@@ -520,9 +520,12 @@ export function ThreeColumnPicker({
         const fullIndex = newColumn.values.indexOf(currentValue);
         nextRow = fullIndex >= 0 ? fullIndex : valueIndex(newColumn, draftRef.current[part]);
       }
-      const nextIndex = Math.max(0, Math.min(newColumn.values.length - 1, Math.round(nextRow)));
+      const boundedRow = Math.max(0, Math.min(newColumn.values.length - 1, nextRow));
+      const nextIndex = Math.round(boundedRow);
       const nextValue = newColumn.values[nextIndex];
-      const top = nextIndex * ROW_HEIGHT;
+      // Retain sub-row finger travel at the mode boundary; only the row
+      // semantics change. Native scrolling continues with its own velocity.
+      const top = boundedRow * ROW_HEIGHT;
       // A delayed scroll RAF from the previous row set must not interpret
       // the new scrollTop using the previous column's semantics.
       if (frameRefs.current[part] !== null) {
@@ -545,7 +548,11 @@ export function ThreeColumnPicker({
         onChangeRef.current(next);
         triggerTelegramSelectionHaptic();
       }
-      scrollColumn(element, nextIndex);
+      if (typeof element.scrollTo === 'function') {
+        element.scrollTo({ top, behavior: 'auto' });
+      } else {
+        element.scrollTop = top;
+      }
     });
   }, [columns, opened, wheelColumns]);
 
@@ -605,8 +612,7 @@ export function ThreeColumnPicker({
     // A new external value can have a different remainder than the active
     // coarse rows. Return to the full wheel before positioning that value.
     PARTS.forEach((part) => {
-      if (quarterSnapRef.current[part] && columns[part].relativeFlickStep
-        && !wheelColumnsRef.current[part].values.includes(valueParts[part])) {
+      if (quarterSnapRef.current[part] && columns[part].relativeFlickStep) {
         setQuarterSnapMode(part, false);
       }
     });
@@ -821,6 +827,9 @@ export function ThreeColumnPicker({
     signalCrossedValues(part, index, false);
     commitIndex(part, index);
     if (quarterSnapRef.current[part] && columns[part].relativeFlickStep) {
+      // The native location must represent the tapped row before the full
+      // one-kilogram value set is restored in the layout effect.
+      scrollColumn(columnRefs.current[part], index);
       setQuarterSnapMode(part, false);
       return;
     }
