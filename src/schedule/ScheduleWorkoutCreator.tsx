@@ -15,8 +15,9 @@ import './workout-planning.css';
 
 type Step = 'athlete' | 'client' | 'source' | 'format' | 'programs' | 'details';
 
-export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated, onNavigationContextChange, mode = 'schedule', onStartWorkout }: {
+export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated, onNavigationContextChange, mode = 'schedule', onStartWorkout, suspended = false }: {
   mode?: 'start' | 'schedule';
+  suspended?: boolean;
   onStartWorkout?: (input: { athleteUserId: string; programId?: string; dayId?: string }) => Promise<void>;
   intent: 'workout' | null; role: 'coach' | 'client'; actor?: ProgramActor;
   onClose: () => void;
@@ -63,12 +64,12 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
     else onClose();
   }, [step, role, mode, onClose]);
   useEffect(() => {
-    if (!intent) return;
+    if (!intent || suspended) return;
     const title = step === 'client' ? 'Выбрать клиента'
       : step === 'details' ? 'Программа тренировок' : step === 'programs' ? 'Выбрать программу' : 'Создать тренировку';
     onNavigationContextChange(nestedNavigation ?? { level: 2, title, contentMode: 'viewport', onBack: back });
     return () => onNavigationContextChange(null);
-  }, [intent, step, back, nestedNavigation, onNavigationContextChange]);
+  }, [intent, suspended, step, back, nestedNavigation, onNavigationContextChange]);
   const run = async (work: (token: number) => Promise<void>) => {
     if (running.current || !planner) return;
     const token = generation.current;
@@ -121,7 +122,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
   const isDialog = intent === 'workout' && ['athlete', 'source', 'format'].includes(step);
   const sheetOpen = intent === 'workout' && (step === 'programs' || step === 'details');
   return <>
-    <MezfitDialog opened={isDialog} title={step === 'athlete' ? 'Создать тренировку' : step === 'format' ? 'Формат тренировки' : 'Источник тренировки'}
+    <MezfitDialog opened={isDialog && !suspended} title={step === 'athlete' ? 'Создать тренировку' : step === 'format' ? 'Формат тренировки' : 'Источник тренировки'}
       buttons={<MezfitDialogButton disabled={busy} onClick={back}>Назад</MezfitDialogButton>}>
       <KonstaList nested>
         {step === 'athlete' ? <>
@@ -141,10 +142,10 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       {busy ? <Text variant="body">Создаём тренировку…</Text> : null}
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitDialog>
-    <ProgramClientPicker opened={intent === 'workout' && step === 'client'} clients={cloud?.clients ?? []}
+    <ProgramClientPicker opened={!suspended && intent === 'workout' && step === 'client'} clients={cloud?.clients ?? []}
       loading={cloud?.status === 'loading'} onClose={back}
       onSelect={client => chooseAthlete(client.userId)} />
-    <MezfitBottomSheet opened={sheetOpen} label="Выбрать программу" lazyMount>
+    <MezfitBottomSheet opened={sheetOpen && !suspended} label="Выбрать программу" lazyMount>
       <SpotlightSurface ref={planningSurfaceRef}>
       <section className="workout-planning-sheet">
         <header className="workout-planning-sheet__header">
@@ -178,7 +179,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       </section>
       </SpotlightSurface>
     </MezfitBottomSheet>
-    <KonstaToast opened={step === 'details' && editToastVersion > 0} position="center" role="status" aria-live="polite">
+    <KonstaToast opened={!suspended && step === 'details' && editToastVersion > 0} position="center" role="status" aria-live="polite">
       <Text variant="body">Нажмите {mode === 'start' ? 'Начать тренировку' : 'Запланировать'}, чтобы начать изменение плана тренировки</Text>
     </KonstaToast>
   </>;

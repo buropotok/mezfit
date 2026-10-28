@@ -14,7 +14,7 @@ Approved product decisions, 2026-10-28:
 
 `LiquidCollapse` is a UI Kit presentation primitive with an interactive catalog example. It uses the existing reverse LiquidPopover contour geometry and live React content, including avatars. It does not screenshot another component's DOM, alter LiquidPopover, or change Konsta packages. Calendar-owned source refs measure cards; a body portal renders the transient animation. Reduced motion, an absent/offscreen source or missing target skip animation. Navigation/unmount releases pending presentation. No cloud sync is awaited.
 
-Start is shared by the calendar and Training tab. Its local atomic materialization detects another athlete's coached booking occupying the actual Start instant, excluding the selected occurrence, personal events, independent bookings, inactive/cancelled bookings and existing executions. It does not cancel the same athlete's other day, reserve a speculative future interval from expected duration, or treat a running session's overrun as this cancellation conflict.
+Start is shared by the calendar and Training tab, including planned, program-day and quick starts. Its local atomic materialization detects another athlete's coached booking occupying the actual Start instant, excluding the selected occurrence, personal events, independent bookings, inactive/cancelled bookings and existing executions. It does not cancel the same athlete's other day, reserve a speculative future interval from expected duration, or treat a running session's overrun as this cancellation conflict.
 
 A public Konsta Sheet shows the other athlete and Cancel / Transfer / Back. Transfer is disabled in this PR; its implementation and same-athlete/different-day wording belong to the next slice. Cancellation runs only after the conflict Sheet closes, then Start retries against fresh local data. Back creates nothing. Session/calendar actual-time placement remains outside this PR.
 
@@ -40,3 +40,27 @@ Relevant audit factors: A-003 (nested navigation/back), A-005 (async reconciliat
 Existing occurrence, planned-workout, calendar, BottomSheet and membership/operator tests were inspected for current contracts and obsolete assumptions; existing tests are unchanged in this PR. New tests cover cancellation/deactivation retention, hidden projections, foreign access, stale started-workout deletion, conflict classification, close-before-cancel sequencing, failure/Back behavior, exact ACL profiles and protected operator boundaries.
 
 Per project workflow, npm, tests, typecheck and build are left to GitHub Actions after PR creation. Mobile visual/real-account checks remain required; source review is not a claim that those checks passed.
+
+
+## Unified Coach Start conflict check (2026-10-28)
+
+Every Coach Start checks the same authorized local calendar workspace in its
+materialization transaction. Quick and program starts include workoutOccurrences
+in that transaction; a conflict rolls back the complete attempt, including any
+automatically created source program. No session, source graph or occurrence
+lifecycle change is accepted until the conflict has been resolved. An invalid
+program/day selection fails before presenting an unrelated cancellation decision.
+The acting coach is occupied by personal Start too; only another athlete's
+coached booking at the actual start instant requires this cancellation flow.
+Independent client bookings do not occupy the coach. Same-athlete/different-day
+resolution remains a separate future case.
+
+The existing Start context owns one pending decision for all entry points. It
+waits for the conflict Sheet to close, cancels with the existing presentation,
+then retries the original intent against current local data and time. Multiple
+conflicts are resolved one at a time. Back cancels no booking. Program selection
+is suspended while resolving a conflict and retained for return. Navigation or
+account changes abandon pending resolution; a late cancellation completion must
+not create a new session after the initiating screen has gone away. Already
+accepted local transactions remain accepted and are not rolled back for UI
+navigation. There is no sync barrier, cloud write operator or schema/ACL change.

@@ -9,9 +9,9 @@ import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { PlannedWorkoutsSheet } from './PlannedWorkoutsSheet';
 import { AdHocSessionScreen } from './AdHocSessionScreen';
 import { adHocErrorMessage } from './adhoc-workout-errors';
+import { usePlannedWorkoutStart, type ProgramWorkoutStartInput } from './PlannedWorkoutStartContext';
 import './adhoc-workouts.css';
 
-type StartInput = { athleteUserId: string; programId?: string; dayId?: string };
 const alreadyActive = (reason: unknown) => reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS';
 const ignoreScheduledCreation = () => {};
 
@@ -21,6 +21,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   onNavigationContextChange: (value: NavigationContext | null) => void;
 }) {
   const cloud = useCloudConnections();
+  const start = usePlannedWorkoutStart();
   const repository = useMemo(() => cloud ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const [sourceOpen, setSourceOpen] = useState(false);
@@ -69,13 +70,16 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retry]);
+  useEffect(() => () => start?.dismissConflict(), [start?.dismissConflict]);
   const closeSource = useCallback(() => { setSourceOpen(false); setChildNavigation(null); }, []);
   const closePlanned = useCallback(() => { setPlannedOpen(false); setChildNavigation(null); }, []);
   useEffect(() => {
-    onNavigationContextChange(childNavigation ?? (plannedOpen
+    onNavigationContextChange(start?.conflictActive
+      ? { level: 2, title: 'Конфликт тренировок', contentMode: 'viewport', onBack: start.dismissConflict }
+      : childNavigation ?? (plannedOpen
       ? { level: 2, title: 'Плановая тренировка', contentMode: 'viewport', onBack: closePlanned } : null));
     return () => onNavigationContextChange(null);
-  }, [plannedOpen, closePlanned, childNavigation, onNavigationContextChange]);
+  }, [plannedOpen, closePlanned, childNavigation, start?.conflictActive, start?.dismissConflict, onNavigationContextChange]);
   const openCreated = useCallback((result: { id: string; createdProgram: boolean }, token: number) => {
     if (token !== generation.current) return;
     activeId.current = result.id;
@@ -88,26 +92,27 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     if (activeId.current) { setBlocked(true); return; }
     const token = generation.current;
     running.current = true; setBusy(true); setError('');
-    try { openCreated(await repository.createQuick(), token); }
+    try { openCreated(await (start ? start.startQuick(() => token === generation.current) : repository.createQuick()), token); }
     catch (reason) {
       if (token !== generation.current) return;
       if (alreadyActive(reason)) setBlocked(true);
       else setError(adHocErrorMessage(reason, 'Не удалось создать тренировку'));
     } finally { if (token === generation.current) { running.current = false; setBusy(false); } }
-  }, [repository, openCreated]);
-  const startFromProgram = useCallback(async (input: StartInput) => {
+  }, [repository, openCreated, start]);
+  const startFromProgram = useCallback(async (input: ProgramWorkoutStartInput) => {
     if (!repository) throw new Error('Не удалось прочитать тренировки');
     const token = generation.current;
     try {
-      openCreated(await repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), token);
+      openCreated(await (start ? start.startFromProgram(input, () => token === generation.current)
+        : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId)), token);
     } catch (reason) {
       if (token !== generation.current) return;
       if (alreadyActive(reason)) { closeSource(); setBlocked(true); }
       else throw new Error(adHocErrorMessage(reason));
     }
-  }, [repository, openCreated, closeSource]);
+  }, [repository, openCreated, closeSource, start]);
   const action = useMemo<NavigationFloatingAction | null>(() => {
-    if (sourceOpen || plannedOpen) return null;
+    if (sourceOpen || plannedOpen || start?.conflictActive) return null;
     const common = { label: 'Создать тренировку', icon: 'plus' as const, disabled: busy || !repository || !sessionsLoaded };
     if (hasActive) return { ...common, disabled: busy, onClick: () => setBlocked(true) };
     return { ...common, popoverItems: [
@@ -122,7 +127,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
       else if (next === 'program') setSourceOpen(true);
       else setPlannedOpen(true);
     } };
-  }, [sourceOpen, plannedOpen, busy, repository, sessionsLoaded, hasActive, pendingStep, quick]);
+  }, [sourceOpen, plannedOpen, busy, repository, sessionsLoaded, hasActive, pendingStep, quick, start?.conflictActive]);
   useNavigationFloatingAction('training', action);
   return <>
     {sessionId && repository ? <AdHocSessionScreen key={sessionId} repository={repository} sessionId={sessionId}
@@ -140,7 +145,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     </section> : null}
     {error ? <section className="adhoc-workouts"><Text variant="footnote" role="alert">{error}</Text>
       <Button rounded tonal disabled={busy} onClick={() => { setError(''); setRetry(value => value + 1); }}>Повторить</Button></section> : null}
-    <ScheduleWorkoutCreator intent={sourceOpen ? 'workout' : null} role="coach" actor={actor} mode="start"
+    <ScheduleWorkoutCreator suspended={start?.conflictActive} intent={sourceOpen ? 'workout' : null} role="coach" actor={actor} mode="start"
       onClose={closeSource} onCreated={ignoreScheduledCreation} onStartWorkout={startFromProgram}
       onNavigationContextChange={setChildNavigation} />
     <PlannedWorkoutsSheet opened={plannedOpen} actor={actor} onClose={closePlanned} onError={setError}

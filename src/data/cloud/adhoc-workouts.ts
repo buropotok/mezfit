@@ -10,7 +10,7 @@ import { isApprovedAssignedPair } from './assigned-programs';
 import { ProgramManagementRepository } from './program-management';
 import { orderedPlanRows } from './program-day-tree';
 import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
-import { isWorkoutExerciseSnapshot, type CloudProgramExerciseSnapshot, type CloudWorkoutExerciseSnapshot } from './workout-foundation-types';
+import { isWorkoutExerciseSnapshot, type CloudWorkoutOccurrenceRow, type CloudProgramExerciseSnapshot, type CloudWorkoutExerciseSnapshot } from './workout-foundation-types';
 import { snapshotProgramDay, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { isExerciseTrackingType } from '../exercises/publicExerciseTypes';
 import { isSetType } from '../../../shared/set-type';
@@ -147,10 +147,18 @@ export class AdHocWorkoutRepository {
   listPrograms(athleteUserId: string): Promise<CloudTrainingPlanRow[]> {
     return this.programs.listForScheduling(athleteUserId);
   }
+  private async assertStartAvailable(athleteUserId: string, timestamp: string,
+    occurrenceId?: string, workspace?: readonly CloudWorkoutOccurrenceRow[]): Promise<void> {
+    const rows = workspace ?? await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
+    // These are Coach Start operations: the actor is occupied even by a personal workout.
+    const conflicts = currentStartConflicts({ id: occurrenceId, athleteUserId, coachUserId: this.actorUserId }, rows, timestamp);
+    if (conflicts.length) throw new PlannedWorkoutConflict(conflicts);
+  }
   createQuick(): Promise<{ id: string; createdProgram: boolean }> {
-    return this.write([], async () => {
+    return this.write(['workoutOccurrences'], async () => {
       await this.requireNoActiveSession();
       const timestamp = now();
+      await this.assertStartAvailable(this.actorUserId, timestamp);
       const id = await this.db.adHocSessions.add({
         realmId: this.actorUserId, owner: this.actorUserId, athleteUserId: this.actorUserId,
         coachUserId: null, clientUserId: null, creatorUserId: this.actorUserId,
@@ -165,7 +173,7 @@ export class AdHocWorkoutRepository {
       || (programId !== undefined && (typeof programId !== 'string' || !programId))
       || (dayId !== undefined && (typeof dayId !== 'string' || !dayId || !programId)))
       return Promise.reject(new Error('ADHOC_INVALID_TARGET'));
-    return this.write([...programTables, ...catalogueTables], async () => {
+    return this.write(['workoutOccurrences', ...programTables, ...catalogueTables], async () => {
       await this.requireNoActiveSession();
       // Eligibility, default graph and execution snapshot share one transaction.
       const programs = await this.listPrograms(athleteUserId);
@@ -186,6 +194,7 @@ export class AdHocWorkoutRepository {
       const day = selectedDayId ? details.days?.find(row => row.day.id === selectedDayId) : undefined;
       if (selectedDayId && !day) throw new Error('ADHOC_DAY_NOT_FOUND');
       const program = details.program, timestamp = now();
+      await this.assertStartAvailable(athleteUserId, timestamp);
       const sessionName = day?.day.name ?? 'Тренировка';
       const id = await this.db.adHocSessions.add({
         realmId: program.realmId, owner: program.realmId, athleteUserId,
@@ -234,8 +243,7 @@ export class AdHocWorkoutRepository {
       await this.requireNoActiveSession();
       await this.requirePlannedLifecycleGrant(occurrence.realmId);
       const timestamp = now();
-      const conflicts = currentStartConflicts(occurrence, workspace, timestamp);
-      if (conflicts.length) throw new PlannedWorkoutConflict(conflicts);
+      await this.assertStartAvailable(occurrence.athleteUserId, timestamp, occurrence.id, workspace);
       const source = occurrence.trainingPlanId ? await this.db.trainingPlans.get(occurrence.trainingPlanId) : undefined;
       const programName = source?.realmId === occurrence.realmId ? source.name : 'Программа';
       const id = await this.db.adHocSessions.add({ realmId: occurrence.realmId, owner: occurrence.realmId,

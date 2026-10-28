@@ -9,6 +9,8 @@ import { PlannedWorkoutConflictSheet } from './PlannedWorkoutConflictSheet';
 import { adHocErrorMessage } from './adhoc-workout-errors';
 
 type CancellationPresentation = (id: string, commit: () => Promise<void>) => Promise<void>;
+export interface ProgramWorkoutStartInput { athleteUserId: string; programId?: string; dayId?: string }
+type StartResult = { id: string; createdProgram: boolean };
 interface PlannedWorkoutStart {
   conflictActive: boolean;
   conflictOccurrence: PlannedWorkoutConflict['occurrences'][number] | null;
@@ -16,12 +18,14 @@ interface PlannedWorkoutStart {
   cancel: (id: string) => Promise<void>;
   registerCancellationPresentation: (handler: CancellationPresentation) => () => void;
   start: (draft: LocalWorkoutOccurrenceDraft) => Promise<string>;
+  startQuick: (isCurrent?: () => boolean) => Promise<StartResult>;
+  startFromProgram: (input: ProgramWorkoutStartInput, isCurrent?: () => boolean) => Promise<StartResult>;
   showSession: (id: string) => void;
 }
 const Context = createContext<PlannedWorkoutStart | null>(null);
 export const usePlannedWorkoutStart = () => useContext(Context);
 
-/** Shared Start intent for the calendar and Training tab; owns navigation only after acceptance. */
+/** Shared conflict resolution for every Coach Start intent; navigation follows acceptance. */
 export function PlannedWorkoutStartProvider(props: {
   role: 'coach' | 'client'; enabled?: boolean; onStarted: (id: string) => void; children: ReactNode;
 }) {
@@ -65,49 +69,59 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
     pendingDecision.current?.('back'); pendingDecision.current = null; setConflictOpened(false); setConflict(null); setConflictActive(false);
     return () => { ++generation.current; pendingDecision.current?.('back'); pendingDecision.current = null; };
   }, [repository, role]);
-  const start = useCallback(async (draft: LocalWorkoutOccurrenceDraft) => {
-    if (!repository || !drafts || role !== 'coach') throw new Error('Запуск тренировки недоступен');
+  const runStart = useCallback(async <T,>(create: () => Promise<T>, prepare?: () => Promise<void>,
+    isCurrent: () => boolean = () => true): Promise<T> => {
+    if (!repository || role !== 'coach') throw new Error('Запуск тренировки недоступен');
     if (running.current) throw new Error('Тренировка уже запускается');
     const token = generation.current;
+    const current = () => token === generation.current && !abandoned.current && isCurrent();
     running.current = true; abandoned.current = false; setConflictError('');
     try {
-      await drafts.flushEdits(draft.id);
-      if (token !== generation.current) throw new Error('Запуск тренировки отменён');
-      const occurrenceId = draft.targetOccurrenceId ?? draft.id.slice(6);
-      const create = async (): Promise<string> => {
-        while (token === generation.current) {
-          try { return (await repository.createFromOccurrence(occurrenceId)).id; }
+      if (!current()) throw new Error('Запуск тренировки отменён');
+      await prepare?.();
+      while (current()) {
+        try { return await create(); }
+        catch (reason) {
+          if (!(reason instanceof PlannedWorkoutConflict) || !current()) throw reason;
+          const row = reason.occurrences[0];
+          if (!row) throw reason;
+          const choice = await new Promise<'cancel' | 'back'>(resolve => {
+            pendingDecision.current = resolve; decision.current = 'back';
+            setConflictActive(true); setConflict(row); setConflictOpened(true);
+          });
+          if (!current() || choice !== 'cancel') throw new Error('Запуск тренировки отменён');
+          try { await cancel(row.id); }
           catch (reason) {
-            if (!(reason instanceof PlannedWorkoutConflict)) throw reason;
-            const row = reason.occurrences[0];
-            if (!row) throw reason;
-            const choice = await new Promise<'cancel' | 'back'>(resolve => {
-              pendingDecision.current = resolve; decision.current = 'back';
-              setConflictActive(true); setConflict(row); setConflictOpened(true);
-            });
-            if (token !== generation.current || choice !== 'cancel') throw new Error('Запуск тренировки отменён');
-            try { await cancel(row.id); }
-            catch (reason) {
-              if (token === generation.current && !abandoned.current)
-                setConflictError(adHocErrorMessage(reason, 'Не удалось отменить тренировку'));
-              throw reason;
-            }
-            if (abandoned.current) throw new Error('Запуск тренировки отменён');
+            if (current()) setConflictError(adHocErrorMessage(reason, 'Не удалось отменить тренировку'));
+            throw reason;
           }
         }
-        throw new Error('Запуск тренировки отменён');
-      };
-      const id = await create();
-      if (token !== generation.current) throw new Error('Запуск тренировки отменён');
-      return id;
-    } catch (reason) {
-      if (token === generation.current && reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS')
-        setBlocked(true);
-      throw new Error(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
+      }
+      throw new Error('Запуск тренировки отменён');
     } finally { if (token === generation.current) { running.current = false; setConflictActive(false); setConflict(null); } }
-  }, [repository, drafts, role, cancel]);
+  }, [repository, role, cancel]);
+  const start = useCallback(async (draft: LocalWorkoutOccurrenceDraft) => {
+    if (!repository || !drafts) throw new Error('Запуск тренировки недоступен');
+    const occurrenceId = draft.targetOccurrenceId ?? draft.id.slice(6);
+    const token = generation.current;
+    try {
+      return await runStart(async () => (await repository.createFromOccurrence(occurrenceId)).id,
+        () => drafts.flushEdits(draft.id));
+    } catch (reason) {
+      if (token === generation.current && reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS') setBlocked(true);
+      throw new Error(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
+    }
+  }, [repository, drafts, runStart]);
+  const startQuick = useCallback((isCurrent?: () => boolean) => {
+    if (!repository) return Promise.reject(new Error('Запуск тренировки недоступен'));
+    return runStart(() => repository.createQuick(), undefined, isCurrent);
+  }, [repository, runStart]);
+  const startFromProgram = useCallback((input: ProgramWorkoutStartInput, isCurrent?: () => boolean) => {
+    if (!repository) return Promise.reject(new Error('Запуск тренировки недоступен'));
+    return runStart(() => repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), undefined, isCurrent);
+  }, [repository, runStart]);
   const showSession = useCallback((id: string) => onStartedRef.current(id), []);
-  const value = useMemo(() => role === 'coach' && repository ? { start, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
+  const value = useMemo(() => role === 'coach' && repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
   return <Context.Provider value={value}>
     {children}
     <PlannedWorkoutConflictSheet occurrence={conflict} opened={conflictOpened}
