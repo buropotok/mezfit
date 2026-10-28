@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - tools/exercise-work/reconcile-reviewed-existing.py
+      - .github/workflows/one-time-reconcile-exercise-work.yml
 
 permissions:
   contents: write
@@ -15,7 +16,10 @@ concurrency:
 
 jobs:
   reconcile:
-    if: github.repository == 'buropotok/mezfit' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'data: prepare one-time exercise work reconciliation'
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      github.event.head_commit.message == 'data: prepare one-time exercise work reconciliation'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
