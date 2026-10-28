@@ -15,6 +15,8 @@ export type MezfitSliderSize = 'big' | 'medium' | 'small';
 
 export type MezfitSliderProps = {
   size: MezfitSliderSize;
+  /** Stretch the track without changing thumb geometry. */
+  fullWidth?: boolean;
   start: number;
   end: number;
   ariaLabel?: string;
@@ -64,6 +66,7 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
 
 export function MezfitSlider({
   size,
+  fullWidth = false,
   start,
   end,
   ariaLabel = 'Slider',
@@ -142,7 +145,7 @@ export function MezfitSlider({
   };
 
   const sliderStyle: SliderCssProperties = {
-    '--mezfit-slider-width': `${BASE_TRACK_WIDTH * scale}px`,
+    '--mezfit-slider-width': fullWidth ? '100%' : `${BASE_TRACK_WIDTH * scale}px`,
     '--mezfit-slider-height': `${thumbHeight}px`,
     '--mezfit-slider-track-height': `${trackHeight}px`,
     '--mezfit-slider-track-radius': `${trackHeight / 2}px`,
