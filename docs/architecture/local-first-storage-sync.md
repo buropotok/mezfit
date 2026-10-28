@@ -183,3 +183,15 @@ No custom sync engine, second authoritative business database, server-enforced F
 Calendar view context is independent from storage/access: the default coach timeline
 shows personal/coached bookings. Independent planning selects that client timeline
 until leaving or tapping the calendar tab; closing/publishing preserves the selection.
+
+## Calendar cancellation and logical deletion (2026-10-28)
+
+Cancellation retains a workout in a separate basket projection and releases its
+calendar occupancy. Logical deletion writes `inactive: true` on the same
+synchronized occurrence; it hides the record from the timeline, basket, program
+projections, direct editor reads and Start, while preserving all data. Physical
+DELETE remains forbidden. Both intents commit locally; Addon owns replication.
+No historical rewrite or Restore UI is part of this slice. Existing cancelled
+records, including formerly discarded test drafts, remain in the basket until
+manually deactivated. The exact protected `inactive` grant and rollout are in
+`calendar-cancellation.md` and AGENTS.md §21.

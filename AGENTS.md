@@ -295,6 +295,30 @@ partial lifecycle grants or unrelated drift. Readback is not proof of ordinary
 account authorization; the live structural permission checklist remains required.
 See `docs/architecture/planned-workout-sessions.md`.
 
+### Approved calendar cancellation and logical deletion (2026-10-28)
+
+The user approved separate cancellation (`cancelledAt`) and logical deletion
+(`inactive: true`) for scheduled occurrences, including removing cancelled test
+drafts from the basket. Physical deletion stays forbidden. Inactive occurrences
+must be excluded from every product projection, direct editor read, scheduling
+occupancy and Start. Started/completed execution cannot be deactivated by this
+calendar action. Discarding edits of a previously published workout still restores
+its published PLAN; deleting the workout itself deactivates the full occurrence.
+No Restore UI and no automatic historical-data migration are approved.
+
+`tools/dexie-roles/calendar-cancellation.mjs` and
+`.github/workflows/dexie-calendar-cancellation.yml` may append only `inactive`
+to Coach and Client `workoutOccurrences` field-update grants from the exact
+complete planned-session baseline, using `cloud/calendar-cancellation-roles.json`.
+No DELETE/manage grants, schema changes, identity updates, PLAN/FACT grant changes,
+membership changes or business-data writes are authorized. Preserve unrelated
+configuration, use the existing protected environment secret, owner/main manual
+preview/apply, literal confirmation, shared writer concurrency, immediate full
+configuration recheck and exact complete readback after failed/no-op imports.
+Membership preflight accepts only complete old or complete new reviewed profiles.
+The workflow is prepared in this PR, not automatically executed on PR/push.
+See `docs/architecture/calendar-cancellation.md` for rollout and activation checks.
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.

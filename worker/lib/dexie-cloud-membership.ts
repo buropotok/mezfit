@@ -2,6 +2,7 @@ import cloudConfig from '../../dexie-cloud.json';
 import roleConfig from '../../cloud/roles.json';
 import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
 import plannedRoleConfig from '../../cloud/planned-session-roles.json';
+import cancellationRoleConfig from '../../cloud/calendar-cancellation-roles.json';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
 export interface CloudMembershipEnv {
@@ -228,6 +229,16 @@ export function assertRemoteRoles(value: unknown): void {
   if (!Array.isArray(value)) failUnavailable();
   const expected = roleConfig.roles;
   const expectedFacts = expected.client.permissions.update.sessionSetFacts;
+  const cancellationProfile = ['coach', 'client'].map(name => {
+    const remote = value.find((candidate: unknown) => isObject(candidate)
+      && candidate.realmId === 'rlm-public' && candidate.name === name);
+    return isObject(remote) && isObject(remote.permissions) && isObject(remote.permissions.update)
+      && Array.isArray(remote.permissions.update.workoutOccurrences)
+      && remote.permissions.update.workoutOccurrences.includes('inactive');
+  });
+  // Only the complete old profile or the complete reviewed new profile is valid.
+  if (cancellationProfile.some(Boolean) && !cancellationProfile.every(Boolean)) failUnavailable();
+  const cancellation = cancellationProfile.every(Boolean);
   for (const name of ['coach', 'client'] as const) {
     const remote = value.find((candidate: unknown) => isObject(candidate)
       && candidate.realmId === 'rlm-public' && candidate.name === name);
@@ -240,12 +251,15 @@ export function assertRemoteRoles(value: unknown): void {
     const plannedFields = [...expected.coach.permissions.update.workoutOccurrences,
       ...plannedRoleConfig.roles.coach.permissions.update.workoutOccurrences];
     const planned = adHoc && isObject(permissions.update)
-      && sameStrings(permissions.update.workoutOccurrences, plannedFields);
+      && sameStrings(permissions.update.workoutOccurrences, [...plannedFields, ...(cancellation ? ['inactive'] : [])]);
+    if (cancellation && name === 'coach' && !planned) failUnavailable();
     const expectedUpdates: Record<string, string[]> = {
       ...expected[name].permissions.update,
       ...(adHoc ? adHocRoleConfig.roles.coach.permissions.update : {}),
       ...(planned ? { workoutOccurrences: plannedFields } : {}),
     };
+    if (cancellation) expectedUpdates.workoutOccurrences = [...expectedUpdates.workoutOccurrences,
+      ...cancellationRoleConfig.roles[name].permissions.update.workoutOccurrences];
     const expectedAdd = adHoc
       ? [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]
       : expected[name].permissions.add;

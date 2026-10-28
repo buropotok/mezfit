@@ -143,7 +143,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     <ScheduleWorkoutCreator intent={sourceOpen ? 'workout' : null} role="coach" actor={actor} mode="start"
       onClose={closeSource} onCreated={ignoreScheduledCreation} onStartWorkout={startFromProgram}
       onNavigationContextChange={setChildNavigation} />
-    <PlannedWorkoutsSheet opened={plannedOpen} actor={actor} onClose={closePlanned}
+    <PlannedWorkoutsSheet opened={plannedOpen} actor={actor} onClose={closePlanned} onError={setError}
       onStarted={id => { setSessionId(id); setPlannedOpen(false); setChildNavigation(null); }}
       onNavigationContextChange={setChildNavigation} />
     <MezfitDialog opened={blocked} title="Завершите текущую тренировку, чтобы начать новую."

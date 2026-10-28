@@ -1,3 +1,4 @@
+import { PlannedWorkoutConflict, currentStartConflicts } from './planned-workout-conflicts';
 import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
 import { markWorkoutChanged } from './workout-sync';
@@ -218,8 +219,8 @@ export class AdHocWorkoutRepository {
   async createFromOccurrence(occurrenceId: string): Promise<{ id: string; createdProgram: false }> {
     if (typeof occurrenceId !== 'string' || !occurrenceId) throw new Error('PLANNED_WORKOUT_NOT_FOUND');
     return this.write(['workoutOccurrences', 'localWorkoutSync', 'trainingPlans', 'roles', ...catalogueTables], async () => {
-      const occurrence = (await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace())
-        .find(row => row.id === occurrenceId && row.entryKind !== 'personal_event');
+      const workspace = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
+      const occurrence = workspace.find(row => row.id === occurrenceId && row.entryKind !== 'personal_event');
       if (!occurrence || occurrence.cancelledAt || occurrence.status === 'cancelled'
         || (occurrence.coachUserId ? occurrence.coachUserId !== this.actorUserId
           : occurrence.realmId !== this.actorUserId || occurrence.athleteUserId !== this.actorUserId))
@@ -233,6 +234,8 @@ export class AdHocWorkoutRepository {
       await this.requireNoActiveSession();
       await this.requirePlannedLifecycleGrant(occurrence.realmId);
       const timestamp = now();
+      const conflicts = currentStartConflicts(occurrence, workspace, timestamp);
+      if (conflicts.length) throw new PlannedWorkoutConflict(conflicts);
       const source = occurrence.trainingPlanId ? await this.db.trainingPlans.get(occurrence.trainingPlanId) : undefined;
       const programName = source?.realmId === occurrence.realmId ? source.name : 'Программа';
       const id = await this.db.adHocSessions.add({ realmId: occurrence.realmId, owner: occurrence.realmId,

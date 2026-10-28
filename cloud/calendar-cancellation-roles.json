@@ -1,0 +1,6 @@
+{
+  "roles": {
+    "coach": { "permissions": { "update": { "workoutOccurrences": ["inactive"] } } },
+    "client": { "permissions": { "update": { "workoutOccurrences": ["inactive"] } } }
+  }
+}

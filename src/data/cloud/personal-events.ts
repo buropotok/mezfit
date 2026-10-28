@@ -47,7 +47,7 @@ export class PersonalEventRepository {
   }
 
   private authorized(row: CloudWorkoutOccurrenceRow | undefined): CloudWorkoutOccurrenceRow {
-    if (!row || !isPersonalEvent(row) || row.realmId !== this.actorUserId
+    if (!row || row.inactive || !isPersonalEvent(row) || row.realmId !== this.actorUserId
       || row.owner !== this.actorUserId || row.athleteUserId !== this.actorUserId
       || row.coachUserId !== null || row.clientUserId !== null || row.format !== 'independent'
       || row.workoutSessionId !== null || row.status !== 'scheduled' || row.cancelledAt

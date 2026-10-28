@@ -44,3 +44,5 @@ export { SpotlightHint, SpotlightTarget, SpotlightSurface, useSpotlightHintPause
 
 export { SpeechCloud, type SpeechCloudProps } from './SpeechCloud';
 export { SPEECH_CLOUD_DEFAULTS, type SpeechCloudArea } from './speechCloudGeometry';
+
+export { LiquidCollapse, type LiquidCollapseProps, type LiquidCollapseBounds } from './LiquidCollapse';
