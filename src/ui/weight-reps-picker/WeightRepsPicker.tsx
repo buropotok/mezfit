@@ -265,7 +265,7 @@ export function WeightRepsPicker({
             </header>
             <div className="ui-weight-reps-picker__number-body">
               <div className="ui-weight-reps-picker__number-grid" aria-label="Цифровая клавиатура">
-                {DIGIT_KEYS.slice(0, 9).map(({ digit, icon }) => (
+                {DIGIT_KEYS.map(({ digit, icon }) => (
                   <div
                     key={digit}
                     className="ui-weight-reps-picker__number-cell"
