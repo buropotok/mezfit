@@ -23,10 +23,15 @@ function props() {
   return { draft, drafts: repository as unknown as WorkoutOccurrenceDraftRepository, collapsed: false,
     onCollapsedChange: vi.fn(), onClose: vi.fn(), onSave: vi.fn(), onCancel: vi.fn(), onDelete: vi.fn().mockResolvedValue(undefined) };
 }
+function cardControls() {
+  const card = screen.getByText('План').closest('section');
+  if (!card) throw new Error('Workout card is missing');
+  return within(card);
+}
 describe('scheduled workout cancellation actions', () => {
   it('places Delete after Cancel and flushes the current PLAN before asking its owner to close the sheet', async () => {
     const input = props(); render(<OccurrenceDraftCard {...input} />);
-    const buttons = screen.getAllByRole('button').map(button => button.textContent);
+    const buttons = cardControls().getAllByRole('button').map(button => button.textContent);
     expect(buttons.indexOf('Отменить тренировку')).toBeLessThan(buttons.indexOf('Удалить'));
     fireEvent.click(screen.getByRole('button', { name: 'Отменить тренировку' }));
     await waitFor(() => expect(input.onCancel).toHaveBeenCalledWith(draft));
@@ -37,7 +42,7 @@ describe('scheduled workout cancellation actions', () => {
     const input = props(); render(<OccurrenceDraftCard {...input} cancelled readOnly planLocked />);
     expect(screen.queryByRole('button', { name: 'Отменить тренировку' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Восстановить/ })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
+    fireEvent.click(cardControls().getByRole('button', { name: 'Удалить' }));
     const confirm = screen.getByRole('dialog', { name: 'Удалить тренировку?' });
     fireEvent.click(within(confirm).getByRole('button', { name: 'Удалить' }));
     await waitFor(() => expect(input.onDelete).toHaveBeenCalledWith(draft));

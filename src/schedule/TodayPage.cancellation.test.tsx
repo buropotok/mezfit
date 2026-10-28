@@ -12,6 +12,8 @@ import { TodayPage } from './TodayPage';
 const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null, closed: null as null | (() => void) }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'offline' }) }));
 vi.mock('../NavigationShell', async original => ({ ...await original<typeof import('../NavigationShell')>(), useNavigationSurfaceFloatingAction: () => {} }));
+// Calendar state is under test; SpringScale has its own browser-animation tests.
+vi.mock('../ui/SpringScale', () => ({ startSpringScale: vi.fn() }));
 vi.mock('../workout/PlannedWorkoutStartContext', () => ({ usePlannedWorkoutStart: () => null }));
 vi.mock('./OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: (props: OccurrenceDraftSheetProps) => {
   state.closed = props.onClosed ?? null;
