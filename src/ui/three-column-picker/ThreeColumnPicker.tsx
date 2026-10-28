@@ -717,243 +717,111 @@ export function ThreeColumnPicker({
     });
   };
 
-  // Gesture-owned columns ignore native scroll events entirely. Only their
-  // touch handlers may update the selected number and physical scrollTop.
-  const setGestureIndex = (part: ThreeColumnPickerPart, requested: number, stride: number) => {
-    const column = columns[part];
-    // Preserve the original unit digit: 77 -> 87 -> 97, not 77 -> 90.
-    const remainder = valueIndex(column, feedbackValueRef.current[part]) % stride;
-    const last = remainder + Math.floor((column.values.length - 1 - remainder) / stride) * stride;
-    const index = Math.max(remainder, Math.min(last, requested));
-    const previous = valueIndex(column, feedbackValueRef.current[part]);
-    if (previous === index) return;
-    const crossed = stride === 1 ? Math.abs(index - previous)
-      : Math.max(1, Math.ceil(Math.abs(index - previous) / stride));
-    for (let n = 0; n < crossed; n += 1) triggerTelegramSelectionHaptic();
-    feedbackValueRef.current = { ...feedbackValueRef.current, [part]: column.values[index] };
-    commitIndex(part, index);
-    const top = index * ROW_HEIGHT;
-    pendingScrollRef.current = { ...pendingScrollRef.current, [part]: top };
-    setScrollTops((current) => ({ ...current, [part]: top }));
-    scrollColumn(columnRefs.current[part], index);
-  };
-
-  const cancelFling = (part: ThreeColumnPickerPart, view: Window) => {
-    const id = flingFrameRef.current[part];
-    if (id !== null) view.cancelAnimationFrame(id);
-    flingFrameRef.current[part] = null;
-  };
-
-  const finishGesture = (part: ThreeColumnPickerPart) => {
-    const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
-    reconcileFrameRef.current = view.requestAnimationFrame(() => {
-      reconcileFrameRef.current = null;
-      if (!openedRef.current || scrollingPartsRef.current.size > 0
-        || PARTS.some((candidate) => gestureRef.current[candidate]
-          || flingFrameRef.current[candidate] !== null)) return;
-      const canonical = controlledRef.current;
-      if (!partsEqual(draftRef.current, canonical)) {
-        draftRef.current = canonical;
-        feedbackValueRef.current = canonical;
-        setDraft(canonical);
-        const tops = partsToScrollTops(columns, canonical);
-        pendingScrollRef.current = tops;
-        setScrollTops(tops);
-        syncColumns(canonical);
-      }
-      locallyEmittedRef.current.clear();
-    });
-  };
-
-  const updateGesturePosition = (part: ThreeColumnPickerPart, gesture: StepGesture, y: number) => {
-    const distance = gesture.startY - y;
-    const step = columns[part].gestureStep ?? 1;
-    const index = gesture.mode === 'fine'
-      ? gesture.startIndex + Math.round(distance / ROW_HEIGHT)
-      : gesture.startIndex
-        + Math.sign(distance) * Math.max(1, Math.round(Math.abs(distance) / 40)) * step;
-    setGestureIndex(part, index, gesture.mode === 'fine' ? 1 : step);
+  const setNativeFineMode = (part: ThreeColumnPickerPart, fine: boolean) => {
+    if (finePartsRef.current[part] === fine) return;
+    finePartsRef.current = { ...finePartsRef.current, [part]: fine };
+    setFineParts(finePartsRef.current);
   };
 
   const handleTouchStart = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
     if (!columns[part].gestureStep || !touch || !openedRef.current) return;
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
-    cancelFling(part, view);
-    const old = gestureRef.current[part];
-    if (old?.holdTimer != null) view.clearTimeout(old.holdTimer);
-    const gesture: StepGesture = {
-      startY: touch.clientY, startTime: event.timeStamp,
-      startIndex: valueIndex(columns[part], draftRef.current[part]),
-      lastY: touch.clientY, lastTime: event.timeStamp,
-      recentSpeed: 0, mode: 'pending', holdTimer: null,
+    const previous = gestureRef.current[part];
+    if (previous?.holdTimer !== null && previous?.holdTimer !== undefined) {
+      view.clearTimeout(previous.holdTimer);
+    }
+    // A new gesture always starts in the native coarse wheel. The browser
+    // cancels ongoing momentum on the next finger-down, as in TimePicker.
+    setNativeFineMode(part, false);
+    const gesture: NativeGesture = {
+      startY: touch.clientY,
+      startTime: event.timeStamp,
+      moved: false,
+      holdTimer: null,
+      mode: 'pending',
     };
-    gesture.holdTimer = view.setTimeout(() => {
-      if (gestureRef.current[part] === gesture && gesture.mode === 'pending') gesture.mode = 'fine';
-      gesture.holdTimer = null;
-    }, HOLD_TO_FINE_MS);
     gestureRef.current[part] = gesture;
+    gesture.holdTimer = view.setTimeout(() => {
+      gesture.holdTimer = null;
+      if (gestureRef.current[part] !== gesture || gesture.mode !== 'pending') return;
+      gesture.mode = 'fine';
+      setNativeFineMode(part, true);
+    }, HOLD_TO_FINE_MS);
   };
 
   const handleTouchMove = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     const gesture = gestureRef.current[part];
     const touch = event.touches[0];
     if (!columns[part].gestureStep || !gesture || !touch) return;
-    const y = touch.clientY;
-    const dt = event.timeStamp - gesture.lastTime;
-    const dy = gesture.lastY - y;
-    if (dt > 0 && dt <= 160 && Math.abs(dy) >= 1) gesture.recentSpeed = Math.abs(dy / dt);
-    gesture.lastY = y;
-    gesture.lastTime = event.timeStamp;
-    if (gesture.mode === 'pending') {
-      // Long-press detection must not rely solely on a timer. WKWebView may
-      // delay the timer while a finger is down; touch timestamps still preserve
-      // the elapsed time when a move is finally delivered.
-      const distance = Math.abs(gesture.startY - y);
-      if (distance >= UNAMBIGUOUS_SWIPE_PX
-        || (distance >= SWIPE_THRESHOLD_PX && event.timeStamp - gesture.startTime < HOLD_TO_FINE_MS)) {
-        gesture.mode = 'coarse';
-      } else if (event.timeStamp - gesture.startTime >= HOLD_TO_FINE_MS) {
-        gesture.mode = 'fine';
-      }
-      if (gesture.mode !== 'pending' && gesture.holdTimer !== null) {
-        (event.currentTarget.ownerDocument.defaultView ?? window).clearTimeout(gesture.holdTimer);
-        gesture.holdTimer = null;
-      }
+    const distance = Math.abs(gesture.startY - touch.clientY);
+    const elapsed = event.timeStamp - gesture.startTime;
+    if (distance >= SWIPE_THRESHOLD_PX) gesture.moved = true;
+    if (gesture.mode !== 'pending') return;
+
+    if (distance >= UNAMBIGUOUS_SWIPE_PX
+      || (distance >= SWIPE_THRESHOLD_PX && elapsed < HOLD_TO_FINE_MS)) {
+      gesture.mode = 'coarse';
+    } else if (elapsed >= HOLD_TO_FINE_MS) {
+      // Also recognize time from touch event timestamps if the WebView
+      // deferred a pending timeout while the finger was stationary.
+      gesture.mode = 'fine';
+      setNativeFineMode(part, true);
     }
-    if (gesture.mode !== 'pending') updateGesturePosition(part, gesture, y);
+    if (gesture.mode !== 'pending' && gesture.holdTimer !== null) {
+      (event.currentTarget.ownerDocument.defaultView ?? window).clearTimeout(gesture.holdTimer);
+      gesture.holdTimer = null;
+    }
+    // No custom scrollTop writes: CSS pan-y and the WebView own the movement.
   };
 
-  const completeGesture = (part: ThreeColumnPickerPart, y: number, time: number, view: Window) => {
+  const finishTouch = (part: ThreeColumnPickerPart, view: Window) => {
     const gesture = gestureRef.current[part];
     if (!gesture) return;
     if (gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
-    const distance = gesture.startY - y;
-    if (gesture.mode === 'pending') {
-      // A delayed timer must also be recognized when the next event is touchend.
-      // With no displacement this remains a tap, not a fine-drag mutation.
-      if (Math.abs(distance) >= UNAMBIGUOUS_SWIPE_PX
-        || (Math.abs(distance) >= SWIPE_THRESHOLD_PX && time - gesture.startTime < HOLD_TO_FINE_MS)) {
-        gesture.mode = 'coarse';
-      } else if (time - gesture.startTime >= HOLD_TO_FINE_MS) {
-        gesture.mode = 'fine';
-      }
-    }
-    if (gesture.mode === 'pending') {
-      delete gestureRef.current[part];
-      return;
-    }
-    updateGesturePosition(part, gesture, y);
     delete gestureRef.current[part];
-    if (gesture.mode === 'fine' || Math.abs(distance) < SWIPE_THRESHOLD_PX) {
-      finishGesture(part);
-      return;
-    }
-
-    const speed = Math.max(Math.abs(distance) / Math.max(1, time - gesture.startTime),
-      time - gesture.lastTime <= 120 ? gesture.recentSpeed : 0);
-    const requestedSteps = Math.max(1, Math.min(FLING_MAX_DECADES, Math.round(speed * 6)));
-    const stride = columns[part].gestureStep ?? 1;
-    const start = valueIndex(columns[part], draftRef.current[part]);
-    const remainder = start % stride;
-    const last = remainder + Math.floor((columns[part].values.length - 1 - remainder) / stride) * stride;
-    const direction = Math.sign(distance);
-    const target = Math.max(remainder, Math.min(last, start + direction * requestedSteps * stride));
-    const steps = Math.abs(target - start) / stride;
-    if (steps === 0) {
-      finishGesture(part);
-      return;
-    }
-    const duration = Math.min(950, 210 + steps * 42);
-    let began: number | null = null;
-    const animate = (timestamp: number) => {
-      if (!openedRef.current) {
-        flingFrameRef.current[part] = null;
-        return;
-      }
-      if (began === null) began = timestamp;
-      const progress = Math.min(1, (timestamp - began) / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      const passed = Math.min(steps, Math.floor(steps * eased));
-      setGestureIndex(part, start + direction * passed * stride, stride);
-      if (progress < 1 && passed < steps) {
-        flingFrameRef.current[part] = view.requestAnimationFrame(animate);
-      } else {
-        setGestureIndex(part, target, stride);
-        flingFrameRef.current[part] = null;
-        finishGesture(part);
-      }
-    };
-    flingFrameRef.current[part] = view.requestAnimationFrame(animate);
+    // A stationary long press has no native scrollend event. Restore the
+    // coarse options on release; otherwise wait for native inertia to settle.
+    if (gesture.mode === 'fine' && !gesture.moved) setNativeFineMode(part, false);
   };
 
   const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     if (!columns[part].gestureStep) return;
-    const touch = event.changedTouches[0];
-    const gesture = gestureRef.current[part];
-    if (!touch || !gesture) return;
-    if (gesture.mode !== 'pending' || Math.abs(touch.clientY - gesture.startY) >= SWIPE_THRESHOLD_PX) {
-      // Do not synthesize a button click after a drag or a decade fling.
-      event.preventDefault();
-    }
-    completeGesture(part, touch.clientY, event.timeStamp,
-      event.currentTarget.ownerDocument.defaultView ?? window);
+    finishTouch(part, event.currentTarget.ownerDocument.defaultView ?? window);
   };
 
   const handleTouchCancel = (part: ThreeColumnPickerPart) => {
-    const gesture = gestureRef.current[part];
-    if (!gesture) return;
+    if (!columns[part].gestureStep) return;
     const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-    if (gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
-    delete gestureRef.current[part];
-    finishGesture(part);
-  };
-
-  const handleWheel = (part: ThreeColumnPickerPart, event: WheelEvent<HTMLDivElement>) => {
-    if (!openedRef.current || !columns[part].gestureStep || event.deltaY === 0) return;
-    // A mouse wheel/trackpad isn't a finger swipe: keep desktop fine control.
-    event.preventDefault();
-    const view = event.currentTarget.ownerDocument.defaultView ?? window;
-    cancelFling(part, view);
-    const gesture = gestureRef.current[part];
-    if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-    delete gestureRef.current[part];
-    const current = valueIndex(columns[part], draftRef.current[part]);
-    setGestureIndex(part, current + Math.sign(event.deltaY), 1);
-    finishGesture(part);
+    finishTouch(part, view);
+    // WebView touchcancel can mean native pan/kinetic scroll took ownership.
+    // Do not replace its snap targets until scrollend.
   };
 
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
-
-    if (columns[part].gestureStep) {
-      const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-      cancelFling(part, view);
-      const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-      delete gestureRef.current[part];
-    }
     signalCrossedValues(part, index, false);
     commitIndex(part, index);
-    const nextTop = index * ROW_HEIGHT;
-    pendingScrollRef.current = {
-      ...pendingScrollRef.current,
-      [part]: nextTop,
-    };
-    setScrollTops((current) => ({ ...current, [part]: nextTop }));
+    const top = index * ROW_HEIGHT;
+    pendingScrollRef.current = { ...pendingScrollRef.current, [part]: top };
+    setScrollTops((current) => ({ ...current, [part]: top }));
     const element = columnRefs.current[part];
     scrollColumn(element, index);
-    if (element && !columns[part].gestureStep) scheduleScrollEndFallback(part, element);
+    if (element) scheduleScrollEndFallback(part, element);
   };
 
   const handleClose = () => {
     PARTS.forEach((part) => {
       if (!columns[part].gestureStep) return;
-      const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-      cancelFling(part, view);
+      const element = columnRefs.current[part];
+      if (!element) return;
+      const index = Math.max(0, Math.min(displayedColumns[part].values.length - 1,
+        Math.round(element.scrollTop / ROW_HEIGHT)));
+      signalCrossedValues(part, index, true);
+      commitIndex(part, index);
+      const view = element.ownerDocument.defaultView ?? window;
       const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
+      if (gesture?.holdTimer !== null && gesture?.holdTimer !== undefined) view.clearTimeout(gesture.holdTimer);
       delete gestureRef.current[part];
     });
     onClose();
@@ -988,7 +856,7 @@ export function ThreeColumnPicker({
               <ThreeColumnPickerColumnWheel
                 key={part}
                 part={part}
-                column={columns[part]}
+                column={displayedColumns[part]}
                 selected={draft[part]}
                 onScroll={handleScroll}
                 onScrollEnd={handleScrollEnd}
@@ -1005,7 +873,7 @@ export function ThreeColumnPicker({
             assets={lensAssets}
             scrollTops={scrollTops}
             lensMode={resolvedLensMode}
-            columns={columns}
+            columns={displayedColumns}
             lensXs={lensXs}
             separators={separators}
           />
