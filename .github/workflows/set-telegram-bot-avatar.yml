@@ -1,0 +1,58 @@
+name: Set Telegram Bot Animated Avatar
+
+# Upload is deliberately manual; PR and push must never mutate a live bot profile.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-bot-avatar
+  cancel-in-progress: false
+
+jobs:
+  update-avatar:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Render double heartbeat (two beats followed by a pause)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ffmpeg -hide_banner -loglevel error -y \
+            -i assets/branding/telegram-bot-avatar.svg \
+            -frames:v 1 "$RUNNER_TEMP/telegram-avatar.png"
+          ffmpeg -hide_banner -loglevel error -y \
+            -loop 1 -framerate 1 -i "$RUNNER_TEMP/telegram-avatar.png" \
+            -vf "zoompan=z='if(lte(on,14),1+0.065*sin(PI*on/14),if(lte(on,28),1+0.05*sin(PI*(on-14)/14),1))':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=96:s=640x640:fps=30" \
+            -frames:v 96 -an -c:v libx264 -profile:v baseline \
+            -pix_fmt yuv420p -movflags +faststart "$RUNNER_TEMP/telegram-avatar.mp4"
+
+      - name: Upload animated profile photo through Telegram Bot API
+        shell: bash
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$TELEGRAM_BOT_TOKEN" ]]; then
+            echo "::error::Set the TELEGRAM_BOT_TOKEN GitHub Actions secret first."
+            exit 1
+          fi
+
+          curl --silent --show-error \
+            --output "$RUNNER_TEMP/telegram-avatar-response.json" \
+            --form 'photo={"type":"animated","animation":"attach://avatar","main_frame_timestamp":0.0}' \
+            --form "avatar=@$RUNNER_TEMP/telegram-avatar.mp4;type=video/mp4" \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyProfilePhoto"
+
+          if ! jq -e '.ok == true and .result == true' "$RUNNER_TEMP/telegram-avatar-response.json" >/dev/null; then
+            jq -r '.description // "Telegram rejected the avatar upload."' "$RUNNER_TEMP/telegram-avatar-response.json"
+            exit 1
+          fi
+          echo "Animated Telegram bot avatar updated."
