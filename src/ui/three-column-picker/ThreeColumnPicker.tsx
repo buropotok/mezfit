@@ -505,11 +505,11 @@ export function ThreeColumnPicker({
     const view = target?.ownerDocument.defaultView ?? window;
 
     if (!opened) {
+      cancelScheduledFrames(view);
       gestureRef.current = {};
       wasOpenedRef.current = false;
       locallyEmittedRef.current.clear();
       scrollingPartsRef.current.clear();
-      cancelScheduledFrames(view);
       return;
     }
 
