@@ -8,56 +8,66 @@ import { WeightRepsPicker } from './WeightRepsPicker';
 
 vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn() }));
 
+const ROW_HEIGHT = 48;
 let frames: Map<number, FrameRequestCallback>;
-let nextFrame: number;
+let nextId: number;
 
-function flushAnimation() {
-  for (let tick = 0; tick < 100 && frames.size > 0; tick += 1) {
-    const callbacks = [...frames.values()];
+function flushFrames() {
+  for (let i = 0; i < 12 && frames.size; i += 1) {
+    const work = [...frames.values()];
     frames.clear();
-    act(() => callbacks.forEach(callback => callback(tick * 16)));
+    act(() => work.forEach(callback => callback(i * 16)));
   }
   expect(frames.size).toBe(0);
 }
 
-function touch(element: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', y: number, time: number) {
+function touch(element: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
+  y: number, at: number) {
   const event = new Event(type, { bubbles: true, cancelable: true });
-  Object.defineProperty(event, 'timeStamp', { value: time });
-  Object.defineProperty(event, 'touches', {
-    value: type === 'touchend' || type === 'touchcancel' ? [] : [{ clientY: y }],
-  });
+  Object.defineProperty(event, 'timeStamp', { value: at });
+  Object.defineProperty(event, 'touches', { value: type === 'touchend' || type === 'touchcancel'
+    ? [] : [{ clientY: y }] });
   Object.defineProperty(event, 'changedTouches', { value: [{ clientY: y }] });
   fireEvent(element, event);
 }
 
-function mountControlled(initialWeight = 280.25) {
+function mountWeight(initialWeight = 280.25) {
   const target = document.createElement('button');
   document.body.appendChild(target);
   const onChange = vi.fn();
+  const onClose = vi.fn();
   function Picker() {
     const [value, setValue] = useState({ reps: 8, weightKg: initialWeight });
     return (
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
-          <WeightRepsPicker opened value={value} target={target}
-            onChange={(next) => { onChange(next); setValue(next); }} onClose={vi.fn()} />
+          <WeightRepsPicker opened target={target} value={value}
+            onChange={next => { onChange(next); setValue(next); }} onClose={onClose} />
         </div>
       </KonstaProvider>
     );
   }
   render(<Picker />);
-  flushAnimation();
-  return { onChange, wheel: screen.getByRole('listbox', { name: 'Килограммы' }) };
+  flushFrames();
+  return { onChange, onClose, wheel: screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement };
+}
+
+function nativeMove(wheel: HTMLDivElement, index: number) {
+  act(() => {
+    wheel.scrollTop = index * ROW_HEIGHT;
+    fireEvent.scroll(wheel);
+  });
+  flushFrames();
 }
 
 beforeEach(() => {
   frames = new Map();
-  nextFrame = 1;
+  nextId = 1;
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.mocked(triggerTelegramSelectionHaptic).mockClear();
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    const id = nextFrame++;
+    const id = nextId++;
     frames.set(id, callback);
     return id;
   });
@@ -73,83 +83,99 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('WeightRepsPicker hold gesture reliability', () => {
-  it('tolerates small finger drift before hold activation and then selects exact units', () => {
-    const { onChange, wheel } = mountControlled();
+describe('WeightRepsPicker native hold-to-one-kilogram precision', () => {
+  it('switches the same native wheel from coarse to all 400 individual kilograms after holding', () => {
+    const { wheel } = mountWeight();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
     touch(wheel, 'touchstart', 200, 100);
-    touch(wheel, 'touchmove', 184, 160); // 16px: finger drift, not an intentional swipe.
-    expect(onChange).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(240));
-    touch(wheel, 'touchmove', 143, 410); // 57px from start, one 48px row.
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
-    touch(wheel, 'touchend', 143, 430);
-    flushAnimation();
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    expect(within(wheel).getByRole('option', { name: '281' })).toBeTruthy();
+    expect(within(wheel).getByRole('option', { name: '280' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('detects elapsed hold time from touch timestamps if the WebView delays its timeout', () => {
-    const { onChange, wheel } = mountControlled();
+  it('tolerates 16px drift while stationary and follows native 1kg rows after the hold', () => {
+    const { onChange, wheel } = mountWeight();
     touch(wheel, 'touchstart', 200, 100);
-    // Deliberately do not advance fake timers: the WebView may delay setTimeout.
-    touch(wheel, 'touchmove', 182, 385); // 285ms, 18px.
-    expect(onChange).not.toHaveBeenCalled();
-    touch(wheel, 'touchmove', 150, 420); // 50px = one exact kilogram.
+    touch(wheel, 'touchmove', 184, 160);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    act(() => vi.advanceTimersByTime(240));
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    nativeMove(wheel, 281);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
-    touch(wheel, 'touchend', 150, 450);
-    flushAnimation();
-    expect(onChange).toHaveBeenCalledTimes(1);
+    touch(wheel, 'touchend', 152, 420);
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    expect(within(wheel).getByRole('option', { name: '281' }).getAttribute('aria-selected')).toBe('true');
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps a long but deliberate swipe in decade mode when its first move spans 80px', () => {
-    const { onChange, wheel } = mountControlled(100.5);
+  it('enters fine mode from event timestamps when WKWebView delays the timeout', () => {
+    const { onChange, wheel } = mountWeight();
+    touch(wheel, 'touchstart', 200, 100);
+    // No vi.advanceTimersByTime call: the WebView has not delivered the timer.
+    touch(wheel, 'touchmove', 182, 385);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    nativeMove(wheel, 282);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 282.25 });
+    touch(wheel, 'touchend', 152, 420);
+  });
+
+  it('keeps a long slow swipe in native 10kg mode when first movement is unambiguous', () => {
+    const { onChange, wheel } = mountWeight(100.5);
     touch(wheel, 'touchstart', 200, 100);
     touch(wheel, 'touchmove', 120, 500);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    nativeMove(wheel, 12);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 120.5 });
     touch(wheel, 'touchend', 120, 550);
-    flushAnimation();
-    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 0.5)).toBe(true);
   });
 
-  it('continues 1kg at a time across 299 -> 300 after the long hold', () => {
-    const { onChange, wheel } = mountControlled(299.75);
+  it('changes 299 -> 300 -> 301 individually without a programmatic fling', () => {
+    const { onChange, wheel } = mountWeight(299.75);
     touch(wheel, 'touchstart', 200, 100);
     act(() => vi.advanceTimersByTime(240));
-    touch(wheel, 'touchmove', 152, 370);
+    nativeMove(wheel, 300);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.75 });
-    touch(wheel, 'touchmove', 104, 410);
+    nativeMove(wheel, 301);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 301.75 });
-    touch(wheel, 'touchend', 104, 440);
-    flushAnimation();
-    expect(onChange).toHaveBeenCalledTimes(2);
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
+    touch(wheel, 'touchend', 100, 410);
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
   });
 
-  it('suppresses the long-press context menu on kilogram rows without disabling exact taps', () => {
-    const { onChange, wheel } = mountControlled();
+  it('prevents the native long-press context menu without blocking row selection', () => {
+    const { onChange, wheel } = mountWeight();
     const option = within(wheel).getByRole('option', { name: '280' });
-    const contextMenu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
-    fireEvent(option, contextMenu);
-    expect(contextMenu.defaultPrevented).toBe(true);
-    fireEvent.click(within(wheel).getByRole('option', { name: '283' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.25 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    const context = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    fireEvent(option, context);
+    expect(context.defaultPrevented).toBe(true);
+    fireEvent.click(within(wheel).getByRole('option', { name: '290' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 290.25 });
   });
 
-  it('allows a new fine hold after WebView cancels an earlier gesture', () => {
-    const { onChange, wheel } = mountControlled();
+  it('does not enable fine mode after touchcancel and allows a fresh hold', () => {
+    const { wheel } = mountWeight();
     touch(wheel, 'touchstart', 200, 100);
-    touch(wheel, 'touchcancel', 200, 180);
+    touch(wheel, 'touchcancel', 200, 140);
     act(() => vi.advanceTimersByTime(500));
-    expect(onChange).not.toHaveBeenCalled();
-
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
     touch(wheel, 'touchstart', 200, 700);
     act(() => vi.advanceTimersByTime(240));
-    touch(wheel, 'touchmove', 152, 980);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
-    touch(wheel, 'touchend', 152, 1000);
-    flushAnimation();
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+  });
+
+  it('commits the visible fine value if the popover closes before scrollend', () => {
+    const { onChange, onClose, wheel } = mountWeight();
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    wheel.scrollTop = 283 * ROW_HEIGHT;
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.25 });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
