@@ -34,12 +34,10 @@ const SCROLL_END_FALLBACK_MS = 200;
 // A stationary hold switches that same native scroller to one-value rows.
 const HOLD_TO_FINE_MS = 240;
 const SWIPE_THRESHOLD_PX = 20;
-const UNAMBIGUOUS_SWIPE_PX = 64;
 
 type NativeGesture = {
   startY: number;
   startTime: number;
-  moved: boolean;
   holdTimer: number | null;
   mode: 'pending' | 'coarse' | 'fine';
 };
@@ -655,9 +653,6 @@ export function ThreeColumnPicker({
     const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
     signalCrossedValues(part, index, true);
     commitIndex(part, index);
-    if (columns[part].gestureStep && finePartsRef.current[part] && !gestureRef.current[part]) {
-      setNativeFineMode(part, false);
-    }
     if (scrollingPartsRef.current.size > 0) return;
 
     // Only reconcile a rejected controlled value after all wheels stop.
@@ -748,7 +743,6 @@ export function ThreeColumnPicker({
     const gesture: NativeGesture = {
       startY: touch.clientY,
       startTime: event.timeStamp,
-      moved: false,
       holdTimer: null,
       mode: 'pending',
     };
@@ -767,17 +761,16 @@ export function ThreeColumnPicker({
     if (!columns[part].gestureStep || !gesture || !touch) return;
     const distance = Math.abs(gesture.startY - touch.clientY);
     const elapsed = event.timeStamp - gesture.startTime;
-    if (distance >= SWIPE_THRESHOLD_PX) gesture.moved = true;
     if (gesture.mode !== 'pending') return;
 
-    if (distance >= UNAMBIGUOUS_SWIPE_PX
-      || (distance >= SWIPE_THRESHOLD_PX && elapsed < HOLD_TO_FINE_MS)) {
-      gesture.mode = 'coarse';
-    } else if (elapsed >= HOLD_TO_FINE_MS) {
-      // Also recognize time from touch event timestamps if the WebView
-      // deferred a pending timeout while the finger was stationary.
+    // Once the hold duration has elapsed, always choose fine mode — even if
+    // WKWebView delivered the first movement late and its displacement is
+    // large. Only an already detected pre-hold swipe stays coarse.
+    if (elapsed >= HOLD_TO_FINE_MS) {
       gesture.mode = 'fine';
       setNativeFineMode(part, true);
+    } else if (distance >= SWIPE_THRESHOLD_PX) {
+      gesture.mode = 'coarse';
     }
     if (gesture.mode !== 'pending' && gesture.holdTimer !== null) {
       (event.currentTarget.ownerDocument.defaultView ?? window).clearTimeout(gesture.holdTimer);
@@ -791,12 +784,10 @@ export function ThreeColumnPicker({
     if (!gesture) return;
     if (gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
     delete gestureRef.current[part];
-    // A stationary long press has no native scrollend event. Restore the
-    // coarse options on release; otherwise wait for native inertia to settle.
-    if (gesture.mode === 'fine'
-      && (!gesture.moved || !scrollingPartsRef.current.has(part))) {
-      setNativeFineMode(part, false);
-    }
+    // Never switch a recognized hold back to tens on touchend/touchcancel.
+    // WKWebView may dispatch touchcancel just as it takes over a fast native
+    // pan, before sending its first scroll event. Fine rows remain locked
+    // through scrollend and momentum until the *next distinct touchstart*.
   };
 
   const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
