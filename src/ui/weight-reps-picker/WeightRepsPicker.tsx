@@ -137,7 +137,6 @@ export function WeightRepsPicker({
       <IconButton
         label={label}
         disabled={editing !== null}
-        className="ui-weight-reps-picker__lens-edit"
         onClick={() => openNumberSheet(field)}
       >
         <Icon name="pencil-plus" style={{ width: 40, height: 40 }} />
@@ -202,9 +201,11 @@ export function WeightRepsPicker({
               <Text variant="headline">
                 {editing === 'reps' ? 'Повторения' : 'Килограммы'}
               </Text>
-              <Button color="blue" disabled={!validDigits} onClick={saveEdit}>
-                Сохранить
-              </Button>
+              <span className="ui-weight-reps-picker__save-slot">
+                <Button color="blue" disabled={!validDigits} onClick={saveEdit}>
+                  Сохранить
+                </Button>
+              </span>
             </header>
             <div className="ui-weight-reps-picker__number-body">
               <Text variant="title" className="ui-weight-reps-picker__number-readout">
