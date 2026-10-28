@@ -37,6 +37,7 @@ export type SortableListProps = {
   disabled?: boolean;
   header?: ReactNode;
   footer?: ReactNode;
+  surface?: 'default' | 'transparent';
   /** Fired when a long press lifts an item. Callers can prepare compact drag content. */
   onDragStart?: (id: UniqueIdentifier) => void;
   /** Keep the lifted item under its original horizontal touch coordinate. */
@@ -66,6 +67,11 @@ function SortableRow({ item, disabled }: { item: SortableListItem; disabled: boo
   );
 }
 
+function SortableSurface({ transparent, children }: { transparent: boolean; children: ReactNode }) {
+  return transparent ? <div className="ui-sortable-list__surface">{children}</div>
+    : <GlassSurface preset="modalTuned" className="ui-sortable-list__surface">{children}</GlassSurface>;
+}
+
 export function SortableList({
   items,
   onReorder,
@@ -75,6 +81,7 @@ export function SortableList({
   disabled = false,
   header,
   footer,
+  surface = 'default',
   onDragStart,
   lockToVerticalAxis = false,
   syncDropLayout = false,
@@ -142,7 +149,7 @@ export function SortableList({
 
   return (
     <DndContext sensors={sensors} modifiers={lockToVerticalAxis ? [verticalOnlyModifier] : undefined} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragCancel={() => { setActiveId(null); setReservedHeight(null); }} onDragEnd={handleDragEnd}>
-      <GlassSurface preset="modalTuned" className="ui-sortable-list__surface">
+      <SortableSurface transparent={surface === 'transparent'}>
         {header != null ? <div className="ui-sortable-list__header">{header}</div> : null}
         <div ref={listRef} style={reservedHeight === null ? undefined : { minHeight: reservedHeight }} className={`ui-sortable-list${showSeparators ? '' : ' ui-sortable-list--no-separators'} ${className}`.trim()} role="list">
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
@@ -150,7 +157,7 @@ export function SortableList({
           </SortableContext>
         </div>
         {footer != null ? <div className="ui-sortable-list__footer">{footer}</div> : null}
-      </GlassSurface>
+      </SortableSurface>
       {portalOverlay && typeof document !== 'undefined' ? createPortal(overlay, document.body) : overlay}
     </DndContext>
   );
