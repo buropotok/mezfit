@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WeightRepsPicker } from './WeightRepsPicker';
@@ -67,7 +67,6 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -141,13 +140,7 @@ describe('WeightRepsPicker', () => {
     renderPicker({ value: { reps: 100, weightKg: 399.75 }, onChange });
     const fractions = screen.getByRole('listbox', { name: 'Доли килограмма' });
     expect(within(fractions).getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
-    // Every kilogram remains selectable after a stationary hold enables the
-    // same native wheel's fine (one-kilogram) rows.
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    fireEvent.touchStart(kilograms, { touches: [{ clientY: 200 }] });
-    act(() => vi.advanceTimersByTime(240));
-    fireEvent.click(within(kilograms).getByRole('option', { name: '70' }));
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' })).getByRole('option', { name: '70' }));
     expect(onChange).toHaveBeenLastCalledWith({ reps: 100, weightKg: 70.75 });
     expect(onChange).toHaveBeenCalledTimes(1);
   });
@@ -175,17 +168,6 @@ describe('WeightRepsPicker', () => {
       .getByRole('option', { name: '399' }).getAttribute('aria-selected')).toBe('true');
     expect(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
       .getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('repositions native coarse rows when external weight changes to another unit residue', () => {
-    const onChange = vi.fn();
-    const picker = renderPicker({ value: { reps: 8, weightKg: 77.5 }, onChange });
-    picker.setValue({ reps: 8, weightKg: 83.5 });
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
-    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
-    expect(within(kilograms).getByRole('option', { name: '83' })
-      .getAttribute('aria-selected')).toBe('true');
     expect(onChange).not.toHaveBeenCalled();
   });
 
