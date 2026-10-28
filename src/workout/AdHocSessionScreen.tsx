@@ -27,9 +27,10 @@ export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
   'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
 
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
-  onNavigationContextChange, onExerciseInformation, readOnly = false }: {
+  onNavigationContextChange, onExerciseInformation, readOnly = false, hideActiveStatus = false }: {
   repository: AdHocSessionRepository;
   readOnly?: boolean;
+  hideActiveStatus?: boolean;
   sessionId: string;
   initData: string;
   actor?: ProgramActor;
@@ -129,7 +130,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       <Text variant="body">Атлет: {athlete.name}</Text>
       <div className="workout-participants"><Text variant="body">{session?.format === 'coached' || (!session?.format && row?.coachUserId) ? 'С тренером в зале' : 'Самостоятельная'}</Text>
         {(session?.format === 'coached' || (!session?.format && row?.coachUserId)) ? coach.compactAvatar : null}</div>
-      <WorkoutSessionCard readOnly={readOnly} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
+      <WorkoutSessionCard showStatus={!hideActiveStatus || displaySession.status !== 'active'} readOnly={readOnly} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
         onReorderExerciseIds={ids => { void mutate(() => repository.reorder(sessionId, ids)).catch(report); }}
         onSaveSet={input => mutate(() => repository.saveSet(sessionId, input.sessionSetId, input.fact))}
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
