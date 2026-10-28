@@ -15,17 +15,11 @@ function renderPicker({
 } = {}) {
   const target = document.createElement('button');
   document.body.appendChild(target);
-
-  const renderResult = render(
+  const result = render(
     <KonstaProvider theme="ios" dark>
       <div className="k-ios dark">
-        <WeightRepsPicker
-          opened
-          target={target}
-          value={value}
-          onChange={onChange}
-          onClose={onClose}
-        />
+        <WeightRepsPicker opened target={target} value={value}
+          onChange={onChange} onClose={onClose} />
       </div>
     </KonstaProvider>,
   );
@@ -33,18 +27,13 @@ function renderPicker({
   return {
     onChange,
     onClose,
-    ...renderResult,
-    setValue(nextValue: { reps: number; weightKg: number }, opened = true) {
-      renderResult.rerender(
+    ...result,
+    setValue(next: { reps: number; weightKg: number }, opened = true) {
+      result.rerender(
         <KonstaProvider theme="ios" dark>
           <div className="k-ios dark">
-            <WeightRepsPicker
-              opened={opened}
-              target={target}
-              value={nextValue}
-              onChange={onChange}
-              onClose={onClose}
-            />
+            <WeightRepsPicker opened={opened} target={target} value={next}
+              onChange={onChange} onClose={onClose} />
           </div>
         </KonstaProvider>,
       );
@@ -52,11 +41,14 @@ function renderPicker({
   };
 }
 
+function enter(...digits: string[]) {
+  for (const digit of digits) {
+    fireEvent.click(screen.getByRole('button', { name: `Цифра ${digit}` }));
+  }
+}
+
 beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', class {
-    observe() {}
-    disconnect() {}
-  });
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
     callback(0);
     return 1;
@@ -69,117 +61,153 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  document.body.innerHTML = '';
 });
 
-describe('WeightRepsPicker', () => {
-  it('renders the approved two-part layout with three independent wheels', () => {
+describe('WeightRepsPicker numeric lens editor', () => {
+  it('renders only the fractional wheel and two actionable pencil-plus icons inside the lens', () => {
     renderPicker();
-
     expect(screen.getByText('Повторения').className).toContain('ui-text--footnote');
     expect(screen.getByText('Вес').className).toContain('ui-text--footnote');
-
-    const reps = screen.getByRole('listbox', { name: 'Повторения' });
-    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
+    expect(screen.queryByRole('listbox', { name: 'Повторения' })).toBeNull();
+    expect(screen.queryByRole('listbox', { name: 'Килограммы' })).toBeNull();
     const fraction = screen.getByRole('listbox', { name: 'Доли килограмма' });
-
-    expect(within(reps).getByRole('option', { name: '8' }).getAttribute('aria-selected')).toBe('true');
-    expect(within(kilograms).getByRole('option', { name: '77' }).getAttribute('aria-selected')).toBe('true');
-    expect(within(fraction).getByRole('option', { name: '0,5' }).getAttribute('aria-selected')).toBe('true');
-
-    const columns = reps.parentElement;
-    expect(columns?.className).toContain('ui-weight-reps-picker__columns');
-    const comma = screen.getByText(',');
-    const lens = comma.closest('.ui-time-picker__lens');
-    const lensTexts = Array.from(lens?.querySelectorAll('text') ?? []);
-    const repsLensValue = lensTexts.find((node) => node.textContent === '8');
-    const kilogramsLensValue = lensTexts.find((node) => node.textContent === '77');
-    const fractionLensValue = lensTexts.find((node) => node.textContent === '5');
-
-    expect(lens).not.toBeNull();
-    expect(repsLensValue?.getAttribute('x')).toBe('80');
-    expect(kilogramsLensValue?.getAttribute('x')).toBe('176');
-    expect(comma.getAttribute('x')).toBe('208');
-    expect(fractionLensValue?.getAttribute('x')).toBe('240');
+    expect(within(fraction).getByRole('option', { name: '0,5' })
+      .getAttribute('aria-selected')).toBe('true');
+    const lens = document.querySelector('.ui-time-picker__lens');
+    expect(lens?.querySelectorAll('.ui-time-picker__lens-action-slot')).toHaveLength(2);
+    expect(within(lens as HTMLElement).getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
+    expect(within(lens as HTMLElement).getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
+    expect(lens?.querySelectorAll('.ui-time-picker__lens-text')).toHaveLength(1);
+    expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
   });
 
-  it('emits repetitions while preserving the selected weight', () => {
+  it('opens the Konsta sheet and immediately swaps the chosen pencil for a blinking letter-i', () => {
+    renderPicker();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
+    expect(sheet.className).toContain('ui-mezfit-bottom-sheet');
+    expect(sheet.className).toContain('ui-mezfit-bottom-sheet--above-popover');
+    const lens = document.querySelector('.ui-time-picker__lens');
+    expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Изменить повторения' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeDisabled();
+    expect(within(sheet).getByRole('button', { name: 'Отменить' })).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Сохранить' })).toBeTruthy();
+  });
+
+  it('lays out exactly ten built-in FABs in a 3 by 4 numeric grid with zero centered', () => {
+    renderPicker();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
+    const fabs = within(sheet).getAllByRole('button', { name: /^Цифра / });
+    expect(fabs).toHaveLength(10);
+    expect(fabs.map(fab => fab.getAttribute('aria-label'))).toEqual(
+      ['Цифра 1', 'Цифра 2', 'Цифра 3', 'Цифра 4', 'Цифра 5',
+        'Цифра 6', 'Цифра 7', 'Цифра 8', 'Цифра 9', 'Цифра 0'],
+    );
+    expect(fabs.every(fab => fab.className.includes('ui-fab'))).toBe(true);
+    expect(fabs[9].parentElement?.className).toContain('ui-weight-reps-picker__number-cell--zero');
+  });
+
+  it('reuses the FAB built-in 1.5x grow-and-return press animation', () => {
+    const animation = vi.fn().mockReturnValue({ cancel: vi.fn() });
+    Object.defineProperty(HTMLElement.prototype, 'animate', {
+      configurable: true,
+      value: animation,
+    });
+    renderPicker();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    const key = screen.getByRole('button', { name: 'Цифра 1' });
+    fireEvent.pointerDown(key);
+    expect(animation).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ scale: '1.5' })]),
+      expect.objectContaining({ duration: 530 }),
+    );
+    delete (HTMLElement.prototype as HTMLElement & { animate?: typeof animation }).animate;
+  });
+
+  it('replaces the prefilled number with the first digit and appends subsequent digits', () => {
     const onChange = vi.fn();
     renderPicker({ onChange });
-
-    fireEvent.click(
-      within(screen.getByRole('listbox', { name: 'Повторения' }))
-        .getByRole('option', { name: '12' }),
-    );
-
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 12, weightKg: 77.5 });
-  });
-
-  it('combines kilogram units and the selected fractional part', () => {
-    const onChange = vi.fn();
-    renderPicker({ value: { reps: 8, weightKg: 77.5 }, onChange });
-
-    fireEvent.click(
-      within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
-        .getByRole('option', { name: '0,25' }),
-    );
-
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.25 });
-  });
-
-  it('uses exactly the requested fractional values', () => {
-    renderPicker();
-
-    const fraction = screen.getByRole('listbox', { name: 'Доли килограмма' });
-    const options = within(fraction).getAllByRole('option');
-
-    expect(options.map((option) => option.textContent)).toEqual(['00', '25', '5', '75']);
-  });
-
-  it('supports 70.75 and the 399.75 kg maximum without rounding', () => {
-    const onChange = vi.fn();
-    renderPicker({ value: { reps: 100, weightKg: 399.75 }, onChange });
-    const fractions = screen.getByRole('listbox', { name: 'Доли килограмма' });
-    expect(within(fractions).getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' })).getByRole('option', { name: '70' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 100, weightKg: 70.75 });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    enter('1', '2');
+    const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
+    expect(within(sheet).getByText('12')).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Сохранить' }));
     expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 12, weightKg: 77.5 });
+    expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
   });
 
-  it('does not fire for an already-selected value or mere dismissal', () => {
+  it('cancels edits without changing the controlled value and restores the pencil icon', () => {
     const onChange = vi.fn();
-    const onClose = vi.fn();
-    renderPicker({ value: { reps: 0, weightKg: 0 }, onChange, onClose });
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Доли килограмма' })).getByRole('option', { name: '0,00' }));
+    renderPicker({ onChange });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    enter('1', '2', '3');
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(onChange).not.toHaveBeenCalled();
-    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
-    fireEvent.click(dialog.previousElementSibling as Element);
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog', { name: 'Ввод килограммов' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
+    expect(document.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
+  });
+
+  it('saves an integer kilogram change without altering selected quarter-kilograms or repetitions', () => {
+    const onChange = vi.fn();
+    renderPicker({ value: { reps: 9, weightKg: 77.75 }, onChange });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    enter('2', '3');
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 9, weightKg: 23.75 });
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
+  });
+
+  it('keeps the native fractional wheel and emits changes without opening the keypad', () => {
+    const onChange = vi.fn();
+    renderPicker({ onChange });
+    const fractions = screen.getByRole('listbox', { name: 'Доли килограмма' });
+    expect(within(fractions).getAllByRole('option').map(option => option.textContent))
+      .toEqual(['00', '25', '5', '75']);
+    fireEvent.click(within(fractions).getByRole('option', { name: '0,25' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.25 });
+    expect(screen.queryByRole('dialog', { name: 'Ввод килограммов' })).toBeNull();
+  });
+
+  it('blocks invalid values beyond the existing 100 repetitions / 399 kilogram contract', () => {
+    const onChange = vi.fn();
+    renderPicker({ onChange });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    enter('1', '0', '1');
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    enter('4', '0', '0');
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('reopens with an updated controlled value without writing it back', () => {
+  it('preserves the maximum 399.75 kg and handles externally controlled values', () => {
     const onChange = vi.fn();
-    const picker = renderPicker({ value: { reps: 8, weightKg: 70.75 }, onChange });
-    picker.setValue({ reps: 100, weightKg: 399.75 }, false);
-    picker.setValue({ reps: 100, weightKg: 399.75 }, true);
-    expect(within(screen.getByRole('listbox', { name: 'Повторения' }))
-      .getByRole('option', { name: '100' }).getAttribute('aria-selected')).toBe('true');
-    expect(within(screen.getByRole('listbox', { name: 'Килограммы' }))
-      .getByRole('option', { name: '399' }).getAttribute('aria-selected')).toBe('true');
+    const picker = renderPicker({ value: { reps: 100, weightKg: 399.75 }, onChange });
     expect(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
       .getByRole('option', { name: '0,75' }).getAttribute('aria-selected')).toBe('true');
+    picker.setValue({ reps: 8, weightKg: 70.25 }, false);
+    picker.setValue({ reps: 8, weightKg: 70.25 }, true);
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    expect(screen.getByText('70 кг')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('rejects values outside the component contract', () => {
-    expect(() => renderPicker({ value: { reps: 101, weightKg: 80 } })).toThrow(
-      'WeightRepsPicker reps must be an integer from 0 to 100',
-    );
-    expect(() => renderPicker({ value: { reps: 8, weightKg: 400 } })).toThrow(
-      'WeightRepsPicker weightKg must be from 0 to 399.75',
-    );
-    expect(() => renderPicker({ value: { reps: 8, weightKg: 80.125 } })).toThrow(
-      'WeightRepsPicker weightKg must use 0.25 kg increments',
-    );
+  it('rejects values outside the public component contract', () => {
+    expect(() => renderPicker({ value: { reps: 101, weightKg: 80 } }))
+      .toThrow('WeightRepsPicker reps must be an integer from 0 to 100');
+    expect(() => renderPicker({ value: { reps: 8, weightKg: 400 } }))
+      .toThrow('WeightRepsPicker weightKg must be from 0 to 399.75');
+    expect(() => renderPicker({ value: { reps: 8, weightKg: 80.125 } }))
+      .toThrow('WeightRepsPicker weightKg must use 0.25 kg increments');
   });
 });
