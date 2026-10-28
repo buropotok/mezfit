@@ -20,6 +20,11 @@
     0 0 36px rgb(170 205 255 / 0.10);
 }
 
+/* Konsta Popover uses z-40; only explicitly nested editors rise above it. */
+.ui-mezfit-bottom-sheet--above-popover {
+  z-index: 41 !important;
+}
+
 .ui-mezfit-bottom-sheet__content {
   flex: 1 1 auto;
   min-height: 0;
