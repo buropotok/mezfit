@@ -12,3 +12,78 @@
   inset-inline: 16px;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
 }
+
+.ui-weight-reps-picker__lens-status {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ui-color-surface-text);
+}
+
+.ui-weight-reps-picker__input-active {
+  animation: ui-weight-reps-input-blink 1s steps(2, start) infinite;
+}
+
+@keyframes ui-weight-reps-input-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-weight-reps-picker__input-active { animation: none; }
+}
+
+.ui-weight-reps-picker__number-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.ui-weight-reps-picker__number-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-4);
+}
+
+.ui-weight-reps-picker__save-slot {
+  justify-self: end;
+}
+
+.ui-weight-reps-picker__cancel {
+  justify-self: start;
+}
+
+.ui-weight-reps-picker__number-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4) var(--ui-space-3) var(--ui-space-6);
+}
+
+.ui-weight-reps-picker__number-readout {
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-weight-reps-picker__number-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 5.5rem);
+  gap: var(--ui-space-1);
+  justify-content: center;
+  width: 100%;
+}
+
+.ui-weight-reps-picker__number-cell {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.ui-weight-reps-picker__number-cell--zero {
+  grid-column: 2;
+}

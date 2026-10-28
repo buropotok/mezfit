@@ -39,8 +39,8 @@ function mountControlled(accepts = true) {
   return { onChange };
 }
 
-function observeNativeScroll(column: string, index: number) {
-  const element = screen.getByRole('listbox', { name: column }) as HTMLDivElement;
+function observeNativeFractions(index: number) {
+  const element = screen.getByRole('listbox', { name: 'Доли килограмма' }) as HTMLDivElement;
   let position = index * ROW_HEIGHT;
   const appWrites: number[] = [];
   Object.defineProperty(element, 'scrollTop', {
@@ -83,81 +83,64 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('three-wheel native scroll handling shared with TimePicker', () => {
-  it('keeps native scroll and per-value haptics for repetitions', () => {
-    const { onChange } = mountControlled();
-    const reps = observeNativeScroll('Повторения', 8);
-    act(() => reps.moveTo(10));
-    flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 10, weightKg: 77.5 });
-    act(() => reps.moveTo(12));
-    flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 12, weightKg: 77.5 });
-    expect(reps.appWrites).toEqual([]);
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(4);
+describe('three-column static lens slots preserve the native fraction wheel', () => {
+  it('removes repetition and integer weight listboxes, leaving one native wheel', () => {
+    mountControlled();
+    expect(screen.queryByRole('listbox', { name: 'Повторения' })).toBeNull();
+    expect(screen.queryByRole('listbox', { name: 'Килограммы' })).toBeNull();
+    const fractions = screen.getByRole('listbox', { name: 'Доли килограмма' });
+    expect(within(fractions).getAllByRole('option')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
   });
 
-  it('uses the same native scroll position for every kilogram, including precise 1kg moves', () => {
+  it('retains native scroll and haptic changes for the fractional column', () => {
     const { onChange } = mountControlled();
-    const kg = observeNativeScroll('Килограммы', 77);
-    act(() => kg.moveTo(78));
-    flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 78.5 });
-    act(() => kg.moveTo(79));
-    flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 79.5 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
-    expect(kg.appWrites).toEqual([]);
-    expect(within(kg.element).getByRole('option', { name: '79' })
-      .getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('preserves native scrolling and fractional haptics', () => {
-    const { onChange } = mountControlled();
-    const fractions = observeNativeScroll('Доли килограмма', 2);
-    act(() => fractions.moveTo(3));
+    const wheel = observeNativeFractions(2);
+    act(() => wheel.moveTo(3));
     flushFrame();
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.75 });
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
-    expect(fractions.appWrites).toEqual([]);
+    expect(wheel.appWrites).toEqual([]);
   });
 
-  it('reconciles rejected repetitions after 200ms without scrollend in legacy WebViews', () => {
+  it('reconciles a rejected fraction after the 200ms fallback in legacy WebViews', () => {
     const { onChange } = mountControlled(false);
-    const reps = observeNativeScroll('Повторения', 8);
-    Object.defineProperty(reps.element, 'onscrollend', { configurable: true, value: undefined });
+    const wheel = observeNativeFractions(2);
+    Object.defineProperty(wheel.element, 'onscrollend', { configurable: true, value: undefined });
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    act(() => reps.moveTo(10));
+    act(() => wheel.moveTo(3));
     flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 10, weightKg: 77.5 });
-    expect(reps.appWrites).toEqual([]);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.75 });
+    expect(wheel.appWrites).toEqual([]);
     act(() => vi.advanceTimersByTime(199));
-    expect(reps.appWrites).toEqual([]);
+    expect(wheel.appWrites).toEqual([]);
     act(() => vi.advanceTimersByTime(1));
     flushFrame();
-    expect(reps.appWrites).toContain(8 * ROW_HEIGHT);
+    expect(wheel.appWrites).toContain(2 * ROW_HEIGHT);
   });
 
-  it('uses native scrollend when available for controlled rejection', () => {
+  it('reconciles a rejected fractional value after scrollend on modern WebViews', () => {
     const { onChange } = mountControlled(false);
-    const reps = observeNativeScroll('Повторения', 8);
-    Object.defineProperty(reps.element, 'onscrollend', { configurable: true, value: null });
+    const wheel = observeNativeFractions(2);
+    Object.defineProperty(wheel.element, 'onscrollend', { configurable: true, value: null });
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    act(() => reps.moveTo(10));
+    act(() => wheel.moveTo(3));
     flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 10, weightKg: 77.5 });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.75 });
     act(() => vi.advanceTimersByTime(500));
-    expect(reps.appWrites).toEqual([]);
-    fireEvent(reps.element, new Event('scrollend', { bubbles: true }));
+    expect(wheel.appWrites).toEqual([]);
+    fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
     flushFrame();
-    expect(reps.appWrites).toContain(8 * ROW_HEIGHT);
+    expect(wheel.appWrites).toContain(2 * ROW_HEIGHT);
   });
 
-  it('retains one tactile event for an exact distant kilogram tap', () => {
+  it('keeps direct fraction taps independent of the numeric sheet actions', () => {
     const { onChange } = mountControlled();
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' }))
-      .getByRole('option', { name: '307' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 307.5 });
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
+      .getByRole('option', { name: '0,25' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.25 });
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
   });
 });
