@@ -19,6 +19,6 @@
     "Cardio"
   ],
   "image_id": "Wheel-Run.gif",
-  "name_ru": "Бег на месте с высоким подниманием коленей",
-  "tracking_type": "time"
+  "name_ru": "Бег «колесом»",
+  "tracking_type": "time_distance"
 }
