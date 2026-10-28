@@ -10,6 +10,8 @@ export type MezfitBottomSheetProps = Omit<
   label: string;
   className?: string;
   contentClassName?: string;
+  /** Use above an already-open Mezfit Popover for nested numeric entry. */
+  layer?: 'standard' | 'abovePopover';
   children?: ReactNode;
   /** Mount content on demand and release it after the closing transition. */
   lazyMount?: boolean;
@@ -40,6 +42,7 @@ export function MezfitBottomSheet({
   label,
   className = '',
   contentClassName = '',
+  layer = 'standard',
   children,
   lazyMount = false,
   onClosed,
@@ -82,7 +85,7 @@ export function MezfitBottomSheet({
         if (event.target === event.currentTarget) finishClose();
       }}
       backdrop={false}
-      className={`ui-mezfit-bottom-sheet ${className}`.trim()}
+      className={`ui-mezfit-bottom-sheet${layer === 'abovePopover' ? ' ui-mezfit-bottom-sheet--above-popover' : ''} ${className}`.trim()}
       role="dialog"
       aria-modal="true"
       aria-label={label}
