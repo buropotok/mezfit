@@ -73,6 +73,22 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByRole('group', { name: 'RPE' })).toBeTruthy();
   });
 
+  it('displays an existing FACT above old numeric limits instead of blocking the picker', () => {
+    render(<SetEntry mode="workout" isOpen data={{
+      ...baseData,
+      fact: {
+        metrics: { weightKg: 450.75, reps: 1234, durationSeconds: null, distanceMeters: null },
+        setLabel: null, setType: null, rpe: null, comment: null, bands: [],
+      },
+    }} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
+      .toContain('450,75 кг × 1234');
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    expect(Array.from(document.querySelectorAll('.ui-weight-reps-picker__lens-value'))
+      .map(node => node.textContent)).toEqual(['1234', '450']);
+    expect(screen.getByRole('listbox', { name: 'Доли килограмма' })).toBeTruthy();
+  });
+
   it('keeps the sheet and weight picker outside card transforms and sheet clipping', async () => {
     const appRoot = document.createElement('div');
     appRoot.id = 'root';
