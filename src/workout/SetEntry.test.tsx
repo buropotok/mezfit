@@ -86,13 +86,14 @@ describe('weight and repetitions SetEntry', () => {
       const { unmount } = render(<SetEntry mode="workout" isOpen data={baseData}
         onClose={vi.fn()} onSave={onSave} />, { container: cardHost });
       const sheet = screen.getByRole('dialog', { name: 'Подход 3' });
-      const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
       expect(appRoot.contains(sheet)).toBe(true);
       expect(cardHost.contains(sheet)).toBe(false);
+      // Closed popovers must not expose interactive roles until the user opens them.
+      expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+      const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
       expect(sheet.contains(picker)).toBe(false);
       expect(appRoot.contains(picker)).toBe(true);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
       fireEvent.click(within(picker).getByRole('button', { name: 'Изменить повторения' }));
       const keypad = screen.getByRole('dialog', { name: 'Ввод повторений' });
       expect(sheet.contains(keypad)).toBe(false);
