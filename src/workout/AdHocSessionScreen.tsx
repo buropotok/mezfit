@@ -127,7 +127,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
         onAddSet={id => { if (!pending.current) void mutate(() => repository.addSet(sessionId, id)).catch(report); }}
         onDeleteSet={id => mutate(() => repository.deleteSet(sessionId, id))}
-        onDeleteExercise={session?.occurrenceId ? undefined : id => { if (!pending.current) setDeleteExerciseId(id); }}
+        onDeleteExercise={id => { if (!pending.current) setDeleteExerciseId(id); }}
         onExerciseInformation={onExerciseInformation ? id => {
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
@@ -184,7 +184,11 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       </>}>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitDialog>
-    <MezfitDialog opened={deleteExerciseId !== null} title="Удалить упражнение?" buttons={<>
+    <MezfitDialog opened={deleteExerciseId !== null}
+      title={session?.occurrenceId ? 'Тренировка была запущена. Удаление из плана невозможно.' : 'Удалить упражнение?'}
+      onBackdropClick={closeOverlay}
+      buttons={session?.occurrenceId
+        ? <MezfitDialogButton strong onClick={closeOverlay}>Понятно</MezfitDialogButton> : <>
       <MezfitDialogButton disabled={busy} onClick={closeOverlay}>Отмена</MezfitDialogButton>
       <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
         if (!deleteExerciseId || pending.current) return;
@@ -194,8 +198,9 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           if (alive.current) setDeleteExerciseId(null);
         }).catch(report);
       }}>Удалить</MezfitDialogButton>
-    </>}><Text variant="body">Упражнение и его подходы будут удалены из этой тренировки.</Text>
+    </>}>{!session?.occurrenceId ? <>
+      <Text variant="body">Упражнение и его подходы будут удалены из этой тренировки.</Text>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    </MezfitDialog>
+    </> : null}</MezfitDialog>
   </section>;
 }
