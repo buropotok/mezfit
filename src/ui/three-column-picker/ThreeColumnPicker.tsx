@@ -226,9 +226,10 @@ function PickerLens({
     <div
       className="ui-time-picker__lens"
       data-ui-time-picker-lens-mode={lensMode}
-      aria-hidden="true"
+      aria-hidden={staticLens ? undefined : true}
     >
       <svg
+        aria-hidden="true"
         viewBox={`0 0 ${LENS_WIDTH} ${LENS_HEIGHT}`}
         preserveAspectRatio="none"
         focusable="false"
