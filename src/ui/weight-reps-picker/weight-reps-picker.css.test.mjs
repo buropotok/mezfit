@@ -7,7 +7,7 @@ const weightRepsPickerCss = readFileSync(
 );
 
 describe('WeightRepsPicker CSS contract', () => {
-  it('keeps the picker split into one half for reps and two quarter-width weight wheels', () => {
+  it('keeps original lens anchors for two static controls and one fractional wheel', () => {
     expect(weightRepsPickerCss).toContain(
       'grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)',
     );
@@ -16,5 +16,14 @@ describe('WeightRepsPicker CSS contract', () => {
     );
     expect(weightRepsPickerCss).toContain('inset-inline: 16px');
     expect(weightRepsPickerCss).toContain('padding-inline: 16px');
+  });
+
+  it('lays out the FAB keypad as equally sized square cells with the zero in column two', () => {
+    expect(weightRepsPickerCss).toContain('grid-template-columns: repeat(3, 5.5rem)');
+    expect(weightRepsPickerCss).toContain('width: 5.5rem');
+    expect(weightRepsPickerCss).toContain('height: 5.5rem');
+    expect(weightRepsPickerCss).toContain('grid-column: 2');
+    expect(weightRepsPickerCss).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(weightRepsPickerCss).toContain('ui-weight-reps-input-blink');
   });
 });
