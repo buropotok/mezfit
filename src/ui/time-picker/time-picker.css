@@ -73,14 +73,6 @@
   scroll-snap-align: none;
 }
 
-/* Native pan-y, WebKit momentum and mandatory snap stay identical to
-   TimePicker. Only the value-row density changes between coarse and fine. */
-.ui-time-picker__column--gesture-scrub {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
 .ui-time-picker__option--selected {
   color: var(--ui-color-surface-text);
 }
