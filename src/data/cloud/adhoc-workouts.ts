@@ -21,6 +21,8 @@ import type { ExistingSetFact, SetEntryFactDraft, SetType } from '../../workout/
 export type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 
 export type AdHocOpenSession = Pick<AdHocSessionRow, 'id' | 'name' | 'status'>;
+/** Read-only calendar projection; format is not persisted on the execution row. */
+export type CalendarWorkoutSession = AdHocSessionRow & Pick<CloudWorkoutOccurrenceRow, 'format'>;
 
 export type AdHocSessionAccessIssue = AdHocSessionValidationIssue | 'ADHOC_LOCAL_RECORD_MISSING'
   | 'ADHOC_PERSONAL_ACCESS_INVALID' | 'ADHOC_RELATIONSHIP_IDENTITY_INVALID' | 'ADHOC_RELATIONSHIP_UNAVAILABLE';
@@ -106,10 +108,16 @@ export class AdHocWorkoutRepository {
     return (await this.accessIssue(row)) === null;
   }
   /** Authorized execution headers for the calendar, including completed history. */
-  async listForCalendar(): Promise<AdHocSessionRow[]> {
-    const result: AdHocSessionRow[] = [];
+  async listForCalendar(): Promise<CalendarWorkoutSession[]> {
+    const result: CalendarWorkoutSession[] = [];
     for (const row of await this.db.adHocSessions.toArray()) {
-      if (isAdHocSessionRow(row) && await this.accessible(row)) result.push(row);
+      if (!isAdHocSessionRow(row) || !await this.accessible(row)) continue;
+      const occurrence = row.occurrenceId ? await this.db.workoutOccurrences.get(row.occurrenceId) : null;
+      const linked = occurrence && occurrence.realmId === row.realmId
+        && occurrence.athleteUserId === row.athleteUserId && occurrence.coachUserId === row.coachUserId
+        && occurrence.clientUserId === row.clientUserId
+        && (!occurrence.workoutSessionId || occurrence.workoutSessionId === row.id);
+      result.push({ ...row, format: linked ? occurrence.format : row.coachUserId ? 'coached' : 'independent' });
     }
     return result;
   }
