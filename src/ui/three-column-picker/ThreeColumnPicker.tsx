@@ -800,7 +800,8 @@ export function ThreeColumnPicker({
     const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
     finishTouch(part, view);
     // WebView touchcancel can mean native pan/kinetic scroll took ownership.
-    // Do not replace its snap targets until scrollend.
+    // Keep fine snap targets through the entire native scroll and scrollend;
+    // only the next independent touchstart may enable coarse rows again.
   };
 
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
