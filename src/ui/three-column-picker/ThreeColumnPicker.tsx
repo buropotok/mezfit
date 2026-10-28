@@ -33,7 +33,7 @@ const SCROLL_END_FALLBACK_MS = 200;
 // A small finger drift during the hold must not permanently select coarse
 // mode. The threshold still recognizes a deliberate swipe before the hold.
 const HOLD_TO_FINE_MS = 240;
-const SWIPE_THRESHOLD_PX = 14;
+const SWIPE_THRESHOLD_PX = 20;
 // A first reported movement this large is swipe intent even if WebView
 // delayed its event beyond the hold window. Preserve slow swipe-by-tens.
 const UNAMBIGUOUS_SWIPE_PX = 64;
