@@ -23,6 +23,7 @@ function mountWeight(initialKg = 280.5) {
   const target = document.createElement('button');
   document.body.appendChild(target);
   const onChange = vi.fn();
+  const onClose = vi.fn();
   function Controlled() {
     const [value, setValue] = useState({ reps: 8, weightKg: initialKg });
     return (
@@ -31,14 +32,14 @@ function mountWeight(initialKg = 280.5) {
           <WeightRepsPicker
             opened target={target} value={value}
             onChange={next => { onChange(next); setValue(next); }}
-            onClose={vi.fn()}
+            onClose={onClose}
           />
         </div>
       </KonstaProvider>
     );
   }
   render(<Controlled />);
-  return { onChange };
+  return { onChange, onClose };
 }
 
 beforeEach(() => {
@@ -112,6 +113,36 @@ describe('WeightRepsPicker 10kg native flick snapping', () => {
     act(() => { kilograms.scrollTop = 300 * ROW_HEIGHT; fireEvent.scroll(kilograms); });
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.5 });
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(20);
+  });
+
+  it('chooses the nearest ten-kilogram stop on dismissal during a fast flick', () => {
+    const { onChange, onClose } = mountWeight();
+    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement;
+    gesture(kilograms, 'touchstart', 200, 100);
+    gesture(kilograms, 'touchmove', 148, 200);
+    gesture(kilograms, 'touchend', 120, 260);
+
+    // The browser has not yet completed its native momentum/snap.
+    kilograms.scrollTop = 307.6 * ROW_HEIGHT;
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 310.5 });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets coarse snapping on direct taps, keeping exact one-kilogram selection', () => {
+    const { onChange } = mountWeight();
+    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
+    gesture(kilograms, 'touchstart', 200, 100);
+    gesture(kilograms, 'touchmove', 150, 200);
+    gesture(kilograms, 'touchend', 120, 250);
+    expect(kilograms.className).toContain('ui-time-picker__column--flick-snap');
+
+    fireEvent.click(within(kilograms).getByRole('option', { name: '283' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 283.5 });
+    expect(kilograms.className).not.toContain('ui-time-picker__column--flick-snap');
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
   });
 
   it('keeps TimePicker-style native snapping isolated to kilograms, not DurationPicker', () => {
