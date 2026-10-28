@@ -30,8 +30,13 @@ const IOS_LENS_MAGNIFICATION = 1.55;
 // of native scroll events instead of changing scrollTop during momentum.
 const SCROLL_END_FALLBACK_MS = 200;
 // A deliberate hold unlocks one-unit control; swipes advance by configured strides.
+// A small finger drift during the hold must not permanently select coarse
+// mode. The threshold still recognizes a deliberate swipe before the hold.
 const HOLD_TO_FINE_MS = 240;
-const SWIPE_THRESHOLD_PX = 7;
+const SWIPE_THRESHOLD_PX = 20;
+// A first reported movement this large is swipe intent even if WebView
+// delayed its event beyond the hold window. Preserve slow swipe-by-tens.
+const UNAMBIGUOUS_SWIPE_PX = 64;
 const FLING_MAX_DECADES = 18;
 
 type StepGesture = {
@@ -363,6 +368,11 @@ function ThreeColumnPickerColumnWheel({
       onTouchEnd={(event) => onTouchEnd(part, event)}
       onTouchCancel={() => onTouchCancel(part)}
       onWheel={(event) => onWheel(part, event)}
+      onContextMenu={(event) => {
+        // Suppress WebView's button/text long-press callout for the gesture wheel.
+        // A native context menu may cancel the touch sequence before fine drag.
+        if (column.gestureStep) event.preventDefault();
+      }}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
@@ -746,9 +756,18 @@ export function ThreeColumnPicker({
     if (dt > 0 && dt <= 160 && Math.abs(dy) >= 1) gesture.recentSpeed = Math.abs(dy / dt);
     gesture.lastY = y;
     gesture.lastTime = event.timeStamp;
-    if (gesture.mode === 'pending' && Math.abs(gesture.startY - y) >= SWIPE_THRESHOLD_PX) {
-      gesture.mode = 'coarse';
-      if (gesture.holdTimer !== null) {
+    if (gesture.mode === 'pending') {
+      // Long-press detection must not rely solely on a timer. WKWebView may
+      // delay the timer while a finger is down; touch timestamps still preserve
+      // the elapsed time when a move is finally delivered.
+      const distance = Math.abs(gesture.startY - y);
+      if (distance >= UNAMBIGUOUS_SWIPE_PX
+        || (distance >= SWIPE_THRESHOLD_PX && event.timeStamp - gesture.startTime < HOLD_TO_FINE_MS)) {
+        gesture.mode = 'coarse';
+      } else if (event.timeStamp - gesture.startTime >= HOLD_TO_FINE_MS) {
+        gesture.mode = 'fine';
+      }
+      if (gesture.mode !== 'pending' && gesture.holdTimer !== null) {
         (event.currentTarget.ownerDocument.defaultView ?? window).clearTimeout(gesture.holdTimer);
         gesture.holdTimer = null;
       }
@@ -761,7 +780,16 @@ export function ThreeColumnPicker({
     if (!gesture) return;
     if (gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
     const distance = gesture.startY - y;
-    if (gesture.mode === 'pending' && Math.abs(distance) >= SWIPE_THRESHOLD_PX) gesture.mode = 'coarse';
+    if (gesture.mode === 'pending') {
+      // A delayed timer must also be recognized when the next event is touchend.
+      // With no displacement this remains a tap, not a fine-drag mutation.
+      if (Math.abs(distance) >= UNAMBIGUOUS_SWIPE_PX
+        || (Math.abs(distance) >= SWIPE_THRESHOLD_PX && time - gesture.startTime < HOLD_TO_FINE_MS)) {
+        gesture.mode = 'coarse';
+      } else if (time - gesture.startTime >= HOLD_TO_FINE_MS) {
+        gesture.mode = 'fine';
+      }
+    }
     if (gesture.mode === 'pending') {
       delete gestureRef.current[part];
       return;
