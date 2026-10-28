@@ -80,7 +80,9 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(lens?.querySelectorAll('.ui-time-picker__lens-action-slot')).toHaveLength(2);
     expect(within(lens as HTMLElement).getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
     expect(within(lens as HTMLElement).getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
-    expect(lens?.querySelectorAll('.ui-time-picker__lens-text')).toHaveLength(1);
+    const fractionTexts = lens?.querySelectorAll('.ui-time-picker__lens-text');
+    expect(fractionTexts).toHaveLength(3); // Prev/current/next of the sole remaining wheel.
+    expect(Array.from(fractionTexts ?? []).every(node => node.getAttribute('x') === '240')).toBe(true);
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
   });
 
