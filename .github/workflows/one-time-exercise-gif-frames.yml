@@ -1,0 +1,108 @@
+name: One-time visual review of exercise GIF frames
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one-time-exercise-gif-frames.yml
+
+permissions:
+  contents: read
+
+jobs:
+  contact-sheets:
+    if: github.repository == 'buropotok/mezfit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image reader
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Download original GIFs and emit sampled animation frames
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import io
+          import json
+          import math
+          import urllib.request
+          from concurrent.futures import ThreadPoolExecutor
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+
+          items = [
+              "cardio/wheel-run", "cardio/walk-wave-machine",
+              "cardio/vibration-plate", "shoulders/backhand-raise",
+              "shoulders/lever-reverse-shoulder-press", "leg/hawaiian-squat",
+              "hip/squat-mobility-complex", "cardio/hook-kick",
+              "abs/ab-roller-crunch", "full-body/plate-push",
+              "back/rope-climb", "abs/teaser-pilates",
+              "cardio/stationary-bike-run",
+          ]
+          def retrieve(path):
+              data = json.loads(Path("assets/work/" + path + ".json").read_text())
+              url = data["gif_url"]
+              if not url.startswith("https://fitnessprogramer.com/wp-content/uploads/"):
+                  raise ValueError("Unexpected media domain " + url)
+              headers = {
+                  "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
+                  "Referer": "https://fitnessprogramer.com/exercise/" + path.split("/")[-1] + "/",
+                  "Accept": "image/avif,image/webp,image/apng,image/gif,image/*;q=0.8,*/*;q=0.5",
+              }
+              with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=20) as res:
+                  payload = res.read(18_000_000)
+              if not payload.startswith((b"GIF87a", b"GIF89a")):
+                  raise ValueError("Response not GIF; bytes " + repr(payload[:80]))
+              pic = Image.open(io.BytesIO(payload))
+              count = pic.n_frames
+              times = [max(10, pic.info.get("duration", 100))]
+              # Sample uniformly across all animation frames including the last.
+              indices = sorted(set(round(k*(count-1)/7) for k in range(8)))
+              durations = []
+              for i in range(count):
+                  pic.seek(i)
+                  durations.append(pic.info.get("duration", 100) or 100)
+              frames = []
+              for index in indices:
+                  pic.seek(index)
+                  frame = pic.convert("RGB").copy()
+                  frame.thumbnail((223, 212))
+                  frames.append((index, sum(durations[:index])/1000, frame))
+              return (path, frames, count, sum(durations)/1000, len(payload))
+          def load(path):
+              try:
+                  return retrieve(path)
+              except Exception as exc:
+                  print("FETCH_ERROR " + path + ": " + str(exc), flush=True)
+                  return (path, [], 0, 0, 0)
+          with ThreadPoolExecutor(max_workers=6) as pool:
+              results = list(pool.map(load, items))
+          for item in results:
+              print("GIF_INFO", item[0], "frames", item[2], "seconds", item[3], "bytes", item[4], flush=True)
+          font = ImageFont.load_default()
+          for k in range(0, len(results), 3):
+              batch = results[k:k+3]
+              out = Image.new("RGB", (8*236, 3*252), "white")
+              draw = ImageDraw.Draw(out)
+              for ri, (path, frames, count, total, byte_count) in enumerate(batch):
+                  draw.text((8, ri*252+4), f"{path} | GIF frames={count} | total={total:.1f}s | bytes={byte_count}", fill="black", font=font)
+                  if not frames:
+                      draw.text((16, ri*252+65), "GIF COULD NOT BE DOWNLOADED", fill="red", font=font)
+                  for ci, (index, seconds, frame) in enumerate(frames):
+                      x = ci*236 + (236-frame.width)//2
+                      y = ri*252+30+(212-frame.height)//2
+                      out.paste(frame, (x, y))
+                      draw.text((ci*236+12, ri*252+230), f"frame {index+1}/{count} @ {seconds:.2f}s", fill="black", font=font)
+              buf = io.BytesIO()
+              out.save(buf, "JPEG", quality=80, optimize=True)
+              payload = base64.b64encode(buf.getvalue()).decode("ascii")
+              group = k//3
+              print("SHEET_START", group, len(payload), flush=True)
+              for j in range(0, len(payload), 2048):
+                  print(f"SHEET_{group}_CHUNK_{j//2048:04d}:" + payload[j:j+2048], flush=True)
+              print("SHEET_END", group, flush=True)
+          PY
