@@ -24,9 +24,9 @@ function metricsText(weightKg: number | null, reps: number | null): string {
 }
 
 function pickerCompatible(weightKg: number, reps: number): boolean {
-  return Number.isInteger(reps) && reps >= 0 && reps <= 100
-    && Number.isFinite(weightKg) && weightKg >= 0 && weightKg <= 399.75
-    && Number.isInteger(weightKg * 4);
+  return Number.isSafeInteger(reps) && reps >= 0
+    && Number.isFinite(weightKg) && weightKg >= 0
+    && Number.isSafeInteger(weightKg * 4);
 }
 
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
