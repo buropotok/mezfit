@@ -36,8 +36,10 @@ function renderWeight(valueKg = 23.5) {
   document.body.appendChild(target);
   const onChange = vi.fn();
   const onClose = vi.fn();
+  let setExternally: ((nextKg: number) => void) | null = null;
   function Controlled() {
     const [value, setValue] = useState({ reps: 8, weightKg: valueKg });
+    setExternally = (nextKg) => setValue((previous) => ({ ...previous, weightKg: nextKg }));
     return (
       <KonstaProvider theme="ios" dark>
         <div className="k-ios dark">
@@ -53,6 +55,9 @@ function renderWeight(valueKg = 23.5) {
   return {
     onChange,
     onClose,
+    setExternalKg(nextKg: number) {
+      act(() => setExternally?.(nextKg));
+    },
     kilograms: screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement,
   };
 }
@@ -216,6 +221,20 @@ describe('WeightRepsPicker native relative ten-kilogram flick', () => {
       .getAttribute('aria-selected')).toBe('true');
     fireEvent.click(within(kilograms).getByRole('option', { name: '54' }));
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 54.5 });
+  });
+
+  it('preserves an external weight update during relative inertia without writing back stale kilograms', () => {
+    const { kilograms, onChange, setExternalKg } = renderWeight();
+    startFastFlick(kilograms);
+    nativeScroll(kilograms, 3);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 33.5 });
+    const priorCalls = onChange.mock.calls.length;
+    setExternalKg(81.25);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
+    expect(within(kilograms).getByRole('option', { name: '81' })
+      .getAttribute('aria-selected')).toBe('true');
+    expect(kilograms.scrollTop).toBe(81 * ROW_HEIGHT);
+    expect(onChange).toHaveBeenCalledTimes(priorCalls);
   });
 
   it('commits the actual relative value on closing mid-inertia, without rounding to global tens', () => {
