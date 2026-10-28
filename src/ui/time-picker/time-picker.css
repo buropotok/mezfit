@@ -47,6 +47,24 @@
   display: none;
 }
 
+.ui-time-picker__static-column {
+  min-width: 0;
+  height: 100%;
+}
+
+.ui-time-picker__lens-actions {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ui-time-picker__lens-action-slot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
 .ui-time-picker__option {
   display: grid;
   place-items: center;
