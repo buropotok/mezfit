@@ -8,7 +8,7 @@ on:
       - .github/workflows/one-time-reconcile-exercise-work.yml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: exercise-work-catalogue-main
@@ -33,16 +33,21 @@ jobs:
         run: python tools/exercise-work/reconcile-reviewed-existing.py
       - name: Ensure original exercise files were not touched
         run: git diff --exit-code -- assets/exercises
-      - name: Commit corrected work copies to main once
+      - name: Export verified corrections for connector batch commit
         shell: bash
         run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- assets/work
-          if git diff --cached --quiet; then
-            echo 'All existing copies already match current source'
-            exit 0
-          fi
-          git commit -m 'data: reconcile reviewed exercise copies with current source'
-          git push origin HEAD:refs/heads/main
+          python - <<'PY'
+          import json
+          import pathlib
+          import subprocess
+          names = subprocess.check_output(
+              ["git", "diff", "--name-only", "--", "assets/work"],
+              text=True,
+          ).splitlines()
+          print("MEZFIT_BATCH_COUNT=" + str(len(names)))
+          for name in names:
+              content = pathlib.Path(name).read_text(encoding="utf-8")
+              print("MEZFIT_BATCH_RECORD=" + json.dumps(
+                  {"path": name, "content": content}, ensure_ascii=False,
+              ))
+          PY
