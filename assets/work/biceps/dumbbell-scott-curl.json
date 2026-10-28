@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-scott-curl/",
+  "name": "Dumbbell Scott Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/dumbbell-scot-curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "dumbbell-scot-curl.gif",
+  "name_ru": "Сгибание руки с гантелью на скамье Скотта",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/run-in-place/",
+  "name": "Run in Place",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Run-in-Place-exercise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Run-in-Place-exercise.gif",
+  "name_ru": "Бег на месте",
+  "tracking_type": "time"
+}

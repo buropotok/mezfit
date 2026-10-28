@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-rear-delt-row/",
+  "name": "Dumbbell Rear Delt Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Dumbbell-Rear-Delt-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-Rear-Delt-Row.gif",
+  "name_ru": "Тяга гантелей к груди в наклоне для задних дельт",
+  "tracking_type": "weight_reps"
+}

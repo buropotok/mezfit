@@ -1,0 +1,48 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-pendlay-row/",
+  "name": "Barbell Pendlay Row",
+  "how_to": "1. Setup: Stand with your feet shoulder-width apart, toes pointing forward, and the barbell on the floor in front of you. Bend at your hips while keeping your back flat, and grip the barbell with an overhand grip (palms facing down) slightly wider than shoulder-width apart.\n2. Starting Position: Your back should be parallel to the floor, and your hips should be lower than your shoulders. Keep your chest out, shoulder blades pulled back and down, and your core engaged. This is the starting position.\n3. The Row: Pull the barbell up towards your lower chest or upper abdomen while keeping your elbows close to your body. Squeeze your shoulder blades together at the top of the movement to engage your back muscles fully.\n4. Lower the Barbell: Lower the barbell back down to the floor with control, ensuring it makes contact with the ground before starting the next repetition. This brief touch on the ground differentiates the Pendlay Row from other rowing variations, where the weight remains off the floor between repetitions.\n5. Repeat: Perform the desired number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Barbell-Pendlay-Row.gif",
+  "muscles": {
+    "target": [
+      "Back"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids",
+      "Brachialis",
+      "Brachioradialis",
+      "Pectoralis Major"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps",
+        "Erector Spinae",
+        "Hamstrings",
+        "Gluteus Maximus",
+        "Quadriceps",
+        "Adductor Magnus"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae"
+  ],
+  "image_id": "Barbell-Pendlay-Row.gif",
+  "name_ru": "Тяга штанги Пендлея",
+  "tracking_type": "weight_reps"
+}

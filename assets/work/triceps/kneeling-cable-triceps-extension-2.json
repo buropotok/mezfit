@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension-2/",
+  "name": "Kneeling Cable Triceps Extension",
+  "how_to": "1. Setup:\n  - Attach a rope or straight bar to a high pulley.\n  - Kneel a few feet in front of the cable machine, facing away from it.\n  - Grasp the handles with both hands and bring them behind your head.\n  - Elbows should be bent, pointing up, with upper arms close to your ears.\n  - Keep your back straight and core engaged.\n2. Execution:\n  - Extend your arms forward and slightly upward by straightening the elbows.\n  - Squeeze the triceps at the top of the movement.\n  - Slowly return to the starting position with control.\n  - Repeat for the desired number of reps.\n3. Breathing:\n  - Inhale during the eccentric (lowering) phase.\n  - Exhale as you extend and press the handles forward.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Kneeling-Cable-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Kneeling-Cable-Triceps-Extension.gif",
+  "name_ru": "Разгибание рук из-за головы на верхнем блоке стоя на коленях",
+  "tracking_type": "weight_reps"
+}

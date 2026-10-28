@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hands-bike/",
+  "name": "Hands Bike",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Hands-Bike.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Hands-Bike.gif",
+  "name_ru": "Вращения рукоятей ручного велоэргометра",
+  "tracking_type": "time_distance"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-alternating-dumbbell-curl/",
+  "name": "Seated Alternating Dumbbell Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/06/Seated-dumbbell-alternating-curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Seated-dumbbell-alternating-curl.gif",
+  "name_ru": "Попеременные сгибания рук с гантелями сидя",
+  "tracking_type": "weight_reps"
+}

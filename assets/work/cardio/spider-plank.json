@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/spider-plank/",
+  "name": "Spider Plank",
+  "how_to": "Spider Plank Benefits\n- Spider Plank is a high-intensity abdominal workout that works your core muscles. In addition to being beneficial for firming and strengthening, it can improve your posture and balance, reduce body fat and help speed up your metabolism.\n- It is also an effective exercise that increases stability in the core, spine and hip areas by providing an isometric contraction. You can add it to your workouts to shape and strengthen your hip, belly, and leg muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Spider-Plank.gif",
+  "muscles": {
+    "target": [
+      "Obliques"
+    ],
+    "synergists": [
+      "Rectus Abdominis",
+      "Iliopsoas",
+      "Hamstrings",
+      "Gluteus Maximus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio"
+  ],
+  "image_id": "Spider-Plank.gif",
+  "name_ru": "Планка «паук» с подтягиванием коленей",
+  "tracking_type": "weight_reps"
+}

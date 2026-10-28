@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/overhead-cable-curl/",
+  "name": "Overhead Cable Curl",
+  "how_to": "1. Select a cable machine ensuring both hand grips are positioned up high.\n2. Select the appropriate weight for your required repetitions. Grasp both cable attachments and take up the slack, moving into the centre.\n3. Allow your arms to be out to the sides and in a raised position. (This is your starting position.)\n4. From this position bring about movement by flexing at your elbows.\n5. Continue to flex until your forearms and Biceps region make contact.\n6. At this point start to slowly reverse the movement back to your starting position.\n7. This is one repetition. Continue until necessary repetitions are completed.\nTips:\n\nUse a slow and controlled tempo: Rather than rushing through the movement, use a slow and controlled tempo to keep your muscles under tension for longer.\n\nUse a full range of motion: To get the most out of the exercise, use a full range of motion that allows you to fully extend your arms at the bottom of the movement and fully contract your biceps at the top of the movement.\n\nUse progressive overload: To continue maximizing muscle activation and gains in strength and size, gradually increase the weight or resistance you use on the exercise over time. This will challenge your muscles and force them to adapt, leading to greater gains in strength and size over the long term.\n\nOverhead Cable Curl Benefits\n- Increased bicep activation: The overhead cable curl is an isolation exercise for the biceps muscle. This position is designed to eliminate shoulder involvement and momentum, while targeting the biceps peak. As you curl the weight up, focus on squeezing your biceps at the top of the movement. This will help to maximize muscle activation and promote greater gains in strength and size.\n- Improved muscle symmetry: By using a cable machine with a high pulley, both arms are forced to work independently, which can help to improve muscle symmetry and reduce muscle imbalances. (for example, if one bicep is bigger than another)\n- Continuous tension: The cable machine provides constant tension throughout the movement, which can help to increase time under tension and promote greater gains in muscle size and strength.\n- Reduced strain on the wrists: The underhand grip used in the overhead cable curl places less strain on the wrists compared to other bicep curl variations, which can be beneficial for those with wrist pain or discomfort.\nOverhead Cable Curl – Muscles Worked\nTarget - Biceps\nSynergists - Brachialis\nSynergists - Brachioradialis\nStabilizers - Wrist Flexors",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/overhead-cable-curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "overhead-cable-curl.gif",
+  "name_ru": "Сгибания рук на бицепс с верхних блоков",
+  "tracking_type": "weight_reps"
+}

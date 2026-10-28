@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-behind-neck-press/",
+  "name": "Smith Machine Behind The Neck Press",
+  "how_to": "1. Starting Position: Sit on an upright bench or stand inside the Smith machine, positioning yourself so the bar rests behind your head, just above shoulder height.\n2. Grip and Posture: Grasp the bar with an overhand grip slightly wider than shoulder-width apart. Engage your core and maintain an upright torso.\n3. Pressing Movement: Push the bar upward by fully extending your arms, keeping your head slightly forward to avoid contact.\n4. Controlled Lowering: Slowly lower the bar back behind your neck until elbows form approximately a 90-degree angle, maintaining controlled tension in your shoulders.\n5. Repeat: Complete the desired repetitions, typically 8–12 reps per set.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Smith-Machine-Behind-Neck-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoids"
+    ],
+    "synergists": [
+      "Deltoids (Lateral, Posterior)",
+      "Supraspinatus",
+      "Triceps",
+      "Pectoralis M., Clavicular",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levator Scapula",
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Smith-Machine-Behind-Neck-Press.gif",
+  "name_ru": "Жим из-за головы в машине Смита",
+  "tracking_type": "weight_reps"
+}

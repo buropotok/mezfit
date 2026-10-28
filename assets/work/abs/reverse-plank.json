@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-plank/",
+  "name": "Reverse Plank",
+  "how_to": "Reverse Plank Benefits\n- Reverse plank is a very effective full-body workout that targets all major muscle groups in the body. Reverse plank strengthens and tightens your entire body, improves your posture and balance, reduces body fat, and can help boost your metabolism. If you have back and lower back troubles, a properly performed reverse plank could ease the pain by strengthening the core muscles. However, if you’re not doing it right and feel neck or back pain during the exercise, start with an easier variation first, like a regular plank.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Reverse-plank.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Hip"
+  ],
+  "image_id": "Reverse-plank.gif",
+  "name_ru": "Обратная планка",
+  "tracking_type": "time"
+}

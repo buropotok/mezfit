@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-pulldown-biceps-curl/",
+  "name": "Cable Pulldown Biceps Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Pulldown-Bicep-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Cable-Pulldown-Bicep-Curl.gif",
+  "name_ru": "Сгибания рук на бицепс на верхнем блоке",
+  "tracking_type": "weight_reps"
+}

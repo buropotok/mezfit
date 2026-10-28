@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-curl/",
+  "name": "Cable Curl",
+  "how_to": "Cable Curl Benefits\n- The cable curl is an isolation exercise for the biceps muscle. It’s a pulling action performed with a cable machine and is suitable for beginners.\n- The primary target of cable curl movement is the biceps brachii muscle. You can get wider, thicker arms by targeting the head of the biceps with this unique cable curling exercise. The cable keeps tension on your biceps during both the lowering and the lifting part of each rep so they are always engaged. The cable’s constant tension means you work your biceps hard.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/cable-curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "cable-curl.gif",
+  "name_ru": "Сгибание рук на нижнем блоке",
+  "tracking_type": "weight_reps"
+}

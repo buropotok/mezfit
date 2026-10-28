@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/close-grip-chin-up/",
+  "name": "Close Grip Chin Up",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Close-Grip-Chin-Up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Calisthenic"
+  ],
+  "image_id": "Close-Grip-Chin-Up.gif",
+  "name_ru": "Подтягивания узким хватом",
+  "tracking_type": "weight_reps"
+}

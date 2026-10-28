@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/resistance-band-pull-apart/",
+  "name": "Resistance Band Pull Apart",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Resistance-Band-Pull-Apart.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Resistance-Band-Pull-Apart.gif",
+  "name_ru": "Разведение рук с резиновой лентой перед грудью",
+  "tracking_type": "weight_reps"
+}

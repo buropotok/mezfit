@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-cable-twist/",
+  "name": "Seated Cable Twist",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Seated-Cable-Twist.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Seated-Cable-Twist.gif",
+  "name_ru": "Повороты корпуса сидя на блоке",
+  "tracking_type": "weight_reps"
+}

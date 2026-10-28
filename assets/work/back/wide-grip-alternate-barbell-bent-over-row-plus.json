@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/wide-grip-alternate-barbell-bent-over-row-plus/",
+  "name": "Wide Grip Alternate Barbell Bent Over Row Plus",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/02/Wide-Grip-Alternate-Barbell-Bent-Over-Row-Plus.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Trapezius"
+  ],
+  "image_id": "Wide-Grip-Alternate-Barbell-Bent-Over-Row-Plus.gif",
+  "name_ru": "Попеременная тяга штанги в наклоне широким хватом с дополнительным сведением лопаток",
+  "tracking_type": "weight_reps"
+}

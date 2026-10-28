@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/overhead-triceps-extension-gymstick/",
+  "name": "Overhead Triceps Extension | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Overhead-Triceps-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Overhead-Triceps-Extension.gif",
+  "name_ru": "Разгибание рук из-за головы с гимстиком",
+  "tracking_type": "weight_reps"
+}

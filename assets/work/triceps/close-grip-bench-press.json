@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/close-grip-bench-press/",
+  "name": "Close Grip Bench Press",
+  "how_to": "To perform a close grip bench press:\n\n1. Lie down on a flat bench with your feet flat on the ground and your back in a neutral position.\n2. Grab the bar with a close grip, with your hands placed slightly less than shoulder-width apart.\n3. Unrack the bar and lower it slowly towards your chest while keeping your elbows tucked in close to your body.\n4. Pause briefly at the bottom of the movement, then press the bar back up to the starting position, squeezing your triceps at the top.\n5. Repeat for your desired number of repetitions.\nIt’s important to maintain proper form throughout the exercise, especially keeping your elbows close to your body to emphasize the triceps engagement and reduce strain on the shoulders. Additionally, be sure to use an appropriate weight for your fitness level, and always warm up before beginning any weightlifting exercise.\n\nClose-Grip Bench Press –",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Close-Grip-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Bench",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "image_id": "Close-Grip-Bench-Press.gif",
+  "name_ru": "Жим штанги лёжа узким хватом",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/alternate-dumbbell-lateral-raise/",
+  "name": "Alternate Dumbbell Lateral Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Alternate-Dumbbell-Lateral-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Alternate-Dumbbell-Lateral-Raise.gif",
+  "name_ru": "Попеременный подъём гантелей через стороны",
+  "tracking_type": "weight_reps"
+}

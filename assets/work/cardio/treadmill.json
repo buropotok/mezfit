@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/treadmill/",
+  "name": "Treadmill",
+  "how_to": "1. Step onto the treadmill with the belt stationary. Clip on the safety key.\n2. Start with a warm-up by walking at a slow pace for 3 to 5 minutes.\n3. Increase the speed to your desired pace for walking, jogging, or running.\n4. Adjust the incline as needed to simulate hills and increase intensity.\n5. Maintain an upright posture and swing your arms naturally.\n6. Cool down by gradually reducing speed over the last 3 to 5 minutes.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Treadmill-.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps",
+      "Gluteus Maximus",
+      "Hamstrings",
+      "Sartorius",
+      "Adductor Magnus",
+      "Adductor Longus",
+      "Adductor Brevis",
+      "Pectineus",
+      "Obliques",
+      "Calves"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Treadmill-.gif",
+  "name_ru": "Бег на беговой дорожке",
+  "tracking_type": "time_distance"
+}

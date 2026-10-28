@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-single-leg-curl/",
+  "name": "Lever Single Leg Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Single-Leg-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Lever-Single-Leg-Curl.gif",
+  "name_ru": "Сгибание одной ноги в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

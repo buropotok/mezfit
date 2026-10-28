@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/calf-raise-with-resistance-band/",
+  "name": "Calf Raise with Resistance Band",
+  "how_to": "1. Setup: Secure a resistance band to a low anchor point behind your feet.\n2. Grip the Band: Attach handles to the band ends and grasp one handle in each hand, arms straight and palms facing backward.\n3. Starting Position: Stand upright with feet hip-width apart. Keep your spine tall, shoulders slightly retracted, and arms relaxed behind you holding the tensioned band.\n4. Raise: Press through the balls of your feet and lift your heels off the ground slowly, engaging your calves as you rise.\n5. Pause and Contract: At the top of the movement, squeeze the calves and hold for 1–2 seconds to emphasize the peak contraction.\n6. Lower Slowly: Descend under control, allowing your heels to return just below parallel for a full stretch.\n7. Repeat: Perform the desired number of reps while maintaining consistent band tension.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Calf-Raise-with-Resistance-Band.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Soleus",
+      "Plantaris",
+      "Tibialis posterior",
+      "Intrinsic foot muscles",
+      "Peroneals"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Calf-Raise-with-Resistance-Band.gif",
+  "name_ru": "Подъёмы на носки с эспандером",
+  "tracking_type": "weight_reps"
+}

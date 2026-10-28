@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/split-squat-gymstick/",
+  "name": "Split Squat | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Split-Squat-Gymstick.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Split-Squat-Gymstick.gif",
+  "name_ru": "Разножные приседания с гимстиком",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/duck-walk/",
+  "name": "Duck Walk",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Duck-Walk.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Duck-Walk.gif",
+  "name_ru": "Ходьба в приседе («утиная ходьба»)",
+  "tracking_type": "weight_reps"
+}

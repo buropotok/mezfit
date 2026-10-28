@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-crossover-lat-pulldown/",
+  "name": "Cable Crossover Lat Pulldown",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Cable-Crossover-Lat-Pulldown.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Cable-Crossover-Lat-Pulldown.gif",
+  "name_ru": "Тяга верхних блоков к груди в кроссовере",
+  "tracking_type": "weight_reps"
+}

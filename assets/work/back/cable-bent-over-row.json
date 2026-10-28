@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-bent-over-row/",
+  "name": "Cable Bent Over Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Cable-Bent-Over-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Cable-Bent-Over-Row.gif",
+  "name_ru": "Тяга нижнего блока в наклоне",
+  "tracking_type": "weight_reps"
+}

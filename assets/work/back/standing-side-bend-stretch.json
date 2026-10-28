@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-side-bend-stretch/",
+  "name": "Standing Side Bend Stretch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Standing-Side-Bend-Stretch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Standing-Side-Bend-Stretch.gif",
+  "name_ru": "Растяжка боковой поверхности корпуса стоя",
+  "tracking_type": "time"
+}

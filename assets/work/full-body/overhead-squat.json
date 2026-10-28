@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/overhead-squat/",
+  "name": "Overhead Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/overhead-squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "overhead-squat.gif",
+  "name_ru": "Приседания со штангой над головой",
+  "tracking_type": "weight_reps"
+}

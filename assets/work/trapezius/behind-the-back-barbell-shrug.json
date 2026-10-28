@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/behind-the-back-barbell-shrug/",
+  "name": "Behind The Back Barbell Shrug",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/03/Behind-The-Back-Barbell-Shrug-Reverse-Barbell-Shrug.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Trapezius"
+  ],
+  "image_id": "Behind-The-Back-Barbell-Shrug-Reverse-Barbell-Shrug.gif",
+  "name_ru": "Шраги со штангой за спиной",
+  "tracking_type": "weight_reps"
+}

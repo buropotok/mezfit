@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/muscle-snatch/",
+  "name": "Muscle Snatch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Barbell-Muscle-Snatch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "Barbell-Muscle-Snatch.gif",
+  "name_ru": "Рывок штанги в стойку без подседа",
+  "tracking_type": "weight_reps"
+}

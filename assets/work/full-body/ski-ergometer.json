@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ski-ergometer/",
+  "name": "Ski Ergometer",
+  "how_to": "1. Starting Position:\n\n  Stand facing the machine with feet shoulder-width apart. Grip the handles firmly with both hands.\n2. Engage Core and Hips:\n\n  Hinge slightly at the hips, keep knees soft, and engage your core muscles.\n3. Pulling Motion:\n\n  Drive the handles downward in a strong motion using lats, shoulders, triceps, and core. Bend knees slightly and engage the lower body to generate more power.\n4. Finish:\n\n  Extend arms fully downward near the thighs while keeping posture upright and controlled.\n5. Recovery:\n\n  Return the handles smoothly to the starting position, maintaining rhythm and control.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Ski-Ergometer.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "Ski-Ergometer.gif",
+  "name_ru": "Тренировка на лыжном эргометре",
+  "tracking_type": "time_distance"
+}

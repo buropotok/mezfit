@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-single-leg-curl-machine/",
+  "name": "Standing Single Leg Curl Machine",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Standing-Single-Leg-Curl-Machine.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Standing-Single-Leg-Curl-Machine.gif",
+  "name_ru": "Сгибание одной ноги стоя в тренажёре",
+  "tracking_type": "weight_reps"
+}

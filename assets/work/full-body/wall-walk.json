@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/wall-walk/",
+  "name": "Wall Walk",
+  "how_to": "Step 1: Set Up in a Push-up Position\n- Lie face down on the floor with your feet against a wall.\n- Place your hands slightly wider than shoulder-width apart in a push-up position.\n- Keep your core engaged and legs straight.\nStep 2: Walk Your Feet Up the Wall\n- Press through your hands and begin walking your feet up the wall.\n- At the same time, move your hands closer to the wall.\n- Maintain a straight body line without arching your back.\nStep 3: Reach the Handstand Position\n- Continue moving until your chest is close to the wall and your arms are fully extended.\n- Hold this position briefly while maintaining control.\nStep 4: Walk Back Down\n- Slowly walk your hands away from the wall while lowering your feet back to the floor.\n- Keep your core tight and avoid letting your body collapse.\n- Return to the starting push-up position.\nRepetitions and Sets\n- Beginners can start with three to five repetitions with full control.\n- Advanced athletes can perform multiple sets or increase time under tension in the handstand position.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/wall-walk-muscles.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Upper Back",
+      "Erector Spinae",
+      "Rectus Abdominis",
+      "Gluteus Maximus",
+      "Other Variations",
+      "Handstand Walk"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Full Body"
+  ],
+  "image_id": "wall-walk-muscles.gif",
+  "name_ru": "Заход ногами по стене в стойку на руках",
+  "tracking_type": "weight_reps"
+}

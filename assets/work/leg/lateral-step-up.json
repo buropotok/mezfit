@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lateral-step-up/",
+  "name": "Lateral Step-up",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Lateral-Step-up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Leg"
+  ],
+  "image_id": "Lateral-Step-up.gif",
+  "name_ru": "Боковые зашагивания на платформу",
+  "tracking_type": "weight_reps"
+}

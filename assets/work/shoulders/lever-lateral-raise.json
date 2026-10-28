@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-lateral-raise/",
+  "name": "Lever Lateral Raise",
+  "how_to": "Sit comfortably in the machine and grasp the handles.\n\nForm: Exhale as you raise your arms out to the side. Hold for a brief moment and then slowly lower to the starting position.\n\nPersonal Trainer Tips: It is very important to maintain good posture throughout this exercise. Many people have a forward head posture, so it is important to keep your head erect during this exercise.\n\nUse a comfortable range of motion. You don’t have to raise your arms up as high as possible. Raise your arms to about 90 degrees or a little above 90 degrees.\n\nLever Lateral Raise – Benefits\n- Lateral raises work all major parts of the shoulder with a little the most emphasis on the middle portion of the deltoid.\n- When using a machine for lateral raises, there is less challenge on the neck and stabilizer muscles, and this exercise can be used to tone and strengthen the shoulders.\nThere are so many different ways to work your shoulder muscles and a lateral machine is just one way. If you don’t belong to a gym, you don’t have to worry. You can work your shoulders with dumbbells or resistance bands in the comfort of your own home.\n\nLever Lateral Raise – Muscles Worked\nTarget - Lateral Deltoid\nSynergists - Supraspinatus\nSynergists - Serratus Anterior\nSynergists - Lateral Deltoid\nSynergists - Trapezius",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lever-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Lateral Deltoid",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Lever-Lateral-Raise.gif",
+  "name_ru": "Подъём рук в тренажёре в стороны",
+  "tracking_type": "weight_reps"
+}

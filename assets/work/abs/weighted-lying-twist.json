@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-lying-twist/",
+  "name": "Weighted Lying Twist",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/weighted-lying-twist.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "weighted-lying-twist.gif",
+  "name_ru": "Повороты корпуса лёжа с отягощением",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-reverse-close-grip-bench-press/",
+  "name": "Close-Grip Reverse Bench Press",
+  "how_to": "1. Setup:\n  - Lie flat on a bench with your feet firmly planted on the ground.\n  - Position yourself under a barbell rack and adjust the barbell so that it is at a comfortable height and within arm’s reach.\n2. Grip and Hand Placement::\n  - Reach up and grip the barbell with both hands using an underhand grip, also known as a supinated grip. This means your palms should be facing towards your head, and your fingers should be wrapped around the bar.\n3. Starting Position:\n  - Lift the barbell off the rack and hold it directly over your chest with your arms fully extended.\n4. Execution:\n  - Inhale and lower the barbell towards your chest in a controlled manner. Keep your elbows close to your body as you lower the bar.\n  - Lower the bar until it touches your chest or comes close to it, while maintaining a slight arch in your lower back.\n5. Pushing Phase:\n  - Exhale and push the barbell back up to the starting position by extending your arms. Focus on using your triceps to perform the movement.\n6. Repeat:\n  - Perform the desired number of repetitions while maintaining proper form and control.\nTips and Considerations:\n- Use a lighter weight than you would for a regular bench press, especially when you’re new to this exercise, as the close-grip reverse bench press can be more challenging on the triceps.\n- Keep your wrists aligned with your forearms to maintain proper wrist position throughout the movement.\n- Focus on squeezing your triceps at the top of the movement to fully engage and activate the muscles.\n- Maintain a stable and controlled movement throughout the exercise to minimize the risk of injury.\n- As with any exercise, ensure you have proper form before adding heavy weights.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Barbell-Reverse-Close-grip-Bench-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps",
+      "Pectoralis Major",
+      "Anterior Deltoid",
+      "Biceps Brachii",
+      "Forearm"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "image_id": "Barbell-Reverse-Close-grip-Bench-Press.gif",
+  "name_ru": "Жим лёжа узким обратным хватом",
+  "tracking_type": "weight_reps"
+}

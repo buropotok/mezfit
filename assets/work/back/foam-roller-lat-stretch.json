@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/foam-roller-lat-stretch/",
+  "name": "Foam Roller Lat Stretch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Foam-Roller-Lat-Stretch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Foam Roller",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Foam-Roller-Lat-Stretch.gif",
+  "name_ru": "Растяжка широчайших мышц на ролике",
+  "tracking_type": "time"
+}

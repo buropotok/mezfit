@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-finger-curl/",
+  "name": "Barbell Finger Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Barbell-Finger-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ],
+  "image_id": "Barbell-Finger-Curl.gif",
+  "name_ru": "Сгибания пальцев со штангой",
+  "tracking_type": "weight_reps"
+}

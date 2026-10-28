@@ -1,0 +1,72 @@
+{
+  "source_json_count": 1673,
+  "work_json_count": 1673,
+  "unique_exercises": 1173,
+  "existing_reviewed_unique": 177,
+  "reference_exact_unique": 167,
+  "editorial_unique": 829,
+  "new_work_files": 1495,
+  "tracking_type_counts": {
+    "time": 198,
+    "time_distance": 29,
+    "time_reps": 64,
+    "time_weight": 7,
+    "weight_reps": 1375
+  },
+  "original_fields_identical": true,
+  "review_cases": [
+    {
+      "path": "cardio/wheel-run.json",
+      "reason": "Пустая инструкция и неочевидный способ измерения дистанции"
+    },
+    {
+      "path": "cardio/walk-wave-machine.json",
+      "reason": "Нет техники выполнения; следует уточнить метрики тренажёра"
+    },
+    {
+      "path": "cardio/vibration-plate.json",
+      "reason": "Нет техники выполнения; требуется уточнить статический режим"
+    },
+    {
+      "path": "shoulders/backhand-raise.json",
+      "reason": "Нет инструкции, название допускает варианты движения"
+    },
+    {
+      "path": "shoulders/lever-reverse-shoulder-press.json",
+      "reason": "Неясна механика обратного жима в тренажёре"
+    },
+    {
+      "path": "leg/hawaiian-squat.json",
+      "reason": "Инструкция содержит преимущественно описание пользы, а не технику"
+    },
+    {
+      "path": "hip/squat-mobility-complex.json",
+      "reason": "Отсутствует описание последовательности упражнений комплекса"
+    },
+    {
+      "path": "cardio/hook-kick.json",
+      "reason": "Нет инструкции; уточнить разновидность удара ногой"
+    },
+    {
+      "path": "abs/ab-roller-crunch.json",
+      "reason": "Нет техники; уточнить разновидность тренажёра"
+    },
+    {
+      "path": "full-body/plate-push.json",
+      "reason": "Уточнить способ учёта перемещения отягощения"
+    },
+    {
+      "path": "back/rope-climb.json",
+      "reason": "Уточнить предпочтение повторений или времени при лазании по канату"
+    },
+    {
+      "path": "abs/teaser-pilates.json",
+      "reason": "Неоднозначно, считать подъёмы или удержание позы"
+    },
+    {
+      "path": "cardio/stationary-bike-run.json",
+      "reason": "Не указано, измеряет ли исходный тренажёр дистанцию"
+    }
+  ],
+  "review_case_count": 13
+}

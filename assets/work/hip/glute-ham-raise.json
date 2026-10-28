@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/glute-ham-raise/",
+  "name": "Glute Ham Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/07/Glute-Ham-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Glute-Ham-Raise.gif",
+  "name_ru": "Подъёмы корпуса в GHD с акцентом на заднюю поверхность бедра",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-incline-biceps-curl/",
+  "name": "Cable Incline Biceps Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Cable-Incline-Biceps-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Cable-Incline-Biceps-Curl.gif",
+  "name_ru": "Сгибания рук на бицепс с нижнего блока на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

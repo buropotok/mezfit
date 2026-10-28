@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-calf-raise-on-leg-press-machine/",
+  "name": "Single Calf Raise on Leg Press Machine",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Single-Calf-Raise-on-Leg-Press-Machine.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Single-Calf-Raise-on-Leg-Press-Machine.gif",
+  "name_ru": "Подъём на носок одной ноги в тренажёре для жима ногами",
+  "tracking_type": "weight_reps"
+}

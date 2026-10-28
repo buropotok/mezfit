@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/high-knees-lift-run/",
+  "name": "High Knees Lift Run",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Run-in-Place.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Run-in-Place.gif",
+  "name_ru": "Бег с высокими подъёмами коленей",
+  "tracking_type": "time_reps"
+}

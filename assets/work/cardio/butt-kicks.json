@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/butt-kicks/",
+  "name": "Butt Kicks",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Butt-Kicks.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Butt-Kicks.gif",
+  "name_ru": "Бег на месте с захлёстом голеней",
+  "tracking_type": "time_reps"
+}

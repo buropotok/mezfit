@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ab-coaster-machine/",
+  "name": "Ab Coaster Machine",
+  "how_to": "1. Make sure the seat is adjusted to the correct height so that your legs are bent at a 90-degree angle when seated.\n2. Hold onto the handles, keeping your back straight and your abs engaged.\n3. Roll forward, allowing the seat to glide along the curved track. Keep your abs engaged and your back straight throughout the movement.\n4. When you reach the end of the machine, pause briefly and then slowly return to the starting position.\n5. Repeat: Repeat the movement for several repetitions, focusing on using your abs to control the motion. You can also vary the difficulty by changing the speed of the movement or the number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Ab-Coaster-Machine.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Ab-Coaster-Machine.gif",
+  "name_ru": "Скручивания в тренажёре Ab Coaster",
+  "tracking_type": "weight_reps"
+}

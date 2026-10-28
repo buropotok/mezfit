@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/jefferson-squat/",
+  "name": "Jefferson Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/jefferson-squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "jefferson-squat.gif",
+  "name_ru": "Приседания Джефферсона со штангой между ног",
+  "tracking_type": "weight_reps"
+}

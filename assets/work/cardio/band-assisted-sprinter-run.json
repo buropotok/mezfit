@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/band-assisted-sprinter-run/",
+  "name": "Band Assisted Sprinter Run",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Band-Assisted-Sprinter-Run.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Band-Assisted-Sprinter-Run.gif",
+  "name_ru": "Спринтерский бег с поддержкой эспандером",
+  "tracking_type": "time_distance"
+}

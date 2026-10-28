@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/high-knee-squat/",
+  "name": "High Knee Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/11/High-Knee-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "High-Knee-Squat.gif",
+  "name_ru": "Приседания с высоким подъёмом колена",
+  "tracking_type": "weight_reps"
+}

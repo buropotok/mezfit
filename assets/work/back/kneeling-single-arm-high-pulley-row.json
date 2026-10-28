@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-single-arm-high-pulley-row/",
+  "name": "Kneeling Single Arm High Pulley Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Kneeling-Single-Arm-High-Pulley-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Kneeling-Single-Arm-High-Pulley-Row.gif",
+  "name_ru": "Высокая тяга блока одной рукой стоя на колене",
+  "tracking_type": "weight_reps"
+}

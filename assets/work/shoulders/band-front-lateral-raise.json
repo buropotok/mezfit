@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/band-front-lateral-raise/",
+  "name": "Band Front Lateral Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Band-Front-Lateral-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Band-Front-Lateral-Raise.gif",
+  "name_ru": "Подъём рук перед собой с эспандером",
+  "tracking_type": "weight_reps"
+}

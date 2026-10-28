@@ -1,0 +1,52 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-twisting-standing-high-row/",
+  "name": "Cable Twisting Standing High Row",
+  "how_to": "Cable Twisting Standing High Row / Benefits\n- This exercise, performed with a cable machine or resistance band, is a compound exercise that works all the back muscles.\n- The rotational movement in this exercise causes many muscle groups to work. As you rotate your body, your legs take more power from your glutes to support your body. Meanwhile, it allows the hip muscles, adductors and many deeper smaller muscle groups to work. While standing, both spinal rotation and hip rotation contribute to the rotation of the body.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Twisting-Standing-high-Row.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Erector Spinae",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Trapezius",
+      "Teres Major",
+      "Rhomboids",
+      "Psoas major",
+      "Iliocastalis thoracis",
+      "Iliocastalis lumborum",
+      "Quadratus Lumborum",
+      "Brachioradialis",
+      "Brachialis",
+      "Gluteus",
+      "Adductors, Hip",
+      "Tensor fasciae latae"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps, Long Head",
+        "Erector Spinae"
+      ],
+      "antagonist": [
+        "Rectus Abdominis"
+      ]
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Cable-Twisting-Standing-high-Row.gif",
+  "name_ru": "Высокая тяга блока стоя с поворотом корпуса",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-one-arm-overhead-triceps-extension/",
+  "name": "Cable One-Arm Overhead Triceps Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Attach a single handle to the low pulley of a cable machine.\n- Stand with your feet shoulder-width apart and grab the handle with one hand.\n- Turn away from the machine and lift the handle overhead, keeping your elbow bent and close to your head.\n- Engage your core and maintain a neutral spine throughout the exercise.\nStep 2: Execution\n1. Extend your arm by straightening your elbow until your arm is fully extended overhead.\n2. Squeeze your triceps at the top of the movement.\n3. Slowly lower the handle back to the starting position, keeping control throughout.\n4. Repeat for 3 to 4 sets of 10 to 15 reps before switching arms.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Cable-One-Arm-Overhead-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-One-Arm-Overhead-Triceps-Extension.gif",
+  "name_ru": "Разгибание одной руки из-за головы на блоке",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/full-planche/",
+  "name": "Full Planche",
+  "how_to": "To successfully perform the Full Planche, follow these steps:\n\n- Start in a Push-Up Position: Begin in a push-up stance, with your hands placed slightly wider than shoulder-width apart.\n- Engage Core and Shoulders: Push your shoulders forward and engage your core to prevent sagging in the lower back. Your arms should be straight and fully locked out.\n- Lift Your Feet Off the Ground: Slowly raise your legs off the floor, keeping them straight, until your body forms a straight line from head to toes.\n- Balance and Hold: As you lift your legs, use your hands and shoulders to help balance your body in a horizontal position. Keep your gaze forward and focus on maintaining the hold.\n- Maintain the Position: Hold the Full Planche as long as possible, focusing on balance and proper alignment of the body. As you build strength, aim to hold for longer durations.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/04/Full-Planche.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis",
+      "Obliques",
+      "Pectoralis Major",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Upper Back",
+      "Biceps Brachii",
+      "Forearms",
+      "Erector Spinae",
+      "Gluteus Maximus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Calisthenic",
+    "Full Body"
+  ],
+  "image_id": "Full-Planche.gif",
+  "name_ru": "Горизонтальный упор (планш)",
+  "tracking_type": "time"
+}

@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-donkey-calf-raise/",
+  "name": "Partner Donkey Calf Raise",
+  "how_to": "1. Foot Placement: Stand on a secure block or platform with just the balls of your feet supported and heels hanging off the edge.\n2. Torso Position: Bend forward at the hips to form a roughly 90° angle. Place your hands on a secure bench, rail, or platform for stability. Keep your back flat and knees fully extended.\n3. Partner Loading: Your partner carefully mounts your hips/lower back area and sits evenly. They should distribute weight without applying direct pressure to the spine or ribs.\n4. Starting Position: Begin with your heels fully lowered to achieve a deep calf stretch.\n5. Initiate the Lift: Raise your heels by pressing through the balls of your feet, contracting your calves forcefully.\n6. Top Squeeze: Hold at the top for 1–2 seconds, focusing on full plantarflexion.\n7. Controlled Descent: Lower the heels back below the block level under slow control, reestablishing the stretch.\n8. Repeat: Complete the desired number of reps, maintaining a consistent tempo and posture throughout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Weighted-Donkey-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis",
+      "Intrinsic foot muscles"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Soleus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Weighted-Donkey-Calf-Raise.gif",
+  "name_ru": "Ослиные подъёмы на носки с партнёром",
+  "tracking_type": "weight_reps"
+}

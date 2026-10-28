@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/foot-and-ankles-stretches/",
+  "name": "Foot and Ankles Stretches",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Foot-and-Ankles-Stretches.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Foot-and-Ankles-Stretches.gif",
+  "name_ru": "Растяжка стоп и голеностопных суставов",
+  "tracking_type": "time"
+}

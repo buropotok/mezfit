@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/front-squat/",
+  "name": "Barbell Front Squat",
+  "how_to": "1. Set the barbell on a squat rack at upper chest level and position yourself under it with the bar resting on your shoulders and collarbone.\n2. Cross your arms over the bar or use a clean grip with elbows pointing forward and chest tall.\n3. Step back and stand with your feet shoulder-width apart and toes slightly turned out.\n4. Brace your core and begin the movement by bending your hips and knees simultaneously.\n5. Lower into a squat while keeping your elbows high and torso upright.\n6. Descend until your thighs are parallel to the ground or slightly below.\n7. Drive through your heels to return to the standing position while maintaining core tension and posture.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/front-squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Deltoid (Anterior, Lateral)",
+        "Trapezius",
+        "Levator Scapulae",
+        "Pectoralis Major",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "front-squat.gif",
+  "name_ru": "Фронтальные приседания со штангой",
+  "tracking_type": "weight_reps"
+}

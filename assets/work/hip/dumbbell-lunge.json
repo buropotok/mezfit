@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-lunge/",
+  "name": "Dumbbell Lunge",
+  "how_to": "Dumbbell Lunge Benefits\n- Builds size and strength in quads, glutes, and hamstrings. Dumbbell lunge are one of the effective lower body exercises that completely improve leg strength, stability and balance. Dumbbell lunge target the quadriceps and hip muscles most intensely, but also hit the knee tendons, thighs and core.\n- Dumbbell lunges are an easy exercise for beginners to do. It can help strengthen leg muscles, tighten hip muscles and burn calories to lose weight.\n- It tightens the butt. Dumbbell lunges are one of the best exercises that can help you achieve a firmer and more toned butt by acting on the deepest gluteus muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Lunge.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Trapezius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Levator Scapulae",
+        "Tibialis Anterior"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Dumbbell-Lunge.gif",
+  "name_ru": "Выпады с гантелями",
+  "tracking_type": "weight_reps"
+}

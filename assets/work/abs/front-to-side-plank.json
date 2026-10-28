@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/front-to-side-plank/",
+  "name": "Front to Side Plank",
+  "how_to": "Front to Side Plank Benefits\n- Front to side plank are an effective cardio and core strengthening workout. It can help you strengthen and develop both upper and lower body muscles.\n- Being a multi-functional movement, this exercise targets not only your abdominal muscles but also the spine and buttocks. Plank strengthens and tightens your entire body, improves your posture and balance, reduces body fat and can help speed up your metabolism.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Front-to-Side-Plank.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Iliopsoas",
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Front-to-Side-Plank.gif",
+  "name_ru": "Переход из прямой планки в боковую",
+  "tracking_type": "weight_reps"
+}

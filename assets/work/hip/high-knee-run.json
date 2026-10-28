@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/high-knee-run/",
+  "name": "High Knee Run",
+  "how_to": "High Knee Run Benefits\n- You can use this exercise both as a dynamic warm-up before training and add it to your cardio training routine to burn fat.\n- High knee run are a plyometric exercise. Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.\n- High knee run target the oblique, leg muscles, hip muscles and hip flexors and also work on the thighs, knee tendons, quadriceps and shoulders.\n- Jumps are beneficial to your health because they combine cardiovascular conditioning with strength work. Since jumps elevate your heart rate, they can also improve your cardiovascular fitness.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/High-Knee-Run.gif",
+  "muscles": {
+    "target": [
+      "Obliques",
+      "Gluteus Maximus",
+      "Quadriceps",
+      "Hip Flexors",
+      "Calves",
+      "Hamstrings"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "High-Knee-Run.gif",
+  "name_ru": "Бег с высоким подниманием коленей",
+  "tracking_type": "time_reps"
+}

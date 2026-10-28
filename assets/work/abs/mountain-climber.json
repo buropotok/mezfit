@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/mountain-climber/",
+  "name": "Mountain Climber",
+  "how_to": "1- Assume a normal press-up position with your weight on your hands and toes, your back and legs straight, and your hands shoulder-width apart.\n\n2- In one quick but controlled movement, bring your right knee up toward your chest, placing the ball of your right foot on the floor at the edge of the movement.\n\n3- Lightly spring up with your legs and switch feet, bringing your left foot up toward your chest as you push back with the right. Continue alternating your feet for the required number of reps, then relax to the start position.\n\nMountain Climber",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Mountain-climber.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Iliopsoas",
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio"
+  ],
+  "image_id": "Mountain-climber.gif",
+  "name_ru": "«Альпинист» (бег в упоре лёжа)",
+  "tracking_type": "time_reps"
+}

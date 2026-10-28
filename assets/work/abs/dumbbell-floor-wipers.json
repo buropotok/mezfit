@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-floor-wipers/",
+  "name": "Dumbbell Floor Wipers",
+  "how_to": "1. Start by lying flat on your back with your legs extended and your arms stretched out to the sides, perpendicular to your body. Hold a dumbbell in each hand, with your palms facing upwards.\n2. Lift your legs off the ground, keeping them together and your knees slightly bent. This will be your starting position.\n3. Keep your upper body stable and maintain the same angle throughout the movement.\n4. Once your legs have reached the lowest point to one side, reverse the motion and bring them back up to the starting position.\n5. Repeat the movement, this time lowering your legs to the opposite side.\n6. Continue alternating sides for the desired number of repetitions or time.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Dumbbell-Floor-Wipers.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Dumbbell-Floor-Wipers.gif",
+  "name_ru": "Маятниковые опускания ног лёжа с удержанием гантелей",
+  "tracking_type": "weight_reps"
+}

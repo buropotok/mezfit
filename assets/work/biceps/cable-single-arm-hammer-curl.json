@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-single-arm-hammer-curl/",
+  "name": "Cable Single Arm Hammer Curl",
+  "how_to": "1. Set the cable to the lowest pulley position and attach a rope or D-handle.\n2. Stand sideways to the machine, grasp the handle with a neutral grip (thumb facing up).\n3. Step slightly away from the machine and brace your core, keeping your arm at your side.\n4. Curl the handle upward, flexing the elbow without rotating the wrist or moving the shoulder.\n5. Squeeze at the top, then slowly lower the handle to the starting position.\n6. Perform 8–12 reps per arm, focusing on control and symmetry.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/cable-single-arm-hammer-curl.gif",
+  "muscles": {
+    "target": [
+      "Brachioradialis"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Biceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Flexor Carpi Radialis",
+        "Extensor Carpi Radialis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps",
+    "Forearm"
+  ],
+  "image_id": "cable-single-arm-hammer-curl.gif",
+  "name_ru": "Молотковое сгибание одной руки на блоке",
+  "tracking_type": "weight_reps"
+}

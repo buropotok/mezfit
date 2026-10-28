@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-shoulder-press/",
+  "name": "Seated Barbell Shoulder Press",
+  "how_to": "1. Sit upright on a flat bench, keeping feet flat and planted slightly wider than hip-width.\n2. Set the barbell at shoulder height on a rack and grip it slightly wider than shoulder-width.\n3. Unrack the bar and bring it to shoulder level with elbows slightly in front of the bar.\n4. Engage your core and glutes to maintain balance without a backrest.\n5. Press the bar overhead, extending your arms without leaning backward.\n6. Lower the bar under control back to your upper chest or shoulder line.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Shoulder-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Triceps",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Barbell-Shoulder-Press.gif",
+  "name_ru": "Жим штанги сидя над головой",
+  "tracking_type": "weight_reps"
+}

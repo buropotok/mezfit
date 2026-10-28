@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/top-half-pull-up/",
+  "name": "Top Half Pull-up",
+  "how_to": "1. Stand on a box or jump up so your chin starts above the bar.\n2. Lower yourself halfway down (elbows reach roughly a 90-degree bend).\n3. Pause briefly, then pull back up until your chin clears the bar again.\n4. Repeat for 3–8 reps, maintaining tension and control throughout.\n5. Avoid full extension at the bottom; stay in the upper half of the range.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/Top-Half-Pull-up.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Levator Scapulae",
+      "Rhomboids",
+      "Teres Major",
+      "Brachialis",
+      "Pectoralis Minor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Top-Half-Pull-up.gif",
+  "name_ru": "Подтягивания в верхней половине амплитуды",
+  "tracking_type": "weight_reps"
+}

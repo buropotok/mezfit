@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/back-lever/",
+  "name": "Back Lever",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Back-Lever.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [],
+  "muscle_group": [
+    "Back / Wing",
+    "Calisthenic",
+    "Full Body",
+    "Shoulders"
+  ],
+  "image_id": "Back-Lever.gif",
+  "name_ru": "Горизонтальный вис спиной вниз (back lever)",
+  "tracking_type": "time"
+}

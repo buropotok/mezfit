@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-scapular-retraction-exercise/",
+  "name": "Seated Scapular Retraction Exercise",
+  "how_to": "To perform this exercise, sit or stand in an upright position. Then, squeeze your shoulder blades together and draw them down wards.\n\nScapular Retraction / Benefits\nStabilizing and strengthening the scapular muscles can:\n\n- Increases range of motion (helps increase your ability to reach)\n- Helps reduce pain in your shoulder and neck\n- improves your posture\n- Increases your stamina to hold certain positions longer",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Seated-Scapular-Retraction-Exercise.gif",
+  "muscles": {
+    "target": [
+      "Scapula",
+      "Trapezius",
+      "Rhomboids",
+      "Shoulder",
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Seated-Scapular-Retraction-Exercise.gif",
+  "name_ru": "Сведение лопаток сидя",
+  "tracking_type": "weight_reps"
+}

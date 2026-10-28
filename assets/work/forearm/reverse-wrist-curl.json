@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-wrist-curl/",
+  "name": "Reverse Wrist Curl",
+  "how_to": "Reverse Wrist Curl Benefits\nYou can do this movement using a barbell or dumbbell.\n\n- It is a very effective exercise to improve the forearm and wrist muscles. If you build up your wrists and forearms you will be able to lift more weight while performing other exercises.\n- The reason you cannot lift your body weight may be due to weak wrists and arms. Adding wrist and forearm exercise to your workout program will create strong wrist flexors.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Wrist-Curl.gif",
+  "muscles": {
+    "target": [
+      "Wrist Extensors"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ],
+  "image_id": "Reverse-Wrist-Curl.gif",
+  "name_ru": "Разгибания кистей с отягощением",
+  "tracking_type": "weight_reps"
+}

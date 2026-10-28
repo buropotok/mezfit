@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/long-jump/",
+  "name": "Long Jump",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/03/Long-Jump-Plyometrics.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Leg"
+  ],
+  "image_id": "Long-Jump-Plyometrics.gif",
+  "name_ru": "Прыжок в длину с места",
+  "tracking_type": "weight_reps"
+}

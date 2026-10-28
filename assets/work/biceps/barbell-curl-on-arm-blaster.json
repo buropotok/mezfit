@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-curl-on-arm-blaster/",
+  "name": "Barbell Curl On Arm Blaster",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Barbell-Curl-On-Arm-Blaster.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Barbell-Curl-On-Arm-Blaster.gif",
+  "name_ru": "Сгибания рук со штангой в армбластере",
+  "tracking_type": "weight_reps"
+}

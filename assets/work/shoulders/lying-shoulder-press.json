@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lying-shoulder-press/",
+  "name": "Lying Shoulder Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lying-Shoulder-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Lying-Shoulder-Press.gif",
+  "name_ru": "Жим гантелей над головой лёжа",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/eccentric-pull-up/",
+  "name": "Eccentric Pull-Up",
+  "how_to": "1. Use a box or jump to get into the top pull-up position (chin above the bar).\n2. Engage your core and scapular stabilizers.\n3. Slowly lower your body in a straight line, taking 3–8 seconds to reach full arm extension.\n4. Control the descent without dropping or swinging.\n5. Step back up and repeat for the desired reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/05/eccentric-pull-up-female.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Trapezius",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Posterior Deltoid"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "eccentric-pull-up-female.gif",
+  "name_ru": "Подтягивания с акцентом на медленное опускание",
+  "tracking_type": "weight_reps"
+}

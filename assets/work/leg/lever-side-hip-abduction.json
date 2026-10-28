@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-side-hip-abduction/",
+  "name": "Lever Side Hip Abduction",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Lever-Side-Hip-Abduction.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Lever-Side-Hip-Abduction.gif",
+  "name_ru": "Отведение бедра в сторону в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

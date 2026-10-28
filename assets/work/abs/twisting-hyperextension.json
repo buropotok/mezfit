@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/twisting-hyperextension/",
+  "name": "Twisting Hyperextension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Twisting-Hyperextension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Erector Spinae"
+  ],
+  "image_id": "Twisting-Hyperextension.gif",
+  "name_ru": "Гиперэкстензия с поворотом корпуса",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hands-in-air-dead-bug/",
+  "name": "Hands In Air Dead Bug",
+  "how_to": "Raising your arms off the floor adds an element of instability, making your core work even harder. Raise your arms straight up.Keeping your arms still, and your core tight, alternately lower each foot to the floor.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dead-Bug.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "name_ru": "Упражнение «мёртвый жук» с поднятыми руками",
+  "tracking_type": "weight_reps"
+}

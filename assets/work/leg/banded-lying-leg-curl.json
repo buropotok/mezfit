@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-lying-leg-curl/",
+  "name": "Banded Lying Leg Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Lying-leg-curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Lying-leg-curl.gif",
+  "name_ru": "Сгибание ног лёжа с эспандером",
+  "tracking_type": "weight_reps"
+}

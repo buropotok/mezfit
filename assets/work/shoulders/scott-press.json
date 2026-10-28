@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/scott-press/",
+  "name": "Scott Press",
+  "how_to": "1. Hold a dumbbell in each hand, and start with your arms at shoulder level, bent at approximately 90-degree angles. With your palms facing each other.\n2. Perform a rotational movement just like with the Arnold Press.\n3. Before the dumbbells reach the top of the movement, rotate them slightly up and out, lower your wrists back to the starting position (palms facing each other), and repeat the movement.\n4. Repeat the movement for the desired number of repetitions.\nTips for performing the Scott Press:\n\n- Think of it like a shortened Arnold Press and not press the weight all the way up like a shoulder press.\n- Use a controlled motion throughout the exercise to avoid any jerking or swinging.\n- Start with a lighter weight to get used to the movement pattern and then gradually increase the weight as you gain proficiency.\n- Focus on keeping tension on the shoulder muscles throughout the entire range of motion.\n- Breathe naturally during the exercise, exhaling as you press the dumbbells up and inhaling as you lower them down.\nScott Press Benefits\nBalanced Shoulder Development: By targeting all three heads of the deltoid at once, the Scott Press ensures balanced shoulder development. This can lead to improved aesthetics, symmetry, and strength in the shoulder region.\n\nEnhanced Shoulder Stability: Strengthening all aspects of the deltoid muscle contributes to better shoulder joint stability. This can be especially beneficial for individuals involved in sports or activities that require shoulder stability during overhead movements.\n\nTime Efficiency: The Scott Press’s unique ability to work all three parts of the deltoid in a single exercise makes it a time-efficient option for those seeking an effective shoulder workout.\n\nImproved Muscle Definition: As the deltoid muscles grow and become more defined, the shoulder region takes on a sculpted appearance, enhancing the overall aesthetic of the upper body.\n\nScott Press Muscles Worked\nTarget - Lateral Deltoid\nSynergists - Posterior Deltoid\nSynergists - Anterior Deltoid\nSynergists - Supraspinatus\nSynergists - Infraspinatus\nSynergists - Trapezius\nSynergists - Serratus Anterior",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/scott-press.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Posterior Deltoid",
+      "Anterior Deltoid",
+      "Supraspinatus",
+      "Infraspinatus",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "scott-press.gif",
+  "name_ru": "Жим Скотта с гантелями",
+  "tracking_type": "weight_reps"
+}

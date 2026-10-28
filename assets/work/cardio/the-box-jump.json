@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/the-box-jump/",
+  "name": "The Box Jump",
+  "how_to": "The Box Jump Benefits\n- The Box Jump are a plyometric exercise. Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.\n- The Box Jump target the abdominal muscles, hip muscles and hip flexors and also work on the thighs, knee tendons and quadriceps.\n- Jumps are beneficial to your health because they combine cardiovascular conditioning with strength work. Since jumps elevate your heart rate, they can also improve your cardiovascular fitness.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2015/07/The-Box-Jump.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg",
+    "Abs",
+    "Calves"
+  ],
+  "image_id": "The-Box-Jump.gif",
+  "name_ru": "Прыжки на тумбу",
+  "tracking_type": "weight_reps"
+}

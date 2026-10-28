@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/close-grip-lat-pulldown/",
+  "name": "Close Grip Lat-Pulldown",
+  "how_to": "Many of the movements that work the same muscle group may look alike, but they focus on different parts of the muscles because they are at different angles. If you want to develop better muscle specifically, keep in mind that it is more beneficial to include exercises that focus on different aspects to your training program.\n\nClose Grip Lat Pulldown Benefits\n- Close Grip lat pulldown is one of the most popular exercises used to strengthen the back muscles. Close Grip lat-pulldown V-Taper is among the movements that allow you to reach the image. It provides interaction in teres minor and teres major muscle groups for the development of the rear shoulder and wing muscles. In this way, you can create a wider back, wing and shoulder structure.\n- Hunching over your computer and phone all day can cause tension and pain in your back. However, regular muscle strengthening exercises will help strengthen these muscles, potentially improving your posture, reducing pain, and improving the overall health of your muscle tissue.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Close-Grip-Lat-Pulldown.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Teres Major",
+      "Rhomboids",
+      "Brachioradialis",
+      "Brachialis"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Close-Grip-Lat-Pulldown.gif",
+  "name_ru": "Тяга верхнего блока узким хватом",
+  "tracking_type": "weight_reps"
+}

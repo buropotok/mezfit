@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/trx-mountain-climber/",
+  "name": "TRX Mountain Climber",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/TRX-Mountain-Climber.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "TRX Suspension"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "TRX-Mountain-Climber.gif",
+  "name_ru": "Альпинист в петлях TRX",
+  "tracking_type": "time_reps"
+}

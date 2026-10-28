@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-lunge/",
+  "name": "Barbell Lunge",
+  "how_to": "Barbell Lunge Benefits\n- Builds size and strength in quads, glutes, and hamstrings. Barbell lunge are one of the effective lower body exercises that completely improve leg strength, stability and balance. Barbell lunge target the quadriceps and hip muscles most intensely, but also hit the knee tendons, thighs and core.\n- Barbell lunges are an easy exercise for beginners to do. It can help strengthen leg muscles, tighten hip muscles and burn calories to lose weight.\n- It tightens the butt. Barbell lunges are one of the best exercises that can help you achieve a firmer and more toned butt by acting on the deepest gluteus muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Barbell-Lunge.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Trapezius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Levator Scapulae",
+        "Tibialis Anterior"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Barbell-Lunge.gif",
+  "name_ru": "Выпады со штангой",
+  "tracking_type": "weight_reps"
+}

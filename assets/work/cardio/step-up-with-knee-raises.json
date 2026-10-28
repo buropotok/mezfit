@@ -1,0 +1,44 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/step-up-with-knee-raises/",
+  "name": "Step Up with Knee Raises",
+  "how_to": "Step Up with Knee Raises\n\nStep Up with Knee Raises / Benefits\n- The step up with knee raise is an effective lower body exercise that targets the hips, quads and hamstrings. Bodyweight exercises are highly good for building muscle and strength, as well as improving your coordination and functional fitness.\n- Step up with knee raise is a suitable exercise for beginners. It can help strengthen leg muscles, tighten hip muscles and burn calories to lose weight.\nStep Up with Knee Raises /",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Step-up.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Quadriceps",
+      "Adductor Magnus",
+      "Soleus",
+      "Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Trapezius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Leg"
+  ],
+  "image_id": "Step-up.gif",
+  "name_ru": "Зашагивания на платформу с подъёмом колена",
+  "tracking_type": "weight_reps"
+}

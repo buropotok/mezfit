@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-reverse-grip-ez-bar-biceps-curl/",
+  "name": "Cable Reverse Grip EZ-bar Biceps Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Reverse-Grip-EZ-bar-Biceps-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps",
+    "Forearm"
+  ],
+  "image_id": "Cable-Reverse-Grip-EZ-bar-Biceps-Curl.gif",
+  "name_ru": "Сгибания рук обратным хватом с EZ-рукоятью на блоке",
+  "tracking_type": "weight_reps"
+}

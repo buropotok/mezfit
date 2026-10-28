@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/happy-baby-pose/",
+  "name": "Happy Baby Pose",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Happy-Baby-Pose.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg",
+    "Yoga"
+  ],
+  "image_id": "Happy-Baby-Pose.gif",
+  "name_ru": "Поза счастливого ребёнка",
+  "tracking_type": "time"
+}

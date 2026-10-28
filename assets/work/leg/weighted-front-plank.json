@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-front-plank/",
+  "name": "Weighted Front Plank",
+  "how_to": "Weighted Front Plank Benefits\n- It is a plank variation made by adding weight. It is mostly preferred for advanced athletes. As a multi-functional movement, the plank not only targets your abdominal muscles but also the spine and hip. Plank strengthens and tightens your entire body, improves your posture and balance, reduces body fat, and can help boost your metabolism.\n- Plank is an effective exercise that increases stability in the core, spine and hip areas by providing an isometric contraction. You can add it to your workouts to shape and strengthen your hip, core and leg muscles.\n- Weighted front plank are a versatile exercise that targets many of the most important muscle groups in the body, so they can be applied by advanced athletes to increase endurance and overall body strength.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Weighted-Front-Plank.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Iliopsoas",
+        "Quadriceps",
+        "Tensor Fasciae Latae",
+        "Sartorius",
+        "Pectoralis major",
+        "Serratus Anterior"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Trapezius",
+        "Rhomboids"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Leg"
+  ],
+  "image_id": "Weighted-Front-Plank.gif",
+  "name_ru": "Планка с отягощением перед собой",
+  "tracking_type": "time_weight"
+}

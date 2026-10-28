@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-bulgarian-split-squat/",
+  "name": "Bodyweight Bulgarian Split Squat",
+  "how_to": "Step 1: Setup and Positioning\n1. Stand about two feet in front of a bench or sturdy platform.\n2. Extend your rear foot back and place the top of your foot on the bench.\n3. Keep your chest upright and core engaged.\nStep 2: Execution\n1. Lower your back knee toward the ground by bending your front knee.\n2. Descend until your front thigh is parallel to the floor or slightly below.\n3. Press through your front heel to return to the starting position.\n4. Repeat for the desired reps before switching legs.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Bodyweight-Bulgarian-Split-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Gluteus Medius",
+        "Gluteus Minimus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Bodyweight-Bulgarian-Split-Squat.gif",
+  "name_ru": "Болгарские выпады с собственным весом",
+  "tracking_type": "weight_reps"
+}

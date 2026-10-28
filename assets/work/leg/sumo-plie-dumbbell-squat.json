@@ -1,0 +1,44 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/sumo-plie-dumbbell-squat/",
+  "name": "Plie Dumbbell Squat",
+  "how_to": "1. Stand with your feet wider than shoulder-width, turning your toes outward at a 30 to 45-degree angle.\n2. Hold a dumbbell vertically with both hands either in a goblet position at your chest or between your legs at arm’s length.\n3. Engage your core and keep your back tall as you begin to squat.\n4. Bend your knees and lower your hips directly down while keeping your torso upright.\n5. Drive your knees out in the direction of your toes to activate your inner thighs.\n6. Squat until your thighs are at least parallel or slightly below if your mobility allows.\n7. Pause briefly at the bottom, then push through your heels to return to the starting position, squeezing your glutes.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/Sumo-Plie-Dumbbell-Squat.gif",
+  "muscles": {
+    "target": [
+      "Adductor Magnus"
+    ],
+    "synergists": [
+      "Hamstrings",
+      "Gluteus Medius, Minimus",
+      "A. Longus, Brevis, Gracilis",
+      "Tensor Fasciae Latae (TFL)",
+      "Calves (Soleus, Gastrocnemius)"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis, Obliques",
+        "Erector Spinae",
+        "Anterior Deltoid",
+        "Biceps Brachii",
+        "Scapular Stabilizers",
+        "Hip External Rotators",
+        "Tibialis Anterior"
+      ],
+      "antagonist": [
+        "Latissimus Dorsi",
+        "Hip Flexors"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Sumo-Plie-Dumbbell-Squat.gif",
+  "name_ru": "Приседания плие с гантелью",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/handstand-walk/",
+  "name": "Handstand Walk",
+  "how_to": "Before attempting a full handstand walk, ensure you can:\n\n1. Hold a freestanding handstand for at least 10 to 15 seconds\n2. Perform wall-assisted handstand holds for 30 seconds\n3. Have sufficient shoulder strength, wrist mobility, and core stability\n1. Start with a Wall Walk\n- Begin in a push-up position with feet against a wall.\n- Slowly walk your feet up the wall while moving your hands toward the wall.\n- Hold the handstand position for balance control.\n2. Practice Shifting Weight\n- While in a handstand, practice shifting weight from one hand to the other to mimic the walking motion.\n3. Use a Spotter or Safety Mat\n- Have a partner assist you or practice on a soft surface to prevent falls.\n4. Initiate the Walk\n- Begin by leaning slightly forward, allowing momentum to guide you.\n- Step forward one hand at a time, maintaining core tension.\n5. Focus on Controlled Steps\n- Avoid rushing; take small, controlled steps to maintain balance.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/handstand-walk.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Triceps",
+      "Pectoralis Major, Clavicular",
+      "Lateral Deltoid",
+      "Supraspinatus",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Full Body"
+  ],
+  "image_id": "handstand-walk.gif",
+  "name_ru": "Ходьба на руках",
+  "tracking_type": "time_distance"
+}

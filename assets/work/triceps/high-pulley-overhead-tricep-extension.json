@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/high-pulley-overhead-tricep-extension/",
+  "name": "High Pulley Overhead Tricep Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Attach a rope or straight bar handle to a high pulley on a cable machine.\n- Stand facing away from the machine, gripping the handle with both hands.\n- Step forward slightly, keeping your feet shoulder-width apart for balance.\n- Raise the handle overhead, positioning your elbows close to your ears and bent at 90 degrees.\nStep 2: Execution\n1. Extend your arms forward and upward, straightening your elbows until your arms are fully extended.\n2. Squeeze your triceps at the top of the movement.\n3. Slowly return to the starting position, ensuring a controlled motion.\n4. Repeat for 8 to 12 reps, completing 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/High-Pulley-Overhead-Tricep-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Erector Spinae",
+        "Obliques",
+        "Anterior Deltoid"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "High-Pulley-Overhead-Tricep-Extension.gif",
+  "name_ru": "Разгибание рук из-за головы на верхнем блоке",
+  "tracking_type": "weight_reps"
+}

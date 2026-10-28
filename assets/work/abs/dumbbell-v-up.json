@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-v-up/",
+  "name": "Dumbbell V-up",
+  "how_to": "Dumbbell V-up",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Dumbbell-V-up.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques",
+      "Iliopsoas",
+      "Tensor Fasciae Latae",
+      "Pectineus",
+      "Sartorius",
+      "Rectus Femoris",
+      "Adductor Longus",
+      "Adductor Brevis"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Dumbbell-V-up.gif",
+  "name_ru": "Складка с гантелью",
+  "tracking_type": "weight_reps"
+}

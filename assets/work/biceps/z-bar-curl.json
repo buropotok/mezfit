@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/z-bar-curl/",
+  "name": "Z-Bar Curl",
+  "how_to": "Z-Bar Curl Benefits\n- Z-bar curl is one of the most effective arm building exercises you can incorporate into your arm workout program. EZ-bars have an undulating middle section which allows a semi-supinated grip. Z-bar reduces the strain on your wrists. This allows the biceps to be effectively isolated while using a joint-friendly grip. Therefore, it allows you to have a healthier workout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Z-Bar-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachialis"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Z-Bar-Curl.gif",
+  "name_ru": "Сгибания рук с EZ-грифом на бицепс",
+  "tracking_type": "weight_reps"
+}

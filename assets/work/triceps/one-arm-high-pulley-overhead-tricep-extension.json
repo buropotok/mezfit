@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-high-pulley-overhead-tricep-extension/",
+  "name": "One Arm High Pulley Overhead Tricep Extension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-One-Arm-High-Pulley-Overhead-Tricep-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-One-Arm-High-Pulley-Overhead-Tricep-Extension.gif",
+  "name_ru": "Разгибание одной руки из-за головы на верхнем блоке",
+  "tracking_type": "weight_reps"
+}

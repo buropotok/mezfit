@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-single-leg-deadlift/",
+  "name": "Barbell Single Leg Deadlift",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Barbell-Single-Leg-Deadlift.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Barbell-Single-Leg-Deadlift.gif",
+  "name_ru": "Становая тяга со штангой на одной ноге",
+  "tracking_type": "weight_reps"
+}

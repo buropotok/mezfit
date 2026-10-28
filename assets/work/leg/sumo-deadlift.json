@@ -1,0 +1,44 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/sumo-deadlift/",
+  "name": "Sumo Deadlift",
+  "how_to": "Sumo Deadlift",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Barbell-Sumo-Deadlift.gif",
+  "muscles": {
+    "target": [
+      "Erector Spinae"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Quadriceps",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Latissimus Dorsi",
+        "Trapezius",
+        "Levator Scapulae",
+        "Rhomboids"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Barbell-Sumo-Deadlift.gif",
+  "name_ru": "Становая тяга сумо",
+  "tracking_type": "weight_reps"
+}

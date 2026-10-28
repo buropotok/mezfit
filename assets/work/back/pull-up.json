@@ -1,0 +1,43 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pull-up/",
+  "name": "Pull-Up",
+  "how_to": "1. Grip a pull-up bar with your hands shoulder-width apart, palms facing away.\n2. Hang from the bar with arms fully extended, legs straight or slightly bent.\n3. Engage your core and back, then pull your chest toward the bar.\n4. Drive elbows downward, squeezing your shoulder blades together.\n5. Pause briefly at the top, with chin above the bar.\n6. Lower yourself slowly and with control to the starting position.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pull-up.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Teres Major",
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Brachialis",
+      "Pectoralis Minor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Calisthenic"
+  ],
+  "image_id": "Pull-up.gif",
+  "name_ru": "Подтягивания на перекладине",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-twist-with-resistance-band/",
+  "name": "Seated Twist With Resistance Band",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Seated-twist.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Seated-twist.gif",
+  "name_ru": "Повороты корпуса сидя с эспандером",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-neutral-wrist-curl/",
+  "name": "Weighted Neutral Wrist Curl",
+  "how_to": "1. Sit on a bench with your knees bent and feet flat.\n2. Hold a weight plate vertically (rim grip) in one hand using a neutral grip—thumb facing up.\n3. Rest your forearm on your thigh, allowing the wrist to hang just beyond the knee.\n4. Let the plate lower slowly by extending your wrist downward.\n5. Curl the plate back up, flexing the wrist while keeping the forearm still.\n6. Pause briefly at the top, then repeat for 10–15 slow, controlled reps per arm.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Weighted-Wrist-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachioradialis"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Plate"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ],
+  "image_id": "Weighted-Wrist-Curl.gif",
+  "name_ru": "Сгибание кисти нейтральным хватом с диском",
+  "tracking_type": "weight_reps"
+}

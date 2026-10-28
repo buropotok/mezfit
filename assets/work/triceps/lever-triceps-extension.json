@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-triceps-extension/",
+  "name": "Lever Triceps Extension",
+  "how_to": "1. Adjust the Machine\n  - Set the seat height so that your arms align properly with the machine’s lever handles.\n  - Adjust the weight stack to a manageable resistance level.\n2. Position Yourself\n  - Sit with your back firmly against the pad and feet flat on the ground.\n  - Grip the machine handles with palms facing down and elbows bent at about 90 degrees.\n3. Execution\n  - Push the handles down by extending your elbows until your arms are fully straight.\n  - Pause briefly at the bottom to maximize muscle contraction.\n  - Slowly return to the starting position, controlling the movement.\n4. Repetitions and Sets\n  - Perform 3 to 4 sets of 10 to 15 repetitions for optimal results.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Tricep-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Lever-Tricep-Extension.gif",
+  "name_ru": "Разгибание рук на трицепс в тренажёре",
+  "tracking_type": "weight_reps"
+}

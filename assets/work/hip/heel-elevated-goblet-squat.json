@@ -1,0 +1,43 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/heel-elevated-goblet-squat/",
+  "name": "Heel-Elevated Goblet Squat",
+  "how_to": "1. Stand with your heels elevated on weight plates, squat wedges, or a slant board, and your toes flat on the floor.\n2. Hold a dumbbell or kettlebell vertically at chest level with both hands (goblet grip).\n3. Keep your chest tall and core engaged as you begin to descend.\n4. Squat down slowly, allowing your knees to travel forward over your toes while maintaining heel contact with the elevated surface.\n5. Lower to full depth, ideally until your hips are below your knees, then press back up through your midfoot and heels.\n6. Perform for 8–12 reps, focusing on control and posture.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/Heel-Elevated-Goblet-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductors",
+      "Soleus, Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Tibialis Anterior",
+        "Rectus Abdominis, Obliques",
+        "Erector Spinae",
+        "Anterior Deltoids",
+        "Scapular Stabilizers",
+        "Biceps Brachii"
+      ],
+      "antagonist": [
+        "Hip Flexors",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Heel-Elevated-Goblet-Squat.gif",
+  "name_ru": "Приседания с гирей или гантелью у груди и приподнятыми пятками",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/concentration-curl/",
+  "name": "Concentration Curl",
+  "how_to": "To perform a concentration curl, follow these steps:\n\n1. Sit on a bench or chair with your feet flat on the ground and a dumbbell in one hand.\n2. Place your elbow on the inside of your thigh, with your arm fully extended and the dumbbell hanging straight down.\n3. Curl the weight up towards your shoulder, keeping your elbow stationary and your upper arm pressed against your thigh.\n4. Pause at the top of the movement, then slowly lower the weight back down to the starting position.\n5. Repeat for the desired number of repetitions, then switch to the other arm and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Concentration-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachialis"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Concentration-Curl.gif",
+  "name_ru": "Концентрированное сгибание руки с гантелью",
+  "tracking_type": "weight_reps"
+}

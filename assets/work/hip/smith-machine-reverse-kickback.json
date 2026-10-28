@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-reverse-kickback/",
+  "name": "Smith Machine Reverse Kickback",
+  "how_to": "- Adjust the height of the Smith machine bar to hip height.\n- Lie facedown on the bench with your back to the machine, feet hip-width apart, and hands under the bench for support.\n- Keeping your back straight and your core engaged, lift both of your legs behind you as far as you can while squeezing your glutes.\n- Slowly lower your legs back down to the starting position and repeat for the desired number of repetitions.\nSmith Machine Reverse Kickback: Benefits\n- Strengthening the glutes: Smith machine reverse kickback target the glutes in a way many other compound exercises can’t. Reverse kickbacks are exercises that strengthen different hip muscles, and when done with the right form, you’ll have a sculpted thigh, a firm butt, and toned calves.\n- Improving posture: Strong glutes can help improve your posture by supporting your lower back and pelvis, which can help alleviate lower back pain and prevent injuries.\n- Enhancing athletic performance: Strong glutes are essential for many athletic movements, such as running, jumping, and squatting. By strengthening your glutes through exercises like the two-leg glute kickback, you can improve your athletic performance and reduce the risk of injury.\n- Toning the lower body: The reverse glute kickback can help tone and shape the glutes, hamstrings, and calves, which can help improve the appearance of your lower body.\nSmith Machine Reverse Kickback: Muscles Worked\nTarget - Gluteus Maximus\nSynergists - Adductor Magnus\nStabilizers - Gluteus Medius and Minimus\nStabilizers - Erector Spinae\nStabilizers - Obliques\nStabilizers - Quadratus Lumborum\nAntagonist Stabilizers - Hamstrings\nAntagonist Stabilizers - Rectus Abdominis",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Smith-Machine-Reverse-Kickback.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Gluteus Medius and Minimus",
+        "Erector Spinae",
+        "Obliques",
+        "Quadratus Lumborum"
+      ],
+      "antagonist": [
+        "Hamstrings",
+        "Rectus Abdominis"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Smith-Machine-Reverse-Kickback.gif",
+  "name_ru": "Отведение ноги назад в машине Смита",
+  "tracking_type": "weight_reps"
+}

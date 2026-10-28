@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-triceps-dip/",
+  "name": "Lever Triceps Dip",
+  "how_to": "1. Setup:\n  - Adjust the seat height so that your arms are comfortably positioned on the handles.\n  - Sit down and place your feet flat on the floor or on the designated footrest.\n  - Grip the handles firmly according to the design of the machine.\n2. Starting Position:\n  - Keep your chest slightly leaned forward while maintaining a straight back.\n  - Engage your core and position your elbows at about a 90-degree angle.\n3. Execution:\n  - Press down on the handles by extending your elbows, lifting your body against the resistance.\n  - Fully extend your arms at the bottom to engage the triceps completely.\n  - Slowly return to the starting position with controlled movement to maintain muscle tension.\n4. Repetitions and Breathing:\n  - Perform 10-15 repetitions per set, depending on your fitness level.\n  - Inhale while lowering yourself back down and exhale as you press down.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Overhand-Triceps-Dip.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Deltoid, Anterior",
+      "Pectoralis Major",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Lever-Overhand-Triceps-Dip.gif",
+  "name_ru": "Отжимания на трицепс в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

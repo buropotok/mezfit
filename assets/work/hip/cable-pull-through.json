@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-pull-through/",
+  "name": "Cable Pull Through",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Cable-Pull-Through.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip"
+  ],
+  "image_id": "Cable-Pull-Through.gif",
+  "name_ru": "Тяга нижнего блока между ног стоя",
+  "tracking_type": "weight_reps"
+}

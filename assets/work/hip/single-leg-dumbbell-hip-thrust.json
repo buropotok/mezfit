@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-dumbbell-hip-thrust/",
+  "name": "Single-Leg Dumbbell Hip Thrust",
+  "how_to": "Step-by-Step Guide\n1. Setup:\n  - Sit on the floor with your upper back resting against a bench or elevated surface.\n  - Place a dumbbell across your hips and hold it securely.\n  - Bend your knees with one foot flat on the ground and the other leg extended straight.\n2. Body Positioning:\n  - Engage your core and glutes before starting the movement.\n  - Keep your chin tucked and your gaze forward.\n3. Thrusting Motion:\n  - Drive through the heel of your planted foot, pushing your hips upward.\n  - Squeeze your glutes at the top and ensure your hips are fully extended.\n  - Maintain a neutral spine without overarching the lower back.\n4. Lowering Phase:\n  - Slowly lower your hips back to the starting position under control.\n  - Repeat for the desired number of reps, then switch legs.\n5. Repetitions and Sets:\n  - Perform 3 to 4 sets of 8 to 12 reps per leg, depending on your fitness level.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/03/Single-Leg-Dumbbell-Hip-Thrust.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Quadriceps",
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hip External Rotators",
+        "Scapular Stabilizers",
+        "Hamstrings",
+        "Tibialis Anterior"
+      ],
+      "antagonist": [
+        "Obliques",
+        "Rectus Abdominis",
+        "Hip Flexors"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Single-Leg-Dumbbell-Hip-Thrust.gif",
+  "name_ru": "Ягодичный мостик на одной ноге с гантелью и опорой на скамью",
+  "tracking_type": "weight_reps"
+}

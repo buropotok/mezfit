@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-lying-leg-and-hip-raise/",
+  "name": "Banded Lying leg and hip raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Lying-leg-and-hip-raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Lying-leg-and-hip-raise.gif",
+  "name_ru": "Подъём ног и таза лёжа с эспандером",
+  "tracking_type": "weight_reps"
+}

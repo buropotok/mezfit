@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-incline-triceps-extension/",
+  "name": "Cable Incline Triceps Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Adjust an incline bench to a 45 to 60-degree angle and place it near a low cable pulley.\n- Attach a straight bar or rope handle to the cable machine.\n- Lie on your back on the bench and grasp the handle from underneath, with your hands shoulder-width apart.\n- Extend your arms straight up, positioning them perpendicular to the floor.\nStep 2: Execution\n1. Slowly lower the handle behind your head by bending your elbows.\n2. Keep your upper arms stationary while allowing only your forearms to move.\n3. Lower the handle until you feel a deep stretch in the triceps.\n4. Pause briefly, then extend your arms to return to the starting position.\n5. Repeat for 8 to 12 reps, completing 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Cable-Incline-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-Incline-Triceps-Extension.gif",
+  "name_ru": "Разгибание рук на трицепс на блоке на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

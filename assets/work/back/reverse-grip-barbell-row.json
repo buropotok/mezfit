@@ -1,0 +1,48 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-grip-barbell-row/",
+  "name": "Reverse Grip Barbell Row",
+  "how_to": "1. Setup: Stand with your feet shoulder-width apart, toes pointing forward, and the barbell in front of you on the floor. For the Reverse Grip Barbell Row, take an underhand grip on the barbell (palms facing up), with your hands positioned slightly wider than shoulder-width apart.\n2. Bend at the Hips: Hinge at your hips while keeping your back straight. Lower your torso until it is almost parallel to the floor. Keep your knees slightly bent throughout the movement.\n3. Grasp the Barbell: Reach down and grip the barbell with the underhand grip. Your arms should be fully extended, and your grip should be firm.\n4. Starting Position: Your back should be flat, chest out, and shoulder blades pulled back and down. This is the starting position.\n5. The Row: Pull the barbell towards your upper abdomen or lower chest while keeping your elbows close to your body. Focus on squeezing your shoulder blades together at the top of the movement to engage your back muscles fully.\n6. Lower the Barbell: Slowly lower the barbell back down to the starting position while maintaining control. Do not allow the weight to pull you forward; instead, control the descent.\n7. Repeat: Perform the desired number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Reverse-Grip-Barbell-Row.gif",
+  "muscles": {
+    "target": [
+      "Back"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Teres Major",
+      "Rhomboids",
+      "Brachialis",
+      "Brachioradialis",
+      "Pectoralis Major"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps",
+        "Erector Spinae",
+        "Hamstrings",
+        "Gluteus Maximus",
+        "Quadriceps",
+        "Adductor Magnus"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Reverse-Grip-Barbell-Row.gif",
+  "name_ru": "Тяга штанги в наклоне обратным хватом",
+  "tracking_type": "weight_reps"
+}

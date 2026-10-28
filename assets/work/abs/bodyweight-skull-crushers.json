@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-skull-crushers/",
+  "name": "Bodyweight Skull Crushers",
+  "how_to": "Step 1: Setup\n1. Find a stable bar (such as a Smith machine, squat rack, or parallel bars).\n2. Adjust the bar height based on your strength level: higher bars are easier, and lower bars increase difficulty.\n3. Stand facing the bar, grip it with an overhand shoulder-width grip, and step back into a diagonal plank position.\nStep 2: Lowering Phase\n1. Keep your body straight from head to heels, engaging your core and glutes.\n2. Bend your elbows and lower your head toward the bar.\n3. Lower yourself under control until your forehead is just above the bar.\nStep 3: Pressing Phase\n1. Push through your triceps, extending your elbows to return to the starting position.\n2. Keep your elbows close to your body to maximize triceps activation.\n3. Repeat for the desired reps, maintaining proper form throughout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Bodyweight-Skull-Crushers.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Calisthenic",
+    "Full Body",
+    "Triceps"
+  ],
+  "image_id": "Bodyweight-Skull-Crushers.gif",
+  "name_ru": "Французские отжимания с собственным весом",
+  "tracking_type": "weight_reps"
+}

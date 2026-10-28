@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-dumbbell-y-raise/",
+  "name": "Incline Dumbbell Y-Raise",
+  "how_to": "To perform a Y-raise, follow these steps:\n\nThe Incline Dumbbell Y-raise is performed on an incline bench set at an angle of 30 to 45 degrees.\n\n1. Lie face down on an exercise ball or bench, with your chest and hips supported and your feet on the ground.\n2. Hold a light dumbbell in each hand, with your palms facing in and your arms straight.\n3. Keeping your arms straight and your head aligned with your spine, lift your arms up and out to form a “Y” shape with your body.\n4. Pause briefly at the top of the movement, then lower the weights back down to the starting position.\nPersonal Trainer Tips: As with any exercise, it’s important to use proper form and start with a light weight or no weight at all, gradually increasing the weight as you get stronger. If you experience any pain or discomfort during the exercise, stop and consult a healthcare professional.\n\nDifficulty: Performing the 45-degree Y-raise on an incline bench adds an extra challenge to the exercise, as you have to work against gravity to lift the weights higher. This can increase the intensity of the exercise and lead to greater gains in strength and muscle activation.\n\nWhat are the Benefits of the Cable Y Raise?\nImproved upper back and shoulder strength: The incline dumbbell Y-raise targets the rotator cuff muscles, middle and lower trapezius, and posterior deltoids, which are important muscles for maintaining good posture and shoulder stability. By strengthening these muscles, you can increase your upper body strength and reduce the risk of injury.\n\nImproved scapular mobility: The incline dumbbell Y-Raise requires a greater range of motion, which can help improve scapular mobility and range of motion. This may be particularly beneficial for athletes who require a lot of overhead movement, such as gymnasts or swimmers.\n\nIn general, it is a rehabilitation exercise that increases range of motion and strength throughout the entire shoulder complex. When done correctly, it can effectively target your neck, shoulders, upper back, upper body. It is an effective exercise that you can include in your training program with light to medium weights to isolate the posterior shoulder muscles, strengthen the rotator cuff muscles, and improve stability and flexibility.\n\nIncline Dumbbell Y-Raise – Muscles Worked\nThe Incline Dumbbell Y-raise targets the upper back and shoulder muscles, specifically the lateral and posterior deltoids, middle and lower trapezius, rotator cuff muscles, and rhomboids.\n\nTarget - Deltoids (Posterior, Lateral)\nSynergists - Trapezius (Lower, Middle)\nSynergists - Infraspinatus\nSynergists - Teres Minor\nSynergists - Anterior Deltoid\nSynergists - Supraspinatus\nSynergists - Rhomboids\nSynergists - Serratus Anterior\nStabilizers - Levator Scapula\nStabilizers -Upper Trapezius",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Incline-Dumbbell-Y-Raise.gif",
+  "muscles": {
+    "target": [
+      "Deltoids (Posterior, Lateral)"
+    ],
+    "synergists": [
+      "Trapezius (Lower, Middle)",
+      "Infraspinatus",
+      "Teres Minor",
+      "Anterior Deltoid",
+      "Supraspinatus",
+      "Rhomboids",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levator Scapula",
+        "Upper Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Incline-Dumbbell-Y-Raise.gif",
+  "name_ru": "Подъём гантелей буквой Y на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-one-arm-floor-press/",
+  "name": "Barbell One Arm Floor Press",
+  "how_to": "Step 1: Setup\n- Position a loaded barbell on the floor with light weight.\n- Lie down with your body perpendicular to the bar, with the bar positioned above one shoulder.\n- Bend your knees slightly or keep your legs extended to increase core challenge.\n- Grip the barbell with one hand in a neutral or overhand grip near the sleeve.\n- Use your free hand to help lift the bar into position if needed.\nStep 2: Execution\n- Press the barbell upward by extending your arm, making sure the bar stays balanced and aligned over your shoulder.\n- Pause briefly at the top, keeping your wrist stacked over the elbow and the bar centered.\n- Slowly lower the bar down until your triceps lightly touch the floor.\n- Keep your elbow close to your side during the descent.\n- Complete the desired reps, then switch arms and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Barbell-One-Arm-Floor-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "image_id": "Barbell-One-Arm-Floor-Press.gif",
+  "name_ru": "Жим штанги одной рукой лёжа на полу",
+  "tracking_type": "weight_reps"
+}

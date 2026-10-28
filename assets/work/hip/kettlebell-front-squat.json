@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kettlebell-front-squat/",
+  "name": "Kettlebell Front Squat",
+  "how_to": "1. Stand with feet shoulder-width apart, holding a kettlebell in each hand in the front-rack position near your collarbone.\n2. Keep your elbows tucked in and wrists neutral while engaging your core.\n3. Push your hips back and bend your knees to lower into a squat.\n4. Descend until your thighs are at least parallel to the ground, keeping your chest up and back flat.\n5. Drive through your heels to stand back up to the starting position. Repeat for the desired number of reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Kettlebell-front-squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductors",
+      "Soleus, Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Tibialis Anterior",
+        "Rectus Abdominis, Obliques",
+        "Erector Spinae",
+        "Anterior Deltoids",
+        "Scapular Stabilizers",
+        "Biceps Brachii"
+      ],
+      "antagonist": [
+        "Hip Flexors",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Kettlebell-front-squat.gif",
+  "name_ru": "Приседания с гирей перед собой",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-hip-thrust/",
+  "name": "Smith Machine Hip Thrust",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Smith-Machine-Hip-Thrust.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Smith-Machine-Hip-Thrust.gif",
+  "name_ru": "Ягодичный мостик в машине Смита",
+  "tracking_type": "weight_reps"
+}

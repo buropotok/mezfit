@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-kettlebell-goblet-squat/",
+  "name": "Banded Kettlebell Goblet Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Banded-Kettlebell-Goblet-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Banded-Kettlebell-Goblet-Squat.gif",
+  "name_ru": "Приседания с гирей у груди и эспандером",
+  "tracking_type": "weight_reps"
+}

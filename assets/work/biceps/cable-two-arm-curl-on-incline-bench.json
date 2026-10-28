@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-two-arm-curl-on-incline-bench/",
+  "name": "Cable Two Arm Curl on Incline Bench",
+  "how_to": "1",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Two-Arm-Curl-on-Incline-Bench.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Cable-Two-Arm-Curl-on-Incline-Bench.gif",
+  "name_ru": "Сгибание рук на блоке на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

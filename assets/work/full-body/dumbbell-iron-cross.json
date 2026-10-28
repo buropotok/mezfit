@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-iron-cross/",
+  "name": "Dumbbell Iron Cross",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Dumbbell-Iron-Cross.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg",
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-Iron-Cross.gif",
+  "name_ru": "«Железный крест» с гантелями",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-4-ways-lateral-raise/",
+  "name": "Dumbbell 4 Way Lateral Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Dumbbell-4-Ways-Lateral-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-4-Ways-Lateral-Raise.gif",
+  "name_ru": "Подъём гантелей через стороны в четырёх направлениях",
+  "tracking_type": "weight_reps"
+}

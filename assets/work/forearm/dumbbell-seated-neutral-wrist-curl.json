@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-seated-neutral-wrist-curl/",
+  "name": "Dumbbell Seated Neutral Wrist Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Dumbbell-Seated-Neutral-Wrist-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ],
+  "image_id": "Dumbbell-Seated-Neutral-Wrist-Curl.gif",
+  "name_ru": "Сгибания кистей с гантелями сидя нейтральным хватом",
+  "tracking_type": "weight_reps"
+}

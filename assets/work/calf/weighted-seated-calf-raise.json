@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-seated-calf-raise/",
+  "name": "Weighted Seated Calf Raise",
+  "how_to": "1. Setup: Sit upright on a bench with a dumbbell resting on your thighs just above the knees.\n2. Foot Position: Place the balls of your feet on a raised platform with your heels hanging off the edge. Keep feet shoulder-width apart.\n3. Starting Position: Hold the dumbbell securely with your hands. Keep your core tight and your torso upright.\n4. Raise the Heels: Press through the balls of your feet to lift your heels as high as possible, squeezing your calves at the top.\n5. Pause at the Top: Hold the peak contraction for 1–2 seconds for maximum activation.\n6. Lower Slowly: Lower your heels until they’re just below the platform to feel a deep stretch in the calves.\n7. Repeat: Perform the desired number of repetitions in a controlled, deliberate manner.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Weighted-Seated-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Soleus"
+    ],
+    "synergists": [
+      "Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym",
+    "Plate"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Weighted-Seated-Calf-Raise.gif",
+  "name_ru": "Подъёмы на носки сидя с отягощением",
+  "tracking_type": "weight_reps"
+}

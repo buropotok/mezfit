@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-jump-squat/",
+  "name": "Barbell Jump Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/Barbell-Jump-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Barbell-Jump-Squat.gif",
+  "name_ru": "Приседания с прыжком со штангой",
+  "tracking_type": "weight_reps"
+}

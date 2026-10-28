@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-pin-squat/",
+  "name": "Barbell Pin Front Squat",
+  "how_to": "1. Set the safety pins in a power rack to just below your front squat bottom position. Place the barbell on the pins.\n2. Step under the bar, assuming a front rack position with elbows high and chest upright.\n3. Brace your core and position your feet shoulder-width apart with toes slightly out.\n4. Drive upward through your heels, lifting the bar off the pins until you reach a full standing position.\n5. Lower the bar under control back onto the pins to complete one rep. Pause briefly before the next rep.\n6. Repeat for the desired number of reps, maintaining a strong core and upright posture.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Barbell-Pin-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Trapezius",
+        "Deltoid, Anterior",
+        "Levator Scapulae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Barbell-Pin-Squat.gif",
+  "name_ru": "Фронтальные приседания со штангой от ограничителей",
+  "tracking_type": "weight_reps"
+}

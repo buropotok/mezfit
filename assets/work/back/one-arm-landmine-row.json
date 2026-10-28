@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-landmine-row/",
+  "name": "One Arm Landmine Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/One-Arm-Landmine-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Shoulders"
+  ],
+  "image_id": "One-Arm-Landmine-Row.gif",
+  "name_ru": "Тяга лэндмайн-грифа одной рукой",
+  "tracking_type": "weight_reps"
+}

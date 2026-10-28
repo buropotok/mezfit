@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-preacher-hammer-curl/",
+  "name": "Dumbbell Preacher Hammer (Scott) Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Dumbbell-Preacher-Hammer-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps",
+    "Forearm"
+  ],
+  "image_id": "Dumbbell-Preacher-Hammer-Curl.gif",
+  "name_ru": "Молотковые сгибания с гантелью на скамье Скотта",
+  "tracking_type": "weight_reps"
+}

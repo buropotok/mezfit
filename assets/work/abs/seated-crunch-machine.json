@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-crunch-machine/",
+  "name": "Seated Crunch Machine",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Seated-Crunch-Machine.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Seated-Crunch-Machine.gif",
+  "name_ru": "Скручивания сидя в тренажёре",
+  "tracking_type": "weight_reps"
+}

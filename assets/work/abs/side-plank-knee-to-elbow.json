@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-plank-knee-to-elbow/",
+  "name": "Side Plank Knee to Elbow",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Side-Plank-Knee-to-Elbow-.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Side-Plank-Knee-to-Elbow-.gif",
+  "name_ru": "Подтягивание колена к локтю в боковой планке",
+  "tracking_type": "weight_reps"
+}

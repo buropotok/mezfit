@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/stationary-bike-run/",
+  "name": "Stationary Bike Run",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Stationary-Bike-Run.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Stationary-Bike-Run.gif",
+  "name_ru": "Занятие на велотренажёре",
+  "tracking_type": "time_distance"
+}

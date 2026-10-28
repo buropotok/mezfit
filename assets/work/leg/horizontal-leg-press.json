@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/horizontal-leg-press/",
+  "name": "Horizontal Leg Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Lever-Horizontal-Leg-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Lever-Horizontal-Leg-Press.gif",
+  "name_ru": "Горизонтальный жим ногами в тренажёре",
+  "tracking_type": "weight_reps"
+}

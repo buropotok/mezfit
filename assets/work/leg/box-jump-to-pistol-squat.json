@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/box-jump-to-pistol-squat/",
+  "name": "Box Jump to Pistol Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/02/Box-Jump-to-Pistol-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Box-Jump-to-Pistol-Squat.gif",
+  "name_ru": "Прыжок на тумбу с переходом в приседание на одной ноге",
+  "tracking_type": "weight_reps"
+}

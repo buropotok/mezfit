@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/face-pull/",
+  "name": "Face Pull",
+  "how_to": "1. Set Up: Attach a rope handle to a cable machine or use resistance bands at chest or eye level.\n2. Grip: Hold the handles with an overhand grip, palms facing down.\n3. Position: Stand tall with feet shoulder-width apart, engaging your core.\n4. Execution:\n  - Pull the rope toward your face, elbows flaring outward.\n  - Squeeze your shoulder blades together at the peak of the movement.\n  - Slowly return to the starting position.\nTips for Effective Face Pulls\n- Focus on Form: Pull the rope or band towards your face while keeping your elbows high and flaring outward. Avoid shrugging your shoulders.\n- Controlled Tempo: Perform the movement slowly, focusing on the squeeze in your upper back and rear delts at the end of the pull.\n- Choose the Right Resistance: Use a moderate weight to ensure proper activation of the target muscles without compromising form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Face-Pull.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Brachioradialis",
+      "Brachialis",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Face-Pull.gif",
+  "name_ru": "Тяга каната к лицу",
+  "tracking_type": "weight_reps"
+}

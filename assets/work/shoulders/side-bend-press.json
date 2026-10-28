@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-bend-press/",
+  "name": "Side Bend Press | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Side-Bend-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Side-Bend-Press.gif",
+  "name_ru": "Жим гимстика с боковым наклоном корпуса",
+  "tracking_type": "weight_reps"
+}

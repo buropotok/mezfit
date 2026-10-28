@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-side-crunch/",
+  "name": "Seated Side Crunch",
+  "how_to": "Seated Side Crunch Benefits\n- Wall seated side crunch is an advanced exercise developed to shape, tighten and strengthen oblique muscles. To take the exercise to a higher level, you can make the movement difficult by taking a weight in your hand. In addition, exercise can help increase the endurance of the leg muscles by providing an isometric contraction.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Seated-Side-Crunches.gif",
+  "muscles": {
+    "target": [
+      "Obliques"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Quadriceps",
+        "Serratus Anterior",
+        "Hamstring",
+        "Calves"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Leg"
+  ],
+  "image_id": "Seated-Side-Crunches.gif",
+  "name_ru": "Боковые скручивания сидя",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-shoulder-adduction/",
+  "name": "Banded Shoulder Adduction",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Banded-Shoulder-Adduction.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest"
+  ],
+  "image_id": "Banded-Shoulder-Adduction.gif",
+  "name_ru": "Приведение плеча с резиновой лентой",
+  "tracking_type": "weight_reps"
+}

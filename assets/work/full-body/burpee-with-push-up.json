@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/burpee-with-push-up/",
+  "name": "Burpee With Push-Up",
+  "how_to": "1. Starting Position: Stand tall with feet shoulder-width apart, arms at your sides.\n2. Squat Down: Lower into a squat and place your hands flat on the ground in front of you.\n3. Kick Back: Jump your feet backward into a high plank position, keeping your body in a straight line.\n4. Push-Up: Perform a controlled push-up, lowering your chest toward the ground and pressing back up.\n5. Return: Jump your feet forward back into the squat position.\n6. Explosive Jump: Drive upward into a vertical jump, reaching overhead.\n7. Repeat for the desired number of reps or time.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/08/Burpee-with-Push-Up.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major",
+      "Triceps Brachii",
+      "Rectus Abdominis",
+      "Anterior Deltoid",
+      "Quadriceps",
+      "Gluteus Maximus",
+      "Calves",
+      "Obliques",
+      "Hamstring",
+      "Hip Flexors",
+      "Trapezius",
+      "Biceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "Burpee-with-Push-Up.gif",
+  "name_ru": "Бёрпи с отжиманием",
+  "tracking_type": "time_reps"
+}

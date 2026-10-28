@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-gripless-shrug/",
+  "name": "Lever Gripless Shrug",
+  "how_to": "Lever Gripless Shrug / Benefits\n- A strong and tight trapezius muscle supports your neck by preventing your head from falling forward and allows you to stand upright. Lever Gripless Shrug is a strength exercise that works your upper traps. Also known as the standing calf raise machine shrug or simply the machine shrug. As long as you practice the correct form during this exercise, you can develop some pretty strong traps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Gripless-Shrug.gif",
+  "muscles": {
+    "target": [
+      "Trapezius, Upper"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Trapezius, Middle"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Trapezius"
+  ],
+  "image_id": "Lever-Gripless-Shrug.gif",
+  "name_ru": "Шраги без хвата в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

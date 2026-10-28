@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-box-jump/",
+  "name": "Single Leg Box Jump",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/02/Single-Leg-Box-Jump.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Single-Leg-Box-Jump.gif",
+  "name_ru": "Прыжки на тумбу на одной ноге",
+  "tracking_type": "weight_reps"
+}

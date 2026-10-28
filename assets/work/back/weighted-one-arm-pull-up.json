@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-one-arm-pull-up/",
+  "name": "Weighted One Arm Pull-up",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Weighted-One-Arm-Pull-up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Weighted-One-Arm-Pull-up.gif",
+  "name_ru": "Подтягивания на одной руке с отягощением",
+  "tracking_type": "weight_reps"
+}

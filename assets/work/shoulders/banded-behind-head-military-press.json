@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-behind-head-military-press/",
+  "name": "Behind the Head Military Press | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Standing-Behind-Head-Military-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Standing-Behind-Head-Military-Press.gif",
+  "name_ru": "Жим гимстика из-за головы",
+  "tracking_type": "weight_reps"
+}

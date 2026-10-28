@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/farmers-walk/",
+  "name": "Farmer’s Walk",
+  "how_to": "1. Begin by selecting two heavy objects or weights of equal weight. These can be dumbbells, kettlebells, barbells, sandbags, or other heavy objects with handles.\n2. Stand upright with a neutral spine and a tight core.\n3. Pick up the weights, one in each hand, with a neutral grip (palms facing each other).\n4. Maintain an upright posture, keep your shoulders back, and avoid excessive leaning forward or backward.\n5. Walk a predetermined distance or for a set amount of time while holding the weights at your sides.\n6. Once you reach the end of your walking distance or time, carefully set the weights down.\nFarmer’s Walk Benefits\n1. Strength and Muscle Development: The Farmer’s Walk is an excellent compound exercise that engages multiple muscle groups simultaneously. It primarily targets the muscles in your grip, forearms, upper back, shoulders, traps, and core. It also works your leg muscles as you walk with the heavy weights.\n2. Functional Strength: This exercise mimics real-life activities like carrying groceries or moving heavy objects, making it highly functional for daily life.\n3. Improved Grip Strength: Holding heavy weights for an extended period significantly improves your grip strength, which can benefit other exercises and activities.\n4. Enhanced Posture and Core Stability: To perform the Farmer’s Walk effectively, you must maintain good posture and engage your core, which helps improve overall stability and posture.\n5. Cardiovascular Fitness: While not as intense as traditional cardiovascular exercises, the Farmer’s Walk can elevate your heart rate and contribute to cardiovascular conditioning, especially when done for longer distances or periods.\n6. Mental Toughness: Carrying heavy weights for an extended time can be mentally challenging and can help build mental toughness and discipline.\nFarmer’s Walk- Muscles Worked\nFarmer’s walks are a compound exercise that primarily works your glutes, quads, hamstrings, as well as your traps, shoulders and arm muscles. In addition, spinal muscles, core muscles and other body muscles are involved in the movement to aid balance, support and stabilization.\n\nGluteus Maximus\nQuadriceps\nHamstrings\nAdductor Magnus\nSoleus\nGastrocnemius\nStabilizers - Wrist Flexors\nStabilizers - Biceps Brachii\nStabilizers - Triceps Brachii\nStabilizers - Trapezius\nStabilizers - Deltoids\nStabilizers - Levator Scapulae\nStabilizers - Rhomboids\nStabilizers - Erector Spinae\nStabilizers - Rectus Abdominis\nStabilizers - Obliques",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Farmers-walk_Cardio.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors",
+        "Biceps Brachii",
+        "Triceps Brachii",
+        "Trapezius",
+        "Deltoids",
+        "Levator Scapulae",
+        "Rhomboids",
+        "Erector Spinae",
+        "Rectus Abdominis",
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "Farmers-walk_Cardio.gif",
+  "name_ru": "Прогулка фермера с отягощением",
+  "tracking_type": "time_weight"
+}

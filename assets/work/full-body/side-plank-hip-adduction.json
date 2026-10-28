@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-plank-hip-adduction/",
+  "name": "Side Plank Hip Adduction",
+  "how_to": "Step-by-Step Guide\n1. Setup:\n  - Position yourself next to a bench or an elevated surface.\n  - Lie on your side with your top leg resting on the bench.\n  - Support yourself on your forearm or hand, maintaining a neutral spine.\n2. Engage Your Core and Lift:\n  - Press through the top leg and lift your hips into a side plank position.\n  - Your bottom leg should be hanging beneath the bench.\n  - Keep your body in a straight line from head to foot.\n3. Perform the Hip Adduction:\n  - Lift your bottom leg toward your top leg using inner thigh strength.\n  - Hold briefly at the top to maximize muscle activation.\n  - Slowly lower the bottom leg back down under control.\n4. Repetitions and Sets:\n  - Perform 3 to 4 sets of 8 to 12 reps per side, depending on your fitness level.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/03/Side-Plank-Hip-Adduction-Copenhagen-adduction.gif",
+  "muscles": {
+    "target": [
+      "Obliques",
+      "Gluteus Maximus",
+      "Rectus Abdominis",
+      "Hip Flexors",
+      "Quadriceps",
+      "Shoulders",
+      "Trapezius"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Full Body",
+    "Hip"
+  ],
+  "image_id": "Side-Plank-Hip-Adduction-Copenhagen-adduction.gif",
+  "name_ru": "Боковая планка с приведением бедра",
+  "tracking_type": "weight_reps"
+}

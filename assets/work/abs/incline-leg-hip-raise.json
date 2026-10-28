@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-leg-hip-raise/",
+  "name": "Incline Leg Hip Raise",
+  "how_to": "Incline Leg Hip Raise Benefits\n- The incline leg hip raise is an exercise designed to shape, tighten and strengthen the abdominal muscles. With this exercise performed on the incline bench, you can focus more on the lower abdominal muscles and strengthen your core muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Incline-Leg-Hip-Raise.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Incline-Leg-Hip-Raise.gif",
+  "name_ru": "Подъём ног и таза на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

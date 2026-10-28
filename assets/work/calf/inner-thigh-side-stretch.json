@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/inner-thigh-side-stretch/",
+  "name": "Inner Thigh Side Stretch",
+  "how_to": "Dynamic stretching consists of active movements. It is usually done before a workout to help warm up your muscles and increase your heart rate. Move slowly, stop and repeat, dig a little deeper each time and improve your range of motion.\n\nStatic stretching is typically done at the end of your workout, once your muscles are warm and relaxed. Hold the stretch for 15 to 40 seconds. Return to the starting position and repeat on the other side.\n\nInner Thigh Side Stretch Benefits\n- The adductor group is located on the inside of the leg and consists of the pectineus, adductor brevis, adductor longus, adductor magnus and gracilis. The best way to keep these muscles relaxed and flexible is by including dynamic stretches in your warm-up and static stretches in your cooldown routine. Stretching your adductors regularly can improve your flexibility and performance, and also prevent injury and stiffness.\n- Pre-workout dynamic stretching improves circulation, prepares your muscles for movement, and temporarily increases your range of motion.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/INNER-THIGH-SIDE-STRETCH.gif",
+  "muscles": {
+    "target": [
+      "Adductor Magnus",
+      "Gracilis",
+      "Pectineus",
+      "Adductor Brevis",
+      "Hamstrings",
+      "Quadriceps",
+      "Calves"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "INNER-THIGH-SIDE-STRETCH.gif",
+  "name_ru": "Боковая растяжка внутренней поверхности бедра",
+  "tracking_type": "time"
+}

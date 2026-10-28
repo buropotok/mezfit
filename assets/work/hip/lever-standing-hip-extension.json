@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-standing-hip-extension/",
+  "name": "Lever Standing Hip Extension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/11/Lever-Standing-Hip-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Lever-Standing-Hip-Extension.gif",
+  "name_ru": "Разгибание бедра стоя в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

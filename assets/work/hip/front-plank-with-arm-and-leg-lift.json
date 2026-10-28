@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/front-plank-with-arm-and-leg-lift/",
+  "name": "Front Plank With Arm And Leg Lift",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Front-Plank-With-Arm-And-Leg-Lift.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Front-Plank-With-Arm-And-Leg-Lift.gif",
+  "name_ru": "Планка с одновременным подъёмом руки и ноги",
+  "tracking_type": "weight_reps"
+}

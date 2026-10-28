@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/squat-on-the-abductor-machine/",
+  "name": "Squat on The Abductor Machine",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Squat-on-The-Abductor-Machine.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Squat-on-The-Abductor-Machine.gif",
+  "name_ru": "Приседания в тренажёре для отведения бёдер",
+  "tracking_type": "weight_reps"
+}

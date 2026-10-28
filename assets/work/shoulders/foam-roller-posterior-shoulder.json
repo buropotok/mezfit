@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/foam-roller-posterior-shoulder/",
+  "name": "Foam Roller Posterior Shoulder",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Foam-Roller-Posterior-Shoulder.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Foam Roller",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Foam-Roller-Posterior-Shoulder.gif",
+  "name_ru": "Миофасциальный релиз задней поверхности плеча роликом",
+  "tracking_type": "time"
+}

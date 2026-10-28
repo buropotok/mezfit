@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/box-jump-1-to-2/",
+  "name": "Box Jump 1 to 2",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/02/Box-Jump-1-to-2.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Box-Jump-1-to-2.gif",
+  "name_ru": "Прыжок на тумбу с одной ноги на две",
+  "tracking_type": "weight_reps"
+}

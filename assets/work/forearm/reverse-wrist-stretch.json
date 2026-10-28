@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-wrist-stretch/",
+  "name": "Reverse Wrist Stretch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/03/reverse-Wrist-Stretch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ],
+  "image_id": "reverse-Wrist-Stretch.gif",
+  "name_ru": "Растяжка разгибателей запястья",
+  "tracking_type": "time"
+}

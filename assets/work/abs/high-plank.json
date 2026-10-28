@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/high-plank/",
+  "name": "High Plank",
+  "how_to": "1. Start in a push-up position, with hands directly under the shoulders and legs extended behind you.\n2. Engage your core, squeeze your glutes, and keep your body in a straight line from head to heels.\n3. Press firmly through the hands, keeping your shoulders active and stable.\n4. Hold the position while breathing steadily, avoiding any sagging or arching.\n5. Begin with 20–30 seconds, gradually increasing time as strength improves.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/07/High-Plank.gif",
+  "muscles": {
+    "target": [
+      "Obliques",
+      "Deltoids",
+      "Trapezius",
+      "Triceps Brachii",
+      "Quadriceps",
+      "Gluteus Maximus",
+      "Erector Spinae",
+      "High Plank Variations",
+      "Plank"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Calisthenic"
+  ],
+  "image_id": "High-Plank.gif",
+  "name_ru": "Планка на прямых руках",
+  "tracking_type": "time"
+}

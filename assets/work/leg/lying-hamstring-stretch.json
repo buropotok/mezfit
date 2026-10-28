@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lying-hamstring-stretch/",
+  "name": "Lying Hamstring Stretch",
+  "how_to": "Dynamic stretching consists of active movements. It is usually done before a workout to help warm up your muscles and increase your heart rate. Move slowly, stop and repeat, dig a little deeper each time and improve your range of motion.\n\nStatic stretching is typically done at the end of your workout, once your muscles are warm and relaxed. Hold the stretch for 15 to 40 seconds. Return to the starting position and repeat on the other side.\n\nLying Hamstring Stretch / Benefits\n- Hamstring stretches will help keep the muscles flexible and mobile. The best way to keep these muscles relaxed and flexible is by including dynamic stretches in your warm-up and static stretches in your cooldown routine. Stretching your hamstring regularly can improve your flexibility and performance, and also prevent injury and stiffness. Pre-workout dynamic stretching improves circulation, prepares your muscles for movement, and temporarily increases your range of motion.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Hamstrings-Lying-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Hamstring",
+      "Calf Muscles"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Hamstrings-Lying-Stretch.gif",
+  "name_ru": "Растяжка задней поверхности бедра лёжа",
+  "tracking_type": "time"
+}

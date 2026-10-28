@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-side-bend/",
+  "name": "Standing side bend",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/standing-side-bend.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Back / Wing"
+  ],
+  "image_id": "standing-side-bend.gif",
+  "name_ru": "Боковые наклоны корпуса стоя",
+  "tracking_type": "weight_reps"
+}

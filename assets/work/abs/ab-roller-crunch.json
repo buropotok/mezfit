@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ab-roller-crunch/",
+  "name": "Ab Roller Crunch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/12/Ab-Roller-Crunch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Ab-Roller-Crunch.gif",
+  "name_ru": "Скручивания в роликовом тренажёре для пресса",
+  "tracking_type": "weight_reps"
+}

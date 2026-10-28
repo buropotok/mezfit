@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/full-range-of-motion-lat-pulldown/",
+  "name": "Full Range Of Motion Lat Pulldown",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Full-Range-Of-Motion-Lat-Pulldown.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Shoulders"
+  ],
+  "image_id": "Full-Range-Of-Motion-Lat-Pulldown.gif",
+  "name_ru": "Тяга верхнего блока в полной амплитуде",
+  "tracking_type": "weight_reps"
+}

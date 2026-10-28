@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-preacher-curl/",
+  "name": "Single Arm Cable Preacher Curl",
+  "how_to": "Here are the steps to perform the single arm cable preacher curl:\n\n1. Adjust the preacher curl attachment of the cable machine so that the seat and armrest are in a comfortable position for you.\n2. Choose the appropriate weight and attach a handle to the cable.\n3. Sit on the seat, and position your arm over the armrest with your elbow slightly bent and your hand holding the handle.\n4. Keeping your elbow stationary, curl the handle towards your shoulder, contracting your biceps muscle.\n5. Pause for a moment at the top of the movement, then slowly lower the handle back down to the starting position.\n6. Repeat the exercise for the desired number of repetitions, then switch arms and perform the same movement with the other arm.\nSingle Arm Cable Preacher Curl –",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/cable-preacher-curls.gif",
+  "muscles": {
+    "target": [
+      "Brachialis"
+    ],
+    "synergists": [
+      "Biceps Brachii",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "cable-preacher-curls.gif",
+  "name_ru": "Сгибание одной руки на скамье Скотта с блоком",
+  "tracking_type": "weight_reps"
+}

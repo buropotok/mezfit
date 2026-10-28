@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/nordic-hamstring-curl/",
+  "name": "Nordic Hamstring Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Nordic-Hamstring-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Nordic-Hamstring-Curl.gif",
+  "name_ru": "Нордические сгибания ног",
+  "tracking_type": "weight_reps"
+}

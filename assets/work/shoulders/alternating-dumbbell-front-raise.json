@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/alternating-dumbbell-front-raise/",
+  "name": "Alternating Dumbbell Front Raise",
+  "how_to": "Starting Position: Simply begin by standing with dumbbells in your hands with the back of your hands facing forwards.\n\nForm: Exhale and alternately raise your arms in front of your body. Only lift to about 90 degrees. Hold briefly at the top and then slowly return to the starting position.\n\nPersonal Trainer Tips: Engage your abdominal muscles and keep your lower back stable as you lift towards the front. It is very easy to use momentum and move out of good posture during the exercise.\n\nAlternating Dumbbell Front Raise – Benefits\n- The Dumbbell front raise is a isole exercise that targets the fronts and sides of the shoulders. Suitable for all levels, this shoulder flexion exercise is a good option for building strength, improving shoulder mobility and shaping your shoulder heads.\nFront Raises complement Lateral Raises which emphasize the middle deltoid and Reverse Flyes, which emphasize the posterior deltoid.\n\nThese are all isolation dumbbell exercises that focus on the three parts of the shoulder.\n\nAlternating Dumbbell Front Raise – Muscles Worked\nTarget - Anterior Deltoid\nSynergists - Pectoralis Major, Clavicular\nSynergists - Lateral Deltoid\nSynergists - Trapezius\nSynergists - Serratus Anterior\nStabilizers - Trapezius, Upper\nStabilizers - Wrist Extensors\nStabilizers - Levator Scapulae",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Alternating-Dumbbell-Front-Raise.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Trapezius, Upper",
+        "Wrist Extensors",
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Alternating-Dumbbell-Front-Raise.gif",
+  "name_ru": "Попеременный подъём гантелей перед собой",
+  "tracking_type": "weight_reps"
+}

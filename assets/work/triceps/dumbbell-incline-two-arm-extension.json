@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-incline-two-arm-extension/",
+  "name": "Dumbbell Incline Two-Arm Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Set an incline bench to about 30 to 45 degrees.\n- Sit on the bench with a dumbbell in each hand, palms facing each other. (Can be done with a single dumbbell)\n- Press the dumbbells overhead until your arms are fully extended.\n- Keep your core engaged and back firmly against the bench.\nStep 2: Execution\n1. Slowly lower the dumbbells behind your head by bending your elbows.\n2. Keep your upper arms stationary while your forearms move downward.\n3. Lower the dumbbells until you feel a stretch in your triceps.\n4. Pause briefly, then extend your arms back to the starting position.\n5. Squeeze your triceps at the top, then repeat for 8 to 12 reps for 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Dumbbell-Incline-Two-Arm-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Dumbbell-Incline-Two-Arm-Extension.gif",
+  "name_ru": "Разгибания с гантелями на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

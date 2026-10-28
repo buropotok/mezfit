@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/half-kneeling-cable-external-rotation/",
+  "name": "Half Kneeling Cable External Rotation",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Half-Kneeling-Cable-External-Rotation.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Half-Kneeling-Cable-External-Rotation.gif",
+  "name_ru": "Наружная ротация плеча на блоке стоя на одном колене",
+  "tracking_type": "weight_reps"
+}

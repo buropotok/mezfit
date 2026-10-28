@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/power-lunge/",
+  "name": "Power Lunge",
+  "how_to": "Starting Position:\n\n- Stand with your feet hip-width apart.\n- Keep your hands on your hips or at your sides for balance.\nLunge Position:\n\n- Bend both knees to create a lunge position.\n- Take a long step back with your right foot.\n- Your left knee should be at a 90-degree angle, with your thigh parallel to the ground.\n- Keep your core engaged, chest up, and back straight.\nJumping Phase:\n\n- From the lowered lunge position, explode into the air using the strength of your left leg.\n- As you jump, lift your right knee as high as possible toward your chest.\n- Use your arms for balance and momentum if needed.\nLanding:\n\n- Land softly on the ground with your left foot, returning to the begin position.\n- Ensure that you land with a slight bend in your left knee to absorb the impact and reduce stress on your joints.\nRepeat on the Other Leg:\n\n- Immediately after landing, switch your legs, so your right foot is forward and your left foot is behind you.\n- Repeat the same sequence: lunge down, jump up, and bring your left knee towards your chest.\nRepetitions and Sets:\n\n- You can perform a specific number of repetitions on each leg (e.g., 10 on each leg) or time yourself (e.g., 15 seconds on each leg) based on your fitness level and goals.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/09/power-lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus",
+      "Hip Flexors"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "power-lunge.gif",
+  "name_ru": "Взрывные выпады",
+  "tracking_type": "weight_reps"
+}

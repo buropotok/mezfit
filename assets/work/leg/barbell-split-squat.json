@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-split-squat/",
+  "name": "Barbell Split Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Barbell-Split-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Barbell-Split-Squat.gif",
+  "name_ru": "Разножные приседания со штангой",
+  "tracking_type": "weight_reps"
+}

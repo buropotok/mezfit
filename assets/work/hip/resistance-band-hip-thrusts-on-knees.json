@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/resistance-band-hip-thrusts-on-knees/",
+  "name": "Resistance Band Hip Thrusts on Knees",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Resistance-Band-Hip-Thrusts-on-Knees.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Resistance-Band-Hip-Thrusts-on-Knees.gif",
+  "name_ru": "Ягодичный мостик стоя на коленях с эспандером",
+  "tracking_type": "weight_reps"
+}

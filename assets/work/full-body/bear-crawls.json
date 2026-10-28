@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bear-crawls/",
+  "name": "Bear Crawl",
+  "how_to": "1. Begin on all fours, with hands under shoulders and knees under hips.\n2. Lift your knees slightly off the ground, keeping them bent about 2–3 inches above the floor.\n3. Brace your core and maintain a flat back throughout the movement.\n4. Move forward by stepping your right hand and left foot forward simultaneously, then your left hand and right foot.\n5. Continue for the desired distance, keeping hips low and body aligned.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bear-Crawl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio",
+    "Full Body"
+  ],
+  "image_id": "Bear-Crawl.gif",
+  "name_ru": "Медвежья ходьба",
+  "tracking_type": "time_distance"
+}

@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/skater/",
+  "name": "Skater",
+  "how_to": "Skater Benefits\n- Skater exercise are a plyometric cardio exercise involving jumping in a pattern that shifts your body weight from side to side to create a skating stride. While it mainly increases leg power, it’s considered a full-body, dynamic workout as it also targets your core, gluteus medius and adductors of the hip joints.\n- Skater is a suitable exercise for beginners. It can help strengthen leg muscles, tighten hip muscles and burn calories to lose weight.\n- Skater exercise is classified as an effective aerobic exercise that helps strengthen the heart and increase muscle strength and endurance. It also helps you improve your overall fitness performance, including strength, speed, fitness and flexibility.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Skater.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Skater.gif",
+  "name_ru": "Прыжки «конькобежец» из стороны в сторону",
+  "tracking_type": "time_reps"
+}

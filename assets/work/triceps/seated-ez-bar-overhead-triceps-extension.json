@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-ez-bar-overhead-triceps-extension/",
+  "name": "Seated EZ-Bar Overhead Triceps Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Sit on a flat bench with back support to maintain stability.\n- Grip the EZ-bar with a close, overhand grip (palms facing forward).\n- Lift the bar overhead, keeping your arms fully extended.\n- Ensure your elbows are close to your head, and your core is engaged.\nStep 2: Execution\n1. Slowly lower the EZ-bar behind your head by bending your elbows.\n2. Keep your upper arms stationary while moving only your forearms.\n3. Lower the bar until you feel a deep stretch in the triceps.\n4. Pause briefly, then press the bar back to the starting position by extending your elbows.\n5. Repeat for 8 to 12 reps, completing 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-EZ-Bar-Overhead-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Seated-EZ-Bar-Overhead-Triceps-Extension.gif",
+  "name_ru": "Разгибание рук с EZ-грифом из-за головы сидя",
+  "tracking_type": "weight_reps"
+}

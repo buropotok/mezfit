@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-seated-front-and-back-tate-press/",
+  "name": "Dumbbell Seated Front and Back Tate Press",
+  "how_to": "1. Starting Position:\n  - Sit on a flat bench with your back straight and feet planted firmly on the ground.\n  - Hold a dumbbell in each hand and have your palms facing forward.\n  - Raise the dumbbells to shoulder level with your elbows bent at approximately 90 degrees.\n2. Execution:\n  - Front Tate Press: Extend your arms upward while keeping the dumbbells in front of your head. Fully extend your elbows, then lower the dumbbells back to the starting position.\n  - Back Tate Press: Press the dumbbells overhead but slightly behind your head. Control the movement as you return to the starting position.\n  - Repeat the front and back presses in an alternating pattern for the desired number of repetitions.\n3. Repetitions and Breathing:\n  - Perform 8 to 12 repetitions per set.\n  - Inhale as you lower the dumbbells and exhale as you press them overhead.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Dumbbell-Seated-Front-and-Back-Tate-Press.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Dumbbell-Seated-Front-and-Back-Tate-Press.gif",
+  "name_ru": "Жим Тейта с гантелями сидя перед головой и за головой",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/foam-roller-rhomboids/",
+  "name": "Foam Roller Rhomboids",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Roll-Rhomboids.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Foam Roller",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Trapezius"
+  ],
+  "image_id": "Roll-Rhomboids.gif",
+  "name_ru": "Миофасциальный релиз ромбовидных мышц роликом",
+  "tracking_type": "time"
+}

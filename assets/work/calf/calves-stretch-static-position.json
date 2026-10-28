@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/calves-stretch-static-position/",
+  "name": "Calves Stretch Static Position",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Calves-Stretch-Static-Position.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Calves-Stretch-Static-Position.gif",
+  "name_ru": "Статическая растяжка икроножных мышц",
+  "tracking_type": "time"
+}

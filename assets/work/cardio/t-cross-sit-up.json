@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/t-cross-sit-up/",
+  "name": "T-Cross Sit-up",
+  "how_to": "T-Cross Sit-up Benefits\n- It works all the abdominal muscles: The T-Cross sit-up exercise targets the rectus abdominus and oblique muscles. It is a beneficial exercise for fat loss and tightening as it has an intense effect on the oblique muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/T-Cross-Sit-up.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio"
+  ],
+  "image_id": "T-Cross-Sit-up.gif",
+  "name_ru": "Подъём корпуса с поворотом в Т-позицию",
+  "tracking_type": "weight_reps"
+}

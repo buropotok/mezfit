@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/chin-up-around-the-bar/",
+  "name": "Chin Up Around the Bar",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Chin-Up-Around-the-Bar.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Biceps"
+  ],
+  "image_id": "Chin-Up-Around-the-Bar.gif",
+  "name_ru": "Подтягивания с перемещением вокруг перекладины",
+  "tracking_type": "weight_reps"
+}

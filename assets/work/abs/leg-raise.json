@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leg-raise/",
+  "name": "Leg Raise",
+  "how_to": "1- Lie on your back with your arms placed by your sides. Raise your legs into a vertical position, keeping your knees and feet together and your back and hips neutral.\n\n2- Slowly lower your legs, keeping your feet and knees together, controlling the movement with your core and keeping your torso stationary.\n\n3- Continue the movement until your feet are as near to the floor as you can get, maintaining a neutral back. Hold this position briefly, then slowly lift your legs back to the start position, with a controlled, smooth motion. Avoid lifting your lower back as you repeat.\n\nLeg Raise Benefits\n- Leg raise is one of the most effective exercises for the lower abdominal muscles. Although this exercise targets the rectus abdominus and oblique muscles, it is particularly useful for burning and tightening the lower fat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lying-Leg-Raise.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Lying-Leg-Raise.gif",
+  "name_ru": "Подъём ног лёжа",
+  "tracking_type": "weight_reps"
+}

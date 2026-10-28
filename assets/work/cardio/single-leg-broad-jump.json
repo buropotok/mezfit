@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-broad-jump/",
+  "name": "Single Leg Broad Jump",
+  "how_to": "Single Leg Broad Jump Benefits\n- Jump are a plyometric exercise. Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.\n- Jump target the abdominal muscles, hip muscles and hip flexors and also work on the thighs, knee tendons and quadriceps.\n- Jumps are beneficial to your health because they combine cardiovascular conditioning with strength work. Since jumps elevate your heart rate, they can also improve your cardiovascular fitness.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Single-Leg-Broad-Jump.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Leg"
+  ],
+  "image_id": "Single-Leg-Broad-Jump.gif",
+  "name_ru": "Прыжки в длину на одной ноге",
+  "tracking_type": "weight_reps"
+}

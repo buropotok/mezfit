@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/glute-bridge-one-leg-on-bench/",
+  "name": "Glute Bridge One Leg on Bench",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Glute-Bridge-One-Leg-on-Bench.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Glute-Bridge-One-Leg-on-Bench.gif",
+  "name_ru": "Ягодичный мостик на одной ноге с опорой на скамью",
+  "tracking_type": "weight_reps"
+}

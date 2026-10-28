@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bent-over-dumbbell-rear-delt-raise-with-head-on-bench/",
+  "name": "Bent-Over Dumbbell Rear Delt Raise With Head On Bench",
+  "how_to": "Bent-Over Dumbbell Rear Delt Raise With Head On Bench Benefits\n- Bent-over dumbbell rear delt raise with head on bench is a free weights exercise that primarily targets the rear shoulders. It is an effective exercise that you can include in your program to isolate the rear shoulder muscles and strengthen the rotator cuff muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bent-Over-Dumbbell-Rear-Delt-Raise-With-Head-On-Bench.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Bent-Over-Dumbbell-Rear-Delt-Raise-With-Head-On-Bench.gif",
+  "name_ru": "Разведение гантелей в наклоне с опорой головой на скамью",
+  "tracking_type": "weight_reps"
+}

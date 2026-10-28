@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-zottman-curl/",
+  "name": "Seated Zottman Curl",
+  "how_to": "1. Seated Position: Begin by sitting on a bench or chair with your back straight and feet flat on the floor. This seated position helps stabilize your body, isolating the muscles you intend to work on.\n2. Supinated Grip: Hold a dumbbell in each hand with your palms facing up (supinated grip). Start with your arms fully extended, hanging by your sides.\n3. Curl Phase: Curl the dumbbells upward toward your shoulders while keeping your upper arms stationary. As you lift the weights, your palms should remain facing up.\n4. Pronation Phase: At the top of the curl, when your biceps are fully contracted, rotate your wrists at the top of the movement by turning your palms downward into a pronated grip.\n5. Return to Starting Position: Begin lowering the dumbbells slowly to the starting position, all while keeping your palms facing down. Once your arms are fully extended, rotate your wrists back to the palms-up position and repeat the movement for the desired number of repetitions.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Seated-Zottman-Curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps Brachii"
+    ],
+    "synergists": [
+      "Brachioradialis",
+      "Brachialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Flexor Carpi Radialis",
+        "Extensor Carpi Radialis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps",
+    "Forearm"
+  ],
+  "image_id": "Seated-Zottman-Curl.gif",
+  "name_ru": "Сгибания Зоттмана сидя",
+  "tracking_type": "weight_reps"
+}

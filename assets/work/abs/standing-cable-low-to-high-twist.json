@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-cable-low-to-high-twist/",
+  "name": "Standing Cable Low-To-High Twist",
+  "how_to": "Standing Cable low-to-high Twist Benefits\n- The exercise works up the obliques, abs, and lower back muscles. Obliques are the muscles which connects your lats and abs these muscles help in twisting or turning our upper body. This exercise, which targets the oblique muscles, is very useful for tightening and developing the abdominals fat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Standing-Cable-low-to-high-Twist.gif",
+  "muscles": {
+    "target": [
+      "Obliques"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Standing-Cable-low-to-high-Twist.gif",
+  "name_ru": "Диагональные повороты корпуса снизу вверх на блоке",
+  "tracking_type": "weight_reps"
+}

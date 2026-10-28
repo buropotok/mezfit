@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bent-arm-lateral-raise/",
+  "name": "Bent Arm Lateral Raise",
+  "how_to": "1. Starting Position:\n  - Stand with your feet shoulder-width apart.\n  - Hold a dumbbell in each hand, with your palms facing your body.\n  - Let your arms hang at your sides.\n2. Bent Arm Position:\n  - Bend your elbows at a 90-degree angle, so your upper arms are parallel to the ground and your forearms are perpendicular.\n3. Lift the Weights:\n  - Keeping your elbows bent at 90 degrees, raise your arms out to the sides until your upper arms are parallel to the ground.\n  - Focus on using your shoulder muscles to lift the weights, not your back or traps.\n4. Controlled Descent:\n  - Lower the weights back down to the starting position in a controlled manner.\n5. Repeat:\n  - Perform the desired number of repetitions.\nTips:\n- Avoid using momentum to lift the weights; the movement should be controlled.\n- Choose an appropriate weight that allows you to perform the exercise with proper form.\n- Don’t lift the weights too high; the goal is to bring your upper arms parallel to the ground.\n- For those new to the exercise, mastering the standard lateral raise is recommended before progressing to the Bent Arm variation. This allows you to build a foundation of shoulder strength and control.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Dumbbell-Bent-Arm-Laterl-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Front and Posterior Deltoid",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-Bent-Arm-Laterl-Raise.gif",
+  "name_ru": "Подъём гантелей через стороны с согнутыми локтями",
+  "tracking_type": "weight_reps"
+}

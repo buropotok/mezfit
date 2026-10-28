@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-wide-leg-adductor-stretch/",
+  "name": "Standing Wide Leg Adductor Stretch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/06/Standing-Wide-Leg-Adductor-Stretch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Standing-Wide-Leg-Adductor-Stretch.gif",
+  "name_ru": "Растяжка приводящих мышц стоя с широко расставленными ногами",
+  "tracking_type": "time"
+}

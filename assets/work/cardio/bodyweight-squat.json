@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-squat/",
+  "name": "Bodyweight Squat",
+  "how_to": "1. Stand with feet shoulder-width apart and toes slightly pointed outward.\n2. Brace your core and keep your chest lifted as you begin the movement.\n3. Push your hips back and bend your knees to lower into a squat.\n4. Descend until your thighs are parallel to the ground or as low as comfortable.\n5. Drive through your heels to stand back up, squeezing your glutes at the top.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/bodyweight-squat-full-version.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "bodyweight-squat-full-version.gif",
+  "name_ru": "Приседания с собственным весом",
+  "tracking_type": "weight_reps"
+}

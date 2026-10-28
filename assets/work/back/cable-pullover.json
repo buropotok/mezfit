@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-pullover/",
+  "name": "Lying Cable Pullover",
+  "how_to": "1. Set up the cable machine: Attach a rope or straight bar to the pulley. Lie face up on a flat bench or the floor.\n2. Grip the handle with straight arms: Hold the bar or rope overhead with a slight bend in your elbows. Keep feet flat on the bench or knees bent on the floor.\n3. Pull the cable down with your lats and pecs: Bring the handle down in an arc toward your hips while keeping your arms extended.\n4. Pause and contract at the bottom: Squeeze your lats and chest muscles, keeping your shoulders stable and down.\n5. Return slowly to the start: Control the cable as it pulls your arms back overhead, maintaining tension on the muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Lying-Extension-Pullover.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Levator Scapulae",
+      "Pectoralis",
+      "Triceps Brachii",
+      "Teres Major",
+      "Posterior Deltoid",
+      "Infraspinatus",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Chest"
+  ],
+  "image_id": "Lying-Extension-Pullover.gif",
+  "name_ru": "Пуловер на блоке лёжа",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-lying-triceps-extension/",
+  "name": "Cable Lying Triceps Extension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Lying-Triceps-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-Lying-Triceps-Extension.gif",
+  "name_ru": "Разгибания рук на трицепс лёжа на блоке",
+  "tracking_type": "weight_reps"
+}

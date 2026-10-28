@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-hip-extension/",
+  "name": "Standing Hip Extension",
+  "how_to": "Standing Hip Extension Benefits\n- The standing hip extension is a simple exercise that helps develop and strengthen the hip muscles. Incorporating a resistance band into these hip extension exercises will help increase the resistance your body is working against.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Standing-Hip-Extension.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Standing-Hip-Extension.gif",
+  "name_ru": "Разгибание бедра назад стоя",
+  "tracking_type": "weight_reps"
+}

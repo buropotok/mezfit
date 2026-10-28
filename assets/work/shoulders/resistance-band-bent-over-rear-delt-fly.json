@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/resistance-band-bent-over-rear-delt-fly/",
+  "name": "Resistance Band Bent Over Rear Delt Fly",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/Resistance-Band-Bent-Over-Rear-Delt-Fly.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Resistance-Band-Bent-Over-Rear-Delt-Fly.gif",
+  "name_ru": "Разведение рук с эспандером в наклоне для задних дельт",
+  "tracking_type": "weight_reps"
+}

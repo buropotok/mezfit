@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-donkey-calf-raise/",
+  "name": "Single Leg Donkey Calf Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Single-Leg-Donkey-Calf-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Single-Leg-Donkey-Calf-Raise.gif",
+  "name_ru": "Ослиные подъёмы на носок одной ноги",
+  "tracking_type": "weight_reps"
+}

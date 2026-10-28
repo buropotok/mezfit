@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-barbell-calf-raise/",
+  "name": "Standing Barbell Calf Raise",
+  "how_to": "1. Setup: Place a sturdy raised platform or step on the floor. Load a barbell and position it across your upper back, as in a back squat.\n2. Foot Position: Step onto the platform so that only the balls of your feet are in contact. Your heels should hang off the edge to allow for a full range of motion.\n3. Body Alignment: Stand upright, keep your core tight, chest up, and shoulders pulled back. Maintain a neutral spine throughout.\n4. Lift Your Heels: Push through the balls of your feet to raise your heels as high as possible, fully contracting your calf muscles.\n5. Pause at the Top: Hold the top position for 1–2 seconds to maximize tension.\n6. Lower Slowly: Lower your heels below the level of the platform in a controlled manner, achieving a full stretch in the calves.\n7. Repeat: Perform the desired number of repetitions with precision and balance.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Standing-Barbell-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis",
+      "Intrinsic foot muscles"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Soleus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Standing-Barbell-Calf-Raise.gif",
+  "name_ru": "Подъёмы на носки стоя со штангой",
+  "tracking_type": "weight_reps"
+}

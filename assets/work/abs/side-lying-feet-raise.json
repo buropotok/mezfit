@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-lying-feet-raise/",
+  "name": "Side Lying Feet Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/06/Side-Lying-Feet-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Hip"
+  ],
+  "image_id": "Side-Lying-Feet-Raise.gif",
+  "name_ru": "Подъём ног лёжа на боку",
+  "tracking_type": "weight_reps"
+}

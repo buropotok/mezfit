@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/landmine-deadlift/",
+  "name": "Landmine Deadlift",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Landmine-Deadlift.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Landmine-Deadlift.gif",
+  "name_ru": "Становая тяга с лэндмайн-грифом",
+  "tracking_type": "weight_reps"
+}

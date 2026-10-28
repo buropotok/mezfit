@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leaning-cable-lateral-raise/",
+  "name": "Leaning Cable Lateral Raise",
+  "how_to": "Leaning Cable Lateral Raise Benefits\n- Compared with the standing cable lateral raise, the leaning cable lateral raise puts your lateral deltoid under tension through a greater portion of the range of motion, making each repetition more effective.\n- Lateral raise exercise with cable machines provides constant tension and continuous resistance while lifting and lowering the weight. Because muscle growth and strength gains are directly dependent on how much the muscle is stretched during exercise, cable machines tire the muscles faster and provide greater strength gain.\n- Leaning cable lateral raise strengthen the stabilizing muscles in your shoulders and improves your muscle balance. Leaning cable lateral raise also places greater overload at the top of the raise. It is also one of the most effective isolated exercises for grow and shredded the shoulder heads.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Anterior Deltoid",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Leaning-Cable-Lateral-Raise.gif",
+  "name_ru": "Подъём руки через сторону на блоке с наклоном корпуса",
+  "tracking_type": "weight_reps"
+}

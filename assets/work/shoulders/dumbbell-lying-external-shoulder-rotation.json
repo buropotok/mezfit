@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-lying-external-shoulder-rotation/",
+  "name": "Dumbbell Lying External Shoulder Rotation",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Dumbbell-Lying-External-Shoulder-Rotation.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-Lying-External-Shoulder-Rotation.gif",
+  "name_ru": "Наружная ротация плеча лёжа с гантелью",
+  "tracking_type": "weight_reps"
+}

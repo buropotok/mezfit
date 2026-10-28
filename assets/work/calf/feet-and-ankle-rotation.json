@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/feet-and-ankle-rotation/",
+  "name": "Foot and Ankle Rotation",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Feet-and-Ankle-Rotation.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Feet-and-Ankle-Rotation.gif",
+  "name_ru": "Круговые движения стопой и голеностопом",
+  "tracking_type": "weight_reps"
+}

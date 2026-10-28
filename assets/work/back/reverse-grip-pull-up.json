@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-grip-pull-up/",
+  "name": "Reverse grip Pull-up",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Reverse-grip-Pull-up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Reverse-grip-Pull-up.gif",
+  "name_ru": "Подтягивания обратным хватом",
+  "tracking_type": "weight_reps"
+}

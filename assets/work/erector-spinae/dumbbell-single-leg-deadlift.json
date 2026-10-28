@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-single-leg-deadlift/",
+  "name": "Dumbbell Single Leg Deadlift",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Dumbbell-Single-Leg-Deadlift.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Dumbbell-Single-Leg-Deadlift.gif",
+  "name_ru": "Становая тяга с гантелями на одной ноге",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-lateral-raise/",
+  "name": "Cable Lateral Raise",
+  "how_to": "- To begin: Stand next to a cable machine with the pulley set to the lowest setting. Grab the opposite-side handle with the hand farthest from the pulley, keeping your palm facing in.\n- Set your posture: Keep your core engaged, chest lifted, and shoulders relaxed. Maintain a slight bend in the elbow throughout the lift.\n- Raise the weight: Lift your arm out to the side until your elbow reaches shoulder height, keeping your wrist aligned with your elbow.\n- Pause and lower: Briefly pause at the top, then slowly lower the handle back to your side with control. Repeat for the desired reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/07/one-arm-Cable-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Deltoids (Anterior, Posterior)",
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "one-arm-Cable-Lateral-Raise.gif",
+  "name_ru": "Подъём рук на блоке в стороны",
+  "tracking_type": "weight_reps"
+}

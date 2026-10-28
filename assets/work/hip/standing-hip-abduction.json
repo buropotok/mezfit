@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-hip-abduction/",
+  "name": "Standing Hip Abduction",
+  "how_to": "Standing Hip Abduction Benefits\n- The focus of this exercise is on the gluteus medius and the gluteus minimus that lies beneath. If the goal is to strengthen and shape the hip (upper and outer buttocks), then hip abduction are a great choice.\nStanding Hip Abduction Muscles Worked\nHip Abductors\nGluteus Maximus\nGluteus Minimus\nTensor Fasciae Latae",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Standing-Hip-Abduction-1.gif",
+  "muscles": {
+    "target": [
+      "Hip Abductors",
+      "Gluteus Maximus",
+      "Gluteus Minimus",
+      "Tensor Fasciae Latae"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Standing-Hip-Abduction-1.gif",
+  "name_ru": "Отведение ноги в сторону стоя",
+  "tracking_type": "weight_reps"
+}

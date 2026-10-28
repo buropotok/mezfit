@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-wall-calf-stretch/",
+  "name": "Standing Wall Calf Stretch",
+  "how_to": "1. Setup: Stand facing a wall, about an arm’s length away. Place your hands on the wall at shoulder height.\n2. Step Back: Move one leg behind you, keeping the toes pointed forward and the heel firmly on the floor.\n3. Foot Placement: Position one foot slightly forward with the toes against the wall.\n4. Feel the Stretch: Lean gently into the wall until you feel a stretch along the lower calf and Achilles tendon.\n5. Hold: Maintain the stretch for 20–30 seconds, breathing deeply.\n6. Switch Sides: Repeat on the opposite leg. Perform 2–3 rounds per side.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Standing-Wall-Calf-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Soleus",
+      "Gastrocnemius",
+      "Plantaris",
+      "Peroneals"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Standing-Wall-Calf-Stretch.gif",
+  "name_ru": "Растяжка икроножной мышцы стоя у стены",
+  "tracking_type": "time"
+}

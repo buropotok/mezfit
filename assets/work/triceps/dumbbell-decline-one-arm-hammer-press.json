@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-decline-one-arm-hammer-press/",
+  "name": "Dumbbell Decline One-Arm Hammer Press",
+  "how_to": "Step 1: Set Up Properly\n\n- Adjust a decline bench to approximately 15 to 30 degrees.\n- Secure your feet under the bench pads to maintain stability.\n- Hold a dumbbell in one hand with a neutral grip (palms facing inward).\n- Position the dumbbell at shoulder level with your elbow bent at 90 degrees.\nStep 2: Engage Your Core and Press the Dumbbell Up\n\n- Keep your core tight and lower back flat against the bench.\n- Press the dumbbell upward in a straight line until your arm is fully extended.\n- Avoid excessive rotation and keep your non-working hand resting on your torso or bench for support.\nStep 3: Control the Descent\n\n- Slowly lower the dumbbell back to the starting position, ensuring full control.\n- Maintain a consistent tempo to keep tension on the lower chest and triceps.\nStep 4: Repeat on the Other Arm\n\n- Complete the desired repetitions on one arm before switching to the other.\n- Perform equal reps on both sides to maintain muscular balance.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Dumbbell-Decline-One-Arm-Hammer-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "image_id": "Dumbbell-Decline-One-Arm-Hammer-Press.gif",
+  "name_ru": "Жим гантели нейтральным хватом одной рукой на скамье с отрицательным наклоном",
+  "tracking_type": "weight_reps"
+}

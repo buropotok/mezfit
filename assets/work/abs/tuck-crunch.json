@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/tuck-crunch/",
+  "name": "Tuck Crunch",
+  "how_to": "Tuck Crunch Benefits\n- Tuck crunch is a simple exercise designed to strengthen, develop and shape the upper abdominal and six-pack muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Tuck-Crunch.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Tuck-Crunch.gif",
+  "name_ru": "Скручивания с группировкой",
+  "tracking_type": "weight_reps"
+}

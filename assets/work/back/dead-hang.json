@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dead-hang/",
+  "name": "Dead Hang",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/Isometric-Pull-Up.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Trapezius",
+      "Rhomboids",
+      "Posterior Deltoid",
+      "Teres Major",
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Brachialis",
+      "Pectoralis Minor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis",
+        "Obliques",
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Isometric-Pull-Up.gif",
+  "name_ru": "Вис на перекладине",
+  "tracking_type": "time"
+}

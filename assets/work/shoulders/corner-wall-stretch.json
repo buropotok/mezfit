@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/corner-wall-stretch/",
+  "name": "Corner Wall Stretch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Corner-Wall-Stretch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Shoulders"
+  ],
+  "image_id": "Corner-Wall-Stretch.gif",
+  "name_ru": "Растяжка грудных мышц в углу у стены",
+  "tracking_type": "time"
+}

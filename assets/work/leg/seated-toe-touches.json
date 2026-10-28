@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-toe-touches/",
+  "name": "Seated Toe Touches",
+  "how_to": "Dynamic stretching consists of active movements. It is usually done before a workout to help warm up your muscles and increase your heart rate. Move slowly, stop and repeat, dig a little deeper each time and improve your range of motion. Pre-workout dynamic stretching improves circulation, prepares your muscles for movement, and temporarily increases your range of motion.\n\nStatic stretching, more commonly done at the end of a workout when your muscles are warm, is when stretches are held in place for a certain period of time, not moving. Static stretching is the most effective form of stretching for loosening up your muscles, joints, ligaments, and tendons, while also improving flexibility and range of motion. Static stretching requires you to move a muscle to the end of its range of motion and maintain this position for 20 to 45 seconds. Repeat this 2 to 3 times each.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-Toe-Touches.gif",
+  "muscles": {
+    "target": [
+      "Erector Spinae",
+      "Leg"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Leg"
+  ],
+  "image_id": "Seated-Toe-Touches.gif",
+  "name_ru": "Растяжка задней поверхности бедра сидя с касанием носков",
+  "tracking_type": "time"
+}

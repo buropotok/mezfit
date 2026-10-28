@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/flutter-kick/",
+  "name": "Flutter Kick",
+  "how_to": "Flutter Kick Benefits\n- It is one of the most effective exercises that work the lower abdominal muscles. Since most of the excess fat stores in the abdominal area are in the lower part, it may be a little more difficult to develop the muscles here. The best way to shape the lower abdominal muscles is to do exercises such as the flutter kick, which moves your legs, hip flexors, and lower abdominal area.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Flutter-Kicks.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Flutter-Kicks.gif",
+  "name_ru": "Попеременные махи ногами лёжа («ножницы»)",
+  "tracking_type": "time"
+}

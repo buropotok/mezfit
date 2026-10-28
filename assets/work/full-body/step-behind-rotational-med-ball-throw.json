@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/step-behind-rotational-med-ball-throw/",
+  "name": "Step Behind Rotational Med Ball Throw",
+  "how_to": "1. Start Side-On to a solid wall or open space, holding a light medicine ball (2–6 kg).\n2. Stand tall with feet shoulder-width apart and the ball held at waist height.\n3. Step your rear foot behind and across your front foot (like a crossover step).\n4. As your rear foot lands, rotate your hips toward the wall and transfer your weight forward.\n5. Explosively rotate your torso and shoulders, releasing the ball in a side-throw motion.\n6. Allow full hip and shoulder rotation, finishing tall and balanced.\n7. Reset between reps and repeat on the opposite side.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2024/03/Step-Behind-Rotational-Med-Ball-Throw.gif",
+  "muscles": {
+    "target": [
+      "Deltoids",
+      "Trapezius",
+      "Lats",
+      "Pectoralis Major",
+      "Quadriceps",
+      "Hamstring",
+      "Erector Spinae"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "Step-Behind-Rotational-Med-Ball-Throw.gif",
+  "name_ru": "Бросок медицинбола с поворотом корпуса и скрестным шагом",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/smith-machine-leg-press/",
+  "name": "Smith Machine Leg Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Smith-Machine-Leg-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Smith-Machine-Leg-Press.gif",
+  "name_ru": "Жим ногами в машине Смита",
+  "tracking_type": "weight_reps"
+}

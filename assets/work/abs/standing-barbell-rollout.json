@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-barbell-rollout/",
+  "name": "Standing Barbell Rollout",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Standing-Barbell-Rollout.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Standing-Barbell-Rollout.gif",
+  "name_ru": "Выкатывание штанги стоя",
+  "tracking_type": "weight_reps"
+}

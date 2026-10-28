@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-cable-twist/",
+  "name": "Standing Cable Twist",
+  "how_to": "Standing Cable Twist Benefits\n- The exercise works up the obliques, abs, and lower back muscles. Obliques are the muscles which connects your lats and abs these muscles help in twisting or turning our upper body. This exercise, which targets the oblique muscles, is very useful for tightening and developing the abdominals fat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/standing-cable-twist.gif",
+  "muscles": {
+    "target": [
+      "Obliques"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "standing-cable-twist.gif",
+  "name_ru": "Повороты корпуса стоя на блоке",
+  "tracking_type": "weight_reps"
+}

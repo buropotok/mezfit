@@ -1,0 +1,43 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-arm-raise-push-up/",
+  "name": "Single Arm Raise Push-up",
+  "how_to": "To perform the Single Arm Raise Push-Up correctly, follow these steps:\n\n1. Get into Push-Up Position: Start in a high plank with hands under shoulders, feet slightly wider than usual for balance, and body in a straight line.\n2. Lower Yourself Down: Perform a standard push-up, lowering your chest toward the floor while keeping your elbows at a 45-degree angle.\n3. Press Back Up: Push through your palms to return to the top of the movement, keeping your core tight.\n4. Lift One Arm: At the top, raise one hand off the ground and extend it forward, to the side, or slightly overhead depending on your skill level.\n5. Hold Briefly: Pause for a second or two while keeping your body rigid, then return the hand to the ground and repeat on the other side.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/Single-Arm-Raise-Push-up.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Anterior Deltoid",
+      "Triceps Brachii",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Rectus Abdominis",
+        "Pectoralis Minor",
+        "Serratus Anterior",
+        "Obliques",
+        "Quadriceps"
+      ],
+      "antagonist": [
+        "Erector Spinae",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calisthenic",
+    "Chest",
+    "Triceps"
+  ],
+  "image_id": "Single-Arm-Raise-Push-up.gif",
+  "name_ru": "Отжимания с подъёмом одной руки",
+  "tracking_type": "weight_reps"
+}

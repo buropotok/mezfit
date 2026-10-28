@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/adductor-magnus-stretch/",
+  "name": "Thigh fly (Adductor Magnus Stretch)",
+  "how_to": "The Thigh Fly as a static stretch:\n1. Starting Position: Lie on your back with your legs together, lifted towards the ceiling. Ensure your hips are firmly anchored to the floor.\n2. Stretching Movement: Slowly open your legs to the sides as far as comfortable, feeling a stretch along your inner thighs. Hold this position for 10-15 seconds while breathing steadily.\n3. Return to Starting Position: Gently close your legs back together, returning to the starting position.\n4. Repetitions: Repeat the stretch for 2-4 repetitions, taking brief rest periods in between if needed.\nThe Thigh Fly as a dynamic movement:\n1. Starting Position: Begin in the same starting position as the static stretch.\n2. Continuous Movement: Open your legs to the sides and then close them back together in a fluid motion without pausing at the stretched position.\n3. Repetitions: Perform the dynamic Thigh Fly for the specified number of repetitions without resting between each repetition.\n4. Breathing: Inhale as you open your legs and exhale as you close them.\nAs always, listen to your body and adjust the intensity and duration of the exercise based on your fitness level and comfort.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Adductor-Magnus-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Adductor Magnus",
+      "Adductor Longus",
+      "Adductor Brevis",
+      "Pectineus",
+      "Gracilis",
+      "Piriformis",
+      "Gluteus Maximus",
+      "Hamstring",
+      "Banded Thigh Fly"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Adductor-Magnus-Stretch.gif",
+  "name_ru": "Растяжка большой приводящей мышцы бедра с разведением ног",
+  "tracking_type": "time"
+}

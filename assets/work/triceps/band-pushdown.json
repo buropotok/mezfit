@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/band-pushdown/",
+  "name": "Band Pushdown",
+  "how_to": "1. Setup\n  - Secure a resistance band to an overhead anchor point such as a doorway or pull-up bar\n  - Stand facing the anchor point and hold the band with both hands using a neutral or pronated grip\n  - Position your feet shoulder-width apart and keep your knees slightly bent\n2. Starting Position\n  - Bring your elbows close to your sides with your forearms parallel to the ground\n  - Your hands should be near chest level, and your upper arms stationary throughout the exercise\n3. Execution\n  - Press the band downward by extending your elbows until your arms are straight\n  - Squeeze your triceps at the bottom of the movement\n  - Slowly return to the starting position with control\n  - Repeat for the desired number of repetitions",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Band-Pushdown.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Band-Pushdown.gif",
+  "name_ru": "Разгибание рук с эспандером сверху вниз",
+  "tracking_type": "weight_reps"
+}

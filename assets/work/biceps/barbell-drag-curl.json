@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-drag-curl/",
+  "name": "Barbell Drag Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Barbell-Drag-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Barbell-Drag-Curl.gif",
+  "name_ru": "Подъём штанги на бицепс с ведением грифа вдоль корпуса",
+  "tracking_type": "weight_reps"
+}

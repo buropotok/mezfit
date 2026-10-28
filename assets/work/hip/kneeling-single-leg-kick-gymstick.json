@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-single-leg-kick-gymstick/",
+  "name": "Kneeling Single Leg Kick | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Kneeling-Single-Leg-Kick.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Kneeling-Single-Leg-Kick.gif",
+  "name_ru": "Мах одной ногой назад стоя на коленях с гимстиком",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/navy-seal-burpee/",
+  "name": "Navy Seal Burpee",
+  "how_to": "1. Start from a standing position with feet shoulder-width apart.\n2. Drop into a squat, place your hands on the ground, and kick your feet back into a push-up position.\n3. Perform a push-up, then drive your right knee toward your right elbow.\n4. Perform a second push-up, then drive your left knee toward your left elbow.\n5. Perform a third push-up, then jump your feet forward to return to the squat position.\n6. Explode upward into a jump, reaching overhead.\n7. Land softly and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Navy-Seal-Burpee.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major",
+      "Triceps Brachii",
+      "Rectus Abdominis",
+      "Anterior Deltoid",
+      "Quadriceps",
+      "Gluteus Maximus",
+      "Calves",
+      "Obliques",
+      "Hamstring",
+      "Hip Flexors",
+      "Trapezius",
+      "Biceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Full Body"
+  ],
+  "image_id": "Navy-Seal-Burpee.gif",
+  "name_ru": "Бёрпи «морской котик» с дополнительными отжиманиями",
+  "tracking_type": "time_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-glute-kickbacks/",
+  "name": "Banded Glute Kickbacks",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Banded-Glute-Kickbacks.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Banded-Glute-Kickbacks.gif",
+  "name_ru": "Отведение ноги назад с эспандером",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-ballerina-exercise/",
+  "name": "Seated Ballerina Exercise",
+  "how_to": "Seated Ballerina Exercise / Benefits\n- Shoulder mobility is important for both strengthening and stretching. This exercise can help stabilize and strengthen the scapular muscles while providing range of motion in the shoulders and upper back.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Seated-Ballerina.gif",
+  "muscles": {
+    "target": [
+      "Shoulder",
+      "Scapula",
+      "Trapezius",
+      "Rhomboids",
+      "Chest"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Seated-Ballerina.gif",
+  "name_ru": "Упражнение «балерина» сидя для подвижности плеч",
+  "tracking_type": "weight_reps"
+}

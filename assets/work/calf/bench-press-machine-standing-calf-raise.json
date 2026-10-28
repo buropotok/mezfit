@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bench-press-machine-standing-calf-raise/",
+  "name": "Standing Calf Raise on the Bench Press Machine",
+  "how_to": "1. Setup: Step onto the machine’s platform with the balls of your feet firmly on the edge and your heels hanging off.\n2. Position: Stand upright and grip the side handles for balance and stability.\n3. Starting Position: Keep your core engaged, back straight, and legs nearly straight (but not locked out).\n4. Raise Your Heels: Press through the balls of your feet to lift your heels as high as possible. Focus on contracting your calves at the top.\n5. Pause and Squeeze: Hold the top position for 1–2 seconds to maximize muscle engagement.\n6. Lower Under Control: Slowly lower your heels below the level of the platform for a full stretch before repeating.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Bench-Press-Machine-Standing-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Soleus",
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis",
+      "Intrinsic foot muscles"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Bench-Press-Machine-Standing-Calf-Raise.gif",
+  "name_ru": "Подъёмы на носки стоя в тренажёре для жима лёжа",
+  "tracking_type": "weight_reps"
+}

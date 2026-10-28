@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-seated-twist-on-floor/",
+  "name": "Cable Seated Twist on Floor",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Cable-Seated-Twist-on-Floor.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Cable-Seated-Twist-on-Floor.gif",
+  "name_ru": "Повороты корпуса на блоке сидя на полу",
+  "tracking_type": "weight_reps"
+}

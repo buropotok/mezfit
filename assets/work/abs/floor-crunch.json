@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/floor-crunch/",
+  "name": "Floor Crunch",
+  "how_to": "1- Lie on a mat with your knees bent, your feet flat on the floor, and your fingers against the sides of your head.\n\n2- Crunching up from your core, lift your shoulders and upper back off the floor without straining.\n\n3- Hold the position briefly, then lower your upper body slowly to the floor, controlling the downward phase with your core.\n\nFloor Crunch Benefits\n- Floor Crunch is a simple exercise designed to strengthen, develop and shape the upper abdominal and six-pack muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Floor-Crunch.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Floor-Crunch.gif",
+  "name_ru": "Скручивания на полу",
+  "tracking_type": "weight_reps"
+}

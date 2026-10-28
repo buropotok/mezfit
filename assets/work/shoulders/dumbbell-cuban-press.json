@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-cuban-press/",
+  "name": "Dumbbell Cuban Press",
+  "how_to": "Dumbbell Cuban Press Benefits\n- The cuban press is one of the comprehensive exercises aimed at building functional strength in the shoulders and rotator cuff. It is often used as an advanced movement to train the rotator cuff muscles. This exercise works all shoulder muscle head positions, while simultaneously stimulating the muscles in the upper back and chest.\n- The rotator cuff is the group of muscles and tendons that keep the head of your upper arm bone firmly within the socket of the shoulder. The purpose of this exercise is to strengthen the cuff muscles connected with the shoulder and protect the shoulder health.\n- It is very important to do the movement with the right technique, and lifting excess weight can be harmful rather than benefit, so low weights are recommended. You can practice the exercise with the help of a barbell, dumbbell or an empty stick.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/dumbbell-cuban-press-.gif",
+  "muscles": {
+    "target": [
+      "Shoulder"
+    ],
+    "synergists": [
+      "Trapezius",
+      "Teres Minor",
+      "Infraspinatus",
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Triceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "dumbbell-cuban-press-.gif",
+  "name_ru": "Кубинский жим с гантелями",
+  "tracking_type": "weight_reps"
+}

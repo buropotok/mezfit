@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/sissy-squat/",
+  "name": "Sissy Squat",
+  "how_to": "1. Stand upright with your feet hip-width apart and heels slightly elevated or supported.\n2. Brace your core and maintain a tall chest as you begin to lean backward from the knees.\n3. Allow your knees to move forward over your toes as your upper body leans back in a straight line.\n4. Lower down until you feel a deep stretch in the quads or reach your mobility limit.\n5. Drive through your toes to return to the starting position, keeping your body aligned.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/sissy-squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Soleus",
+      "Hip Flexors"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Gluteus Maximus",
+        "Erector Spinae",
+        "Rectus Abdominis",
+        "Obliques",
+        "Tibialis anterior"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "sissy-squat.gif",
+  "name_ru": "Сисси-приседания",
+  "tracking_type": "weight_reps"
+}

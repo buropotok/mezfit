@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/push-press/",
+  "name": "Push Press",
+  "how_to": "1. Set Up:\n  - Stand with your feet shoulder-width apart. Your toes should be slightly turned out.\n  - Position the barbell across your upper chest, just below your neck. If using dumbbells, hold one in each hand at shoulder height with palms facing forward.\n2. Grip:\n  - For the barbell push press, your grip should be slightly wider than shoulder-width. Grip the bar with your palms facing forward and your elbows pointing downward. Make sure your wrists are aligned with your forearms.\n  - If using dumbbells, grip them firmly with your palms facing each other.\n3. Rack Position:\n  - Lift the barbell off the rack or clean the barbell to your shoulders if starting from the ground.\n  - Keep your elbows slightly in front of the barbell and your upper arms parallel to the ground. This is your starting position.\n4. Dip:\n  - Begin by slightly bending your knees to initiate a dip. Keep your torso upright and your chest lifted.\n  - As you dip, focus on keeping your weight balanced on the midfoot and heels.\n5. Drive:\n  - Explosively extend your hips and knees to generate upward momentum. This movement should be powerful and quick.\n  - As you drive upward, press the barbell overhead using the strength of your shoulders and triceps. If using dumbbells, press them overhead simultaneously.\n6. Lockout:\n  - Fully extend your arms overhead, locking out your elbows. Your head should move slightly forward as the barbell passes your forehead.\n7. Return:\n  - Lower the barbell back to the starting position by bending your knees and hips. Allow the weight to descend under control.\n8. Rack the Barbell:\n  - If using a barbell, rack it back on the supports or the ground.\nTips:\n- Maintain a tight core throughout the movement to stabilize your spine.\n- Use a slight bounce from your dip to aid in the upward drive, but avoid turning it into a full squat.\n- Engage your glutes and quads during the drive phase for maximum power.\n- Keep the barbell or dumbbells close to your body during both the upward and downward phases of the movement.\n- Always warm up before attempting heavy weights and start with a weight you can comfortably handle to practice your form.\nPush Press Benefits\nIncreased Upper Body Strength: The push press primarily targets the shoulders, triceps, and upper back muscles. By pushing heavy weights overhead, you can develop substantial upper body strength.\n\nEnhanced Muscle Mass: Engaging multiple muscle groups during the push press stimulates muscle growth. This exercise can contribute to broader shoulders, a stronger upper chest, and more defined triceps.\n\nImproved Power and Explosiveness: The explosive drive from the hips and legs to lift the weight overhead develops power in the lower body and transfers it to the upper body, resulting in improved overall explosiveness.\n\nFunctional Strength: The push press simulates movements that involve lifting objects overhead, making it a functional exercise for daily activities or sports that require pushing or lifting.\n\nMetabolic Conditioning: The high-intensity nature of the push press engages multiple muscle groups, leading to an increased heart rate. This can contribute to improved cardiovascular fitness and fat burning.\n\nJoint Stability: The push press requires proper joint alignment and stability, promoting healthy shoulder and elbow joints when performed correctly.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/push-press-1.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Hip Flexion",
+      "Hamstring",
+      "Quadriceps",
+      "Serratus Anterior",
+      "Biceps",
+      "Triceps",
+      "Plantar Flexion"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Trapezius, Upper",
+        "Erector Spinae",
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Shoulders"
+  ],
+  "image_id": "push-press-1.gif",
+  "name_ru": "Швунг жимовой со штангой",
+  "tracking_type": "weight_reps"
+}

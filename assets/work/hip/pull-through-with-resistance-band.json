@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pull-through-with-resistance-band/",
+  "name": "Pull through With Resistance Band",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Pull-through-Hips.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Pull-through-Hips.gif",
+  "name_ru": "Тяга эспандера между ног стоя",
+  "tracking_type": "weight_reps"
+}

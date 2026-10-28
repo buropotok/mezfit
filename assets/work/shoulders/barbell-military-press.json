@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-military-press/",
+  "name": "Barbell Military Press (Overhead press)",
+  "how_to": "Starting Position: Grasp a barbell or body bar with an overhand grip. Your hands should be wider than shoulder width.\n\nRaise the barbell so that it is just below your chin, and keep your knees slightly bent.\n\nForm: While keeping your core muscles engaged, exhale and press your arms over your head. Hold for a brief second at the top and then slowly lower back to the starting position.\n\n2 Different Leg Positions\n\nYou can perform this exercise with your feet parallel or with your feet staggered. When your feet are parallel there is more challenge on balance and there is also more challenge on your lower back.\n\nIf you want to take some pressure off your lower back use a staggered stance.\n\nPersonal Trainer Tips: As with all exercises, posture is very important. Make sure that your back does not arch excessively when you press over head.\n\nIt is important to note that proper form and technique are crucial when performing the barbell military press to avoid injury. It is recommended to start with lighter weights and gradually increase the load as your strength and technique improve.\n\nBarbell Military Press –",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/07/Barbell-Standing-Military-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral and Posterior Deltoid",
+      "Triceps",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Barbell-Standing-Military-Press.gif",
+  "name_ru": "Армейский жим штанги стоя",
+  "tracking_type": "weight_reps"
+}

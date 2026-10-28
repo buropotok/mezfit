@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-side-hip-adduction/",
+  "name": "Lever Side Hip Adduction",
+  "how_to": "Lever Hip Adduction Benefits\n- The Lever hip adduction is an effective isolation exercise for the inner hips which builds strength and muscle in the adductors responsible for rotation of the hip joint.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Lever-Side-Hip-Adduction.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Lever-Side-Hip-Adduction.gif",
+  "name_ru": "Приведение бедра в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

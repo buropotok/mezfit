@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-plie-squat/",
+  "name": "Bodyweight Plie Squat",
+  "how_to": "1. Stand with feet wider than shoulder-width and turn your toes out at about a 45-degree angle.\n2. Keep your chest tall and engage your core to support your spine.\n3. Push your knees out in line with your toes as you begin to lower into the squat.\n4. Bend your knees and lower your hips straight down until your thighs are parallel to the floor or slightly lower.\n5. Pause briefly at the bottom, keeping your back straight and core braced.\n6. Drive through your heels to return to the starting position, squeezing your glutes at the top.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/04/Bodyweight-Plie-Squat.gif",
+  "muscles": {
+    "target": [
+      "Adductor Magnus"
+    ],
+    "synergists": [
+      "Hamstrings",
+      "Gluteus Medius, Minimus",
+      "A. Longus, Brevis, Gracilis",
+      "Tensor Fasciae Latae (TFL)",
+      "Calves (Soleus, Gastrocnemius)"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Rectus Abdominis, Obliques",
+        "Erector Spinae",
+        "Hip External Rotators",
+        "Tibialis Anterior"
+      ],
+      "antagonist": [
+        "Latissimus Dorsi",
+        "Hip Flexors"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Bodyweight-Plie-Squat.gif",
+  "name_ru": "Приседания плие с собственным весом",
+  "tracking_type": "weight_reps"
+}

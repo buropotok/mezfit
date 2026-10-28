@@ -1,0 +1,40 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-pull-up/",
+  "name": "Weighted Pull-up",
+  "how_to": "Pull-Up Benefits\n- When it comes to compound exercises, one of the best exercises that comes to mind is probably the pull-up movement.\n- Pull-up is a closed-chain an exercise that works almost all of the muscle groups on the upper body and provides both hypertrophy and strength at body weight.\n- It strengthens the back and wing muscles. The focus of the pull-ups exercise is on the back muscles. It is one of the most effective exercises to develop and strengthen the back and wing muscles.\n- It prevents posture disorder and allows you to stand upright: Infraspinatus, scapula and strengthen the muscles covering the scapula, preventing problems caused by muscle weakness such as postural posture and shoulder blade protrusion.\n- It plays an important role in body power and strength increase: Since pull-up is a compound exercise, it works the muscles in the upper body in perfect harmony. The pull-up exercise performed at body weight supports general body strength and core strength. It provides a stronger and more solid body.\n- Provides cardiovascular benefits: Pull-ups increase your heart rate. When this type of exercise is done quickly and with no rest periods in between, it provides a great cardiovascular workout as well as the ability to develop strength.\n- Increases grip strength: When you hold an object in your daily life, it allows you to grasp it more firmly. For example; You can feel this even when opening a jar.\n- Pull-up up makes your arms stronger: If you cannot do the pull-up exercise, this is probably an indication that your arms are weak. Arms and wrists work actively in all types of pull-ups. The strength of the arms increases more each time you lift the body weight. Increasing the number of pull-ups means the development and strengthening of your arms.\n- It develops wing muscles: It is effective in working and shaping the parts of the body, which are located in the right and left upper parts and which are called wing muscles. If you want a V-taper body, you can have it with a pull-up motion.\nDoes Pull-up Increase Height?\nDoes pull-ups make you taller? Although pull-up is said to increase height, there is no research confirming this. Although pull-up does not provide height increase, strengthening these muscles can benefit you look taller by helping your posture. Good posture relies on the strong back and core muscles responsible for stabilizing the spine. When you strengthen these muscle groups, you can maintain an upright posture by effectively exercising the necessary muscles to keep your upper body balanced and aligned.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Weighted-Pull-up.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Teres Major",
+      "Biceps Brachii",
+      "Brachioradialis",
+      "Brachialis",
+      "Pectoralis Minor"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Triceps"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Weighted-Pull-up.gif",
+  "name_ru": "Подтягивания с отягощением",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-military-press/",
+  "name": "Bodyweight Military Press",
+  "how_to": "1. Start by standing with your feet shoulder-width apart and your arms at your sides.\n2. Raise your arms up to shoulder level, bending your elbows at a 90-degree angle, with your palms facing forward.\n3. Engage your core and squeeze your glutes to maintain stability throughout the movement.\n4. Slowly press your hands directly overhead, extending your arms fully without locking your elbows. Imagine pushing the ceiling away from you.\n5. Pause for a moment at the top, ensuring your arms are fully extended.\n6. Slowly lower your hands back down to the starting position, maintaining control and a controlled pace.\n7. Repeat for the desired number of repetitions.\nHere are some additional tips for performing the bodyweight military press:\n\n- Maintain proper form throughout the exercise. Keep your head aligned with your spine, and avoid arching or excessively leaning back.\n- Engage your core muscles to provide stability and support for your spine.\n- Focus on using your shoulder muscles to lift your arms overhead rather than relying on momentum or excessive upper body movement.\n- Breathe naturally throughout the exercise, exhaling as you press your arms overhead and inhaling as you lower them down.\n- Start with a weight and repetition range that challenges you without compromising form. If necessary, you can gradually increase the difficulty by performing the exercise on an elevated surface, such as push-up handles or parallettes.\nBodyweight Military Press – Benefits\n1. The military press is a bodyweight exercise that mimics the pushing motion you often perform in daily activities or sports. By strengthening the muscles involved in this movement, you enhance your ability to perform tasks that require overhead pushing, such as lifting objects, reaching, or participating in sports like basketball or volleyball.\n2. Bodyweight military press work the muscles surrounding the scapula and shoulder for both dynamic and static stability. It is a frequently used exercise for upright posture and postural disorders. Applying this exercise, which is beneficial for posture, as a dynamic warm-up before shoulder exercises, provides benefits for the development of shoulder muscles.\nOne of the advantages of the bodyweight military press is that it can be performed without the need for external weights or equipment. This makes it a convenient exercise that you can do anywhere, using just your bodyweight.\n\nBodyweight Military Press – Muscles Worked\nTarget - Anterior Deltoid\nSynergists - Supraspinatus\nSynergists - Triceps\nSynergists - Lateral Deltoid\nSynergists - Trapezius\nSynergists - Serratus Anterior\nStabilizers - Levatos Scapula",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Bodyweight-Military-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Triceps",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Bodyweight-Military-Press.gif",
+  "name_ru": "Жим руками вверх без отягощения",
+  "tracking_type": "weight_reps"
+}

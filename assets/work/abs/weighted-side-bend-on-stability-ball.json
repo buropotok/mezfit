@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-side-bend-on-stability-ball/",
+  "name": "Weighted Side Bend On Stability Ball",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Weighted-Side-Bend-on-stability-ball.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Exercise Ball",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Weighted-Side-Bend-on-stability-ball.gif",
+  "name_ru": "Наклоны корпуса в сторону с отягощением",
+  "tracking_type": "weight_reps"
+}

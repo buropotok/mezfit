@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-lying-one-arm-rear-lateral-raise/",
+  "name": "Dumbbell Lying One-Arm Rear Lateral Raise",
+  "how_to": "Dumbbell Lying One-Arm Rear Lateral Raise / Benefits\n- Dumbbell Lying One-Arm Rear Lateral Raise is an exercise used to strengthen the lateral and posterior shoulder muscles and the smaller muscle groups attached to them. Lifting too much weight in this movement may not be healthy, doing the exercise with light weights with high repetitions may be more beneficial for the deltoid and rotator cuff muscles.\nDumbbell Lying One-Arm Rear Lateral Raise /",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Dumbbell-Lying-One-Arm-Rear-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Rhomboids",
+      "Infraspinatus",
+      "Teres Minor",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-Lying-One-Arm-Rear-Lateral-Raise.gif",
+  "name_ru": "Подъём рук с гантелями одной рукой лёжа назад в стороны",
+  "tracking_type": "weight_reps"
+}

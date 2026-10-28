@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-assisted-single-leg-press/",
+  "name": "Lever Assisted Single Leg Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Lever-Assisted-Leg-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Lever-Assisted-Leg-Press.gif",
+  "name_ru": "Жим одной ногой с помощью в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

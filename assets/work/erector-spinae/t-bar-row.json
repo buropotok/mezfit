@@ -1,0 +1,50 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/t-bar-row/",
+  "name": "T-Bar Row",
+  "how_to": "Here’s a step-by-step guide on how to perform the T-bar row:\n\n1. Set up the Equipment: First, set up the T-bar row machine with the appropriate amount of weight. If you don’t have access to a T-bar row machine, you can also use a barbell and a landmine attachment.\n2. Position Yourself: Bend at the hips, keeping your back straight, and reach down to grasp the V-bar handles with a neutral grip (palms facing each other).\n3. Lift the Weight: Lift the weight off the ground and let it hang in front of your body. This is your starting position.\n4. Engage Your Back Muscles: Slowly pull the weight towards your chest by retracting your shoulder blades and squeezing your back muscles. Keep your elbows close to your body and your forearms parallel to the ground.\n5. Hold the Contraction: Hold the contraction for a second or two, then slowly lower the weight back to the starting position.\n6. Repeat: Complete the desired number of repetitions, then rest and repeat for additional sets.\nTips for Performing T-bar Rows:\n- Keep your back straight throughout the exercise to prevent injury and maximize muscle activation.\n- Use a weight that is challenging but allows you to maintain proper form and technique.\n- Avoid using momentum to lift the weight. Focus on using your back muscles to pull the weight towards your chest.\n- Breathe in as you lower the weight and breathe out as you lift the weight.\n- Mix up your grip to target different areas of your back. You can use an overhand grip, underhand grip, or a neutral grip.\nIncorporating T-bar rows into your workout routine can help you build a strong and defined back. By following proper form and technique, you can target the muscles in your back and maximize muscle activation.\n\nT-Bar Row Benefits\n- T-bar row are a strength training exercise that mimics the movement of rowing a boat. The goal is to strengthen the muscles that bring the arms toward the body, as well as those that move the shoulder blades toward the spine. The t-bar row can allow you to lift more weight. Due to the nature of this movement, you are able to leverage more weight.\n- The T bar, which targets the entire back chain, targets the latissimus dorsi, infraspinatus, trapezius, posterior deltoids and rhomboids, so adding exercises such as barbell rows and t-bar rows to your training programs will be beneficial for the development of back muscles.\nT-Bar Row – Muscles Worked\nTarget - Latissimus Dorsi\nSynergists - Levator Scapulae\nSynergists - Infraspinatus\nSynergists - Teres Minor\nSynergists - Posterior Deltoid\nSynergists - Trapezius\nSynergists - Teres Major\nSynergists - Rhomboids\nSynergists - Brachialis\nSynergists - Pectoralis Major, Sternal\nSynergists - Brachioradialis\nDynamic Stabilizers - Biceps Brachii\nDynamic Stabilizers - Triceps, Long Head\nStabilizers - Erector Spinae\nStabilizers - Hamstrings\nStabilizers - Gluteus Maximus\nStabilizers - Adductor Magnus\nStabilizers - Quadriceps\nAntagonist Stabilizers - Rectus Abdominis\nAntagonist Stabilizers - Obliques\nT-Bar Row Alternative\nThese alternatives exercises are all effective ways to stimulate and work similar muscle groups that the T-Bar Row would hit. Try adding these variations of the T-Bar Row into your training to keep workout fun and varied.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/t-bar-rows.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Levator Scapulae",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Teres Major",
+      "Rhomboids",
+      "Brachialis",
+      "Pectoralis Major, Sternal",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Triceps, Long Head",
+        "Erector Spinae",
+        "Hamstrings",
+        "Gluteus Maximus",
+        "Adductor Magnus",
+        "Quadriceps"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae"
+  ],
+  "image_id": "t-bar-rows.gif",
+  "name_ru": "Тяга Т-грифа",
+  "tracking_type": "weight_reps"
+}

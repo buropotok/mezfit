@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cross-cable-face-pull/",
+  "name": "Cross Cable Face Pull",
+  "how_to": "Cross Cable Face Pull / Benefits\n- Cross cable face pull is a cable exercise that activates and develops your back and traps. The exercise also improves the shoulders in general and the rotator cuff muscles such as the infraspinatus. In addition, this exercise is one of the corrective exercises that helps to compensate for poor posture and shoulder dysfunction and benefits posture.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Cross-Cable-Face-Pull.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Brachioradialis",
+      "Brachialis",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Cross-Cable-Face-Pull.gif",
+  "name_ru": "Тяга перекрёстных блоков к лицу",
+  "tracking_type": "weight_reps"
+}

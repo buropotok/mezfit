@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-curtsey-lunge/",
+  "name": "Barbell Curtsey Lunge",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Barbell-Curtsey-Lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Barbell-Curtsey-Lunge.gif",
+  "name_ru": "Перекрёстные выпады («реверанс») со штангой",
+  "tracking_type": "weight_reps"
+}

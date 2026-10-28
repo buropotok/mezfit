@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/step-up-single-leg-balance-with-bicep-curl/",
+  "name": "Step Up Single Leg Balance with Bicep Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Step-Up-Single-Leg-Balance-with-Bicep-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Step-Up-Single-Leg-Balance-with-Bicep-Curl.gif",
+  "name_ru": "Зашагивание с удержанием равновесия на одной ноге и сгибанием руки с гантелью",
+  "tracking_type": "weight_reps"
+}

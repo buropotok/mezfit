@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ez-bar-incline-front-raise/",
+  "name": "Ez-Bar Incline Front Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Incline-Front-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Incline-Front-Raise.gif",
+  "name_ru": "Подъём EZ-грифа перед собой на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

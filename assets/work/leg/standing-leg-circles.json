@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-leg-circles/",
+  "name": "Standing Leg Circles",
+  "how_to": "1. Stand tall with your feet shoulder-width apart and your hands on your hips or extended out for balance.\n2. Shift your weight to one leg and lift the opposite foot slightly off the floor.\n3. Draw small circles in the air with the lifted leg, moving it forward, outward, then backward in a slow, controlled motion.\n4. Perform 8 to 10 circles in one direction, then reverse the direction.\n5. Switch legs and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Standing-Leg-Circles.gif",
+  "muscles": {
+    "target": [
+      "Hip Flexors",
+      "Hip Abductors",
+      "Hip Adductors",
+      "Quadriceps",
+      "Hamstrings",
+      "Gluteal Muscles"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Standing-Leg-Circles.gif",
+  "name_ru": "Круговые махи ногой стоя",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-rear-delt-raise/",
+  "name": "Barbell Rear Delt Raise",
+  "how_to": "Barbell Rear Delt Raise Benefits\n- Barbell rear delt raise is a barbell exercise that primarily targets the lateral and posterior shoulders. It is an effective exercise that you can include in your program to isolate the rear shoulder muscles and strengthen the rotator cuff muscles.\n- It also activates the trapezius muscles, and may benefit discomfort caused by muscle weakness such as postural posture and shoulder blade protrusion by affecting the infraspinatus and subscapula muscles that cover the scapula.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Barbell-Rear-Delt-Raise.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Levator Scapulae",
+      "Infraspinatus",
+      "Trapezius",
+      "Brachialis",
+      "Biceps Brachii",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Barbell-Rear-Delt-Raise.gif",
+  "name_ru": "Подъём рук со штангой назад на дельтовидные",
+  "tracking_type": "weight_reps"
+}

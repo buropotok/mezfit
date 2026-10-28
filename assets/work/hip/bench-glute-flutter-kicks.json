@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bench-glute-flutter-kicks/",
+  "name": "Bench Glute Flutter Kicks",
+  "how_to": "Bench Glute Flutter Kicks / Benefits\n- It is one of the best equipment-free exercises you can include in your workouts to tighten and tone the glutes, improve hip mobility, and strengthen your lower back.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/12/Bench-Glute-Flutter-Kicks.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Gluteus Minimus"
+      ],
+      "antagonist": [
+        "Hamstrings",
+        "Rectus Abdominis"
+      ]
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Bench-Glute-Flutter-Kicks.gif",
+  "name_ru": "Попеременные махи ногами лёжа на скамье для ягодиц",
+  "tracking_type": "time"
+}

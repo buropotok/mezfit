@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leaning-single-arm-dumbbell-lateral-raise/",
+  "name": "Leaning Single Arm Dumbbell Lateral Raise",
+  "how_to": "Leaning Single Arm Dumbbell Lateral Raise Benefits\n- The leaning single arm dumbbell lateral raise is an isolation exercise that strengthens the entire shoulder. Compared with the dumbbell lateral raise, the leaning dumbbell lateral raise puts your lateral deltoid under tension through a greater portion of the range of motion, making each repetition more effective.The leaning position creates leverage while maximizing the isolation on the shoulders throughout the movement. It also places greater overload at the top of the movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Leaning-Single-Arm-Dumbbell-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Leaning-Single-Arm-Dumbbell-Lateral-Raise.gif",
+  "name_ru": "Подъём гантели через сторону одной рукой с наклоном корпуса",
+  "tracking_type": "weight_reps"
+}

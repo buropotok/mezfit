@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-w-press/",
+  "name": "Dumbbell W Press",
+  "how_to": "Dumbbell W Press Benefits\n- Dumbbell W Press is an isolation exercise that supports the development of the shoulder muscles and especially the anterior and lateral deltoid muscle. It is recommended to do it with low weight instead of lifting too much weight.\n- Many of the movements that work the same muscle group may look alike, but they focus on different parts of the muscles because they are at different angles. If you want to build better muscle specifically, keep in mind that it is more beneficial to include exercises that focus on different aspects to your training program.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Dumbbell-W-Press.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-W-Press.gif",
+  "name_ru": "Жим гантелей в положении W",
+  "tracking_type": "weight_reps"
+}

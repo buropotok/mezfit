@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-curl/",
+  "name": "Dumbbell Curl",
+  "how_to": "Here are some tips on how to perfect your form for dumbbell curls:\n\n1. Start with a comfortable weight: Select a weight that you can comfortably lift for the desired number of reps. It’s better to start with a lighter weight and work your way up, rather than using a weight that’s too heavy and sacrificing form.\n2. Stand with proper posture: Stand up straight with your feet shoulder-width apart and your shoulders back. This will help to maintain proper alignment and engage your core.\n3. Hold the dumbbells correctly: Hold the dumbbells with a neutral grip (palms facing inward) and keep your wrists straight. Avoid using a grip that’s too tight, as this can cause unnecessary strain on the wrists.\n4. Keep your elbows close to your sides: Keep your elbows close to your sides throughout the movement. This will help to isolate the biceps and prevent swinging.\n5. Curl one arm at a time: Start by curling one dumbbell towards your shoulder, keeping your elbow close to your side. As you lift the weight, focus on squeezing your bicep at the top of the movement.\n6. Lower the weight in a controlled manner: Lower the weight back down in a controlled manner, making sure to keep your elbow close to your side. Avoid letting the weight drop quickly, as this can put unnecessary strain on the joints.\n7. Alternate between arms: Once you have completed a full rep with one arm, switch to the other arm and repeat the exercise.\n8. Breathe properly: Inhale as you lower the weight and exhale as you curl the weight towards your shoulder.\nDumbbell Curl Benefits\n- Increased muscle size: Dumbbell curls are a great way to increase muscle size in the biceps. By performing the exercise with proper form and gradually increasing weight or resistance, you can activate more muscle fibers and stimulate muscle growth over time.\n- Improved muscle strength: Dumbbell curls can also help improve muscle strength in the biceps. By challenging the muscles with heavier weights or resistance, you can increase muscle activation and promote the development of stronger, more resilient muscle fibers.\n- Enhanced muscle endurance: Dumbbell curls can also improve muscle endurance in the biceps. By performing higher reps or multiple sets of the exercise, you can challenge the muscles to sustain exertion for longer periods, ultimately improving overall muscle endurance.\n- Increased functional strength: Stronger biceps muscles can improve overall functional strength, helping you perform everyday tasks with greater ease and efficiency. For example, lifting heavy objects or carrying groceries can be much easier with strong biceps muscles.\n- Improved grip strength: Dumbbell curls can also improve grip strength, as the exercise requires a strong grip to hold onto the weights. Improved grip strength can translate to improved performance in activities that require a strong grip, such as rock climbing or gymnastics.\nIn conclusion, dumbbell curls are a great exercise for building stronger, more defined arms. By incorporating the exercise into your workout routine, you can increase muscle size, strength, endurance, and functional strength, as well as improve grip strength for a variety of activities.\n\nDumbbell Curl Muscles Worked\nThe dumbbell curl primarily targets the biceps muscles, with the brachialis and brachioradialis muscles acting as synergists. The wrist flexors also act as stabilizers to help control the movement of the weight. Here’s a breakdown of the muscles worked during dumbbell curls:\n\nTarget - Biceps\nSynergists - Brachialis\nSynergists - Brachioradialis\nStabilizers - Wrist Flexors",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Curl.gif",
+  "muscles": {
+    "target": [
+      "Biceps"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Brachioradialis"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Dumbbell-Curl.gif",
+  "name_ru": "Сгибания рук с гантелями на бицепс",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/stair-climber-machine/",
+  "name": "Stair Climber Machine",
+  "how_to": "1. Step carefully onto the machine, starting with the lowest speed setting.\n2. Hold the handrails lightly for balance, keeping an upright posture.\n3. Climb step by step, driving through the heels and engaging your glutes.\n4. Focus on controlled movement, avoiding short or rushed steps.\n5. Increase speed or duration gradually based on your fitness level and goals.\n6. Cool down by decreasing speed for the final 2–3 minutes before stepping off safely.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Walking-on-Stepmill.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Walking-on-Stepmill.gif",
+  "name_ru": "Подъём по ступеням на степпере",
+  "tracking_type": "time"
+}

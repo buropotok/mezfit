@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/triceps-dips-on-floor/",
+  "name": "Triceps Dips on Floor",
+  "how_to": "1. Starting Position:\n  - Sit on the floor with your knees bent and feet flat on the ground.\n  - Place your hands behind you, slightly wider than shoulder-width, with fingers pointing forward or slightly outward.\n  - Lift your hips off the ground so your arms support your upper body weight.\n2. Execution:\n  - Slowly lower your body by bending your elbows until your triceps are parallel to the floor or slightly below.\n  - Keep your elbows close to your body to maximize triceps activation.\n  - Push through your palms and straighten your arms to return to the starting position.\n  - Repeat for the desired number of repetitions.\n3. Repetitions and Breathing:\n  - Perform 10 to 15 repetitions per set.\n  - Inhale as you lower your body and exhale as you push back up.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Triceps-dips-on-floors.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Triceps-dips-on-floors.gif",
+  "name_ru": "Обратные отжимания с опорой руками и ногами на полу",
+  "tracking_type": "weight_reps"
+}

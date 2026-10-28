@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-high-pulley-row/",
+  "name": "Kneeling High Pulley Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Kneeling-High-Pulley-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Trapezius"
+  ],
+  "image_id": "Kneeling-High-Pulley-Row.gif",
+  "name_ru": "Высокая тяга блока стоя на коленях",
+  "tracking_type": "weight_reps"
+}

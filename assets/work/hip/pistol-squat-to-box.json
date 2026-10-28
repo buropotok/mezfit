@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pistol-squat-to-box/",
+  "name": "Pistol Squat to Box",
+  "how_to": "Place a box behind you. Raise your hands to maintain balance. Lift one leg in front of you and slowly lower yourself to spin on the box. Then slowly lift yourself up.\n\nUnlike the beginners version of this exercise, with the full version of the one legged squat, you’ll need to do the same without the aid of a bench. Go down as far as you can and go back up. Do as many repetitions as you can. The key is maintaining your balance while you go up and down.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Pistol-Squat-to-Box.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Pistol-Squat-to-Box.gif",
+  "name_ru": "Приседания «пистолетик» до тумбы",
+  "tracking_type": "weight_reps"
+}

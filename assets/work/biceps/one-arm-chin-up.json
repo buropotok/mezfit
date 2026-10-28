@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-chin-up/",
+  "name": "One Arm Chin-Up",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/One-Arm-Chin-Up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Biceps"
+  ],
+  "image_id": "One-Arm-Chin-Up.gif",
+  "name_ru": "Подтягивания одной рукой",
+  "tracking_type": "weight_reps"
+}

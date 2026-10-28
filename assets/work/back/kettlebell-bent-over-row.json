@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kettlebell-bent-over-row/",
+  "name": "Kettlebell Bent Over Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Kettlebell-Bent-Over-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Kettlebell-Bent-Over-Row.gif",
+  "name_ru": "Тяга гири в наклоне",
+  "tracking_type": "weight_reps"
+}

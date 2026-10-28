@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bench-supported-dumbbell-external-rotation/",
+  "name": "Bench Supported Dumbbell External Rotation",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Bench-Supported-Dumbbell-External-Rotation.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Bench-Supported-Dumbbell-External-Rotation.gif",
+  "name_ru": "Наружная ротация плеча с гантелью и опорой на скамью",
+  "tracking_type": "weight_reps"
+}

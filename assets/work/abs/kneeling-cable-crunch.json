@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kneeling-cable-crunch/",
+  "name": "Kneeling Cable Crunch",
+  "how_to": "Kneeling Cable Crunch Benefits\n- The first muscle group that works in this exercise is your rectus abdominis, your six-pack muscles. It also helps to work on other core muscles. In order to get the most out of this exercise, it is important that the movement is done in the right shape. It may not be suitable for beginners and people with back injuries.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Kneeling-Cable-Crunch.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Kneeling-Cable-Crunch.gif",
+  "name_ru": "Скручивания на верхнем блоке стоя на коленях",
+  "tracking_type": "weight_reps"
+}

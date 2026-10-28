@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-reverse-lunge/",
+  "name": "Dumbbell Reverse Lunge",
+  "how_to": "1. Hold a dumbbell in each hand, arms fully extended at your sides, palms facing inward.\n2. Stand tall with your feet hip-width apart and core engaged.\n3. Step one leg backward and lower your body by bending both knees until your back knee hovers just above the floor.\n4. Keep your torso upright and front heel grounded as you descend.\n5. Push through the front foot to return to the starting position.\n6. Repeat on the opposite leg, alternating or completing all reps on one side.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/09/Dumbell-reverse-lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Dumbell-reverse-lunge.gif",
+  "name_ru": "Обратные выпады с гантелями",
+  "tracking_type": "weight_reps"
+}

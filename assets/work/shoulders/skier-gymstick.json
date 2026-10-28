@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/skier-gymstick/",
+  "name": "Skier | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Skier-Gymstick.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Skier-Gymstick.gif",
+  "name_ru": "Тяга гимстика прямыми руками назад («лыжник»)",
+  "tracking_type": "weight_reps"
+}

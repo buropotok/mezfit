@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-side-triceps-extension/",
+  "name": "Cable Side Triceps Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Attach a single-handle grip to a high cable pulley.\n- Stand sideways to the cable machine, with your working arm closest to the cable.\n- Grab the handle with an overhand grip and position your elbow at shoulder height, bent at 90 degrees.\n- Place your opposite hand on your hip or stomach for stability.\nStep 2: Execution\n1. Extend your arm outward, straightening the elbow until your arm is fully extended.\n2. Keep your upper arm stationary, moving only your forearm.\n3. Pause for a brief contraction at the top, squeezing your triceps.\n4. Slowly return to the starting position, maintaining control throughout.\n5. Repeat for 8 to 12 reps per arm, completing 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Cable-Side-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-Side-Triceps-Extension.gif",
+  "name_ru": "Разгибание руки в сторону на верхнем блоке",
+  "tracking_type": "weight_reps"
+}

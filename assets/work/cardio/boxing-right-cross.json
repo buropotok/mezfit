@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/boxing-right-cross/",
+  "name": "Boxing Right Cross",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Boxing-Right-Cross-with-boxing-bag.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Boxing-Right-Cross-with-boxing-bag.gif",
+  "name_ru": "Прямой удар правой рукой («кросс»)",
+  "tracking_type": "time_reps"
+}

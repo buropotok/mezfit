@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-renegade-row/",
+  "name": "Dumbbell Renegade Row",
+  "how_to": "Step 1: Get in traditional plank position. Keep your back in neutral alignment, toes on the floor, pelvis parallel to the floor. Place one hand on a kettlebell.\n\nStep 2: Pull kettlebell to the side of your chest, keeping shoulders and hips square to the ground.\n\nStep 3: Lower weight to starting position. Perform all reps with one arm then switch sides and repeat.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/01/dumbbell-renegade-row-1.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Full Body"
+  ],
+  "image_id": "dumbbell-renegade-row-1.gif",
+  "name_ru": "Тяга гантелей в планке",
+  "tracking_type": "weight_reps"
+}

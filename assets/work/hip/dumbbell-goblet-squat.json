@@ -1,0 +1,42 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-goblet-squat/",
+  "name": "Dumbbell Goblet Squat",
+  "how_to": "1. Hold a dumbbell vertically with both hands under the top portion (the weighted end), close to your chest.\n2. Stand with feet shoulder-width apart, toes slightly turned out.\n3. Engage your core and keep your chest lifted throughout the movement.\n4. Push your hips back and bend your knees, lowering into a deep squat while keeping the dumbbell at chest level.\n5. Keep your elbows inside your knees as you reach full depth, and avoid letting the knees collapse inward.\n6. Drive through your heels to return to the standing position, fully extending your hips at the top.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/01/Dumbbell-Goblet-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductors",
+      "Soleus, Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Tibialis Anterior",
+        "Rectus Abdominis, Obliques",
+        "Erector Spinae",
+        "Anterior Deltoids",
+        "Scapular Stabilizers",
+        "Biceps Brachii"
+      ],
+      "antagonist": [
+        "Hip Flexors",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Dumbbell-Goblet-Squat.gif",
+  "name_ru": "Приседания с гантелями",
+  "tracking_type": "weight_reps"
+}

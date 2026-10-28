@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lying-barbell-triceps-extension/",
+  "name": "Lying Barbell Triceps Extension",
+  "how_to": "1. Setup:\n  - Lie on a flat bench with your feet firmly planted on the ground.\n  - Hold a barbell with an overhand grip, shoulder-width apart.\n  - Extend your arms fully above your chest, keeping a slight bend in the elbows to prevent joint strain.\n2. Lowering Phase:\n  - Inhale and slowly lower the barbell towards your forehead by bending your elbows.\n  - Keep your elbows stationary and pointed upward throughout the movement.\n  - Lower the barbell until it is just above your forehead or slightly behind your head.\n3. Lifting Phase:\n  - Exhale and extend your elbows to push the barbell back to the starting position.\n  - Focus on contracting the triceps as you straighten your arms.\n  - Avoid locking out your elbows at the top to maintain muscle tension.\n4. Repetitions and Breathing:\n  - Perform 8-12 repetitions per set, depending on your training goal.\n  - Maintain controlled breathing throughout the movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Bench",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Barbell-Triceps-Extension.gif",
+  "name_ru": "Французский жим лёжа со штангой",
+  "tracking_type": "weight_reps"
+}

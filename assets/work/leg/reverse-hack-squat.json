@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-hack-squat/",
+  "name": "Reverse Hack Squat",
+  "how_to": "1. Step into the hack squat machine facing the pads and place your shoulders under the shoulder rests.\n2. Position your feet slightly forward and hip-width apart on the footplate.\n3. Brace your core and grip the side handles.\n4. Unrack the machine by standing up slightly and releasing the safety catch.\n5. Lower your body by bending your knees and hips until your thighs are at least parallel to the footplate.\n6. Drive through your heels to return to the top position. Repeat for the desired reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Reverse-Hack-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Reverse-Hack-Squat.gif",
+  "name_ru": "Обратные приседания в гакк-тренажёре",
+  "tracking_type": "weight_reps"
+}

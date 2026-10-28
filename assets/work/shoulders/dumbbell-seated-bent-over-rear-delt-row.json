@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-seated-bent-over-rear-delt-row/",
+  "name": "Dumbbell Seated Bent Over Rear Delt Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Dumbbell-Seated-Bent-Over-Rear-Delt-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-Seated-Bent-Over-Rear-Delt-Row.gif",
+  "name_ru": "Тяга гантелей сидя в наклоне для задних дельт",
+  "tracking_type": "weight_reps"
+}

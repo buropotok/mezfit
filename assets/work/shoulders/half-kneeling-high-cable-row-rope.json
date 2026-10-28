@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/half-kneeling-high-cable-row-rope/",
+  "name": "Half Kneeling High Cable Row Rope",
+  "how_to": "Half Kneeling High Cable Row Rope / Benefits\n- Half kneeling high cable row is a tremendous exercise that effectively works many muscles, including the shoulder, back, wing and trapezius muscles. It also activates the trapezius muscles, and may benefit discomfort caused by muscle weakness such as postural posture and shoulder blade protrusion by affecting the infraspinatus and subscapula muscles that cover the scapula. In addition, face pull is one of the most effective corrective exercises that help compensate for poor posture and shoulder dysfunction.\nMany of the movements that work the same muscle group may look alike, but they focus on different parts of the muscles because they are at different angles. If you want to build better muscle specifically, keep in mind that it is more beneficial to include exercises that focus on different aspects to your training program.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Half-Kneeling-High-Cable-Row-Rope.gif",
+  "muscles": {
+    "target": [
+      "Posterior Deltoid"
+    ],
+    "synergists": [
+      "Infraspinatus",
+      "Teres Minor",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Brachioradialis",
+      "Brachialis",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders",
+    "Trapezius"
+  ],
+  "image_id": "Half-Kneeling-High-Cable-Row-Rope.gif",
+  "name_ru": "Высокая тяга каната на блоке стоя на одном колене",
+  "tracking_type": "weight_reps"
+}

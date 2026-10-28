@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/scapula-pull-up/",
+  "name": "Scapula Pull-up",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Scapula-Pull-up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Trapezius"
+  ],
+  "image_id": "Scapula-Pull-up.gif",
+  "name_ru": "Подтягивания лопатками в висе",
+  "tracking_type": "weight_reps"
+}

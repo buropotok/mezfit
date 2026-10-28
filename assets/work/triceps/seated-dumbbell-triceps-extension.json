@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-dumbbell-triceps-extension/",
+  "name": "Seated Dumbbell Triceps Extension",
+  "how_to": "Step 1: Setup and Starting Position\n- Sit on a bench with back support to ensure stability.\n- Hold a dumbbell with both hands, gripping the weight by the top plate or handle.\n- Lift the dumbbell overhead, fully extending your arms.\nStep 2: Execution\n1. Slowly lower the dumbbell behind your head by bending your elbows.\n2. Keep your upper arms stationary while allowing your forearms to move.\n3. Lower the dumbbell until your elbows reach a 90-degree angle.\n4. Engage your triceps to push the dumbbell back to the starting position.\n5. Repeat for 8 to 12 repetitions for 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-Dumbbell-Triceps-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Seated-Dumbbell-Triceps-Extension.gif",
+  "name_ru": "Разгибание рук с гантелью из-за головы сидя",
+  "tracking_type": "weight_reps"
+}

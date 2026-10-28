@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/donkey-kicks/",
+  "name": "Donkey Kicks",
+  "how_to": "Donkey Kicks Benefits\n- The primary muscle that the Donkey Kick engages is the Gluteus Maximus. It is one of the best equipment-free exercises you can include in your workouts to tighten and tone the glutes, improve hip mobility, and strengthen your lower back.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Donkey-Kicks.gif",
+  "muscles": {
+    "target": [
+      "Gluteus Maximus"
+    ],
+    "synergists": [
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques",
+        "Erector Spinae",
+        "Gluteus Medius",
+        "Gluteus Minimus"
+      ],
+      "antagonist": [
+        "Hamstrings",
+        "Rectus Abdominis"
+      ]
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Donkey-Kicks.gif",
+  "name_ru": "Махи согнутой ногой назад на четвереньках",
+  "tracking_type": "weight_reps"
+}

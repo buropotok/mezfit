@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-high-row/",
+  "name": "Lever High Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Lever-High-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Shoulders"
+  ],
+  "image_id": "Lever-High-Row.gif",
+  "name_ru": "Тяга в тренажёре высоким хватом",
+  "tracking_type": "weight_reps"
+}

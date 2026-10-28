@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-step-down/",
+  "name": "Single Leg Step Down",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Single-Leg-Step-Down.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Single-Leg-Step-Down.gif",
+  "name_ru": "Спуск с платформы на одной ноге",
+  "tracking_type": "weight_reps"
+}

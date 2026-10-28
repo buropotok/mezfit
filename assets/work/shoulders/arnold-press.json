@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/arnold-press/",
+  "name": "Arnold Press",
+  "how_to": "Step-by-Step Guide\n\n1. Starting Position:\n  - Sit on a bench with back support or stand upright.\n  - Hold dumbbells at shoulder height with your palms facing your body.\n2. Press and Rotate:\n  - As you press the dumbbells overhead, rotate your wrists outward so your palms face forward at the top of the movement.\n3. Lower and Reset:\n  - Lower the dumbbells back to the starting position while rotating your wrists inward, returning your palms to face your chest.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Arnold-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Supraspinatus",
+      "Trapezius",
+      "Triceps Brachii",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Triceps, Long Head",
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Arnold-Press.gif",
+  "name_ru": "Жим Арнольда с гантелями",
+  "tracking_type": "weight_reps"
+}

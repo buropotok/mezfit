@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/tire-sledge-hammer/",
+  "name": "Tire Sledge Hammer",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Tire-SledgeHammer.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body"
+  ],
+  "image_id": "Tire-SledgeHammer.gif",
+  "name_ru": "Удары кувалдой по покрышке",
+  "tracking_type": "time_reps"
+}

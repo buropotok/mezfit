@@ -1,0 +1,31 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/two-arm-cable-lateral-raise/",
+  "name": "Two Arm Cable Lateral Raise",
+  "how_to": "Two Arm Cable Lateral Raise",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Two-Arm-Cable-Lateral-Raise.gif",
+  "muscles": {
+    "target": [
+      "Lateral Deltoid"
+    ],
+    "synergists": [
+      "Supraspinatus",
+      "Serratus Anterior",
+      "Anterior Deltoid",
+      "Trapezius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Two-Arm-Cable-Lateral-Raise.gif",
+  "name_ru": "Подъём обеих рук через стороны на блоках",
+  "tracking_type": "weight_reps"
+}

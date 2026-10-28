@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/standing-leg-raise-with-resistance-band/",
+  "name": "Standing Leg Raise With Resistance Band",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Standing-Leg-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Standing-Leg-Raise.gif",
+  "name_ru": "Подъём ноги стоя с эспандером",
+  "tracking_type": "weight_reps"
+}

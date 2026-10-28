@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-biceps-curl/",
+  "name": "Lever Biceps Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Biceps-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Lever-Biceps-Curl.gif",
+  "name_ru": "Сгибания рук на бицепс в рычажном тренажёре",
+  "tracking_type": "weight_reps"
+}

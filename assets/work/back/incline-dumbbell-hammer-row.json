@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-dumbbell-hammer-row/",
+  "name": "Incline Dumbbell Hammer Row",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Incline-Dumbbell-Hammer-Row.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Incline-Dumbbell-Hammer-Row.gif",
+  "name_ru": "Тяга гантелей нейтральным хватом с опорой на наклонную скамью",
+  "tracking_type": "weight_reps"
+}

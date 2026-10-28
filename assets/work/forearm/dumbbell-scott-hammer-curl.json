@@ -1,0 +1,33 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-scott-hammer-curl/",
+  "name": "Dumbbell Scott Hammer Curl",
+  "how_to": "- The exercise is performed by standing behind the preacher bench and placing the back of your arms on the bench pad. Holding the dumbbells with a neutral grip, palms facing each other, you will curl the weights up towards your shoulders while keeping your upper arms stationary.\n- Squeeze your biceps at the top of the movement and then slowly lower the dumbbells back down to the starting position.\n- Repeat for the desired number of reps and sets.\nDumbbell Scott Hammer Curl Benefits\n- The neutral grip used in the dumbbell scott hammer curl places greater emphasis on the brachialis muscle, which is located underneath the biceps and helps to give the arm a thicker, more defined look. Additionally, the use of dumbbells allows for a greater range of motion than barbells or machines, which can help to increase muscle activation and promote hypertrophy.\n- Incorporating the dumbbell scott hammer curl into your workout routine can help to add variety to your bicep training and improve overall arm strength and definition. However, as with any exercise, it’s important to use proper form and start with a weight that allows you to maintain control throughout the movement. Gradually increase the weight and number of reps over time as your strength improves.\nDumbbell Scott Hammer Curl – Muscles Worked\nTarget - Brachioradialis\nSynergists - Brachialis\nSynergists - Biceps Brachii\nStabilizers - Flexor Carpi Radialis\nStabilizers - Extensor Carpi Radialis",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Dumbbell-Scott-Hammer-Curl.gif",
+  "muscles": {
+    "target": [
+      "Brachioradialis"
+    ],
+    "synergists": [
+      "Brachialis",
+      "Biceps Brachii"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Flexor Carpi Radialis",
+        "Extensor Carpi Radialis"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps",
+    "Forearm"
+  ],
+  "image_id": "Dumbbell-Scott-Hammer-Curl.gif",
+  "name_ru": "Молотковое сгибание руки с гантелью на скамье Скотта",
+  "tracking_type": "weight_reps"
+}

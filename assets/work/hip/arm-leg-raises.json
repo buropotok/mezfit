@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/arm-leg-raises/",
+  "name": "Arm Leg Raises",
+  "how_to": "Contracting your abs, simultaneously lift your right leg behind you to hip height and your left arm forward to shoulder height. Hold for 10 seconds, return to the start position, then repeat with your other leg and arm. Maintain a straight line from your shoulders to your hips throughout the movement.\n\nArm Leg Raises Benefits\n- It is an exercise designed to work your hips, back, shoulders and core muscles and strengthen your overall stability.\n- Arm leg raises is also an exercise that requires mental focus, forces movements to be made in harmony, and helps improve balance and coordination.\n- This exercise, which is also applied as a warm-up exercise, can work even the smallest muscle fibers from different angles to strengthen the core muscles. It is also a safe and effective way to strengthen and balance your spine, back and neck muscles. A solid spine structure and strong back muscles can help improve your posture and relieve and prevent back pain.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/arm-leg-raise.gif",
+  "muscles": {
+    "target": [
+      "Hips"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip"
+  ],
+  "image_id": "arm-leg-raise.gif",
+  "name_ru": "Разноимённые подъёмы руки и ноги",
+  "tracking_type": "weight_reps"
+}

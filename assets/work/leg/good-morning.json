@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/good-morning/",
+  "name": "Good Morning",
+  "how_to": "1- Holding your body upright, position a barbell behind your neck and resting on the upper back. Keep your knees slightly bent and your spine neutral.\n\n2- Bending slightly at your knees and hips, start to lean forward under control. Keep your chin up—it will stop you from rounding your back.\n\n3- Lean forward by pivoting at the hip. Continue lowering your chest, keeping the back neutral and allowing your knees to bend slightly.\n\n4- Flex as far as you can. With practice, your back may be parallel to the floor. Return to the start position, breathing out as you go.\n\nGood Morning Exercise Benefits\n- A good morning exercise is a hip hinge movement that helps strengthen your butt and legs by targeting your back, hamstrings, glutes, and adductors.\n- When done right, a good morning workout is effective for strengthening your back and making it more flexible. However, if you have just started, it is recommended to try the movement with empty weight.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Good-Morning.gif",
+  "muscles": {
+    "target": [
+      "Hamstrings"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Barbell-Good-Morning.gif",
+  "name_ru": "Наклоны со штангой на плечах («гуд морнинг»)",
+  "tracking_type": "weight_reps"
+}

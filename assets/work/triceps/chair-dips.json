@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/chair-dips/",
+  "name": "Chair Dips",
+  "how_to": "1. Set Up the Position\n  - Find a sturdy chair or bench that can support your body weight.\n  - Sit on the edge of the chair and place your hands shoulder-width apart, gripping the edge of the seat with your fingers facing forward.\n2. Starting Position\n  - Extend your legs straight out in front of you, keeping your heels on the floor.\n  - Slide your hips off the chair while supporting your weight with your arms.\n3. Execution\n  - Slowly lower your body by bending your elbows until they reach a 90-degree angle.\n  - Keep your back close to the chair and avoid flaring your elbows outward.\n  - Pause briefly at the bottom, then push through your palms to extend your arms and return to the starting position.\n4. Repetitions and Sets\n  - Perform 3 to 4 sets of 10 to 15 repetitions, depending on your fitness level.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/CHAIR-DIPS.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "CHAIR-DIPS.gif",
+  "name_ru": "Обратные отжимания от стула",
+  "tracking_type": "weight_reps"
+}

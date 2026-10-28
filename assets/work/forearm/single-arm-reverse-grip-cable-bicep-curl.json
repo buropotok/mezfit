@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-arm-reverse-grip-cable-bicep-curl/",
+  "name": "Single Arm Reverse Grip Cable Bicep Curl",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/06/Single-Arm-Reverse-Grip-Cable-Bicep-Curl.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Biceps",
+    "Forearm"
+  ],
+  "image_id": "Single-Arm-Reverse-Grip-Cable-Bicep-Curl.gif",
+  "name_ru": "Сгибание одной руки на блоке обратным хватом",
+  "tracking_type": "weight_reps"
+}

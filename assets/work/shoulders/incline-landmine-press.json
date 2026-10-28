@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/incline-landmine-press/",
+  "name": "Incline Landmine Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Incline-Landmine-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Landmine"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Shoulders"
+  ],
+  "image_id": "Incline-Landmine-Press.gif",
+  "name_ru": "Жим лэндмайн-грифа на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

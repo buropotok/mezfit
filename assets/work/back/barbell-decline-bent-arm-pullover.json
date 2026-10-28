@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-decline-bent-arm-pullover/",
+  "name": "Barbell Decline Bent Arm Pullover",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Barbell-Decline-Bent-Arm-Pullover.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Barbell-Decline-Bent-Arm-Pullover.gif",
+  "name_ru": "Пуловер со штангой с согнутыми локтями на скамье с отрицательным наклоном",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-seated-calf-raise/",
+  "name": "Barbell Seated Calf Raise",
+  "how_to": "1. Setup: Sit on a flat bench with your feet shoulder-width apart on a raised surface or platform (2–4 inches high). Your knees should be bent at roughly 90 degrees.\n2. Load the Barbell: Carefully place a padded barbell across your lower thighs, just above the kneecaps. Use a squat pad or towel for comfort.\n3. Starting Position: Sit upright with a neutral spine, core braced, and toes pointing forward. Heels should be hanging off the edge of the platform.\n4. Raise: Press through the balls of your feet and lift your heels as high as possible, contracting the calves at the top.\n5. Pause and Contract: Hold the top position for 1–2 seconds to maximize soleus engagement.\n6. Lower Slowly: Descend under control, allowing the heels to dip below the platform to stretch the calf.\n7. Repeat: Complete the desired number of repetitions without bouncing or jerking.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Barbell-Seated-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Soleus"
+    ],
+    "synergists": [
+      "Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Barbell-Seated-Calf-Raise.gif",
+  "name_ru": "Подъёмы на носки сидя со штангой",
+  "tracking_type": "weight_reps"
+}

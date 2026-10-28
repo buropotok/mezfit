@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/double-leg-stretch/",
+  "name": "Double Leg Stretch",
+  "how_to": "Double Leg Stretch Benefits\n- It targets the lower and upper abdominal muscles at the same time: The double leg stretch exercise targets the rectus abdominus and oblique muscles, so that the upper and lower abdominal muscles develop simultaneously.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Double-Leg-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Double-Leg-Stretch.gif",
+  "name_ru": "Одновременное вытягивание рук и ног лёжа на спине",
+  "tracking_type": "weight_reps"
+}

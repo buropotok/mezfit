@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/neutral-grip-pull-up/",
+  "name": "Neutral Grip Pull-up",
+  "how_to": "1. Setup: Find a pull-up bar with parallel handles or bars. Grip the handles with your palms facing each other, and your hands spaced about shoulder-width apart.\n2. Hang: Hang from the pull-up bar with your arms fully extended, shoulders relaxed, and your core engaged.\n3. Pulling: Initiate the movement by engaging your back muscles and pulling your body upward. Focus on bringing your elbows down and towards your sides. Keep your core tight and maintain a controlled motion.\n4. Ascent: Continue pulling until your chin is above the level of the bar. Try to avoid excessive swinging or using momentum to complete the rep. Keep your body as stable as possible.\n5. Descent: Slowly lower your body back down to the starting position with control. Fully extend your arms at the bottom to complete one rep.\n6. Repetitions: Aim for a specific number of repetitions based on your fitness level. Start with a number that challenges you but allows you to maintain proper form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/neutral-grip-pull-up.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "neutral-grip-pull-up.gif",
+  "name_ru": "Подтягивания нейтральным хватом",
+  "tracking_type": "weight_reps"
+}

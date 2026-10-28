@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/pendulum-lunge/",
+  "name": "Pendulum Lunge",
+  "how_to": "1. Starting Position: Stand upright with your feet hip-width apart and your hands in front of your chest or on your hips.\n2. Reverse Lunge: Step one leg backward and lower into a reverse lunge while keeping your torso upright.\n3. High Knee to Forward Lunge: Push through the front foot, drive the same leg forward into a high knee, then step directly into a forward lunge.\n4. Return to Start: Push back to the starting position to complete one repetition.\n5. Repeat: Perform the desired reps on one leg before switching sides.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/09/pendulum-lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Tibialis Anterior",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Obliques",
+        "Levator Scapulae",
+        "Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "pendulum-lunge.gif",
+  "name_ru": "Маятниковые выпады вперёд и назад",
+  "tracking_type": "weight_reps"
+}

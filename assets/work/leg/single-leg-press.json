@@ -1,0 +1,32 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-press/",
+  "name": "Single Leg Press",
+  "how_to": "Single Leg Press Benefits\n- The Single leg press, is a type of strength training exercise. It’s an effective move for strengthening your quadriceps, which are in the front of your upper legs. If you have a muscular imbalance or one leg is weaker than the other, the single leg press is a one-sided isolated exercise used to develop leg muscles.\n- Provides volume increase in legs. If your goal is to add volume to your legs, leg press is one of the best leg exercises that focus solely on the big leg muscles.\n- It is suitable for beginners. Since this exercise is done on a machine and while doing this you don’t need to focus on your balancing muscles, it allows you to add more weight to gain more muscle.\n- It increases growth hormone and testosterone levels. Studies show that both Leg press and Squat increase testosterone, growth hormone and cortisol levels, but squat exercise increases by 16.7% more than leg press exercise.\n- It can help you increase hip and knee strength so you can do exercises like leg press, squats and deadlifts better.\n- Leg press can help increase your speed and ability to accelerate. Moving fast requires your legs to build enough force to push your body forward. The more force you create, the further you move with each step. Exercising leg exercises, such as leg presses for power and strength, will benefit your stamina and strength so you can run faster.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Single-Leg-Press.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Machine"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Single-Leg-Press.gif",
+  "name_ru": "Жим одной ногой в тренажёре",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,41 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ez-bar-bent-arm-pullover/",
+  "name": "EZ-Bar Bent Arm Pullover",
+  "how_to": "Step 1: Setup\n1. Choose an EZ-Bar with a comfortable weight.\n2. Lie flat on a bench with your feet planted on the floor for stability.\n3. Hold the EZ-Bar with a shoulder-width overhand grip, keeping your hands on the angled sections of the bar.\nStep 2: Starting Position\n1. Extend your arms upward, positioning the bar above your chest.\n2. Keep a slight bend in your elbows to reduce joint strain.\n3. Brace your core and keep your shoulders stable.\nStep 3: Lowering Phase\n1. Slowly lower the bar backward behind your head in a controlled motion.\n2. Keep your elbows slightly bent to prevent overloading the joints.\n3. Lower the weight until you feel a deep stretch in the chest and lats.\nStep 4: Lifting Phase\n1. Engage your chest, lats, and triceps to bring the bar back to the starting position.\n2. Maintain control and avoid jerking the weight.\n3. Fully extend your arms at the top but do not lock out your elbows.\nRepetitions and Sets:\n- Beginners: 3 sets of 8 to 10 reps\n- Intermediate: 3 to 4 sets of 10 to 12 reps\n- Advanced: 4 sets of 12 to 15 reps",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/EZ-Bar-Bent-Arm-Pullover.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Pectoralis Major, Sternal",
+      "Triceps Brachii (Long Head)",
+      "Posterior Deltoid",
+      "Teres Major",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Serratus Anterior",
+      "Levator Scapulae"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Wrist Flexors",
+        "Triceps Brachii",
+        "Pectoralis Major, Clavicular",
+        "Anterior Deltoid"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Triceps"
+  ],
+  "image_id": "EZ-Bar-Bent-Arm-Pullover.gif",
+  "name_ru": "Пуловер с EZ-грифом на согнутых руках",
+  "tracking_type": "weight_reps"
+}

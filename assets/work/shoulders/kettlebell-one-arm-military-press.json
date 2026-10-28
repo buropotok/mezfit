@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kettlebell-one-arm-military-press/",
+  "name": "Kettlebell One-Arm Military Press",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Kettlebell-One-Arm-Military-Press.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Kettlebell-One-Arm-Military-Press.gif",
+  "name_ru": "Армейский жим гири одной рукой",
+  "tracking_type": "weight_reps"
+}

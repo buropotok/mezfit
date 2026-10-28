@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/leg-swings-front-to-back/",
+  "name": "Leg Swings Front to Back",
+  "how_to": "1. Stand tall next to a wall or sturdy object for balance support.\n2. Shift your weight to one leg and lift the opposite leg slightly off the ground.\n3. Swing the lifted leg forward, keeping the knee straight or slightly bent.\n4. Allow the leg to swing backward, creating a smooth front-to-back arc.\n5. Perform 10–15 swings per leg, increasing the range of motion gradually with each rep.\n6. Switch sides and repeat with the opposite leg.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/Leg-Swings-Front-to-Back.gif",
+  "muscles": {
+    "target": [
+      "Hamstrings",
+      "Quadriceps",
+      "Adductors"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Leg-Swings-Front-to-Back.gif",
+  "name_ru": "Махи ногой вперёд-назад",
+  "tracking_type": "weight_reps"
+}

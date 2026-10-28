@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/flexor-incline-dumbbell-curls/",
+  "name": "Flexor Incline Dumbbell Curls",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Flexor-Incline-Dumbbell-Curls.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Biceps"
+  ],
+  "image_id": "Flexor-Incline-Dumbbell-Curls.gif",
+  "name_ru": "Сгибания рук с гантелями на наклонной скамье",
+  "tracking_type": "weight_reps"
+}

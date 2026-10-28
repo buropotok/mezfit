@@ -1,0 +1,44 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/ab-wheel-rollout/",
+  "name": "Ab Wheel Rollout",
+  "how_to": "Ab Wheel Rollout Benefits\n- The ab wheel rollout exercise is an effective exercise as it works all the muscles of the upper body, especially the hip flexors and core muscles. Compared to traditional ab exercises like crunches or sit-ups, the ab roller exercises more challenging and effective.\n- The Ab Wheel rollout exercise is a compound move. This means it activates multiple muscle groups at once. The ab wheel rollout can give you a better abdominal workout than traditional flexion exercises, allowing you to build stronger and more defined abs.\nThe ab rollout is a slightly tougher core exercise, and without proper progressions can actually increase injury to areas like the lower back. The exercise wheel puts pressure on the lower back muscles, spine, and hip flexors. If you have problems with these areas, don’t do it.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Ab-Wheel-Rollout.gif",
+  "muscles": {
+    "target": [
+      "Iliopsoas"
+    ],
+    "synergists": [
+      "Tensor Fasciae Latae",
+      "Sartorius",
+      "Pectineus",
+      "Adductor Longus",
+      "Adductor Brevis",
+      "Latissimus Dorsi",
+      "Teres Major",
+      "Pectoralis Major",
+      "Posterior Deltoid",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Abdominal",
+        "Obliques",
+        "Triceps",
+        "Wrist Flexors",
+        "Rectus Femoris",
+        "Erector Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Hip"
+  ],
+  "image_id": "Ab-Wheel-Rollout.gif",
+  "name_ru": "Выкатывание ролика для пресса",
+  "tracking_type": "weight_reps"
+}

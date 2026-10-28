@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-crunch/",
+  "name": "Reverse Crunch",
+  "how_to": "Reverse Crunch Benefits\n- The most important of the reverse crunch benefits is that it provides benefits from core strength to spine stabilization, improving your body functions and aesthetics. As you pull your legs towards your chest, your abdominal muscles contract and the upper part of your body remains fixed on the floor, thereby working the rectus abdominis muscle, helping the six-pack muscles to exit more effectively.\n- Exercises the lower abdominal muscles: It is difficult to exercise the lower abdominal muscles, but reverse exercises can help you do this. Reverse crunch is one of the basic core strengthening exercises that increase stability throughout the waist, hips and spine. The main purpose of this exercise is to provide strength and flexibility to your lower abdominal muscles. It is effective for tightening the abdominal muscles and getting rid of belly fat, including your lower stomach.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Crunch-1.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Reverse-Crunch-1.gif",
+  "name_ru": "Обратные скручивания",
+  "tracking_type": "weight_reps"
+}

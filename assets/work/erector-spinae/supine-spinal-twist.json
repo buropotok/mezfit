@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/supine-spinal-twist/",
+  "name": "Supine Spinal Twist",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/12/Supine-Spinal-Twist.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Back / Wing",
+    "Erector Spinae",
+    "Yoga"
+  ],
+  "image_id": "Supine-Spinal-Twist.gif",
+  "name_ru": "Скручивание позвоночника лёжа на спине",
+  "tracking_type": "time"
+}

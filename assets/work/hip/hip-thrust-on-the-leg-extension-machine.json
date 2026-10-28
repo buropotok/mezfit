@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hip-thrust-on-the-leg-extension-machine/",
+  "name": "Hip Thrust on The Leg Extension Machine",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Hip-Thrust-on-The-Leg-Extension-Machine.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Hip-Thrust-on-The-Leg-Extension-Machine.gif",
+  "name_ru": "Ягодичный мостик в тренажёре для разгибания ног",
+  "tracking_type": "weight_reps"
+}

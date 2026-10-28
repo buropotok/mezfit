@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/seated-leg-extension-with-resistance-band/",
+  "name": "Seated Leg Extension with Resistance Band",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Seated-Leg-Extension-with-Resistance-Band.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Leg"
+  ],
+  "image_id": "Seated-Leg-Extension-with-Resistance-Band.gif",
+  "name_ru": "Разгибания ног сидя с эспандером",
+  "tracking_type": "weight_reps"
+}

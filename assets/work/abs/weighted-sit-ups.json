@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weighted-sit-ups/",
+  "name": "Weighted Sit-ups",
+  "how_to": "Weighted Sit-ups Benefits\n- The Weighted sit-ups movement is an advanced exercise applied with the help of a weight to shape, tighten and strengthen the abdominal muscles. In this exercise you do with weight, you can have more interaction on the sixpack muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/weightedsitups.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "weightedsitups.gif",
+  "name_ru": "Подъёмы корпуса с отягощением",
+  "tracking_type": "weight_reps"
+}

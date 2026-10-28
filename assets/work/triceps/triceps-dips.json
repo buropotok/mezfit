@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/triceps-dips/",
+  "name": "Triceps Dips",
+  "how_to": "Using Parallel Bars or a Dip Station\n1. Set Up Your Position\n  - Grip the parallel bars with your hands slightly wider than shoulder-width apart.\n  - Fully extend your arms and support your body weight above the bars.\n2. Position Your Body\n  - Keep your chest slightly forward and engage your core.\n  - Bend your knees or extend your legs straight, depending on comfort and difficulty level.\n3. Execution\n  - Inhale as you lower your body by bending your elbows until your upper arms are parallel to the ground.\n  - Keep your elbows close to your torso and avoid flaring them outward.\n  - Pause briefly at the bottom, ensuring full triceps engagement.\n  - Exhale as you press through your palms to extend your arms and return to the starting position.\n4. Repeat\n  - Perform the desired number of repetitions while maintaining proper form.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Triceps-Dips.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Triceps-Dips.gif",
+  "name_ru": "Отжимания на брусьях с акцентом на трицепс",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,30 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/snap-jumps/",
+  "name": "Snap Jumps",
+  "how_to": "Snap Jumps Benefits\n- Snap jumps are a plyometric exercise. Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.\n- Snap jumps target the abdominal muscles, hip muscles and hip flexors and also work on the thighs, knee tendons, quadriceps and shoulders.\n- Snap jumps are beneficial to your health because they combine cardiovascular conditioning with strength work. Since snap jumps elevate your heart rate, they can also improve your cardiovascular fitness.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/SNAP-JUMPS.gif",
+  "muscles": {
+    "target": [
+      "Abs"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Cardio",
+    "Full Body",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "SNAP-JUMPS.gif",
+  "name_ru": "Плиометрические прыжки из упора присев",
+  "tracking_type": "time_reps"
+}

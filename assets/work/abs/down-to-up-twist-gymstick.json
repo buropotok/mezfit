@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/down-to-up-twist-gymstick/",
+  "name": "Down to Up Twist |Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Down-to-Up-Twist-Gymstick.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Down-to-Up-Twist-Gymstick.gif",
+  "name_ru": "Диагональные повороты корпуса снизу вверх с гимстиком",
+  "tracking_type": "weight_reps"
+}

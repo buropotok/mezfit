@@ -1,0 +1,23 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-6-ways-raise/",
+  "name": "Dumbbell 6 Way Raise",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Dumbbell-6-Ways-Raise.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Dumbbell-6-Ways-Raise.gif",
+  "name_ru": "Шестипозиционный подъём гантелей для плеч",
+  "tracking_type": "weight_reps"
+}

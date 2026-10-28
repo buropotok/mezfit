@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hack-squat-calf-raise/",
+  "name": "Hack Squat Calf Raise",
+  "how_to": "1. Setup: Stand inside the hack squat machine with your shoulders under the pads, and feet placed high on the foot platform. Keep your toes pointing straight ahead or slightly out.\n2. Position Feet for Full Stretch: The balls of your feet should rest on the edge of the platform so your heels can move freely into a deep stretch without slipping.\n3. Unlock the Machine: Extend your legs fully to lift the carriage and release the safety handles.\n4. Begin the Raise: With knees fully extended, press through the forefeet to lift your heels as high as possible.\n5. Pause and Contract: Hold at the top for 1–2 seconds, emphasizing a peak contraction in the calves.\n6. Lower Slowly: Let your heels drop below the level of the platform to achieve a full stretch in the gastrocnemius and soleus.\n7. Repeat: Perform the desired number of reps, maintaining control throughout.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Hack-Squat-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Soleus",
+      "Tibialis posterior",
+      "Plantaris",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis",
+      "Intrinsic foot muscles"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Hack-Squat-Calf-Raise.gif",
+  "name_ru": "Подъёмы на носки в гакк-тренажёре",
+  "tracking_type": "weight_reps"
+}

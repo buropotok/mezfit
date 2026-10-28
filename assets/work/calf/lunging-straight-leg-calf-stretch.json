@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lunging-straight-leg-calf-stretch/",
+  "name": "Lunging Straight Leg Calf Stretch",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Lunging-Straight-Leg-Calf-Stretch.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Lunging-Straight-Leg-Calf-Stretch.gif",
+  "name_ru": "Растяжка икроножной мышцы с прямой задней ногой в выпаде",
+  "tracking_type": "time"
+}

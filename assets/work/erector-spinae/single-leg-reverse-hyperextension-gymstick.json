@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/single-leg-reverse-hyperextension-gymstick/",
+  "name": "Single Leg Reverse Hyperextension | Gymstick",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/05/Single-Leg-Reverse-Hyperextension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Gymstick",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Erector Spinae",
+    "Hip"
+  ],
+  "image_id": "Single-Leg-Reverse-Hyperextension.gif",
+  "name_ru": "Обратная гиперэкстензия одной ногой с гимстиком",
+  "tracking_type": "weight_reps"
+}

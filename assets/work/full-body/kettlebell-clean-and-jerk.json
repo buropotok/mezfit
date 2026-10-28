@@ -1,0 +1,38 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/kettlebell-clean-and-jerk/",
+  "name": "Kettlebell Clean and Jerk",
+  "how_to": "Kettlebell Clean and Jerk",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Kettlebell-Clean-and-Jerk.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid",
+      "Trapezius",
+      "Serratus Anterior",
+      "Abdominals",
+      "Gluteus Maximus",
+      "Hamstring",
+      "Quadriceps",
+      "Lower Back/Lumbar",
+      "Soleus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Kettlebell"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Full Body",
+    "Hip",
+    "Leg",
+    "Shoulders"
+  ],
+  "image_id": "Kettlebell-Clean-and-Jerk.gif",
+  "name_ru": "Взятие гири на грудь и толчок",
+  "tracking_type": "weight_reps"
+}

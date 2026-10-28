@@ -1,0 +1,37 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bench-dips-on-floor/",
+  "name": "Bench Dips on Floor",
+  "how_to": "Step 1: Setup and Starting Position\n- Sit on the edge of a sturdy bench or elevated surface with your hands placed shoulder-width apart.\n- Extend your legs straight in front of you, with your heels resting on the floor.\n- Keep your arms fully extended while supporting your body weight.\nStep 2: Execution\n1. Lower your body by bending your elbows until your upper arms are parallel to the floor.\n2. Keep your elbows tucked in and avoid flaring them outward.\n3. Pause briefly at the bottom of the movement.\n4. Push through your palms to straighten your arms and return to the starting position.\n5. Repeat for 10 to 15 repetitions for 3 to 4 sets.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Triceps-Dips-on-Floor.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [
+      "Anterior Deltoid",
+      "Pectoralis Major, Sternal",
+      "Pectoralis Major, Clavicular",
+      "Pectoralis Minor",
+      "Rhomboids",
+      "Levator Scapulae",
+      "Latissimus Dorsi"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii",
+        "Lower Trapezius"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Bench",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Triceps-Dips-on-Floor.gif",
+  "name_ru": "Обратные отжимания от скамьи с ногами на полу",
+  "tracking_type": "weight_reps"
+}

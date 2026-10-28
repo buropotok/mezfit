@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-front-raise/",
+  "name": "Cable Front Raise",
+  "how_to": "Form: Exhale and raise your arm up to about 90 degrees. Hold for a brief second and then slowly return to the starting position.\n\nPersonal Trainer Tips: During this shoulder exercise it is important to be mindful of your neck and shoulder position.\n\nFocus on contracting your shoulder blade muscles so that your shoulder blade stays down and back as you lift forward. Prevent your shoulder from shrugging upwards as you lift forward.\n\nIt is also important to be mindful of the position of your lower back during this exercise. As you get fatigued, you may feel the tendency to move your hips and lower back to help lift the weight.\n\nKeep your abdominal muscles engaged throughout the movement to keep your pelvis and lower back stable.\n\nIf you don’t have access to a cable machine, no worries you can use a resistance band or dumbbells to do the same motion.\n\nCable Front Raise – Benefits\n- Cable front raise is the most popular shoulder development and strengthening exercise targeting the anterior deltoid.\n- Front raise exercise with cable machines provides constant tension and continuous resistance while lifting and lowering the weight. Because muscle growth and strength gains are directly dependent on how much the muscle is stretched during exercise, cable machines tire the muscles faster and provide greater strength gain.\n- Cable front exercise strengthens the stabilizing muscles in your shoulders and improves your muscular balance\nCable Front Raise –",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Cable-Front-Raise.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior",
+      "Pectoralis Major, Clavicular"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Levatos Scapula",
+        "Wrist Extensors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Cable-Front-Raise.gif",
+  "name_ru": "Подъём рук на блоке перед собой",
+  "tracking_type": "weight_reps"
+}

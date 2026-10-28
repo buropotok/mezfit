@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-dumbbell-snatch/",
+  "name": "One Arm Dumbbell Snatch",
+  "how_to": "One Arm Dumbbell Snatch",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/One-Arm-Dumbbell-Snatch.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid",
+      "Gluteus Maximus",
+      "Quadriceps",
+      "Erector Spinae",
+      "Hamstring",
+      "Trapezius",
+      "Serratus Anterior",
+      "Abdominals",
+      "Latissimus Dorsi",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg",
+    "Shoulders"
+  ],
+  "image_id": "One-Arm-Dumbbell-Snatch.gif",
+  "name_ru": "Рывок гантели одной рукой",
+  "tracking_type": "weight_reps"
+}

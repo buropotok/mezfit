@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/side-bridge-hip-abduction/",
+  "name": "Side Bridge Hip Abduction",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Side-Bridge-Hip-Abduction.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Hip"
+  ],
+  "image_id": "Side-Bridge-Hip-Abduction.gif",
+  "name_ru": "Боковая планка с отведением бедра",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-lunge/",
+  "name": "Reverse Lunge",
+  "how_to": "Step 1: Stand tall with feet hip-width apart, hands on your hips and shoulders back.\n\nStep 2: Keeping your upper body still and core tight, take one large step back with your right foot, then bend both knees to lower into a lunge, front leg should be parallel to the ground.\n\nStep 3: Press through your left heel and return to start position. Repeat move, this time stepping back with your left foot.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/08/bodyweight-reverse-lunge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "bodyweight-reverse-lunge.gif",
+  "name_ru": "Обратные выпады",
+  "tracking_type": "weight_reps"
+}

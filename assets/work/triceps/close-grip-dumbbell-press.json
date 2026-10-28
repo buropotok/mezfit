@@ -1,0 +1,29 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/close-grip-dumbbell-press/",
+  "name": "Close-Grip Dumbbell Press",
+  "how_to": "1. Setup:\n  - Lie flat on a bench with a dumbbell in each hand.\n  - Position the dumbbells directly over your chest, palms facing each other (neutral grip), and elbows bent at a 90-degree angle.\n2. Execution:\n  - Begin the movement by extending your arms fully and pressing the dumbbells directly upwards.\n  - As you press, focus on squeezing the dumbbells together forcefully. Imagine you’re trying to crush or squeeze them together throughout the movement.\n  - Keep your elbows close to your body throughout the lift, maintaining a close grip.\n  - Pause for a moment at the top of the movement, maintaining tension in your triceps.\n3. Lowering Phase:\n  - Slowly lower the dumbbells back down to the starting position, maintaining control and keeping the squeeze on the dumbbells as much as possible.\n4. Repeat:\n  - Perform the desired number of repetitions, maintaining proper form and control throughout the set.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Close-Grip-Dumbbell-Press.gif",
+  "muscles": {
+    "target": [
+      "Pectoralis Major, Sternal"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Biceps Brachii"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Chest",
+    "Triceps"
+  ],
+  "image_id": "Close-Grip-Dumbbell-Press.gif",
+  "name_ru": "Жим гантелей лёжа узким хватом",
+  "tracking_type": "weight_reps"
+}

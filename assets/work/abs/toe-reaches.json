@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/toe-reaches/",
+  "name": "Toe Reaches",
+  "how_to": "Toe Reaches Benefits\n- Toe reaches is one of the most effective exercises for the upper and lower abdominal muscles. Although this exercise targets the rectus abdominus and oblique muscles, it is particularly useful for burning and tightening the fat.\n- Exercise helps to stretch the leg muscles, strengthen the core muscles and increase the mobility of the muscles. A strong core refers to your ability to perform at higher levels during any sport or physical activity.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Toe-Reaches.gif",
+  "muscles": {
+    "target": [
+      "Rectus Abdominis"
+    ],
+    "synergists": [
+      "Obliques"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs"
+  ],
+  "image_id": "Toe-Reaches.gif",
+  "name_ru": "Касания носков ног лёжа",
+  "tracking_type": "weight_reps"
+}

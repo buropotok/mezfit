@@ -1,0 +1,27 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/wrist-circles-stretch/",
+  "name": "Dynamic Wrist Stretches",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Wrist-Circles-Stretch.gif",
+  "muscles": {
+    "target": [
+      "Wrist Flexors",
+      "Wrist Extensors"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Forearm"
+  ],
+  "image_id": "Wrist-Circles-Stretch.gif",
+  "name_ru": "Динамическая растяжка запястий",
+  "tracking_type": "weight_reps"
+}

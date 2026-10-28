@@ -1,0 +1,34 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-cable-row/",
+  "name": "One Arm Cable Row",
+  "how_to": "One Arm Cable Row Benefits\n- One arm cable row is a pulling exercise that works the back muscles in general, particularly the latissimus dorsi. This exercise performed on the cable machine is one-sided and provides constant resistance, so it is very beneficial in terms of equal development of the muscles.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/One-arm-Cable-Row.gif",
+  "muscles": {
+    "target": [
+      "Back"
+    ],
+    "synergists": [
+      "Latissimus Dorsi",
+      "Infraspinatus",
+      "Teres Minor",
+      "Posterior Deltoid",
+      "Trapezius",
+      "Rhomboids"
+    ],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "One-arm-Cable-Row.gif",
+  "name_ru": "Тяга блока одной рукой к поясу",
+  "tracking_type": "weight_reps"
+}

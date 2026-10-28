@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bodyweight-kneeling-sissy-squat/",
+  "name": "Bodyweight Kneeling Sissy Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/02/Bodyweight-Kneeling-Sissy-Squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Leg"
+  ],
+  "image_id": "Bodyweight-Kneeling-Sissy-Squat.gif",
+  "name_ru": "Сисси-приседания с колен без отягощения",
+  "tracking_type": "weight_reps"
+}

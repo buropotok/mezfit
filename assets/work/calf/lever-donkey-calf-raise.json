@@ -1,0 +1,36 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/lever-donkey-calf-raise/",
+  "name": "Lever Donkey Calf Raise",
+  "how_to": "1. Set the Machine: Adjust the height of the padded lever so it rests securely on your lower back or hips when you bend over.\n2. Foot Position: Stand on the calf block with the balls of your feet supported and your heels hanging off. Feet should be hip-width apart or slightly narrower.\n3. Torso Alignment: Bend forward at the hips to about a 90° angle, keeping your spine neutral. The padded lever should rest across your sacrum or upper glutes, not your spine.\n4. Starting Position: Drop your heels below the platform level to achieve a full stretch in the calves.\n5. Initiate the Movement: Press through the balls of your feet to raise the lever by plantarflexing the ankles. Keep your knees straight throughout the movement.\n6. Peak Contraction: At the top, pause for 1–2 seconds while actively squeezing the calves.\n7. Controlled Lowering: Slowly lower the lever until your heels are below parallel to stretch the muscle fully.\n8. Repeat: Perform the desired number of reps with controlled tempo and full range of motion.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lever-Donkey-Calf-Raise.gif",
+  "muscles": {
+    "target": [
+      "Gastrocnemius"
+    ],
+    "synergists": [
+      "Plantaris",
+      "Tibialis posterior",
+      "Flexor hallucis longus",
+      "Flexor digitorum longus",
+      "Peroneus longus",
+      "Peroneus brevis",
+      "Intrinsic foot muscles"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Soleus"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Calf"
+  ],
+  "image_id": "Lever-Donkey-Calf-Raise.gif",
+  "name_ru": "Подъёмы на носки в тренажёре в положении «ослик»",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/hanging-windshield-wiper/",
+  "name": "Hanging Windshield Wiper",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/01/Hanging-Windshield-Wiper.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Abs",
+    "Calisthenic"
+  ],
+  "image_id": "Hanging-Windshield-Wiper.gif",
+  "name_ru": "Маятниковые повороты прямых ног в висе",
+  "tracking_type": "weight_reps"
+}

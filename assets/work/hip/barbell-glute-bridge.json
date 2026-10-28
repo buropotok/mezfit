@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-glute-bridge/",
+  "name": "Barbell Glute Bridge",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/12/Barbell-Glute-Bridge.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Barbell-Glute-Bridge.gif",
+  "name_ru": "Ягодичный мост со штангой",
+  "tracking_type": "weight_reps"
+}

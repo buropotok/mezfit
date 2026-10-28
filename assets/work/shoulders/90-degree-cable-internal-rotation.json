@@ -1,0 +1,25 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/90-degree-cable-internal-rotation/",
+  "name": "90-degree Cable Internal Rotation",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Cable-Shoulder-90-degrees-Internal-Rotation.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Cable-Shoulder-90-degrees-Internal-Rotation.gif",
+  "name_ru": "Внутренняя ротация плеча на блоке при отведённой на 90° руке",
+  "tracking_type": "weight_reps"
+}

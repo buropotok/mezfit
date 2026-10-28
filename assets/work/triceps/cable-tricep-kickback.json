@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-tricep-kickback/",
+  "name": "Cable Tricep Kickback",
+  "how_to": "1. Setup:\n  - Attach a single-handled attachment to the pulley of the cable machine.\n  - Select an appropriate weight that allows controlled movement.\n  - Stand facing the machine, grab the handle with an underhand grip, and take a step back.\n  - Hinge forward slightly at the hips, keeping your back straight and core engaged.\n  - Keep your upper arm parallel to your torso with your elbow bent at 90 degrees.\n2. Execution:\n  - Extend your arm straight back by fully straightening your elbow while keeping your upper arm stationary.\n  - Squeeze your triceps at the top of the movement.\n  - Slowly return to the starting position with control, allowing your elbow to bend again.\n  - Repeat for the desired number of repetitions and switch arms if performing single-arm kickbacks.\n3. Repetitions and Breathing:\n  - Perform 10 to 15 reps per set.\n  - Inhale as you return to the starting position and exhale as you extend your arm backward.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Cable-Tricep-Kickback.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-Tricep-Kickback.gif",
+  "name_ru": "Отведение предплечья назад на блоке для трицепса",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/overhead-shrug/",
+  "name": "Overhead Shrug",
+  "how_to": "Step 1: Set Up Properly: Stand straight with feet about shoulder-width apart. Hold the barbell with an overhand grip, hands slightly wider than shoulder-width apart. Lift the barbell overhead, fully extending your arms and keeping the bar directly above your head. Make sure to keep your shoulders down and your back straight.\n\nStep 2: Lift your scapula up: Keeping your arms straight and your shoulders down, shrug your shoulders up toward your ears. Focus on engaging the upper back and shoulder muscles, and lift or elevate your scapula while you are pressing the weight overhead.\n\nStep 3: Hold the Top Position: Hold the top position for a second or two, then lower your shoulders back down to the starting position. Make sure to keep your back straight and your core engaged throughout the movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/overhead-shrug.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Anterior Deltoid",
+        "Lateral Deltoid",
+        "Erectos Spinae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Trapezius"
+  ],
+  "image_id": "overhead-shrug.gif",
+  "name_ru": "Шраги со штангой над головой",
+  "tracking_type": "weight_reps"
+}

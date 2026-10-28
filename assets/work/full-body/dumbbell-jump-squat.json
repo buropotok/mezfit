@@ -1,0 +1,43 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/dumbbell-jump-squat/",
+  "name": "Dumbbell Jump Squat",
+  "how_to": "1. Stand tall with feet shoulder-width apart, holding a dumbbell in each hand at your sides.\n2. Brace your core and lower into a squat, keeping your chest up and back neutral.\n3. Explode upward, jumping off the ground as high as you can while holding the dumbbells.\n4. Land softly on the balls of your feet, immediately lowering back into a squat for the next rep.\n5. Repeat for reps, maintaining control during both the takeoff and landing.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/04/Dumbbell-Jump-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Erector Spinae",
+        "Deltoid (Anterior, Lateral)",
+        "Levator Scapulae",
+        "Trapezius",
+        "Hamstrings",
+        "Gastrocnemius"
+      ],
+      "antagonist": [
+        "Rectus Abdominis",
+        "Obliques"
+      ]
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Cardio",
+    "Full Body",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Dumbbell-Jump-Squat.gif",
+  "name_ru": "Приседания с гантелями и выпрыгиванием",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/bike/",
+  "name": "Stationary Bike",
+  "how_to": "1. Adjust the seat height so your knee has a slight bend at the bottom of the pedal stroke.\n2. Sit upright with a firm grip on the handlebars and feet securely in the pedals.\n3. Start pedaling slowly to warm up your muscles and joints.\n4. Increase resistance or speed as needed, depending on your workout type.\n5. Maintain steady breathing and posture as you ride.\n6. Cool down by lowering resistance and pedaling gently for 3–5 minutes.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Bike.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Machine"
+  ],
+  "muscle_group": [
+    "Cardio"
+  ],
+  "image_id": "Bike.gif",
+  "name_ru": "Езда на велотренажёре",
+  "tracking_type": "time_distance"
+}

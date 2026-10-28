@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/banded-fire-hydrant/",
+  "name": "Banded Fire Hydrant",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Banded-Fire-Hydrant.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip"
+  ],
+  "image_id": "Banded-Fire-Hydrant.gif",
+  "name_ru": "Отведение согнутой ноги в сторону на четвереньках с эспандером",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/reverse-lunge-knee/",
+  "name": "Reverse Lunge Knee Lift",
+  "how_to": "Reverse Lunge Knee Lift Benefits\n- Reverse lunge Knee Lift activate your core, hamstrings, quadriceps and glutes. This unilateral exercise, which trains each leg separately, activates your stabilizing muscles, and helps you become more balanced and coordinated. This is ideal for people who have knee concerns, difficulty balancing, or less hip mobility. This exercise is great for runners as it builds leg strength. They help you run more efficiently and make you less prone to injury.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Reverse-Lunge-Knee.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductor Magnus",
+      "Soleus"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Gastrocnemius",
+        "Gluteus Medius",
+        "Gluteus Minimus",
+        "Quadratus Lumborum",
+        "Tibialis Anterior",
+        "Obliques"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Full Gym",
+    "NO EQUIPMENT"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Reverse-Lunge-Knee.gif",
+  "name_ru": "Обратные выпады с подъёмом колена",
+  "tracking_type": "weight_reps"
+}

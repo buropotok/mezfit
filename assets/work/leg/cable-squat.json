@@ -1,0 +1,43 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-squat/",
+  "name": "Cable Goblet Squat",
+  "how_to": "1. Attach a straight bar or rope handle to the low pulley of a cable machine.\n2. Stand facing the machine and grip the handle with both hands, holding it at chest height.\n3. Step back slightly so the weight pulls forward, then stand with feet shoulder-width apart.\n4. Brace your core and begin the squat by bending your hips and knees simultaneously.\n5. Lower your body until your thighs are parallel to the floor or slightly below, keeping your chest up.\n6. Drive through your heels to return to the starting position, maintaining cable tension throughout.\n7. Repeat for reps, ensuring control and an upright torso during the movement.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Cable-Squat.gif",
+  "muscles": {
+    "target": [
+      "Quadriceps"
+    ],
+    "synergists": [
+      "Gluteus Maximus",
+      "Adductors",
+      "Soleus, Gastrocnemius"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Hamstrings",
+        "Tibialis Anterior",
+        "Rectus Abdominis, Obliques",
+        "Erector Spinae",
+        "Anterior Deltoids",
+        "Scapular Stabilizers",
+        "Biceps Brachii"
+      ],
+      "antagonist": [
+        "Hip Flexors",
+        "Latissimus Dorsi"
+      ]
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym",
+    "Resistance Band"
+  ],
+  "muscle_group": [
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "Cable-Squat.gif",
+  "name_ru": "Приседания с нижним блоком с рукоятью у груди",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,24 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-rope-lying-tricep-extension/",
+  "name": "Cable Rope Lying Tricep Extension",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Rope-Lying-on-Floor-Tricep-Extension.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Cable-Rope-Lying-on-Floor-Tricep-Extension.gif",
+  "name_ru": "Разгибания рук с канатом на блоке лёжа",
+  "tracking_type": "weight_reps"
+}

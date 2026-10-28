@@ -1,0 +1,35 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/weight-plate-front-raise/",
+  "name": "Weight Plate Front Raise",
+  "how_to": "Weight Plate Front Raise Benefits\n- The Weight plate front raise is a isole exercise that targets the fronts and sides of the shoulders. Suitable for all levels, this shoulder flexion exercise is a good option for building strength, improving shoulder mobility and shaping your shoulder heads.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Weight-Plate-Front-Raise-1.gif",
+  "muscles": {
+    "target": [
+      "Anterior Deltoid"
+    ],
+    "synergists": [
+      "Pectoralis Major, Clavicular",
+      "Lateral Deltoid",
+      "Trapezius",
+      "Serratus Anterior"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Trapezius, Upper",
+        "Wrist Extensors",
+        "Levator Scapulae"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Dumbbells",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Shoulders"
+  ],
+  "image_id": "Weight-Plate-Front-Raise-1.gif",
+  "name_ru": "Подъём диска от штанги перед собой",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,39 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/cable-straight-arm-pulldown/",
+  "name": "Cable Straight Arm Pulldown",
+  "how_to": "Cable Straight Arm Pulldown – Benefits\n- The straight-arm pulldown exercise is a variation of the classic lat-pulldown. Keeping the arms straight prevents the mid-back and biceps from taking over the movement, so you can focus on the lat muscles you’re trying to work more directly.\n- Having a strong back helps to keep the spinal column in proper alignment and allows for completion of everyday tasks with reduced injury risk. In addition to helping strengthen the back, the exercise secondarily works the triceps and shoulders.\nCable Straight Arm Pulldown – Muscles Worked\nTarget - Latissimus Dorsi\nSynergists - Pectoralis Major, Sternal\nSynergists - Triceps, Long Head\nSynergists - Teres Major\nSynergists - Deltoid, Posterior\nSynergists - Rhomboids\nSynergists - Levator Scapulae\nStabilizers - Triceps Brachii\nStabilizers - Pectoralis Major, Clavicular\nStabilizers - Rectus Abdominis\nStabilizers - Obliques\nStabilizers - Wrist Flexors\nStraight Arm Pulldown Variations\nExercise 1\nRope Straight Arm Pulldown",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Cable-Straight-Arm-Pulldown.gif",
+  "muscles": {
+    "target": [
+      "Latissimus Dorsi"
+    ],
+    "synergists": [
+      "Pectoralis Major, Sternal",
+      "Triceps, Long Head",
+      "Teres Major",
+      "Deltoid, Posterior",
+      "Rhomboids",
+      "Levator Scapulae"
+    ],
+    "stabilizers": {
+      "dynamic": [
+        "Triceps Brachii",
+        "Pectoralis Major, Clavicular",
+        "Rectus Abdominis",
+        "Obliques",
+        "Wrist Flexors"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Back / Wing"
+  ],
+  "image_id": "Cable-Straight-Arm-Pulldown.gif",
+  "name_ru": "Тяга верхнего блока прямыми руками",
+  "tracking_type": "weight_reps"
+}

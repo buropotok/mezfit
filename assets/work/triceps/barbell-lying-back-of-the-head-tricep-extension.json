@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/barbell-lying-back-of-the-head-tricep-extension/",
+  "name": "Barbell Lying Back of the Head Tricep Extension",
+  "how_to": "Setup:\n\n- Lie flat on a flat bench, feet flat on the floor.\n- Grasp an EZ-bar or straight bar with a shoulder-width pronated grip (palms down).\n- Start with your arms fully extended, holding the bar directly above your shoulders.\nExecution:\n\n1. Keeping your elbows pointed upward and tucked close to your head, slowly bend your elbows to lower the bar in an arc behind your head.\n2. Your upper arms should stay stationary and perpendicular to the floor.\n3. Lower the bar as far back as is comfortable, ideally until it’s level with or slightly below the bench height.\n4. Engage the triceps to press the bar back up to the starting position without moving your shoulders or flaring the elbows.\n5. Repeat for the desired reps.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Barbell-Lying-Back-of-the-Head-Tricep-Extension.gif",
+  "muscles": {
+    "target": [
+      "Triceps Brachii"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "Barbell-Lying-Back-of-the-Head-Tricep-Extension.gif",
+  "name_ru": "Разгибание рук со штангой лёжа с опусканием за голову",
+  "tracking_type": "weight_reps"
+}

@@ -1,0 +1,28 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/one-arm-reverse-push-down/",
+  "name": "One-Arm Reverse Pushdown",
+  "how_to": "1. Set Up the Equipment\n  - Attach a single handle to the high pulley of a cable machine.\n  - Select a moderate weight that allows for controlled movement.\n2. Position Yourself\n  - Stand with feet shoulder-width apart for balance.\n  - Grip the handle with an underhand grip (palm facing up).\n  - Keep your elbow close to your torso and your wrist straight.\n3. Execution\n  - Exhale as you push the handle downward by extending your elbow fully.\n  - Keep your elbow stationary and avoid excessive wrist movement.\n  - Lower the handle until your arm is fully extended but not locked out.\n  - Pause briefly at the bottom to engage the triceps completely.\n  - Inhale as you slowly return to the starting position with control.\n4. Repeat\n  - Perform the desired number of repetitions before switching arms.",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/02/One-Arm-Reverse-Push-Down.gif",
+  "muscles": {
+    "target": [
+      "Triceps"
+    ],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [
+        "Forearms"
+      ],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Cable",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Triceps"
+  ],
+  "image_id": "One-Arm-Reverse-Push-Down.gif",
+  "name_ru": "Разгибание одной руки на блоке обратным хватом",
+  "tracking_type": "weight_reps"
+}

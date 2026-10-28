@@ -1,0 +1,26 @@
+{
+  "source_url": "https://fitnessprogramer.com/exercise/trap-bar-jump-squat/",
+  "name": "Trap Bar Jump Squat",
+  "how_to": "",
+  "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/02/trap-bar-jump-squat.gif",
+  "muscles": {
+    "target": [],
+    "synergists": [],
+    "stabilizers": {
+      "dynamic": [],
+      "antagonist": []
+    }
+  },
+  "equipment": [
+    "Barbell",
+    "Full Gym"
+  ],
+  "muscle_group": [
+    "Full Body",
+    "Hip",
+    "Leg"
+  ],
+  "image_id": "trap-bar-jump-squat.gif",
+  "name_ru": "Приседания с выпрыгиванием с трэп-грифом",
+  "tracking_type": "weight_reps"
+}
