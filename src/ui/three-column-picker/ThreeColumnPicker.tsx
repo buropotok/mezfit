@@ -42,6 +42,8 @@ export interface ThreeColumnPickerColumn {
   format: (value: number) => string;
   formatAria?: (value: number) => string;
   freeMomentum?: boolean;
+  /** Let native inertia finish without browser-selected distant scroll-snap targets. */
+  snapToNearestOnEnd?: boolean;
 }
 
 export interface ThreeColumnPickerSeparator {
@@ -324,7 +326,7 @@ function ThreeColumnPickerColumnWheel({
   return (
     <div
       ref={(element) => setColumnRef(part, element)}
-      className={`ui-time-picker__column${column.freeMomentum ? ' ui-time-picker__column--free-momentum' : ''}`}
+      className={`ui-time-picker__column${column.freeMomentum ? ' ui-time-picker__column--free-momentum' : ''}${column.snapToNearestOnEnd ? ' ui-time-picker__column--snap-on-end' : ''}`}
       role="listbox"
       aria-label={column.ariaLabel}
       onScroll={(event) => onScroll(part, event)}
@@ -540,6 +542,9 @@ export function ThreeColumnPicker({
     scrollingPartsRef.current.delete(part);
     const column = columns[part];
     const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
+    if (column.snapToNearestOnEnd && Math.abs(element.scrollTop - index * ROW_HEIGHT) > 0.5) {
+      scrollColumn(element, index);
+    }
     signalCrossedValues(part, index, true);
     commitIndex(part, index);
     if (scrollingPartsRef.current.size > 0) return;
