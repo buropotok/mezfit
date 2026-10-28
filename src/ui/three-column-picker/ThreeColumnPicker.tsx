@@ -430,6 +430,7 @@ export function ThreeColumnPicker({
   const relativeFlickOriginRef = useRef<Record<ThreeColumnPickerPart, number>>({
     first: 0, second: 0, third: 0,
   });
+  const externalResetValueRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
   const quarterSnapRef = useRef<Record<ThreeColumnPickerPart, boolean>>({
     first: false, second: false, third: false,
   });
@@ -515,8 +516,10 @@ export function ThreeColumnPicker({
         const anchorRow = newColumn.values.indexOf(anchorValue);
         nextRow = anchorRow + oldRow - origin;
       } else {
+        const externallySelected = externalResetValueRef.current[part];
+        delete externalResetValueRef.current[part];
         const oldIndex = Math.max(0, Math.min(oldColumn.values.length - 1, Math.round(oldRow)));
-        const currentValue = oldColumn.values[oldIndex];
+        const currentValue = externallySelected ?? oldColumn.values[oldIndex];
         const fullIndex = newColumn.values.indexOf(currentValue);
         nextRow = fullIndex >= 0 ? fullIndex : valueIndex(newColumn, draftRef.current[part]);
       }
@@ -588,6 +591,7 @@ export function ThreeColumnPicker({
     if (!opened) {
       cancelScheduledFrames(view);
       touchStartRef.current = {};
+      externalResetValueRef.current = {};
       quarterSnapRef.current = { first: false, second: false, third: false };
       setQuarterSnap(quarterSnapRef.current);
       wasOpenedRef.current = false;
@@ -613,6 +617,7 @@ export function ThreeColumnPicker({
     // coarse rows. Return to the full wheel before positioning that value.
     PARTS.forEach((part) => {
       if (quarterSnapRef.current[part] && columns[part].relativeFlickStep) {
+        externalResetValueRef.current[part] = valueParts[part];
         setQuarterSnapMode(part, false);
       }
     });
