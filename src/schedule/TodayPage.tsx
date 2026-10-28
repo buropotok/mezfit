@@ -24,7 +24,7 @@ import { ScheduleActionButton } from './ScheduleActionButton';
 import { ScheduleClientFilter } from './ScheduleClientFilter';
 import { calendarSegments, calendarTime, localScheduleInstant } from './calendar-time';
 import { CalendarSessionSheet } from './CalendarSessionSheet';
-import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
+import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { sessionTiming } from '../workout/session-timing';
 import { useSessionClock } from '../workout/useSessionClock';
 import './today-page.css';
@@ -32,7 +32,7 @@ import './today-page.css';
 type TimelineItem = DayScheduleEvent & { date: string } & (
   | { type: 'draft'; draft: LocalWorkoutOccurrenceDraft }
   | { type: 'occurrence'; occurrence: CloudWorkoutOccurrenceRow }
-  | { type: 'session'; session: AdHocSessionRow; timeLabel: string }
+  | { type: 'session'; session: CalendarWorkoutSession; timeLabel: string }
 );
 
 function datePart(instant: string): LocalDate {
@@ -52,7 +52,7 @@ function timelineEvents(
   });
 }
 
-function sessionEvents(session: AdHocSessionRow, now: number): TimelineItem[] {
+function sessionEvents(session: CalendarWorkoutSession, now: number): TimelineItem[] {
   const timing = sessionTiming(session, now);
   let boundary = Date.parse(session.startedAt);
   return calendarSegments(timing.startsAtUtc, timing.durationMinutes).map((segment, index): TimelineItem => {
@@ -66,7 +66,7 @@ function sessionEvents(session: AdHocSessionRow, now: number): TimelineItem[] {
 function booking(event: TimelineItem) {
   if (event.type === 'draft') return event.draft;
   if (event.type === 'occurrence') return event.occurrence;
-  return { ...event.session, startsAtUtc: event.session.startedAt, durationMinutes: event.durationMinutes, format: event.session.coachUserId ? 'coached' as const : 'independent' as const };
+  return { ...event.session, startsAtUtc: event.session.startedAt, durationMinutes: event.durationMinutes };
 }
 
 function BookingCard({ event, state, actor, onClick }: {
@@ -116,7 +116,7 @@ export function TodayPage({
     [cloud?.db, cloud?.actorUserId]);
   const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(client => [client.userId, client])).values()], [cloud?.clients]);
   const [date, setDate] = useState<LocalDate>(currentDate);
-  const [sessions, setSessions] = useState<AdHocSessionRow[]>([]);
+  const [sessions, setSessions] = useState<CalendarWorkoutSession[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const now = useSessionClock(sessions.some(row => row.status === 'active'));
   const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
@@ -291,7 +291,7 @@ export function TodayPage({
       ...occurrences.filter(row => !executed(row, row.id)).filter(visible).filter(row => !drafts.some(draft => draft.targetOccurrenceId === row.id))
         .flatMap(row => timelineEvents(withTiming(row, 'occurrence'), 'occurrence')),
       ...drafts.filter(row => !executed(row, row.targetOccurrenceId ?? row.id.slice(6))).filter(visible).flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
-      ...sessions.filter(row => visible({ ...row, format: row.coachUserId ? 'coached' : 'independent' })).flatMap(row => sessionEvents(row, now)),
+      ...sessions.filter(visible).flatMap(row => sessionEvents(row, now)),
     ];
   }, [occurrences, drafts, sessions, now, cancelledRows, showCancelled, timingOverrides, role, clientUserIds, cloud?.actorUserId, plannedStart?.conflictActive, plannedStart?.conflictOccurrence?.id]);
 
