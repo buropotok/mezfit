@@ -7,6 +7,8 @@ import type { ReactNode } from 'react';
 import { CLOUD_DATABASE_STORES_V12, type MezfitCloudDatabase } from '../data/cloud/database';
 import type { DayScheduleEvent, DayScheduleEventCardProps, DayScheduleRenderState } from '../ui';
 import { TodayPage } from './TodayPage';
+import { relationshipMembership } from '../../worker/lib/dexie-cloud-membership';
+import { SchedulePlanningContext } from './SchedulePlanningContext';
 
 const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
@@ -86,5 +88,25 @@ it('segments a completed session across midnight and does not restore its old pl
   expect(first.getAttribute('data-duration')).toBe('10');
   expect(second.getAttribute('data-date')).toBe('2026-10-29');
   expect(second.getAttribute('data-duration')).toBe('20');
+  expect(screen.queryByTestId('occurrence:planned:0')).toBeNull();
+});
+
+it.each(['independent', 'coached'] as const)('keeps %s execution in the correct coach calendar context', async format => {
+  const pair = await relationshipMembership('101', '202');
+  await db.table('realms').put(pair.realm);
+  await db.table('members').bulkPut(pair.members);
+  const participants = { realmId: pair.realm.realmId, owner: pair.realm.realmId,
+    athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
+  await db.table('workoutOccurrences').update('planned', { ...participants, format });
+  await db.table('adHocSessions').update('execution', participants);
+  const view = render(<TodayPage initData="" role="coach" onNavigationContextChange={() => {}} />);
+  await waitFor(() => expect(screen.getByLabelText('Расписание').getAttribute('aria-busy')).toBeNull());
+  if (format === 'independent') expect(screen.queryByTestId('session:execution:0')).toBeNull();
+  else expect(screen.getByTestId('session:execution:0')).toBeTruthy();
+  view.rerender(<SchedulePlanningContext.Provider value={{ requestedDraftId: 'planned', requestedClientUserId: 'tg:202',
+    openDraft: () => {}, clearDraft: () => {} }}>
+    <TodayPage initData="" role="coach" onNavigationContextChange={() => {}} />
+  </SchedulePlanningContext.Provider>);
+  expect(await screen.findByTestId('session:execution:0')).toBeTruthy();
   expect(screen.queryByTestId('occurrence:planned:0')).toBeNull();
 });
