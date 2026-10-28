@@ -425,3 +425,13 @@ describe('SessionExercise metric formatting', () => {
     }, 'time_distance')).toBe('18:42 · 3,20 км');
   });
 });
+
+it('shows the complete FACT before RPE in the result area', () => {
+  renderExercise();
+  const row = screen.getByRole('button', { name: 'Открыть подход 1' });
+  const result = within(row).getByText('82,5 кг × 10');
+  const rpe = within(row).getByText('RPE 8');
+  expect(result.compareDocumentPosition(rpe) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(result.closest('.ui-list-item__trailing')?.classList.contains('ui-list-item__trailing--content')).toBe(true);
+  expect(result.classList.contains('ui-text--headline')).toBe(true);
+});
