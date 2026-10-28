@@ -203,14 +203,18 @@ describe('WeightRepsPicker numeric lens editor', () => {
     renderPicker();
     const popover = document.querySelector('.ui-weight-reps-picker__popover') as HTMLElement;
     vi.spyOn(popover, 'getBoundingClientRect').mockReturnValue({ bottom: 360 } as DOMRect);
-    const viewport = Object.assign(document.createElement('div'), { offsetTop: 20, height: 600 });
+    const viewport = document.createElement('div');
+    Object.defineProperties(viewport, {
+      offsetTop: { configurable: true, value: 20 },
+      height: { value: 600 },
+    });
     vi.stubGlobal('visualViewport', viewport);
     vi.stubGlobal('innerHeight', 700);
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
     expect(sheet.style.bottom).toBe('80px');
     expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-height')).toBe('250px');
-    viewport.offsetTop = 40;
+    Object.defineProperty(viewport, 'offsetTop', { value: 40 });
     fireEvent(viewport, new Event('scroll'));
     expect(sheet.style.bottom).toBe('60px');
     expect(sheet.style.getPropertyValue('--ui-weight-reps-number-sheet-height')).toBe('270px');
