@@ -127,6 +127,18 @@ describe('WeightRepsPicker hold-versus-swipe kilogram control', () => {
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
   });
 
+  it('advances by ten relative to an arbitrary starting kilogram without rounding it', () => {
+    const { onChange } = mountWeight(77.75);
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 160, 200);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 87.75 });
+    touch(wheel, 'touchend', 160, 220);
+    finishMomentum();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 107.75 });
+    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 7.75)).toBe(true);
+  });
+
   it('works across 299 -> 300 with one tactile event per decade', () => {
     const { onChange } = mountWeight(290.75);
     const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
@@ -177,7 +189,7 @@ describe('WeightRepsPicker hold-versus-swipe kilogram control', () => {
     touch(wheel, 'touchmove', 120, 130);
     touch(wheel, 'touchend', 120, 150);
     finishMomentum();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 390.75 });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 395.75 });
     expect(frames.size).toBe(0);
   });
 
