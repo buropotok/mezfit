@@ -46,7 +46,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
       data={{ ...base, trackingType: 'time_distance' }} onClose={onClose} onPlanSave={onPlanSave} />);
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     expect(onPlanSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onPlanSave).toHaveBeenLastCalledWith(expect.objectContaining({
       durationSeconds: 125, distanceMeters: 2500, setType: 'cluster',
     })));
@@ -70,9 +71,9 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     expect(screen.getByText('00:03:05')).toBeTruthy();
     expect(onPlanSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(screen.getByText('Сохранить изменения?')).toBeTruthy();
     expect(onPlanSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onPlanSave).not.toHaveBeenCalled();
   });
@@ -95,7 +96,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
       { target: { value: '9' } });
     expect(screen.getByText('RPE: 9')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
-    const save = screen.getByRole('button', { name: 'Сохранить' });
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    const save = screen.getByRole('button', { name: 'Да' });
     expect(save.querySelector('.ui-text--body')).not.toBeNull();
     fireEvent.click(save);
     await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
@@ -123,7 +125,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Лучше предыдущего' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       setLabel: 'hard', rpe: 6, comment: 'Лучше предыдущего',
       metrics: { weightKg: null, reps: null, durationSeconds: 150, distanceMeters: null },
@@ -146,7 +149,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     expect(screen.getByText('RPE: 7')).toBeTruthy();
     fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '0' } });
     expect(screen.getByText('RPE: 0')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       setLabel: 'warmup', rpe: null, setType: null,
       metrics: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: 2500 },
@@ -169,7 +173,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     </KonstaProvider>);
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
     expect(onSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
       rpe: null, metrics: expectedMetrics,
@@ -224,18 +229,15 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     </KonstaProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    expect(screen.getByText('Изменения не сохранятся!')).toBeTruthy();
+    expect(screen.getByText('Сохранить изменения?')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
-    expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('never autosaves edits in time-based FACT before an explicit Save action', async () => {
+  it('never autosaves edits in time-based FACT before an explicit Yes decision', async () => {
     const onSave = vi.fn(async () => undefined);
     render(<KonstaProvider theme="ios" dark>
       <SetEntry mode="workout" isOpen data={{ ...base, trackingType: 'time' }}
@@ -244,7 +246,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     await new Promise<void>(resolve => { window.setTimeout(resolve, 400); });
     expect(onSave).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
   });
 
@@ -254,6 +257,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     render(<SetEntry mode="workout" isOpen
       data={{ ...base, trackingType: 'time' }} onClose={onClose} onSave={onSave} />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });
