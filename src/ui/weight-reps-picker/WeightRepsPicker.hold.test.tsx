@@ -106,7 +106,8 @@ describe('WeightRepsPicker native hold-to-one-kilogram precision', () => {
     touch(wheel, 'touchend', 152, 420);
     fireEvent(wheel, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    // Releasing a fine hold must not turn the same gesture back to decades.
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
     expect(within(wheel).getByRole('option', { name: '281' }).getAttribute('aria-selected')).toBe('true');
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
   });
@@ -122,10 +123,11 @@ describe('WeightRepsPicker native hold-to-one-kilogram precision', () => {
     touch(wheel, 'touchend', 152, 420);
   });
 
-  it('keeps a long slow swipe in native 10kg mode when first movement is unambiguous', () => {
+  it('keeps a slow decade swipe coarse when displacement begins before the hold', () => {
     const { onChange, wheel } = mountWeight(100.5);
     touch(wheel, 'touchstart', 200, 100);
-    touch(wheel, 'touchmove', 120, 500);
+    touch(wheel, 'touchmove', 178, 180); // Movement began 80ms after contact.
+    touch(wheel, 'touchmove', 120, 500); // Moving slowly does not switch modes.
     expect(within(wheel).getAllByRole('option')).toHaveLength(40);
     nativeMove(wheel, 12);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 120.5 });
@@ -159,7 +161,72 @@ describe('WeightRepsPicker native hold-to-one-kilogram precision', () => {
     touch(wheel, 'touchend', 100, 410);
     fireEvent(wheel, new Event('scrollend', { bubbles: true }));
     flushFrames();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    nativeMove(wheel, 302);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 302.75 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
+  });
+
+  it('holds 1kg mode when WebView sends touchcancel before the first scroll event', () => {
+    const { onChange, wheel } = mountWeight(280.5);
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    // Native pan starts. WKWebView takes ownership via touchcancel *before*
+    // onScroll, so there is no scrollingPartsRef entry yet.
+    touch(wheel, 'touchcancel', 152, 360);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    nativeMove(wheel, 281);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.5 });
+    nativeMove(wheel, 282);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 282.5 });
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    // Only an entirely new gesture may start the coarse (10kg) wheel.
+    touch(wheel, 'touchstart', 200, 600);
     expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    expect(within(wheel).getByRole('option', { name: '282' }).getAttribute('aria-selected')).toBe('true');
+    touch(wheel, 'touchend', 200, 620);
+  });
+
+  it('keeps an already recognized hold precise during rapid movement after touchcancel', () => {
+    const { onChange, wheel } = mountWeight(280.25);
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    touch(wheel, 'touchmove', 155, 365);
+    touch(wheel, 'touchcancel', 95, 385);
+    nativeMove(wheel, 282);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 282.25 });
+    nativeMove(wheel, 290);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 290.25 });
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+  });
+
+  it('treats a late first move after holding as precise even if it spans 80px', () => {
+    const { onChange, wheel } = mountWeight(100.5);
+    touch(wheel, 'touchstart', 200, 100);
+    // Simulate WebView delaying setTimeout: elapsed touch time decides.
+    touch(wheel, 'touchmove', 120, 500);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    nativeMove(wheel, 102);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 102.5 });
+    touch(wheel, 'touchcancel', 60, 550);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+  });
+
+  it('keeps a stationary recognized hold fine after release until a new touch', () => {
+    const { wheel } = mountWeight(281.25);
+    touch(wheel, 'touchstart', 200, 100);
+    act(() => vi.advanceTimersByTime(240));
+    touch(wheel, 'touchend', 200, 350);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    touch(wheel, 'touchstart', 200, 500);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    touch(wheel, 'touchend', 200, 520);
   });
 
   it('prevents the native long-press context menu without blocking row selection', () => {
