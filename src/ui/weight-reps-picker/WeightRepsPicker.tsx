@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton } from 'konsta/react';
 import { loadBrowserGlassSettings } from '../../glassSettings';
@@ -68,9 +68,10 @@ export function WeightRepsPicker({
   const [editing, setEditing] = useState<NumericField | null>(null);
   const [digits, setDigits] = useState('');
   const [hasTyped, setHasTyped] = useState(false);
+  const [sheetMaxHeight, setSheetMaxHeight] = useState<number | null>(null);
 
-  if (!Number.isInteger(value.reps) || value.reps < 0 || value.reps > 100) {
-    throw new Error('WeightRepsPicker reps must be an integer from 0 to 100');
+  if (!Number.isSafeInteger(value.reps) || value.reps < 0) {
+    throw new Error('WeightRepsPicker reps must be a non-negative safe integer');
   }
   const weight = parseWeightKg(value.weightKg, 'WeightRepsPicker');
   const glass = loadBrowserGlassSettings();
@@ -90,6 +91,39 @@ export function WeightRepsPicker({
     }
   }, [opened]);
 
+  // The keypad may never cover its originating picker and metric control.
+  // Compute the free area from live layout rather than guessing a device height.
+  useLayoutEffect(() => {
+    if (!opened || editing === null) {
+      setSheetMaxHeight(null);
+      return;
+    }
+    const view = target?.ownerDocument.defaultView ?? window;
+    const viewport = view.visualViewport;
+    const popover = view.document.querySelector<HTMLElement>('.ui-weight-reps-picker__popover');
+    const measure = () => {
+      const bottom = viewport ? viewport.offsetTop + viewport.height : view.innerHeight;
+      const top = Math.max(
+        popover?.getBoundingClientRect().bottom ?? 0,
+        target?.getBoundingClientRect().bottom ?? 0,
+      ) + 12;
+      setSheetMaxHeight(Math.max(0, Math.floor(bottom - top)));
+    };
+    measure();
+    view.addEventListener('resize', measure);
+    viewport?.addEventListener('resize', measure);
+    viewport?.addEventListener('scroll', measure);
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (popover) observer?.observe(popover);
+    if (target) observer?.observe(target);
+    return () => {
+      view.removeEventListener('resize', measure);
+      viewport?.removeEventListener('resize', measure);
+      viewport?.removeEventListener('scroll', measure);
+      observer?.disconnect();
+    };
+  }, [opened, editing, target]);
+
   const openNumberSheet = (field: NumericField) => {
     setEditing(field);
     setDigits(String(field === 'reps' ? value.reps : weight.kilograms));
@@ -99,9 +133,18 @@ export function WeightRepsPicker({
   const appendDigit = (digit: string) => {
     setDigits((current) => {
       if (!hasTyped) return digit;
-      if (current.length >= 3) return current;
       return current === '0' ? digit : current + digit;
     });
+    setHasTyped(true);
+  };
+
+  const clearDigits = () => {
+    setDigits('');
+    setHasTyped(true);
+  };
+
+  const backspaceDigit = () => {
+    setDigits((current) => current.slice(0, -1));
     setHasTyped(true);
   };
 
@@ -110,8 +153,11 @@ export function WeightRepsPicker({
     setHasTyped(false);
   };
 
-  const maxValue = editing === 'reps' ? 100 : 399;
-  const validDigits = /^\d{1,3}$/.test(digits) && Number(digits) <= maxValue;
+  // No product-specific upper bound. Guard only against values JS cannot
+  // represent exactly as integers or quarter-kilograms.
+  const validDigits = /^\d+$/.test(digits)
+    && Number.isSafeInteger(Number(digits))
+    && (editing !== 'kilograms' || Number.isSafeInteger(Number(digits) * 4 + weight.fraction / 25));
   const saveEdit = () => {
     if (!editing || !validDigits) return;
     const number = Number(digits);
@@ -122,26 +168,32 @@ export function WeightRepsPicker({
       if (nextWeight !== value.weightKg) onChange({ ...value, weightKg: nextWeight });
     }
     cancelEdit();
+    onClose();
   };
 
   const lensAction = (field: NumericField) => {
     const isEditing = editing === field;
     const label = field === 'reps' ? 'Изменить повторения' : 'Изменить целые килограммы';
-    if (isEditing) {
-      return (
-        <span className="ui-weight-reps-picker__lens-status" role="status" aria-label={label}>
-          <Icon name="letter-i" className="ui-weight-reps-picker__input-active" style={{ width: 40, height: 40 }} />
-        </span>
-      );
-    }
+    const displayedValue = String(field === 'reps' ? value.reps : weight.kilograms);
     return (
-      <IconButton
-        label={label}
-        disabled={editing !== null}
-        onClick={() => openNumberSheet(field)}
-      >
-        <Icon name="pencil-plus" style={{ width: 40, height: 40 }} />
-      </IconButton>
+      <div className="ui-weight-reps-picker__lens-field">
+        {isEditing ? (
+          <span className="ui-weight-reps-picker__lens-status" role="status" aria-label={label}>
+            <Icon name="letter-i" className="ui-weight-reps-picker__input-active" style={{ width: 40, height: 40 }} />
+          </span>
+        ) : (
+          <IconButton
+            label={label}
+            disabled={editing !== null}
+            onClick={() => openNumberSheet(field)}
+          >
+            <Icon name="pencil-plus" style={{ width: 40, height: 40 }} />
+          </IconButton>
+        )}
+        <Text variant="caption" className="ui-weight-reps-picker__lens-value">
+          {displayedValue}
+        </Text>
+      </div>
     );
   };
 
@@ -189,6 +241,9 @@ export function WeightRepsPicker({
           lazyMount
           layer="abovePopover"
           className="ui-weight-reps-picker__number-sheet"
+          style={sheetMaxHeight === null ? undefined : {
+            '--ui-weight-reps-number-sheet-max-height': `${sheetMaxHeight}px`,
+          } as CSSProperties}
         >
           <div className="ui-weight-reps-picker__number-content">
             <header className="ui-weight-reps-picker__number-header">
@@ -204,25 +259,17 @@ export function WeightRepsPicker({
                 {editing === 'reps' ? 'Повторения' : 'Килограммы'}
               </Text>
               <span className="ui-weight-reps-picker__save-slot">
-                <Button color="blue" disabled={!validDigits} onClick={saveEdit}>
+                <Button disabled={!validDigits} onClick={saveEdit}>
                   Сохранить
                 </Button>
               </span>
             </header>
             <div className="ui-weight-reps-picker__number-body">
-              <Text variant="title" className="ui-weight-reps-picker__number-readout">
-                {digits}{editing === 'kilograms' ? ' кг' : ''}
-              </Text>
-              {!validDigits ? (
-                <Text variant="caption" tone="muted">
-                  {editing === 'reps' ? 'Допустимо от 0 до 100' : 'Допустимо от 0 до 399'}
-                </Text>
-              ) : null}
               <div className="ui-weight-reps-picker__number-grid" aria-label="Цифровая клавиатура">
-                {DIGIT_KEYS.map(({ digit, icon }) => (
+                {DIGIT_KEYS.slice(0, 9).map(({ digit, icon }) => (
                   <div
                     key={digit}
-                    className={`ui-weight-reps-picker__number-cell${digit === '0' ? ' ui-weight-reps-picker__number-cell--zero' : ''}`}
+                    className="ui-weight-reps-picker__number-cell"
                   >
                     <FloatingActionButton
                       label={`Цифра ${digit}`}
@@ -233,6 +280,21 @@ export function WeightRepsPicker({
                     />
                   </div>
                 ))}
+                <div className="ui-weight-reps-picker__number-cell">
+                  <FloatingActionButton label="Очистить ввод" icon="x"
+                    glassPreset={glass.preset} glassOptics={glass.optics}
+                    onClick={clearDigits} />
+                </div>
+                <div className="ui-weight-reps-picker__number-cell ui-weight-reps-picker__number-cell--zero">
+                  <FloatingActionButton label="Цифра 0" icon="number-0"
+                    glassPreset={glass.preset} glassOptics={glass.optics}
+                    onClick={() => appendDigit('0')} />
+                </div>
+                <div className="ui-weight-reps-picker__number-cell">
+                  <FloatingActionButton label="Стереть последнюю цифру" icon="arrow-left"
+                    glassPreset={glass.preset} glassOptics={glass.optics}
+                    onClick={backspaceDigit} />
+                </div>
               </div>
             </div>
           </div>
