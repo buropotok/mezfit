@@ -685,6 +685,8 @@ export function ThreeColumnPicker({
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
 
+    delete touchStartRef.current[part];
+    setQuarterSnapMode(part, false);
     signalCrossedValues(part, index, false);
     commitIndex(part, index);
     const nextTop = index * ROW_HEIGHT;
