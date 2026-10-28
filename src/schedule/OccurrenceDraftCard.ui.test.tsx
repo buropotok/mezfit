@@ -82,14 +82,15 @@ const draft: LocalWorkoutOccurrenceDraft = {
   startsAtUtc: '2026-10-27T08:00:00.000Z', durationMinutes: 60, plan, originalPlan: plan,
   createdAt: '2026-10-26T08:00:00.000Z', updatedAt: '2026-10-26T08:00:00.000Z',
 };
-function setup() {
+function setup(published = false) {
+  const record = published ? { ...draft, saved: true } : draft;
   const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
   vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
   vi.spyOn(drafts, 'pendingEditError').mockReturnValue('');
-  vi.spyOn(drafts, 'get').mockResolvedValue(draft);
+  vi.spyOn(drafts, 'get').mockResolvedValue(record);
   vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
   vi.spyOn(drafts, 'delete').mockResolvedValue(undefined);
-  return { draft, drafts, sourceProgramName: 'Программа', onClose: vi.fn(), onSave: vi.fn(async () => undefined) };
+  return { draft: record, drafts, sourceProgramName: 'Программа', onClose: vi.fn(), onSave: vi.fn(async () => undefined) };
 }
 afterEach(() => {
   cleanup();
@@ -129,8 +130,8 @@ describe('shared scheduled occurrence UI', () => {
   });
 
   it.each(['sheet', 'card'] as const)('%s flushes before Start, rejects same-tick repeats, and keeps errors editable', async surface => {
-    const props = setup();
-    const latest = { ...draft, durationMinutes: 90 };
+    const props = setup(true);
+    const latest = { ...props.draft, durationMinutes: 90 };
     vi.mocked(props.drafts.get).mockResolvedValue(latest);
     let resolveFlush: (() => void) | undefined;
     vi.mocked(props.drafts.flushEdits).mockResolvedValueOnce(undefined).mockImplementationOnce(() => new Promise<void>(resolve => { resolveFlush = resolve; }));
@@ -166,7 +167,7 @@ describe('shared scheduled occurrence UI', () => {
   });
 
   it('blocks Start on a failed edit flush', async () => {
-    const props = setup();
+    const props = setup(true);
     vi.mocked(props.drafts.flushEdits).mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('Правки не сохранены'));
     const onStart = vi.fn();
     render(<OccurrenceDraftCard {...props} collapsed={false} onCollapsedChange={vi.fn()} onStart={onStart} />);
@@ -176,7 +177,7 @@ describe('shared scheduled occurrence UI', () => {
   });
 
   it.each(['flush', 'read'] as const)('does not Start after unmount during the pending %s', async stage => {
-    const props = setup();
+    const props = setup(true);
     let finishFlush: (() => void) | undefined;
     let finishRead: ((value: LocalWorkoutOccurrenceDraft) => void) | undefined;
     if (stage === 'flush') {
@@ -191,7 +192,7 @@ describe('shared scheduled occurrence UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
     await waitFor(() => expect(stage === 'flush' ? finishFlush : finishRead).toBeTypeOf('function'));
     unmount();
-    await act(async () => { finishFlush?.(); finishRead?.(draft); });
+    await act(async () => { finishFlush?.(); finishRead?.(props.draft); });
     const flushCalls = vi.mocked(props.drafts.flushEdits).mock.calls.length;
     act(() => { staleClick?.(); });
     expect(props.drafts.flushEdits).toHaveBeenCalledTimes(flushCalls);
@@ -200,7 +201,7 @@ describe('shared scheduled occurrence UI', () => {
   });
 
   it.each(['flush', 'read'] as const)('rechecks read-only permission after the pending %s', async stage => {
-    const props = setup();
+    const props = setup(true);
     let finishFlush: (() => void) | undefined;
     let finishRead: ((value: LocalWorkoutOccurrenceDraft) => void) | undefined;
     if (stage === 'flush') {
@@ -215,7 +216,7 @@ describe('shared scheduled occurrence UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
     await waitFor(() => expect(stage === 'flush' ? finishFlush : finishRead).toBeTypeOf('function'));
     rerender(<OccurrenceDraftCard {...props} readOnly collapsed={false} onCollapsedChange={vi.fn()} onStart={onStart} />);
-    await act(async () => { finishFlush?.(); finishRead?.(draft); });
+    await act(async () => { finishFlush?.(); finishRead?.(props.draft); });
     const flushCalls = vi.mocked(props.drafts.flushEdits).mock.calls.length;
     act(() => { staleClick?.(); });
     expect(props.drafts.flushEdits).toHaveBeenCalledTimes(flushCalls);
@@ -224,7 +225,7 @@ describe('shared scheduled occurrence UI', () => {
   });
 
   it('handles a Start failure after unmount without closing or affecting a replacement editor', async () => {
-    const props = setup();
+    const props = setup(true);
     let rejectStart: ((reason: Error) => void) | undefined;
     const onStart = vi.fn(() => new Promise<void>((_resolve, reject) => { rejectStart = reject; }));
     const { unmount } = render(<OccurrenceDraftCard {...props} collapsed={false} onCollapsedChange={vi.fn()} onStart={onStart} />);
