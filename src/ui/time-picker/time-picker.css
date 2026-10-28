@@ -73,17 +73,6 @@
   scroll-snap-align: none;
 }
 
-/* Touch is fully owned by the kilogram gesture controller: no native fling
-   remains active to fight the velocity-based decade animation. */
-.ui-time-picker__column--gesture-scrub {
-  overflow-y: hidden;
-  touch-action: none;
-  scroll-snap-type: none;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
 .ui-time-picker__option--selected {
   color: var(--ui-color-surface-text);
 }

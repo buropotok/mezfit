@@ -83,7 +83,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('three-wheel native handling outside the gesture-owned kilogram wheel', () => {
+describe('three-wheel native scroll handling shared with TimePicker', () => {
   it('keeps native scroll and per-value haptics for repetitions', () => {
     const { onChange } = mountControlled();
     const reps = observeNativeScroll('Повторения', 8);
@@ -97,15 +97,18 @@ describe('three-wheel native handling outside the gesture-owned kilogram wheel',
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(4);
   });
 
-  it('does not let native WebView inertia compete with the gesture-owned kilograms', () => {
+  it('uses the same native scroll position for every kilogram, including precise 1kg moves', () => {
     const { onChange } = mountControlled();
     const kg = observeNativeScroll('Килограммы', 77);
-    act(() => kg.moveTo(140));
+    act(() => kg.moveTo(78));
     flushFrame();
-    expect(onChange).not.toHaveBeenCalled();
-    expect(triggerTelegramSelectionHaptic).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 78.5 });
+    act(() => kg.moveTo(79));
+    flushFrame();
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 79.5 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
     expect(kg.appWrites).toEqual([]);
-    expect(within(kg.element).getByRole('option', { name: '77' })
+    expect(within(kg.element).getByRole('option', { name: '79' })
       .getAttribute('aria-selected')).toBe('true');
   });
 
@@ -150,11 +153,11 @@ describe('three-wheel native handling outside the gesture-owned kilogram wheel',
     expect(reps.appWrites).toContain(8 * ROW_HEIGHT);
   });
 
-  it('retains an exact distant tap as one tactile event', () => {
+  it('retains one tactile event for an exact distant kilogram tap', () => {
     const { onChange } = mountControlled();
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Килограммы' }))
-      .getByRole('option', { name: '300' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.5 });
+      .getByRole('option', { name: '307' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 307.5 });
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
   });
 });

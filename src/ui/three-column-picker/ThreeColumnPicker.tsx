@@ -5,7 +5,6 @@ import {
   useState,
   type UIEvent,
   type TouchEvent,
-  type WheelEvent,
   type ReactNode,
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
@@ -29,27 +28,6 @@ const IOS_LENS_MAGNIFICATION = 1.55;
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
 // of native scroll events instead of changing scrollTop during momentum.
 const SCROLL_END_FALLBACK_MS = 200;
-// A deliberate hold unlocks one-unit control; swipes advance by configured strides.
-// A small finger drift during the hold must not permanently select coarse
-// mode. The threshold still recognizes a deliberate swipe before the hold.
-const HOLD_TO_FINE_MS = 240;
-const SWIPE_THRESHOLD_PX = 20;
-// A first reported movement this large is swipe intent even if WebView
-// delayed its event beyond the hold window. Preserve slow swipe-by-tens.
-const UNAMBIGUOUS_SWIPE_PX = 64;
-const FLING_MAX_DECADES = 18;
-
-type StepGesture = {
-  startY: number;
-  startTime: number;
-  startIndex: number;
-  lastY: number;
-  lastTime: number;
-  recentSpeed: number;
-  mode: 'pending' | 'fine' | 'coarse';
-  holdTimer: number | null;
-};
-
 export type ThreeColumnPickerPart = 'first' | 'second' | 'third';
 
 export interface ThreeColumnPickerParts {
@@ -64,8 +42,8 @@ export interface ThreeColumnPickerColumn {
   format: (value: number) => string;
   formatAria?: (value: number) => string;
   freeMomentum?: boolean;
-  /** Opt-in decade swipes with velocity-scaled inertia and hold-to-scrub precision. */
-  gestureStep?: number;
+  /** Fast-flick native snap interval, matching TwoColumnPicker. */
+  flickSnapStep?: number;
 }
 
 export interface ThreeColumnPickerSeparator {
@@ -339,7 +317,7 @@ function ThreeColumnPickerColumnWheel({
   onTouchMove,
   onTouchEnd,
   onTouchCancel,
-  onWheel,
+  quarterSnap,
   setColumnRef,
 }: {
   part: ThreeColumnPickerPart;
@@ -352,13 +330,13 @@ function ThreeColumnPickerColumnWheel({
   onTouchMove: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
   onTouchCancel: (part: ThreeColumnPickerPart) => void;
-  onWheel: (part: ThreeColumnPickerPart, event: WheelEvent<HTMLDivElement>) => void;
+  quarterSnap: boolean;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
   return (
     <div
       ref={(element) => setColumnRef(part, element)}
-      className={`ui-time-picker__column${column.freeMomentum ? ' ui-time-picker__column--free-momentum' : ''}${column.gestureStep ? ' ui-time-picker__column--gesture-scrub' : ''}`}
+      className={`ui-time-picker__column${column.freeMomentum ? ' ui-time-picker__column--free-momentum' : ''}${quarterSnap ? ' ui-time-picker__column--quarter-snap' : ''}`}
       role="listbox"
       aria-label={column.ariaLabel}
       onScroll={(event) => onScroll(part, event)}
@@ -367,22 +345,17 @@ function ThreeColumnPickerColumnWheel({
       onTouchMove={(event) => onTouchMove(part, event)}
       onTouchEnd={(event) => onTouchEnd(part, event)}
       onTouchCancel={() => onTouchCancel(part)}
-      onWheel={(event) => onWheel(part, event)}
-      onContextMenu={(event) => {
-        // Suppress WebView's button/text long-press callout for the gesture wheel.
-        // A native context menu may cancel the touch sequence before fine drag.
-        if (column.gestureStep) event.preventDefault();
-      }}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
+        const quarterStop = Boolean(column.flickSnapStep && index % column.flickSnapStep === 0);
         const label = column.format(value);
 
         return (
           <button
             key={value}
             type="button"
-            className={`ui-time-picker__option ui-text--body${isSelected ? ' ui-time-picker__option--selected' : ''}`}
+            className={`ui-time-picker__option ui-text--body${isSelected ? ' ui-time-picker__option--selected' : ''}${quarterStop ? ' ui-time-picker__option--quarter-stop' : ''}`}
             role="option"
             aria-label={column.formatAria?.(value) ?? label}
             aria-selected={isSelected}
@@ -429,9 +402,12 @@ export function ThreeColumnPicker({
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
-  const gestureRef = useRef<Partial<Record<ThreeColumnPickerPart, StepGesture>>>({});
-  const flingFrameRef = useRef<Record<ThreeColumnPickerPart, number | null>>({
-    first: null, second: null, third: null,
+  const touchStartRef = useRef<Partial<Record<ThreeColumnPickerPart, { y: number; time: number }>>>({});
+  const quarterSnapRef = useRef<Record<ThreeColumnPickerPart, boolean>>({
+    first: false, second: false, third: false,
+  });
+  const [quarterSnap, setQuarterSnap] = useState<Record<ThreeColumnPickerPart, boolean>>({
+    first: false, second: false, third: false,
   });
   // Parent acknowledgements can arrive after further native scroll frames.
   const locallyEmittedRef = useRef<Set<string>>(new Set());
@@ -454,13 +430,6 @@ export function ThreeColumnPicker({
 
   const cancelScheduledFrames = (view: Window) => {
     PARTS.forEach((part) => {
-      const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-      const momentum = flingFrameRef.current[part];
-      if (momentum !== null) {
-        view.cancelAnimationFrame(momentum);
-        flingFrameRef.current[part] = null;
-      }
       const fallbackTimer = scrollEndFallbackRefs.current[part];
       if (fallbackTimer !== null) {
         view.clearTimeout(fallbackTimer);
@@ -516,7 +485,9 @@ export function ThreeColumnPicker({
 
     if (!opened) {
       cancelScheduledFrames(view);
-      gestureRef.current = {};
+      touchStartRef.current = {};
+      quarterSnapRef.current = { first: false, second: false, third: false };
+      setQuarterSnap(quarterSnapRef.current);
       wasOpenedRef.current = false;
       locallyEmittedRef.current.clear();
       scrollingPartsRef.current.clear();
@@ -532,7 +503,7 @@ export function ThreeColumnPicker({
     locallyEmittedRef.current.clear();
 
     cancelScheduledFrames(view);
-    gestureRef.current = {};
+    touchStartRef.current = {};
     draftRef.current = valueParts;
     feedbackValueRef.current = valueParts;
     setDraft(valueParts);
@@ -559,12 +530,13 @@ export function ThreeColumnPicker({
 
     // Scroll events may skip multiple rows: issue one tick per crossed value,
     // even if React commits only the most recent position this animation frame.
-    if (fromScroll) {
+    if (fromScroll && !columns[part].flickSnapStep) {
       const step = nextIndex > lastIndex ? 1 : -1;
       for (let cursor = lastIndex + step; cursor !== nextIndex + step; cursor += step) {
         triggerTelegramSelectionHaptic();
       }
     } else {
+      // TimePicker triggers one selection haptic per reported change.
       triggerTelegramSelectionHaptic();
     }
     feedbackValueRef.current = { ...feedbackValueRef.current, [part]: values[nextIndex] };
@@ -585,7 +557,7 @@ export function ThreeColumnPicker({
   };
 
   const handleScrollEnd = (part: ThreeColumnPickerPart) => {
-    if (!openedRef.current || columns[part].gestureStep) return;
+    if (!openedRef.current) return;
     const element = columnRefs.current[part];
     if (!element) return;
     const view = element.ownerDocument.defaultView ?? window;
@@ -605,9 +577,7 @@ export function ThreeColumnPicker({
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
       reconcileFrameRef.current = null;
-      if (!openedRef.current || scrollingPartsRef.current.size > 0
-        || PARTS.some((candidate) => gestureRef.current[candidate]
-          || flingFrameRef.current[candidate] !== null)) return;
+      if (!openedRef.current || scrollingPartsRef.current.size > 0) return;
       const canonical = controlledRef.current;
       if (!partsEqual(draftRef.current, canonical)) {
         draftRef.current = canonical;
@@ -639,7 +609,7 @@ export function ThreeColumnPicker({
     part: ThreeColumnPickerPart,
     event: UIEvent<HTMLDivElement>,
   ) => {
-    if (!openedRef.current || columns[part].gestureStep) return;
+    if (!openedRef.current) return;
 
     const top = event.currentTarget.scrollTop;
     scrollingPartsRef.current.add(part);
@@ -667,223 +637,55 @@ export function ThreeColumnPicker({
     });
   };
 
-  // Gesture-owned columns ignore native scroll events entirely. Only their
-  // touch handlers may update the selected number and physical scrollTop.
-  const setGestureIndex = (part: ThreeColumnPickerPart, requested: number, stride: number) => {
-    const column = columns[part];
-    // Preserve the original unit digit: 77 -> 87 -> 97, not 77 -> 90.
-    const remainder = valueIndex(column, feedbackValueRef.current[part]) % stride;
-    const last = remainder + Math.floor((column.values.length - 1 - remainder) / stride) * stride;
-    const index = Math.max(remainder, Math.min(last, requested));
-    const previous = valueIndex(column, feedbackValueRef.current[part]);
-    if (previous === index) return;
-    const crossed = stride === 1 ? Math.abs(index - previous)
-      : Math.max(1, Math.ceil(Math.abs(index - previous) / stride));
-    for (let n = 0; n < crossed; n += 1) triggerTelegramSelectionHaptic();
-    feedbackValueRef.current = { ...feedbackValueRef.current, [part]: column.values[index] };
-    commitIndex(part, index);
-    const top = index * ROW_HEIGHT;
-    pendingScrollRef.current = { ...pendingScrollRef.current, [part]: top };
-    setScrollTops((current) => ({ ...current, [part]: top }));
-    scrollColumn(columnRefs.current[part], index);
-  };
-
-  const cancelFling = (part: ThreeColumnPickerPart, view: Window) => {
-    const id = flingFrameRef.current[part];
-    if (id !== null) view.cancelAnimationFrame(id);
-    flingFrameRef.current[part] = null;
-  };
-
-  const finishGesture = (part: ThreeColumnPickerPart) => {
-    const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
-    reconcileFrameRef.current = view.requestAnimationFrame(() => {
-      reconcileFrameRef.current = null;
-      if (!openedRef.current || scrollingPartsRef.current.size > 0
-        || PARTS.some((candidate) => gestureRef.current[candidate]
-          || flingFrameRef.current[candidate] !== null)) return;
-      const canonical = controlledRef.current;
-      if (!partsEqual(draftRef.current, canonical)) {
-        draftRef.current = canonical;
-        feedbackValueRef.current = canonical;
-        setDraft(canonical);
-        const tops = partsToScrollTops(columns, canonical);
-        pendingScrollRef.current = tops;
-        setScrollTops(tops);
-        syncColumns(canonical);
-      }
-      locallyEmittedRef.current.clear();
-    });
-  };
-
-  const updateGesturePosition = (part: ThreeColumnPickerPart, gesture: StepGesture, y: number) => {
-    const distance = gesture.startY - y;
-    const step = columns[part].gestureStep ?? 1;
-    const index = gesture.mode === 'fine'
-      ? gesture.startIndex + Math.round(distance / ROW_HEIGHT)
-      : gesture.startIndex
-        + Math.sign(distance) * Math.max(1, Math.round(Math.abs(distance) / 40)) * step;
-    setGestureIndex(part, index, gesture.mode === 'fine' ? 1 : step);
+  const setQuarterSnapMode = (part: ThreeColumnPickerPart, enabled: boolean) => {
+    if (quarterSnapRef.current[part] === enabled) return;
+    quarterSnapRef.current = { ...quarterSnapRef.current, [part]: enabled };
+    setQuarterSnap(quarterSnapRef.current);
   };
 
   const handleTouchStart = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
-    if (!columns[part].gestureStep || !touch || !openedRef.current) return;
-    const view = event.currentTarget.ownerDocument.defaultView ?? window;
-    cancelFling(part, view);
-    const old = gestureRef.current[part];
-    if (old?.holdTimer != null) view.clearTimeout(old.holdTimer);
-    const gesture: StepGesture = {
-      startY: touch.clientY, startTime: event.timeStamp,
-      startIndex: valueIndex(columns[part], draftRef.current[part]),
-      lastY: touch.clientY, lastTime: event.timeStamp,
-      recentSpeed: 0, mode: 'pending', holdTimer: null,
-    };
-    gesture.holdTimer = view.setTimeout(() => {
-      if (gestureRef.current[part] === gesture && gesture.mode === 'pending') gesture.mode = 'fine';
-      gesture.holdTimer = null;
-    }, HOLD_TO_FINE_MS);
-    gestureRef.current[part] = gesture;
+    if (!touch) return;
+    touchStartRef.current[part] = { y: touch.clientY, time: event.timeStamp };
+    setQuarterSnapMode(part, false);
+  };
+
+  const isFastSwipe = (part: ThreeColumnPickerPart, y: number, time: number) => {
+    const start = touchStartRef.current[part];
+    if (!start) return false;
+    const distance = Math.abs(y - start.y);
+    const duration = Math.max(1, time - start.time);
+    return distance >= 36 && duration <= 500 && distance / duration >= 0.35;
   };
 
   const handleTouchMove = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
-    const gesture = gestureRef.current[part];
+    const column = columns[part];
     const touch = event.touches[0];
-    if (!columns[part].gestureStep || !gesture || !touch) return;
-    const y = touch.clientY;
-    const dt = event.timeStamp - gesture.lastTime;
-    const dy = gesture.lastY - y;
-    if (dt > 0 && dt <= 160 && Math.abs(dy) >= 1) gesture.recentSpeed = Math.abs(dy / dt);
-    gesture.lastY = y;
-    gesture.lastTime = event.timeStamp;
-    if (gesture.mode === 'pending') {
-      // Long-press detection must not rely solely on a timer. WKWebView may
-      // delay the timer while a finger is down; touch timestamps still preserve
-      // the elapsed time when a move is finally delivered.
-      const distance = Math.abs(gesture.startY - y);
-      if (distance >= UNAMBIGUOUS_SWIPE_PX
-        || (distance >= SWIPE_THRESHOLD_PX && event.timeStamp - gesture.startTime < HOLD_TO_FINE_MS)) {
-        gesture.mode = 'coarse';
-      } else if (event.timeStamp - gesture.startTime >= HOLD_TO_FINE_MS) {
-        gesture.mode = 'fine';
-      }
-      if (gesture.mode !== 'pending' && gesture.holdTimer !== null) {
-        (event.currentTarget.ownerDocument.defaultView ?? window).clearTimeout(gesture.holdTimer);
-        gesture.holdTimer = null;
-      }
-    }
-    if (gesture.mode !== 'pending') updateGesturePosition(part, gesture, y);
-  };
-
-  const completeGesture = (part: ThreeColumnPickerPart, y: number, time: number, view: Window) => {
-    const gesture = gestureRef.current[part];
-    if (!gesture) return;
-    if (gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
-    const distance = gesture.startY - y;
-    if (gesture.mode === 'pending') {
-      // A delayed timer must also be recognized when the next event is touchend.
-      // With no displacement this remains a tap, not a fine-drag mutation.
-      if (Math.abs(distance) >= UNAMBIGUOUS_SWIPE_PX
-        || (Math.abs(distance) >= SWIPE_THRESHOLD_PX && time - gesture.startTime < HOLD_TO_FINE_MS)) {
-        gesture.mode = 'coarse';
-      } else if (time - gesture.startTime >= HOLD_TO_FINE_MS) {
-        gesture.mode = 'fine';
-      }
-    }
-    if (gesture.mode === 'pending') {
-      delete gestureRef.current[part];
-      return;
-    }
-    updateGesturePosition(part, gesture, y);
-    delete gestureRef.current[part];
-    if (gesture.mode === 'fine' || Math.abs(distance) < SWIPE_THRESHOLD_PX) {
-      finishGesture(part);
-      return;
-    }
-
-    const speed = Math.max(Math.abs(distance) / Math.max(1, time - gesture.startTime),
-      time - gesture.lastTime <= 120 ? gesture.recentSpeed : 0);
-    const requestedSteps = Math.max(1, Math.min(FLING_MAX_DECADES, Math.round(speed * 6)));
-    const stride = columns[part].gestureStep ?? 1;
-    const start = valueIndex(columns[part], draftRef.current[part]);
-    const remainder = start % stride;
-    const last = remainder + Math.floor((columns[part].values.length - 1 - remainder) / stride) * stride;
-    const direction = Math.sign(distance);
-    const target = Math.max(remainder, Math.min(last, start + direction * requestedSteps * stride));
-    const steps = Math.abs(target - start) / stride;
-    if (steps === 0) {
-      finishGesture(part);
-      return;
-    }
-    const duration = Math.min(950, 210 + steps * 42);
-    let began: number | null = null;
-    const animate = (timestamp: number) => {
-      if (!openedRef.current) {
-        flingFrameRef.current[part] = null;
-        return;
-      }
-      if (began === null) began = timestamp;
-      const progress = Math.min(1, (timestamp - began) / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      const passed = Math.min(steps, Math.floor(steps * eased));
-      setGestureIndex(part, start + direction * passed * stride, stride);
-      if (progress < 1 && passed < steps) {
-        flingFrameRef.current[part] = view.requestAnimationFrame(animate);
-      } else {
-        setGestureIndex(part, target, stride);
-        flingFrameRef.current[part] = null;
-        finishGesture(part);
-      }
-    };
-    flingFrameRef.current[part] = view.requestAnimationFrame(animate);
+    if (!column.flickSnapStep || !touch) return;
+    // Enable coarse native scroll snapping while the finger is moving:
+    // the browser chooses one final quarter-hour stop as part of its inertia.
+    if (isFastSwipe(part, touch.clientY, event.timeStamp)) setQuarterSnapMode(part, true);
   };
 
   const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
-    if (!columns[part].gestureStep) return;
+    const column = columns[part];
     const touch = event.changedTouches[0];
-    const gesture = gestureRef.current[part];
-    if (!touch || !gesture) return;
-    if (gesture.mode !== 'pending' || Math.abs(touch.clientY - gesture.startY) >= SWIPE_THRESHOLD_PX) {
-      // Do not synthesize a button click after a drag or a decade fling.
-      event.preventDefault();
-    }
-    completeGesture(part, touch.clientY, event.timeStamp,
-      event.currentTarget.ownerDocument.defaultView ?? window);
+    setQuarterSnapMode(part, Boolean(column.flickSnapStep && touch
+      && isFastSwipe(part, touch.clientY, event.timeStamp)));
+    delete touchStartRef.current[part];
   };
 
   const handleTouchCancel = (part: ThreeColumnPickerPart) => {
-    const gesture = gestureRef.current[part];
-    if (!gesture) return;
-    const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-    if (gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
-    delete gestureRef.current[part];
-    finishGesture(part);
-  };
-
-  const handleWheel = (part: ThreeColumnPickerPart, event: WheelEvent<HTMLDivElement>) => {
-    if (!openedRef.current || !columns[part].gestureStep || event.deltaY === 0) return;
-    // A mouse wheel/trackpad isn't a finger swipe: keep desktop fine control.
-    event.preventDefault();
-    const view = event.currentTarget.ownerDocument.defaultView ?? window;
-    cancelFling(part, view);
-    const gesture = gestureRef.current[part];
-    if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-    delete gestureRef.current[part];
-    const current = valueIndex(columns[part], draftRef.current[part]);
-    setGestureIndex(part, current + Math.sign(event.deltaY), 1);
-    finishGesture(part);
+    delete touchStartRef.current[part];
+    // Native WebView scrolling can take over a touch and emit touchcancel.
+    // Keep the active snap targets through that same momentum gesture.
   };
 
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
 
-    if (columns[part].gestureStep) {
-      const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-      cancelFling(part, view);
-      const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-      delete gestureRef.current[part];
-    }
+    delete touchStartRef.current[part];
+    setQuarterSnapMode(part, false);
     signalCrossedValues(part, index, false);
     commitIndex(part, index);
     const nextTop = index * ROW_HEIGHT;
@@ -894,17 +696,22 @@ export function ThreeColumnPicker({
     setScrollTops((current) => ({ ...current, [part]: nextTop }));
     const element = columnRefs.current[part];
     scrollColumn(element, index);
-    if (element && !columns[part].gestureStep) scheduleScrollEndFallback(part, element);
+    if (element) scheduleScrollEndFallback(part, element);
   };
 
   const handleClose = () => {
+    // Match TimePicker: use the native visible position or the active coarse
+    // snap target if the popover closes while inertia is still settling.
     PARTS.forEach((part) => {
-      if (!columns[part].gestureStep) return;
-      const view = columnRefs.current[part]?.ownerDocument.defaultView ?? window;
-      cancelFling(part, view);
-      const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer != null) view.clearTimeout(gesture.holdTimer);
-      delete gestureRef.current[part];
+      const column = columns[part];
+      if (!column.flickSnapStep) return;
+      const element = columnRefs.current[part];
+      if (!element) return;
+      const index = Math.round(element.scrollTop / ROW_HEIGHT);
+      const finalIndex = quarterSnapRef.current[part]
+        ? Math.round(index / column.flickSnapStep) * column.flickSnapStep
+        : index;
+      commitIndex(part, finalIndex);
     });
     onClose();
   };
@@ -947,7 +754,7 @@ export function ThreeColumnPicker({
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
-                onWheel={handleWheel}
+                quarterSnap={quarterSnap[part]}
                 setColumnRef={setColumnRef}
               />
             ))}
