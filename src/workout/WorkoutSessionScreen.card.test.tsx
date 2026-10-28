@@ -149,7 +149,7 @@ describe('WorkoutSessionScreen workout card', () => {
     expect(screen.queryByRole('button', { name: 'Комментарий' })).toBeNull();
     expect(screen.queryByText('7 октября 2026 г.')).toBeNull();
     expect(screen.getByText(/октября 2026/)).toBeTruthy();
-    expect(screen.getByText(/^\d{2}:\d{2} — \d{2}:\d{2}$/)).toBeTruthy();
+    expect(screen.getByText(/^\d{2}:\d{2} — …$/)).toBeTruthy();
   });
 
   it('renders a completed interval and disables workout reordering', async () => {
