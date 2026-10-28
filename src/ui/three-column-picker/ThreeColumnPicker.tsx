@@ -793,7 +793,10 @@ export function ThreeColumnPicker({
     delete gestureRef.current[part];
     // A stationary long press has no native scrollend event. Restore the
     // coarse options on release; otherwise wait for native inertia to settle.
-    if (gesture.mode === 'fine' && !gesture.moved) setNativeFineMode(part, false);
+    if (gesture.mode === 'fine'
+      && (!gesture.moved || !scrollingPartsRef.current.has(part))) {
+      setNativeFineMode(part, false);
+    }
   };
 
   const handleTouchEnd = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
