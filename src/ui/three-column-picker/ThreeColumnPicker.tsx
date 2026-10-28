@@ -661,12 +661,14 @@ export function ThreeColumnPicker({
   // touch handlers may update the selected number and physical scrollTop.
   const setGestureIndex = (part: ThreeColumnPickerPart, requested: number, stride: number) => {
     const column = columns[part];
-    const last = Math.floor((column.values.length - 1) / stride) * stride;
-    const index = Math.max(0, Math.min(last, requested));
+    // Preserve the original unit digit: 77 -> 87 -> 97, not 77 -> 90.
+    const remainder = valueIndex(column, feedbackValueRef.current[part]) % stride;
+    const last = remainder + Math.floor((column.values.length - 1 - remainder) / stride) * stride;
+    const index = Math.max(remainder, Math.min(last, requested));
     const previous = valueIndex(column, feedbackValueRef.current[part]);
     if (previous === index) return;
     const crossed = stride === 1 ? Math.abs(index - previous)
-      : Math.max(1, Math.abs(Math.round(index / stride) - Math.round(previous / stride)));
+      : Math.max(1, Math.ceil(Math.abs(index - previous) / stride));
     for (let n = 0; n < crossed; n += 1) triggerTelegramSelectionHaptic();
     feedbackValueRef.current = { ...feedbackValueRef.current, [part]: column.values[index] };
     commitIndex(part, index);
@@ -709,7 +711,7 @@ export function ThreeColumnPicker({
     const step = columns[part].gestureStep ?? 1;
     const index = gesture.mode === 'fine'
       ? gesture.startIndex + Math.round(distance / ROW_HEIGHT)
-      : Math.round(gesture.startIndex / step) * step
+      : gesture.startIndex
         + Math.sign(distance) * Math.max(1, Math.round(Math.abs(distance) / 40)) * step;
     setGestureIndex(part, index, gesture.mode === 'fine' ? 1 : step);
   };
@@ -776,9 +778,10 @@ export function ThreeColumnPicker({
     const requestedSteps = Math.max(1, Math.min(FLING_MAX_DECADES, Math.round(speed * 6)));
     const stride = columns[part].gestureStep ?? 1;
     const start = valueIndex(columns[part], draftRef.current[part]);
-    const last = Math.floor((columns[part].values.length - 1) / stride) * stride;
+    const remainder = start % stride;
+    const last = remainder + Math.floor((columns[part].values.length - 1 - remainder) / stride) * stride;
     const direction = Math.sign(distance);
-    const target = Math.max(0, Math.min(last, start + direction * requestedSteps * stride));
+    const target = Math.max(remainder, Math.min(last, start + direction * requestedSteps * stride));
     const steps = Math.abs(target - start) / stride;
     if (steps === 0) {
       finishGesture(part);
