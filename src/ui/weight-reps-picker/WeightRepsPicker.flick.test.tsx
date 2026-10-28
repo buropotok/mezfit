@@ -107,10 +107,36 @@ describe('WeightRepsPicker 10kg native flick snapping', () => {
     gesture(kilograms, 'touchstart', 200, 100);
     gesture(kilograms, 'touchmove', 148, 200);
     gesture(kilograms, 'touchend', 120, 260);
-    act(() => { kilograms.scrollTop = 299 * ROW_HEIGHT; fireEvent.scroll(kilograms); });
+
+    // Model the browser's deferred animation frames. The global immediate RAF
+    // stub runs a callback before the component assigns its frame ID, leaving
+    // that ID incorrectly pending and swallowing a second scroll event.
+    const frames = new Map<number, FrameRequestCallback>();
+    let nextFrame = 2;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      const id = nextFrame++;
+      frames.set(id, callback);
+      return id;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
+    const flushFrame = () => {
+      const callbacks = [...frames.values()];
+      frames.clear();
+      callbacks.forEach(callback => callback(0));
+    };
+
+    act(() => {
+      kilograms.scrollTop = 299 * ROW_HEIGHT;
+      fireEvent.scroll(kilograms);
+      flushFrame();
+    });
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 299.5 });
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(19);
-    act(() => { kilograms.scrollTop = 300 * ROW_HEIGHT; fireEvent.scroll(kilograms); });
+    act(() => {
+      kilograms.scrollTop = 300 * ROW_HEIGHT;
+      fireEvent.scroll(kilograms);
+      flushFrame();
+    });
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 300.5 });
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(20);
   });
