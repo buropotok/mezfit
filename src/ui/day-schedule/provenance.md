@@ -21,9 +21,12 @@ for demos; clock minutes still use device local time. A product timezone adapter
 belongs at the caller boundary before adding timezone-specific scheduling.
 
 The displayed range is 06:00–24:00, 112 px/hour, with an initial 08:00 scroll,
-matching v26. Events outside the displayed range are clipped; invalid/nonpositive
-intervals are omitted. Event frames never extend beyond their time interval.
-Cards must fit the supplied frame; compact content is the renderer's concern.
+matching v26. Events outside the displayed range are clipped; invalid/negative
+intervals are omitted. Zero-length Start and short events have a minimum visual
+height of 15 minutes; their actual interval and slot occupancy stay unchanged.
+The minimum frame stays inside the day, shifting upward near midnight if needed.
+Cards must fit the supplied frame; EventCard's compact row hides the fixed-size
+avatar and preserves day, athlete, actual time, status and the format icon.
 The caller supplies non-overlapping events. Business conflict detection,
 move/resize, the event editor and backend/API integration are outside this slice.
 
