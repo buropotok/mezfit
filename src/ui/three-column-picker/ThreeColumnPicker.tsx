@@ -24,6 +24,9 @@ const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
 const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
+// Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
+// of native scroll events instead of changing scrollTop during momentum.
+const SCROLL_END_FALLBACK_MS = 200;
 
 export type ThreeColumnPickerPart = 'first' | 'second' | 'third';
 
@@ -72,6 +75,10 @@ function valueIndex(column: ThreeColumnPickerColumn, value: number) {
     throw new Error(`ThreeColumnPicker value ${value} is not present in ${column.ariaLabel}`);
   }
   return index;
+}
+
+function partsKey(value: ThreeColumnPickerParts) {
+  return `${value.first}:${value.second}:${value.third}`;
 }
 
 function partsEqual(left: ThreeColumnPickerParts, right: ThreeColumnPickerParts) {
@@ -302,6 +309,7 @@ function ThreeColumnPickerColumnWheel({
   column,
   selected,
   onScroll,
+  onScrollEnd,
   onSelect,
   setColumnRef,
 }: {
@@ -309,6 +317,7 @@ function ThreeColumnPickerColumnWheel({
   column: ThreeColumnPickerColumn;
   selected: number;
   onScroll: (part: ThreeColumnPickerPart, event: UIEvent<HTMLDivElement>) => void;
+  onScrollEnd: (part: ThreeColumnPickerPart) => void;
   onSelect: (part: ThreeColumnPickerPart, index: number) => void;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
@@ -319,6 +328,7 @@ function ThreeColumnPickerColumnWheel({
       role="listbox"
       aria-label={column.ariaLabel}
       onScroll={(event) => onScroll(part, event)}
+      onScrollEnd={() => onScrollEnd(part)}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
@@ -375,6 +385,14 @@ export function ThreeColumnPicker({
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
+  // Parent acknowledgements can arrive after further native scroll frames.
+  const locallyEmittedRef = useRef<Set<string>>(new Set());
+  const scrollingPartsRef = useRef<Set<ThreeColumnPickerPart>>(new Set());
+  const scrollEndFallbackRefs = useRef<Record<ThreeColumnPickerPart, number | null>>({
+    first: null,
+    second: null,
+    third: null,
+  });
   const feedbackValueRef = useRef<ThreeColumnPickerParts>(valueParts);
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts));
 
@@ -388,6 +406,11 @@ export function ThreeColumnPicker({
 
   const cancelScheduledFrames = (view: Window) => {
     PARTS.forEach((part) => {
+      const fallbackTimer = scrollEndFallbackRefs.current[part];
+      if (fallbackTimer !== null) {
+        view.clearTimeout(fallbackTimer);
+        scrollEndFallbackRefs.current[part] = null;
+      }
       const frame = frameRefs.current[part];
       if (frame !== null) {
         view.cancelAnimationFrame(frame);
@@ -438,6 +461,8 @@ export function ThreeColumnPicker({
 
     if (!opened) {
       wasOpenedRef.current = false;
+      locallyEmittedRef.current.clear();
+      scrollingPartsRef.current.clear();
       cancelScheduledFrames(view);
       return;
     }
@@ -446,6 +471,9 @@ export function ThreeColumnPicker({
     wasOpenedRef.current = true;
     const valueChanged = !partsEqual(draftRef.current, valueParts);
     if (!justOpened && !valueChanged) return;
+    // Delayed echoes of earlier steps must not steer a moving wheel.
+    if (!justOpened && locallyEmittedRef.current.has(partsKey(valueParts))) return;
+    locallyEmittedRef.current.clear();
 
     cancelScheduledFrames(view);
     draftRef.current = valueParts;
@@ -466,50 +494,86 @@ export function ThreeColumnPicker({
     cancelScheduledFrames(view);
   }, [target]);
 
+  const signalCrossedValues = (part: ThreeColumnPickerPart, index: number, fromScroll: boolean) => {
+    const values = columns[part].values;
+    const nextIndex = Math.max(0, Math.min(values.length - 1, index));
+    const lastIndex = valueIndex(columns[part], feedbackValueRef.current[part]);
+    if (lastIndex === nextIndex) return;
+
+    // Scroll events may skip multiple rows: issue one tick per crossed value,
+    // even if React commits only the most recent position this animation frame.
+    if (fromScroll) {
+      const step = nextIndex > lastIndex ? 1 : -1;
+      for (let cursor = lastIndex + step; cursor !== nextIndex + step; cursor += step) {
+        triggerTelegramSelectionHaptic();
+      }
+    } else {
+      triggerTelegramSelectionHaptic();
+    }
+    feedbackValueRef.current = { ...feedbackValueRef.current, [part]: values[nextIndex] };
+  };
+
   const commitIndex = (part: ThreeColumnPickerPart, index: number) => {
     const column = columns[part];
     const clampedIndex = Math.max(0, Math.min(column.values.length - 1, index));
     const nextPartValue = column.values[clampedIndex];
-    const current = controlledRef.current;
+    const current = draftRef.current;
     const next = { ...current, [part]: nextPartValue };
-
-    if (feedbackValueRef.current[part] !== nextPartValue) {
-      feedbackValueRef.current = {
-        ...feedbackValueRef.current,
-        [part]: nextPartValue,
-      };
-      triggerTelegramSelectionHaptic();
-    }
-
-    if (partsEqual(next, current)) {
-      draftRef.current = current;
-      setDraft(current);
-      return;
-    }
+    if (partsEqual(next, current)) return;
 
     draftRef.current = next;
     setDraft(next);
+    locallyEmittedRef.current.add(partsKey(next));
     onChangeRef.current(next);
+  };
 
-    const view = target?.ownerDocument.defaultView ?? window;
-    if (reconcileFrameRef.current !== null) {
-      view.cancelAnimationFrame(reconcileFrameRef.current);
+  const handleScrollEnd = (part: ThreeColumnPickerPart) => {
+    if (!openedRef.current) return;
+    const element = columnRefs.current[part];
+    if (!element) return;
+    const view = element.ownerDocument.defaultView ?? window;
+    const pendingTimer = scrollEndFallbackRefs.current[part];
+    if (pendingTimer !== null) {
+      view.clearTimeout(pendingTimer);
+      scrollEndFallbackRefs.current[part] = null;
     }
+    scrollingPartsRef.current.delete(part);
+    const column = columns[part];
+    const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
+    signalCrossedValues(part, index, true);
+    commitIndex(part, index);
+    if (scrollingPartsRef.current.size > 0) return;
+
+    // Only reconcile a rejected controlled value after all wheels stop.
+    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
       reconcileFrameRef.current = null;
-      if (!openedRef.current) return;
-
+      if (!openedRef.current || scrollingPartsRef.current.size > 0) return;
       const canonical = controlledRef.current;
-      if (partsEqual(canonical, next)) return;
-
-      draftRef.current = canonical;
-      feedbackValueRef.current = canonical;
-      setDraft(canonical);
-      const canonicalScrollTops = partsToScrollTops(columns, canonical);
-      pendingScrollRef.current = canonicalScrollTops;
-      setScrollTops(canonicalScrollTops);
-      syncColumns(canonical);
+      if (!partsEqual(draftRef.current, canonical)) {
+        draftRef.current = canonical;
+        feedbackValueRef.current = canonical;
+        setDraft(canonical);
+        const tops = partsToScrollTops(columns, canonical);
+        pendingScrollRef.current = tops;
+        setScrollTops(tops);
+        syncColumns(canonical);
+      }
+      locallyEmittedRef.current.clear();
     });
+  };
+
+  const scheduleScrollEndFallback = (part: ThreeColumnPickerPart, element: HTMLDivElement) => {
+    // Modern WebViews dispatch scrollend. Older ones need an inactivity
+    // fallback; restarting its timer never interferes with native deceleration.
+    if (typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend !== 'undefined') return;
+    const view = element.ownerDocument.defaultView ?? window;
+    const previous = scrollEndFallbackRefs.current[part];
+    if (previous !== null) view.clearTimeout(previous);
+    scrollEndFallbackRefs.current[part] = view.setTimeout(() => {
+      scrollEndFallbackRefs.current[part] = null;
+      handleScrollEnd(part);
+    }, SCROLL_END_FALLBACK_MS);
   };
 
   const handleScroll = (
@@ -519,10 +583,17 @@ export function ThreeColumnPicker({
     if (!openedRef.current) return;
 
     const top = event.currentTarget.scrollTop;
+    scrollingPartsRef.current.add(part);
+    if (reconcileFrameRef.current !== null) {
+      (event.currentTarget.ownerDocument.defaultView ?? window).cancelAnimationFrame(reconcileFrameRef.current);
+      reconcileFrameRef.current = null;
+    }
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
       [part]: top,
     };
+    signalCrossedValues(part, Math.round(top / ROW_HEIGHT), true);
+    scheduleScrollEndFallback(part, event.currentTarget);
 
     if (frameRefs.current[part] !== null) return;
 
@@ -540,6 +611,7 @@ export function ThreeColumnPicker({
   const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
     if (!openedRef.current) return;
 
+    signalCrossedValues(part, index, false);
     commitIndex(part, index);
     const nextTop = index * ROW_HEIGHT;
     pendingScrollRef.current = {
@@ -547,7 +619,9 @@ export function ThreeColumnPicker({
       [part]: nextTop,
     };
     setScrollTops((current) => ({ ...current, [part]: nextTop }));
-    scrollColumn(columnRefs.current[part], index);
+    const element = columnRefs.current[part];
+    scrollColumn(element, index);
+    if (element) scheduleScrollEndFallback(part, element);
   };
 
   const setColumnRef = (
@@ -582,6 +656,7 @@ export function ThreeColumnPicker({
                 column={columns[part]}
                 selected={draft[part]}
                 onScroll={handleScroll}
+                onScrollEnd={handleScrollEnd}
                 onSelect={handleSelect}
                 setColumnRef={setColumnRef}
               />
