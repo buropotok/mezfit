@@ -106,7 +106,7 @@ function fixture() {
   } satisfies AdHocSessionRepository;
   const view = render(<AdHocSessionScreen repository={repository} sessionId={session.sessionId}
     initData="signed" onNavigationContextChange={vi.fn()} />);
-  return { ...view, observations, observe, addSet, complete, addExercises };
+  return { ...view, observations, observe, addSet, complete, addExercises, repository };
 }
 
 afterEach(() => {
@@ -235,15 +235,24 @@ it('shows the safe repository diagnosis when an observed session becomes unavail
 });
 
 
-it.each([null, 'occurrence-one'])('offers exercise deletion only for unplanned sessions (occurrence=%s)', occurrenceId => {
-  const { observations } = fixture();
+it.each([null, 'occurrence-one'])('shows one deletion dialog matching session kind (occurrence=%s)', occurrenceId => {
+  const { observations, repository } = fixture();
   act(() => observations[0].next({ ...session, occurrenceId }, row));
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить упражнение' }));
+  expect(screen.getAllByRole('dialog')).toHaveLength(1);
   if (occurrenceId) {
-    expect(screen.queryByRole('button', { name: 'Удалить упражнение' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Завершить тренировку' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Добавить подход' })).toBeTruthy();
+    const dialog = screen.getByRole('dialog', {
+      name: 'Тренировка была запущена. Удаление из плана невозможно.',
+    });
+    expect(within(dialog).getAllByRole('button')).toHaveLength(1);
+    expect(within(dialog).queryByRole('button', { name: 'Удалить' })).toBeNull();
+    expect(screen.queryByText('Упражнение и его подходы будут удалены из этой тренировки.')).toBeNull();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Понятно' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(repository.deleteExercise).not.toHaveBeenCalled();
+    expect(screen.getByTestId('session-card')).toBeTruthy();
   } else {
-    fireEvent.click(screen.getByRole('button', { name: 'Удалить упражнение' }));
     expect(screen.getByRole('dialog', { name: 'Удалить упражнение?' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Удалить' })).toBeTruthy();
   }
 });
