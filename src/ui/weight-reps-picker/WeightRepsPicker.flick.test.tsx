@@ -181,6 +181,48 @@ describe('WeightRepsPicker hold-versus-swipe kilogram control', () => {
     expect(frames.size).toBe(0);
   });
 
+  it('ignores programmatic scroll events during the gesture instead of vibrating repeatedly', () => {
+    const { onChange } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' }) as HTMLDivElement;
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 160, 150);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 110.5 });
+    const emitted = onChange.mock.calls.length;
+    fireEvent.scroll(wheel);
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    expect(onChange).toHaveBeenCalledTimes(emitted);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    touch(wheel, 'touchend', 160, 180);
+    finishMomentum();
+    expect(frames.size).toBe(0);
+  });
+
+  it('stops ongoing inertia immediately when the popover closes', () => {
+    const { onClose } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 120, 150);
+    touch(wheel, 'touchend', 120, 180);
+    flushFrame(0);
+    flushFrame(48);
+    const pulses = vi.mocked(triggerTelegramSelectionHaptic).mock.calls.length;
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(frames.size).toBe(0);
+    finishMomentum();
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(pulses);
+  });
+
+  it('preserves fine adjustment by desktop wheel without starting a flick', () => {
+    const { onChange } = mountWeight();
+    const wheel = screen.getByRole('listbox', { name: 'Килограммы' });
+    fireEvent.wheel(wheel, { deltaY: 40 });
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 101.5 });
+    finishMomentum();
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+  });
+
   it('leaves the existing duration picker unchanged', () => {
     const target = document.createElement('button');
     document.body.appendChild(target);
