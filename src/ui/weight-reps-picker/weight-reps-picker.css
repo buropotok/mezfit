@@ -13,14 +13,6 @@
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.ui-weight-reps-picker__lens-status {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  color: var(--ui-color-surface-text);
-}
-
 .ui-weight-reps-picker__input-active {
   animation: ui-weight-reps-input-blink 1s steps(2, start) infinite;
 }
