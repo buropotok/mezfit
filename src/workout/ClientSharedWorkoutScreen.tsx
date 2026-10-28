@@ -42,7 +42,7 @@ function ClientSharedSession({ repository, sessionId, actor, onNavigationContext
     {session ? <><Text variant="body">Атлет: {athlete.name}</Text>
       <div className="workout-participants"><Text variant="body">{session?.format === 'coached' || (!session?.format && metadata?.coachUserId) ? 'С тренером в зале' : 'Самостоятельная'}</Text>
         {(session?.format === 'coached' || (!session?.format && metadata?.coachUserId)) ? coach.compactAvatar : null}</div>
-      <WorkoutSessionCard athleteName={athlete.name} athleteAvatar={athlete.avatar} readOnly session={session} title={title}
+      <WorkoutSessionCard showStatus={session.status !== 'active'} athleteName={athlete.name} athleteAvatar={athlete.avatar} readOnly session={session} title={title}
       onReorderExerciseIds={() => {}}
       onSaveSet={async () => { throw new Error('Редактирование доступно только тренеру'); }}
       onNavigationContextChange={onNavigationContextChange} /></> : null}
