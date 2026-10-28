@@ -543,6 +543,9 @@ export function ThreeColumnPicker({
     const column = columns[part];
     const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
     if (column.snapToNearestOnEnd && Math.abs(element.scrollTop - index * ROW_HEIGHT) > 0.5) {
+      const snappedTop = index * ROW_HEIGHT;
+      pendingScrollRef.current = { ...pendingScrollRef.current, [part]: snappedTop };
+      setScrollTops((current) => ({ ...current, [part]: snappedTop }));
       scrollColumn(element, index);
     }
     signalCrossedValues(part, index, true);
