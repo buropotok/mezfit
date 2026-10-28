@@ -7,7 +7,7 @@ on:
       - .github/workflows/one-time-exercise-gif-frames.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   contact-sheets:
@@ -104,5 +104,15 @@ jobs:
               print("SHEET_START", group, len(payload), flush=True)
               for j in range(0, len(payload), 2048):
                   print(f"SHEET_{group}_CHUNK_{j//2048:04d}:" + payload[j:j+2048], flush=True)
+              Path("tools/exercise-work/gif-frame-audit").mkdir(parents=True, exist_ok=True)
+              Path(f"tools/exercise-work/gif-frame-audit/sheet-{group}.b64").write_text(payload)
               print("SHEET_END", group, flush=True)
           PY
+      - name: Publish frame strips to isolated audit branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b gif-frames-review-20261028
+          git add tools/exercise-work/gif-frame-audit/
+          git commit -m 'temp: sampled frames for disputed exercise GIFs'
+          git push origin HEAD:refs/heads/gif-frames-review-20261028
