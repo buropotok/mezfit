@@ -361,10 +361,10 @@ describe('SessionExercise and SetEntry boundary', () => {
       .toContain('85 кг × 8');
     fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
     const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
-    const repetitions = within(picker).getByRole('listbox', { name: 'Повторения' });
-    const nine = repetitions.querySelector<HTMLButtonElement>('button[aria-label="9"]');
-    expect(nine).not.toBeNull();
-    fireEvent.click(nine!);
+    fireEvent.click(within(picker).getByRole('button', { name: 'Изменить повторения' }));
+    const keypad = screen.getByRole('dialog', { name: 'Ввод повторений' });
+    fireEvent.click(within(keypad).getByRole('button', { name: 'Цифра 9' }));
+    fireEvent.click(within(keypad).getByRole('button', { name: 'Сохранить' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(saved).toHaveBeenCalledOnce());
