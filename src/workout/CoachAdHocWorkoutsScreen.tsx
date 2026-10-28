@@ -131,7 +131,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   useNavigationFloatingAction('training', action);
   return <>
     {sessionId && repository ? <AdHocSessionScreen key={sessionId} repository={repository} sessionId={sessionId}
-      initData={initData} actor={actor}
+      initData={initData} actor={actor} hideActiveStatus
       onExerciseInformation={loadSessionExerciseInformation}
       onNavigationContextChange={setChildNavigation} /> : <section className="adhoc-workouts">
       <Text variant="headline">Тренировка</Text>
