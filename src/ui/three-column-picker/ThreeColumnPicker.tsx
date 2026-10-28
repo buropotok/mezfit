@@ -530,12 +530,13 @@ export function ThreeColumnPicker({
 
     // Scroll events may skip multiple rows: issue one tick per crossed value,
     // even if React commits only the most recent position this animation frame.
-    if (fromScroll) {
+    if (fromScroll && !columns[part].flickSnapStep) {
       const step = nextIndex > lastIndex ? 1 : -1;
       for (let cursor = lastIndex + step; cursor !== nextIndex + step; cursor += step) {
         triggerTelegramSelectionHaptic();
       }
     } else {
+      // TimePicker triggers one selection haptic per reported change.
       triggerTelegramSelectionHaptic();
     }
     feedbackValueRef.current = { ...feedbackValueRef.current, [part]: values[nextIndex] };
