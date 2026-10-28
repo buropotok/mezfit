@@ -53,14 +53,7 @@
 }
 
 .ui-weight-reps-picker__cancel {
-  display: inline-flex;
-  align-items: center;
   justify-self: start;
-  padding: var(--ui-space-2) 0;
-  border: 0;
-  color: var(--ui-color-surface-text);
-  background: transparent;
-  cursor: pointer;
 }
 
 .ui-weight-reps-picker__number-body {
