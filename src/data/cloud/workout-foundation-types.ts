@@ -116,6 +116,8 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   owner: string | null;
   /** Calendar cancellation is separate from execution/session lifecycle status. */
   cancelledAt?: string | null;
+  /** Logical deletion: hidden from every user-facing projection, including cancelled workouts. */
+  inactive?: boolean;
   /** Publication is business state, independent from replication and execution. */
   publicationStatus?: 'draft' | 'published';
   draftAuthorUserId?: string;

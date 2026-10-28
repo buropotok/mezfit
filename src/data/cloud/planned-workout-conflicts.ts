@@ -10,7 +10,7 @@ export function currentStartConflicts(
   const instant = Date.parse(startedAt);
   if (selected.format !== 'coached' || !selected.coachUserId || !Number.isFinite(instant)) return [];
   return rows.filter(row => row.id !== selected.id && row.entryKind !== 'personal_event'
-    && row.status === 'scheduled' && !row.cancelledAt && !row.workoutSessionId
+    && !row.inactive && row.status === 'scheduled' && !row.cancelledAt && !row.workoutSessionId
     && row.format === 'coached' && row.coachUserId === selected.coachUserId
     && row.athleteUserId !== selected.athleteUserId
     && Date.parse(row.startsAtUtc) <= instant

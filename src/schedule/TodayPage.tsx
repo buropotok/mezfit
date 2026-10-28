@@ -167,6 +167,14 @@ export function TodayPage({
       () => { if (active) setSelectedProgramTitle({ id, name: null }); });
     return () => { active = false; subscription.unsubscribe(); };
   }, [selected?.trainingPlanId, planner]);
+  useEffect(() => {
+    if (loading || !viewed) return;
+    const id = viewed.targetOccurrenceId ?? viewed.id.slice(6);
+    if (!occurrences.some(row => row.id === id) && !cancelledRows.some(row => row.id === id)
+      && !drafts.some(row => row.id === viewed.id)) {
+      ++editorGeneration.current; setViewed(null); setEditorNavigation(null);
+    }
+  }, [loading, viewed?.id, occurrences, cancelledRows, drafts]);
   const sourceProgramName = selectedProgramTitle && selectedProgramTitle.id === selected?.trainingPlanId
     ? selectedProgramTitle.name : null;
   const closeEditor = useCallback(() => { ++editorGeneration.current; setOpenedDraftId(null); setViewed(null); setEditorNavigation(null); }, []);
@@ -179,6 +187,8 @@ export function TodayPage({
     ],
   } : null, [selected?.id, personalEventId, creation, filterOpened]);
   useNavigationSurfaceFloatingAction(createAction);
+  const mayManage = (row: Pick<LocalWorkoutOccurrenceDraft, 'athleteUserId' | 'coachUserId' | 'format'>) => (row.athleteUserId === cloud?.actorUserId || row.coachUserId === cloud?.actorUserId)
+    && (row.format !== 'coached' || row.coachUserId === cloud?.actorUserId);
   const mayEdit = (row: CloudWorkoutOccurrenceRow) => !row.cancelledAt && row.status === 'scheduled' && !row.workoutSessionId
     && (row.athleteUserId === cloud?.actorUserId || row.coachUserId === cloud?.actorUserId)
     && (row.format !== 'coached' || row.coachUserId === cloud?.actorUserId);
@@ -220,10 +230,19 @@ export function TodayPage({
     return () => onNavigationContextChange(null);
   }, [date, showCancelled, plannedStart?.conflictActive, plannedStart?.dismissConflict, selected?.id, personalEventId, filterOpened, creation, editorNavigation, closePersonalEvent, onNavigationContextChange]);
 
+  useEffect(() => {
+    if (plannedStart?.conflictActive && plannedStart.conflictOccurrence) {
+      setShowCancelled(false);
+      setDate(datePart(plannedStart.conflictOccurrence.startsAtUtc));
+    }
+  }, [plannedStart?.conflictActive, plannedStart?.conflictOccurrence?.id]);
+
   const merged = useMemo(() => {
     const withTiming = <T extends LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow>(row: T, type: string): T =>
       timingOverrides[type + ':' + row.id] ? { ...row, ...timingOverrides[type + ':' + row.id] } : row;
     const visible = (row: LocalWorkoutOccurrenceDraft | CloudWorkoutOccurrenceRow) => {
+      const conflictId = plannedStart?.conflictActive ? plannedStart.conflictOccurrence?.id : null;
+      if (conflictId && (row.id === conflictId || row.id === 'draft:' + conflictId)) return true;
       if (role === 'coach' && clientUserIds.length) return clientUserIds.includes(row.athleteUserId);
       return row.athleteUserId === cloud?.actorUserId
         || (row.coachUserId === cloud?.actorUserId && row.format === 'coached');
@@ -234,7 +253,7 @@ export function TodayPage({
         .flatMap(row => timelineEvents(withTiming(row, 'occurrence'), 'occurrence')),
       ...drafts.filter(visible).flatMap(row => timelineEvents(withTiming(row, 'draft'), 'draft')),
     ];
-  }, [occurrences, drafts, cancelledRows, showCancelled, timingOverrides, role, clientUserIds, cloud?.actorUserId]);
+  }, [occurrences, drafts, cancelledRows, showCancelled, timingOverrides, role, clientUserIds, cloud?.actorUserId, plannedStart?.conflictActive, plannedStart?.conflictOccurrence?.id]);
 
   const eventsByDate = useMemo<Record<LocalDate, TimelineItem[]>>(() => {
     const grouped: Record<string, TimelineItem[]> = {};
@@ -334,7 +353,8 @@ export function TodayPage({
       const row = item.event.type === 'draft' ? item.event.draft : item.event.occurrence;
       const occurrenceId = item.event.type === 'draft' ? item.event.draft.targetOccurrenceId ?? row.id.slice(6) : row.id;
       const bounds = item.element.getBoundingClientRect();
-      return occurrenceId === id && bounds.bottom > 0 && bounds.top < window.innerHeight;
+      return occurrenceId === id && bounds.bottom > 0 && bounds.top < window.innerHeight
+        && bounds.right > 0 && bounds.left < window.innerWidth;
     });
     const rect = source?.element.getBoundingClientRect();
     const repository = activeRepository.current;
@@ -346,8 +366,10 @@ export function TodayPage({
         event: source.event, state: source.state });
     });
   }, []);
-  useEffect(() => plannedStart?.registerCancellationPresentation?.(animateCancellation),
-    [plannedStart?.registerCancellationPresentation, animateCancellation]);
+  useEffect(() => {
+    const unregister = plannedStart?.registerCancellationPresentation?.(animateCancellation);
+    return () => { unregister?.(); plannedStart?.dismissConflict?.(); };
+  }, [plannedStart?.registerCancellationPresentation, plannedStart?.dismissConflict, animateCancellation]);
   const cancelAfterClose = () => {
     const id = pendingCancel.current;
     pendingCancel.current = null;
@@ -379,9 +401,9 @@ export function TodayPage({
         clients={clients} selected={clientUserIds} onOpen={() => setFilterOpened(true)}
         onRemove={id => setClientUserIds(current => current.filter(value => value !== id))} /> : null}
       <div className="today-page__basket">
-        <IconButton ref={basket} label="Отменённые тренировки" selected={showCancelled}
+        <IconButton ref={basket} theme="glass" icon="trash" label="Отменённые тренировки" selected={showCancelled}
           disabled={Boolean((selected && !plannedStart?.conflictActive) || personalEventId || creation || filterOpened)}
-          onClick={() => setShowCancelled(value => !value)}><Icon name="trash" /></IconButton>
+          onClick={() => setShowCancelled(value => !value)} />
       </div>
       {showCancelled && !selected ? <div className="today-page__cancelled-label"><Text variant="footnote">Отменённые тренировки</Text></div> : null}
       {collapse ? <LiquidCollapse source={collapse.source} targetRef={basket} onFinished={() => {
@@ -414,13 +436,20 @@ export function TodayPage({
         }} />
       {draftRepository ? <OccurrenceDraftSheet suspended={plannedStart?.conflictActive} draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
         planLocked={Boolean(selected?.workoutSessionId || (selected?.executionStatus && selected.executionStatus !== 'scheduled'))}
-        onStart={role === 'coach' && plannedStart ? async draft => {
+        onStart={role === 'coach' && plannedStart && !viewed ? async draft => {
           const token = editorGeneration.current;
           const id = await plannedStart.start(draft);
           if (token === editorGeneration.current && activeRepository.current === draftRepository) {
             closeEditor(); plannedStart.showSession(id);
           }
         } : undefined}
+        cancelled={Boolean(viewed && cancelledRows.some(row => row.id === (viewed.targetOccurrenceId ?? viewed.id.slice(6))))}
+        onDelete={selected && mayManage(selected) && !selected.workoutSessionId
+          && (!selected.executionStatus || selected.executionStatus === 'scheduled' || selected.executionStatus === 'cancelled') ? async draft => {
+            const token = editorGeneration.current;
+            await draftRepository.deactivate(draft.targetOccurrenceId ?? draft.id.slice(6));
+            if (token === editorGeneration.current && activeRepository.current === draftRepository) closeEditor();
+          } : undefined}
         onCancel={!viewed ? draft => {
           pendingCancel.current = draft.targetOccurrenceId ?? draft.id.slice(6); closeEditor();
         } : undefined}

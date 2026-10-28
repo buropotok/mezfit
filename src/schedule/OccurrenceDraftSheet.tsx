@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { STARTED_PLAN_MESSAGE as lockedPlanMessage } from '../data/cloud/planned-session-policy';
 import { createPortal } from 'react-dom';
-import { Toast } from 'konsta/react';
+import { Toast, Button as KonstaButton } from 'konsta/react';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -85,6 +85,8 @@ export interface OccurrenceDraftSheetProps {
   /** Called with the latest locally persisted draft after all pending edits flush. */
   onStart?: (draft: LocalWorkoutOccurrenceDraft) => Promise<void>;
   onCancel?: (draft: LocalWorkoutOccurrenceDraft) => void;
+  onDelete?: (draft: LocalWorkoutOccurrenceDraft) => Promise<void>;
+  cancelled?: boolean;
   onClosed?: () => void;
   suspended?: boolean;
   saveNotice?: string;
@@ -101,7 +103,7 @@ export interface OccurrenceDraftCardProps extends OccurrenceDraftSheetProps {
 
 
 
-function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, planLocked = false,
+function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
   actor, readOnly = false, saveNotice = '', sourceProgramName, container,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
@@ -125,6 +127,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string; trackingType: ExerciseTrackingType } | null>(null);
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const starting = useRef(false);
   const startAlive = useRef(true);
@@ -401,7 +404,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
-            <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>
+            {cancelled ? <Badge textVariant="body">Отменена</Badge>
+              : <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
           </div>
           <div className="occurrence-draft-sheet__timing">
             <Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
@@ -447,18 +451,29 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             onExerciseInformation={planner ? setExerciseInformationId : undefined}
           />
         </div>
-        {!readOnly && !planLocked && onCancel ? <Button variant="secondary" disabled={busy} onClick={() => {
-          if (!mutationBlocked() && !starting.current) onCancel(draft);
-        }}>Отменить тренировку</Button> : null}
         {!readOnly && !draft.saved ? <footer className="occurrence-draft-sheet__footer">
-          <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDeleteOpen(true); }}>
+          {draft.previouslyPublished || !onDelete ? <Button variant="secondary" color="red" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDeleteOpen(true); }}>
             {draft.previouslyPublished ? 'Отменить изменения' : 'Удалить черновик'}
-          </Button>
+          </Button> : null}
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}
         {onStart ? <div className="occurrence-draft-sheet__start">
           <StartWorkoutButton disabled={busy || planLocked || readOnly}
             onClick={() => { void startWorkout(); }} />
+        </div> : null}
+        {onCancel || onDelete ? <div className="occurrence-draft-sheet__actions">
+          {!readOnly && !planLocked && !cancelled && onCancel ? <KonstaButton rounded tonal disabled={busy} onClick={() => {
+            if (mutationBlocked() || starting.current) return;
+            setBusy(true);
+            void flushEdits().then(async () => {
+              const latest = await drafts.get(draft.id);
+              if (!latest) throw new Error('Тренировка недоступна');
+              if (startAlive.current) onCancel(latest);
+            }).catch(reason => reportPlanError(reason, 'Не удалось отменить тренировку'))
+              .finally(() => { if (startAlive.current) setBusy(false); });
+          }}>Отменить тренировку</KonstaButton> : null}
+          {onDelete ? <KonstaButton rounded strong colors={{ strongBgIos: 'bg-red-500', strongBgMaterial: 'bg-red-500' }} disabled={busy}
+            onClick={() => setDeactivateOpen(true)}>Удалить</KonstaButton> : null}
         </div> : null}
         </> : null}
       </section> : null;
@@ -543,6 +558,18 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         </>}>
         <Text variant="body">План запланированной тренировки сохранится в любом случае.</Text>
       </MezfitDialog>
+      <MezfitDialog opened={deactivateOpen} role="dialog" aria-hidden={deactivateOpen ? undefined : true} aria-label="Удалить тренировку?" title={<Text variant="headline">Удалить тренировку?</Text>}
+        onBackdropClick={() => { if (!busy) setDeactivateOpen(false); }}
+        buttons={<>
+          <MezfitDialogButton disabled={busy} onClick={() => setDeactivateOpen(false)}>Назад</MezfitDialogButton>
+          <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
+            if (!draft || !onDelete || busy || starting.current) return;
+            setBusy(true);
+            void onDelete(draft).then(() => { if (startAlive.current) setDeactivateOpen(false); })
+              .catch(reason => reportPlanError(reason, 'Не удалось удалить тренировку'))
+              .finally(() => { if (startAlive.current) setBusy(false); });
+          }}>Удалить</MezfitDialogButton>
+        </>}><Text variant="body">Тренировка исчезнет из расписания и корзины.</Text></MezfitDialog>
       <MezfitDialog opened={deleteOpen} title={<Text variant="headline">Удалить черновик?</Text>}
         buttons={<>
           <MezfitDialogButton onClick={() => setDeleteOpen(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>

@@ -11,9 +11,10 @@ import { MezfitBottomSheet, Text } from '../ui';
 import { usePlannedWorkoutStart } from './PlannedWorkoutStartContext';
 import './planned-workouts.css';
 
-export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavigationContextChange }: {
+export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavigationContextChange, onError }: {
   opened: boolean; actor?: ProgramActor; onClose: () => void; onStarted: (id: string) => void;
   onNavigationContextChange: (value: NavigationContext | null) => void;
+  onError?: (message: string) => void;
 }) {
   const cloud = useCloudConnections();
   const start = usePlannedWorkoutStart();
@@ -28,9 +29,13 @@ export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavi
   const [retry, setRetry] = useState(0);
   const visit = useRef(0);
   const alive = useRef(false);
+  const pendingCancel = useRef<string | null>(null);
+  const activeRepository = useRef(repository);
+  activeRepository.current = repository;
+  useEffect(() => { pendingCancel.current = null; }, [repository]);
   const isOpen = useRef(opened);
   isOpen.current = opened;
-  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; pendingCancel.current = null; }; }, []);
   useEffect(() => {
     ++visit.current;
     if (!opened || !repository) return;
@@ -43,6 +48,11 @@ export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavi
     });
     return () => { ++visit.current; active = false; subscription.unsubscribe(); };
   }, [opened, repository, retry]);
+  useEffect(() => {
+    if (!opened || !start?.conflictActive) return;
+    onNavigationContextChange({ level: 2, title: 'Конфликт тренировок', contentMode: 'viewport', onBack: start.dismissConflict });
+    return () => onNavigationContextChange(null);
+  }, [opened, start?.conflictActive, start?.dismissConflict, onNavigationContextChange]);
   const save = useCallback(async (draft: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
     if (!planner || !repository) throw new Error('Сохранение недоступно');
     const current = await repository.drafts.get(draft.id);
@@ -51,7 +61,14 @@ export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavi
     if (updateProgram && current.trainingPlanId && current.programDayId)
       await planner.programs.applyOccurrencePlan(current.trainingPlanId, current.programDayId, current.plan, current.originalPlan);
   }, [planner, repository]);
-  return <MezfitBottomSheet opened={opened} label="Плановая тренировка" lazyMount>
+  return <MezfitBottomSheet opened={opened && !start?.conflictActive} label="Плановая тренировка" lazyMount onClosed={() => {
+    const id = pendingCancel.current; pendingCancel.current = null;
+    if (!id || !repository) return;
+    const current = repository;
+    void (start ? start.cancel(id) : repository.drafts.cancel(id)).catch(reason => {
+      if (alive.current && activeRepository.current === current) onError?.(reason instanceof Error ? reason.message : 'Не удалось отменить тренировку');
+    });
+  }}>
     <section className="planned-workouts">
       <header className="planned-workouts__header">
         <Text variant="headline">Плановая тренировка</Text>
@@ -74,6 +91,12 @@ export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavi
           const id = await start.start(draft);
           if (token === visit.current && alive.current && isOpen.current) { onStarted(id); start.showSession(id); }
         } : undefined}
+        onCancel={draft => { pendingCancel.current = draft.targetOccurrenceId ?? draft.id.slice(6); onClose(); }}
+        onDelete={async draft => {
+          const token = visit.current;
+          await repository.drafts.deactivate(draft.targetOccurrenceId ?? draft.id.slice(6));
+          if (alive.current && token === visit.current && isOpen.current) onClose();
+        }}
         onSave={save} onClose={onClose} onNavigationContextChange={onNavigationContextChange} />) : null}
     </section>
   </MezfitBottomSheet>;

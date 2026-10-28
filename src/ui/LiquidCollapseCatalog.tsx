@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Avatar, Button, IconButton, Text } from './primitives';
+import { Button } from 'konsta/react';
+import { Avatar, IconButton, Text } from './primitives';
 import { Icon } from './Icon';
 import { DayScheduleEventCard } from './DayScheduleEventCard';
 import { LiquidCollapse, type LiquidCollapseBounds } from './LiquidCollapse';
@@ -17,7 +18,7 @@ export function LiquidCollapseCatalog() {
       <IconButton ref={target} label="Отменённые тренировки"><Icon name="trash" /></IconButton>
     </div>
     <div ref={source} style={{ height: 80, visibility: cancelled ? 'hidden' : 'visible' }}>{card}</div>
-    <Button onClick={() => {
+    <Button rounded tonal onClick={() => {
       if (cancelled) { setCancelled(false); return; }
       const rect = source.current?.getBoundingClientRect();
       if (rect) setBounds({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });

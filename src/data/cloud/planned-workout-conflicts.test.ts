@@ -25,7 +25,7 @@ describe('conflict at actual planned-workout Start', () => {
       '2026-10-28T10:00:00.000Z')).toEqual([]);
   });
   it.each([
-    { cancelledAt: '2026-10-28T09:00:00.000Z' }, { status: 'cancelled' as const },
+    { inactive: true }, { cancelledAt: '2026-10-28T09:00:00.000Z' }, { status: 'cancelled' as const },
     { status: 'in_progress' as const, workoutSessionId: 'session' },
     { entryKind: 'personal_event' as const }, { format: 'independent' as const }, { coachUserId: 'tg:9' },
   ])('ignores a booking that does not require this cancellation flow: %j', changes => {

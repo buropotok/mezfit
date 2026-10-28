@@ -73,7 +73,7 @@ export class WorkoutOccurrenceDraftRepository {
         let id = draft.targetOccurrenceId;
         if (id) {
           const current = await this.db.workoutOccurrences.get(id);
-          if (!current || current.entryKind === 'personal_event' || current.realmId !== draft.realmId || current.athleteUserId !== draft.athleteUserId
+          if (!current || current.inactive || current.cancelledAt || current.entryKind === 'personal_event' || current.realmId !== draft.realmId || current.athleteUserId !== draft.athleteUserId
             || current.coachUserId !== draft.coachUserId || current.clientUserId !== draft.clientUserId
             || current.format !== draft.format) continue;
           await this.db.workoutOccurrences.update(id, { plan: draft.plan, originalPlan: draft.originalPlan,
@@ -118,7 +118,7 @@ export class WorkoutOccurrenceDraftRepository {
   async get(id: string): Promise<LocalWorkoutOccurrenceDraft | null> {
     if (!id.startsWith('draft:')) return null;
     const row = await this.db.workoutOccurrences.get(id.slice(6));
-    if (!row || row.entryKind === 'personal_event' || (row.status === 'cancelled' || row.cancelledAt)) return null;
+    if (!row || row.inactive || row.entryKind === 'personal_event' || (row.status === 'cancelled' || row.cancelledAt)) return null;
     if (row.publicationStatus === 'draft' && (row.coachUserId ?? row.athleteUserId) !== this.actorUserId
       && (row.draftAuthorUserId ?? row.createdByUserId) !== this.actorUserId) return null;
     try { await this.authorize(row); }
@@ -261,13 +261,35 @@ export class WorkoutOccurrenceDraftRepository {
     await this.flushEdits('draft:' + occurrenceId);
     await this.transaction(async () => {
       const row = await this.db.workoutOccurrences.get(occurrenceId);
-      if (!row || row.entryKind === 'personal_event') throw new Error('OCCURRENCE_NOT_FOUND');
+      if (!row || row.inactive || row.entryKind === 'personal_event') throw new Error('OCCURRENCE_NOT_FOUND');
       await this.authorize(row);
       if (row.cancelledAt || row.status === 'cancelled') return;
       this.assertPlanEditable(draftFromOccurrence(this.actorUserId, await this.executionView(row)));
       await this.db.workoutOccurrences.update(occurrenceId, { cancelledAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       await markWorkoutChanged(this.db, occurrenceId);
     });
+  }
+
+  /** Logical deletion only. Retains the full occurrence and its cancellation history.
+   * A cancelled record can be removed from the basket; execution records are protected.
+   */
+  async deactivate(occurrenceId: string): Promise<void> {
+    const editorId = 'draft:' + occurrenceId;
+    const queue = this.queue(editorId);
+    await queue.running.catch(() => undefined);
+    await this.transaction(async () => {
+      const row = await this.db.workoutOccurrences.get(occurrenceId);
+      if (!row || row.entryKind === 'personal_event') throw new WorkoutEditRejected('OCCURRENCE_NOT_FOUND');
+      await this.authorize(row);
+      if (row.inactive) return;
+      const current = await this.executionView(row);
+      if (current.workoutSessionId || (current.status !== 'scheduled' && current.status !== 'cancelled'))
+        throw new WorkoutEditRejected(STARTED_PLAN_MESSAGE);
+      await this.db.workoutOccurrences.update(occurrenceId, { inactive: true, updatedAt: new Date().toISOString() });
+      await markWorkoutChanged(this.db, occurrenceId);
+    });
+    queue.pending.length = 0;
+    editQueues.get(this.db)?.delete(this.actorUserId + ':' + editorId);
   }
 
   async delete(id: string): Promise<void> {
@@ -285,7 +307,7 @@ export class WorkoutOccurrenceDraftRepository {
       if (row.publishedPlan && author) {
         await this.db.workoutOccurrences.update(row.id, { plan: row.publishedPlan, publicationStatus: 'published', updatedAt: new Date().toISOString() });
       } else {
-        await this.db.workoutOccurrences.update(row.id, { cancelledAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        await this.db.workoutOccurrences.update(row.id, { inactive: true, updatedAt: new Date().toISOString() });
       }
       await markWorkoutChanged(this.db, row.id);
     });

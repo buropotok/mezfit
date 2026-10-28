@@ -3,7 +3,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
-import { MezfitDialog, MezfitDialogButton } from '../ui';
+import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { PlannedWorkoutConflict } from '../data/cloud/planned-workout-conflicts';
 import { PlannedWorkoutConflictSheet } from './PlannedWorkoutConflictSheet';
 import { adHocErrorMessage } from './adhoc-workout-errors';
@@ -11,6 +11,7 @@ import { adHocErrorMessage } from './adhoc-workout-errors';
 type CancellationPresentation = (id: string, commit: () => Promise<void>) => Promise<void>;
 interface PlannedWorkoutStart {
   conflictActive: boolean;
+  conflictOccurrence: PlannedWorkoutConflict['occurrences'][number] | null;
   dismissConflict: () => void;
   cancel: (id: string) => Promise<void>;
   registerCancellationPresentation: (handler: CancellationPresentation) => () => void;
@@ -43,10 +44,12 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
   const [conflict, setConflict] = useState<PlannedWorkoutConflict['occurrences'][number] | null>(null);
   const [conflictOpened, setConflictOpened] = useState(false);
   const [conflictActive, setConflictActive] = useState(false);
+  const [conflictError, setConflictError] = useState('');
+  const abandoned = useRef(false);
   const decision = useRef<'cancel' | 'back'>('back');
   const pendingDecision = useRef<((value: 'cancel' | 'back') => void) | null>(null);
   const presentation = useRef<CancellationPresentation | null>(null);
-  const dismissConflict = useCallback(() => { decision.current = 'back'; setConflictOpened(false); }, []);
+  const dismissConflict = useCallback(() => { abandoned.current = true; decision.current = 'back'; setConflictOpened(false); }, []);
   const registerCancellationPresentation = useCallback((handler: CancellationPresentation) => {
     presentation.current = handler;
     return () => { if (presentation.current === handler) presentation.current = null; };
@@ -58,7 +61,7 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
     else await commit();
   }, [drafts]);
   useEffect(() => {
-    ++generation.current; running.current = false; setBlocked(false);
+    ++generation.current; running.current = false; setBlocked(false); setConflictError('');
     pendingDecision.current?.('back'); pendingDecision.current = null; setConflictOpened(false); setConflict(null); setConflictActive(false);
     return () => { ++generation.current; pendingDecision.current?.('back'); pendingDecision.current = null; };
   }, [repository, role]);
@@ -66,7 +69,7 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
     if (!repository || !drafts || role !== 'coach') throw new Error('Запуск тренировки недоступен');
     if (running.current) throw new Error('Тренировка уже запускается');
     const token = generation.current;
-    running.current = true;
+    running.current = true; abandoned.current = false; setConflictError('');
     try {
       await drafts.flushEdits(draft.id);
       if (token !== generation.current) throw new Error('Запуск тренировки отменён');
@@ -83,7 +86,13 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
               setConflictActive(true); setConflict(row); setConflictOpened(true);
             });
             if (token !== generation.current || choice !== 'cancel') throw new Error('Запуск тренировки отменён');
-            await cancel(row.id);
+            try { await cancel(row.id); }
+            catch (reason) {
+              if (token === generation.current && !abandoned.current)
+                setConflictError(adHocErrorMessage(reason, 'Не удалось отменить тренировку'));
+              throw reason;
+            }
+            if (abandoned.current) throw new Error('Запуск тренировки отменён');
           }
         }
         throw new Error('Запуск тренировки отменён');
@@ -95,18 +104,23 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
       if (token === generation.current && reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS')
         setBlocked(true);
       throw new Error(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
-    } finally { if (token === generation.current) { running.current = false; setConflictActive(false); } }
+    } finally { if (token === generation.current) { running.current = false; setConflictActive(false); setConflict(null); } }
   }, [repository, drafts, role, cancel]);
   const showSession = useCallback((id: string) => onStartedRef.current(id), []);
-  const value = useMemo(() => role === 'coach' && repository ? { start, showSession, cancel, registerCancellationPresentation, conflictActive, dismissConflict } : null, [repository, role, start, showSession, cancel, registerCancellationPresentation, conflictActive, dismissConflict]);
+  const value = useMemo(() => role === 'coach' && repository ? { start, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
   return <Context.Provider value={value}>
     {children}
     <PlannedWorkoutConflictSheet occurrence={conflict} opened={conflictOpened}
-      onDecision={value => { decision.current = value; setConflictOpened(false); }}
+      onDecision={value => { if (value === 'back') abandoned.current = true; decision.current = value; setConflictOpened(false); }}
       onClosed={() => {
         const resolve = pendingDecision.current; pendingDecision.current = null;
-        setConflict(null); resolve?.(decision.current);
+        resolve?.(decision.current);
       }} />
+    <MezfitDialog opened={Boolean(conflictError)} title={<Text variant="headline">Не удалось отменить тренировку</Text>}
+      onBackdropClick={() => setConflictError('')}
+      buttons={<MezfitDialogButton strong onClick={() => setConflictError('')}>Понятно</MezfitDialogButton>}>
+      <Text variant="body">{conflictError}</Text>
+    </MezfitDialog>
     <MezfitDialog opened={blocked} title="Завершите текущую тренировку, чтобы начать новую."
       onBackdropClick={() => setBlocked(false)}
       buttons={<MezfitDialogButton strong onClick={() => setBlocked(false)}>Понятно</MezfitDialogButton>} />

@@ -20,3 +20,5 @@
 .occurrence-draft-sheet--inline .occurrence-draft-sheet__body { overflow: visible; flex: none; }
 .occurrence-draft-sheet__start { padding: 0 16px max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
 .occurrence-draft-sheet__identity { padding: 16px 16px 0; }
+
+.occurrence-draft-sheet__actions { display: flex; flex-direction: column; gap: 12px; padding: 0 16px max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
