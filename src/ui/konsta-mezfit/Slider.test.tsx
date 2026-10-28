@@ -187,3 +187,15 @@ describe('MezfitSlider', () => {
     expect(new Set(ids).size).toBe(2);
   });
 });
+
+it('stretches a controlled RPE track while preserving small thumb geometry and input', () => {
+  const change = vi.fn();
+  const view = render(<KonstaProvider theme="ios" dark>
+    <MezfitSlider fullWidth size="small" start={0} end={10} value={6} ariaLabel="RPE" onValueChange={change} />
+  </KonstaProvider>);
+  const root = view.container.querySelector<HTMLElement>('.mezfit-slider');
+  expect(root?.style.getPropertyValue('--mezfit-slider-width')).toBe('100%');
+  expect(root?.style.getPropertyValue('--mezfit-slider-thumb-width')).toBe('45px');
+  fireEvent.input(view.getByRole('slider', { name: 'RPE' }), { target: { value: '8' } });
+  expect(change).toHaveBeenCalledWith(8);
+});
