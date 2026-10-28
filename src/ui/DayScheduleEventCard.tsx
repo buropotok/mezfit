@@ -12,6 +12,7 @@ export type DayScheduleEventCardProps = {
   status?: ReactNode;
   /** Plain status for the single-line compact layout; no full-height badge. */
   compactStatus?: string;
+  compactStatusColor?: 'green';
   media?: ReactNode;
   corner?: ReactNode;
   cornerSize?: number;
@@ -36,6 +37,7 @@ export function DayScheduleEventCard({
   timeLabel,
   status,
   compactStatus,
+  compactStatusColor,
   media,
   corner,
   cornerSize = 24,
@@ -79,7 +81,7 @@ export function DayScheduleEventCard({
         {detail ? <Text variant="caption" className="ui-day-schedule-event-card__truncate">{detail}</Text> : null}
         <Text variant="caption" className="ui-day-schedule-event-card__truncate">{title}</Text>
         <Text variant="caption" className="ui-day-schedule-event-card__fixed">{timeLabel ?? timeRange}</Text>
-        {compactStatus ? <Text variant="caption" className="ui-day-schedule-event-card__fixed">{compactStatus}</Text> : null}
+        {compactStatus ? <Text variant="caption" className={`ui-day-schedule-event-card__fixed${compactStatusColor === 'green' ? ' ui-day-schedule-event-card__status--green' : ''}`}>{compactStatus}</Text> : null}
         {icon}
       </div> : <List nested dividers={false} className="w-full">
         <ListItem
