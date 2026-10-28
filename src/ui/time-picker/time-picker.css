@@ -79,6 +79,9 @@
   overflow-y: hidden;
   touch-action: none;
   scroll-snap-type: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .ui-time-picker__option--selected {
