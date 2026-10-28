@@ -27,8 +27,8 @@ describe('Client execution with pinned Dexie Cloud Addon', () => {
       unsyncedTables: ['localProgramSync', 'localWorkoutSync', 'localWorkoutOccurrenceDrafts'] });
     const pair = await relationshipMembership('101', '202');
     const timestamp = '2026-10-28T08:00:00.000Z';
-    const row: CloudWorkoutOccurrenceRow = {
-      id: 'published-workout', realmId: pair.realm.realmId, owner: pair.realm.realmId,
+    const row: Omit<CloudWorkoutOccurrenceRow, 'id'> = {
+      realmId: pair.realm.realmId, owner: pair.realm.realmId,
       athleteUserId: 'tg:202', clientUserId: 'tg:202', coachUserId: 'tg:101', format: 'independent',
       startsAtUtc: timestamp, durationMinutes: 60, status: 'scheduled', workoutSessionId: null,
       publicationStatus: 'published', createdByUserId: 'tg:101', createdAt: timestamp, updatedAt: timestamp,
@@ -43,7 +43,7 @@ describe('Client execution with pinned Dexie Cloud Addon', () => {
     // Seed synchronized infrastructure without Addon's unauthenticated owner rewriting;
     // product writes below retain the actual Addon middleware and generated IDs.
     await new Promise<void>((resolve, reject) => {
-      const tx = db.backendDB().transaction(['realms', 'members', 'roles', 'workoutOccurrences'], 'readwrite');
+      const tx = db.backendDB().transaction(['realms', 'members', 'roles'], 'readwrite');
       tx.objectStore('realms').put(pair.realm);
       for (const member of pair.members) tx.objectStore('members').put(member);
       tx.objectStore('roles').put({ realmId: 'rlm-public', name: 'client', permissions: {
@@ -52,12 +52,12 @@ describe('Client execution with pinned Dexie Cloud Addon', () => {
           workoutOccurrences: [...baseline.roles.client.permissions.update.workoutOccurrences, 'inactive',
             ...grants.roles.client.permissions.update.workoutOccurrences] },
       } });
-      tx.objectStore('workoutOccurrences').put(row);
       tx.oncomplete = () => resolve(); tx.onabort = () => reject(tx.error);
     });
     const database = db as MezfitCloudDatabase;
+    const occurrenceId = await database.workoutOccurrences.add(row);
     const repo = new ClientWorkoutRepository(database, 'tg:202');
-    const { id } = await repo.createFromOccurrence(row.id);
+    const { id } = await repo.createFromOccurrence(occurrenceId);
     expect(db.cloud.schema?.adHocSessions.markedForSync).toBe(true);
     expect(await repo.getRow(id)).toMatchObject({ realmId: row.realmId, owner: row.realmId, occurrencePlan: row.plan });
     const session = await repo.get(id);
@@ -75,7 +75,7 @@ describe('Client execution with pinned Dexie Cloud Addon', () => {
     const reopened = new ClientWorkoutRepository(database, 'tg:202');
     expect((await reopened.getActive())?.id).toBe(id);
     await reopened.complete(id);
-    expect(await database.workoutOccurrences.get(row.id)).toMatchObject({ status: 'completed', workoutSessionId: id, plan: row.plan });
+    expect(await database.workoutOccurrences.get(occurrenceId)).toMatchObject({ status: 'completed', workoutSessionId: id, plan: row.plan });
     expect((await reopened.get(id))?.exercises[0].sets[0]).toMatchObject({ plan: { reps: 12, weightKg: 50 },
       fact: { metrics: { reps: 8, weightKg: 70 } } });
     expect(fetch).not.toHaveBeenCalled();
