@@ -1,5 +1,4 @@
-import { AdHocWorkoutRepository } from './adhoc-workouts';
-import type { AdHocSessionRow } from './adhoc-workout-types';
+import { AdHocWorkoutRepository, type CalendarWorkoutSession } from './adhoc-workouts';
 import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { liveQuery } from 'dexie';
 import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
@@ -139,7 +138,7 @@ export class WorkoutOccurrenceDraftRepository {
     return liveQuery(() => this.list()).subscribe({ next: onChange, error: onError });
   }
 
-  observeWorkspace(onChange: (value: { occurrences: CloudWorkoutOccurrenceRow[]; drafts: LocalWorkoutOccurrenceDraft[]; cancelled?: CloudWorkoutOccurrenceRow[]; sessions?: AdHocSessionRow[] }) => void,
+  observeWorkspace(onChange: (value: { occurrences: CloudWorkoutOccurrenceRow[]; drafts: LocalWorkoutOccurrenceDraft[]; cancelled?: CloudWorkoutOccurrenceRow[]; sessions?: CalendarWorkoutSession[] }) => void,
     onError: (reason: unknown) => void) {
     const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
     return liveQuery(async () => {
