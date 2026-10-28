@@ -10,19 +10,18 @@ import { WeightRepsPicker } from './WeightRepsPicker';
 vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn() }));
 
 const ROW_HEIGHT = 48;
-// Match TimePicker.circular.test.tsx: browser RAF callbacks run on a later frame.
 const frames = new Map<number, FrameRequestCallback>();
 let nextFrame = 0;
 
 function flushFrames() {
   act(() => {
-    const callbacks = [...frames.values()];
+    const pending = [...frames.values()];
     frames.clear();
-    callbacks.forEach(callback => callback(0));
+    pending.forEach(callback => callback(0));
   });
 }
 
-function dispatchTouch(element: Element, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
+function touch(element: Element, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
   y: number, time: number) {
   const event = new Event(type, { bubbles: true });
   Object.defineProperty(event, 'timeStamp', { value: time });
@@ -32,7 +31,7 @@ function dispatchTouch(element: Element, type: 'touchstart' | 'touchmove' | 'tou
   fireEvent(element, event);
 }
 
-function renderWeight(valueKg = 77.5) {
+function renderWeight(valueKg = 23.5) {
   const target = document.createElement('button');
   document.body.appendChild(target);
   const onChange = vi.fn();
@@ -58,10 +57,16 @@ function renderWeight(valueKg = 77.5) {
   };
 }
 
-function nativeScroll(element: HTMLDivElement, kilogram: number) {
-  element.scrollTop = kilogram * ROW_HEIGHT;
-  fireEvent.scroll(element);
+function nativeScroll(wheel: HTMLDivElement, row: number) {
+  wheel.scrollTop = row * ROW_HEIGHT;
+  fireEvent.scroll(wheel);
   flushFrames();
+}
+
+function startFastFlick(wheel: HTMLDivElement, start = 100) {
+  touch(wheel, 'touchstart', 230, start);
+  touch(wheel, 'touchmove', 100, start + 80);
+  expect(wheel.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
 }
 
 beforeEach(() => {
@@ -87,131 +92,149 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('WeightRepsPicker mirrors TimePicker native flick snapping, with step 10 instead of 15', () => {
-  it('renders all 400 kilogram values and marks each tenth as the native fast-flick stop', () => {
-    const { kilograms } = renderWeight();
-    const options = within(kilograms).getAllByRole('option');
-    expect(options).toHaveLength(400);
-    expect(within(kilograms).getByRole('option', { name: '77' })
+describe('WeightRepsPicker native relative ten-kilogram flick', () => {
+  it('starts with every one-kilogram row and keeps normal precision immediately', () => {
+    const { kilograms, onChange } = renderWeight();
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
+    expect(within(kilograms).getByRole('option', { name: '23' })
       .getAttribute('aria-selected')).toBe('true');
-    expect(within(kilograms).getByRole('option', { name: '10' })
-      .classList.contains('ui-time-picker__option--quarter-stop')).toBe(true);
-    expect(within(kilograms).getByRole('option', { name: '77' })
-      .classList.contains('ui-time-picker__option--quarter-stop')).toBe(false);
+    touch(kilograms, 'touchstart', 230, 100);
+    nativeScroll(kilograms, 24);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 24.5 });
+    nativeScroll(kilograms, 25);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 25.5 });
     expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+    touch(kilograms, 'touchend', 210, 180);
+  });
+
+  it('switches to actual 23, 33, 43, 53 rows on fast swipe, not 20, 30, 40', () => {
+    const { kilograms, onChange } = renderWeight(23.5);
+    startFastFlick(kilograms);
+    const labels = within(kilograms).getAllByRole('option').map(option => option.textContent);
+    expect(labels).toHaveLength(40);
+    expect(labels.slice(0, 7)).toEqual(['3', '13', '23', '33', '43', '53', '63']);
+    expect(within(kilograms).queryByRole('option', { name: '20' })).toBeNull();
+    expect(within(kilograms).getByRole('option', { name: '23' }).getAttribute('aria-selected')).toBe('true');
+    nativeScroll(kilograms, 3);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 33.5 });
+    nativeScroll(kilograms, 4);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 43.5 });
+    nativeScroll(kilograms, 5);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 53.5 });
+    expect(onChange.mock.calls.every(([value]) => value.weightKg % 10 === 3.5)).toBe(true);
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(3);
+  });
+
+  it('preserves the actual physical finger displacement when fast mode activates', () => {
+    const { kilograms, onChange } = renderWeight();
+    touch(kilograms, 'touchstart', 230, 100);
+    // The native wheel already travelled two 1kg rows before detecting speed.
+    nativeScroll(kilograms, 25);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 25.5 });
+    touch(kilograms, 'touchmove', 100, 180);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
+    // Two travelled physical rows now represent +20kg relative to 23.
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 43.5 });
+    expect(kilograms.scrollTop).toBe(4 * ROW_HEIGHT);
+    nativeScroll(kilograms, 5);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 53.5 });
+  });
+
+  it('moves backward in tens relative to 23 and clamps at the first valid row', () => {
+    const { kilograms, onChange } = renderWeight();
+    startFastFlick(kilograms);
+    nativeScroll(kilograms, 1);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 13.5 });
+    nativeScroll(kilograms, 0);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 3.5 });
+    expect(within(kilograms).getByRole('option', { name: '3' })
+      .getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('retains native inertial movement in relative 10kg mode after touchend and touchcancel', () => {
+    const { kilograms, onChange } = renderWeight();
+    startFastFlick(kilograms);
+    touch(kilograms, 'touchend', 100, 260);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
+    nativeScroll(kilograms, 6);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 63.5 });
+    touch(kilograms, 'touchcancel', 100, 270);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
+    nativeScroll(kilograms, 7);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 73.5 });
+    fireEvent(kilograms, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
+  });
+
+  it('resets to the exact 1kg wheel on the next independent touch without changing the value', () => {
+    const { kilograms, onChange } = renderWeight();
+    startFastFlick(kilograms);
+    nativeScroll(kilograms, 4);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 43.5 });
+    touch(kilograms, 'touchend', 100, 260);
+    const changes = onChange.mock.calls.length;
+    touch(kilograms, 'touchstart', 230, 400);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
+    expect(within(kilograms).getByRole('option', { name: '43' })
+      .getAttribute('aria-selected')).toBe('true');
+    expect(kilograms.scrollTop).toBe(43 * ROW_HEIGHT);
+    expect(onChange).toHaveBeenCalledTimes(changes);
+    nativeScroll(kilograms, 44);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 44.5 });
+  });
+
+  it('keeps a slow swipe on individual kilograms using unchanged TimePicker thresholds', () => {
+    const { kilograms, onChange } = renderWeight();
+    touch(kilograms, 'touchstart', 230, 100);
+    touch(kilograms, 'touchmove', 194, 300); // 36px/200ms = 0.18 < 0.35.
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
+    nativeScroll(kilograms, 26);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 26.5 });
+    touch(kilograms, 'touchend', 100, 800);
+    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
+  });
+
+  it('preserves relative tens for arbitrary starts and reaches 397 without rounding', () => {
+    const { kilograms, onChange } = renderWeight(287.75);
+    startFastFlick(kilograms);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
+    expect(within(kilograms).getByRole('option', { name: '287' }).getAttribute('aria-selected')).toBe('true');
+    nativeScroll(kilograms, 29);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 297.75 });
+    nativeScroll(kilograms, 39);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 397.75 });
+  });
+
+  it('keeps exact direct taps and restores fine rows after a coarse tap', () => {
+    const { kilograms, onChange } = renderWeight();
+    startFastFlick(kilograms);
+    fireEvent.click(within(kilograms).getByRole('option', { name: '53' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 53.5 });
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
+    expect(within(kilograms).getByRole('option', { name: '53' })
+      .getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(within(kilograms).getByRole('option', { name: '54' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 54.5 });
+  });
+
+  it('commits the actual relative value on closing mid-inertia, without rounding to global tens', () => {
+    const { kilograms, onChange, onClose } = renderWeight();
+    startFastFlick(kilograms);
+    kilograms.scrollTop = 4.9 * ROW_HEIGHT;
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 53.5 });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not alter the repetition, fraction or duration wheel configurations', () => {
+    const { kilograms } = renderWeight();
+    expect(kilograms.className).not.toContain('ui-time-picker__column--quarter-snap');
     expect(screen.getByRole('listbox', { name: 'Повторения' }).className)
       .not.toContain('ui-time-picker__column--quarter-snap');
     expect(screen.getByRole('listbox', { name: 'Доли килограмма' }).className)
       .not.toContain('ui-time-picker__column--quarter-snap');
-  });
-
-  it('scrolls precisely by one kilogram immediately, with no hold timer', () => {
-    const { kilograms, onChange } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    nativeScroll(kilograms, 78);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 78.5 });
-    nativeScroll(kilograms, 79);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 79.5 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
-    dispatchTouch(kilograms, 'touchend', 210, 160);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
-  });
-
-  it('enables exactly the same fast-swipe snap as TimePicker and lands on multiples of 10', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const { kilograms, onChange } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    dispatchTouch(kilograms, 'touchmove', 100, 200);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-    expect(within(kilograms).getByRole('option', { name: '80' })
-      .classList.contains('ui-time-picker__option--quarter-stop')).toBe(true);
-    expect(within(kilograms).getByRole('option', { name: '81' })
-      .classList.contains('ui-time-picker__option--quarter-stop')).toBe(false);
-    dispatchTouch(kilograms, 'touchend', 100, 300);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-
-    // jsdom has no native momentum or CSS snap layout: simulate WebView's
-    // inertial landing on a native 10kg stop, exactly as TimePicker tests do.
-    nativeScroll(kilograms, 130);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 130.5 });
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
-    const callsAtLanding = onChange.mock.calls.length;
-    act(() => { vi.advanceTimersByTime(400); });
-    flushFrames();
-    expect(onChange).toHaveBeenCalledTimes(callsAtLanding);
-    expect(kilograms.scrollTop).toBe(130 * ROW_HEIGHT);
-  });
-
-  it('keeps exact kilograms when dragging slowly, with the same thresholds as TimePicker', () => {
-    const { kilograms, onChange } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    nativeScroll(kilograms, 83);
-    dispatchTouch(kilograms, 'touchend', 100, 800);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 83.5 });
-  });
-
-  it('uses the same fast-swipe velocity threshold as TimePicker', () => {
-    const { kilograms } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    dispatchTouch(kilograms, 'touchmove', 194, 300); // 36px / 200ms = 0.18px/ms.
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
-    dispatchTouch(kilograms, 'touchend', 194, 300);
-
-    dispatchTouch(kilograms, 'touchstart', 230, 400);
-    dispatchTouch(kilograms, 'touchmove', 194, 480); // 36px / 80ms = 0.45px/ms.
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-  });
-
-  it('resets native coarse snap on the next touch or a precise direct tap', () => {
-    const { kilograms, onChange } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    dispatchTouch(kilograms, 'touchmove', 100, 180);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-    dispatchTouch(kilograms, 'touchend', 100, 250);
-
-    dispatchTouch(kilograms, 'touchstart', 230, 400);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
-    dispatchTouch(kilograms, 'touchmove', 100, 480);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-
-    fireEvent.click(within(kilograms).getByRole('option', { name: '83' }));
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 83.5 });
-  });
-
-  it('preserves snap targets if WebView takes ownership and dispatches touchcancel', () => {
-    const { kilograms } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    dispatchTouch(kilograms, 'touchmove', 100, 180);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-    dispatchTouch(kilograms, 'touchcancel', 100, 190);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-  });
-
-  it('commits the nearest 10kg target on backdrop dismissal mid-inertia like TimePicker', () => {
-    const { kilograms, onChange, onClose } = renderWeight();
-    dispatchTouch(kilograms, 'touchstart', 230, 100);
-    dispatchTouch(kilograms, 'touchmove', 100, 180);
-    expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(true);
-    kilograms.scrollTop = 126 * ROW_HEIGHT;
-    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
-    fireEvent.click(dialog.previousElementSibling as Element);
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 130.5 });
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the last exact value and fractional part available', () => {
-    const { kilograms, onChange } = renderWeight(399.75);
-    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
-    expect(within(kilograms).getByRole('option', { name: '399' })
-      .getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(within(kilograms).getByRole('option', { name: '398' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 398.75 });
-  });
-
-  it('does not modify DurationPicker native columns', () => {
     const target = document.createElement('button');
     document.body.appendChild(target);
     render(
