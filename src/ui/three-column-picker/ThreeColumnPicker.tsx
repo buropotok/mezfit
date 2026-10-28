@@ -657,6 +657,8 @@ export function ThreeColumnPicker({
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
+      aria-hidden={opened ? undefined : true}
+      inert={!opened ? true : undefined}
     >
       <div className={`ui-time-picker${pickerClassName ? ` ${pickerClassName}` : ''}`}>
         {header}
