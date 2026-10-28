@@ -112,6 +112,7 @@ describe('WeightRepsPicker mirrors TimePicker native flick snapping, with step 1
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 78.5 });
     nativeScroll(kilograms, 79);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 79.5 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(2);
     expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
     dispatchTouch(kilograms, 'touchend', 210, 160);
     expect(kilograms.classList.contains('ui-time-picker__column--quarter-snap')).toBe(false);
@@ -134,6 +135,7 @@ describe('WeightRepsPicker mirrors TimePicker native flick snapping, with step 1
     // inertial landing on a native 10kg stop, exactly as TimePicker tests do.
     nativeScroll(kilograms, 130);
     expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 130.5 });
+    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
     const callsAtLanding = onChange.mock.calls.length;
     act(() => { vi.advanceTimersByTime(400); });
     flushFrames();
