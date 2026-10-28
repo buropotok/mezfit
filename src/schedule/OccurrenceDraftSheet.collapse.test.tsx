@@ -14,7 +14,7 @@ vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSele
 vi.mock('../workout/SessionExercise', () => ({ SessionExercise: () => <div>Упражнение плана</div> }));
 vi.mock('../ui', async original => ({
   ...await original<typeof import('../ui')>(),
-  SortableList: ({ header, items, footer }: SortableListProps) => <div>{header}
+  SortableList: ({ header, items, footer, surface }: SortableListProps) => <div data-testid="plan-list" data-surface={surface}>{header}
     {items.map(item => <div key={item.id}>{item.content}</div>)}{footer}</div>,
   MezfitBottomSheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LiquidPopover: ({ trigger }: { trigger: ReactNode }) => <>{trigger}</>,
@@ -37,7 +37,7 @@ it('collapses only the plan, shows its compact timing and keeps the planning she
   vi.spyOn(repository, 'flushEdits').mockResolvedValue(undefined);
   vi.spyOn(repository, 'pendingEditError').mockReturnValue('');
   const close = vi.fn();
-  render(<OccurrenceDraftSheet draft={draft} drafts={repository} onClose={close} onSave={vi.fn()} />);
+  const view = render(<OccurrenceDraftSheet draft={draft} drafts={repository} onClose={close} onSave={vi.fn()} />);
   expect(screen.getByText('Упражнение плана')).toBeTruthy();
   expect(screen.queryByText('28.10.2026')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Свернуть тренировку' }));
@@ -49,4 +49,6 @@ it('collapses only the plan, shows its compact timing and keeps the planning she
   expect(screen.getByText('Упражнение плана')).toBeTruthy();
   expect(screen.queryByText('28.10.2026')).toBeNull();
   expect(close).not.toHaveBeenCalled();
+  view.rerender(<OccurrenceDraftSheet inlineCard draft={draft} drafts={repository} onClose={close} onSave={vi.fn()} />);
+  expect(screen.getByTestId('plan-list').getAttribute('data-surface')).toBe('transparent');
 });
