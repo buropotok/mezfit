@@ -5,15 +5,14 @@
   "corrected_unique_exercises": 6,
   "corrected_work_json_files": 7,
   "tracking_changes_by_distinct_exercise": [
-    "Wheel Run",
     "Squat mobility Complex"
   ],
   "source_json_files_modified": 0,
   "all_original_fields_identical": true,
   "catalogue_count": 1673,
   "tracking_type_counts_after_review": {
-    "time": 197,
-    "time_distance": 28,
+    "time": 196,
+    "time_distance": 29,
     "time_reps": 66,
     "time_weight": 7,
     "weight_reps": 1375
@@ -27,14 +26,20 @@
     {
       "path": "cardio/wheel-run.json",
       "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Wheel-Run.gif",
-      "visual_evidence": "36 кадров, 7,5 с: бег на месте с циклическим высоким подъёмом коленей; колеса и перемещения по дистанции нет.",
-      "status": "corrected",
-      "name_ru": "Бег на месте с высоким подниманием коленей",
-      "tracking_type": "time",
+      "visual_evidence": "36 кадров, 7,5 с: показана циклическая работа ног в беговом шаге; фиксированное положение демонстрационной модели не доказывает бег на месте. По уточнению пользователя это специальное беговое упражнение «колесо»: высокий вынос бедра, пронос/захлёст голени и загребающее опускание стопы с продвижением вперёд.",
+      "status": "corrected_after_user_clarification",
+      "name_ru": "Бег «колесом»",
+      "tracking_type": "time_distance",
       "before": {
         "name_ru": "Бег в колесе",
         "tracking_type": "time_distance"
-      }
+      },
+      "clarification": "Уточнение пользователя 2026-10-28: Wheel Run — бег техникой «колесо», а не бег на месте. Метрика дистанции применима, поскольку упражнение выполняют с продвижением вперёд.",
+      "terminology_sources": [
+        "https://rusathletics.info/news/14659-zhurnal-legkaya-atletika-7/",
+        "https://runstart.ru/blog/sbu-uprazhneniya",
+        "https://uzathletics.uz/stati/view/obzor-tehnicheskoe-masterstvo-sportsmena"
+      ]
     },
     {
       "path": "cardio/walk-wave-machine.json",
@@ -152,5 +157,7 @@
       "name_ru": "Занятие на велотренажёре",
       "tracking_type": "time_distance"
     }
-  ]
+  ],
+  "later_correction": "2026-10-28: Wheel Run reclassified from running in place to the running-wheel technique based on user correction and track-and-field terminology. Initial correction to time was reversed; time_distance restored.",
+  "outstanding_consistency_issue": "The separately approved audit/visual/remediation/REM-01-proposed-corrections.json (public definition #3637) still proposes the incorrect running-in-place name and instructions. It is a protected, separately approved publication proposal and has not been silently modified or published. Review it before any REM-01 application."
 }
