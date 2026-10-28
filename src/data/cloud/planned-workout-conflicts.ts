@@ -5,8 +5,8 @@ import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
  * Do not infer a cancellation from a later booking or from a session running long.
  * A different day for the same athlete is a separate, not-yet-implemented flow.
  */
-export function currentStartConflicts(
-  selected: Pick<CloudWorkoutOccurrenceRow, 'athleteUserId' | 'coachUserId'> & { id?: string }, rows: readonly CloudWorkoutOccurrenceRow[], startedAt: string,
+export function currentStartConflicts<T extends Pick<CloudWorkoutOccurrenceRow, 'athleteUserId' | 'coachUserId'> & { id?: string }>(
+  selected: T, rows: readonly CloudWorkoutOccurrenceRow[], startedAt: string,
 ): CloudWorkoutOccurrenceRow[] {
   const instant = Date.parse(startedAt);
   if (!selected.coachUserId || !Number.isFinite(instant)) return [];
