@@ -214,6 +214,29 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('closes an active numeric sheet when its owning picker is dismissed', () => {
+    const onChange = vi.fn();
+    const picker = renderPicker({ onChange });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    enter('1', '2');
+    picker.setValue({ reps: 8, weightKg: 77.5 }, false);
+    expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+    picker.setValue({ reps: 8, weightKg: 77.5 }, true);
+    expect(screen.getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('saves the zero digit as a valid explicit integer', () => {
+    const onChange = vi.fn();
+    renderPicker({ onChange });
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    enter('0');
+    expect(screen.getByRole('button', { name: 'Сохранить' })
+      .hasAttribute('disabled')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 0, weightKg: 77.5 });
+  });
+
   it('rejects values outside the public component contract', () => {
     expect(() => renderPicker({ value: { reps: 101, weightKg: 80 } }))
       .toThrow('WeightRepsPicker reps must be an integer from 0 to 100');
