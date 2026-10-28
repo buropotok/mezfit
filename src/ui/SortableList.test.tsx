@@ -11,6 +11,11 @@ const items: SortableListItem[] = [
 afterEach(() => cleanup());
 
 describe('SortableList surfaces', () => {
+  it('allows an enclosing workout card to own the single background', () => {
+    const { container } = render(<SortableList surface="transparent" items={items} onReorder={vi.fn()} />);
+    expect(container.querySelector('.ui-sortable-list__surface.ui-glass-surface')).toBeNull();
+    expect(container.querySelectorAll('.ui-sortable-list__row')).toHaveLength(2);
+  });
   it('renders one resting GlassSurface for the list and leaves resting items transparent', () => {
     const { container } = render(<SortableList items={items} onReorder={vi.fn()} />);
     const surface = container.querySelector('.ui-sortable-list__surface');
