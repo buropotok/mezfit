@@ -1,0 +1,656 @@
+[
+  {
+    "uses": 5,
+    "length": 3692,
+    "how_to": "1- Stand with your feet shoulder width apart and grip the kettlebell with both hands, allowing it to hang loosely. Bend your knees and drop your buttocks backward slightly, leaning your torso forward from the hip and keeping your back straight.\n\n2- Keeping your arms straight but relaxed, drive forward with your hips to stand tall, so that the kettlebell swings forward and up.\n\n3- Allow the kettlebell to swing up as far as momentum carries it, and then back down toward the hips. As it approaches, drop your hips and lean your torso forwards, and keeping your back straight, to return to the start position.\n\nPersonal Trainer Tips:\n\n- The kettlebell swing is a dynamic movement; it should flow continuously without pausing at the top or bottom.\n- Stand with your feet 6–12 inches outside of shoulder width on either side, each foot pointed outward about 30 degrees.\n- Keep your shoulders pulled back (retracted) and down to avoid rounding your back.\n- The lowering movement (backswing) is a sitting-back-on-a-chair movement, not a squatting- down movement.\n- Imagine pinching a quarter between your butt cheeks when you pop your hips forward.\n- At the top of the swing, the kettlebell should be around shoulder height, and your body should form a straight line from head to heels.\nKettlebell Swing – Benefits\nFull-body workout: Kettlebell swings engage multiple muscle groups simultaneously, including the hips, glutes, hamstrings, core, back, shoulders, and arms. This makes it an excellent full-body exercise that can help you save time while working on multiple areas at once.\n\nCardiovascular conditioning: Due to the dynamic nature of the movement, kettlebell swings elevate your heart rate and provide an intense cardiovascular workout. This can improve your endurance and overall cardiovascular health.\n\nStrength and power: Kettlebell swings build strength and power, particularly in the posterior chain muscles (glutes, hamstrings, and lower back). Strengthening these muscles can help improve athletic performance and reduce the risk of injury.\n\nFat burning: As a high-intensity exercise, kettlebell swings can help you burn a significant amount of calories in a short period. This makes them an effective addition to a weight loss or fat loss program.\n\nImproved posture and stability: The swinging motion requires proper form and engagement of the core muscles, which can lead to better posture and enhanced stability in the lower back and hips.\n\nIncreased flexibility: Kettlebell swings can improve hip mobility and flexibility, which is essential for various daily activities and athletic movements.\n\nJoint-friendly: When performed correctly, kettlebell swings are relatively low-impact and place less stress on the joints compared to some other exercises.\n\nFunctional strength: The movements involved in kettlebell swings mimic real-life activities like lifting and swinging, making it a functional exercise that can improve your performance in daily tasks.\n\nVersatility: Kettlebell swings can be combined with other exercises or incorporated into circuit training, making them a versatile choice for different workout routines.\n\nKettlebell Swing Muscles Worked\nTarget Core Muscles: ▪ Rectus abdominis ▪ Transverse abdominis ▪ Pelvic floor ▪ Hip flexors ▪ Erector spinae ▪ Multifidus ▪ Quadratus lumborum ▪ Gluteus minimus/medius ▪ Gluteus maximus\n\nGluteus Maximus\nSynergists - Hamstrings\nSynergists - Adductor Magnus\nSynergists - Quadriceps\nSynergists - Soleus\nSynergists - Erector Spinae\nSynergists - Trapezius\nSynergists - Deltoids\nSynergists - Serratus Anterior\nSynergists - Pectoralis Major\nSynergists - Rectus Abdominis\nSynergists - Obliques\nSynergists - Latissimus Dorsi",
+    "paths": [
+      {
+        "path": "assets/work/hip/kettlebell-swings.json",
+        "name_ru": "Махи гирей"
+      },
+      {
+        "path": "assets/work/shoulders/kettlebell-swings.json",
+        "name_ru": "Махи гирей"
+      },
+      {
+        "path": "assets/work/leg/kettlebell-swings.json",
+        "name_ru": "Махи гирей"
+      },
+      {
+        "path": "assets/work/abs/kettlebell-swings.json",
+        "name_ru": "Махи гирей"
+      },
+      {
+        "path": "assets/work/full-body/kettlebell-swings.json",
+        "name_ru": "Махи гирей"
+      }
+    ]
+  },
+  {
+    "uses": 5,
+    "length": 1046,
+    "how_to": "How to do:\n\n1- Lie on your left side with your hips, knees, and feet stacked one above the other, and your hips and knees bent at right angles. Extend your arms straight in front of you, pressing your palms together.\n\n2- Keeping your knees and feet together and your hips stacked, breathe in, brace your abdomen, and reach upward and back with your right hand, while keeping your left arm straight and resting on the floor.\n\n3- Breathing out, rotate your upper body to face the ceiling, keeping your hips stacked and your right arm extended.\n\n4- Continue the movement until you are as far back as possible, with your chest facing upward and your hips still stacked. Hold the movement briefly, keeping your shoulders stable and level. Breathe in.\n\n5- Breathing out, reach back toward the ceiling with your right arm, while rotating your torso back toward the start position slowly and under control.\n\n6- Continue the movement toward the start position and touch the palms of your hands together. Repeat the movement as required, then switch sides.",
+    "paths": [
+      {
+        "path": "assets/work/shoulders/lying-upper-body-rotation.json",
+        "name_ru": "Повороты верхней части корпуса лёжа"
+      },
+      {
+        "path": "assets/work/erector-spinae/lying-upper-body-rotation.json",
+        "name_ru": "Повороты верхней части корпуса лёжа"
+      },
+      {
+        "path": "assets/work/abs/lying-upper-body-rotation.json",
+        "name_ru": "Повороты верхней части корпуса лёжа"
+      },
+      {
+        "path": "assets/work/back/lying-upper-body-rotation.json",
+        "name_ru": "Повороты верхней части корпуса лёжа"
+      },
+      {
+        "path": "assets/work/chest/lying-upper-body-rotation.json",
+        "name_ru": "Повороты верхней части корпуса лёжа"
+      }
+    ]
+  },
+  {
+    "uses": 5,
+    "length": 517,
+    "how_to": "Snap Jumps Benefits\n- Snap jumps are a plyometric exercise. Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.\n- Snap jumps target the abdominal muscles, hip muscles and hip flexors and also work on the thighs, knee tendons, quadriceps and shoulders.\n- Snap jumps are beneficial to your health because they combine cardiovascular conditioning with strength work. Since snap jumps elevate your heart rate, they can also improve your cardiovascular fitness.",
+    "paths": [
+      {
+        "path": "assets/work/hip/snap-jumps.json",
+        "name_ru": "Плиометрические прыжки из упора присев"
+      },
+      {
+        "path": "assets/work/leg/snap-jumps.json",
+        "name_ru": "Плиометрические прыжки из упора присев"
+      },
+      {
+        "path": "assets/work/abs/snap-jumps.json",
+        "name_ru": "Плиометрические прыжки из упора присев"
+      },
+      {
+        "path": "assets/work/cardio/snap-jumps.json",
+        "name_ru": "Плиометрические прыжки из упора присев"
+      },
+      {
+        "path": "assets/work/full-body/snap-jumps.json",
+        "name_ru": "Плиометрические прыжки из упора присев"
+      }
+    ]
+  },
+  {
+    "uses": 5,
+    "length": 25,
+    "how_to": "Kettlebell Clean and Jerk",
+    "paths": [
+      {
+        "path": "assets/work/hip/kettlebell-clean-and-jerk.json",
+        "name_ru": "Взятие гири на грудь и толчок"
+      },
+      {
+        "path": "assets/work/shoulders/kettlebell-clean-and-jerk.json",
+        "name_ru": "Взятие гири на грудь и толчок"
+      },
+      {
+        "path": "assets/work/leg/kettlebell-clean-and-jerk.json",
+        "name_ru": "Взятие гири на грудь и толчок"
+      },
+      {
+        "path": "assets/work/cardio/kettlebell-clean-and-jerk.json",
+        "name_ru": "Взятие гири на грудь и толчок"
+      },
+      {
+        "path": "assets/work/full-body/kettlebell-clean-and-jerk.json",
+        "name_ru": "Взятие гири на грудь и толчок"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 5620,
+    "how_to": "To perform a Romanian deadlift, follow these steps:\n\n1. Feet shoulder-width apart\n\nThe first step in performing a Romanian deadlift is to make sure your feet are positioned shoulder-width apart. This stance provides a stable base for the lift, allowing you to engage your muscles and maintain proper form throughout the exercise.\n\n2. Hinge at hips with slight knee bend\n\nOnce you have established your foot position, it’s time to hinge at the hips. Begin by standing tall with your shoulders back and your core engaged. From this position, slowly bend forward at the hips while maintaining a slight bend in your knees. This movement should feel like you are pushing your hips back, rather than simply bending forward.\n\nAs you hinge forward, it’s important to maintain a neutral spine. This means keeping your back straight and avoiding any rounding or arching in your upper or lower back. Keep your gaze forward or slightly down, and avoid looking up or craning your neck.\n\n3. Overhand grip on barbell with hands shoulder-width apart\n\nTake an overhand grip on the bar with your hands positioned shoulder-width apart. Ensure that the barbell is positioned close to your shins and is in contact with your body throughout the lift. This will help you maintain proper form and engage the correct muscles. If the barbell is too far away from your body, you risk straining your lower back and not targeting the intended muscle groups.\n\n4. Straighten hips and knees to lift bar\n\nKeeping your back straight and your core engaged, lift the bar by straightening your hips and knees. It’s essential to lift the bar with a controlled movement, avoiding any jerking or sudden movements. This will help you maintain proper form and reduce the risk of injury.\n\nAs you reach the top of the movement, squeeze your glutes and exhale. Reverse the movement and return the bar to the starting position by pushing your hips back and bending your knees slightly.\n\nTips: Throughout the lift, it’s essential to maintain a neutral spine and engage your core muscles. This will help you stabilize your body and reduce the risk of injury. Focus on keeping your back straight and avoiding any rounding or arching in your upper or lower back.\n\nIn summary, lifting the barbell in a Romanian deadlift involves straightening your hips and knees while maintaining proper form and keeping the barbell close to your body. By engaging your glutes, hamstrings, and core muscles, you can perform the lift with control and reduce the risk of injury.\n\nRomanian Deadlift Benefits\n- Building Strength and Muscle Mass:\nRomanian deadlift is an excellent exercise for building strength and muscle mass in targeted muscles. They involve a high level of muscle activation, which stimulates muscle growth and development.\n\nTo maximize strength and muscle gains from RDLs, it is essential to perform the exercise with proper form and technique. This involves maintaining a neutral spine and engaging the core muscles to support the lower back. Additionally, it is crucial to use an appropriate weight that challenges the muscles without compromising form. As you progress, increasing the weight or the number of repetitions can help continue to stimulate muscle growth.\n\n- Improved Posture\nThe lower back, glutes, and hamstrings are crucial for maintaining proper posture. The lower back muscles are responsible for stabilizing the spine, while the glutes and hamstrings help support the pelvis and hip joints. Weakness in any of these muscles can result in poor posture and alignment, which can lead to chronic pain and injury.\n\nRomanian deadlift can significantly improve posture by strengthening the muscles that are responsible for maintaining proper alignment of the spine. These muscles include the lower back, glutes, and hamstrings, which are all targeted by the RDL exercise. Strengthening these muscles can help prevent slouching and rounding of the spine, leading to improved posture.\n\n- Enhanced Athletic Performance\nThe Romanian deadlift can enhance athletic performance by improving strength and power in the lower body, which are essential for explosive movements such as jumping, sprinting, and change of direction.\n\nStrength and power are essential components of athletic performance. Strength refers to the ability to produce force, while power refers to the ability to produce force quickly. Developing both strength and power in the lower body can improve athletic performance by increasing explosiveness, speed, and agility.\n\nThese movements require a combination of strength, speed, and power, which can be improved through resistance training exercises such as RDLs.\n\nTo maximize the athletic performance benefits of RDLs, it is essential to focus on proper form and technique while gradually increasing weight and repetitions. Additionally, incorporating other exercises that target explosive power, such as plyometric exercises, can further enhance athletic performance gains.\n\nRomanian Deadlift – Muscles Worked\nTarget - Erector Spinae\nSynergists - Gluteus Maximus\nSynergists - Hamstrings\nSynergists - Adductor Magnus\nStabilizers - Quadriceps\nStabilizers - Latissimus Dorsi\nStabilizers - Trapezius\nStabilizers - Levator Scapulae\nStabilizers - Rhomboids\nAntagonist Stabilizers - Rectus Abdominis\nAntagonist Stabilizers - Obliques\nIn summary, the Romanian deadlift is a powerful exercise that can help you achieve your fitness goals in various ways. RDLs can help build strength and muscle mass, improve posture, reduce the risk of injury, increase flexibility and range of motion, enhance athletic performance, and improve balance and stability.",
+    "paths": [
+      {
+        "path": "assets/work/hip/romanian-deadlift.json",
+        "name_ru": "Румынская тяга"
+      },
+      {
+        "path": "assets/work/erector-spinae/romanian-deadlift.json",
+        "name_ru": "Румынская тяга"
+      },
+      {
+        "path": "assets/work/leg/romanian-deadlift.json",
+        "name_ru": "Румынская тяга"
+      },
+      {
+        "path": "assets/work/back/romanian-deadlift.json",
+        "name_ru": "Румынская тяга"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 1760,
+    "how_to": "1. Setup:\n  - Stand with your feet wider apart than shoulder-width, with your toes pointing slightly outward. The wider stance is a key characteristic of the sumo deadlift.\n  - Place a dumbbell on the ground between your feet. You can use one or two dumbbells, depending on your preference and the weight you’re comfortable with.\n2. Grip the Dumbbells:\n  - Bend at your hips and knees to lower your body down. Keep your back straight, chest up, and your core engaged.\n  - Grasp the dumbbells with both hands using an overhand grip (palms facing each other) between your legs.\n3. Lift:\n  - As you exhale, stand up by driving through your heels, extending your hips and knees simultaneously. Keep the dumbbells close to your body as you lift them.\n  - Make sure to maintain a neutral spine throughout the movement. Do not round your lower back.\n4. Finish:\n  - At the top of the movement, stand tall with your hips fully extended, and your shoulders back.\n  - Pause for a moment, and then reverse the movement by bending at your hips and knees to lower the dumbbells back to the ground.\n  - Control the descent to avoid slamming the weights on the floor.\n5. Repeat:\n  - Perform the desired number of repetitions, and then carefully return the dumbbells to the starting position.\nTips:\n- Start with a light weight to ensure proper form and gradually increase the weight as you become more comfortable with the movement.\n- Keep the dumbbell close to your body throughout the lift to minimize strain on your lower back.\n- Maintain a neutral spine and avoid rounding or arching your back.\n- Push through your heels when lifting and lowering the weight to engage your hamstrings and glutes effectively.\n- Don’t rush the movement; focus on control and proper technique.",
+    "paths": [
+      {
+        "path": "assets/work/hip/dumbbell-sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо с гантелями"
+      },
+      {
+        "path": "assets/work/erector-spinae/dumbbell-sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо с гантелями"
+      },
+      {
+        "path": "assets/work/leg/dumbbell-sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо с гантелями"
+      },
+      {
+        "path": "assets/work/full-body/dumbbell-sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо с гантелями"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 1732,
+    "how_to": "Standing Variation:\n\n1. Stand in a neutral posture with your feet shoulder-width apart.\n2. Raise one arm overhead and bend the elbow to reach behind your back.\n3. Simultaneously, bring the other arm behind your back from below, aiming to touch or overlap your fingers.\n4. Do they touch, or are they close to touching? Are they overlapping?Does one side feel tighter than the other?\n5. Switch sides and note your results.\nTowel-Assisted Variation:\n\n1. Hold a towel or resistance band in both hands behind your back.\n2. Use the towel to assist in pulling your arms into the stretch if clasping your hands is challenging.\n3. Follow the same technique as above, ensuring a controlled stretch.\nShoulder Flexibility Test\nThe Shoulder flexibility test is a simple flexibility test to determine whether the hands can be brought together from behind and to detect shoulder range of motion.\n\nMeasure distance from finger tip to finger tip. If fingers overlap, score as a plus. If fingers fail to meet, score as a minus.\n\n- Fingers overlap / Excellent\n- Fingers are touching / Good\n- Fingertips are not touching but are less than two inches (5cm) apart. / Fair\n- Fingertips are greater than two inches (5cm) apart. / Poor\nTips for Maximum Effectiveness\n1. Start Gradually: Begin with a smaller range of motion and increase as your flexibility improves.\n2. Pair with Other Shoulder Stretches: Combine this stretch with movements like reverse shoulder stretches or assisted stretches for a comprehensive routine.\n3. Incorporate into Work Breaks: Use this stretch during long periods of sitting to reduce tension and improve posture.\n4. Breathe Deeply: Take slow, deep breaths during the stretch to help relax the muscles and enhance flexibility.",
+    "paths": [
+      {
+        "path": "assets/work/shoulders/shoulder-stretch-behind-back.json",
+        "name_ru": "Растяжка плеч с руками за спиной"
+      },
+      {
+        "path": "assets/work/back/shoulder-stretch-behind-back.json",
+        "name_ru": "Растяжка плеч с руками за спиной"
+      },
+      {
+        "path": "assets/work/triceps/shoulder-stretch-behind-back.json",
+        "name_ru": "Растяжка плеч с руками за спиной"
+      },
+      {
+        "path": "assets/work/chest/shoulder-stretch-behind-back.json",
+        "name_ru": "Растяжка плеч с руками за спиной"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 1648,
+    "how_to": "Here’s how to perform a dumbbell deadlift:\n\n1. Setup:\n  - Stand with your feet hip-width apart. Place a dumbbell on each side of your feet.\n  - The dumbbells should be positioned parallel to your feet, so the handles are perpendicular to your body.\n2. Stance:\n  - Bend at your hips and knees to lower yourself down.\n  - Keep your back straight, chest up, and shoulders back.\n  - Hold onto the dumbbells with a firm grip, palms facing your body. Your hands should be just outside your knees.\n3. Lift:\n  - Push through your heels and lift the dumbbells by straightening your hips and knees.\n  - Maintain a neutral spine throughout the movement. Do not round your back.\n  - Keep the dumbbells close to your body as you lift them.\n  - Stand fully upright with your chest out and shoulders back.\n4. Lower:\n  - Reverse the movement by pushing your hips back first, then bending your knees to lower the dumbbells back to the ground.\n  - Keep the dumbbells close to your body and maintain good form.\n5. Repetition:\n  - Repeat the lift for the desired number of repetitions.\n  - Exhale as you lift the dumbbells and inhale as you lower them.\nTips:\n- Start with a light weight to practice proper form, and gradually increase the weight as you become more comfortable and stronger.\n- Engage your core muscles to stabilize your spine throughout the exercise.\n- Keep your head in a neutral position, looking forward or slightly upward.\n- Avoid jerky or fast movements; focus on controlled and smooth lifting and lowering.\n- If you have any pre-existing back or lower-body issues, consult a fitness professional or medical expert before attempting this exercise.",
+    "paths": [
+      {
+        "path": "assets/work/hip/dumbbell-deadlift.json",
+        "name_ru": "Становая тяга с гантелями"
+      },
+      {
+        "path": "assets/work/erector-spinae/dumbbell-deadlift.json",
+        "name_ru": "Становая тяга с гантелями"
+      },
+      {
+        "path": "assets/work/leg/dumbbell-deadlift.json",
+        "name_ru": "Становая тяга с гантелями"
+      },
+      {
+        "path": "assets/work/full-body/dumbbell-deadlift.json",
+        "name_ru": "Становая тяга с гантелями"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 1585,
+    "how_to": "1. Starting Position: Stand with your feet shoulder-width apart, knees slightly bent, and the kettlebell placed on the floor between your feet. Your hips should be hinged back slightly, and your back should be straight.\n2. Grip the Kettlebell: Reach down with one hand and grip the handle of the kettlebell firmly. Your palm should be facing your body.\n3. Initiate the Movement: In one fluid motion, drive through your hips and legs to generate power. As you do this, simultaneously pull the kettlebell up explosively, using the momentum to lift it towards your shoulder.\n4. Rotation: When the kettlebell reaches shoulder height, rotate your hand so that your palm is facing up.\n5. Lockout: Once the kettlebell reaches shoulder height, lock your arm out overhead by fully extending your elbow.\n6. Lower the Kettlebell: Reverse the motion by lowering the kettlebell back down to the starting position with control. Keep your core engaged and your back straight throughout the movement.\n7. Repeat: Perform the desired number of repetitions on one arm before switching to the other arm.\nTips:\n- Keep the movement smooth and controlled, avoiding any jerky motions.\n- Engage your core throughout the exercise to maintain stability and protect your lower back.\n- Focus on using the power generated from your hips and legs to drive the movement, rather than relying solely on your arm strength.\n- Start with a lighter kettlebell to master the technique before progressing to heavier weights.\n- Pay attention to your breathing, exhaling as you lift the kettlebell and inhaling as you lower it.",
+    "paths": [
+      {
+        "path": "assets/work/hip/one-arm-kettlebell-snatch.json",
+        "name_ru": "Рывок гири одной рукой"
+      },
+      {
+        "path": "assets/work/shoulders/one-arm-kettlebell-snatch.json",
+        "name_ru": "Рывок гири одной рукой"
+      },
+      {
+        "path": "assets/work/leg/one-arm-kettlebell-snatch.json",
+        "name_ru": "Рывок гири одной рукой"
+      },
+      {
+        "path": "assets/work/full-body/one-arm-kettlebell-snatch.json",
+        "name_ru": "Рывок гири одной рукой"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 925,
+    "how_to": "Here are the steps to perform a conventional deadlift:\n\n1. Begin by standing with your feet shoulder-width apart, with your toes pointed straight ahead. The barbell should be on the ground in front of you.\n2. Bend down and grasp the bar with your hands slightly wider than shoulder-width apart, using an overhand or mixed grip (one hand overhand, one hand underhand).\n3. Bend your knees and lower your hips, keeping your back straight and your chest up. Keep your head and neck in a neutral position, and focus on looking forward.\n4. Take a deep breath and brace your core muscles. This will help to stabilize your spine and protect your lower back.\n5. Keep the bar close to your body as you lift, and use your legs, glutes, and back muscles to power the lift.\n6. Once you have lifted the bar to a standing position, pause for a moment, then lower it back down to the ground, keeping your back straight and your core engaged.",
+    "paths": [
+      {
+        "path": "assets/work/hip/deadlift.json",
+        "name_ru": "Становая тяга"
+      },
+      {
+        "path": "assets/work/erector-spinae/deadlift.json",
+        "name_ru": "Становая тяга"
+      },
+      {
+        "path": "assets/work/leg/deadlift.json",
+        "name_ru": "Становая тяга"
+      },
+      {
+        "path": "assets/work/back/deadlift.json",
+        "name_ru": "Становая тяга"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 881,
+    "how_to": "Dynamic stretching consists of active movements. It is usually done before a workout to help warm up your muscles and increase your heart rate. Move slowly, stop and repeat, dig a little deeper each time and improve your range of motion. Pre-workout dynamic stretching improves circulation, prepares your muscles for movement, and temporarily increases your range of motion.\n\nStatic stretching, more commonly done at the end of a workout when your muscles are warm, is when stretches are held in place for a certain period of time, not moving. Static stretching is the most effective form of stretching for loosening up your muscles, joints, ligaments, and tendons, while also improving flexibility and range of motion. Static stretching requires you to move a muscle to the end of its range of motion and maintain this position for 20 to 45 seconds. Repeat this 2 to 3 times each.",
+    "paths": [
+      {
+        "path": "assets/work/erector-spinae/seated-toe-touches.json",
+        "name_ru": "Растяжка задней поверхности бедра сидя с касанием носков"
+      },
+      {
+        "path": "assets/work/leg/seated-toe-touches.json",
+        "name_ru": "Растяжка задней поверхности бедра сидя с касанием носков"
+      },
+      {
+        "path": "assets/work/back/upper-back-stretch.json",
+        "name_ru": "Растяжка верхней части спины"
+      },
+      {
+        "path": "assets/work/back/seated-toe-touches.json",
+        "name_ru": "Растяжка задней поверхности бедра сидя с касанием носков"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 441,
+    "how_to": "1. Stand tall with feet shoulder-width apart, holding a dumbbell in each hand at your sides.\n2. Brace your core and lower into a squat, keeping your chest up and back neutral.\n3. Explode upward, jumping off the ground as high as you can while holding the dumbbells.\n4. Land softly on the balls of your feet, immediately lowering back into a squat for the next rep.\n5. Repeat for reps, maintaining control during both the takeoff and landing.",
+    "paths": [
+      {
+        "path": "assets/work/hip/dumbbell-jump-squat.json",
+        "name_ru": "Приседания с гантелями и выпрыгиванием"
+      },
+      {
+        "path": "assets/work/leg/dumbbell-jump-squat.json",
+        "name_ru": "Приседания с гантелями и выпрыгиванием"
+      },
+      {
+        "path": "assets/work/cardio/dumbbell-jump-squat.json",
+        "name_ru": "Приседания с гантелями и выпрыгиванием"
+      },
+      {
+        "path": "assets/work/full-body/dumbbell-jump-squat.json",
+        "name_ru": "Приседания с гантелями и выпрыгиванием"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 374,
+    "how_to": "1. Stand with your feet shoulder-width apart and hold the medicine ball in one hand overhead.\n2. Ensure your torso remains upright, and avoid leaning back excessively.\n3. Slam the medicine ball down firmly onto the ground in front of you.\n4. Catch the rebound and return to the starting position.\n5. Perform the exercise with both arms to ensure balanced muscle development.",
+    "paths": [
+      {
+        "path": "assets/work/shoulders/one-arm-medicine-ball-slam.json",
+        "name_ru": "Удар медицинболом об пол одной рукой"
+      },
+      {
+        "path": "assets/work/abs/one-arm-medicine-ball-slam.json",
+        "name_ru": "Удар медицинболом об пол одной рукой"
+      },
+      {
+        "path": "assets/work/full-body/one-arm-medicine-ball-slam.json",
+        "name_ru": "Удар медицинболом об пол одной рукой"
+      },
+      {
+        "path": "assets/work/chest/one-arm-medicine-ball-slam.json",
+        "name_ru": "Удар медицинболом об пол одной рукой"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 23,
+    "how_to": "One Arm Dumbbell Snatch",
+    "paths": [
+      {
+        "path": "assets/work/hip/one-arm-dumbbell-snatch.json",
+        "name_ru": "Рывок гантели одной рукой"
+      },
+      {
+        "path": "assets/work/shoulders/one-arm-dumbbell-snatch.json",
+        "name_ru": "Рывок гантели одной рукой"
+      },
+      {
+        "path": "assets/work/leg/one-arm-dumbbell-snatch.json",
+        "name_ru": "Рывок гантели одной рукой"
+      },
+      {
+        "path": "assets/work/full-body/one-arm-dumbbell-snatch.json",
+        "name_ru": "Рывок гантели одной рукой"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 14,
+    "how_to": "Landmine Press",
+    "paths": [
+      {
+        "path": "assets/work/hip/landmine-press.json",
+        "name_ru": "Приседание с последующим жимом лэндмайн-грифа"
+      },
+      {
+        "path": "assets/work/shoulders/landmine-press.json",
+        "name_ru": "Приседание с последующим жимом лэндмайн-грифа"
+      },
+      {
+        "path": "assets/work/leg/landmine-press.json",
+        "name_ru": "Приседание с последующим жимом лэндмайн-грифа"
+      },
+      {
+        "path": "assets/work/full-body/landmine-press.json",
+        "name_ru": "Приседание с последующим жимом лэндмайн-грифа"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 13,
+    "how_to": "Sumo Deadlift",
+    "paths": [
+      {
+        "path": "assets/work/hip/sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо"
+      },
+      {
+        "path": "assets/work/erector-spinae/sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо"
+      },
+      {
+        "path": "assets/work/leg/sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо"
+      },
+      {
+        "path": "assets/work/back/sumo-deadlift.json",
+        "name_ru": "Становая тяга сумо"
+      }
+    ]
+  },
+  {
+    "uses": 4,
+    "length": 8,
+    "how_to": "Swimming",
+    "paths": [
+      {
+        "path": "assets/work/hip/swimming.json",
+        "name_ru": "Плавание"
+      },
+      {
+        "path": "assets/work/erector-spinae/swimming.json",
+        "name_ru": "Плавание"
+      },
+      {
+        "path": "assets/work/trapezius/swimming.json",
+        "name_ru": "Плавание"
+      },
+      {
+        "path": "assets/work/back/swimming.json",
+        "name_ru": "Плавание"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 5800,
+    "how_to": "1. Setup:\n\n- Arrange five markers on the ground in the sequence A-B-C-D-E to form the layout.\n- Stand on the initial markers, A and B.\n2. Initial Position (A-B):\n\n- Commence with your feet together on markers A and B.\n3. Leap to Point C:\n\n- Swiftly jump forward to marker C, ensuring that your left foot lands precisely on the marker.\n4. Leap to D and E (Split Feet):\n\n- Following marker C, perform another explosive jump, but this time separate your feet. Land with one foot on marker D and the other on marker E.\n5. Backward Jump:\n\n- Execute a rapid backward jump using both feet, landing on marker C with your left foot.\n- Immediately perform another backward jump to return to the starting position, markers A and B, with both feet together.\n- Maintain control and balance throughout the entire movement.\n6. Repeat:\n\n- Duplicate the sequence, this time leading with your right leg. Strive to execute the drill with maximum speed while adhering to proper form.\n8 Benefits of 5 Dot Drill\n1- Improved Agility: Agility is the ability to move the body quickly and easily while maintaining control and balance, especially in changing or challenging situations. The 5 Dot Drill is a specialized exercise designed to target and enhance agility through a series of dynamic and multidirectional movements. The dynamic and multidirectional movements required in the drill enhance agility by training the body to change direction quickly and efficiently.\n\n2- Enhanced Coordination: The specific foot placements and dynamic movements required during the drill stimulate the connection between the brain and muscles, fostering improved coordination and neuromuscular control. The intentional and controlled nature of each step fosters a heightened connection between the brain and the muscles involved in the intricate footwork. This process not only sharpens the mind-muscle connection but also refines the intricate coordination skills necessary for diverse physical activities.\n\n3- Increased Speed: The drill encourages participants to execute movements at an accelerated pace, fostering the development of speed and quickness. The incorporation of explosive jumps challenges the muscles to generate force rapidly.\n\n4- Balance Development: Landing on and jumping between markers challenges the body’s balance and stability, activating core muscles and smaller stabilizing muscles in the legs, ankles, and feet. As participants land on one foot and transition between markers, they experience unilateral loading. This uneven distribution of weight challenges the body to stabilize and adapt to changes in load, promoting strength and balance on each leg independently.\n\n5- Sports Performance: Sports are dynamic, and athletes must react quickly to changing situations. Athletes in sports such as basketball, soccer, tennis, and others that require quick lateral movements and changes in direction can benefit significantly from the sport-specific agility and speed developed through the 5 Dot Drill.\n\n6- Cardiovascular Endurance: As a continuous and dynamic exercise, the 5 Dot Drill elevates heart rate and maintains it throughout the session, leading to improved cardiovascular endurance. Cardiovascular endurance is essential for activities that require sustained effort over time, such as prolonged workouts, sports matches, or even everyday tasks that demand continuous physical exertion. The 5 Dot Drill helps individuals build the stamina needed to perform these activities with greater ease and efficiency.\n\n7- Caloric Expenditure: The continuous and rhythmic movements of the 5 Dot Drill result in increased caloric expenditure. This can be beneficial for those looking to manage weight or improve body composition, as it contributes to the overall energy balance by burning calories during the workout.\n\n8- Plyometric Training: Plyometric exercises involve rapid contraction and extension of muscles, utilizing the stretch-shortening cycle. This cycle involves a rapid lengthening (eccentric phase) followed by an immediate shortening (concentric phase) of the muscle. Incorporating plyometric elements such as jumps and explosive movements in 5 Dot Drills contributes to lower-body power and explosiveness.\n\nIn summary, 5 Dot Drills provide a comprehensive approach to physical fitness by targeting speed, coordination, agility, and incorporating plyometric training—all of which are crucial components for athletes and individuals seeking overall improvement in their physical performance.\n\n5 Dot Drill: Muscles Worked\nHere are the main muscles worked during the 5 Dot Drill:\n\nQuadriceps\nGluteus Maximus\nHip Flexors\nHamstrings\nSoleus\nGastrocnemius\n1. Quadriceps: Located at the front of the thigh, the quadriceps are engaged during the explosive jumps and directional changes of the drill.\n2. Gluteus Maximus: The largest muscle in the buttocks, the gluteus maximus is involved in generating power during the jumps and providing stability during landings.\n3. Hip Flexors: These muscles, including the iliopsoas, assist in lifting the legs and driving them upward during the drill’s movements.\n4. Hamstrings: Situated at the back of the thigh, the hamstrings are engaged during both the explosive jumps and the controlled landings, helping to stabilize the knee joint.\n5. Soleus: A calf muscle that assists in ankle plantar flexion, the soleus is engaged during the rapid foot movements and jumps of the 5 Dot Drill.\n6. Gastrocnemius: Another calf muscle, the gastrocnemius works with the soleus to provide strength and stability to the ankle joint during the drill’s movements.\nBy targeting these muscles, the 5 Dot Drill helps improve lower body strength, power, agility, and coordination, making it a valuable exercise for athletes and individuals looking to enhance their athletic performance.",
+    "paths": [
+      {
+        "path": "assets/work/hip/5-dot-drills.json",
+        "name_ru": "Прыжки по пяти маркерам на координацию"
+      },
+      {
+        "path": "assets/work/leg/5-dot-drills.json",
+        "name_ru": "Прыжки по пяти маркерам на координацию"
+      },
+      {
+        "path": "assets/work/cardio/5-dot-drills.json",
+        "name_ru": "Прыжки по пяти маркерам на координацию"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 4336,
+    "how_to": "1. Stand with your feet hip-width apart and hold a pair of dumbbells in front of your thighs with your palms facing your body.\n2. Engage your core, keep your chest lifted, and maintain a slight bend in your knees throughout the movement.\n3. Begin the movement by hinging at the hips, pushing your glutes back while keeping your back straight.\n4. Lower the dumbbells along the front of your legs, maintaining a slight bend in your knees and keeping the weights close to your body.\n5. Continue to lower the dumbbells until you feel a stretch in your hamstrings or until you reach a comfortable range of motion.\n6. Pause briefly at the bottom of the movement, then reverse the motion by driving your hips forward and squeezing your glutes.\n7. Return to the starting position by standing up tall, keeping your core engaged and maintaining a neutral spine.\nDumbbell Romanian Deadlift – Benefits\nTargeted Muscle Development: Dumbbell Romanian Deadlifts specifically target the posterior chain, which is crucial for lower body strength. The exercise effectively engages the hamstrings, glutes, and lower back muscles, promoting muscular development, strength, and endurance in these areas. By incorporating Dumbbell RDLs into your training routine, you can achieve a balanced and powerful lower body.\n\nImproved Hip Hinge Mechanics: Hip hinge mechanics are fundamental for proper lifting techniques and athletic performance. Dumbbell RDLs focus on the hip hinge movement pattern, teaching you how to hinge at the hips while maintaining a neutral spine. By practicing and perfecting this movement, you will enhance your overall lifting mechanics, which can translate to better performance in exercises like squats, deadlifts, and various athletic movements.\n\nEnhanced Posterior Chain Strength: The posterior chain, comprising the hamstrings, glutes, and lower back, is responsible for powerful hip extension and overall lower body strength. Dumbbell Romanian Deadlifts place significant emphasis on these muscles, helping you develop a stronger and more resilient posterior chain. This, in turn, can improve your performance in other exercises and activities that require lower body strength, such as running, jumping, and lifting heavy objects.\n\nIncreased Stability and Balance: Performing Dumbbell RDLs requires proper balance and stability throughout the movement. As you lower the dumbbells and hinge at the hips, your core muscles engage to maintain stability and control. This not only strengthens your core but also enhances your overall balance and stability, which are essential for athletic performance and injury prevention.\n\nInjury Prevention: Weak hamstrings and glutes can increase the risk of lower body injuries, particularly in the knees and lower back. Dumbbell Romanian Deadlifts help strengthen these muscle groups, providing better support and stability to the joints. By incorporating this exercise into your routine, you can reduce the likelihood of injuries and enhance the overall resilience of your lower body.\n\nVersatility and Convenience: Dumbbell Romanian Deadlifts offer versatility and convenience, as they can be performed with just a pair of dumbbells, making them accessible to individuals training at home or in a gym setting. You can easily adjust the weight to match your fitness level and progressively challenge yourself over time.\n\nFunctional Strength: Functional exercises are designed to improve your ability to perform daily activities and enhance your overall movement patterns. When it comes to functional lower body training, the Dumbbell Romanian Deadlift (RDL) is a highly effective exercise. Not only does it target key muscles, but it also enhances functional strength and mobility. Whether you’re carrying groceries, playing with your kids, or engaging in recreational activities, incorporating Dumbbell Romanian Deadlifts into your training routine will enhance your functional fitness and improve your overall quality of movement.\n\nDumbbell Romanian Deadlift – Muscles Worked\nTarget - Erector Spinae\nSynergists - Gluteus Maximus\nSynergists - Hamstrings\nSynergists - Adductor Magnus\nStabilizers - Quadriceps\nStabilizers - Latissimus Dorsi\nStabilizers - Trapezius\nStabilizers - Levator Scapulae\nStabilizers - Rhomboids\nAntagonist Stabilizers - Rectus Abdominis\nAntagonist Stabilizers - Obliques",
+    "paths": [
+      {
+        "path": "assets/work/hip/dumbbell-romanian-deadlift.json",
+        "name_ru": "Румынская тяга с гантелями"
+      },
+      {
+        "path": "assets/work/erector-spinae/dumbbell-romanian-deadlift.json",
+        "name_ru": "Румынская тяга с гантелями"
+      },
+      {
+        "path": "assets/work/leg/dumbbell-romanian-deadlift.json",
+        "name_ru": "Румынская тяга с гантелями"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 4128,
+    "how_to": "1. Set Up: Begin by standing with your feet hip-width apart or slightly wider. Place the kettlebell on the ground between your feet.\n2. Grip: Bend at the hips and knees, reaching down to grip the kettlebell handle with both hands. Your palms should be facing your body, and your hands should be just outside your knees.\n3. Positioning: Keep your back flat and chest up as you hinge at the hips, pushing your hips backward while bending your knees slightly. Your shins should remain vertical, and your weight should be centered over your midfoot.\n4. Lift: Drive through your heels and engage your glutes and hamstrings to lift the kettlebell off the ground. As you stand up, keep the kettlebell close to your body to maintain balance and control.\n5. Full Extension: At the top of the movement, stand tall with your hips and knees fully extended. Your body should form a straight line from head to heels, and your shoulders should be pulled back.\n6. Lowering: To lower the kettlebell back down, hinge at the hips and push your hips backward as you bend your knees. Lower the kettlebell back to the starting position with control.\nTips:\n\n- Maintain a neutral spine throughout the movement. Avoid rounding or arching your back to prevent injury.\n- Keep the kettlebell close to your body at all times to reduce stress on the lower back.\n- Focus on using your hips, glutes, and hamstrings to lift the kettlebell, rather than relying on your lower back or arms.\n- Breathe out as you lift the kettlebell and breathe in as you lower it back down.\nKettlebell Deadlift – Benefits\n1. Strengthens the Lower Body: The kettlebell deadlift primarily targets the glutes, hamstrings, and lower back muscles. It helps build strength and muscular endurance in these areas, which are essential for everyday activities like lifting, bending, and walking.\n2. Hip Hinge Mechanics: Performing kettlebell deadlifts reinforces the hip hinge movement pattern. Learning and mastering this movement pattern is crucial for lifting objects safely and efficiently, reducing the risk of lower back injuries.\n3. Core Stabilization: During the kettlebell deadlift, the core muscles are engaged to stabilize the spine and maintain a neutral posture. This helps develop core strength and improves overall stability.\n4. Grip Strength: Since you need to hold the kettlebell throughout the movement, the kettlebell deadlift also improves grip strength. A stronger grip can be beneficial for various activities, including sports and daily tasks.\n5. Increased Range of Motion: The hip hinge motion in the kettlebell deadlift requires good hip flexibility. Regular practice can lead to improved hip mobility and range of motion.\n6. Less Impact on the Spine: Compared to some other exercises like traditional barbell deadlifts, kettlebell deadlifts typically put less stress on the spine. The load is centered closer to your body, which can be more forgiving for those with lower back issues.\n7. Improved Posture: By strengthening the posterior chain muscles and the core, kettlebell deadlifts can help improve posture and reduce the likelihood of rounded shoulders and a slouched back.\n8. Functional Fitness: The hip hinge movement pattern used in the kettlebell deadlift mimics many real-life activities, making it a functional exercise that can enhance your performance in daily tasks and sports.\n9. Scalability: Kettlebell deadlifts can be easily adjusted for different fitness levels. You can start with a lighter kettlebell and gradually increase the weight as you progress.\n10. Efficiency: Kettlebell deadlifts are relatively simple to learn and can be incorporated into various workout routines. They are an efficient exercise for building strength and engaging multiple muscle groups in a short amount of time.\nKettlebell Deadlift – Muscles Worked\nTarget - Erector Spinae\nSynergists - Gluteus Maximus\nSynergists - Hamstrings\nSynergists - Adductor Magnus\nStabilizers - Quadriceps\nStabilizers - Latissimus Dorsi\nStabilizers - Trapezius\nStabilizers - Levator Scapulae\nStabilizers - Rhomboids\nAntagonist Stabilizers - Rectus Abdominis\nAntagonist Stabilizers - Obliques",
+    "paths": [
+      {
+        "path": "assets/work/hip/kettlebell-deadlift.json",
+        "name_ru": "Становая тяга с гирей"
+      },
+      {
+        "path": "assets/work/erector-spinae/kettlebell-deadlift.json",
+        "name_ru": "Становая тяга с гирей"
+      },
+      {
+        "path": "assets/work/leg/kettlebell-deadlift.json",
+        "name_ru": "Становая тяга с гирей"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 2970,
+    "how_to": "1. Starting Position: Begin in a downward dog position. This is similar to a yoga pose. Start on your hands and knees, then lift your hips and straighten your legs to form an inverted V shape with your body. Your hands should be shoulder-width apart, and your feet should be hip-width apart.\n2. Descent (Dive Bomber Phase):\n  - Shift your weight forward, lowering your upper body toward the ground while keeping your arms straight.\n  - Continue moving forward until your chest almost touches the ground. Your hips will be low, and your back will be arched, resembling an upward-facing dog yoga pose.\n  - As you descend, make sure to look upward and forward, allowing your head to come up and your back to arch deeply.\n3. Ascent:\n  - From the downward-facing dog position, push your hips back and upward, moving them toward the ceiling. Your head should look back between your legs.\n  - As your hips rise, bend your elbows and lower your chest back to the starting position.\n  - Continue this motion until you return to the downward dog position.\n4. Repeat: Repeat the sequence for the desired number of repetitions, maintaining a smooth and controlled flow between the different positions.\nHindu Push-ups Benefits\n1. Dynamic Flexibility: The flowing movements in Hindu push-ups help improve flexibility in various muscle groups. The transitions between downward dog, low plank, and upward dog positions promote dynamic flexibility, especially in the spine, shoulders, hips, and hamstrings.\n2. Core Engagement: The shifting between positions requires constant engagement of your core muscles to stabilize your body. This leads to improved core strength and stability over time.\n3. Upper Body Strength: Hindu push-ups primarily target the chest, shoulders, and triceps. The variations in arm positioning and movement angles offer unique challenges to these muscles, helping to build strength and definition.\n4. Joint Mobility: The range of motion involved in Hindu push-ups promotes joint mobility and flexibility in the shoulders, spine, and hips. This can be particularly beneficial for individuals seeking to counteract the negative effects of sedentary lifestyles.\n5. Postural Improvement: The exercise encourages an open chest and elongated spine, promoting better posture over time. This can counteract the hunching and rounded shoulders often associated with prolonged desk work.\n6. Cardiovascular Endurance: The continuous movement in Hindu push-ups, especially when performed in a fluid sequence, can elevate your heart rate and contribute to improved cardiovascular fitness.\n7. Mind-Body Connection: Hindu push-ups require coordination and focus as you transition between positions. This fosters a stronger mind-body connection and enhances overall body awareness.\nHindu Push-ups Muscles Worked\nTarget - Shoulder\nPectoralis major\nRectus Abdominis\nTriceps Brachii\nErector Spinae\nLatissimus dorsi\nWrist and Forearm\nGluteus Maximus\nHip Flexors\nHamstrings\nQuadriceps",
+    "paths": [
+      {
+        "path": "assets/work/shoulders/hindu-push-ups.json",
+        "name_ru": "Индуистские отжимания"
+      },
+      {
+        "path": "assets/work/erector-spinae/hindu-push-ups.json",
+        "name_ru": "Индуистские отжимания"
+      },
+      {
+        "path": "assets/work/abs/hindu-push-ups.json",
+        "name_ru": "Индуистские отжимания"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 2945,
+    "how_to": "1. Stand facing the Smith machine with your feet shoulder-width apart and the barbell resting on your shoulders.\n2. Keep your chest up and your core engaged.\n3. Slowly bend at the hips, pushing your glutes back and lowering your torso toward the floor.\n4. Lower yourself until your torso is parallel to the floor.\n5. Pause briefly at the bottom of the movement, then slowly raise your torso back up to the starting position.\n6. Repeat for the desired number of repetitions.\nTips and Precautions:\nIt’s important to note that the good morning exercise, including the Smith machine variation, places a significant load on the lower back and hamstrings. Therefore, it’s crucial to start with lighter weights and focus on proper form before increasing the load.\n\n- Start with a light weight to get used to the movement and to ensure proper form.\n- Focus on the hinge at the hips, keeping your back straight.\n- Avoid using excessive weight, especially if you’re new to the exercise.\n- Consult a healthcare professional if you have any pre-existing conditions or concerns about performing this exercise.\nSmith Machine Good Morning: Benefits\nTargets Multiple Muscle Groups: The Smith Machine Good Morning is a compound exercise that targets several muscle groups at once, including the lower back, glutes, and hamstrings. By targeting these muscles together, you can build overall body strength and improve your athletic performance.\n\nBuilds Strength and Endurance: The Smith Machine Good Morning is a challenging exercise that requires strength and endurance to perform. As you increase the weight and number of repetitions over time, you’ll build both strength and endurance in your lower body muscles.\n\nReduces Risk of Injury: Because the Smith Machine guides the barbell up and down, you’re less likely to experience a loss of balance or other form-related injuries that can occur with free-weight exercises. This makes the Smith Machine Good Morning a safe and effective exercise for building lower body strength.\n\nImproves Posture: The Smith Machine Good Morning targets the lower back muscles, which can help improve your posture over time. The erector spinae muscles, which run along the length of the spine, are also worked during this exercise. These muscles are responsible for spinal extension and help to maintain proper posture. By strengthening your lower back muscles, you’ll be able to maintain better posture throughout the day, reducing the risk of back pain and other related issues.\n\nSmith Machine Good Morning: Muscles Worked\nThe Smith Machine Good Morning is an exercise that primarily targets the muscles of the lower body, including the hamstrings, glutes, and lower back. Here’s a breakdown of the specific muscles worked during this exercise:\n\nTarget - Hamstrings\nSynergists - Gluteus Maximus\nSynergists - Adductor Magnus\nStabilizers - Erector Spinae\nAntagonist Stabilizers - Rectus Abdominis\nAntagonist Stabilizers - Obliques",
+    "paths": [
+      {
+        "path": "assets/work/hip/smith-machine-good-morning.json",
+        "name_ru": "Наклоны «гуд морнинг» в машине Смита"
+      },
+      {
+        "path": "assets/work/erector-spinae/smith-machine-good-morning.json",
+        "name_ru": "Наклоны «гуд морнинг» в машине Смита"
+      },
+      {
+        "path": "assets/work/leg/smith-machine-good-morning.json",
+        "name_ru": "Наклоны «гуд морнинг» в машине Смита"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 2488,
+    "how_to": "1. Begin in a lunge position with your right foot forward and left foot back. Keep your feet shoulder-width apart and your toes pointing forward.\n2. Explosively jump up and switch the position of your feet in mid-air, so that your left foot is now in front and your right foot is back.\n3. Land softly on the ground with your left foot forward and right foot back, lowering your body back down into a lunge position.\n4. Repeat the movement for the desired number of reps or time, alternating between each leg.\nSplit Jump Squat Benefits\n- Improved Leg Strength: Split jump squats are a unilateral exercise that require explosive power from a single leg, which can help improve leg strength, particularly in the quadriceps, hamstrings, and glutes. This makes it a great exercise for runners, cyclists, and other athletes who rely heavily on lower body strength and power.\n- Increased Cardiovascular Endurance: The explosive nature of split jump squats can also provide a cardiovascular workout, helping to improve endurance and overall fitness. This is because the exercise causes your heart rate to increase rapidly, which can improve oxygen consumption and overall cardiovascular health.\n- Improved Balance and Stability: Because split jump squats are a unilateral exercise, they require greater balance and stability than traditional squats. This can help improve overall athletic performance and reduce the risk of injury, particularly in sports that involve sudden changes in direction or unstable surfaces.\n- Better Coordination: The split jump squat requires coordination between the lower body and core muscles, helping to improve overall coordination and agility. This can be particularly useful for athletes who require good coordination, such as basketball players or soccer players.\nIn conclusion, split jump squats are a versatile exercise that can offer a wide range of benefits for both fitness enthusiasts and athletes. By improving leg strength, cardiovascular endurance, balance, stability, coordination, and overall fitness, split jump squats can help you become a better athlete and achieve your fitness goals. If you’re interested in trying split jump squats, be sure to start slowly and gradually increase the intensity as you become more comfortable with the exercise.\n\nSplit Jump Squat Muscles Worked\nTarget - Quadriceps\nSynergists - Gluteus Maximus\nSynergists - Adductor Magnus\nSynergists - Soleus\nDynamic Stabilizers - Hamstrings\nDynamic Stabilizers - Gastrocnemius",
+    "paths": [
+      {
+        "path": "assets/work/hip/split-squat.json",
+        "name_ru": "Выпрыгивания из разножного приседа"
+      },
+      {
+        "path": "assets/work/leg/split-squat.json",
+        "name_ru": "Выпрыгивания из разножного приседа"
+      },
+      {
+        "path": "assets/work/cardio/split-squat.json",
+        "name_ru": "Выпрыгивания из разножного приседа"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 2324,
+    "how_to": "1. Set up the Hurdles: Arrange a series of hurdles at different heights in a straight line, leaving enough space between them for you to land and hop between each one.\n2. Depth Jump:\n  - Stand on top of the plyometric box or platform with your feet hip-width apart.\n  - Start by stepping off the box and quickly dropping down to the ground, allowing your knees to slightly bend to absorb the impact.\n  - As soon as your feet make contact with the ground, immediately spring up explosively, using your arms for momentum.\n  - The depth jump is intended to be a quick and powerful jump, so make sure you’re not spending much time on the ground.\n3. Hurdle Hop:\n  - After the depth jump, immediately transition into the hurdle hop.\n  - As you ascend from the depth jump, aim to clear the first hurdle with a high knee lift.\n  - Land on the other side of the hurdle and quickly prepare for the next hop.\n4. Repeat: Continue performing the depth jump to hurdle hop sequence for the desired number of repetitions or for a set time period.\nTips:\n- Focus on explosiveness and speed during both the depth jump and hurdle hop phases.\n- Land softly on the balls of your feet to reduce impact and minimize the risk of injury.\n- Maintain proper body posture and alignment throughout the exercise.\n- Start with a low hurdle height and gradually increase it as you become more proficient.\n- Ensure that you have adequate strength and conditioning before attempting this exercise, as it can be physically demanding.\nKey Components of Depth Jump to Hurdle Hop:\nDepth Jump: This exercise begins with a “depth jump” off an elevated platform or box. This initial drop stimulates the stretch-shortening cycle of your muscles, allowing for a more forceful contraction during the subsequent jump.\n\nStretch-Shortening Cycle (SSC): During the depth jump, the muscles undergo a rapid eccentric (lengthening) phase as you land, followed by an immediate concentric (shortening) phase as you jump vertically. This SSC recruits a large number of muscle fibers, enhancing force production.\n\nHurdle Hop: Following the drop, you transition seamlessly into a hurdle hop. In this phase, you explode upward and forward, propelling yourself over a hurdle or obstacle. This part of the exercise requires precise timing, explosive power, and excellent coordination.",
+    "paths": [
+      {
+        "path": "assets/work/hip/depth-jump-to-hurdle-hop.json",
+        "name_ru": "Прыжок в глубину с последующим прыжком через барьер"
+      },
+      {
+        "path": "assets/work/leg/depth-jump-to-hurdle-hop.json",
+        "name_ru": "Прыжок в глубину с последующим прыжком через барьер"
+      },
+      {
+        "path": "assets/work/cardio/depth-jump-to-hurdle-hop.json",
+        "name_ru": "Прыжок в глубину с последующим прыжком через барьер"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 2089,
+    "how_to": "1. Setup:\n\n- Stand with feet shoulder-width apart, facing a sturdy wall or a partner.\n- Hold the medicine ball with both hands, gripping it firmly.\n- Position the medicine ball above your head with your elbows bent back.\n2. Throw the Medicine Ball:\n\n- Initiate the movement by forcefully throwing the medicine ball directly overhead toward the wall or your partner.\n- Utilize your entire body for power, engaging your legs, hips, and core.\n- Aim for a high and powerful throw.\n3. Catch and Reset:\n\n- After throwing the ball, quickly prepare to catch it as it rebounds off the wall or is returned by your partner.\n- Keep your eyes on the ball and be ready to react.\n4. Repeat:\n\n- As soon as you catch the ball, immediately go into the next throw.\n- Perform the Medicine Ball Overhead Throw continuously for the desired number of repetitions or a specific duration.\nMaster The Medicine Ball Overhead Throw\nMastering the Medicine Ball Overhead Throw requires proper technique and strength. Pay attention to your form, ensuring a smooth and controlled motion. Here are some techniques and tips that will be useful to you:\n\nTechnique:\n- Start by standing with feet shoulder-width apart, holding the ball above your head.\n- Engage your core, bend your knees slightly, and explosively throw the ball forward, extending your arms. Aim for height and distance.\n- Use your whole body to generate power, focusing on the core, shoulders, and legs.\nTips:\n- Begin with a thorough warm-up to prepare your muscles and joints for the dynamic movements involved in medicine ball throws.\n- Use a medicine ball weight that challenges you but allows you to maintain proper form.\n- Focus on explosive power and a controlled motion throughout the exercise.\n- Maintain proper body mechanics, keeping back straight and core engaged.\n- If you are new to this exercise, start with a lighter medicine ball and gradually increase the weight as your strength improves.\nDifficulty:\nSingle-Leg Stance: Perform the overhead throws while balancing on one leg to increase stability and engage additional stabilizing muscles.",
+    "paths": [
+      {
+        "path": "assets/work/shoulders/medicine-ball-overhead-throw.json",
+        "name_ru": "Бросок медицинбола из-за головы"
+      },
+      {
+        "path": "assets/work/triceps/medicine-ball-overhead-throw.json",
+        "name_ru": "Бросок медицинбола из-за головы"
+      },
+      {
+        "path": "assets/work/chest/medicine-ball-overhead-throw.json",
+        "name_ru": "Бросок медицинбола из-за головы"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 1671,
+    "how_to": "Here’s how you can perform a Reaction Ball Drill:\n\n1. Stand facing the wall or chosen surface with the reaction ball in one hand (e.g., your right hand if you’re starting with your dominant hand).\n2. Assume a comfortable athletic stance with your feet shoulder-width apart.\n3. Hold the reaction ball at chest level with your arm slightly bent.\n4. Use your wrist, arm, and core muscles to throw the reaction ball against the wall. The goal is to create an unpredictable bounce.\n5. As the ball bounces back, quickly react to its movement with the same hand and attempt to catch it.\n6. Focus on tracking the ball’s trajectory and adjusting your hand positioning to catch it accurately.\n7. Repeat the throws and catches for a set number of repetitions or a specified time period.\nHand Switch:\n\n1. After completing the desired number of throws with one hand, switch to the other hand (e.g., your left hand if you started with your right).\n2. Perform the same single-handed throws and catches with the opposite hand.\n3. This variation challenges your coordination and reaction time with your non-dominant hand.\nWhat is Reaction Ball Training?\nAt its core, reaction ball training involves using a specialized ball with uneven surfaces that cause unpredictable bounces when thrown against a solid surface. The irregular rebound of the ball challenges your ability to anticipate its trajectory, requiring quick reflexes and precise hand-eye coordination to catch or control it. Reaction ball training is not only physically demanding but also mentally stimulating, as it sharpens your cognitive skills by forcing you to process information rapidly and make split-second decisions.",
+    "paths": [
+      {
+        "path": "assets/work/shoulders/reaction-ball-throw.json",
+        "name_ru": "Бросок реакционного мяча"
+      },
+      {
+        "path": "assets/work/triceps/reaction-ball-throw.json",
+        "name_ru": "Бросок реакционного мяча"
+      },
+      {
+        "path": "assets/work/chest/reaction-ball-throw.json",
+        "name_ru": "Бросок реакционного мяча"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 1243,
+    "how_to": "Starting Position:\n\n- Stand with your feet hip-width apart.\n- Keep your hands on your hips or at your sides for balance.\nLunge Position:\n\n- Bend both knees to create a lunge position.\n- Take a long step back with your right foot.\n- Your left knee should be at a 90-degree angle, with your thigh parallel to the ground.\n- Keep your core engaged, chest up, and back straight.\nJumping Phase:\n\n- From the lowered lunge position, explode into the air using the strength of your left leg.\n- As you jump, lift your right knee as high as possible toward your chest.\n- Use your arms for balance and momentum if needed.\nLanding:\n\n- Land softly on the ground with your left foot, returning to the begin position.\n- Ensure that you land with a slight bend in your left knee to absorb the impact and reduce stress on your joints.\nRepeat on the Other Leg:\n\n- Immediately after landing, switch your legs, so your right foot is forward and your left foot is behind you.\n- Repeat the same sequence: lunge down, jump up, and bring your left knee towards your chest.\nRepetitions and Sets:\n\n- You can perform a specific number of repetitions on each leg (e.g., 10 on each leg) or time yourself (e.g., 15 seconds on each leg) based on your fitness level and goals.",
+    "paths": [
+      {
+        "path": "assets/work/hip/power-lunge.json",
+        "name_ru": "Взрывные выпады"
+      },
+      {
+        "path": "assets/work/leg/power-lunge.json",
+        "name_ru": "Взрывные выпады"
+      },
+      {
+        "path": "assets/work/cardio/power-lunge.json",
+        "name_ru": "Взрывные выпады"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 1043,
+    "how_to": "Dynamic stretching consists of active movements. It is usually done before a workout to help warm up your muscles and increase your heart rate. Move slowly, stop and repeat, dig a little deeper each time and improve your range of motion.\n\nStatic stretching is typically done at the end of your workout, once your muscles are warm and relaxed. Hold the stretch for 15 to 40 seconds. Return to the starting position and repeat on the other side.\n\nInner Thigh Side Stretch Benefits\n- The adductor group is located on the inside of the leg and consists of the pectineus, adductor brevis, adductor longus, adductor magnus and gracilis. The best way to keep these muscles relaxed and flexible is by including dynamic stretches in your warm-up and static stretches in your cooldown routine. Stretching your adductors regularly can improve your flexibility and performance, and also prevent injury and stiffness.\n- Pre-workout dynamic stretching improves circulation, prepares your muscles for movement, and temporarily increases your range of motion.",
+    "paths": [
+      {
+        "path": "assets/work/hip/inner-thigh-side-stretch.json",
+        "name_ru": "Боковая растяжка внутренней поверхности бедра"
+      },
+      {
+        "path": "assets/work/calf/inner-thigh-side-stretch.json",
+        "name_ru": "Боковая растяжка внутренней поверхности бедра"
+      },
+      {
+        "path": "assets/work/leg/inner-thigh-side-stretch.json",
+        "name_ru": "Боковая растяжка внутренней поверхности бедра"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 985,
+    "how_to": "Setup & Positioning:\n\n1. Find a parallel bar station or dip bars at a comfortable width (slightly wider than shoulder-width).\n2. Grip the bars with a neutral grip (palms facing inward).\n3. Lift your legs behind your body, keeping them straight (instead of tucked forward like in traditional dips).\n4. Keep your core engaged and your body in a slight forward lean.\nExecution:\n\n1. Lowering Phase (Eccentric)\n  - Slowly lower your body downward, allowing your shoulders to travel slightly behind the bars.\n  - Keep your elbows tucked close to your torso to avoid excessive strain.\n  - Lower until your shoulders are level with or slightly below your elbows.\n  - Feel the stretch in your chest and shoulders at the bottom position.\n2. Pressing Phase (Concentric)\n  - Push yourself back up explosively, engaging your pecs, triceps, and shoulders.\n  - Maintain a controlled movement, avoiding swinging or momentum.\n  - Fully extend your arms at the top while keeping tension in your muscles.",
+    "paths": [
+      {
+        "path": "assets/work/triceps/korean-dips.json",
+        "name_ru": "Корейские отжимания на брусьях"
+      },
+      {
+        "path": "assets/work/full-body/korean-dips.json",
+        "name_ru": "Корейские отжимания на брусьях"
+      },
+      {
+        "path": "assets/work/chest/korean-dips.json",
+        "name_ru": "Корейские отжимания на брусьях"
+      }
+    ]
+  },
+  {
+    "uses": 3,
+    "length": 954,
+    "how_to": "1- Holding your body upright, position a barbell behind your neck and resting on the upper back. Keep your knees slightly bent and your spine neutral.\n\n2- Bending slightly at your knees and hips, start to lean forward under control. Keep your chin up—it will stop you from rounding your back.\n\n3- Lean forward by pivoting at the hip. Continue lowering your chest, keeping the back neutral and allowing your knees to bend slightly.\n\n4- Flex as far as you can. With practice, your back may be parallel to the floor. Return to the start position, breathing out as you go.\n\nGood Morning Exercise Benefits\n- A good morning exercise is a hip hinge movement that helps strengthen your butt and legs by targeting your back, hamstrings, glutes, and adductors.\n- When done right, a good morning workout is effective for strengthening your back and making it more flexible. However, if you have just started, it is recommended to try the movement with empty weight.",
+    "paths": [
+      {
+        "path": "assets/work/hip/good-morning.json",
+        "name_ru": "Наклоны со штангой на плечах («гуд морнинг»)"
+      },
+      {
+        "path": "assets/work/erector-spinae/good-morning.json",
+        "name_ru": "Наклоны со штангой на плечах («гуд морнинг»)"
+      },
+      {
+        "path": "assets/work/leg/good-morning.json",
+        "name_ru": "Наклоны со штангой на плечах («гуд морнинг»)"
+      }
+    ]
+  }
+]
