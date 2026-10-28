@@ -15,11 +15,12 @@ import { useWorkoutPerson } from './WorkoutPerson';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { Badge, DaySchedule, DayScheduleEventCard, Text, getDayScheduleValue,
-  Icon, IconButton, LiquidCollapse, type LiquidCollapseBounds, type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
+  Icon, LiquidCollapse, type LiquidCollapseBounds, type DayScheduleEvent, type LocalDate, type LocalTime } from '../ui';
 import { useSchedulePlanning } from './SchedulePlanningContext';
 import { usePlannedWorkoutStart } from '../workout/PlannedWorkoutStartContext';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 import { ScheduleFilterBar } from './ScheduleFilterBar';
+import { ScheduleActionButton } from './ScheduleActionButton';
 import { ScheduleClientFilter } from './ScheduleClientFilter';
 import { calendarSegments, localScheduleInstant } from './calendar-time';
 import './today-page.css';
@@ -400,12 +401,12 @@ export function TodayPage({
       {role === 'coach' && (!selected || plannedStart?.conflictActive) && !personalEventId && !creation && !filterOpened ? <ScheduleFilterBar
         clients={clients} selected={clientUserIds} onOpen={() => setFilterOpened(true)}
         onRemove={id => setClientUserIds(current => current.filter(value => value !== id))} /> : null}
-      <div className="today-page__basket">
-        <IconButton ref={basket} theme="glass" icon="trash" label="Отменённые тренировки" selected={showCancelled}
-          disabled={Boolean((selected && !plannedStart?.conflictActive) || personalEventId || creation || filterOpened)}
+      {(!selected || plannedStart?.conflictActive) && !personalEventId && !creation && !filterOpened ? <div
+        className={`today-page__basket${role === 'client' ? ' today-page__basket--first' : ''}`}>
+        <ScheduleActionButton ref={basket} icon="trash" label="Отменённые тренировки" pressed={showCancelled}
           onClick={() => setShowCancelled(value => !value)} />
-      </div>
-      {showCancelled && !selected ? <div className="today-page__cancelled-label"><Text variant="footnote">Отменённые тренировки</Text></div> : null}
+      </div> : null}
+      {showCancelled && !selected && !personalEventId && !creation && !filterOpened ? <div className={`today-page__cancelled-label${role === 'client' ? ' today-page__cancelled-label--first' : ''}`}><Text variant="footnote">Отменённые тренировки</Text></div> : null}
       {collapse ? <LiquidCollapse source={collapse.source} targetRef={basket} onFinished={() => {
         setCollapse(null); animationDone.current?.(); animationDone.current = null;
       }}><BookingCard event={collapse.event} state={collapse.state} actor={actor} onClick={() => undefined} /></LiquidCollapse> : null}

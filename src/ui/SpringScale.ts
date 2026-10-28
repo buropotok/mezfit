@@ -16,4 +16,5 @@ export function startSpringScale(element: HTMLElement) {
     { duration: reduceMotion ? 1 : 560, easing: 'linear' },
   );
   springScaleAnimations.set(element, animation);
+  return animation;
 }

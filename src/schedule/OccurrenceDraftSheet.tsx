@@ -112,6 +112,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const [programSheetOpen, setProgramSheetOpen] = useState(false);
+  const [planCollapsed, setPlanCollapsed] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [openProgramAfterMenu, setOpenProgramAfterMenu] = useState(false);
   const actionsRef = useRef<HTMLButtonElement>(null);
@@ -376,7 +377,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         {inlineCard ? <div className="occurrence-draft-sheet__identity"><WorkoutPlanCardHeader name={draft.plan.name}
           programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
           creatorName={owner.name} creatorAvatar={owner.avatar}
-          scheduledTiming={scheduledTiming}
+          scheduledTiming={collapsed ? scheduledTiming : undefined}
           collapsed={collapsed} onCollapsedChange={onCollapsedChange} /></div> : null}
         {!collapsed ? <>
         <header className="occurrence-draft-sheet__header">
@@ -421,8 +422,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             </div>
           </div>
           <Text variant="body">План на тренировку</Text>
-          <WorkoutPlanCard mode="planning" hideHeader={inlineCard} onCollapsedChange={inlineCard ? undefined : onClose}
-            scheduledTiming={scheduledTiming} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
+          <WorkoutPlanCard mode="planning" hideHeader={inlineCard} collapsed={planCollapsed}
+            onCollapsedChange={inlineCard ? undefined : () => setPlanCollapsed(value => !value)}
+            scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
             creatorName={owner.name} creatorAvatar={owner.avatar} hideProgramMenu hideWorkoutActions
             busy={busy} readOnly={!mayEditStructure}
