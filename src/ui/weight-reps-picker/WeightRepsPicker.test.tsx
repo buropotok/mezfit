@@ -86,6 +86,21 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
   });
 
+  it('keeps a closed picker out of the accessibility and interaction tree', () => {
+    const picker = renderPicker();
+    picker.setValue({ reps: 8, weightKg: 77.5 }, false);
+    expect(screen.queryByRole('button', { name: 'Изменить повторения' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Изменить целые килограммы' })).toBeNull();
+    const hidden = document.querySelector('.ui-time-picker__popover');
+    expect(hidden?.getAttribute('aria-hidden')).toBe('true');
+    expect(hidden?.hasAttribute('inert')).toBe(true);
+
+    picker.setValue({ reps: 8, weightKg: 77.5 }, true);
+    expect(screen.getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
+    expect(hidden?.hasAttribute('inert')).toBe(false);
+  });
+
   it('opens the Konsta sheet and immediately swaps the chosen pencil for a blinking letter-i', () => {
     renderPicker();
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
