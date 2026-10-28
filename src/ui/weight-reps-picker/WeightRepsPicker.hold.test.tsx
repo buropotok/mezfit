@@ -229,6 +229,37 @@ describe('WeightRepsPicker native hold-to-one-kilogram precision', () => {
     touch(wheel, 'touchend', 200, 520);
   });
 
+  it('recovers fine precision on touchcancel after a delayed hold timer and no touchmove', () => {
+    const { onChange, wheel } = mountWeight(280.25);
+    touch(wheel, 'touchstart', 200, 100);
+    // The timer did not run and WebView delivered no intermediate touchmove.
+    touch(wheel, 'touchcancel', 148, 400);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    nativeMove(wheel, 281);
+    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 281.25 });
+    fireEvent(wheel, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+  });
+
+  it('recognizes the completed stationary hold even if its timeout never ran', () => {
+    const { wheel } = mountWeight(280.25);
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchend', 200, 400);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(400);
+    touch(wheel, 'touchstart', 200, 600);
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+    touch(wheel, 'touchend', 200, 620);
+  });
+
+  it('never upgrades an already detected swipe into fine mode on late touchcancel', () => {
+    const { wheel } = mountWeight(100.5);
+    touch(wheel, 'touchstart', 200, 100);
+    touch(wheel, 'touchmove', 165, 150); // Start movement before hold threshold.
+    touch(wheel, 'touchcancel', 120, 500); // Long duration after gesture started.
+    expect(within(wheel).getAllByRole('option')).toHaveLength(40);
+  });
+
   it('prevents the native long-press context menu without blocking row selection', () => {
     const { onChange, wheel } = mountWeight();
     const option = within(wheel).getByRole('option', { name: '280' });
