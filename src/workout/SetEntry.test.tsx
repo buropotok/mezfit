@@ -84,8 +84,9 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
       .toContain('450,75 кг × 1234');
     fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
-    expect(Array.from(document.querySelectorAll('.ui-weight-reps-picker__lens-value'))
-      .map(node => node.textContent)).toEqual(['1234', '450']);
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Стереть последнюю цифру' }));
+    expect(document.querySelector('[data-ui-picker-static-value="second"]')?.textContent).toBe('45');
     expect(screen.getByRole('listbox', { name: 'Доли килограмма' })).toBeTruthy();
   });
 
