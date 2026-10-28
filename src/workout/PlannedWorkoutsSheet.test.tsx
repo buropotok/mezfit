@@ -3,13 +3,19 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { UpcomingPlannedWorkout } from '../data/cloud/planned-workouts';
+import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { OccurrenceDraftCardProps } from '../schedule/OccurrenceDraftSheet';
 import { PlannedWorkoutsSheet } from './PlannedWorkoutsSheet';
 const state = vi.hoisted(() => ({ db: {}, next: null as ((rows: UpcomingPlannedWorkout[]) => void) | null,
+  editorNext: null as ((draft: LocalWorkoutOccurrenceDraft | null) => void) | null, editorUnsubscribe: vi.fn(),
   unsubscribe: vi.fn(), start: vi.fn(), show: vi.fn(), cards: [] as OccurrenceDraftCardProps[] }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: state.db, actorUserId: 'tg:101' }) }));
 vi.mock('../data/cloud/planned-workouts', () => ({ PlannedWorkoutsRepository: class {
   drafts = {};
+  observeDraft(_id: string, next: (draft: LocalWorkoutOccurrenceDraft | null) => void) {
+    state.editorNext = next;
+    return { unsubscribe: state.editorUnsubscribe };
+  }
   observe(_date: Date, next: (rows: UpcomingPlannedWorkout[]) => void) { state.next = next; return { unsubscribe: state.unsubscribe }; }
 } }));
 vi.mock('../data/cloud/workout-planning', () => ({ WorkoutPlanningRepository: class {} }));
@@ -18,8 +24,10 @@ vi.mock('../ui', () => ({
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   MezfitBottomSheet: ({ opened, children }: { opened: boolean; children: ReactNode }) => opened ? <div>{children}</div> : null,
 }));
-vi.mock('konsta/react', () => ({ Button: ({ children, onClick }: { children: ReactNode; onClick: () => void }) => <button onClick={onClick}>{children}</button> }));
-vi.mock('../schedule/OccurrenceDraftSheet', () => ({ OccurrenceDraftCard: (props: OccurrenceDraftCardProps) => {
+vi.mock('konsta/react', () => ({ Toast: () => null, Button: ({ children, onClick }: { children: ReactNode; onClick: () => void }) => <button onClick={onClick}>{children}</button> }));
+vi.mock('../schedule/OccurrenceDraftSheet', () => ({
+  useOccurrenceDraftClose: ({ onClose }: { onClose: () => void }) => ({ requestClose: onClose, closeDialog: null }),
+  OccurrenceDraftCard: (props: OccurrenceDraftCardProps) => {
   state.cards.push(props);
   return <article><span>{props.draft?.plan.name}</span>
     <button onClick={props.onCollapsedChange}>{props.collapsed ? 'Раскрыть день' : 'Свернуть день'}</button>
@@ -33,7 +41,7 @@ const row: UpcomingPlannedWorkout = { id: 'original-occurrence', programName: '�
   plan: { name: 'День А', comment: null, exercises: [] }, originalPlan: { name: 'День А', comment: null, exercises: [] },
   createdAt: '', updatedAt: '',
 } };
-beforeEach(() => { vi.clearAllMocks(); state.cards = []; state.next = null; state.start.mockResolvedValue('execution'); });
+beforeEach(() => { vi.clearAllMocks(); state.cards = []; state.next = null; state.editorNext = null; state.start.mockResolvedValue('execution'); });
 afterEach(cleanup);
 it('reuses the original occurrence draft and shared editor across reactive updates and Start', async () => {
   const started = vi.fn();
@@ -66,4 +74,17 @@ it('unsubscribes and suppresses stale navigation after closing and reopening dur
   expect(started).not.toHaveBeenCalled();
   expect(state.show).not.toHaveBeenCalled();
   expect(state.unsubscribe).toHaveBeenCalled();
+});
+
+it('retains only the already opened editor when its occurrence becomes a draft, and removes it on lost access', () => {
+  render(<PlannedWorkoutsSheet opened onClose={vi.fn()} onStarted={vi.fn()} onNavigationContextChange={vi.fn()} />);
+  act(() => state.next?.([row]));
+  fireEvent.click(screen.getByRole('button', { name: 'Раскрыть день' }));
+  const edited = { ...row.draft, saved: false, previouslyPublished: true, plan: { ...row.draft.plan, name: 'Правки дня' } };
+  act(() => { state.next?.([]); state.editorNext?.(edited); });
+  expect(screen.getByText('Правки дня')).toBeTruthy();
+  expect(state.cards.at(-1)?.draft).toBe(edited);
+  act(() => state.editorNext?.(null));
+  expect(screen.queryByText('Правки дня')).toBeNull();
+  expect(state.editorUnsubscribe).toHaveBeenCalled();
 });
