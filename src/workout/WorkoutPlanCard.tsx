@@ -27,6 +27,7 @@ export interface WorkoutPlanCardProps {
   onMutationAttempt?: () => void;
   hideProgramMenu?: boolean;
   hideWorkoutActions?: boolean;
+  surface?: 'default' | 'transparent';
   onReorderExercises?: (ids: string[]) => void;
   /** Use the viewport as the drag-overlay coordinate space inside animated sheets. */
   portalDragOverlay?: boolean;
@@ -114,6 +115,7 @@ export function WorkoutPlanCard({
   collapsed = false, onCollapsedChange, scheduledTiming, status, hideHeader = false,
   day: outline, programName = 'Без программы', canScheduleCoached = false, onSchedule, onStart,
   hideProgramMenu = false, hideWorkoutActions = false, hideProgramName = false,
+  surface = 'default',
   onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
   creatorName, creatorAvatar, athleteName, athleteAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
@@ -166,7 +168,7 @@ export function WorkoutPlanCard({
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
-    <SortableList items={items} disabled={Boolean(onMutationAttempt) || readOnly || busy || !onReorderExercises} showSeparators={false}
+    <SortableList surface={surface} items={items} disabled={Boolean(onMutationAttempt) || readOnly || busy || !onReorderExercises} showSeparators={false}
       lockToVerticalAxis syncDropLayout portalOverlay={portalDragOverlay} preserveListHeightOnDrag={preserveDragHeight}
       onDragStart={() => setExpandedExercises(new Set())}
       onReorder={(rows) => mutate(() => onReorderExercises?.(rows.map((row) => String(row.id))))}
