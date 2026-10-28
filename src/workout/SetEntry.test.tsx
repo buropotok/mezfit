@@ -101,6 +101,10 @@ describe('weight and repetitions SetEntry', () => {
       expect(appRoot.contains(keypad)).toBe(true);
       fireEvent.click(within(keypad).getByRole('button', { name: 'Цифра 9' }));
       fireEvent.click(within(keypad).getByRole('button', { name: 'Сохранить' }));
+      expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+      expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
+        .toContain('80 кг × 9');
       expect(onSave).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
       fireEvent.click(screen.getByRole('button', { name: 'Да' }));
