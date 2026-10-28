@@ -17,7 +17,17 @@ describe('schedule geometry and date boundaries', () => {
     const a = eventGeometry({ id: 'a', startMinutes: 600, durationMinutes: 15 });
     const b = eventGeometry({ id: 'b', startMinutes: 615, durationMinutes: 15 });
     expect(a).not.toBeNull(); expect(b).not.toBeNull();
-    expect(a!.top + a!.height).toBeLessThan(b!.top);
+    expect(a!.top + a!.height).toBeLessThanOrEqual(b!.top);
+  });
+  it('keeps a quarter-hour visual minimum without changing actual timing or slot occupancy', () => {
+    for (const durationMinutes of [0, 0.1, 1, 5, 15]) {
+      const event = { id: 'short', startMinutes: 600, durationMinutes };
+      expect(eventGeometry(event)).toEqual({ top: yForMinutes(600), height: HOUR_HEIGHT / 4 });
+      expect(event.durationMinutes).toBe(durationMinutes);
+    }
+    const nearMidnight = eventGeometry({ id: 'late', startMinutes: 1439, durationMinutes: 0 });
+    expect(nearMidnight).toEqual({ top: yForMinutes(1440) - HOUR_HEIGHT / 4, height: HOUR_HEIGHT / 4 });
+    expect(eventFitsSlot([{ id: 'short', startMinutes: 600, durationMinutes: 1 }], 'next', 601, 15)).toBe(true);
   });
   it('renders early-morning events, clips at day boundaries, and ignores invalid geometry', () => {
     expect(eventGeometry({ id: 'early', startMinutes: 300, durationMinutes: 30 })).toEqual({

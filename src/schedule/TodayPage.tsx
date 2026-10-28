@@ -60,7 +60,8 @@ function sessionEvents(session: CalendarWorkoutSession, now: number): TimelineIt
     const until = Math.min(Date.parse(timing.endsAtUtc), boundary);
     const startLabel = `${String(Math.floor(segment.startMinutes / 60)).padStart(2, '0')}:${String(segment.startMinutes % 60).padStart(2, '0')}`;
     const endLabel = segment.startMinutes + segment.durationMinutes >= 1440 ? '24:00' : calendarTime(new Date(until));
-    return { ...segment, id: `session:${session.id}:${index}`, type: 'session', session, timeLabel: `${startLabel}–${endLabel}` };
+    return { ...segment, id: `session:${session.id}:${index}`, type: 'session', session,
+      timeLabel: `${startLabel}–${session.status === 'active' ? '…' : endLabel}` };
   });
 }
 function booking(event: TimelineItem) {
@@ -80,12 +81,14 @@ function BookingCard({ event, state, actor, onClick }: {
   const name = event.type === 'session' ? event.session.name : event.type === 'draft' ? event.draft.plan.name : event.occurrence.plan.name;
   const comment = event.type === 'occurrence' ? event.occurrence.plan.comment : null;
   return <DayScheduleEventCard title={personalEvent ? name : person.name}
-    detail={personalEvent ? comment : name}
+    detail={personalEvent ? comment : name} media={personalEvent ? undefined : person.avatar}
     cancelled={cancelled} variant={personalEvent ? 'event' : 'workout'}
-    corner={personalEvent ? <Icon name="calendar-event" /> : <span className="today-page__athlete-avatar">{person.compactAvatar}</span>}
-    cornerSize={Math.min(32, (state.height ?? 62) / 2)}
+    corner={<Icon name={personalEvent ? 'calendar-event' : row.format === 'coached' ? 'users' : 'user'} />}
+    cornerSize={32}
     status={event.type === 'session' ? <Badge textVariant="caption">{event.session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
       : cancelled ? <Badge textVariant="caption">Отменена</Badge> : event.type === 'draft' ? <Badge color="yellow" textVariant="caption">Черновик</Badge> : undefined}
+    compactStatus={event.type === 'session' ? event.session.status === 'completed' ? 'Завершена' : 'Запущена'
+      : cancelled ? 'Отменена' : event.type === 'draft' ? 'Черновик' : undefined}
     timeLabel={event.type === 'session' ? event.timeLabel : undefined}
     state={state} onClick={onClick} />;
 }

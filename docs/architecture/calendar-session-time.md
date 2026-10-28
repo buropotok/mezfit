@@ -13,8 +13,11 @@ sessions. Current date and Client filters apply to both kinds of records.
 
 Active geometry ends at current device time and refreshes every 15 seconds and
 on WebView visibility changes. Completion freezes the end at completedAt. A
-one-minute minimum keeps a newly started card tappable, while its time label
-uses actual timestamps. Multi-day and offset-transition segmentation reuses the
+quarter-hour minimum in DaySchedule geometry keeps short and newly started cards
+readable. This does not change durationMinutes, saved timestamps, segmentation
+or resource occupancy. Zero-length Start has one segment on its actual date;
+near midnight the minimum frame stays inside that date. Active labels use
+«start–…», not the current time as a completed end. Multi-day and offset-transition segmentation reuses the
 calendar's existing timezone logic. Session overlap with the next scheduled
 booking is accepted; session drag/resize/delete interactions are disabled.
 
@@ -29,6 +32,20 @@ The athlete name is above the training format. Started/completed records show
 «Запущена»/«Завершена». Reusable program day templates have no execution status.
 The expanded occurrence card puts its menu to the left of its collapse chevron;
 the menu is absent when collapsed. Collapse remains local to the card.
+
+Timeline EventCard composition is separate from detailed PLAN/FACT cards: a
+fixed-size athlete avatar occupies the left media slot; the training-format icon
+occupies the right corner. Compact cards hide the avatar entirely and show one
+Caption row: day, athlete, actual time, status and icon. Only the icon may shrink.
+PLAN/FACT keep their upper-right athlete avatar. Active detailed cards show an
+open end until completion, without substituting now into completedAt.
+
+Start materializes only the selected occurrence. Calendar reads project all
+authorized execution history, so deployment of actual-time projection can change
+old cards compared with their former planned durations. A live clock refresh is
+not a persistent edit. Regression coverage compares both stored records and
+display intervals for unrelated coach/client history and future bookings across
+another planned Start and clock advancement.
 
 Checks cover actual/complete intervals, preservation of original timing,
 authorized history, replacement rather than duplication, unplanned executions,

@@ -3,6 +3,12 @@ import { calendarSegments, localScheduleEnd, localScheduleInstant } from './cale
 afterEach(() => vi.unstubAllEnvs());
 
 describe('local schedule calendar', () => {
+  it('places a zero-length Start only on its actual date', () => {
+    vi.stubEnv('TZ', 'UTC');
+    expect(calendarSegments('2026-10-28T23:59:59.000Z', 0)).toEqual([
+      { date: '2026-10-28', startMinutes: 1439, durationMinutes: 0 },
+    ]);
+  });
   it('retains both parts of a workout and no empty segment at midnight', () => {
     vi.stubEnv('TZ', 'UTC');
     expect(calendarSegments('2026-10-19T23:30:00.000Z', 120)).toEqual([

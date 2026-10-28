@@ -54,6 +54,10 @@ function offsetBoundary(from: number, until: number): number {
 export function calendarSegments(startsAtUtc: string, durationMinutes: number): Array<{
   date: string; startMinutes: number; durationMinutes: number;
 }> {
+  if (durationMinutes === 0 && Number.isFinite(Date.parse(startsAtUtc))) {
+    const instant = new Date(startsAtUtc);
+    return [{ date: calendarDate(instant), startMinutes: instant.getHours() * 60 + instant.getMinutes(), durationMinutes: 0 }];
+  }
   const end = Date.parse(startsAtUtc) + durationMinutes * 60_000;
   const segments = [];
   let from = new Date(startsAtUtc);

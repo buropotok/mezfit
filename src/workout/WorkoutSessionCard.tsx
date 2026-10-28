@@ -18,7 +18,6 @@ import { WorkoutPlanCard, type WorkoutPlanCardProps } from './WorkoutPlanCard';
 import { SessionExercise } from './SessionExercise';
 import type { SaveSessionSetInput } from './sessionExerciseTypes';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
-import { useSessionClock } from './useSessionClock';
 import './workout-session-card.css';
 
 const workoutDateFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -150,10 +149,6 @@ function WorkoutFactCard<Id extends string | number = number>({
   onOpenChat,
   onNavigationContextChange,
 }: WorkoutFactCardProps<Id>) {
-  const now = useSessionClock(session.status === 'active');
-  const actualStart = parseWorkoutTimestamp(session.startedAt);
-  const actualSession = session.status === 'active' && actualStart
-    ? { ...session, completedAt: new Date(Math.max(actualStart.getTime(), now)).toISOString() } : session;
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -403,7 +398,7 @@ function WorkoutFactCard<Id extends string | number = number>({
               ) : null}
               <div className="workout-session-card__time">
                 <Text variant="footnote" tone="muted">{formatWorkoutDate(session)}</Text>
-                <Text variant="caption" tone="muted">{workoutTimeRange(actualSession)}</Text>
+                <Text variant="caption" tone="muted">{workoutTimeRange(session)}</Text>
               </div>
             </div>
 

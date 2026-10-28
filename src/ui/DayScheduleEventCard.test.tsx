@@ -35,6 +35,24 @@ it('uses one touch surface for avatar and text, prevents native callouts and kee
   expect(view.container.querySelector<HTMLElement>('.ui-day-schedule-event-card__corner')?.style.height).toBe('31px');
 });
 
+it('uses one compact row in day/name/time/status/icon order and hides the avatar without resizing it', () => {
+  const props = { title: 'Анна', detail: 'День 1', timeLabel: '10:00–10:01',
+    status: <Badge>Завершена</Badge>, compactStatus: 'Завершена',
+    media: <img src="/anna.jpg" alt="Аватар Анны" />, corner: <span>Формат</span>, cornerSize: 32 };
+  const view = render(<DayScheduleEventCard {...props} state={{ startMinutes: 600, durationMinutes: 1,
+    height: 16, compact: true, lifted: false, editing: false }} />);
+  expect(screen.queryByAltText('Аватар Анны')).toBeNull();
+  const row = view.container.querySelector('.ui-day-schedule-event-card__compact-row');
+  expect([...row!.children].map(child => child.textContent)).toEqual(['День 1', 'Анна', '10:00–10:01', 'Завершена', 'Формат']);
+  const icon = view.container.querySelector<HTMLElement>('.ui-day-schedule-event-card__corner');
+  expect(icon?.style.height).toBe('16px');
+  expect(screen.getByRole('button', { name: /День 1.*Анна.*10:00–10:01.*Завершена.*Формат/ })).toBeTruthy();
+  view.rerender(<DayScheduleEventCard {...props} state={{ startMinutes: 600, durationMinutes: 60,
+    height: 62, compact: false, lifted: false, editing: false }} />);
+  expect(screen.getByAltText('Аватар Анны').closest('.ui-day-schedule-event-card__media')).toBeTruthy();
+  expect(screen.getByText('Формат').closest('.ui-day-schedule-event-card__corner')).toBeTruthy();
+});
+
 it('selects purple event styling without changing the workout default in all visual states', () => {
   const base = { startMinutes: 600, durationMinutes: 60, height: 62, compact: false };
   for (const state of [
