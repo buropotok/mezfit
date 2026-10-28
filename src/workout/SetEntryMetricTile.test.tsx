@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TrackingType } from '../api';
 import { SetEntry } from './SetEntry';
+import { SetEntryMetricTile } from './SetEntryMetricTile';
 import type { SetEntryData } from './setEntryTypes';
 
 afterEach(cleanup);
@@ -67,4 +68,32 @@ describe('shared entry metric card for exercise tracking types', () => {
       expect(screen.queryByText('Повторения × Вес')).toBeNull();
     });
   }
+});
+
+it('uses FAB press timing, fades the halo and opens on click without waiting for animation completion', () => {
+  const open = vi.fn(), cancel = vi.fn();
+  const view = render(<SetEntryMetricTile metric="weight_reps" value="80 кг × 12" ariaLabel="Результат" disabled={false} onClick={open} />);
+  const button = screen.getByRole('button', { name: 'Результат' });
+  const animate = vi.fn(() => ({ cancel }));
+  Object.defineProperty(button, 'animate', { configurable: true, value: animate });
+  fireEvent.pointerDown(button);
+  expect(animate).toHaveBeenNthCalledWith(1, [
+    { scale: '1', easing: 'ease-out' },
+    { scale: '0.95', offset: 120 / 530, easing: 'cubic-bezier(.2, 1.30, .3, 1)' },
+    { scale: '1' },
+  ], { duration: 530 });
+  expect(animate).toHaveBeenNthCalledWith(2, [
+    { '--ui-glass-surface-halo-opacity': '1', easing: 'ease-out' },
+    { '--ui-glass-surface-halo-opacity': '0.03', offset: 120 / 530, easing: 'ease-in-out' },
+    { '--ui-glass-surface-halo-opacity': '1' },
+  ], { duration: 530 });
+  expect(open).not.toHaveBeenCalled();
+  fireEvent.click(button);
+  expect(open).toHaveBeenCalledOnce();
+  view.rerender(<SetEntryMetricTile metric="weight_reps" value="80 кг × 12" ariaLabel="Результат" disabled onClick={open} />);
+  fireEvent.pointerDown(button); fireEvent.click(button);
+  expect(animate).toHaveBeenCalledTimes(2);
+  expect(open).toHaveBeenCalledOnce();
+  view.unmount();
+  expect(cancel).toHaveBeenCalledTimes(2);
 });
