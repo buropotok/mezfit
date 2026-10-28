@@ -73,6 +73,12 @@
   scroll-snap-align: none;
 }
 
+/* Three-column fast flicks share TimePicker's native coarse snap strategy.
+   Keep the intervening rows visible and haptic-active while they pass. */
+.ui-time-picker__column--flick-snap .ui-time-picker__option:not(.ui-time-picker__option--flick-stop) {
+  scroll-snap-align: none;
+}
+
 .ui-time-picker__option--selected {
   color: var(--ui-color-surface-text);
 }
