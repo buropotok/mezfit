@@ -322,7 +322,8 @@ export class AdHocWorkoutRepository {
 
   /** Resolve the exercise card from the session snapshot, with current session access checks. */
   async exerciseInformation(sessionId: string, exerciseId: string) {
-    const session = await this.require(sessionId, false);
+    const session = await this.getRow(sessionId);
+    if (!session) throw new Error('ADHOC_SESSION_NOT_FOUND');
     const exercise = await this.exercise(session, exerciseId);
     return new ProgramManagementRepository(this.db, this.actorUserId)
       .snapshotExerciseInformation(exercise.exercise, session.realmId);
