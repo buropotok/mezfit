@@ -9,6 +9,11 @@ import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutSlotConflict } from '../data/cloud/workout-slot-validation';
 import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
+vi.mock('../workout/StartWorkoutButton', () => ({
+  StartWorkoutButton: ({ disabled, onClick }: ButtonHTMLAttributes<HTMLButtonElement>) =>
+    <button disabled={disabled} onClick={onClick}>Начать тренировку</button>,
+}));
+
 const cloudEnabled = vi.hoisted(() => ({ value: false }));
 const overlayProbe = vi.hoisted(() => ({ animated: false, zeroDuration: false, dates: 0, times: 0, dialogs: 0, selectors: 0 }));
 
