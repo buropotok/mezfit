@@ -20,6 +20,6 @@
     "Leg"
   ],
   "image_id": "Squat-mobility-Complex.gif",
-  "name_ru": "Комплекс упражнений для подвижности в приседе",
-  "tracking_type": "time"
+  "name_ru": "Переход из глубокого приседа в наклон вперёд",
+  "tracking_type": "time_reps"
 }

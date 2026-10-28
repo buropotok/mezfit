@@ -480,8 +480,8 @@
     "tracking_type": "weight_reps"
   },
   "Squat mobility Complex": {
-    "name_ru": "Комплекс упражнений для подвижности в приседе",
-    "tracking_type": "time"
+    "name_ru": "Переход из глубокого приседа в наклон вперёд",
+    "tracking_type": "time_reps"
   },
   "Squat on The Abductor Machine": {
     "name_ru": "Приседания в тренажёре для отведения бёдер",

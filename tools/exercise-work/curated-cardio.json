@@ -280,7 +280,7 @@
     "tracking_type": "time_reps"
   },
   "Vibration Plate": {
-    "name_ru": "Упражнение на виброплатформе",
+    "name_ru": "Стойка на виброплатформе",
     "tracking_type": "time"
   },
   "Walk Wave Machine": {
@@ -298,5 +298,9 @@
   "Zig Zag Hops Plyometric": {
     "name_ru": "Плиометрические прыжки зигзагом",
     "tracking_type": "time_reps"
+  },
+  "Wheel Run": {
+    "name_ru": "Бег на месте с высоким подниманием коленей",
+    "tracking_type": "time"
   }
 }

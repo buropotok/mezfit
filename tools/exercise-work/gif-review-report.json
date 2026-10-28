@@ -1,0 +1,156 @@
+{
+  "source": "Original fitnessprogramer.com GIF URLs from assets/exercises",
+  "method": "Downloaded original animated GIFs; visually inspected 8 uniformly sampled frames per GIF across each full cycle",
+  "reviewed_cases": 13,
+  "corrected_unique_exercises": 6,
+  "corrected_work_json_files": 7,
+  "tracking_changes_by_distinct_exercise": [
+    "Wheel Run",
+    "Squat mobility Complex"
+  ],
+  "source_json_files_modified": 0,
+  "all_original_fields_identical": true,
+  "catalogue_count": 1673,
+  "tracking_type_counts_after_review": {
+    "time": 197,
+    "time_distance": 28,
+    "time_reps": 66,
+    "time_weight": 7,
+    "weight_reps": 1375
+  },
+  "limitations": [
+    "GIF cannot establish which metrics an electronic cardio machine reports.",
+    "Available tracking types cannot record plate load and pushed distance together.",
+    "The prior work-generation-report.json describes the initial generation before this GIF review."
+  ],
+  "cases": [
+    {
+      "path": "cardio/wheel-run.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Wheel-Run.gif",
+      "visual_evidence": "36 кадров, 7,5 с: бег на месте с циклическим высоким подъёмом коленей; колеса и перемещения по дистанции нет.",
+      "status": "corrected",
+      "name_ru": "Бег на месте с высоким подниманием коленей",
+      "tracking_type": "time",
+      "before": {
+        "name_ru": "Бег в колесе",
+        "tracking_type": "time_distance"
+      }
+    },
+    {
+      "path": "cardio/walk-wave-machine.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/10/Walk-Wave-Machine.gif",
+      "visual_evidence": "12 кадров: ходьба на волновом кардиотренажёре; показания консоли в GIF не читаются.",
+      "status": "confirmed_metric_uncertain",
+      "name_ru": "Ходьба на тренажёре Walk Wave",
+      "tracking_type": "time"
+    },
+    {
+      "path": "cardio/vibration-plate.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2023/06/Vibrate-Plate-Standing.gif",
+      "visual_evidence": "12 кадров: статическое положение стоя на виброплатформе с опорой на поручни.",
+      "status": "corrected",
+      "name_ru": "Стойка на виброплатформе",
+      "tracking_type": "time",
+      "before": {
+        "name_ru": "Упражнение на виброплатформе",
+        "tracking_type": "time"
+      }
+    },
+    {
+      "path": "shoulders/backhand-raise.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Backhand-Raise.gif",
+      "visual_evidence": "12 кадров: подъём обеих прямых рук назад, корпус слегка наклонён; отягощений нет.",
+      "status": "corrected",
+      "name_ru": "Подъём прямых рук назад стоя",
+      "tracking_type": "weight_reps",
+      "before": {
+        "name_ru": "Подъём рук тыльной стороной кисти вверх",
+        "tracking_type": "weight_reps"
+      }
+    },
+    {
+      "path": "shoulders/lever-reverse-shoulder-press.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/09/Lever-Reverse-Shoulder-Press.gif",
+      "visual_evidence": "12 кадров: жим вверх сидя в рычажном тренажёре; точный хват на анимации различим недостаточно.",
+      "status": "confirmed",
+      "name_ru": "Обратный жим над головой в рычажном тренажёре",
+      "tracking_type": "weight_reps"
+    },
+    {
+      "path": "leg/hawaiian-squat.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Hawaiian-Squat-exercise.gif",
+      "visual_evidence": "12 кадров: приседание на одной опорной ноге, свободная нога согнута и уложена поверх опорной.",
+      "status": "corrected",
+      "name_ru": "Гавайское приседание на одной ноге",
+      "tracking_type": "weight_reps",
+      "before": {
+        "name_ru": "Гавайские приседания",
+        "tracking_type": "weight_reps"
+      }
+    },
+    {
+      "path": "hip/squat-mobility-complex.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/07/Squat-mobility-Complex.gif",
+      "visual_evidence": "12 кадров: повторяемый переход из глубокого приседа с захватом стоп в наклон на выпрямленных ногах.",
+      "status": "corrected",
+      "name_ru": "Переход из глубокого приседа в наклон вперёд",
+      "tracking_type": "time_reps",
+      "before": {
+        "name_ru": "Комплекс упражнений для подвижности в приседе",
+        "tracking_type": "time"
+      }
+    },
+    {
+      "path": "cardio/hook-kick.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Hook-Kick-Kickboxing-with-boxing-bag.gif",
+      "visual_evidence": "18 кадров: дуговой удар ногой по подвесному мешку с возвратом в боевую стойку.",
+      "status": "confirmed",
+      "name_ru": "Удар ногой по дуге («хук-кик»)",
+      "tracking_type": "time_reps"
+    },
+    {
+      "path": "abs/ab-roller-crunch.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/12/Ab-Roller-Crunch.gif",
+      "visual_evidence": "12 кадров: скручивания лёжа с опорной дугообразной рамой Ab Roller, без выкатывания ролика.",
+      "status": "corrected",
+      "name_ru": "Скручивания с опорной рамой Ab Roller",
+      "tracking_type": "weight_reps",
+      "before": {
+        "name_ru": "Скручивания в роликовом тренажёре для пресса",
+        "tracking_type": "weight_reps"
+      }
+    },
+    {
+      "path": "full-body/plate-push.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2025/07/plate-push.gif",
+      "visual_evidence": "16 кадров: продвижение весового диска по полу руками в низком положении тела; текущая схема не даёт учесть одновременно массу и дистанцию.",
+      "status": "confirmed_schema_limitation",
+      "name_ru": "Толкание диска от штанги по полу",
+      "tracking_type": "time_weight"
+    },
+    {
+      "path": "back/rope-climb.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Rope-Climb.gif",
+      "visual_evidence": "12 кадров: подъём по канату руками без опоры на ноги; один подъём можно учитывать как повторение.",
+      "status": "confirmed",
+      "name_ru": "Лазание по канату без помощи ног",
+      "tracking_type": "weight_reps"
+    },
+    {
+      "path": "abs/teaser-pilates.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Teaser-Pilates.gif",
+      "visual_evidence": "12 кадров: повторяемый подъём и опускание в V-положение, не только статическое удержание.",
+      "status": "confirmed",
+      "name_ru": "Пилатес: упражнение «тизер»",
+      "tracking_type": "weight_reps"
+    },
+    {
+      "path": "cardio/stationary-bike-run.json",
+      "gif_url": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Stationary-Bike-Run.gif",
+      "visual_evidence": "12 кадров: педалирование на вертикальном велотренажёре; конкретные числовые показатели дисплея не читаются.",
+      "status": "confirmed_metric_uncertain",
+      "name_ru": "Занятие на велотренажёре",
+      "tracking_type": "time_distance"
+    }
+  ]
+}
