@@ -93,8 +93,13 @@ describe('weight and repetitions SetEntry', () => {
       expect(appRoot.contains(picker)).toBe(true);
 
       fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
-      fireEvent.click(within(picker).getByRole('listbox', { name: 'Повторения' })
-        .querySelector<HTMLButtonElement>('button[aria-label="9"]')!);
+      fireEvent.click(within(picker).getByRole('button', { name: 'Изменить повторения' }));
+      const keypad = screen.getByRole('dialog', { name: 'Ввод повторений' });
+      expect(sheet.contains(keypad)).toBe(false);
+      expect(cardHost.contains(keypad)).toBe(false);
+      expect(appRoot.contains(keypad)).toBe(true);
+      fireEvent.click(within(keypad).getByRole('button', { name: 'Цифра 9' }));
+      fireEvent.click(within(keypad).getByRole('button', { name: 'Сохранить' }));
       expect(onSave).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
       fireEvent.click(screen.getByRole('button', { name: 'Да' }));
