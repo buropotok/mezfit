@@ -1,0 +1,218 @@
+{
+  "Arm Blaster Hammer Curl": {
+    "name_ru": "Молотковые сгибания с гантелями в армбластере",
+    "tracking_type": "weight_reps"
+  },
+  "Band Biceps Curl": {
+    "name_ru": "Сгибания рук на бицепс с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Curl On Arm Blaster": {
+    "name_ru": "Сгибания рук со штангой в армбластере",
+    "tracking_type": "weight_reps"
+  },
+  "Biceps Curl Machine": {
+    "name_ru": "Сгибания рук на бицепс в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Incline Biceps Curl": {
+    "name_ru": "Сгибания рук на бицепс с нижнего блока на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Kneeling Biceps Curl": {
+    "name_ru": "Сгибания рук на бицепс на блоке стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Single Arm Cable Preacher Curl": {
+    "name_ru": "Сгибание одной руки на скамье Скотта с блоком",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Pulldown Biceps Curl": {
+    "name_ru": "Сгибания рук на бицепс на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Reverse Grip EZ-bar Biceps Curl": {
+    "name_ru": "Сгибания рук обратным хватом с EZ-рукоятью на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Rope Hammer Curl": {
+    "name_ru": "Молотковые сгибания с канатом на нижнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Single Arm Hammer Curl": {
+    "name_ru": "Молотковое сгибание одной руки на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Close Grip Barbell Curl": {
+    "name_ru": "Сгибания рук со штангой узким хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Close Grip Z-Bar Curl": {
+    "name_ru": "Сгибания рук с EZ-грифом узким хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Concentration Curl": {
+    "name_ru": "Концентрированное сгибание руки с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Double Arm Dumbbell Curl": {
+    "name_ru": "Одновременные сгибания рук с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Curl On Arm Blaster": {
+    "name_ru": "Сгибания рук с гантелями в армбластере",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Curl": {
+    "name_ru": "Сгибания рук с гантелями на бицепс",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Preacher Hammer (Scott) Curl": {
+    "name_ru": "Молотковые сгибания с гантелью на скамье Скотта",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Reverse Curl": {
+    "name_ru": "Сгибания рук с гантелями обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Scott Curl": {
+    "name_ru": "Сгибание руки с гантелью на скамье Скотта",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Scott Hammer Curl": {
+    "name_ru": "Молотковое сгибание руки с гантелью на скамье Скотта",
+    "tracking_type": "weight_reps"
+  },
+  "Elbow Flexion": {
+    "name_ru": "Сгибание руки в локтевом суставе",
+    "tracking_type": "weight_reps"
+  },
+  "Flexor Incline Dumbbell Curls": {
+    "name_ru": "Сгибания рук с гантелями на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Hammer Curl with Resistance Band": {
+    "name_ru": "Молотковые сгибания рук с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Hammer Curl": {
+    "name_ru": "Молотковые сгибания рук с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "High Cable Single Arm Bicep Curl": {
+    "name_ru": "Сгибание одной руки на бицепс с верхнего блока",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Biceps Curl": {
+    "name_ru": "Сгибания рук на бицепс в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Cable Curl": {
+    "name_ru": "Сгибания рук лёжа на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Lying High Bench Barbell Curl": {
+    "name_ru": "Сгибания рук со штангой лёжа грудью на высокой скамье",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Biceps Curl With Resistance Band": {
+    "name_ru": "Сгибание одной руки с эспандером на бицепс",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Biceps Curl": {
+    "name_ru": "Сгибание одной руки с гантелью на бицепс",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Cable Bicep Curl": {
+    "name_ru": "Сгибание одной руки на бицепс на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Cable Curl": {
+    "name_ru": "Сгибание одной руки на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Prone Dumbbell Curl": {
+    "name_ru": "Сгибание одной руки с гантелью лёжа на животе",
+    "tracking_type": "weight_reps"
+  },
+  "Overhead Cable Curl": {
+    "name_ru": "Сгибания рук на бицепс с верхних блоков",
+    "tracking_type": "weight_reps"
+  },
+  "Prone Incline Barbell Curl": {
+    "name_ru": "Сгибания рук со штангой лёжа грудью на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Grip EZ-Bar Curl": {
+    "name_ru": "Сгибания рук с EZ-грифом обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Alternating Dumbbell Curl": {
+    "name_ru": "Попеременные сгибания рук с гантелями сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Bicep Curl With Resistance Band": {
+    "name_ru": "Сгибания рук на бицепс сидя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Biceps Curl": {
+    "name_ru": "Сгибания рук с гантелями сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Close-Grip Concentration Curl": {
+    "name_ru": "Концентрированные сгибания рук сидя узким хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Hammer Curl": {
+    "name_ru": "Молотковые сгибания рук сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Incline Dumbbell Curl": {
+    "name_ru": "Сгибания рук с гантелями сидя на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Zottman Curl": {
+    "name_ru": "Сгибания Зоттмана сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Single Arm Reverse Grip Cable Bicep Curl": {
+    "name_ru": "Сгибание одной руки на блоке обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Single Dumbbell Spider Hammer Curl": {
+    "name_ru": "Молотковое сгибание с гантелью на наклонной скамье («паук»)",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Barbell Concentration Curl": {
+    "name_ru": "Концентрированное сгибание руки со штангой стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Reverse Shoulder Stretch": {
+    "name_ru": "Растяжка плеч с отведёнными назад руками стоя",
+    "tracking_type": "time"
+  },
+  "Two Dumbbell Preacher Curl": {
+    "name_ru": "Сгибания обеих рук с гантелями на скамье Скотта",
+    "tracking_type": "weight_reps"
+  },
+  "Waiter Curl": {
+    "name_ru": "Сгибания рук с гантелью хватом снизу («официант»)",
+    "tracking_type": "weight_reps"
+  },
+  "Water Bottle Hammer Curl": {
+    "name_ru": "Молотковые сгибания рук с бутылками воды",
+    "tracking_type": "weight_reps"
+  },
+  "Z-Bar Curl": {
+    "name_ru": "Сгибания рук с EZ-грифом на бицепс",
+    "tracking_type": "weight_reps"
+  },
+  "EZ Bar Preacher Curl": {
+    "name_ru": "Сгибания рук с EZ-грифом на скамье Скотта",
+    "tracking_type": "weight_reps"
+  },
+  "Zottman Curl": {
+    "name_ru": "Сгибания Зоттмана с гантелями",
+    "tracking_type": "weight_reps"
+  }
+}

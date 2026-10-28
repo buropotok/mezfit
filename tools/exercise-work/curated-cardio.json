@@ -1,0 +1,302 @@
+{
+  "1-2 Stick Drill": {
+    "name_ru": "Прыжки в стороны с фиксацией приземления («1–2 stick»)",
+    "tracking_type": "time_reps"
+  },
+  "5 Dot Drills": {
+    "name_ru": "Прыжки по пяти маркерам на координацию",
+    "tracking_type": "time_reps"
+  },
+  "Manual Treadmill": {
+    "name_ru": "Бег на механической беговой дорожке",
+    "tracking_type": "time_distance"
+  },
+  "Assault AirBike": {
+    "name_ru": "Работа на аэробайке Assault",
+    "tracking_type": "time_distance"
+  },
+  "Astride Jumps": {
+    "name_ru": "Прыжки с разведением ног в стороны",
+    "tracking_type": "time_reps"
+  },
+  "Backward Running": {
+    "name_ru": "Бег спиной вперёд",
+    "tracking_type": "time_distance"
+  },
+  "Band Assisted Sprinter Run": {
+    "name_ru": "Спринтерский бег с поддержкой эспандером",
+    "tracking_type": "time_distance"
+  },
+  "Stationary Bike": {
+    "name_ru": "Езда на велотренажёре",
+    "tracking_type": "time_distance"
+  },
+  "Bodyweight Squat": {
+    "name_ru": "Приседания с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Box Jump 1 to 2": {
+    "name_ru": "Прыжок на тумбу с одной ноги на две",
+    "tracking_type": "weight_reps"
+  },
+  "Box Jump 2 to 1": {
+    "name_ru": "Прыжок на тумбу с двух ног на одну",
+    "tracking_type": "weight_reps"
+  },
+  "Box Jump to Pistol Squat": {
+    "name_ru": "Прыжок на тумбу с переходом в приседание на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Boxer Shuffle Cardio": {
+    "name_ru": "Боксёрские шаги на месте",
+    "tracking_type": "time"
+  },
+  "Boxing Right Cross": {
+    "name_ru": "Прямой удар правой рукой («кросс»)",
+    "tracking_type": "time_reps"
+  },
+  "Briskly Walking": {
+    "name_ru": "Быстрая ходьба",
+    "tracking_type": "time_distance"
+  },
+  "Burpee Long Jump": {
+    "name_ru": "Бёрпи с прыжком в длину",
+    "tracking_type": "time_reps"
+  },
+  "Butt Kicks": {
+    "name_ru": "Бег на месте с захлёстом голеней",
+    "tracking_type": "time_reps"
+  },
+  "Cross Body Push-up": {
+    "name_ru": "Отжимания с перекрёстным движением корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Curtsy Squat": {
+    "name_ru": "Приседания с перекрёстным шагом («реверанс»)",
+    "tracking_type": "weight_reps"
+  },
+  "Depth Jump to Hurdle Hop": {
+    "name_ru": "Прыжок в глубину с последующим прыжком через барьер",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Burpees": {
+    "name_ru": "Бёрпи с гантелями",
+    "tracking_type": "time_reps"
+  },
+  "Dumbbell Jump Squat": {
+    "name_ru": "Приседания с гантелями и выпрыгиванием",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Split Jump": {
+    "name_ru": "Прыжковые выпады с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Elbow To Knee Twists": {
+    "name_ru": "Повороты корпуса с касанием локтем колена",
+    "tracking_type": "weight_reps"
+  },
+  "Elliptical Machine": {
+    "name_ru": "Занятие на эллиптическом тренажёре",
+    "tracking_type": "time_distance"
+  },
+  "Fast Feet Run": {
+    "name_ru": "Бег на месте с быстрыми короткими шагами",
+    "tracking_type": "time_reps"
+  },
+  "High Knee Run": {
+    "name_ru": "Бег с высоким подниманием коленей",
+    "tracking_type": "time_reps"
+  },
+  "High Knees Against Wall": {
+    "name_ru": "Беговые подъёмы коленей с упором в стену",
+    "tracking_type": "time_reps"
+  },
+  "High Knees Lift Run": {
+    "name_ru": "Бег с высокими подъёмами коленей",
+    "tracking_type": "time_reps"
+  },
+  "Hook Kick": {
+    "name_ru": "Удар ногой по дуге («хук-кик»)",
+    "tracking_type": "time_reps"
+  },
+  "Incline Treadmill": {
+    "name_ru": "Бег на дорожке с наклоном",
+    "tracking_type": "time_distance"
+  },
+  "Jab Boxing": {
+    "name_ru": "Боксёрский прямой удар передней рукой («джеб»)",
+    "tracking_type": "time_reps"
+  },
+  "Jack Burpees": {
+    "name_ru": "Бёрпи с разведением ног в прыжке",
+    "tracking_type": "time_reps"
+  },
+  "Jump Squats": {
+    "name_ru": "Приседания с выпрыгиванием",
+    "tracking_type": "weight_reps"
+  },
+  "Jumping jack": {
+    "name_ru": "Прыжки «ноги врозь — ноги вместе»",
+    "tracking_type": "time_reps"
+  },
+  "Kettlebell Clean and Jerk": {
+    "name_ru": "Взятие гири на грудь и толчок",
+    "tracking_type": "weight_reps"
+  },
+  "Lateral Speed Step": {
+    "name_ru": "Быстрые приставные шаги в стороны",
+    "tracking_type": "time_reps"
+  },
+  "Lateral Step-up": {
+    "name_ru": "Боковые зашагивания на платформу",
+    "tracking_type": "weight_reps"
+  },
+  "Long Jump": {
+    "name_ru": "Прыжок в длину с места",
+    "tracking_type": "weight_reps"
+  },
+  "Navy Seal Burpee": {
+    "name_ru": "Бёрпи «морской котик» с дополнительными отжиманиями",
+    "tracking_type": "time_reps"
+  },
+  "Plyo Jacks": {
+    "name_ru": "Плиометрические прыжки с разведением рук и ног",
+    "tracking_type": "time_reps"
+  },
+  "Power Lunge": {
+    "name_ru": "Взрывные выпады",
+    "tracking_type": "weight_reps"
+  },
+  "Power Skips": {
+    "name_ru": "Мощные подскоки с высоким подъёмом колена",
+    "tracking_type": "time_reps"
+  },
+  "Punches": {
+    "name_ru": "Серии ударов руками",
+    "tracking_type": "time_reps"
+  },
+  "Push-up Toe Touch": {
+    "name_ru": "Отжимания с касанием носка",
+    "tracking_type": "weight_reps"
+  },
+  "Recumbent Exercise Bike": {
+    "name_ru": "Езда на горизонтальном велотренажёре",
+    "tracking_type": "time_distance"
+  },
+  "Riding Outdoor Bicycle": {
+    "name_ru": "Езда на велосипеде",
+    "tracking_type": "time_distance"
+  },
+  "Right Cross": {
+    "name_ru": "Прямой удар правой рукой («кросс»)",
+    "tracking_type": "time_reps"
+  },
+  "Right Uppercut": {
+    "name_ru": "Апперкот правой рукой",
+    "tracking_type": "time_reps"
+  },
+  "Rowing Machine": {
+    "name_ru": "Гребля на тренажёре",
+    "tracking_type": "time_distance"
+  },
+  "Run in Place": {
+    "name_ru": "Бег на месте",
+    "tracking_type": "time"
+  },
+  "Running": {
+    "name_ru": "Бег",
+    "tracking_type": "time_distance"
+  },
+  "Shadow Boxing": {
+    "name_ru": "Бой с тенью",
+    "tracking_type": "time"
+  },
+  "Side Shuttle": {
+    "name_ru": "Челночные приставные шаги в стороны",
+    "tracking_type": "time"
+  },
+  "Single Leg Box Jump": {
+    "name_ru": "Прыжки на тумбу на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Broad Jump": {
+    "name_ru": "Прыжки в длину на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Hip Thrust Jump": {
+    "name_ru": "Взрывной ягодичный мостик на одной ноге с прыжком",
+    "tracking_type": "weight_reps"
+  },
+  "Skater": {
+    "name_ru": "Прыжки «конькобежец» из стороны в сторону",
+    "tracking_type": "time_reps"
+  },
+  "Split Jacks": {
+    "name_ru": "Прыжки с попеременным выносом ног вперёд-назад",
+    "tracking_type": "time_reps"
+  },
+  "Split Jump Squat": {
+    "name_ru": "Выпрыгивания из разножного приседа",
+    "tracking_type": "weight_reps"
+  },
+  "Sprint": {
+    "name_ru": "Спринтерский бег",
+    "tracking_type": "time_distance"
+  },
+  "Squat Tuck Jump": {
+    "name_ru": "Прыжки из приседа с подтягиванием коленей к груди",
+    "tracking_type": "time_reps"
+  },
+  "Stair Climber Machine": {
+    "name_ru": "Подъём по ступеням на степпере",
+    "tracking_type": "time"
+  },
+  "Stationary Bike Run": {
+    "name_ru": "Занятие на велотренажёре",
+    "tracking_type": "time_distance"
+  },
+  "Step Up + Opposite Elbow to Knee Twist": {
+    "name_ru": "Зашагивания с касанием колена противоположным локтем",
+    "tracking_type": "weight_reps"
+  },
+  "Step Up with Knee Raises": {
+    "name_ru": "Зашагивания на платформу с подъёмом колена",
+    "tracking_type": "weight_reps"
+  },
+  "The Box Jump": {
+    "name_ru": "Прыжки на тумбу",
+    "tracking_type": "weight_reps"
+  },
+  "Treadmill": {
+    "name_ru": "Бег на беговой дорожке",
+    "tracking_type": "time_distance"
+  },
+  "Tuck Jump": {
+    "name_ru": "Прыжки с подтягиванием коленей к груди",
+    "tracking_type": "time_reps"
+  },
+  "Vertical Mountain Climber": {
+    "name_ru": "Вертикальный «альпинист» стоя",
+    "tracking_type": "time_reps"
+  },
+  "Vibration Plate": {
+    "name_ru": "Упражнение на виброплатформе",
+    "tracking_type": "time"
+  },
+  "Walk Wave Machine": {
+    "name_ru": "Ходьба на тренажёре Walk Wave",
+    "tracking_type": "time"
+  },
+  "Walking High Knee Lunges": {
+    "name_ru": "Выпады в ходьбе с высоким подъёмом колена",
+    "tracking_type": "weight_reps"
+  },
+  "Walking": {
+    "name_ru": "Ходьба",
+    "tracking_type": "time_distance"
+  },
+  "Zig Zag Hops Plyometric": {
+    "name_ru": "Плиометрические прыжки зигзагом",
+    "tracking_type": "time_reps"
+  }
+}

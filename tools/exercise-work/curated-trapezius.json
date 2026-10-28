@@ -1,0 +1,22 @@
+{
+  "Behind The Back Barbell Shrug": {
+    "name_ru": "Шраги со штангой за спиной",
+    "tracking_type": "weight_reps"
+  },
+  "Dip Shrugs (Serratus Shrugs)": {
+    "name_ru": "Опускание и подъём корпуса за счёт лопаток в упоре на брусьях",
+    "tracking_type": "weight_reps"
+  },
+  "Overhead Shrug": {
+    "name_ru": "Шраги со штангой над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Prone Incline Shrug": {
+    "name_ru": "Шраги с гантелями лёжа грудью на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Shrug": {
+    "name_ru": "Шраги в машине Смита",
+    "tracking_type": "weight_reps"
+  }
+}

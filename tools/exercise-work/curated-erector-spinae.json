@@ -1,0 +1,110 @@
+{
+  "Arm Leg Raises": {
+    "name_ru": "Разноимённые подъёмы руки и ноги",
+    "tracking_type": "weight_reps"
+  },
+  "Bird Dog": {
+    "name_ru": "«Птица-собака»: разноимённые подъёмы руки и ноги на четвереньках",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Pull Through": {
+    "name_ru": "Тяга нижнего блока между ног стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Cat Cow Pose": {
+    "name_ru": "Динамическое прогибание и округление спины («кошка-корова»)",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Good Morning": {
+    "name_ru": "Наклоны «гуд морнинг» с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Jefferson Curl": {
+    "name_ru": "Сгибание позвоночника стоя с гантелью («Джефферсон-кёрл»)",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Pull Through": {
+    "name_ru": "Тяга гантели между ног назад-вперёд",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Sumo Deadlift": {
+    "name_ru": "Становая тяга сумо с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Flat Bench Hyperextension": {
+    "name_ru": "Гиперэкстензия на горизонтальной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Forward Bend": {
+    "name_ru": "Наклон вперёд для растяжки задней поверхности тела",
+    "tracking_type": "time"
+  },
+  "Good Morning With Resistance Band": {
+    "name_ru": "Наклоны «гуд морнинг» с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Good Morning": {
+    "name_ru": "Наклоны со штангой на плечах («гуд морнинг»)",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Deadlift": {
+    "name_ru": "Становая тяга с гирей",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Single Leg Deadlift": {
+    "name_ru": "Становая тяга с гирей на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Back Rotation": {
+    "name_ru": "Повороты грудного отдела спины стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "PVC Hip Hinge": {
+    "name_ru": "Отработка тазобедренного наклона с гимнастической палкой",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Hyperextension Machine": {
+    "name_ru": "Обратная гиперэкстензия в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Frog Reverse Hyperextension": {
+    "name_ru": "Обратная гиперэкстензия с разведёнными коленями («лягушка»)",
+    "tracking_type": "weight_reps"
+  },
+  "Rolling Like a Ball": {
+    "name_ru": "Перекаты на спине «как мяч» (пилатес)",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Back Extension": {
+    "name_ru": "Разгибание спины сидя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Hamstring Stretch": {
+    "name_ru": "Растяжка задней поверхности бедра сидя",
+    "tracking_type": "time"
+  },
+  "Single Leg Reverse Hyperextension | Gymstick": {
+    "name_ru": "Обратная гиперэкстензия одной ногой с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Good Morning": {
+    "name_ru": "Наклоны «гуд морнинг» в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Toe Touches": {
+    "name_ru": "Наклоны стоя с касанием носков ног",
+    "tracking_type": "weight_reps"
+  },
+  "Stiff Leg Deadlift": {
+    "name_ru": "Становая тяга на прямых ногах",
+    "tracking_type": "weight_reps"
+  },
+  "Swing | Gymstick": {
+    "name_ru": "Махи с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted Back Extension": {
+    "name_ru": "Гиперэкстензия с отягощением",
+    "tracking_type": "weight_reps"
+  }
+}

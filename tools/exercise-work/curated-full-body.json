@@ -1,0 +1,126 @@
+{
+  "Backward Medicine Ball Throw": {
+    "name_ru": "Бросок медицинбола назад через голову",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Hang Clean": {
+    "name_ru": "Взятие штанги на грудь с виса",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Snatch": {
+    "name_ru": "Рывок штанги",
+    "tracking_type": "weight_reps"
+  },
+  "Burpee With Push-Up": {
+    "name_ru": "Бёрпи с отжиманием",
+    "tracking_type": "time_reps"
+  },
+  "Clean and Jerk": {
+    "name_ru": "Толчок штанги (взятие на грудь и толчок)",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Devil Press": {
+    "name_ru": "«Дьявольский жим» с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Power Clean": {
+    "name_ru": "Силовое взятие гантелей на грудь",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Walking Lunge": {
+    "name_ru": "Выпады в ходьбе с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Farmer’s Walk": {
+    "name_ru": "Прогулка фермера с отягощением",
+    "tracking_type": "time_weight"
+  },
+  "Handstand Walk": {
+    "name_ru": "Ходьба на руках",
+    "tracking_type": "time_distance"
+  },
+  "Heaving Snatch Balance": {
+    "name_ru": "Уход в рывковый сед с подседом под штангу",
+    "tracking_type": "weight_reps"
+  },
+  "Human Flag": {
+    "name_ru": "Горизонтальный вис боком («флаг человека»)",
+    "tracking_type": "time"
+  },
+  "Kettlebell Clean and Press": {
+    "name_ru": "Взятие гири на грудь и жим",
+    "tracking_type": "weight_reps"
+  },
+  "Kipping Handstand Push-up": {
+    "name_ru": "Отжимания в стойке на руках с киппингом",
+    "tracking_type": "weight_reps"
+  },
+  "Landmine Squat to Press": {
+    "name_ru": "Приседание с последующим жимом лэндмайн-грифа",
+    "tracking_type": "weight_reps"
+  },
+  "Log Lift": {
+    "name_ru": "Подъём бревна на грудь и жим",
+    "tracking_type": "weight_reps"
+  },
+  "Muscle Snatch": {
+    "name_ru": "Рывок штанги в стойку без подседа",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Dumbbell Snatch": {
+    "name_ru": "Рывок гантели одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Kettlebell Snatch": {
+    "name_ru": "Рывок гири одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Kettlebell Swing": {
+    "name_ru": "Махи гирей одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Overhead Squat": {
+    "name_ru": "Приседания со штангой над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Plate Push": {
+    "name_ru": "Толкание диска от штанги по полу",
+    "tracking_type": "time_weight"
+  },
+  "Power Snatch": {
+    "name_ru": "Силовой рывок штанги в стойку",
+    "tracking_type": "weight_reps"
+  },
+  "Push Press": {
+    "name_ru": "Швунг жимовой со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Step Behind Rotational Med Ball Throw": {
+    "name_ru": "Бросок медицинбола с поворотом корпуса и скрестным шагом",
+    "tracking_type": "weight_reps"
+  },
+  "Tire Sledge Hammer": {
+    "name_ru": "Удары кувалдой по покрышке",
+    "tracking_type": "time_reps"
+  },
+  "Trap Bar Jump Squat": {
+    "name_ru": "Приседания с выпрыгиванием с трэп-грифом",
+    "tracking_type": "weight_reps"
+  },
+  "Turkish Get-up": {
+    "name_ru": "Турецкий подъём с отягощением",
+    "tracking_type": "weight_reps"
+  },
+  "Wall Ball": {
+    "name_ru": "Броски медицинбола в стену из приседа",
+    "tracking_type": "time_reps"
+  },
+  "Wall Walk": {
+    "name_ru": "Заход ногами по стене в стойку на руках",
+    "tracking_type": "weight_reps"
+  },
+  "Zercher Carry": {
+    "name_ru": "Переноска штанги в захвате Зерхера",
+    "tracking_type": "time_weight"
+  }
+}

@@ -1,0 +1,366 @@
+{
+  "Across Chest Shoulder Stretch": {
+    "name_ru": "Растяжка плеча поперёк груди",
+    "tracking_type": "time"
+  },
+  "Band Alternating Lat Pulldown": {
+    "name_ru": "Попеременная тяга эспандера сверху к груди",
+    "tracking_type": "weight_reps"
+  },
+  "Band Alternating Low Row with Twist": {
+    "name_ru": "Попеременная нижняя тяга эспандера с поворотом корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Band Assisted Muscle-Up": {
+    "name_ru": "Выход силой на перекладине с помощью резиновой петли",
+    "tracking_type": "weight_reps"
+  },
+  "Band Seated Row": {
+    "name_ru": "Горизонтальная тяга эспандера сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Shoulder Extension": {
+    "name_ru": "Разгибание плеча с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Battle Rope": {
+    "name_ru": "Волны с тренировочными канатами",
+    "tracking_type": "time"
+  },
+  "Behind The Neck Pull-up": {
+    "name_ru": "Подтягивания за голову",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Dumbbell Row": {
+    "name_ru": "Тяга гантелей в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Row | Gymstick": {
+    "name_ru": "Тяга гимстика к поясу в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Row in Doorway": {
+    "name_ru": "Горизонтальные подтягивания в дверном проёме",
+    "tracking_type": "weight_reps"
+  },
+  "Brachialis Pull-up": {
+    "name_ru": "Подтягивания с акцентом на плечевую мышцу",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Bent Over Row": {
+    "name_ru": "Тяга нижнего блока в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Crossover Lat Pulldown": {
+    "name_ru": "Тяга верхних блоков к груди в кроссовере",
+    "tracking_type": "weight_reps"
+  },
+  "Cable One Arm Lat Pulldown": {
+    "name_ru": "Тяга верхнего блока одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Seated Pullover": {
+    "name_ru": "Пуловер на блоке сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Twisting Standing High Row": {
+    "name_ru": "Высокая тяга блока стоя с поворотом корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Chin Up Around the Bar": {
+    "name_ru": "Подтягивания с перемещением вокруг перекладины",
+    "tracking_type": "weight_reps"
+  },
+  "Climbing Monkey Bars": {
+    "name_ru": "Передвижение по рукоходу",
+    "tracking_type": "time"
+  },
+  "Close Grip Cable Row": {
+    "name_ru": "Горизонтальная тяга блока узким хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Close Grip Lat-Pulldown": {
+    "name_ru": "Тяга верхнего блока узким хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Commando Pull-up": {
+    "name_ru": "Подтягивания «коммандо» боковым хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Dead Hang": {
+    "name_ru": "Вис на перекладине",
+    "tracking_type": "time"
+  },
+  "Deadlift": {
+    "name_ru": "Становая тяга",
+    "tracking_type": "weight_reps"
+  },
+  "Double Cable Neutral Grip Lat Pulldown On Floor": {
+    "name_ru": "Тяга двух верхних блоков нейтральным хватом сидя на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Bent Over Reverse Grip Row": {
+    "name_ru": "Тяга гантелей в наклоне обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Renegade Row": {
+    "name_ru": "Тяга гантелей в планке",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Row": {
+    "name_ru": "Тяга гантели к поясу",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Seal Row": {
+    "name_ru": "Тяга гантелей лёжа грудью на скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Eccentric Pull-Up": {
+    "name_ru": "Подтягивания с акцентом на медленное опускание",
+    "tracking_type": "weight_reps"
+  },
+  "Elbow Reverse Push-Up": {
+    "name_ru": "Обратные отжимания с опорой на локти",
+    "tracking_type": "weight_reps"
+  },
+  "EZ-Bar Bent Arm Pullover": {
+    "name_ru": "Пуловер с EZ-грифом на согнутых руках",
+    "tracking_type": "weight_reps"
+  },
+  "Foam Roller Back Stretch": {
+    "name_ru": "Растяжка мышц спины на массажном ролике",
+    "tracking_type": "time"
+  },
+  "Foam Roller Lat Stretch": {
+    "name_ru": "Растяжка широчайших мышц на ролике",
+    "tracking_type": "time"
+  },
+  "Foam Roller Rhomboids": {
+    "name_ru": "Миофасциальный релиз ромбовидных мышц роликом",
+    "tracking_type": "time"
+  },
+  "Foam Roller Upper Back": {
+    "name_ru": "Миофасциальный релиз верхней части спины роликом",
+    "tracking_type": "time"
+  },
+  "Front Lever Pull-up": {
+    "name_ru": "Подтягивания в переднем горизонте",
+    "tracking_type": "weight_reps"
+  },
+  "Full Range Of Motion Lat Pulldown": {
+    "name_ru": "Тяга верхнего блока в полной амплитуде",
+    "tracking_type": "weight_reps"
+  },
+  "Half Kneeling Lat Pulldown": {
+    "name_ru": "Тяга верхнего блока стоя на одном колене",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Barbell Row": {
+    "name_ru": "Тяга штанги с опорой грудью на наклонную скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Cable Row": {
+    "name_ru": "Тяга блока с опорой на наклонную скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Dumbbell Hammer Row": {
+    "name_ru": "Тяга гантелей нейтральным хватом с опорой на наклонную скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Reverse Grip Dumbbell Row": {
+    "name_ru": "Тяга гантелей обратным хватом на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Isometric Pull-Up": {
+    "name_ru": "Изометрическое удержание в подтягивании",
+    "tracking_type": "time"
+  },
+  "Jumping Pull-up": {
+    "name_ru": "Подтягивания с прыжка",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Bent Over Row": {
+    "name_ru": "Тяга гири в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling High Pulley Row": {
+    "name_ru": "Высокая тяга блока стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Pulldown With Resistance Band": {
+    "name_ru": "Тяга эспандера сверху стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Single Arm High Pulley Row": {
+    "name_ru": "Высокая тяга блока одной рукой стоя на колене",
+    "tracking_type": "weight_reps"
+  },
+  "L-Sit Pull-Up": {
+    "name_ru": "Подтягивания с ногами в положении «уголок»",
+    "tracking_type": "weight_reps"
+  },
+  "Landmine T-Bar Row": {
+    "name_ru": "Тяга Т-грифа в лэндмайне",
+    "tracking_type": "weight_reps"
+  },
+  "Lat Pulldown": {
+    "name_ru": "Тяга верхнего блока к груди",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Cable Rear Pulldown": {
+    "name_ru": "Тяга рычажного тренажёра сверху за голову",
+    "tracking_type": "weight_reps"
+  },
+  "Neutral Grip Pull-up": {
+    "name_ru": "Подтягивания нейтральным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Barbell Row": {
+    "name_ru": "Тяга штанги одной рукой в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Cable Row": {
+    "name_ru": "Тяга блока одной рукой к поясу",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Landmine Row": {
+    "name_ru": "Тяга лэндмайн-грифа одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Plate Loaded Seated Row": {
+    "name_ru": "Горизонтальная тяга сидя в дисковом тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Grip Barbell Row": {
+    "name_ru": "Тяга штанги в наклоне обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Grip Machine Row": {
+    "name_ru": "Тяга в тренажёре обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Lat-Pulldown": {
+    "name_ru": "Тяга верхнего блока обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Ring Inverted Row": {
+    "name_ru": "Горизонтальные подтягивания на кольцах",
+    "tracking_type": "weight_reps"
+  },
+  "Romanian Deadlift": {
+    "name_ru": "Румынская тяга",
+    "tracking_type": "weight_reps"
+  },
+  "Legless Rope Climb": {
+    "name_ru": "Лазание по канату без помощи ног",
+    "tracking_type": "weight_reps"
+  },
+  "Rope Straight Arm Pulldown": {
+    "name_ru": "Тяга каната на прямых руках с верхнего блока",
+    "tracking_type": "weight_reps"
+  },
+  "Scapula Pull-up": {
+    "name_ru": "Подтягивания лопатками в висе",
+    "tracking_type": "weight_reps"
+  },
+  "Scapular Protraction and Retraction": {
+    "name_ru": "Сведение и разведение лопаток",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Cable Rope Row": {
+    "name_ru": "Горизонтальная тяга каната на блоке сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Cable Row": {
+    "name_ru": "Горизонтальная тяга блока сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Row Machine": {
+    "name_ru": "Горизонтальная тяга сидя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Toe Touches": {
+    "name_ru": "Растяжка задней поверхности бедра сидя с касанием носков",
+    "tracking_type": "time"
+  },
+  "Shotgun Row": {
+    "name_ru": "Тяга блока к поясу одной рукой («шотган»)",
+    "tracking_type": "weight_reps"
+  },
+  "Single Arm Twisting Seated Cable Row": {
+    "name_ru": "Горизонтальная тяга блока одной рукой с поворотом корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Bent Over Row": {
+    "name_ru": "Тяга штанги в наклоне в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Banded Row": {
+    "name_ru": "Горизонтальная тяга эспандера стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Reach Up Back rotation Stretch": {
+    "name_ru": "Растяжка спины стоя с подъёмом руки и поворотом корпуса",
+    "tracking_type": "time"
+  },
+  "Standing Side Bend Stretch": {
+    "name_ru": "Растяжка боковой поверхности корпуса стоя",
+    "tracking_type": "time"
+  },
+  "Towel Shoulder Stretch": {
+    "name_ru": "Растяжка плечевого пояса с полотенцем",
+    "tracking_type": "time"
+  },
+  "Sumo Deadlift": {
+    "name_ru": "Становая тяга сумо",
+    "tracking_type": "weight_reps"
+  },
+  "Supine Spinal Twist": {
+    "name_ru": "Скручивание позвоночника лёжа на спине",
+    "tracking_type": "time"
+  },
+  "Swimming": {
+    "name_ru": "Плавание",
+    "tracking_type": "time_distance"
+  },
+  "T-Bar Row": {
+    "name_ru": "Тяга Т-грифа",
+    "tracking_type": "weight_reps"
+  },
+  "Table Inverted Row": {
+    "name_ru": "Горизонтальные подтягивания под столом",
+    "tracking_type": "weight_reps"
+  },
+  "Top Half Pull-up": {
+    "name_ru": "Подтягивания в верхней половине амплитуды",
+    "tracking_type": "weight_reps"
+  },
+  "Unilateral Lat Stretch on the Wall": {
+    "name_ru": "Растяжка широчайшей мышцы одной рукой у стены",
+    "tracking_type": "time"
+  },
+  "Upside Down Pull-up": {
+    "name_ru": "Подтягивания вниз головой",
+    "tracking_type": "weight_reps"
+  },
+  "V-bar Lat Pulldown": {
+    "name_ru": "Тяга верхнего блока V-образной рукоятью",
+    "tracking_type": "weight_reps"
+  },
+  "Wall Slides": {
+    "name_ru": "Скольжение руками по стене",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted One Arm Pull-up": {
+    "name_ru": "Подтягивания на одной руке с отягощением",
+    "tracking_type": "weight_reps"
+  },
+  "Wide Grip Alternate Barbell Bent Over Row Plus": {
+    "name_ru": "Попеременная тяга штанги в наклоне широким хватом с дополнительным сведением лопаток",
+    "tracking_type": "weight_reps"
+  },
+  "Wide Grip Barbell Bent Over Row Plus": {
+    "name_ru": "Тяга штанги в наклоне широким хватом с дополнительным сведением лопаток",
+    "tracking_type": "weight_reps"
+  }
+}

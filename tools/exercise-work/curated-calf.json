@@ -1,0 +1,134 @@
+{
+  "Banded Foot External Rotation": {
+    "name_ru": "Наружная ротация стопы с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Calf Raise on the Bench Press Machine": {
+    "name_ru": "Подъёмы на носки стоя в тренажёре для жима лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Calf Raise with Resistance Band": {
+    "name_ru": "Подъёмы на носки с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Calf Raise With Dumbbell": {
+    "name_ru": "Подъёмы на носки стоя с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Calves Stretch Static Position": {
+    "name_ru": "Статическая растяжка икроножных мышц",
+    "tracking_type": "time"
+  },
+  "Crouching Heel Back Calf Stretch": {
+    "name_ru": "Растяжка икроножных мышц в приседе с отведённой пяткой",
+    "tracking_type": "time"
+  },
+  "Foot and Ankle Rotation": {
+    "name_ru": "Круговые движения стопой и голеностопом",
+    "tracking_type": "weight_reps"
+  },
+  "Foam Roller Calves": {
+    "name_ru": "Миофасциальный релиз икроножных мышц на ролике",
+    "tracking_type": "time"
+  },
+  "Foot and Ankles Stretches": {
+    "name_ru": "Растяжка стоп и голеностопных суставов",
+    "tracking_type": "time"
+  },
+  "Hack Machine One-Leg Calf Raise": {
+    "name_ru": "Подъём на носок одной ноги в гакк-тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Hack Squat Calf Raise": {
+    "name_ru": "Подъёмы на носки в гакк-тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Inner Thigh Side Stretch": {
+    "name_ru": "Боковая растяжка внутренней поверхности бедра",
+    "tracking_type": "time"
+  },
+  "Leg Press Calf Raise": {
+    "name_ru": "Подъёмы на носки в тренажёре для жима ногами",
+    "tracking_type": "weight_reps"
+  },
+  "Lunging Straight Leg Calf Stretch": {
+    "name_ru": "Растяжка икроножной мышцы с прямой задней ногой в выпаде",
+    "tracking_type": "time"
+  },
+  "Seated Calf Press on Leg Press Machine": {
+    "name_ru": "Подъёмы на носки сидя в тренажёре для жима ногами",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Straight Leg Calf Stretch": {
+    "name_ru": "Растяжка икроножной мышцы сидя с прямой ногой",
+    "tracking_type": "time"
+  },
+  "Single Calf Raise on Leg Press Machine": {
+    "name_ru": "Подъём на носок одной ноги в тренажёре для жима ногами",
+    "tracking_type": "weight_reps"
+  },
+  "Single Heel Drop Calf Stretch": {
+    "name_ru": "Растяжка икроножной мышцы с опусканием пятки с опоры",
+    "tracking_type": "time"
+  },
+  "Single Leg Calf Raise": {
+    "name_ru": "Подъём на носок одной ноги",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Calves Stretch": {
+    "name_ru": "Растяжка икроножной мышцы одной ноги",
+    "tracking_type": "time"
+  },
+  "Single Leg Donkey Calf Raise": {
+    "name_ru": "Ослиные подъёмы на носок одной ноги",
+    "tracking_type": "weight_reps"
+  },
+  "Squat Hold Calf Raise": {
+    "name_ru": "Подъёмы на носки в удержании приседа",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Barbell Calf Raise": {
+    "name_ru": "Подъёмы на носки стоя со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Cross Leg Hamstring Stretch": {
+    "name_ru": "Растяжка задней поверхности бедра стоя со скрещёнными ногами",
+    "tracking_type": "time"
+  },
+  "Standing Ankle Dorsiflexion": {
+    "name_ru": "Тыльное сгибание стопы стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Gastrocnemius Calf Stretch": {
+    "name_ru": "Растяжка икроножной мышцы стоя",
+    "tracking_type": "time"
+  },
+  "Standing Hamstring Stretch": {
+    "name_ru": "Растяжка задней поверхности бедра стоя",
+    "tracking_type": "time"
+  },
+  "Standing Toe Flexor Stretch": {
+    "name_ru": "Растяжка сгибателей пальцев стопы стоя",
+    "tracking_type": "time"
+  },
+  "Standing Toe Up Achilles Stretch": {
+    "name_ru": "Растяжка ахиллова сухожилия стоя с поднятым носком",
+    "tracking_type": "time"
+  },
+  "Standing Wall Calf Stretch": {
+    "name_ru": "Растяжка икроножной мышцы стоя у стены",
+    "tracking_type": "time"
+  },
+  "Toe Extensor Stretch": {
+    "name_ru": "Растяжка разгибателей пальцев стопы",
+    "tracking_type": "time"
+  },
+  "Partner Donkey Calf Raise": {
+    "name_ru": "Ослиные подъёмы на носки с партнёром",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted Seated Calf Raise": {
+    "name_ru": "Подъёмы на носки сидя с отягощением",
+    "tracking_type": "weight_reps"
+  }
+}

@@ -1,0 +1,538 @@
+{
+  "4 Point Tummy Vacuum Exercise": {
+    "name_ru": "Вакуум живота стоя на четвереньках",
+    "tracking_type": "time"
+  },
+  "Ab Coaster Machine": {
+    "name_ru": "Скручивания в тренажёре Ab Coaster",
+    "tracking_type": "weight_reps"
+  },
+  "Ab Roller Crunch": {
+    "name_ru": "Скручивания в роликовом тренажёре для пресса",
+    "tracking_type": "weight_reps"
+  },
+  "Ab Straps Leg Raise": {
+    "name_ru": "Подъём ног в подвесных петлях для пресса",
+    "tracking_type": "weight_reps"
+  },
+  "Ab Wheel Rollout": {
+    "name_ru": "Выкатывание ролика для пресса",
+    "tracking_type": "weight_reps"
+  },
+  "Alternate Leg Raises": {
+    "name_ru": "Попеременный подъём ног",
+    "tracking_type": "weight_reps"
+  },
+  "Alternate Lying Floor Leg Raise": {
+    "name_ru": "Попеременный подъём ног лёжа на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Ball Russian Twist throw with partner": {
+    "name_ru": "Русские повороты корпуса с передачей мяча партнёру",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Jack knife sit-up": {
+    "name_ru": "Складка с сопротивлением эспандера",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Lying leg and hip raise": {
+    "name_ru": "Подъём ног и таза лёжа с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Rollout": {
+    "name_ru": "Выкатывание штанги для пресса",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Side Bend": {
+    "name_ru": "Боковые наклоны со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Bench Side Bend": {
+    "name_ru": "Боковые наклоны корпуса на скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Twist": {
+    "name_ru": "Повороты корпуса в наклоне с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Bicycle Crunch | Gymstick": {
+    "name_ru": "Скручивания «велосипед» с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Bicycle Crunch": {
+    "name_ru": "Скручивания «велосипед»",
+    "tracking_type": "weight_reps"
+  },
+  "Bicycle Twisting Crunch": {
+    "name_ru": "Перекрёстные скручивания «велосипед»",
+    "tracking_type": "weight_reps"
+  },
+  "Boat Pose": {
+    "name_ru": "Поза лодки",
+    "tracking_type": "time"
+  },
+  "Body Saw Plank": {
+    "name_ru": "Планка с движением корпуса вперёд-назад («пила»)",
+    "tracking_type": "time"
+  },
+  "Bodyweight Kneeling Sissy Squat": {
+    "name_ru": "Сисси-приседания с колен без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Skull Crushers": {
+    "name_ru": "Французские отжимания с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Windmill": {
+    "name_ru": "Наклоны «мельница» без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Bow Pose": {
+    "name_ru": "Поза лука",
+    "tracking_type": "time"
+  },
+  "Burpees": {
+    "name_ru": "Бёрпи",
+    "tracking_type": "time_reps"
+  },
+  "Butterfly Sit-up": {
+    "name_ru": "Подъёмы корпуса сидя с разведёнными коленями («бабочка»)",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Seated Cross Arm Twist": {
+    "name_ru": "Повороты корпуса сидя на блоке со скрещенными руками",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Seated Twist on Floor": {
+    "name_ru": "Повороты корпуса на блоке сидя на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Captains Chair Leg Raise": {
+    "name_ru": "Подъём ног в упоре на локтях («капитанский стул»)",
+    "tracking_type": "weight_reps"
+  },
+  "Cross Body Mountain Climber": {
+    "name_ru": "Альпинист с подтягиванием колена к противоположному локтю",
+    "tracking_type": "time_reps"
+  },
+  "Cross Crunch": {
+    "name_ru": "Перекрёстные скручивания",
+    "tracking_type": "weight_reps"
+  },
+  "Crunch With Leg Raise": {
+    "name_ru": "Скручивания с подъёмом ног",
+    "tracking_type": "weight_reps"
+  },
+  "Crunches": {
+    "name_ru": "Скручивания лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Dhanurasana | Rocking Bow Pose": {
+    "name_ru": "Поза лука с раскачиванием (дханурасана)",
+    "tracking_type": "weight_reps"
+  },
+  "Double Crunches": {
+    "name_ru": "Двойные скручивания",
+    "tracking_type": "weight_reps"
+  },
+  "Double Leg Stretch": {
+    "name_ru": "Одновременное вытягивание рук и ног лёжа на спине",
+    "tracking_type": "weight_reps"
+  },
+  "Down to Up Twist |Gymstick": {
+    "name_ru": "Диагональные повороты корпуса снизу вверх с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Dragon Flag": {
+    "name_ru": "Подъём прямого корпуса на скамье («флаг дракона»)",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Floor Wipers": {
+    "name_ru": "Маятниковые опускания ног лёжа с удержанием гантелей",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell V-up": {
+    "name_ru": "Складка с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Windmill": {
+    "name_ru": "Мельница с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Exercise Ball Frog Crunch": {
+    "name_ru": "Скручивания «лягушка» на фитболе",
+    "tracking_type": "weight_reps"
+  },
+  "Floor Crunch": {
+    "name_ru": "Скручивания на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Flutter Kick": {
+    "name_ru": "Попеременные махи ногами лёжа («ножницы»)",
+    "tracking_type": "time"
+  },
+  "Front Plank With Arm And Leg Lift": {
+    "name_ru": "Планка с одновременным подъёмом руки и ноги",
+    "tracking_type": "weight_reps"
+  },
+  "Front Plank with Arm Lift": {
+    "name_ru": "Планка с подъёмом руки",
+    "tracking_type": "weight_reps"
+  },
+  "Front to Side Plank": {
+    "name_ru": "Переход из прямой планки в боковую",
+    "tracking_type": "weight_reps"
+  },
+  "Full Crunch Machine": {
+    "name_ru": "Полные скручивания в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Glute Bridge": {
+    "name_ru": "Ягодичный мостик",
+    "tracking_type": "weight_reps"
+  },
+  "Half Cross Crunch": {
+    "name_ru": "Неполные перекрёстные скручивания",
+    "tracking_type": "weight_reps"
+  },
+  "Half Frog Pose": {
+    "name_ru": "Полупоза лягушки",
+    "tracking_type": "time"
+  },
+  "Half Wipers": {
+    "name_ru": "Неполные маятниковые опускания ног лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Hands In Air Dead Bug": {
+    "name_ru": "Упражнение «мёртвый жук» с поднятыми руками",
+    "tracking_type": "weight_reps"
+  },
+  "Hanging Knee Raises": {
+    "name_ru": "Подъём коленей в висе",
+    "tracking_type": "weight_reps"
+  },
+  "Hanging Side Knee Raises": {
+    "name_ru": "Подъём коленей в висе в стороны",
+    "tracking_type": "weight_reps"
+  },
+  "Hanging Windshield Wiper": {
+    "name_ru": "Маятниковые повороты прямых ног в висе",
+    "tracking_type": "weight_reps"
+  },
+  "Heel Touch": {
+    "name_ru": "Касания пяток лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Hell Slide": {
+    "name_ru": "Скольжение пяткой по полу",
+    "tracking_type": "weight_reps"
+  },
+  "High Knee Skips": {
+    "name_ru": "Бег с высоким подниманием коленей и подскоками",
+    "tracking_type": "time_reps"
+  },
+  "High Knee Squat": {
+    "name_ru": "Приседания с высоким подъёмом колена",
+    "tracking_type": "weight_reps"
+  },
+  "High Plank": {
+    "name_ru": "Планка на прямых руках",
+    "tracking_type": "time"
+  },
+  "Hindu Push-ups": {
+    "name_ru": "Индуистские отжимания",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Leg Hip Raise": {
+    "name_ru": "Подъём ног и таза на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Jackknife Sit-ups (V-Up)": {
+    "name_ru": "Складка лёжа («V-up»)",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Swings": {
+    "name_ru": "Махи гирей",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Cable Crunch": {
+    "name_ru": "Скручивания на верхнем блоке стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling T-spine Rotation": {
+    "name_ru": "Повороты грудного отдела позвоночника стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "L-Sit": {
+    "name_ru": "Уголок в упоре",
+    "tracking_type": "time"
+  },
+  "Landmine Twist": {
+    "name_ru": "Повороты корпуса с лэндмайн-грифом",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Pull-in Knee-ups": {
+    "name_ru": "Подтягивание коленей к груди сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Raise": {
+    "name_ru": "Подъём ног лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Scissors": {
+    "name_ru": "Перекрёстные махи ногами («ножницы»)",
+    "tracking_type": "time"
+  },
+  "Lever Lying Crunch": {
+    "name_ru": "Скручивания лёжа в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Long Arm Crunch": {
+    "name_ru": "Скручивания с вытянутыми за головой руками",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Knee Raise": {
+    "name_ru": "Подъём коленей лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Scissor Kick": {
+    "name_ru": "Ножницы ногами лёжа",
+    "tracking_type": "time"
+  },
+  "Lying Toe Touches": {
+    "name_ru": "Касания носков лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Medicine Ball Crunch": {
+    "name_ru": "Скручивания с медицинболом",
+    "tracking_type": "weight_reps"
+  },
+  "Medicine Ball Rotational Throw": {
+    "name_ru": "Ротационные броски медицинбола",
+    "tracking_type": "weight_reps"
+  },
+  "Medicine Ball-Sit-up Throw": {
+    "name_ru": "Подъём корпуса с броском медицинбола",
+    "tracking_type": "weight_reps"
+  },
+  "Oblique Floor Crunches": {
+    "name_ru": "Боковые скручивания на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Plank Jacks / Extended Leg": {
+    "name_ru": "Прыжки ногами в планке на прямых руках",
+    "tracking_type": "time_reps"
+  },
+  "Plank Knee to Elbow": {
+    "name_ru": "Подтягивание колена к локтю в планке",
+    "tracking_type": "weight_reps"
+  },
+  "Plank Leg Lift": {
+    "name_ru": "Планка с подъёмом ноги",
+    "tracking_type": "weight_reps"
+  },
+  "Plank With Arm And Leg Lift": {
+    "name_ru": "Планка с подъёмом руки и ноги",
+    "tracking_type": "weight_reps"
+  },
+  "Plank": {
+    "name_ru": "Планка на предплечьях",
+    "tracking_type": "time"
+  },
+  "Reverse Plank Kicks": {
+    "name_ru": "Махи ногами в обратной планке",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Plank": {
+    "name_ru": "Обратная планка",
+    "tracking_type": "time"
+  },
+  "Seated Ab Crunch Machine": {
+    "name_ru": "Скручивания сидя в тренажёре для пресса",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Barbell Twist": {
+    "name_ru": "Повороты корпуса сидя со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Bench Leg Pull-in": {
+    "name_ru": "Подтягивание коленей к груди сидя на скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Cable Twist": {
+    "name_ru": "Повороты корпуса сидя на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Crunch Machine": {
+    "name_ru": "Скручивания сидя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Flutter Kick": {
+    "name_ru": "Попеременные махи ногами сидя на скамье",
+    "tracking_type": "time"
+  },
+  "Seated Oblique Twist": {
+    "name_ru": "Повороты корпуса сидя с акцентом на косые мышцы",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Side Crunch": {
+    "name_ru": "Боковые скручивания сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Twist Machine": {
+    "name_ru": "Повороты корпуса сидя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Twist With Resistance Band": {
+    "name_ru": "Повороты корпуса сидя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Side Bent": {
+    "name_ru": "Боковые наклоны корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Side Bridge": {
+    "name_ru": "Подъёмы таза в боковой планке",
+    "tracking_type": "weight_reps"
+  },
+  "Side Lying Feet Raise": {
+    "name_ru": "Подъём ног лёжа на боку",
+    "tracking_type": "weight_reps"
+  },
+  "Side Plank Knee to Elbow": {
+    "name_ru": "Подтягивание колена к локтю в боковой планке",
+    "tracking_type": "weight_reps"
+  },
+  "Side Plank Leg Raises": {
+    "name_ru": "Подъём ноги в боковой планке",
+    "tracking_type": "weight_reps"
+  },
+  "Side Plank Oblique Crunch": {
+    "name_ru": "Боковые скручивания в боковой планке",
+    "tracking_type": "weight_reps"
+  },
+  "Side Plank Rotation": {
+    "name_ru": "Повороты корпуса в боковой планке",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Dumbbell Side Bridge": {
+    "name_ru": "Боковая планка на одной ноге с гантелью",
+    "tracking_type": "time_weight"
+  },
+  "Sit-ups": {
+    "name_ru": "Подъёмы корпуса лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Snap Jumps": {
+    "name_ru": "Плиометрические прыжки из упора присев",
+    "tracking_type": "time_reps"
+  },
+  "Spider Plank": {
+    "name_ru": "Планка «паук» с подтягиванием коленей",
+    "tracking_type": "weight_reps"
+  },
+  "Stability Ball Knee Tuck": {
+    "name_ru": "Подтягивание коленей к груди в упоре на фитболе",
+    "tracking_type": "weight_reps"
+  },
+  "Stability Ball V-Up": {
+    "name_ru": "Складка с фитболом",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Barbell Rollout": {
+    "name_ru": "Выкатывание штанги стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Cable Crunch": {
+    "name_ru": "Скручивания стоя на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Cable High-To-Low Twist": {
+    "name_ru": "Диагональные повороты корпуса сверху вниз на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Cable Low-To-High Twist": {
+    "name_ru": "Диагональные повороты корпуса снизу вверх на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Cable Twist": {
+    "name_ru": "Повороты корпуса стоя на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Rotation": {
+    "name_ru": "Повороты корпуса стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Side Bend | Gymstick": {
+    "name_ru": "Боковые наклоны стоя с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Standing side bend": {
+    "name_ru": "Боковые наклоны корпуса стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Stomach Vacuum": {
+    "name_ru": "Вакуум живота стоя",
+    "tracking_type": "time"
+  },
+  "Standing Toe Touch": {
+    "name_ru": "Наклоны стоя с касанием носков",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Twist Machine": {
+    "name_ru": "Повороты корпуса стоя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Suspended Ab Fall-out": {
+    "name_ru": "Выкатывание корпуса в петлях TRX",
+    "tracking_type": "weight_reps"
+  },
+  "Swiss Ball Rollout": {
+    "name_ru": "Выкатывание на фитболе для пресса",
+    "tracking_type": "weight_reps"
+  },
+  "T-Cross Sit-up": {
+    "name_ru": "Подъём корпуса с поворотом в Т-позицию",
+    "tracking_type": "weight_reps"
+  },
+  "Teaser Pilates": {
+    "name_ru": "Пилатес: упражнение «тизер»",
+    "tracking_type": "weight_reps"
+  },
+  "Toe Reaches": {
+    "name_ru": "Касания носков ног лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Toes to Bar": {
+    "name_ru": "Подъём прямых ног к перекладине",
+    "tracking_type": "weight_reps"
+  },
+  "TRX Mountain Climber": {
+    "name_ru": "Альпинист в петлях TRX",
+    "tracking_type": "time_reps"
+  },
+  "Twist down up With Resistance Band": {
+    "name_ru": "Диагональные повороты корпуса сверху вниз с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Twist With Resistance Band": {
+    "name_ru": "Повороты корпуса с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Twisting Hyperextension": {
+    "name_ru": "Гиперэкстензия с поворотом корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted Hanging Knee Raises": {
+    "name_ru": "Подъём коленей в висе с отягощением",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted Lying Twist": {
+    "name_ru": "Повороты корпуса лёжа с отягощением",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted Sit-ups": {
+    "name_ru": "Подъёмы корпуса с отягощением",
+    "tracking_type": "weight_reps"
+  }
+}

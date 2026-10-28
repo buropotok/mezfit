@@ -1,0 +1,70 @@
+{
+  "Barbell Finger Curl": {
+    "name_ru": "Сгибания пальцев со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Reverse Wrist Curl Over a Bench": {
+    "name_ru": "Разгибания кистей со штангой с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Behind The Back Barbell Wrist Curl": {
+    "name_ru": "Сгибания кистей со штангой за спиной",
+    "tracking_type": "weight_reps"
+  },
+  "Cable One-Arm Wrist Curl On Floor": {
+    "name_ru": "Сгибание кисти одной руки на блоке сидя на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Finger Curl": {
+    "name_ru": "Сгибания пальцев с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Wrist Curl": {
+    "name_ru": "Сгибания кистей с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Hand Gripper": {
+    "name_ru": "Сжатие кистевого эспандера",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Wrist Curl": {
+    "name_ru": "Разгибания кистей с отягощением",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Wrist Stretch": {
+    "name_ru": "Растяжка разгибателей запястья",
+    "tracking_type": "time"
+  },
+  "Seated Barbell Finger Curl": {
+    "name_ru": "Сгибания пальцев со штангой сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Weighted Neutral Wrist Curl": {
+    "name_ru": "Сгибание кисти нейтральным хватом с диском",
+    "tracking_type": "weight_reps"
+  },
+  "Dynamic Wrist Stretches": {
+    "name_ru": "Динамическая растяжка запястий",
+    "tracking_type": "weight_reps"
+  },
+  "Wrist Curl": {
+    "name_ru": "Сгибания кистей с отягощением",
+    "tracking_type": "weight_reps"
+  },
+  "Wrist Roller": {
+    "name_ru": "Наматывание груза кистевым роллером",
+    "tracking_type": "weight_reps"
+  },
+  "Wrist Rotations": {
+    "name_ru": "Круговые вращения кистями",
+    "tracking_type": "weight_reps"
+  },
+  "Wrist Stretch": {
+    "name_ru": "Растяжка сгибателей запястья",
+    "tracking_type": "time"
+  },
+  "Wrist Ulnar Deviator And Extensor Stretch": {
+    "name_ru": "Растяжка локтевых отклонителей и разгибателей кисти",
+    "tracking_type": "time"
+  }
+}

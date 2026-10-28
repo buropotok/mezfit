@@ -1,0 +1,226 @@
+{
+  "Banded Leg Curl": {
+    "name_ru": "Сгибание ног с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Lunge": {
+    "name_ru": "Выпады с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Lying Leg Curl": {
+    "name_ru": "Сгибание ног лёжа с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Split Squat": {
+    "name_ru": "Разножные приседания с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Bulgarian Split Squat": {
+    "name_ru": "Болгарские выпады со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Curtsey Lunge": {
+    "name_ru": "Перекрёстные выпады («реверанс») со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Split Squat": {
+    "name_ru": "Разножные приседания со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Walking Lunge": {
+    "name_ru": "Выпады в ходьбе без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Lunge": {
+    "name_ru": "Выпады с сопротивлением блока",
+    "tracking_type": "weight_reps"
+  },
+  "Decline Dumbbell Leg Curl": {
+    "name_ru": "Сгибание ног с гантелью лёжа на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Bulgarian Split Squat": {
+    "name_ru": "Болгарские выпады с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Goblet Curtsey Lunge": {
+    "name_ru": "Перекрёстные выпады с гантелью у груди",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Pistol Squat": {
+    "name_ru": "Приседания «пистолетик» с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Foam Roller Hamstrings": {
+    "name_ru": "Миофасциальный релиз задней поверхности бедра на ролике",
+    "tracking_type": "time"
+  },
+  "Foam Roller IT (iliotibial Band) Stretch": {
+    "name_ru": "Миофасциальный релиз подвздошно-большеберцового тракта роликом",
+    "tracking_type": "time"
+  },
+  "Foam Roller Plantar Fasciitis": {
+    "name_ru": "Массаж подошвенной фасции роликом",
+    "tracking_type": "time"
+  },
+  "Foam Roller Quads": {
+    "name_ru": "Миофасциальный релиз квадрицепса на ролике",
+    "tracking_type": "time"
+  },
+  "Hack Squats Machine": {
+    "name_ru": "Гакк-приседания в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Hawaiian Squat": {
+    "name_ru": "Гавайские приседания",
+    "tracking_type": "weight_reps"
+  },
+  "Heel Touch Side Kick Squat": {
+    "name_ru": "Приседания с боковым ударом ногой и касанием пятки",
+    "tracking_type": "weight_reps"
+  },
+  "Horizontal Leg Press": {
+    "name_ru": "Горизонтальный жим ногами в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Pistol Squats": {
+    "name_ru": "Приседания «пистолетик» с гирей",
+    "tracking_type": "weight_reps"
+  },
+  "Knee Circles": {
+    "name_ru": "Круговые движения коленями",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Quad Stretch": {
+    "name_ru": "Растяжка квадрицепса стоя на коленях",
+    "tracking_type": "time"
+  },
+  "Leg Curl On Stability Ball": {
+    "name_ru": "Сгибания ног лёжа на фитболе",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Curl": {
+    "name_ru": "Сгибание ног в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Extension": {
+    "name_ru": "Разгибание ног в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Press": {
+    "name_ru": "Жим ногами в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Assisted Single Leg Press": {
+    "name_ru": "Жим одной ногой с помощью в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Single Leg Curl": {
+    "name_ru": "Сгибание одной ноги в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Standing Leg Raise": {
+    "name_ru": "Подъём ноги стоя в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Alternate Leg Press | Gymstick": {
+    "name_ru": "Попеременный жим ногами лёжа с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Dumbbell Leg Curl": {
+    "name_ru": "Сгибание ног лёжа с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Hamstring Stretch": {
+    "name_ru": "Растяжка задней поверхности бедра лёжа",
+    "tracking_type": "time"
+  },
+  "Nordic Hamstring Curl": {
+    "name_ru": "Нордические сгибания ног",
+    "tracking_type": "weight_reps"
+  },
+  "Pistol Squat": {
+    "name_ru": "Приседания на одной ноге («пистолетик»)",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Banded Leg Extension": {
+    "name_ru": "Разгибания ног сидя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Leg Curl": {
+    "name_ru": "Сгибания ног сидя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Leg Extension with Resistance Band": {
+    "name_ru": "Разгибания ног сидя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Groin / Adductor Stretch": {
+    "name_ru": "Растяжка приводящих мышц бедра сидя",
+    "tracking_type": "time"
+  },
+  "Shrimp Squat": {
+    "name_ru": "Приседания «креветка» на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Side Lunge": {
+    "name_ru": "Боковые выпады",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Extension": {
+    "name_ru": "Разгибание одной ноги в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Press": {
+    "name_ru": "Жим одной ногой в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Single Leg Step Down": {
+    "name_ru": "Спуск с платформы на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Skater Squat": {
+    "name_ru": "Приседания «конькобежец» на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Leg Press": {
+    "name_ru": "Жим ногами в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Leg Curl With Resistance Band": {
+    "name_ru": "Сгибание ноги стоя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Leg Extension With Resistance Band": {
+    "name_ru": "Разгибание ноги стоя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Leg Raise With Resistance Band": {
+    "name_ru": "Подъём ноги стоя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Quadriceps Stretch": {
+    "name_ru": "Растяжка квадрицепса стоя",
+    "tracking_type": "time"
+  },
+  "Standing Side Toe Touching": {
+    "name_ru": "Наклоны в сторону с касанием носка стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Single Leg Curl Machine": {
+    "name_ru": "Сгибание одной ноги стоя в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Straight Leg Raise With Resistance Band": {
+    "name_ru": "Подъём прямой ноги стоя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Supported Pistol Squat": {
+    "name_ru": "Приседания «пистолетик» с поддержкой",
+    "tracking_type": "weight_reps"
+  },
+  "Upavistha Konasana": {
+    "name_ru": "Упавиштха конасана (наклон сидя с широко разведёнными ногами)",
+    "tracking_type": "time"
+  }
+}

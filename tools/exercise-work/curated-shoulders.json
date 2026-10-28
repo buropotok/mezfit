@@ -1,0 +1,438 @@
+{
+  "45 Degree Incline Dumbbell Row": {
+    "name_ru": "Тяга гантелей с опорой грудью на скамью под углом 45°",
+    "tracking_type": "weight_reps"
+  },
+  "90-Degree Cable External Rotation": {
+    "name_ru": "Наружная ротация плеча на блоке при отведённой на 90° руке",
+    "tracking_type": "weight_reps"
+  },
+  "90-degree Cable Internal Rotation": {
+    "name_ru": "Внутренняя ротация плеча на блоке при отведённой на 90° руке",
+    "tracking_type": "weight_reps"
+  },
+  "Alternate Dumbbell Lateral Raise": {
+    "name_ru": "Попеременный подъём гантелей через стороны",
+    "tracking_type": "weight_reps"
+  },
+  "Alternating Dumbbell Front Raise": {
+    "name_ru": "Попеременный подъём гантелей перед собой",
+    "tracking_type": "weight_reps"
+  },
+  "Arm Circles": {
+    "name_ru": "Круговые вращения руками",
+    "tracking_type": "weight_reps"
+  },
+  "Arnold Press": {
+    "name_ru": "Жим Арнольда с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Alternating Shoulder Flexion": {
+    "name_ru": "Попеременный подъём рук перед собой",
+    "tracking_type": "weight_reps"
+  },
+  "Backhand Raise": {
+    "name_ru": "Подъём рук тыльной стороной кисти вверх",
+    "tracking_type": "weight_reps"
+  },
+  "Band Pull-Apart": {
+    "name_ru": "Разведение рук с эспандером перед грудью",
+    "tracking_type": "weight_reps"
+  },
+  "Band Single Arm Shoulder Press": {
+    "name_ru": "Жим эспандера над головой одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Behind the Head Military Press | Gymstick": {
+    "name_ru": "Жим гимстика из-за головы",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Shoulder External Rotation": {
+    "name_ru": "Наружная ротация плеча с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Shoulder Flexion": {
+    "name_ru": "Сгибание плеча с эспандером (подъём руки вперёд)",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Front Raise Twist": {
+    "name_ru": "Подъём штанги перед собой с поворотом",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Military Press (Overhead press)": {
+    "name_ru": "Армейский жим штанги стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Barbell Shoulder Press": {
+    "name_ru": "Жим штанги сидя над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Bench Pike Push-up": {
+    "name_ru": "Отжимания уголком с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Bench Supported Dumbbell External Rotation": {
+    "name_ru": "Наружная ротация плеча с гантелью и опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Arm Lateral Raise": {
+    "name_ru": "Подъём гантелей через стороны с согнутыми локтями",
+    "tracking_type": "weight_reps"
+  },
+  "Bent-Over Barbell Reverse Raise": {
+    "name_ru": "Подъём штанги назад в наклоне для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Bent-Over Dumbbell Rear Delt Raise With Head On Bench": {
+    "name_ru": "Разведение гантелей в наклоне с опорой головой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Lateral Raise": {
+    "name_ru": "Разведение рук через стороны в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Rear Delt Fly | Gymstick": {
+    "name_ru": "Разведение рук в наклоне с гимстиком для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Reverse Cable Fly": {
+    "name_ru": "Обратные разведения рук на блоках в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Military Press": {
+    "name_ru": "Жим руками вверх без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Cable External Shoulder Rotation": {
+    "name_ru": "Наружная ротация плеча на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Internal Shoulder Rotation": {
+    "name_ru": "Внутренняя ротация плеча на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Rear Delt Fly": {
+    "name_ru": "Обратные разведения рук на блоках для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Y Raise": {
+    "name_ru": "Подъём рук буквой Y на блоках",
+    "tracking_type": "weight_reps"
+  },
+  "Chest Supported Dumbbell Front Raises": {
+    "name_ru": "Подъём гантелей перед собой с опорой грудью на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Cross Cable Face Pull": {
+    "name_ru": "Тяга перекрёстных блоков к лицу",
+    "tracking_type": "weight_reps"
+  },
+  "Double Cable Front Raise": {
+    "name_ru": "Подъём обеих рук перед собой на блоках",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell 4 Way Lateral Raise": {
+    "name_ru": "Подъём гантелей через стороны в четырёх направлениях",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell 6 Way Raise": {
+    "name_ru": "Шестипозиционный подъём гантелей для плеч",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Chest Supported Lateral Raises": {
+    "name_ru": "Подъём гантелей через стороны с опорой грудью на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Cuban External Rotation": {
+    "name_ru": "Кубинское вращение плеч с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Rear Delt Row": {
+    "name_ru": "Тяга гантелей к груди в наклоне для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Dumbbell Reverse Fly": {
+    "name_ru": "Разведение гантелей в наклоне на скамье для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Scaption": {
+    "name_ru": "Подъём гантелей в плоскости лопатки («скапция»)",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Seated Bent Over Rear Delt Row": {
+    "name_ru": "Тяга гантелей сидя в наклоне для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Seated Cuban Press": {
+    "name_ru": "Кубинский жим с гантелями сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Shoulder Press": {
+    "name_ru": "Жим гантелей над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Side Lying Rear Delt Raise": {
+    "name_ru": "Подъём гантели для задней дельты лёжа на боку",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Single Arm Lateral Raise": {
+    "name_ru": "Подъём гантели через сторону одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Z Press": {
+    "name_ru": "Жим Зет-пресс с гантелями сидя на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Ez-Bar Incline Front Raise": {
+    "name_ru": "Подъём EZ-грифа перед собой на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "EZ Bar Underhand Press": {
+    "name_ru": "Жим EZ-грифа обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Ez Bar Upright Row": {
+    "name_ru": "Тяга EZ-грифа к подбородку",
+    "tracking_type": "weight_reps"
+  },
+  "Face Pull With Resistance Band": {
+    "name_ru": "Тяга эспандера к лицу",
+    "tracking_type": "weight_reps"
+  },
+  "Face Pull": {
+    "name_ru": "Тяга каната к лицу",
+    "tracking_type": "weight_reps"
+  },
+  "Foam Roller Posterior Shoulder": {
+    "name_ru": "Миофасциальный релиз задней поверхности плеча роликом",
+    "tracking_type": "time"
+  },
+  "Front Rack PVC Stretch": {
+    "name_ru": "Растяжка для фронтального хвата штанги с гимнастической палкой",
+    "tracking_type": "time"
+  },
+  "Half Arnold Press": {
+    "name_ru": "Жим Арнольда в неполной амплитуде",
+    "tracking_type": "weight_reps"
+  },
+  "Half Kneeling Cable External Rotation": {
+    "name_ru": "Наружная ротация плеча на блоке стоя на одном колене",
+    "tracking_type": "weight_reps"
+  },
+  "Half Kneeling High Cable Row Rope": {
+    "name_ru": "Высокая тяга каната на блоке стоя на одном колене",
+    "tracking_type": "weight_reps"
+  },
+  "Handstand Push-ups Between Benches": {
+    "name_ru": "Отжимания в стойке на руках между скамьями",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Dumbbell Side Lateral Raise": {
+    "name_ru": "Подъём гантелей через стороны на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Incline Dumbbell Y-Raise": {
+    "name_ru": "Подъём гантелей буквой Y на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Lateral Raise": {
+    "name_ru": "Подъём гири через сторону",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell One-Arm Military Press": {
+    "name_ru": "Армейский жим гири одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Shoulder Press": {
+    "name_ru": "Жим гири над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Cable Shoulder Press": {
+    "name_ru": "Жим над головой на блоке стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Lateral Raise Machine": {
+    "name_ru": "Подъём рук через стороны в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lateral Raise with Towel on Wall": {
+    "name_ru": "Подъём руки через сторону с полотенцем у стены",
+    "tracking_type": "weight_reps"
+  },
+  "Leaning Cable Lateral Raise": {
+    "name_ru": "Подъём руки через сторону на блоке с наклоном корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Leaning Single Arm Dumbbell Lateral Raise": {
+    "name_ru": "Подъём гантели через сторону одной рукой с наклоном корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Reverse Shoulder Press": {
+    "name_ru": "Обратный жим над головой в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Shoulder Press (Hammer Grip)": {
+    "name_ru": "Жим над головой нейтральным хватом в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Cable Reverse Fly": {
+    "name_ru": "Обратное разведение рук на блоках лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Shoulder Press": {
+    "name_ru": "Жим гантелей над головой лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Bent Over Cable Lateral Raise": {
+    "name_ru": "Разведение руки в наклоне на блоке одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Dumbbell Upright Row": {
+    "name_ru": "Тяга гантели к подбородку одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Plate Loaded Shoulder Press": {
+    "name_ru": "Жим над головой в дисковом тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Rear Delt Fly Machine": {
+    "name_ru": "Обратное разведение рук в тренажёре для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Bent Over Rear Delt Fly": {
+    "name_ru": "Разведение рук с эспандером в наклоне для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Pull Apart": {
+    "name_ru": "Разведение рук с резиновой лентой перед грудью",
+    "tracking_type": "weight_reps"
+  },
+  "Rotator Cuff Stretch": {
+    "name_ru": "Растяжка вращательной манжеты плеча",
+    "tracking_type": "time"
+  },
+  "Scott Press": {
+    "name_ru": "Жим Скотта с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Ballerina Exercise": {
+    "name_ru": "Упражнение «балерина» сидя для подвижности плеч",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Behind Neck Press": {
+    "name_ru": "Жим штанги из-за головы сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Dumbbell Front Raise": {
+    "name_ru": "Подъём гантелей перед собой сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Dumbbell Lateral Raise": {
+    "name_ru": "Подъём гантелей через стороны сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Rear Lateral Dumbbell Raise": {
+    "name_ru": "Разведение гантелей сидя в наклоне для задних дельт",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Scapular Retraction Exercise": {
+    "name_ru": "Сведение лопаток сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Serratus Wall Slide With Foam Roller": {
+    "name_ru": "Скольжение руками по стене с роликом для передней зубчатой мышцы",
+    "tracking_type": "weight_reps"
+  },
+  "Shoulder External Rotation": {
+    "name_ru": "Наружная ротация плеча без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Shoulder Internal Rotation": {
+    "name_ru": "Внутренняя ротация плеча без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Shoulder Pendulum": {
+    "name_ru": "Маятниковые движения рукой для плечевого сустава",
+    "tracking_type": "weight_reps"
+  },
+  "Side Arm Raises": {
+    "name_ru": "Подъём рук через стороны без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Side Bend Press | Gymstick": {
+    "name_ru": "Жим гимстика с боковым наклоном корпуса",
+    "tracking_type": "weight_reps"
+  },
+  "Side Lying Rear Delt Dumbbell Raise": {
+    "name_ru": "Подъём гантели для задней дельты лёжа на боку",
+    "tracking_type": "weight_reps"
+  },
+  "Single Arm Arnold Press": {
+    "name_ru": "Жим Арнольда одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Single Arm Circles": {
+    "name_ru": "Круговые движения одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Single Arm Upright Row | Gymstick": {
+    "name_ru": "Тяга гимстика к подбородку одной рукой",
+    "tracking_type": "weight_reps"
+  },
+  "Skier | Gymstick": {
+    "name_ru": "Тяга гимстика прямыми руками назад («лыжник»)",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Behind The Neck Press": {
+    "name_ru": "Жим из-за головы в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Shoulder Press": {
+    "name_ru": "Жим над головой в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Alternating Dumbbell Shoulder Press": {
+    "name_ru": "Попеременный жим гантелей над головой стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Close Grip Military Press": {
+    "name_ru": "Армейский жим штанги узким хватом стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Dumbbell Shoulder Press": {
+    "name_ru": "Жим гантелей стоя над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Smith Machine Shoulder Press": {
+    "name_ru": "Жим над головой стоя в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Tall Kneeling One Arm Kettlebell Press": {
+    "name_ru": "Жим гири одной рукой стоя на обоих коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Two Arm Cable Front Raise": {
+    "name_ru": "Подъём обеих рук перед собой на блоках",
+    "tracking_type": "weight_reps"
+  },
+  "Two Arm Cable Lateral Raise": {
+    "name_ru": "Подъём обеих рук через стороны на блоках",
+    "tracking_type": "weight_reps"
+  },
+  "Two Arm Dumbbell Front Raise": {
+    "name_ru": "Подъём двух гантелей перед собой",
+    "tracking_type": "weight_reps"
+  },
+  "Wall Supported Arm Raises": {
+    "name_ru": "Подъём рук с опорой на стену",
+    "tracking_type": "weight_reps"
+  },
+  "Wall-Supported Handstand Push-Ups": {
+    "name_ru": "Отжимания в стойке на руках у стены",
+    "tracking_type": "weight_reps"
+  },
+  "Weight Plate Front Raise": {
+    "name_ru": "Подъём диска от штанги перед собой",
+    "tracking_type": "weight_reps"
+  }
+}

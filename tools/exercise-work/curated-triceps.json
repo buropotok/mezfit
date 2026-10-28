@@ -1,0 +1,238 @@
+{
+  "Alternating Lying Dumbbell Triceps Extension": {
+    "name_ru": "Попеременное разгибание рук с гантелями лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Assisted Triceps Dips": {
+    "name_ru": "Отжимания на брусьях с поддержкой в гравитроне (акцент на трицепс)",
+    "tracking_type": "weight_reps"
+  },
+  "Band Pushdown": {
+    "name_ru": "Разгибание рук с эспандером сверху вниз",
+    "tracking_type": "weight_reps"
+  },
+  "Band Skull Crusher": {
+    "name_ru": "Французский жим с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Overhead Triceps Extension": {
+    "name_ru": "Разгибание рук из-за головы с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell JM Press": {
+    "name_ru": "Жим JM со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Bench Dips on Floor": {
+    "name_ru": "Обратные отжимания от скамьи с ногами на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Bench Dips": {
+    "name_ru": "Обратные отжимания от скамьи",
+    "tracking_type": "weight_reps"
+  },
+  "Bent Over Kickback": {
+    "name_ru": "Разгибание рук с гантелями назад в наклоне",
+    "tracking_type": "weight_reps"
+  },
+  "Body Ups": {
+    "name_ru": "Отжимания из упора на предплечьях с выпрямлением рук",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Concentration Tricep Extension": {
+    "name_ru": "Концентрированное разгибание руки на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Crossover Triceps Extension": {
+    "name_ru": "Разгибание рук на перекрёстных блоках",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Lying Triceps Extension": {
+    "name_ru": "Разгибания рук на трицепс лёжа на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Lying Triceps Extensions": {
+    "name_ru": "Разгибания рук на трицепс лёжа с блоком",
+    "tracking_type": "weight_reps"
+  },
+  "Cable One-Arm Overhead Triceps Extension": {
+    "name_ru": "Разгибание одной руки из-за головы на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Rope Lying Tricep Extension": {
+    "name_ru": "Разгибания рук с канатом на блоке лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Rope Overhead Triceps Extension": {
+    "name_ru": "Разгибание рук из-за головы с канатом на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Side Triceps Extension": {
+    "name_ru": "Разгибание руки в сторону на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Tricep Kickback": {
+    "name_ru": "Отведение предплечья назад на блоке для трицепса",
+    "tracking_type": "weight_reps"
+  },
+  "Chair Dips": {
+    "name_ru": "Обратные отжимания от стула",
+    "tracking_type": "weight_reps"
+  },
+  "Cross Arm Push-up": {
+    "name_ru": "Отжимания с перекрёстным положением рук",
+    "tracking_type": "weight_reps"
+  },
+  "Decline Close-Grip Bench To Skull Crusher": {
+    "name_ru": "Жим узким хватом с переходом во французский жим на скамье с отрицательным наклоном",
+    "tracking_type": "weight_reps"
+  },
+  "Decline Dumbbell Triceps Extension": {
+    "name_ru": "Разгибание рук с гантелями лёжа на скамье с отрицательным наклоном",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Seated Front and Back Tate Press": {
+    "name_ru": "Жим Тейта с гантелями сидя перед головой и за головой",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Skull Crusher": {
+    "name_ru": "Французский жим лёжа с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Triceps Extension": {
+    "name_ru": "Разгибание рук с гантелью на трицепс",
+    "tracking_type": "weight_reps"
+  },
+  "Exercise Ball Triceps Extension": {
+    "name_ru": "Разгибание рук на трицепс с опорой на фитбол",
+    "tracking_type": "weight_reps"
+  },
+  "High Pulley Overhead Tricep Extension": {
+    "name_ru": "Разгибание рук из-за головы на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Incline EZ-Bar Triceps Extension": {
+    "name_ru": "Французский жим с EZ-грифом на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Cable Triceps Extension": {
+    "name_ru": "Разгибание рук на блоке стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Triceps Dip": {
+    "name_ru": "Отжимания на трицепс в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Low Cable Tricep Kickback": {
+    "name_ru": "Разгибание руки назад с нижнего блока",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Barbell Triceps Extension": {
+    "name_ru": "Французский жим лёжа со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm High Pulley Overhead Tricep Extension": {
+    "name_ru": "Разгибание одной руки из-за головы на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Lying Triceps Extension": {
+    "name_ru": "Разгибание одной руки с гантелью лёжа",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Pronated Dumbbell Triceps Extension": {
+    "name_ru": "Разгибание одной руки с гантелью хватом сверху",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Reverse Pushdown": {
+    "name_ru": "Разгибание одной руки на блоке обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "One-Arm Single-Leg Bench Dips": {
+    "name_ru": "Обратные отжимания от скамьи с опорой на одну ногу",
+    "tracking_type": "weight_reps"
+  },
+  "One Arm Triceps Pushdown": {
+    "name_ru": "Разгибание одной руки на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Overhead Triceps Extension | Gymstick": {
+    "name_ru": "Разгибание рук из-за головы с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Push-down": {
+    "name_ru": "Разгибание рук на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Rear Drive With Resistance Band": {
+    "name_ru": "Разгибание рук назад с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Grip Pushdown": {
+    "name_ru": "Разгибание рук на верхнем блоке обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Rope Pushdown": {
+    "name_ru": "Разгибание рук с канатом на верхнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Seated Dumbbell Triceps Extension": {
+    "name_ru": "Разгибание рук с гантелью из-за головы сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated EZ-Bar Overhead Triceps Extension": {
+    "name_ru": "Разгибание рук с EZ-грифом из-за головы сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Seated One-Arm Dumbbell Triceps Extension": {
+    "name_ru": "Разгибание одной руки с гантелью из-за головы сидя",
+    "tracking_type": "weight_reps"
+  },
+  "Side One Arm Reverse Pushdown": {
+    "name_ru": "Разгибание одной руки на блоке сбоку обратным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Barbell Triceps Extension": {
+    "name_ru": "Разгибание рук со штангой стоя на трицепс",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Triceps Extension | Gymstick": {
+    "name_ru": "Разгибание рук стоя с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Triceps Stretch": {
+    "name_ru": "Растяжка трицепса стоя",
+    "tracking_type": "time"
+  },
+  "Triceps Dip Machine": {
+    "name_ru": "Отжимания на трицепс в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Triceps Dips on Floor": {
+    "name_ru": "Обратные отжимания с опорой руками и ногами на полу",
+    "tracking_type": "weight_reps"
+  },
+  "Triceps Dips": {
+    "name_ru": "Отжимания на брусьях с акцентом на трицепс",
+    "tracking_type": "weight_reps"
+  },
+  "Triceps Extension Machine": {
+    "name_ru": "Разгибание рук на трицепс в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Band Pushdown (Neutral Grip)": {
+    "name_ru": "Разгибание рук с эспандером нейтральным хватом",
+    "tracking_type": "weight_reps"
+  },
+  "V-bar Pushdown": {
+    "name_ru": "Разгибание рук на верхнем блоке с V-образной рукоятью",
+    "tracking_type": "weight_reps"
+  },
+  "triceps/kneeling-cable-triceps-extension-2.json": {
+    "name_ru": "Разгибание рук из-за головы на верхнем блоке стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "triceps/kneeling-cable-triceps-extension.json": {
+    "name_ru": "Разгибание рук на верхнем блоке стоя на коленях с упором локтями",
+    "tracking_type": "weight_reps"
+  }
+}

@@ -1,102 +1,35 @@
-name: One-time reconcile reviewed exercise JSON
+name: Build curated Russian exercise catalogue (one-time)
 
 on:
   push:
     branches: [main]
     paths:
-      - tools/exercise-work/reconcile-reviewed-existing.py
       - .github/workflows/one-time-reconcile-exercise-work.yml
+      - tools/exercise-work/build-reviewed.py
 
 permissions:
   contents: read
 
-concurrency:
-  group: exercise-work-catalogue-main
-  cancel-in-progress: false
-
 jobs:
-  reconcile:
+  generate:
     if: >-
       github.repository == 'buropotok/mezfit' &&
       github.ref == 'refs/heads/main' &&
-      github.event.head_commit.message == 'data: emit one-time editorial exercise inventory'
+      github.event.head_commit.message == 'data: prepare curated exercise catalogue build'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        category: [abs, back, biceps, calf, cardio, erector-spinae, forearm, full-body, hip, leg, shoulders, trapezius, triceps]
     steps:
-      - name: Checkout current main
+      - name: Checkout exact main commit
         uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Reconcile only existing reviewed copies
-        run: python tools/exercise-work/reconcile-reviewed-existing.py
-      - name: Ensure original exercise files were not touched
+      - name: Build and validate every exercise and emit one category
+        run: python tools/exercise-work/build-reviewed.py --category "${{ matrix.category }}"
+      - name: Assert source catalogue unchanged
         run: git diff --exit-code -- assets/exercises
-      - name: Export verified corrections for connector batch commit
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json
-          import pathlib
-          import subprocess
-          names = subprocess.check_output(
-              ["git", "diff", "--name-only", "--", "assets/work"],
-              text=True,
-          ).splitlines()
-          print("MEZFIT_BATCH_COUNT=" + str(len(names)))
-          for name in names:
-              content = pathlib.Path(name).read_text(encoding="utf-8")
-              print("MEZFIT_BATCH_RECORD=" + json.dumps(
-                  {"path": name, "content": content}, ensure_ascii=False,
-              ))
-          PY
-      - name: Export source-only index for editorial translation
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json
-          import re
-          import unicodedata
-          from pathlib import Path
-          root = Path(".")
-          sources = root / "assets" / "exercises"
-          works = root / "assets" / "work"
-          refs = json.loads((root / "tools/exercise-work/ru-names-reference.json").read_text(encoding="utf-8"))["names"]
-          def norm(value):
-              value = unicodedata.normalize("NFKC", value).lower()
-              value = re.sub(r"\\((male|female)\\)", " ", value)
-              return " ".join(re.findall(r"[a-z0-9]+", value))
-          known = {norm(name) for name in refs}
-          reviewed = set()
-          for p in works.glob("*/*.json"):
-              obj = json.loads(p.read_text(encoding="utf-8"))
-              reviewed.add(obj.get("source_url") or norm(obj["name"]))
-          seen = set()
-          counts = {"source_files": 0, "unique": 0, "reviewed": 0, "reference_exact": 0, "editorial": 0}
-          for p in sorted(sources.glob("*/*.json")):
-              if p.name == "_manifest.json":
-                  continue
-              counts["source_files"] += 1
-              obj = json.loads(p.read_text(encoding="utf-8"))
-              identity = obj.get("source_url") or norm(obj["name"])
-              if identity in seen:
-                  continue
-              seen.add(identity)
-              counts["unique"] += 1
-              if identity in reviewed:
-                  counts["reviewed"] += 1
-                  continue
-              if norm(obj["name"]) in known:
-                  counts["reference_exact"] += 1
-                  continue
-              counts["editorial"] += 1
-              value = {
-                  "path": p.relative_to(sources).as_posix(),
-                  "name": obj["name"],
-                  "equipment": obj.get("equipment", []),
-                  "how_to": str(obj.get("how_to", ""))[:600],
-              }
-              print("MEZFIT_EDITORIAL_ITEM=" + json.dumps(value, ensure_ascii=False))
-          print("MEZFIT_EDITORIAL_SUMMARY=" + json.dumps(counts, ensure_ascii=False))
-          PY

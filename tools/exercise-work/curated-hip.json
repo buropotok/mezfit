@@ -1,0 +1,558 @@
+{
+  "90/90 Hip Stretch": {
+    "name_ru": "Растяжка тазобедренных суставов в положении 90/90",
+    "tracking_type": "time"
+  },
+  "Thigh fly (Adductor Magnus Stretch)": {
+    "name_ru": "Растяжка большой приводящей мышцы бедра с разведением ног",
+    "tracking_type": "time"
+  },
+  "ATG Split Squat": {
+    "name_ru": "Глубокие разножные приседания (ATG)",
+    "tracking_type": "weight_reps"
+  },
+  "Band Lying Hip External Rotation": {
+    "name_ru": "Наружная ротация бедра лёжа с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Band Seated Hip External Rotation": {
+    "name_ru": "Наружная ротация бедра сидя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Band Side Lying Clam": {
+    "name_ru": "Разведение коленей лёжа на боку («ракушка») с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Band Side Lying Leg Lift": {
+    "name_ru": "Подъём ноги лёжа на боку с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Donkey Kicks": {
+    "name_ru": "Махи согнутой ногой назад на четвереньках с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Fire Hydrant": {
+    "name_ru": "Отведение согнутой ноги в сторону на четвереньках с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Glute Bridge": {
+    "name_ru": "Ягодичный мостик с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Glute Kickbacks": {
+    "name_ru": "Отведение ноги назад с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Kettlebell Goblet Squat": {
+    "name_ru": "Приседания с гирей у груди и эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Seated Hip Abduction": {
+    "name_ru": "Разведение бёдер сидя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Single Leg Glute Bridge": {
+    "name_ru": "Ягодичный мостик на одной ноге с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Standing Glute Kickback": {
+    "name_ru": "Отведение ноги назад стоя с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Step-up": {
+    "name_ru": "Зашагивания на платформу с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Thigh Fly": {
+    "name_ru": "Разведение бёдер с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Banded Walk": {
+    "name_ru": "Ходьба в сторону с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Glute Bridge Two Legs on Bench": {
+    "name_ru": "Ягодичный мостик со штангой с двумя ногами на скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Hip Thrusts": {
+    "name_ru": "Ягодичный мостик со штангой с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Pin Front Squat": {
+    "name_ru": "Фронтальные приседания со штангой от ограничителей",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Single Leg Hip Thrust": {
+    "name_ru": "Ягодичный мостик со штангой на одной ноге с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Sumo Squat": {
+    "name_ru": "Приседания сумо со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Belt Squat": {
+    "name_ru": "Приседания с поясным отягощением в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Bench Glute Flutter Kicks": {
+    "name_ru": "Попеременные махи ногами лёжа на скамье для ягодиц",
+    "tracking_type": "time"
+  },
+  "Bodyweight Box Squat": {
+    "name_ru": "Приседания на тумбу с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Bulgarian Split Squat": {
+    "name_ru": "Болгарские выпады с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Hip Thrust": {
+    "name_ru": "Ягодичный мостик с опорой на скамью без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Lunge": {
+    "name_ru": "Выпады с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Plie Squat": {
+    "name_ru": "Приседания плие с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Single Leg Deadlift": {
+    "name_ru": "Становая тяга на одной ноге без отягощения",
+    "tracking_type": "weight_reps"
+  },
+  "Bodyweight Sumo Squat": {
+    "name_ru": "Приседания сумо с собственным весом",
+    "tracking_type": "weight_reps"
+  },
+  "Box Pistol Squat": {
+    "name_ru": "Приседания на одной ноге до тумбы («пистолетик»)",
+    "tracking_type": "weight_reps"
+  },
+  "Bridge Hip Abduction": {
+    "name_ru": "Разведение коленей в ягодичном мостике",
+    "tracking_type": "weight_reps"
+  },
+  "Bulgarian Split Squat Jump": {
+    "name_ru": "Болгарские выпады с выпрыгиванием",
+    "tracking_type": "weight_reps"
+  },
+  "Butterfly Stretch": {
+    "name_ru": "Растяжка приводящих мышц сидя («бабочка»)",
+    "tracking_type": "time"
+  },
+  "Cable Donkey Kickback": {
+    "name_ru": "Отведение согнутой ноги назад на нижнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Forward Lunge": {
+    "name_ru": "Выпады вперёд с сопротивлением блока",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Front Squat": {
+    "name_ru": "Фронтальные приседания с нижним блоком",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Hip Abduction": {
+    "name_ru": "Отведение бедра в сторону на нижнем блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Hip Extension": {
+    "name_ru": "Разгибание бедра назад на блоке",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Cable Pull Through": {
+    "name_ru": "Тяга нижнего блока между ног стоя на коленях",
+    "tracking_type": "weight_reps"
+  },
+  "Cable Goblet Squat": {
+    "name_ru": "Приседания с нижним блоком с рукоятью у груди",
+    "tracking_type": "weight_reps"
+  },
+  "Cossack Squat": {
+    "name_ru": "Приседания «казак»",
+    "tracking_type": "weight_reps"
+  },
+  "Curtsy Lunge": {
+    "name_ru": "Перекрёстные выпады («реверанс»)",
+    "tracking_type": "weight_reps"
+  },
+  "Decline Bench Dumbbell Lunge": {
+    "name_ru": "Выпады с гантелями с ногой на наклонной скамье",
+    "tracking_type": "weight_reps"
+  },
+  "Donkey Kick on Leg Extension Machine": {
+    "name_ru": "Отведение ноги назад в тренажёре для разгибания ног",
+    "tracking_type": "weight_reps"
+  },
+  "Donkey Kick on Smith Machine": {
+    "name_ru": "Отведение ноги назад с упором в гриф машины Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Donkey Kicks": {
+    "name_ru": "Махи согнутой ногой назад на четвереньках",
+    "tracking_type": "weight_reps"
+  },
+  "Duck Walk": {
+    "name_ru": "Ходьба в приседе («утиная ходьба»)",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Cossack Squat": {
+    "name_ru": "Приседания «казак» с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Forward Leaning Lunge": {
+    "name_ru": "Выпады с гантелями с наклоном корпуса вперёд",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Glute Bridge": {
+    "name_ru": "Ягодичный мостик с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Lateral Step Up": {
+    "name_ru": "Боковые зашагивания на платформу с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Reverse Lunge": {
+    "name_ru": "Обратные выпады с гантелями",
+    "tracking_type": "weight_reps"
+  },
+  "Dumbbell Sumo Squat": {
+    "name_ru": "Приседания сумо с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Exercise Ball Wall Squat": {
+    "name_ru": "Приседания у стены с фитболом за спиной",
+    "tracking_type": "weight_reps"
+  },
+  "Fire Hydrant": {
+    "name_ru": "Отведение согнутой ноги в сторону на четвереньках («пожарный гидрант»)",
+    "tracking_type": "weight_reps"
+  },
+  "Foam Roller Glutes": {
+    "name_ru": "Миофасциальный релиз ягодиц массажным роликом",
+    "tracking_type": "time"
+  },
+  "Foam Roller Inner Thigh Adductor Stretch": {
+    "name_ru": "Миофасциальный релиз приводящих мышц бедра роликом",
+    "tracking_type": "time"
+  },
+  "Frog Pose": {
+    "name_ru": "Поза лягушки",
+    "tracking_type": "time"
+  },
+  "Frog Pump": {
+    "name_ru": "Ягодичный мостик «лягушка» со сведёнными стопами",
+    "tracking_type": "weight_reps"
+  },
+  "Glute Bridge on Bench": {
+    "name_ru": "Ягодичный мостик с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Glute Bridge One Leg on Bench": {
+    "name_ru": "Ягодичный мостик на одной ноге с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Glute Kickback Machine": {
+    "name_ru": "Отведение ноги назад в тренажёре для ягодиц",
+    "tracking_type": "weight_reps"
+  },
+  "Happy Baby Pose": {
+    "name_ru": "Поза счастливого ребёнка",
+    "tracking_type": "time"
+  },
+  "Heel-Elevated Goblet Squat": {
+    "name_ru": "Приседания с гирей или гантелью у груди и приподнятыми пятками",
+    "tracking_type": "weight_reps"
+  },
+  "High Knee Lunge on Bosu Ball": {
+    "name_ru": "Выпад с высоким подъёмом колена на BOSU",
+    "tracking_type": "weight_reps"
+  },
+  "Hip Abduction Machine": {
+    "name_ru": "Разведение бёдер в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Hip Adduction Machine": {
+    "name_ru": "Сведение бёдер в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Hip Circles": {
+    "name_ru": "Круговые движения тазом",
+    "tracking_type": "weight_reps"
+  },
+  "Hip Extension On Bench": {
+    "name_ru": "Разгибание бедра с опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Hip Thrust Machine": {
+    "name_ru": "Ягодичный мостик в тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Hip Thrust on The Leg Extension Machine": {
+    "name_ru": "Ягодичный мостик в тренажёре для разгибания ног",
+    "tracking_type": "weight_reps"
+  },
+  "Jefferson Squat": {
+    "name_ru": "Приседания Джефферсона со штангой между ног",
+    "tracking_type": "weight_reps"
+  },
+  "Kettlebell Split Snatch": {
+    "name_ru": "Рывок гири с приёмом в разножку",
+    "tracking_type": "weight_reps"
+  },
+  "Kicks Leg Bent": {
+    "name_ru": "Махи согнутой ногой назад",
+    "tracking_type": "weight_reps"
+  },
+  "Kneeling Hip Flexor Stretch": {
+    "name_ru": "Растяжка сгибателей бедра стоя на колене",
+    "tracking_type": "time"
+  },
+  "Kneeling Leg Out Adductor Stretch": {
+    "name_ru": "Растяжка приводящих мышц с вытянутой в сторону ногой стоя на колене",
+    "tracking_type": "time"
+  },
+  "Kneeling Single Leg Kick | Gymstick": {
+    "name_ru": "Мах одной ногой назад стоя на коленях с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Landmine Deadlift": {
+    "name_ru": "Становая тяга с лэндмайн-грифом",
+    "tracking_type": "weight_reps"
+  },
+  "Landmine Lunge": {
+    "name_ru": "Выпады с лэндмайн-грифом",
+    "tracking_type": "weight_reps"
+  },
+  "Landmine Squat": {
+    "name_ru": "Приседания с лэндмайн-грифом",
+    "tracking_type": "weight_reps"
+  },
+  "Lateral Leg Swings": {
+    "name_ru": "Махи ногой в сторону",
+    "tracking_type": "weight_reps"
+  },
+  "Leg Swings Front to Back": {
+    "name_ru": "Махи ногой вперёд-назад",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Side Hip Abduction": {
+    "name_ru": "Отведение бедра в сторону в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Side Hip Adduction": {
+    "name_ru": "Приведение бедра в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Standing Hip Extension": {
+    "name_ru": "Разгибание бедра стоя в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lever Standing Rear Kick": {
+    "name_ru": "Отведение ноги назад стоя в рычажном тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Lying Glute Stretch": {
+    "name_ru": "Растяжка ягодичных мышц лёжа",
+    "tracking_type": "time"
+  },
+  "Pendulum Lunge": {
+    "name_ru": "Маятниковые выпады вперёд и назад",
+    "tracking_type": "weight_reps"
+  },
+  "Pendulum Squat": {
+    "name_ru": "Приседания в маятниковом тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Pin Squat": {
+    "name_ru": "Приседания со штангой от ограничителей",
+    "tracking_type": "weight_reps"
+  },
+  "Piriformis Stretch": {
+    "name_ru": "Растяжка грушевидной мышцы",
+    "tracking_type": "time"
+  },
+  "Pistol Squat to Box": {
+    "name_ru": "Приседания «пистолетик» до тумбы",
+    "tracking_type": "weight_reps"
+  },
+  "Pull through With Resistance Band": {
+    "name_ru": "Тяга эспандера между ног стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Rack Pull": {
+    "name_ru": "Становая тяга штанги от стоек",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Hip Thrust": {
+    "name_ru": "Ягодичный мостик с опорой на скамью и эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Hip Thrusts on Knees": {
+    "name_ru": "Ягодичный мостик стоя на коленях с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Lateral Walk": {
+    "name_ru": "Боковая ходьба с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Overhead Squat": {
+    "name_ru": "Приседания с эспандером над головой",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Reverse Hyperextension": {
+    "name_ru": "Обратная гиперэкстензия с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Resistance Band Toe Touch": {
+    "name_ru": "Наклоны с касанием носков с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Hack Squat": {
+    "name_ru": "Обратные приседания в гакк-тренажёре",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Lunge Knee Lift": {
+    "name_ru": "Обратные выпады с подъёмом колена",
+    "tracking_type": "weight_reps"
+  },
+  "Reverse Lunge": {
+    "name_ru": "Обратные выпады",
+    "tracking_type": "weight_reps"
+  },
+  "Side Lying Clam": {
+    "name_ru": "Разведение коленей лёжа на боку («ракушка»)",
+    "tracking_type": "weight_reps"
+  },
+  "Side Lying Hip Adduction": {
+    "name_ru": "Приведение бедра лёжа на боку",
+    "tracking_type": "weight_reps"
+  },
+  "Single Knee To Chest": {
+    "name_ru": "Подтягивание одного колена к груди для растяжки",
+    "tracking_type": "time"
+  },
+  "Single Leg Bridge": {
+    "name_ru": "Ягодичный мостик на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Single Stiff Leg Deadlift With Resistance Band": {
+    "name_ru": "Становая тяга на прямой ноге с эспандером",
+    "tracking_type": "weight_reps"
+  },
+  "Single-Leg Dumbbell Hip Thrust": {
+    "name_ru": "Ягодичный мостик на одной ноге с гантелью и опорой на скамью",
+    "tracking_type": "weight_reps"
+  },
+  "Sitting Rotation Hip Stretch": {
+    "name_ru": "Растяжка тазобедренного сустава сидя с поворотом бедра",
+    "tracking_type": "time"
+  },
+  "Sitting Wide Leg Adductor Stretch": {
+    "name_ru": "Растяжка приводящих мышц сидя с широко разведёнными ногами",
+    "tracking_type": "time"
+  },
+  "Smith Machine Hip Thrust": {
+    "name_ru": "Ягодичный мостик в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Lunge": {
+    "name_ru": "Выпады в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Reverse Kickback": {
+    "name_ru": "Отведение ноги назад в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Smith Machine Squat": {
+    "name_ru": "Приседания в машине Смита",
+    "tracking_type": "weight_reps"
+  },
+  "Split Squat | Gymstick": {
+    "name_ru": "Разножные приседания с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Squat | Gymstick": {
+    "name_ru": "Приседания с гимстиком",
+    "tracking_type": "weight_reps"
+  },
+  "Squat mobility Complex": {
+    "name_ru": "Комплекс упражнений для подвижности в приседе",
+    "tracking_type": "time"
+  },
+  "Squat on The Abductor Machine": {
+    "name_ru": "Приседания в тренажёре для отведения бёдер",
+    "tracking_type": "weight_reps"
+  },
+  "Barbell Squat": {
+    "name_ru": "Приседания со штангой",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Hip Abduction": {
+    "name_ru": "Отведение ноги в сторону стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Hip Extension": {
+    "name_ru": "Разгибание бедра назад стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Knee Hugs": {
+    "name_ru": "Подтягивание колена к груди стоя",
+    "tracking_type": "time"
+  },
+  "Standing Leg Circles": {
+    "name_ru": "Круговые махи ногой стоя",
+    "tracking_type": "weight_reps"
+  },
+  "Standing Wide Knees Adductor Stretch": {
+    "name_ru": "Растяжка приводящих мышц стоя с широко разведёнными коленями",
+    "tracking_type": "time"
+  },
+  "Standing Wide Leg Adductor Stretch": {
+    "name_ru": "Растяжка приводящих мышц стоя с широко расставленными ногами",
+    "tracking_type": "time"
+  },
+  "Static Lunge": {
+    "name_ru": "Выпады на месте",
+    "tracking_type": "weight_reps"
+  },
+  "Step Up Single Leg Balance with Bicep Curl": {
+    "name_ru": "Зашагивание с удержанием равновесия на одной ноге и сгибанием руки с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Straight Leg Kickback": {
+    "name_ru": "Отведение прямой ноги назад",
+    "tracking_type": "weight_reps"
+  },
+  "Plie Dumbbell Squat": {
+    "name_ru": "Приседания плие с гантелью",
+    "tracking_type": "weight_reps"
+  },
+  "Supported One Leg Standing Hip Flexor And Knee Extensor Stretch": {
+    "name_ru": "Растяжка сгибателей бедра и разгибателей колена стоя на одной ноге с опорой",
+    "tracking_type": "time"
+  },
+  "Towel Leg Curl": {
+    "name_ru": "Сгибания ног скольжением пяток по полотенцу",
+    "tracking_type": "weight_reps"
+  },
+  "TRX Pistol Squat": {
+    "name_ru": "Приседания «пистолетик» с поддержкой петель TRX",
+    "tracking_type": "weight_reps"
+  },
+  "Unilateral Bridge": {
+    "name_ru": "Ягодичный мостик на одной ноге",
+    "tracking_type": "weight_reps"
+  },
+  "Zercher Deadlift": {
+    "name_ru": "Становая тяга Зерхера",
+    "tracking_type": "weight_reps"
+  },
+  "Zercher Squat": {
+    "name_ru": "Приседания Зерхера",
+    "tracking_type": "weight_reps"
+  }
+}
