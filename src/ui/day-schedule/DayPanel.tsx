@@ -6,6 +6,7 @@ export const START_HOUR = 0;
 export const END_HOUR = 24;
 export const HOUR_HEIGHT = 64;
 export const EVENT_EDGE_INSET = 1;
+export const MIN_EVENT_DISPLAY_MINUTES = 15;
 export const FULL_EVENT_CARD_HEIGHT = HOUR_HEIGHT - EVENT_EDGE_INSET * 2;
 export const DRAG_SNAP_MINUTES = 15;
 
@@ -131,15 +132,17 @@ export function resizedEventTiming(
   };
 }
 
-/** Clip to the displayed 00:00–24:00 range; visual size never exceeds time. */
+/** Actual timing stays unchanged; short entries get a readable quarter-hour frame. */
 export function eventGeometry(event: DayScheduleEventBase): { top: number; height: number } | null {
-  if (!Number.isFinite(event.startMinutes) || !Number.isFinite(event.durationMinutes) || event.durationMinutes <= 0) return null;
+  if (!Number.isFinite(event.startMinutes) || !Number.isFinite(event.durationMinutes) || event.durationMinutes < 0) return null;
   const start = Math.max(START_HOUR * 60, event.startMinutes);
   const end = Math.min(END_HOUR * 60, event.startMinutes + event.durationMinutes);
-  if (end <= start) return null;
+  if (end < start || start >= END_HOUR * 60 || (event.startMinutes < START_HOUR * 60 && end <= START_HOUR * 60)) return null;
   const slotHeight = (end - start) / 60 * HOUR_HEIGHT;
-  const inset = Math.min(EVENT_EDGE_INSET, slotHeight / 4);
-  return { top: yForMinutes(start) + inset, height: slotHeight - 2 * inset };
+  const minimumHeight = MIN_EVENT_DISPLAY_MINUTES / 60 * HOUR_HEIGHT;
+  const inset = Math.min(EVENT_EDGE_INSET, Math.max(0, (slotHeight - minimumHeight) / 2));
+  const height = Math.max(minimumHeight, slotHeight - inset * 2);
+  return { top: Math.min(yForMinutes(start) + inset, yForMinutes(END_HOUR * 60) - height), height };
 }
 
 function formatTime(totalMinutes: number): string {
