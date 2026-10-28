@@ -187,7 +187,10 @@ describe.each(trackingTypes)('SetEntry %s explicit deletion capability', trackin
     const remove = screen.getByRole('button', { name: 'Удалить' });
     fireEvent.click(remove);
     fireEvent.click(remove);
-    fireEvent.click(screen.getByRole('button', { name: 'Сохраняем…' }));
+    const close = screen.getByRole('button', { name: 'Закрыть подход' });
+    expect(close.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(close);
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
     expect(onDeleteSet).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
