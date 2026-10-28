@@ -5,6 +5,7 @@ import {
   useState,
   type UIEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
 import { triggerTelegramSelectionHaptic } from '../../telegram';
 import { MezfitPopover } from '../konsta-mezfit';
@@ -61,6 +62,10 @@ export interface ThreeColumnPickerProps {
   header?: ReactNode;
   /** Static interactive lens slots replacing individual wheels when supplied. */
   staticLens?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
+  /** Text at a static slot, rendered through the same optics as wheel values. */
+  staticLensValues?: Partial<Record<ThreeColumnPickerPart, string>>;
+  popoverRef?: Ref<HTMLElement>;
+  onPositioned?: (element: HTMLElement) => void;
   popoverClassName?: string;
   pickerClassName?: string;
   columnsClassName?: string;
@@ -179,6 +184,7 @@ function PickerLens({
   lensXs,
   separators = [],
   staticLens,
+  staticLensValues,
 }: {
   assets: TimeLensAssets | null;
   scrollTops: ScrollTops;
@@ -187,6 +193,7 @@ function PickerLens({
   lensXs: readonly [number, number, number];
   separators?: readonly ThreeColumnPickerSeparator[];
   staticLens?: Partial<Record<ThreeColumnPickerPart, ReactNode>>;
+  staticLensValues?: Partial<Record<ThreeColumnPickerPart, string>>;
 }) {
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-three-column-picker-lens-${reactId}`;
@@ -204,6 +211,16 @@ function PickerLens({
           lensMode={lensMode}
         />
       ))}
+      {PARTS.map((part, index) => staticLensValues?.[part] ? (
+        <g key={part} data-ui-picker-static-value={part}>
+          <LensText
+            x={lensXs[index]}
+            column={{ ...columns[part], values: [0], format: () => staticLensValues?.[part] ?? '' }}
+            scrollTop={0}
+            lensMode={lensMode}
+          />
+        </g>
+      ) : null)}
       {separators.map(({ x, label }, index) => (
         <text
           key={index}
@@ -381,6 +398,9 @@ export function ThreeColumnPicker({
   separators,
   header,
   staticLens,
+  staticLensValues,
+  popoverRef,
+  onPositioned,
   popoverClassName,
   pickerClassName,
   columnsClassName,
@@ -646,6 +666,8 @@ export function ThreeColumnPicker({
 
   return (
     <MezfitPopover
+      ref={popoverRef}
+      onPositioned={onPositioned}
       opened={opened}
       target={target ?? undefined}
       angle={false}
@@ -687,6 +709,7 @@ export function ThreeColumnPicker({
             lensXs={lensXs}
             separators={separators}
             staticLens={staticLens}
+            staticLensValues={staticLensValues}
           />
         </div>
       </div>
