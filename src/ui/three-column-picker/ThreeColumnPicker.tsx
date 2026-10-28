@@ -739,7 +739,7 @@ export function ThreeColumnPicker({
     if (!columns[part].gestureStep || !touch || !openedRef.current) return;
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
     const previous = gestureRef.current[part];
-    if (previous?.holdTimer !== null && previous?.holdTimer !== undefined) {
+    if (previous && previous.holdTimer !== null) {
       view.clearTimeout(previous.holdTimer);
     }
     // A new gesture always starts in the native coarse wheel. The browser
@@ -835,7 +835,7 @@ export function ThreeColumnPicker({
       commitIndex(part, index);
       const view = element.ownerDocument.defaultView ?? window;
       const gesture = gestureRef.current[part];
-      if (gesture?.holdTimer !== null && gesture?.holdTimer !== undefined) view.clearTimeout(gesture.holdTimer);
+      if (gesture && gesture.holdTimer !== null) view.clearTimeout(gesture.holdTimer);
       delete gestureRef.current[part];
     });
     onClose();
