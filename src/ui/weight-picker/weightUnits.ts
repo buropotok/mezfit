@@ -3,12 +3,14 @@ export const KILOGRAM_VALUES = Array.from({ length: 400 }, (_, index) => index);
 export const FRACTION_VALUES = [0, 25, 50, 75] as const;
 
 export function parseWeightKg(weightKg: number, owner: 'WeightPicker' | 'WeightRepsPicker') {
-  if (!Number.isFinite(weightKg) || weightKg < 0 || weightKg > 399.75) {
-    throw new Error(`${owner} weightKg must be from 0 to 399.75`);
+  if (!Number.isFinite(weightKg) || weightKg < 0
+    || (owner === 'WeightPicker' && weightKg > 399.75)) {
+    throw new Error(`${owner} weightKg must be ${owner === 'WeightPicker' ? 'from 0 to 399.75' : 'non-negative'}`);
   }
-  // Multiplication by four is exact for the supported quarter-kilogram values.
-  if (!Number.isInteger(weightKg * 4)) {
-    throw new Error(`${owner} weightKg must use 0.25 kg increments`);
+  // WeightPicker remains a bounded wheel. The number-keypad WeightRepsPicker
+  // has no business maximum, but quarter values must be exactly representable.
+  if (!Number.isSafeInteger(weightKg * 4)) {
+    throw new Error(`${owner} weightKg must use 0.25 kg increments within JS safe precision`);
   }
   const quarters = weightKg * 4;
   return {

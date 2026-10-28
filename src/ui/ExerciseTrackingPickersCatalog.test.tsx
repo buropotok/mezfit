@@ -59,7 +59,8 @@ describe('UI Kit exercise tracking picker catalog', () => {
     expect(screen.getByText('Выбрано: 2 км 050 м (2050 м)')).toBeTruthy();
     expect(screen.getByText('Выбрано: 70.75 кг')).toBeTruthy();
     expect(screen.getByText(/Целые числа от 0 до 999/)).toBeTruthy();
-    expect(screen.getAllByText(/дроби 00 \/ 25 \/ 5 \/ 75/)).toHaveLength(2);
+    expect(screen.getByText(/Цифровой ввод неотрицательных повторений и целых килограммов без заданной верхней границы; дробные килограммы с шагом 0,25 кг выбираются колесом 00 \/ 25 \/ 5 \/ 75/)).toBeTruthy();
+    expect(screen.getByText(/Только вес: 0–399,75 кг, шаг 0,25 кг\. Два колеса — килограммы и дроби 00 \/ 25 \/ 5 \/ 75/)).toBeTruthy();
   });
 
   it('allows choosing exact elapsed seconds, then closes without resetting the value', () => {

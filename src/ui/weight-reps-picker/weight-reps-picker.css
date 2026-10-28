@@ -13,6 +13,27 @@
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/* The icon stays the same 40px UIKit control; the current value
+   remains visible immediately beneath it within the 72px lens. */
+.ui-weight-reps-picker__lens-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  max-width: 100%;
+}
+
+.ui-weight-reps-picker__lens-value {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .ui-weight-reps-picker__lens-status {
   display: grid;
   place-items: center;
@@ -34,10 +55,18 @@
   .ui-weight-reps-picker__input-active { animation: none; }
 }
 
+/* The shared Sheet fills the navigation-safe viewport by default.
+   Only this numeric keypad sizes to its contents and the measured
+   space below the picker/metric card (on short viewports it scrolls). */
+.ui-mezfit-bottom-sheet.ui-weight-reps-picker__number-sheet {
+  height: auto;
+  max-height: var(--ui-weight-reps-number-sheet-max-height, calc(100dvh - 16px));
+}
+
 .ui-weight-reps-picker__number-content {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: 0;
 }
 
 .ui-weight-reps-picker__number-header {
@@ -58,16 +87,11 @@
 
 .ui-weight-reps-picker__number-body {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-4) var(--ui-space-3) var(--ui-space-6);
-}
-
-.ui-weight-reps-picker__number-readout {
-  font-variant-numeric: tabular-nums;
+  justify-content: flex-start;
+  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-4);
 }
 
 .ui-weight-reps-picker__number-grid {
