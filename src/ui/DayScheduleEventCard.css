@@ -34,6 +34,8 @@
   place-items: center;
 }
 
+.ui-day-schedule-event-card__media > * { flex-shrink: 0; }
+
 .ui-day-schedule-event-card__media > .ui-avatar {
   width: 50px;
   height: 50px;
@@ -45,6 +47,8 @@
 
 .ui-day-schedule-event-card__content { width: 100%; min-width: 0; pointer-events: none; }
 .ui-day-schedule-event-card__corner { position: absolute; top: 4px; right: 4px; pointer-events: none; }
+.ui-day-schedule-event-card__compact-row { display: flex; align-items: center; gap: 4px; padding-inline: 4px; white-space: nowrap; }
+.ui-day-schedule-event-card__corner--inline { position: static; display: flex; flex: 0 0 auto; align-items: center; justify-content: center; }
 .ui-day-schedule-event-card__touch {
   position: absolute;
   inset: 0;
