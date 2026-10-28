@@ -178,6 +178,17 @@ describe('WeightRepsPicker', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('repositions native coarse rows when external weight changes to another unit residue', () => {
+    const onChange = vi.fn();
+    const picker = renderPicker({ value: { reps: 8, weightKg: 77.5 }, onChange });
+    picker.setValue({ reps: 8, weightKg: 83.5 });
+    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(40);
+    expect(within(kilograms).getByRole('option', { name: '83' })
+      .getAttribute('aria-selected')).toBe('true');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('rejects values outside the component contract', () => {
     expect(() => renderPicker({ value: { reps: 101, weightKg: 80 } })).toThrow(
       'WeightRepsPicker reps must be an integer from 0 to 100',
