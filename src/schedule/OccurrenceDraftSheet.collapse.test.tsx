@@ -6,7 +6,7 @@ import type { SortableListProps } from '../ui/SortableList';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
-import { OccurrenceDraftSheet } from './OccurrenceDraftSheet';
+import { OccurrenceDraftCard, OccurrenceDraftSheet } from './OccurrenceDraftSheet';
 
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => null }));
 vi.mock('./WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
@@ -49,6 +49,6 @@ it('collapses only the plan, shows its compact timing and keeps the planning she
   expect(screen.getByText('Упражнение плана')).toBeTruthy();
   expect(screen.queryByText('28.10.2026')).toBeNull();
   expect(close).not.toHaveBeenCalled();
-  view.rerender(<OccurrenceDraftSheet inlineCard draft={draft} drafts={repository} onClose={close} onSave={vi.fn()} />);
+  view.rerender(<OccurrenceDraftCard collapsed={false} onCollapsedChange={vi.fn()} draft={draft} drafts={repository} onClose={close} onSave={vi.fn()} />);
   expect(screen.getByTestId('plan-list').getAttribute('data-surface')).toBe('transparent');
 });
