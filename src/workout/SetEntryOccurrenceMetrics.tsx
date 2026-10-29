@@ -292,7 +292,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
       <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
     </MezfitDialog>, host) : null}
-    {error ? createPortal(<Toast opened position="bottom" role="alert"><Text variant="body">{error}</Text></Toast>, host) : null}
+    {error ? createPortal(<Toast opened position="center" role="alert"><Text variant="body">{error}</Text></Toast>, host) : null}
     {createPortal(<MezfitDialog opened={discardConfirm} role="alertdialog" aria-label="Сохранить изменения?" aria-modal="true"
       title={<Text variant="headline">Сохранить изменения?</Text>}
       buttons={<>
