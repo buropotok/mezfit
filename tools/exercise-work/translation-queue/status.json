@@ -127,15 +127,25 @@
       "result_stats": null
     },
     "B008": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "mezfit-translation-agent-mvsttlku-4p6tjvd",
       "claim_id": "claim-mvsug0zc-f6hxw6k3x5l",
       "started_at": "2026-10-29T01:07:33.789Z",
       "lease_until": "2026-10-29T03:07:33.789Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T01:22:11.807Z",
+      "result_branch": "data/howto-batch-B008-claim-mvsug0zc-f6hxw6k3x5l",
+      "result_commit": "45a66560099221a71eb3c2f5628e43b3bef6ccf5",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 54,
+        "already_translated": 0,
+        "without_english": 46,
+        "new_unique_translations": 38,
+        "reused_translations": 16,
+        "unique_nonempty_english": 38,
+        "duplicate_conflicts": 0,
+        "validation": "passed"
+      }
     },
     "B009": {
       "status": "in_progress",
