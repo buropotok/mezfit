@@ -201,11 +201,11 @@
       "result_stats": null
     },
     "B013": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "mezfit-translation-gpt6-continue2-w03dkrc",
+      "claim_id": "claim-mvsv49au-qzzowfrp4",
+      "started_at": "2026-10-29T01:26:24.721Z",
+      "lease_until": "2026-10-29T03:26:24.721Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
