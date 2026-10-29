@@ -191,16 +191,18 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 15, weightKg: 23.5 });
   });
 
-  it('restores native relative ten-kilogram rows during a fast flick', () => {
+  it('keeps consecutive kilogram rows and the visible native value during a fast flick', () => {
     const picker = renderPicker({ value: { reps: 8, weightKg: 23.75 } });
     fireEvent.click(screen.getByRole('button', { name: 'Режим' }));
     const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' }).style.top).toBe('100px');
     fireEvent.touchStart(kilograms, { touches: [{ clientY: 200 }] });
     fireEvent.touchMove(kilograms, { touches: [{ clientY: 120 }] });
     const labels = within(kilograms).getAllByRole('option').map(node => node.textContent);
-    expect(labels.slice(0, 5)).toEqual(['3', '13', '23', '33', '43']);
+    expect(labels.slice(0, 5)).toEqual(['0', '1', '2', '3', '4']);
+    expect(labels).toHaveLength(400);
     fireEvent.touchEnd(kilograms, { changedTouches: [{ clientY: 120 }] });
-    fireEvent.scroll(kilograms, { target: { scrollTop: 3 * 48 } });
+    fireEvent.scroll(kilograms, { target: { scrollTop: 33 * 48 } });
     expect(picker.onChange).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(dialog.previousElementSibling as Element);
