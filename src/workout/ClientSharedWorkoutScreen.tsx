@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from 'konsta/react';
+import { Button, List, ListItem } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { PlannedWorkoutsRepository, type UpcomingPlannedWorkout } from '../data/cloud/planned-workouts';
@@ -33,16 +33,18 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
   const [plansError, setPlansError] = useState('');
   const [retry, setRetry] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedActiveId, setSelectedActiveId] = useState<string | null>(null);
   const [retained, setRetained] = useState<{ repository: ClientWorkoutRepository; id: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const generation = useRef(0);
   const running = useRef(false);
-  const activeId = workout?.sessions.find(row => row.status === 'active')?.id ?? null;
+  const activeSessions = workout?.sessions.filter(row => row.status === 'active') ?? [];
+  const activeId = activeSessions.find(row => row.id === selectedActiveId)?.id ?? activeSessions[0]?.id ?? null;
   const sessionId = activeId ?? (retained?.repository === repository ? retained.id : null);
   useEffect(() => {
     ++generation.current; running.current = false;
-    setRetained(null); setBusy(false); setError('');
+    setRetained(null); setSelectedActiveId(null); setBusy(false); setError('');
     return () => { ++generation.current; };
   }, [repository]);
   useEffect(() => {
@@ -80,6 +82,8 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
     }
   };
   return <>
+    {activeSessions.length > 1 ? <List nested>{activeSessions.map(row => <ListItem key={row.id}
+      title={row.name} link onClick={() => setSelectedActiveId(row.id)} />)}</List> : null}
     {sessionId && repository ? <AdHocSessionScreen key={sessionId} repository={repository} sessionId={sessionId}
       initData={initData} actor={actor} hideActiveStatus personalCatalogueRole="client"
       onExerciseInformation={exerciseInformation} onNavigationContextChange={onNavigationContextChange} /> : null}
