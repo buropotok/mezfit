@@ -1,0 +1,80 @@
+name: One-time translation queue bootstrap
+
+on:
+  push:
+    branches:
+      - data/howto-coordination
+    paths:
+      - .github/workflows/bootstrap-translation-queue.yml
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.repository == 'buropotok/mezfit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout frozen source snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: data/howto-coordination
+          fetch-depth: 0
+
+      - name: Generate manifest and status with exact duplicate grouping
+        shell: bash
+        run: |
+          python3 tools/exercise-work/translation-queue/build_queue.py --source-commit 7855c08e647ea461af7d59736c6c91f2c7f8b44a
+
+      - name: Validate queue and source preservation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json
+          from collections import Counter
+          from pathlib import Path
+          root=Path('tools/exercise-work/translation-queue')
+          raw=(root/'batches.json').read_bytes()
+          m=json.loads(raw)
+          s=json.loads((root/'status.json').read_text(encoding='utf-8'))
+          assert m['source_commit']==s['source_commit']
+          assert hashlib.sha256(raw).hexdigest()==s['manifest_sha256']
+          assert len(m['batches'])==17
+          assert [len(b['files']) for b in m['batches']]==[100]*16+[73]
+          paths=[p for b in m['batches'] for p in b['files']]
+          assert len(paths)==len(set(paths))==1673
+          expected={p.as_posix() for p in Path('assets/work').glob('*/*.json')}
+          assert set(paths)==expected
+          by_hash={}
+          seen_source_hashes={}
+          english_count=ru_count=0
+          for batch in m['batches']:
+              assert s['batches'][batch['id']]['status']=='new'
+              for p in batch['files']:
+                  j=json.loads(Path(p).read_text(encoding='utf-8'))
+                  english=j.get('how_to','')
+                  if not english.strip(): continue
+                  english_count+=1
+                  if j.get('how_to_ru'): ru_count+=1
+                  digest=hashlib.sha256(english.encode('utf-8')).hexdigest()
+                  assert digest not in seen_source_hashes or seen_source_hashes[digest]==english
+                  seen_source_hashes[digest]=english
+                  assert digest not in by_hash or by_hash[digest]==batch['id'], (p,batch['id'])
+                  by_hash[digest]=batch['id']
+          assert english_count==963 and len(by_hash)==652
+          assert ru_count==m['existing_how_to_ru_files']
+          assert len(s['batches'])==17
+          print('VERIFY_OK files=',len(paths),'batches=',len(m['batches']),'unique=',len(by_hash),'existing_ru=',ru_count)
+          PY
+          git diff --check
+          git diff --exit-code -- assets/work/ assets/exercises/
+
+      - name: Commit only queue artifacts to coordination branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/exercise-work/translation-queue/batches.json tools/exercise-work/translation-queue/status.json
+          git commit -m 'data: initialize seventeen deduplicated exercise translation batches'
+          git push origin HEAD:refs/heads/data/howto-coordination
