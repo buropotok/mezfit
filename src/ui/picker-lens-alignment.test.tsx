@@ -82,8 +82,8 @@ describe('picker lens numeric alignment', () => {
     const minutes = texts.find((element) => element.textContent === '34');
     expect(hours?.getAttribute('x')).toBe('62');
     expect(minutes?.getAttribute('x')).toBe('226');
-    expect(hours?.getAttribute('transform')).toContain('scale(1.55)');
-    expect(minutes?.getAttribute('transform')).toContain('scale(1.55)');
+    expect(hours?.getAttribute('transform')).toContain('scale(1.55 3.1)');
+    expect(minutes?.getAttribute('transform')).toContain('scale(1.55 3.1)');
   });
 
   it('keeps distance units stationary in the lens, outside the numeric scroll ribbons', () => {
