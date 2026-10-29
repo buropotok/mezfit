@@ -168,15 +168,22 @@
       }
     },
     "B010": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "gpt6-mezfit-mvsuogxd-56t5r",
       "claim_id": "claim-mvsuoppm-zq6cf5x6",
       "started_at": "2026-10-29T01:14:17.002Z",
       "lease_until": "2026-10-29T03:14:17.002Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T01:27:32.938Z",
+      "result_branch": "data/howto-batch-B010-claim-mvsuoppm-zq6cf5x6",
+      "result_commit": "774b18abd8307519ff8d1ef373b8baef0c7b72a9",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 48,
+        "existing_translations": 0,
+        "without_english_instruction": 52,
+        "new_unique_translations": 37,
+        "reused_translations": 11
+      }
     },
     "B011": {
       "status": "in_progress",
