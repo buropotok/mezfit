@@ -166,19 +166,70 @@ describe('WeightRepsPicker numeric lens editor', () => {
     rect.mockRestore();
   });
 
+  it('switches to the historical three wheels and publishes the combined draft only on close', () => {
+    const picker = renderPicker();
+    const mode = () => screen.getByRole('button', { name: 'Режим' });
+    fireEvent.click(mode());
+    expect(mode().getAttribute('aria-pressed')).toBe('true');
+    const reps = screen.getByRole('listbox', { name: 'Повторения' });
+    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
+    expect(within(reps).getAllByRole('option')).toHaveLength(101);
+    expect(within(kilograms).getAllByRole('option')).toHaveLength(400);
+    fireEvent.click(within(reps).getByRole('option', { name: '12' }));
+    fireEvent.click(within(kilograms).getByRole('option', { name: '23' }));
+    expect(picker.onChange).not.toHaveBeenCalled();
+    fireEvent.click(mode());
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('12');
+    enter('1', '5');
+    fireEvent.click(mode());
+    expect(within(screen.getByRole('listbox', { name: 'Повторения' }))
+      .getByRole('option', { name: '15' }).getAttribute('aria-selected')).toBe('true');
+    expect(picker.onChange).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 15, weightKg: 23.5 });
+  });
+
+  it('restores native relative ten-kilogram rows during a fast flick', () => {
+    const picker = renderPicker({ value: { reps: 8, weightKg: 23.75 } });
+    fireEvent.click(screen.getByRole('button', { name: 'Режим' }));
+    const kilograms = screen.getByRole('listbox', { name: 'Килограммы' });
+    fireEvent.touchStart(kilograms, { touches: [{ clientY: 200 }] });
+    fireEvent.touchMove(kilograms, { touches: [{ clientY: 120 }] });
+    const labels = within(kilograms).getAllByRole('option').map(node => node.textContent);
+    expect(labels.slice(0, 5)).toEqual(['3', '13', '23', '33', '43']);
+    fireEvent.touchEnd(kilograms, { changedTouches: [{ clientY: 120 }] });
+    fireEvent.scroll(kilograms, { target: { scrollTop: 3 * 48 } });
+    expect(picker.onChange).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 33.75 });
+  });
+
+  it('does not clamp a larger numeric value when switching to wheels', () => {
+    const picker = renderPicker({ value: { reps: 1234, weightKg: 450.75 } });
+    fireEvent.click(screen.getByRole('button', { name: 'Режим' }));
+    expect(within(screen.getByRole('listbox', { name: 'Повторения' }))
+      .getByRole('option', { name: '1234' }).getAttribute('aria-selected')).toBe('true');
+    expect(within(screen.getByRole('listbox', { name: 'Килограммы' }))
+      .getByRole('option', { name: '450' }).getAttribute('aria-selected')).toBe('true');
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(picker.onChange).not.toHaveBeenCalled();
+  });
+
   it('keeps a closed picker out of the accessibility and interaction tree', () => {
     const picker = renderPicker();
     picker.setValue({ reps: 8, weightKg: 77.5 }, false);
     expect(screen.queryByRole('button', { name: 'Изменить повторения' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Изменить целые килограммы' })).toBeNull();
-    const hidden = document.querySelector('.ui-time-picker__popover');
-    expect(hidden?.getAttribute('aria-hidden')).toBe('true');
-    expect(hidden?.hasAttribute('inert')).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
 
     picker.setValue({ reps: 8, weightKg: 77.5 }, true);
     expect(screen.getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
-    expect(hidden?.hasAttribute('inert')).toBe(false);
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
   });
 
   it('opens the Konsta sheet and immediately swaps the chosen pencil for a blinking letter-i', () => {
@@ -351,15 +402,18 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(document.querySelector('[data-ui-picker-static-value="second"]')?.textContent).toBe('2');
   });
 
-  it('keeps the native fractional wheel and emits changes without opening the keypad', () => {
+  it('keeps fractional changes inside the picker draft until dismissal', () => {
     const onChange = vi.fn();
     renderPicker({ onChange });
     const fractions = screen.getByRole('listbox', { name: 'Доли килограмма' });
     expect(within(fractions).getAllByRole('option').map(option => option.textContent))
       .toEqual(['00', '25', '5', '75']);
     fireEvent.click(within(fractions).getByRole('option', { name: '0,25' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.25 });
+    expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog', { name: 'Ввод килограммов' })).toBeNull();
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    fireEvent.click(dialog.previousElementSibling as Element);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.25 });
   });
 
   it('allows more than 100 repetitions and 399 kilograms without a business maximum', () => {
