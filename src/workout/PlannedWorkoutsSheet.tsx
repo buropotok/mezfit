@@ -126,7 +126,7 @@ export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavi
         }}
         onStart={start ? async draft => {
           const token = visit.current;
-          const id = await start.start(draft);
+          const id = await start.start(draft, () => token === visit.current && alive.current && isOpen.current);
           if (token === visit.current && alive.current && isOpen.current) { onStarted(id); start.showSession(id); }
         } : undefined}
         onCancel={draft => { pendingCancel.current = draft.targetOccurrenceId ?? draft.id.slice(6); onClose(); }}
