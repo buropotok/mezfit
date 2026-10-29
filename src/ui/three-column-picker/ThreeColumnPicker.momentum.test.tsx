@@ -213,10 +213,10 @@ describe('weight/reps wheels use TimePicker native momentum and compact optics',
   });
 
   it.each([
-    { label: 'Повторения', origin: 8, landing: 9.2, aligned: 10, result: { reps: 10, weightKg: 77.5 } },
-    { label: 'Килограммы', origin: 77, landing: 78.2, aligned: 79, result: { reps: 8, weightKg: 79.5 } },
-    { label: 'Доли килограмма', origin: 2, landing: 2.2, aligned: 3, result: { reps: 8, weightKg: 77.75 } },
-  ])('leaves $label free during inertia and settles forward only after scrollend', ({ label, origin, landing, aligned, result }) => {
+    { label: 'Повторения', origin: 8, landing: 9.2, aligned: 9, result: { reps: 9, weightKg: 77.5 } },
+    { label: 'Килограммы', origin: 77, landing: 78.2, aligned: 78, result: { reps: 8, weightKg: 78.5 } },
+    { label: 'Доли килограмма', origin: 2, landing: 2.8, aligned: 3, result: { reps: 8, weightKg: 77.75 } },
+  ])('leaves $label free during inertia and settles to the nearest center only after scrollend', ({ label, origin, landing, aligned, result }) => {
     const { onChange } = mountCompact();
     const wheel = trackWheel(label, origin);
     wheel.move(landing);
@@ -231,7 +231,7 @@ describe('weight/reps wheels use TimePicker native momentum and compact optics',
     expect(onChange).toHaveBeenCalledExactlyOnceWith(result);
   });
 
-  it('keeps the direction of a flick despite a small reverse WebView bounce', () => {
+  it('selects the nearest center even when it is behind the flick direction', () => {
     mountCompact();
     const wheel = trackWheel('Килограммы', 77);
     touchWheel(wheel.element, 'touchstart', 220);
@@ -242,16 +242,16 @@ describe('weight/reps wheels use TimePicker native momentum and compact optics',
     flushFrame();
     expect(wheel.writes).toEqual([]);
     fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
-    expect(wheel.writes).toEqual([{ top: 79 * 36, behavior: 'smooth' }]);
+    expect(wheel.writes).toEqual([{ top: 78 * 36, behavior: 'smooth' }]);
   });
 
-  it('settles a decreasing wheel downwards without rewinding it', () => {
+  it('settles decreasing motion to the nearer higher cell', () => {
     mountCompact();
     const wheel = trackWheel('Килограммы', 77);
-    wheel.move(72.3);
+    wheel.move(72.8);
     flushFrame();
     fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
-    expect(wheel.writes).toEqual([{ top: 72 * 36, behavior: 'smooth' }]);
+    expect(wheel.writes).toEqual([{ top: 73 * 36, behavior: 'smooth' }]);
   });
 
   it('uses the same selection tick at observed crossings without bursts for skipped frames', () => {
@@ -295,7 +295,7 @@ describe('weight/reps wheels use TimePicker native momentum and compact optics',
     act(() => vi.advanceTimersByTime(449));
     expect(wheel.writes).toEqual([]);
     act(() => vi.advanceTimersByTime(1));
-    expect(wheel.writes).toEqual([{ top: 80 * 36, behavior: 'smooth' }]);
+    expect(wheel.writes).toEqual([{ top: 79 * 36, behavior: 'smooth' }]);
   });
 
   it('returns to the numeric layout with both drafts intact', () => {

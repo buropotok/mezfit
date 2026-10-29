@@ -113,7 +113,7 @@ describe('TimePicker native momentum and settle ownership', () => {
     // Legacy WebView quiet-window fallback only runs after the last event.
     act(() => vi.advanceTimersByTime(1));
     flushFrames();
-    expect(native.writes).toEqual([18 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([17 * ROW_HEIGHT]);
   });
 
   it('ignores a synthetic button click following a touch flick', () => {
@@ -172,7 +172,7 @@ describe('TimePicker native momentum and settle ownership', () => {
     expect(native.writes).toEqual([]);
   });
 
-  it('applies an unrelated controlled update only after native momentum and its forward settle finish', () => {
+  it('applies an unrelated controlled update only after native momentum and its nearest-center settle finish', () => {
     const { minutes, rerender } = mount('08:00');
     flushFrames();
     const native = trackBrowserScroll(minutes, 0);
@@ -184,10 +184,10 @@ describe('TimePicker native momentum and settle ownership', () => {
 
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(native.writes).toEqual([13 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([12 * ROW_HEIGHT]);
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(native.writes).toEqual([13 * ROW_HEIGHT, 45 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([12 * ROW_HEIGHT, 45 * ROW_HEIGHT]);
   });
 
   it('smoothly aligns only after true scrollend and can cancel when retouched', () => {
@@ -200,7 +200,7 @@ describe('TimePicker native momentum and settle ownership', () => {
 
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(native.writes).toEqual([18 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([17 * ROW_HEIGHT]);
     touch(minutes, 'touchstart', 220);
     touch(minutes, 'touchend', 220);
     act(() => native.move(19));

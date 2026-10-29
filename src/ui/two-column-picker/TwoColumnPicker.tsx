@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { MezfitPopover } from '../konsta-mezfit';
 import { triggerTelegramPickerSelectionTick } from '../../telegram';
-import { forwardSettledIndex } from '../time-picker/forwardSettle';
+import { nearestSettledIndex } from '../time-picker/forwardSettle';
 import { COMPACT_TIME_GEOMETRY, STANDARD_GEOMETRY, type WheelGeometry } from '../time-picker/wheelGeometry';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
@@ -445,10 +445,7 @@ export function TwoColumnPicker({
   const locallyEmittedRef = useRef(new Set<string>());
   const endTimersRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const settleTimersRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
-  const lastScrollTopRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const lastTickIndexRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
-  const directionRef = useRef<Partial<Record<TwoColumnPickerSide, -1 | 0 | 1>>>({});
-  const gestureOriginRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const settlingRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, value, geometry));
 
@@ -496,10 +493,7 @@ export function TwoColumnPicker({
       touchStartRef.current = {};
       suppressTouchClickRef.current = {};
       deferredExternalRef.current = null;
-      lastScrollTopRef.current = {};
       lastTickIndexRef.current = {};
-      directionRef.current = {};
-      gestureOriginRef.current = {};
       settlingRef.current = {};
       if (initialSyncFrameRef.current !== null) {
         view.cancelAnimationFrame(initialSyncFrameRef.current);
@@ -563,13 +557,10 @@ export function TwoColumnPicker({
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
     if (isTimeWheel) {
-      lastScrollTopRef.current = nextScrollTops;
       lastTickIndexRef.current = {
         left: valueIndex(columns[0], value.left),
         right: valueIndex(columns[1], value.right),
       };
-      directionRef.current = {};
-      gestureOriginRef.current = {};
       settlingRef.current = {};
     }
 
@@ -614,18 +605,16 @@ export function TwoColumnPicker({
 
   const reconcileDeferredTimeValue = () => {
     if (scrollingRef.current.size > 0 || Object.keys(settlingRef.current).length > 0) return;
-    gestureOriginRef.current = {};
     const external = deferredExternalRef.current;
     deferredExternalRef.current = null;
     if (external && !locallyEmittedRef.current.has(`${external.left}:${external.right}`)) {
       // Explicit controlled changes (not our own delayed echoes) regain
-      // ownership after native scrolling and the forward settle finish.
+      // ownership after native scrolling and the nearest-center settle finish.
       draftRef.current = external;
       setDraft(external);
       const tops = partsToScrollTops(columns, external, geometry);
       pendingScrollRef.current = tops;
       setScrollTops(tops);
-      lastScrollTopRef.current = tops;
       lastTickIndexRef.current = {
         left: valueIndex(columns[0], external.left),
         right: valueIndex(columns[1], external.right),
@@ -680,10 +669,6 @@ export function TwoColumnPicker({
     }
     const touch = event.touches[0];
     if (touch) touchStartRef.current[side] = touch.clientY;
-    if (isTimeWheel) {
-      gestureOriginRef.current[side] = event.currentTarget.scrollTop;
-      directionRef.current[side] = 0;
-    }
   };
 
   const handleTouchMove = (side: TwoColumnPickerSide, event: TouchEvent<HTMLDivElement>) => {
@@ -713,8 +698,8 @@ export function TwoColumnPicker({
     if (!element) return;
     if (isTimeWheel && touchStartRef.current[side] !== undefined) return;
     if (isTimeWheel) {
-      // Native scrolling is entirely free. Once it genuinely ends, align
-      // forwards to the next center line; never rewind to the nearest row.
+      // Native scrolling stays free until it ends, then align the nearest
+      // cell center to the horizontal selection line.
       const currentTop = element.scrollTop;
       const activeTarget = settlingRef.current[side];
       if (activeTarget !== undefined) {
@@ -728,8 +713,7 @@ export function TwoColumnPicker({
         return;
       }
       const column = columns[side === 'left' ? 0 : 1];
-      const direction = directionRef.current[side] ?? 0;
-      const index = forwardSettledIndex(currentTop, geometry.rowHeight, direction, column.values.length);
+      const index = nearestSettledIndex(currentTop, geometry.rowHeight, column.values.length);
       const targetTop = index * geometry.rowHeight;
       commitIndex(side, index);
       if (Math.abs(targetTop - currentTop) > 0.5) {
@@ -802,18 +786,6 @@ export function TwoColumnPicker({
     const top = element.scrollTop;
     const view = element.ownerDocument.defaultView ?? window;
     if (isTimeWheel) {
-      const previous = lastScrollTopRef.current[side];
-      const origin = gestureOriginRef.current[side];
-      if (settlingRef.current[side] === undefined) {
-        // During a touch flick use its net travel, not a tiny reverse bounce
-        // on the last WebView frame, to choose the eventual snap direction.
-        if (origin !== undefined && Math.abs(top - origin) > 1) {
-          directionRef.current[side] = top > origin ? 1 : -1;
-        } else if (origin === undefined && previous !== undefined && Math.abs(top - previous) > 0.5) {
-          directionRef.current[side] = top > previous ? 1 : -1;
-        }
-      }
-      lastScrollTopRef.current[side] = top;
       const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
       if (lastTickIndexRef.current[side] !== undefined && lastTickIndexRef.current[side] !== index) {
         // One selection tick per observed crossing; skipped native frames
@@ -865,12 +837,10 @@ export function TwoColumnPicker({
 
     if (isTimeWheel) {
       delete settlingRef.current[side];
-      delete gestureOriginRef.current[side];
       const view = target?.ownerDocument.defaultView ?? window;
       view.clearTimeout(settleTimersRef.current[side]);
       delete settleTimersRef.current[side];
       lastTickIndexRef.current[side] = index;
-      lastScrollTopRef.current[side] = index * geometry.rowHeight;
     }
     commitIndex(side, index);
     const nextIndex = column.circular ? wheelIndex(column, index % column.values.length, geometry) : index;

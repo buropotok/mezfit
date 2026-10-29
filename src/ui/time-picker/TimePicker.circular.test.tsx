@@ -68,7 +68,7 @@ describe('TimePicker regression: retired cyclic scrolling', () => {
     expect(within(minutes).getByRole('option', { name: '59' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('does not write scrollTop during momentum, then aligns with its direction', () => {
+  it('does not write scrollTop during momentum, then aligns the nearest center', () => {
     const { minutes, onChange } = renderWheel('08:10');
     let top = 10 * 36;
     const writes: Array<{ top: number; behavior: ScrollBehavior }> = [];
@@ -92,11 +92,11 @@ describe('TimePicker regression: retired cyclic scrolling', () => {
     expect(writes).toEqual([]);
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(writes).toEqual([{ top: 12 * 36, behavior: 'smooth' }]);
-    expect(onChange).toHaveBeenLastCalledWith('08:12');
+    expect(writes).toEqual([{ top: 11 * 36, behavior: 'smooth' }]);
+    expect(onChange).toHaveBeenLastCalledWith('08:11');
   });
 
-  it('ignores a small reverse WebView bounce after a positive flick', () => {
+  it('selects the closest center after a positive flick and a small bounce', () => {
     const { minutes } = renderWheel('08:10');
     const writes: number[] = [];
     Object.defineProperty(minutes, 'scrollTo', {
@@ -118,10 +118,10 @@ describe('TimePicker regression: retired cyclic scrolling', () => {
 
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(writes).toEqual([11 * 36]);
+    expect(writes).toEqual([10 * 36]);
   });
 
-  it('never reverses a decreasing wheel when it aligns a fractional position', () => {
+  it('selects the closest center after decreasing motion', () => {
     const { minutes, onChange } = renderWheel('08:30');
     const writes: number[] = [];
     Object.defineProperty(minutes, 'scrollTo', {
