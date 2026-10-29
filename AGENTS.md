@@ -361,7 +361,7 @@ and `.github/workflows/dexie-flex-attributes.yml` may install **only** the
 additive `flexAttributes: id` and `flexValues: id` cloud schema and append
 **only** `add: [flexAttributes, flexValues]` and
 `update: { flexValues: [value] }` to the existing Coach and Client roles.
-The full current Client execution policy is the required baseline; no
+The full current Coach coached-start policy is the required baseline; no
 historical ACL upgrades are implicit. No other roles, grant fields, DELETE,
 manage, owner/identity/realm updates, membership, schema entries or business
 data are authorized. Attribute definitions are add-only; updates can change
