@@ -2,14 +2,14 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { triggerTelegramSelectionHaptic } from '../../telegram';
+import { triggerTelegramPickerSelectionTick } from '../../telegram';
 import { TimePicker, type LocalTime } from './TimePicker';
 
 vi.mock('../../telegram', () => ({
-  triggerTelegramSelectionHaptic: vi.fn(),
+  triggerTelegramPickerSelectionTick: vi.fn(),
 }));
 
-const selectionHapticMock = vi.mocked(triggerTelegramSelectionHaptic);
+const selectionHapticMock = vi.mocked(triggerTelegramPickerSelectionTick);
 
 function renderPicker({
   value = '08:15',
@@ -107,19 +107,22 @@ describe('TimePicker', () => {
     expect(onChange).toHaveBeenLastCalledWith('10:45');
   });
 
-  it('keeps Telegram selection feedback disabled while selecting either wheel', () => {
-    const picker = renderPicker();
+  it('emits one gentle selection tick when a number passes center, not on taps', () => {
+    renderPicker();
+    const minutes = screen.getByRole('listbox', { name: 'Минуты' });
+    minutes.scrollTop = 16 * 36;
+    fireEvent.scroll(minutes);
+    expect(selectionHapticMock).toHaveBeenCalledTimes(1);
 
-    const hours = screen.getByRole('listbox', { name: 'Часы' });
-    fireEvent.click(within(hours).getByRole('option', { name: '10' }));
-    expect(selectionHapticMock).not.toHaveBeenCalled();
+    fireEvent.scroll(minutes);
+    expect(selectionHapticMock).toHaveBeenCalledTimes(1);
 
-    picker.setValue('10:15');
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Часы' })).getByRole('option', { name: '10' }));
-    expect(selectionHapticMock).not.toHaveBeenCalled();
+    minutes.scrollTop = 17 * 36;
+    fireEvent.scroll(minutes);
+    expect(selectionHapticMock).toHaveBeenCalledTimes(2);
 
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Минуты' })).getByRole('option', { name: '45' }));
-    expect(selectionHapticMock).not.toHaveBeenCalled();
+    fireEvent.click(within(minutes).getByRole('option', { name: '45' }));
+    expect(selectionHapticMock).toHaveBeenCalledTimes(2);
   });
 
   it('rejects malformed local-time values instead of guessing a timezone-bearing time', () => {

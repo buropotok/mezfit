@@ -19,17 +19,19 @@ function declaration(selector, property) {
 }
 
 describe('Native wheel scrolling', () => {
-  it('scales the complete optical layer to 24px while keeping the native scroll window aligned', () => {
-    expect(declaration('.ui-time-picker__popover--compact-time', '--ui-time-picker-row-height')).toBe('24px');
-    expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__lens', 'transform'))
-      .toBe('translateY(-50%) scaleY(0.3333333333)');
-    expect(css).toContain('rgb(0 0 0) 0 45%, transparent 45% 55%');
-    // The SVG source and bitmap map are scaled together by the parent lens
-    // rather than cropping unscaled optical data into a shorter viewport.
+  it('scales only the optical SVG inside an unscaled 36px capsule', () => {
+    expect(declaration('.ui-time-picker__popover--compact-time', '--ui-time-picker-row-height')).toBe('36px');
+    expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__lens', 'border-radius')).toBe('999px');
+    expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__lens', 'overflow')).toBe('hidden');
+    expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__lens svg', 'transform'))
+      .toBe('translateY(-50%) scaleY(0.5)');
+    expect(css).toContain('rgb(0 0 0) 0 42.5%, transparent 42.5% 57.5%');
+    // The filter bitmap stays at its original resolution while the inner SVG
+    // is scaled; the outer capsule retains normal round end caps.
     expect(declaration('.ui-time-picker__lens', 'height')).toBe('var(--ui-time-picker-lens-height)');
   });
 
-  it('uses free native scrolling only in compact TimePicker during the momentum experiment', () => {
+  it('keeps free native scrolling only in compact TimePicker while other pickers snap', () => {
     expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__column', 'scroll-snap-type'))
       .toBe('none');
     // The shared picker keeps its existing snap rule for non-time wheels.

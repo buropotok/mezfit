@@ -21,13 +21,11 @@ const TIME_COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
     ariaLabel: 'Часы',
     values: HOUR_VALUES,
     format: formatUnit,
-    circular: true,
   },
   {
     ariaLabel: 'Минуты',
     values: MINUTE_VALUES,
     format: formatUnit,
-    circular: true,
   },
 ];
 

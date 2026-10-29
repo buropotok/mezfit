@@ -4,23 +4,42 @@
   --ui-time-picker-lens-height: 72px;
 }
 
-/* TimePicker-only: 24px physical wheel pitch, 24px visible lens height.
-   Scaling the entire 72px optical source also scales its SVG displacement map,
-   bezel, highlights, and text without recalculating the bitmap. */
+/* Compact TimePicker retains free native scrolling; only after momentum ends
+   does it advance to the next center line in the movement direction. */
 .ui-time-picker__popover--compact-time {
-  --ui-time-picker-row-height: 24px;
+  --ui-time-picker-row-height: 36px;
+  --ui-time-picker-lens-height: 36px;
+}
+
+.ui-time-picker__popover--compact-time .ui-time-picker {
+  padding-inline: var(--ui-space-5);
+}
+
+.ui-time-picker__popover--compact-time .ui-time-picker__wheel {
+  width: min(14.4rem, calc(100vw - 72px));
+}
+
+.ui-time-picker__popover--compact-time .ui-time-picker__columns {
+  grid-template-columns: minmax(0, 1fr) 2rem minmax(0, 1fr);
 }
 
 .ui-time-picker__popover--compact-time .ui-time-picker__column {
-  /* Experiment: isolate native WebView momentum from mandatory row snapping.
-     The wheel may settle between values until we validate the feel on device. */
   scroll-snap-type: none;
-  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 45%, transparent 45% 55%, rgb(0 0 0) 55% 100%);
-  mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 45%, transparent 45% 55%, rgb(0 0 0) 55% 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 42.5%, transparent 42.5% 57.5%, rgb(0 0 0) 57.5% 100%);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 42.5%, transparent 42.5% 57.5%, rgb(0 0 0) 57.5% 100%);
 }
 
 .ui-time-picker__popover--compact-time .ui-time-picker__lens {
-  transform: translateY(-50%) scaleY(0.3333333333);
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.ui-time-picker__popover--compact-time .ui-time-picker__lens svg {
+  position: absolute;
+  top: 50%;
+  height: 72px;
+  transform: translateY(-50%) scaleY(0.5);
+  transform-origin: center;
 }
 
 .ui-time-picker {

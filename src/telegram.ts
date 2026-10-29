@@ -147,6 +147,18 @@ export function triggerTelegramSelectionHaptic(
   }
 }
 
+/** Quiet tick for a picker crossing its center line.
+ *  Unlike the general feedback helper, this never sends success notifications. */
+export function triggerTelegramPickerSelectionTick(
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+): void {
+  try {
+    webApp?.HapticFeedback?.selectionChanged();
+  } catch {
+    // Haptics must never interrupt native wheel scrolling.
+  }
+}
+
 export function runHapticProbe(
   kind: HapticProbeKind,
   webApp: TelegramWebApp | null = getTelegramWebApp(),
