@@ -104,3 +104,9 @@
   width: 5.5rem;
   height: 5.5rem;
 }
+
+.ui-weight-reps-picker__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--ui-space-1);
+}
