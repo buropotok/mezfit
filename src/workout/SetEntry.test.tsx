@@ -27,6 +27,7 @@ describe('weight and repetitions SetEntry', () => {
     const onSave = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
     const onClose = vi.fn();
     const view = render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onSave={onSave} onClose={onClose} />);
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '6' } });
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     view.unmount();
@@ -40,6 +41,7 @@ describe('weight and repetitions SetEntry', () => {
     render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onSave={onSave} onClose={onClose} />);
     expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Создать' })).toBeNull();
+    fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '6' } });
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
@@ -226,7 +228,7 @@ describe('weight and repetitions SetEntry', () => {
     fireEvent.click(trigger);
     expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });
@@ -239,6 +241,9 @@ describe('weight and repetitions SetEntry', () => {
     expect(screen.getByText('RPE: 0')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
     expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
@@ -374,4 +379,67 @@ describe('weight and repetitions SetEntry', () => {
     })));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
+});
+
+it.each(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight'] as const)(
+  '%s closes an unchanged SetEntry without a dialog or writes', trackingType => {
+    const save = vi.fn(), close = vi.fn();
+    render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onClose={close} onSave={save} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(close).toHaveBeenCalledOnce();
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+  },
+);
+
+it('closes without a prompt when metadata changes are reverted to the initial values', () => {
+  const close = vi.fn(), save = vi.fn();
+  render(<SetEntry mode="workout" isOpen data={baseData} onClose={close} onSave={save} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+  expect(close).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+  expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+});
+
+it.each([false, true])('accepts PLAN as new FACT after saving the numeric form (retyped=%s)', async retyped => {
+  const close = vi.fn(), save = vi.fn(async () => undefined);
+  render(<SetEntry mode="workout" isOpen data={baseData} onClose={close} onSave={save} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+  expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('10');
+  expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('80');
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+  if (retyped) {
+    fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Цифра 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Цифра 0' }));
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+  expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+  expect(save).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+  await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ metrics: baseData.plan })));
+});
+
+it('opens the existing FACT as numbers and closes both picker layers on Cancel without changing SetEntry', () => {
+  const close = vi.fn(), save = vi.fn();
+  const fact = { metrics: { weightKg: 82.75, reps: 12, durationSeconds: null, distanceMeters: null },
+    setLabel: null, setType: null, rpe: 7, comment: null, bands: [] };
+  render(<SetEntry mode="workout" isOpen data={{ ...baseData, fact }} onClose={close} onSave={save} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+  expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('12');
+  expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('82');
+  expect(screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('.ui-icon')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Цифра 9' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+  expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+  expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('82,75 кг × 12');
+  expect(screen.getByRole('dialog', { name: 'Подход 3' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+  expect(close).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
 });
