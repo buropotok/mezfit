@@ -488,3 +488,39 @@ it('saves a partial PLAN without replacing its missing weight by zero', async ()
   fireEvent.click(screen.getByRole('button', { name: 'Да' }));
   await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ metrics: plan })));
 });
+
+describe('session FACT objects without measurements', () => {
+  const emptyFact: NonNullable<SetEntryData['fact']> = {
+    metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
+    setLabel: null, setType: 'cluster', rpe: 6, comment: 'Сохранить комментарий', bands: ['red'],
+  };
+
+  it('prefills the PLAN while preserving FACT metadata and leaving both source objects unchanged', () => {
+    const snapshot = structuredClone({ ...baseData, fact: emptyFact });
+    const draft = createSetEntryDraft(snapshot);
+    expect(draft.metrics).toEqual(baseData.plan);
+    expect(draft.metrics).not.toBe(snapshot.plan);
+    expect(draft).toMatchObject({ setType: 'cluster', rpe: 6,
+      comment: 'Сохранить комментарий', bands: ['red'] });
+    expect(snapshot.fact).toEqual(emptyFact);
+    expect(snapshot.plan).toEqual(baseData.plan);
+  });
+
+  it.each([
+    { weightKg: 0, reps: 0, durationSeconds: null, distanceMeters: null },
+    { weightKg: null, reps: 5, durationSeconds: null, distanceMeters: null },
+  ])('preserves recorded zero and partial FACT instead of replacing them with PLAN: %j', metrics => {
+    expect(createSetEntryDraft({ ...baseData, fact: { ...emptyFact, metrics } }).metrics).toEqual(metrics);
+  });
+
+  it('closes untouched session input without prompting or saving the prefilled PLAN', () => {
+    const close = vi.fn(), save = vi.fn();
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{ ...baseData, fact: emptyFact }} onClose={close} onSave={save} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(close).toHaveBeenCalledOnce();
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(true);
+  });
+});

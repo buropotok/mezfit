@@ -100,9 +100,16 @@ export function emptySetMetrics(): SetMetrics {
   };
 }
 
+/** Session projections may carry a FACT object before any measurement is recorded. */
+export function hasSetMeasurements(metrics: SetMetrics | null | undefined): metrics is SetMetrics {
+  return metrics != null && [metrics.weightKg, metrics.reps, metrics.durationSeconds, metrics.distanceMeters]
+    .some(value => value !== null);
+}
+
 export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
+  const factMetrics = data.fact?.metrics;
   return {
-    metrics: { ...(data.fact?.metrics ?? data.plan ?? emptySetMetrics()) },
+    metrics: { ...(hasSetMeasurements(factMetrics) ? factMetrics : data.plan ?? emptySetMetrics()) },
     setLabel: data.fact?.setLabel ?? null,
     setType: data.fact?.setType !== undefined ? data.fact.setType : data.setType ?? null,
     rpe: data.fact?.rpe ?? null,
