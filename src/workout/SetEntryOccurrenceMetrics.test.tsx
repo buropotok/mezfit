@@ -163,7 +163,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     ['time_distance', { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: 2500 }],
     ['time_reps', { weightKg: null, reps: 8, durationSeconds: 125, distanceMeters: null }],
     ['time_weight', { weightKg: 70.75, reps: null, durationSeconds: 125, distanceMeters: null }],
-  ] as const)('%s records relevant PLAN values as FACT with Save only, even without edits', async (trackingType, expectedMetrics) => {
+  ] as const)('%s preserves relevant PLAN metrics as FACT when confirming an edited set type', async (trackingType, expectedMetrics) => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<KonstaProvider theme="ios" dark>
@@ -173,6 +173,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     </KonstaProvider>);
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
     expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
@@ -257,7 +258,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     render(<SetEntry mode="workout" isOpen
       data={{ ...base, trackingType: 'time' }} onClose={onClose} onSave={onSave} />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(true);
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });

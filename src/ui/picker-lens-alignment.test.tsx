@@ -131,8 +131,10 @@ describe('picker lens numeric alignment', () => {
       </KonstaProvider>,
     );
     const updated = Array.from(document.querySelectorAll('.ui-time-picker__lens-text'));
-    expect(updated).toHaveLength(3); // Previous, selected and next fractional values remain in the lens.
-    expect(updated.every(node => node.getAttribute('x') === '240')).toBe(true);
+    const fractional = updated.filter(node => node.getAttribute('x') === '240');
+    expect(fractional).toHaveLength(3); // Previous, selected and next fractional values remain in the lens.
+    expect(updated.some(node => node.getAttribute('x') === '80' && node.textContent === '8')).toBe(true);
+    expect(updated.some(node => node.getAttribute('x') === '176' && node.textContent === '77')).toBe(true);
     const slots = Array.from(document.querySelectorAll<HTMLElement>('.ui-time-picker__lens-action-slot'));
     expect(slots).toHaveLength(2);
     expect(Number.parseFloat(slots[0].style.left)).toBeCloseTo(80 / 288 * 100);

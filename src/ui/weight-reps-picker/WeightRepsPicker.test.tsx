@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 describe('WeightRepsPicker numeric lens editor', () => {
-  it('renders only the fractional wheel and two actionable pencil-plus icons inside the lens', () => {
+  it('renders initial numbers as actionable lens values and only the fractional wheel', () => {
     renderPicker();
     expect(screen.getByText('Повторения').className).toContain('ui-text--footnote');
     expect(screen.getByText('Вес').className).toContain('ui-text--footnote');
@@ -81,10 +81,13 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(lens?.querySelectorAll('.ui-time-picker__lens-action-slot')).toHaveLength(2);
     expect(within(lens as HTMLElement).getByRole('button', { name: 'Изменить повторения' })).toBeTruthy();
     expect(within(lens as HTMLElement).getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
-    const fractionTexts = lens?.querySelectorAll('.ui-time-picker__lens-text');
+    const fractionTexts = lens?.querySelectorAll('.ui-time-picker__lens-text[x="240"]');
     expect(fractionTexts).toHaveLength(3); // Prev/current/next of the sole remaining wheel.
     expect(Array.from(fractionTexts ?? []).every(node => node.getAttribute('x') === '240')).toBe(true);
     expect(lens?.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('8');
+    expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('77');
+    expect(screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('.ui-icon')).toBeNull();
     expect(lens?.querySelector('.ui-weight-reps-picker__lens-value')).toBeNull();
   });
 
@@ -144,15 +147,16 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(screen.getByRole('button', { name: 'Сохранить' })).toHaveProperty('disabled', true);
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(picker.onChange).not.toHaveBeenCalled();
+    expect(picker.onClose).toHaveBeenCalledOnce();
+    picker.setValue({ reps: 8, weightKg: 77.5 }, false);
+    picker.setValue({ reps: 8, weightKg: 77.5 });
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('8');
   });
 
-  it('uses 50px pencil icons and centers a 50px cursor after the measured final digit', () => {
+  it('keeps the values visible without pencils and centers a 50px cursor after the measured final digit', () => {
     renderPicker();
-    const pencil = screen.getByRole('button', { name: 'Изменить повторения' }).querySelector<HTMLElement>('.ui-icon');
-    expect(pencil?.style.width).toBe('50px');
-    expect(pencil?.style.height).toBe('50px');
+    expect(screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('.ui-icon')).toBeNull();
     const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
       return { width: this.tagName.toLowerCase() === 'text' ? 40 : 0, height: 0 } as DOMRect;
     });
@@ -234,7 +238,7 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
   });
 
-  it('opens the Konsta sheet and immediately swaps the chosen pencil for a blinking letter-i', () => {
+  it('opens the Konsta sheet and immediately shows a blinking letter-i after the chosen number', () => {
     renderPicker();
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     const sheet = screen.getByRole('dialog', { name: 'Ввод повторений' });
@@ -376,13 +380,14 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(document.querySelector('[data-ui-picker-static-value="first"]')?.textContent).toBe('1');
   });
 
-  it('cancels edits without changing the controlled value and restores the pencil icon', () => {
+  it('cancels the whole picker without changing the controlled value', () => {
     const onChange = vi.fn();
-    renderPicker({ onChange });
+    const picker = renderPicker({ onChange });
     fireEvent.click(screen.getByRole('button', { name: 'Изменить целые килограммы' }));
     enter('1', '2', '3');
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(onChange).not.toHaveBeenCalled();
+    expect(picker.onClose).toHaveBeenCalledOnce();
     expect(screen.queryByRole('dialog', { name: 'Ввод килограммов' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
     expect(document.querySelectorAll('.ui-weight-reps-picker__input-active')).toHaveLength(0);
@@ -481,4 +486,16 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(() => renderPicker({ value: { reps: 8, weightKg: 80.125 } }))
       .toThrow('WeightRepsPicker weightKg must use 0.25 kg increments');
   });
+});
+
+it.each([false, true])('accepts an unchanged value on explicit Save (retyped=%s)', retyped => {
+  const picker = renderPicker({ value: { reps: 8, weightKg: 77.5 } });
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+  if (retyped) {
+    fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
+    enter('8');
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+  expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.5 });
+  expect(picker.onClose).toHaveBeenCalledOnce();
 });
