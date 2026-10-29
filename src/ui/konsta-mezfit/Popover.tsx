@@ -30,7 +30,7 @@ export type MezfitPopoverProps = ComponentProps<typeof KonstaPopover> & {
   /** Custom owns its surface and opening animation; shared placement/backdrop stay here. */
   presentation?: 'standard' | 'custom';
   /** Render through a React portal without losing theme/context. */
-  portal?: boolean;
+  portal?: boolean | HTMLElement;
   /** Fixed, horizontally centered surface at this CSS-pixel viewport offset. */
   viewportTop?: number;
   /** Allow native vertical panning through the surface to scrollable children. */
@@ -273,7 +273,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
       </Component>
     </>
   );
-  return portal && typeof document !== 'undefined' ? createPortal(content, document.body) : content;
+  return portal && typeof document !== 'undefined' ? createPortal(content, typeof portal === 'boolean' ? document.body : portal) : content;
 }
 
 MezfitPopover.displayName = 'MezfitPopover';
