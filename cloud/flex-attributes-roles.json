@@ -1,0 +1,30 @@
+{
+  "roles": {
+    "coach": {
+      "permissions": {
+        "add": [
+          "flexAttributes",
+          "flexValues"
+        ],
+        "update": {
+          "flexValues": [
+            "value"
+          ]
+        }
+      }
+    },
+    "client": {
+      "permissions": {
+        "add": [
+          "flexAttributes",
+          "flexValues"
+        ],
+        "update": {
+          "flexValues": [
+            "value"
+          ]
+        }
+      }
+    }
+  }
+}
