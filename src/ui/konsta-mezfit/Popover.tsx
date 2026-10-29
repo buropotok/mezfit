@@ -136,7 +136,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
         set: true,
         anglePosition: 'top',
         popoverTop: viewportTop,
-        popoverLeft: Math.max(12, (view.innerWidth - elRef.current.getBoundingClientRect().width) / 2),
+        popoverLeft: Math.max(12, (view.innerWidth - elRef.current.offsetWidth) / 2),
         popoverPosition: 'bottom-left',
       });
       return;
