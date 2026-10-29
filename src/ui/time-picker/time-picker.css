@@ -4,6 +4,22 @@
   --ui-time-picker-lens-height: 72px;
 }
 
+/* TimePicker-only: 24px physical wheel pitch, 24px visible lens height.
+   Scaling the entire 72px optical source also scales its SVG displacement map,
+   bezel, highlights, and text without recalculating the bitmap. */
+.ui-time-picker__popover--compact-time {
+  --ui-time-picker-row-height: 24px;
+}
+
+.ui-time-picker__popover--compact-time .ui-time-picker__column {
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 45%, transparent 45% 55%, rgb(0 0 0) 55% 100%);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 45%, transparent 45% 55%, rgb(0 0 0) 55% 100%);
+}
+
+.ui-time-picker__popover--compact-time .ui-time-picker__lens {
+  transform: translateY(-50%) scaleY(0.3333333333);
+}
+
 .ui-time-picker {
   box-sizing: border-box;
   width: 100%;
