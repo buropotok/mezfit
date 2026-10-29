@@ -210,9 +210,12 @@ function PickerLens({
   const filterId = `ui-time-picker-lens-${reactId}`;
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
-  const separatorTransform = lensMode === 'ios'
-    ? centeredLensScale(LENS_WIDTH / 2, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
-    : undefined;
+  const separatorMagnification = lensMode === 'ios' ? IOS_LENS_MAGNIFICATION : 1;
+  const separatorTransform = geometry.glyphScaleY !== 1
+    ? `translate(${LENS_WIDTH / 2} ${LENS_HEIGHT / 2}) scale(${separatorMagnification} ${separatorMagnification * geometry.glyphScaleY}) translate(${-LENS_WIDTH / 2} ${-LENS_HEIGHT / 2})`
+    : lensMode === 'ios'
+      ? centeredLensScale(LENS_WIDTH / 2, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
+      : undefined;
 
   // Fixed units are composited after the displacement filter so they never
   // shift optically or scroll with any numeric ribbon.
