@@ -5,6 +5,7 @@ import {
   prepareTelegramWebApp,
   runHapticProbe,
   triggerTelegramSelectionHaptic,
+  triggerTelegramPickerSelectionTick,
   type TelegramWebApp,
 } from './telegram';
 
@@ -91,7 +92,7 @@ describe('getTelegramLaunchStartParam', () => {
 
 
 describe('triggerTelegramSelectionHaptic', () => {
-  it('prefers Telegram notification success for TimePicker selection feedback', () => {
+  it('prefers Telegram notification success for the general selection helper', () => {
     const selectionChanged = vi.fn();
     const impactOccurred = vi.fn();
     const notificationOccurred = vi.fn();
@@ -146,6 +147,29 @@ describe('triggerTelegramSelectionHaptic', () => {
     };
 
     expect(() => triggerTelegramSelectionHaptic(webApp)).not.toThrow();
+  });
+});
+
+describe('triggerTelegramPickerSelectionTick', () => {
+  it('uses only quiet selectionChanged for spinning number wheels', () => {
+    const selectionChanged = vi.fn();
+    const impactOccurred = vi.fn();
+    const notificationOccurred = vi.fn();
+    const webApp = createWebApp();
+    webApp.HapticFeedback = { selectionChanged, impactOccurred, notificationOccurred };
+
+    triggerTelegramPickerSelectionTick(webApp);
+
+    expect(selectionChanged).toHaveBeenCalledOnce();
+    expect(notificationOccurred).not.toHaveBeenCalled();
+    expect(impactOccurred).not.toHaveBeenCalled();
+  });
+
+  it('is safe without Telegram haptics or when the native API rejects a tick', () => {
+    expect(() => triggerTelegramPickerSelectionTick(createWebApp())).not.toThrow();
+    const webApp = createWebApp();
+    webApp.HapticFeedback = { selectionChanged: () => { throw new Error('unsupported'); } };
+    expect(() => triggerTelegramPickerSelectionTick(webApp)).not.toThrow();
   });
 });
 
