@@ -12,6 +12,9 @@
 }
 
 .ui-time-picker__popover--compact-time .ui-time-picker__column {
+  /* Experiment: isolate native WebView momentum from mandatory row snapping.
+     The wheel may settle between values until we validate the feel on device. */
+  scroll-snap-type: none;
   -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 45%, transparent 45% 55%, rgb(0 0 0) 55% 100%);
   mask-image: linear-gradient(to bottom, rgb(0 0 0) 0 45%, transparent 45% 55%, rgb(0 0 0) 55% 100%);
 }
