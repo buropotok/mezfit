@@ -617,7 +617,6 @@ export function TwoColumnPicker({
   };
 
   const handleTouchCancel = (side: TwoColumnPickerSide) => {
-    if (touchStartRef.current[side] !== undefined) suppressTouchClickRef.current[side] = true;
     delete touchStartRef.current[side];
   };
 
