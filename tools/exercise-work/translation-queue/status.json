@@ -142,11 +142,11 @@
       "result_stats": null
     },
     "B010": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-mezfit-mvsuogxd-56t5r",
+      "claim_id": "claim-mvsuoppm-zq6cf5x6",
+      "started_at": "2026-10-29T01:14:17.002Z",
+      "lease_until": "2026-10-29T03:14:17.002Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
