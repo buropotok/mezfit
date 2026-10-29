@@ -202,18 +202,18 @@ function WeightRepsPickerSession({
     };
   };
 
-  const finishPicker = () => {
+  const finishPicker = (confirmed = false) => {
     if (!validDigits || closingRef.current) return;
     closingRef.current = true;
     const next = numericValue();
-    if (next.reps !== initialValue.reps || next.weightKg !== initialValue.weightKg) onCommit(next);
+    if (confirmed || next.reps !== initialValue.reps || next.weightKg !== initialValue.weightKg) onCommit(next);
     cancelEdit();
     onDismiss();
   };
 
   const saveEdit = () => {
     if (!editing || !validDigits) return;
-    finishPicker();
+    finishPicker(true);
   };
 
   const toggleMode = () => {
@@ -227,11 +227,9 @@ function WeightRepsPickerSession({
     const label = field === 'reps' ? 'Изменить повторения' : 'Изменить целые килограммы';
     return (
       <IconButton label={label} aria-pressed={editing === field} onClick={() => openNumberSheet(field)}>
-        {drafts[field] ? (
-          <span className="ui-visually-hidden" aria-live="polite">{drafts[field]?.digits}</span>
-        ) : (
-          <Icon name="pencil-plus" style={{ width: 50, height: 50 }} />
-        )}
+        <span className="ui-visually-hidden" aria-live="polite">
+          {drafts[field]?.digits ?? String(field === 'reps' ? value.reps : weight.kilograms)}
+        </span>
       </IconButton>
     );
   };
@@ -252,7 +250,7 @@ function WeightRepsPickerSession({
           reps: first,
           weightKg: combineWeightKg(second, third),
         })}
-        onClose={finishPicker}
+        onClose={() => finishPicker()}
         target={target}
         columns={columns}
         popoverRef={setPopover}
@@ -264,8 +262,8 @@ function WeightRepsPickerSession({
           second: lensAction('kilograms'),
         } : undefined}
         staticLensValues={mode === 'numbers' ? {
-          first: drafts.reps?.digits,
-          second: drafts.kilograms?.digits,
+          first: drafts.reps?.digits ?? String(value.reps),
+          second: drafts.kilograms?.digits ?? String(weight.kilograms),
         } : undefined}
         staticLensCursors={mode === 'numbers' ? {
           first: editing === 'reps' ? cursor : undefined,
@@ -313,7 +311,12 @@ function WeightRepsPickerSession({
                 clear
                 inline
                 className="ui-weight-reps-picker__cancel"
-                onClick={cancelEdit}
+                onClick={() => {
+                  if (closingRef.current) return;
+                  closingRef.current = true;
+                  cancelEdit();
+                  onDismiss();
+                }}
               >
                 <Text variant="body">Отменить</Text>
               </KonstaButton>
