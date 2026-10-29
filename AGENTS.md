@@ -344,6 +344,23 @@ and configuration comparison do not prove ordinary-account server permissions.
 See `docs/architecture/client-workout-sessions.md` for exact grants and rollout.
 
 
+### Confirmed Coach format conversion (2026-10-29)
+
+The user authorized starting another athlete's independent planned workout only
+after explicit confirmation to convert it to coached. Convert the same occurrence
+and materialize execution in one local transaction; preserve participants, realm,
+owner, source PLAN and timing. Independent athlete Start remains available.
+
+`tools/dexie-roles/coached-start.mjs` and
+`.github/workflows/dexie-coached-start.yml` may prepare/install only the exact
+Coach `workoutOccurrences.format` update in `cloud/coached-start-roles.json` on
+the complete Client execution baseline. Client, source PLAN, FACT, schema,
+membership and business data are unchanged. Reuse the protected environment
+secret, main/owner manual preview/apply, literal confirmation, shared writer
+concurrency, immediate full recheck and exact full readback after attempted
+imports (including failure) and no-op applies. No PR/push activation or new
+credentials. See `docs/architecture/coached-workout-start.md`.
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.
