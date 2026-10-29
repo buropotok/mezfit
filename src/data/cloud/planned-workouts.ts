@@ -23,7 +23,7 @@ export function plannedWorkoutRange(reference: Date): { from: number; until: num
 /** Read projections only; the card edits the original synchronized occurrence. */
 export class PlannedWorkoutsRepository {
   readonly drafts: WorkoutOccurrenceDraftRepository;
-  constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
+  constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string, private readonly role: 'coach' | 'client' = 'coach') {
     this.drafts = new WorkoutOccurrenceDraftRepository(db, actorUserId);
   }
   async list(reference = new Date()): Promise<UpcomingPlannedWorkout[]> {
@@ -34,8 +34,9 @@ export class PlannedWorkoutsRepository {
       const start = Date.parse(row.startsAtUtc);
       if (row.entryKind === 'personal_event' || row.status !== 'scheduled' || row.workoutSessionId
         || row.publicationStatus === 'draft' || row.cancelledAt || start < from || start >= until
-        || (row.coachUserId ? row.coachUserId !== this.actorUserId
-          : row.realmId !== this.actorUserId || row.athleteUserId !== this.actorUserId)) continue;
+        || (this.role === 'client' ? row.athleteUserId !== this.actorUserId || row.publicationStatus !== 'published'
+          : row.coachUserId ? row.coachUserId !== this.actorUserId
+            : row.realmId !== this.actorUserId || row.athleteUserId !== this.actorUserId)) continue;
       const draft = await this.drafts.get('draft:' + row.id);
       if (!draft || !draft.saved || draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled')) continue;
       const program = row.trainingPlanId ? await this.db.trainingPlans.get(row.trainingPlanId) : null;

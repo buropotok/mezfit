@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import { useClientWorkout } from './ClientWorkoutContext';
 import { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -25,19 +26,21 @@ interface PlannedWorkoutStart {
 const Context = createContext<PlannedWorkoutStart | null>(null);
 export const usePlannedWorkoutStart = () => useContext(Context);
 
-/** Shared conflict resolution for every Coach Start intent; navigation follows acceptance. */
+/** Shared local Start owner; client execution reads published PLAN without editing it. */
 export function PlannedWorkoutStartProvider(props: {
   role: 'coach' | 'client'; enabled?: boolean; onStarted: (id: string) => void; children: ReactNode;
 }) {
-  return props.role === 'coach' && props.enabled !== false ? <CoachPlannedWorkoutStartProvider {...props} /> : <>{props.children}</>;
+  return props.enabled !== false ? <LocalWorkoutStartProvider {...props} /> : <>{props.children}</>;
 }
 
-function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
+function LocalWorkoutStartProvider({ role, onStarted, children }: {
   role: 'coach' | 'client'; onStarted: (id: string) => void; children: ReactNode;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
-    [cloud?.db, cloud?.actorUserId]);
+  const clientWorkout = useClientWorkout();
+  const repository = useMemo(() => role === 'client' ? clientWorkout?.repository ?? null
+    : cloud ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
+    [role, clientWorkout?.repository, cloud?.db, cloud?.actorUserId]);
   const drafts = useMemo(() => cloud ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const running = useRef(false);
@@ -71,7 +74,7 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
   }, [repository, role]);
   const runStart = useCallback(async <T,>(create: () => Promise<T>, prepare?: () => Promise<void>,
     isCurrent: () => boolean = () => true): Promise<T> => {
-    if (!repository || role !== 'coach') throw new Error('Запуск тренировки недоступен');
+    if (!repository) throw new Error('Запуск тренировки недоступен');
     if (running.current) throw new Error('Тренировка уже запускается');
     const token = generation.current;
     const current = () => token === generation.current && !abandoned.current && isCurrent();
@@ -106,12 +109,12 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
     const token = generation.current;
     try {
       return await runStart(async () => (await repository.createFromOccurrence(occurrenceId)).id,
-        () => drafts.flushEdits(draft.id));
+        role === 'coach' ? () => drafts.flushEdits(draft.id) : undefined);
     } catch (reason) {
       if (token === generation.current && reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS') setBlocked(true);
       throw new Error(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
     }
-  }, [repository, drafts, runStart]);
+  }, [repository, drafts, runStart, role]);
   const startQuick = useCallback((isCurrent?: () => boolean) => {
     if (!repository) return Promise.reject(new Error('Запуск тренировки недоступен'));
     return runStart(() => repository.createQuick(), undefined, isCurrent);
@@ -121,7 +124,7 @@ function CoachPlannedWorkoutStartProvider({ role, onStarted, children }: {
     return runStart(() => repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), undefined, isCurrent);
   }, [repository, runStart]);
   const showSession = useCallback((id: string) => onStartedRef.current(id), []);
-  const value = useMemo(() => role === 'coach' && repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
+  const value = useMemo(() => repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
   return <Context.Provider value={value}>
     {children}
     <PlannedWorkoutConflictSheet occurrence={conflict} opened={conflictOpened}

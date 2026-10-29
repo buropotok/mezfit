@@ -27,9 +27,10 @@ export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
   'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
 
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
-  onNavigationContextChange, onExerciseInformation, readOnly = false, hideActiveStatus = false }: {
+  onNavigationContextChange, onExerciseInformation, readOnly: requestedReadOnly = false, hideActiveStatus = false, personalCatalogueRole = 'coach' }: {
   repository: AdHocSessionRepository;
   readOnly?: boolean;
+  personalCatalogueRole?: 'coach' | 'client';
   hideActiveStatus?: boolean;
   sessionId: string;
   initData: string;
@@ -40,6 +41,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
 }) {
   const [session, setSession] = useState<ActiveWorkoutSession<string> | null>(null);
   const [row, setRow] = useState<AdHocSessionRow | null>(null);
+  const readOnly = requestedReadOnly || (personalCatalogueRole === 'client' && row?.athleteUserId !== repository.actorUserId);
   const athlete = useWorkoutPerson(row?.athleteUserId ?? null, row?.realmId ?? '', actor);
   const coach = useWorkoutPerson(row?.coachUserId ?? null, row?.realmId ?? '', actor);
   const [loading, setLoading] = useState(true);
@@ -151,7 +153,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
     </> : null}
     {error ? <><Text variant="footnote" role="alert">{error}</Text>
       {!session ? <Button rounded tonal onClick={() => setRetry(value => value + 1)}>Повторить</Button> : null}</> : null}
-    <WorkoutExerciseSelectionSheet opened={selection} initData={initData} personalCatalogueRole="coach"
+    <WorkoutExerciseSelectionSheet opened={selection} initData={initData} personalCatalogueRole={personalCatalogueRole}
       saving={busy} actionError={error} onNavigationContextChange={setNestedNavigation}
       onClose={closeOverlay} onConfirm={ids => {
         if (!ids.length || pending.current) return;
@@ -182,7 +184,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       <Text variant="body">Тренировка сохранится в истории.</Text>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitDialog>
-    <MezfitDialog opened={!readOnly && row?.status === 'completed' && row.templateSaveDecision === 'pending'}
+    <MezfitDialog opened={!readOnly && personalCatalogueRole === 'coach' && row?.creatorUserId === repository.actorUserId && row?.status === 'completed' && row.templateSaveDecision === 'pending'}
       title="Сохранить шаблон тренировки в программе?" buttons={<>
         <MezfitDialogButton disabled={busy} onClick={() => {
           if (!pending.current) void mutate(() => repository.resolveTemplate(sessionId, false)).catch(report);
