@@ -1,4 +1,9 @@
+/** A deliberate No/close decision is not an error toast. */
+export class WorkoutStartDismissed extends Error {}
+
 const messages: Readonly<Record<string, string>> = {
+  PLANNED_INDEPENDENT_REQUIRES_COACHING: 'Самостоятельную тренировку может начать только указанный атлет.',
+  PLANNED_COACHED_START_ACL_REQUIRED: 'Для смены формата тренировки нужно установить согласованные права Coach в Dexie Cloud.',
   PLANNED_START_ACL_REQUIRED: 'Для запуска плановых тренировок нужно установить согласованные права Coach в Dexie Cloud.',
   PLANNED_WORKOUT_NOT_FOUND: 'Плановая тренировка недоступна.',
   PLANNED_WORKOUT_ALREADY_STARTED: 'Плановая тренировка уже была запущена.',
