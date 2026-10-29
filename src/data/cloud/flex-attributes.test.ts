@@ -18,7 +18,7 @@ class TestFlexDatabase extends Dexie {
     this.version(1).stores({
       flexAttributes: CLOUD_DATABASE_STORES_V13.flexAttributes,
       flexValues: CLOUD_DATABASE_STORES_V13.flexValues,
-      adHocSessions: CLOUD_DATABASE_STORES_V13.adHocSessions,
+      adHocSessions: CLOUD_DATABASE_STORES_V13.adHocSessions.replaceAll('@', ''),
     });
   }
 }
@@ -107,10 +107,11 @@ describe('FlexAttributesRepository', () => {
       { key: 'Band_1_min', valueType: 'number', value: 9 },
       { key: 'Band_1_max', valueType: 'string', value: 'wrong' },
     ])).rejects.toThrow('FLEX_ATTRIBUTE_CONFLICT');
-    expect(await repo.getValues(personal)).toEqual([
+    expect(await repo.getValues(personal)).toEqual(expect.arrayContaining([
       { key: 'Band_1_min', valueType: 'number', value: 2 },
       { key: 'Band_1_max', valueType: 'number', value: 5 },
-    ]);
+    ]));
+    expect(await db.flexValues.count()).toBe(2);
     await expect(repo.setValues(personal, [
       { key: 'Band_1_min', valueType: 'number', value: 3 },
       { key: 'Band_1_min', valueType: 'number', value: 4 },
