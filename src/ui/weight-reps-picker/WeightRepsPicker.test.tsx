@@ -499,3 +499,47 @@ it.each([false, true])('accepts an unchanged value on explicit Save (retyped=%s)
   expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.5 });
   expect(picker.onClose).toHaveBeenCalledOnce();
 });
+
+it('accepts the unchanged displayed numbers on ordinary picker dismissal', () => {
+  const picker = renderPicker({ value: { reps: 10, weightKg: 80 } });
+  const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+  fireEvent.click(dialog.previousElementSibling as Element);
+  expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 10, weightKg: 80 });
+  expect(picker.onClose).toHaveBeenCalledOnce();
+});
+
+it('shows pencils for missing fields and dismisses without inventing zero measurements', () => {
+  const change = vi.fn(), close = vi.fn();
+  render(<KonstaProvider theme="ios" dark>
+    <WeightRepsPicker opened target={null} value={{ reps: 0, weightKg: 0 }}
+      emptyFields={{ reps: true, weightKg: true }} onChange={change} onClose={close} />
+  </KonstaProvider>);
+  for (const name of ['Изменить повторения', 'Изменить целые килограммы']) {
+    expect(screen.getByRole('button', { name }).querySelector('.ui-icon')).not.toBeNull();
+  }
+  expect(document.querySelector('[data-ui-picker-static-value="first"]')).toBeNull();
+  expect(document.querySelector('[data-ui-picker-static-value="second"]')).toBeNull();
+  const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+  fireEvent.click(dialog.previousElementSibling as Element);
+  expect(change).not.toHaveBeenCalled();
+  expect(close).toHaveBeenCalledOnce();
+});
+
+it('reports an explicit zero as entered while keeping the other field empty', () => {
+  const change = vi.fn();
+  render(<KonstaProvider theme="ios" dark>
+    <WeightRepsPicker opened target={null} value={{ reps: 0, weightKg: 0 }}
+      emptyFields={{ reps: true, weightKg: true }} onChange={change} onClose={vi.fn()} />
+  </KonstaProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+  enter('0');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+  expect(change).toHaveBeenCalledExactlyOnceWith({ reps: 0, weightKg: 0 }, { reps: true, weightKg: false });
+});
+
+it('keeps an already recorded zero visible as a number', () => {
+  renderPicker({ value: { reps: 0, weightKg: 0 } });
+  expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('0');
+  expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('0');
+  expect(screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('.ui-icon')).toBeNull();
+});
