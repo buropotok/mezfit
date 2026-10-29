@@ -26,7 +26,7 @@ describe('weight and repetitions SetEntry', () => {
     let finish = () => {};
     const onSave = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
     const onClose = vi.fn();
-    const view = render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onSave={onSave} onClose={onClose} />);
+    const view = render(<KonstaProvider theme="ios" dark><SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onSave={onSave} onClose={onClose} /></KonstaProvider>);
     fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '6' } });
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
@@ -38,7 +38,7 @@ describe('weight and repetitions SetEntry', () => {
     let finish = () => {};
     const onSave = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
     const onClose = vi.fn();
-    render(<SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onSave={onSave} onClose={onClose} />);
+    render(<KonstaProvider theme="ios" dark><SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }} onSave={onSave} onClose={onClose} /></KonstaProvider>);
     expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Создать' })).toBeNull();
     fireEvent.input(screen.getByRole('slider', { name: 'RPE' }), { target: { value: '6' } });
@@ -228,7 +228,7 @@ describe('weight and repetitions SetEntry', () => {
     fireEvent.click(trigger);
     expect(screen.getByRole('dialog', { name: 'Повторения и вес' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(true);
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });
@@ -388,7 +388,7 @@ it.each(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight'] as 
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     expect(close).toHaveBeenCalledOnce();
     expect(save).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(true);
   },
 );
 
@@ -400,7 +400,7 @@ it('closes without a prompt when metadata changes are reverted to the initial va
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
   expect(close).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
-  expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+  expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(true);
 });
 
 it.each([false, true])('accepts PLAN as new FACT after saving the numeric form (retyped=%s)', async retyped => {
