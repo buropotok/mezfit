@@ -23,7 +23,7 @@ import '../time-picker/time-picker.css';
 const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
 
-// The 72px optical source is scaled to 24px on screen for the compact time wheel.
+// The compact wheel draws its 72px SVG source inside a real 36px capsule.
 interface WheelGeometry {
   rowHeight: number;
   circularCopies: number;
@@ -589,7 +589,7 @@ export function TwoColumnPicker({
       scrollColumn(leftRef.current, wheelIndex(columns[0], valueIndex(columns[0], value.left), geometry), geometry);
       scrollColumn(rightRef.current, wheelIndex(columns[1], valueIndex(columns[1], value.right), geometry), geometry);
     });
-  }, [columns, opened, target, value.left, value.right]);
+  }, [columns, geometryName, opened, target, value.left, value.right]);
 
   useEffect(() => () => {
     const view = target?.ownerDocument.defaultView ?? window;
@@ -619,6 +619,29 @@ export function TwoColumnPicker({
     setDraft(next);
     locallyEmittedRef.current.add(`${next.left}:${next.right}`);
     onChangeRef.current(next);
+  };
+
+  const reconcileDeferredTimeValue = () => {
+    if (scrollingRef.current.size > 0 || Object.keys(settlingRef.current).length > 0) return;
+    const external = deferredExternalRef.current;
+    deferredExternalRef.current = null;
+    if (external && !locallyEmittedRef.current.has(`${external.left}:${external.right}`)) {
+      // Explicit controlled changes (not our own delayed echoes) regain
+      // ownership after native scrolling and the forward settle finish.
+      draftRef.current = external;
+      setDraft(external);
+      const tops = partsToScrollTops(columns, external, geometry);
+      pendingScrollRef.current = tops;
+      setScrollTops(tops);
+      lastScrollTopRef.current = tops;
+      lastTickIndexRef.current = {
+        left: valueIndex(columns[0], external.left),
+        right: valueIndex(columns[1], external.right),
+      };
+      scrollColumn(leftRef.current, valueIndex(columns[0], external.left), geometry);
+      scrollColumn(rightRef.current, valueIndex(columns[1], external.right), geometry);
+    }
+    locallyEmittedRef.current.clear();
   };
 
   // A circular wheel may move only on real scrollend or a new touch, which
@@ -705,7 +728,7 @@ export function TwoColumnPicker({
         delete settleTimersRef.current[side];
         commitIndex(side, Math.round(activeTarget / geometry.rowHeight));
         scrollingRef.current.delete(side);
-        locallyEmittedRef.current.clear();
+        reconcileDeferredTimeValue();
         return;
       }
       const column = columns[side === 'left' ? 0 : 1];
@@ -727,11 +750,11 @@ export function TwoColumnPicker({
           delete settleTimersRef.current[side];
           commitIndex(side, index);
           scrollingRef.current.delete(side);
-          locallyEmittedRef.current.clear();
+          reconcileDeferredTimeValue();
         }, 400);
       } else {
         scrollingRef.current.delete(side);
-        locallyEmittedRef.current.clear();
+        reconcileDeferredTimeValue();
       }
       return;
     }
