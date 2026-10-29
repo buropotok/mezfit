@@ -29,7 +29,6 @@ const NUMBER_COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = 
     ariaLabel: 'Последние две цифры',
     values: LOWER_VALUES,
     format: formatLower,
-    freeMomentum: true,
   },
 ];
 
