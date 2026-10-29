@@ -19,15 +19,6 @@ function flushFrames() {
   });
 }
 
-function dispatchTouch(element: Element, type: string, y: number, time: number) {
-  const event = new Event(type, { bubbles: true });
-  Object.defineProperty(event, 'timeStamp', { value: time });
-  Object.defineProperty(event, type === 'touchend' ? 'changedTouches' : 'touches', {
-    value: [{ clientY: y }],
-  });
-  fireEvent(element, event);
-}
-
 function renderWheel(value = '08:00') {
   const target = document.createElement('button');
   document.body.appendChild(target);
