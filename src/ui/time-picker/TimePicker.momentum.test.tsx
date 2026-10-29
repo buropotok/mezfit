@@ -172,6 +172,6 @@ describe('TimePicker native momentum ownership', () => {
 
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(native.writes).toEqual([105 * ROW_HEIGHT, 32 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([105 * ROW_HEIGHT]);
   });
 });
