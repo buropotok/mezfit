@@ -186,15 +186,22 @@
       }
     },
     "B011": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "mezfit-translator-mvstt33m-h1d1uuo",
       "claim_id": "claim-mvsut3dq-yor8iv7dky",
       "started_at": "2026-10-29T01:17:42.358Z",
       "lease_until": "2026-10-29T03:17:42.358Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T01:30:03.632Z",
+      "result_branch": "data/howto-batch-B011-claim-mvsut3dq-yor8iv7dky",
+      "result_commit": "2bbd31ebeffcfab029df088f34c7d1ec948c45c2",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 51,
+        "already_translated": 0,
+        "without_english_instruction": 49,
+        "new_unique_translations": 38,
+        "reused_translations": 13
+      }
     },
     "B012": {
       "status": "in_progress",
