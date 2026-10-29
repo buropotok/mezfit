@@ -16,7 +16,6 @@ const COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
     ariaLabel: 'Килограммы',
     values: KILOGRAM_VALUES,
     format: String,
-    freeMomentum: true,
   },
   {
     ariaLabel: 'Доли килограмма',
