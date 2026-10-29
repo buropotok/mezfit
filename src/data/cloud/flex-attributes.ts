@@ -117,22 +117,27 @@ export class FlexAttributesRepository {
   }
 
   async getValues(target: FlexEntityTarget): Promise<FlexResolvedValue[]> {
-    await this.assertTarget(target);
-    const values = await this.db.flexValues
-      .where('[realmId+entityType+entityId]')
-      .equals([target.realmId, target.entityType, target.entityId])
-      .toArray();
-    const resolved: FlexResolvedValue[] = [];
-    for (const entry of values) {
-      const attribute = await this.db.flexAttributes.get(entry.attributeId);
-      if (!isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
-        || entry.id !== flexValueId(target, attribute.id)
-        || !isValidFlexValue(attribute.valueType, entry.value)) {
-        throw new Error('INVALID_STORED_FLEX_VALUE');
-      }
-      resolved.push({ key: attribute.key, valueType: attribute.valueType, value: entry.value });
-    }
-    return resolved;
+    return this.db.transaction('r',
+      this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions, async () => {
+        await this.assertTarget(target);
+        const values = await this.db.flexValues
+          .where('[realmId+entityType+entityId]')
+          .equals([target.realmId, target.entityType, target.entityId])
+          .toArray();
+        const resolved: FlexResolvedValue[] = [];
+        const expectedOwner = ownerFor(target, this.actorUserId);
+        for (const entry of values) {
+          const attribute = await this.db.flexAttributes.get(entry.attributeId);
+          if (!isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
+            || attribute.owner !== expectedOwner || entry.owner !== expectedOwner
+            || entry.id !== flexValueId(target, attribute.id)
+            || !isValidFlexValue(attribute.valueType, entry.value)) {
+            throw new Error('INVALID_STORED_FLEX_VALUE');
+          }
+          resolved.push({ key: attribute.key, valueType: attribute.valueType, value: entry.value });
+        }
+        return resolved.sort((a, b) => a.key.localeCompare(b.key));
+      });
   }
 
   /** Atomically register new keys and upsert their values in the target realm. */
