@@ -178,7 +178,7 @@ export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabl
         }}>Нет</MezfitDialogButton>
         <MezfitDialogButton strong disabled={saving} onClick={() => { void run(true); }}>Да</MezfitDialogButton>
       </>} /> : null}
-    {error ? <Toast opened position="bottom" role="alert"><Text variant="body">{error}</Text></Toast> : null}
+    {error ? <Toast opened position="center" role="alert"><Text variant="body">{error}</Text></Toast> : null}
   </>;
   return { requestClose, closeDialog };
 }
@@ -582,8 +582,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   return <>
     {container ? createPortal(content, container) : inlineCard
       ? <GlassSurface preset="modalTuned" optics={glass.optics}>{content}</GlassSurface> : content}
-    {error || saveNotice ? <Toast opened position="bottom" role="alert"><Text variant="body">{error || saveNotice}</Text></Toast> : null}
-    {lockToastVersion > 0 ? <Toast opened position="bottom" role="status" aria-live="polite">
+    {error || saveNotice ? <Toast opened position="center" role="alert"><Text variant="body">{error || saveNotice}</Text></Toast> : null}
+    {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
       <Text variant="body">{lockedPlanMessage}</Text>
     </Toast> : null}
     {draft && auxiliaryReady && !collapsed ? <>
