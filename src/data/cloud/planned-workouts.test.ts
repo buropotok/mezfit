@@ -404,3 +404,59 @@ it('prefills result entry from a real pending session projection and saves only 
   expect((await repo.getRow(created.id))?.occurrencePlan).toEqual(row.plan);
   expect(await sourceGraph(db)).toEqual(sourceBefore);
 });
+
+describe('independent client workouts started by a Coach', () => {
+  async function independentFixture() {
+    const value = await fixture(true);
+    await occurrences(value.db).update(value.row.id, { format: 'independent' });
+    const row = await occurrences(value.db).get(value.row.id);
+    if (!row) throw new Error('Missing independent occurrence');
+    return { ...value, row };
+  }
+  async function grantFormat(db: Dexie) {
+    const role = await db.table('roles').get(['rlm-public', 'coach']);
+    await db.table('roles').update(['rlm-public', 'coach'], {
+      'permissions.update.workoutOccurrences': [...role.permissions.update.workoutOccurrences, 'format'],
+    });
+  }
+  it('rejects unconfirmed independent Start without changing the occurrence or creating execution', async () => {
+    const { db, repo, row } = await independentFixture();
+    await expect(repo.createFromOccurrence(row.id)).rejects.toThrow('PLANNED_INDEPENDENT_REQUIRES_COACHING');
+    await expectNoExecution(db, row);
+  });
+  it('requires the installed format grant before conversion', async () => {
+    const { db, repo, row } = await independentFixture();
+    await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('PLANNED_COACHED_START_ACL_REQUIRED');
+    await expectNoExecution(db, row);
+  });
+  it('converts and starts the same occurrence atomically while preserving PLAN and participants', async () => {
+    const { db, repo, row } = await independentFixture();
+    await grantFormat(db);
+    const source = await sourceGraph(db);
+    const created = await repo.createFromOccurrence(row.id, { asCoached: true });
+    expect(await occurrences(db).get(row.id)).toMatchObject({
+      format: 'coached', status: 'in_progress', workoutSessionId: created.id,
+      realmId: row.realmId, athleteUserId: row.athleteUserId, coachUserId: row.coachUserId,
+      clientUserId: row.clientUserId, plan: row.plan,
+    });
+    expect(await repo.getRow(created.id)).toMatchObject({ occurrenceId: row.id,
+      athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, occurrencePlan: row.plan });
+    expect((await repo.get(created.id))?.format).toBe('coached');
+    expect(await sourceGraph(db)).toEqual(source);
+  });
+  it('rolls back conversion when materializing the session fails', async () => {
+    const { db, repo, row } = await independentFixture();
+    await grantFormat(db);
+    db.table('adHocExercises').hook('creating', () => { throw new Error('Storage failure'); });
+    await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('Storage failure');
+    await expectNoExecution(db, row);
+  });
+  it('does not convert when a current coached booking conflicts with Start', async () => {
+    const { db, repo, row } = await independentFixture();
+    await grantFormat(db);
+    await occurrences(db).add({ ...row, id: 'other-booking', format: 'coached', athleteUserId: 'tg:101',
+      clientUserId: 'tg:101', startsAtUtc: new Date(Date.now() - 60_000).toISOString() });
+    await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('На это время назначена тренировка другого клиента');
+    await expectNoExecution(db, row);
+  });
+});
