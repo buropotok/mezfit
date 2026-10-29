@@ -258,7 +258,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     render(<SetEntry mode="workout" isOpen
       data={{ ...base, trackingType: 'time' }} onClose={onClose} onSave={onSave} />);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
-    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(true);
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(onSave).not.toHaveBeenCalled();
   });
