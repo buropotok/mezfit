@@ -617,6 +617,7 @@ export function TwoColumnPicker({
   };
 
   const handleTouchCancel = (side: TwoColumnPickerSide) => {
+    if (touchStartRef.current[side] !== undefined) suppressTouchClickRef.current[side] = true;
     delete touchStartRef.current[side];
   };
 
@@ -676,7 +677,6 @@ export function TwoColumnPicker({
     const top = element.scrollTop;
     const view = element.ownerDocument.defaultView ?? window;
     scrollingRef.current.add(side);
-    if (touchStartRef.current[side] !== undefined) suppressTouchClickRef.current[side] = true;
     if (initialSyncFrameRef.current !== null && columns.some(column => column.circular)) {
       view.cancelAnimationFrame(initialSyncFrameRef.current);
       initialSyncFrameRef.current = null;
