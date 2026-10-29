@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { EXPECTED_CLIENT_SESSION_ROLES } from './client-sessions.mjs';
+import { EXPECTED_COACHED_START_ROLES } from './coached-start.mjs';
 import {
   FLEX_ROLE_OVERLAY, FLEX_SCHEMA, EXPECTED_FLEX_ROLES, CONFIRMATION,
   assertFlexManifests, assertFlexUnchanged, buildExpectedFlexRoles,
@@ -11,7 +11,7 @@ const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'ut
 const overlay = read('../../cloud/flex-attributes-roles.json');
 const manifest = read('../../cloud/schema-flex-attributes.json');
 const schema = { sealed: true, schema: { trainingPlans: '@id', existing: 'id' }, metadata: { keep: true } };
-const roles = { roles: { ...structuredClone(EXPECTED_CLIENT_SESSION_ROLES), extra: { permissions: { add: ['existing'] } } }, metadata: 'keep' };
+const roles = { roles: { ...structuredClone(EXPECTED_COACHED_START_ROLES), extra: { permissions: { add: ['existing'] } } }, metadata: 'keep' };
 const afterSchema = () => ({ ...structuredClone(schema), schema: { ...schema.schema, ...FLEX_SCHEMA.schema } });
 const afterRoles = () => ({ ...structuredClone(roles), roles: { ...structuredClone(roles.roles),
   coach: structuredClone(EXPECTED_FLEX_ROLES.coach), client: structuredClone(EXPECTED_FLEX_ROLES.client) } });
@@ -26,7 +26,7 @@ describe('protected Flex Attributes schema and ACL', () => {
     expect(overlay).toEqual(FLEX_ROLE_OVERLAY);
     expect(manifest).toEqual(FLEX_SCHEMA);
     expect(buildExpectedFlexRoles()).toEqual(EXPECTED_FLEX_ROLES);
-    const invalid = structuredClone(EXPECTED_CLIENT_SESSION_ROLES);
+    const invalid = structuredClone(EXPECTED_COACHED_START_ROLES);
     invalid.client.permissions.add.push('sessionSetFacts');
     expect(() => buildExpectedFlexRoles(invalid)).toThrow('UNEXPECTED_FLEX_BASELINE');
     expect(Object.isFrozen(EXPECTED_FLEX_ROLES.coach.permissions.add)).toBe(true);
@@ -40,11 +40,11 @@ describe('protected Flex Attributes schema and ACL', () => {
       roles: { coach: EXPECTED_FLEX_ROLES.coach, client: EXPECTED_FLEX_ROLES.client } });
     for (const name of ['coach', 'client']) {
       const permission = EXPECTED_FLEX_ROLES[name].permissions;
-      expect(permission.add).toEqual([...EXPECTED_CLIENT_SESSION_ROLES[name].permissions.add,
+      expect(permission.add).toEqual([...EXPECTED_COACHED_START_ROLES[name].permissions.add,
         'flexAttributes', 'flexValues']);
       expect(permission.update.flexValues).toEqual(['value']);
       expect(permission.update.flexAttributes).toBeUndefined();
-      expect(permission.manage).toEqual(EXPECTED_CLIENT_SESSION_ROLES[name].permissions.manage);
+      expect(permission.manage).toEqual(EXPECTED_COACHED_START_ROLES[name].permissions.manage);
       expect(permission.delete).toBeUndefined();
     }
   });
@@ -68,7 +68,7 @@ describe('protected Flex Attributes schema and ACL', () => {
     expect(plan(afterSchema(), roles).changedRoles).toEqual(['coach', 'client']);
     expect(plan(schema, afterRoles()).addedTables).toEqual(['flexAttributes', 'flexValues']);
     const partial = afterRoles();
-    partial.roles.client = structuredClone(EXPECTED_CLIENT_SESSION_ROLES.client);
+    partial.roles.client = structuredClone(EXPECTED_COACHED_START_ROLES.client);
     expect(plan(afterSchema(), partial).changedRoles).toEqual(['client']);
   });
 
