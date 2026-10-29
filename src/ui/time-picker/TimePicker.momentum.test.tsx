@@ -172,6 +172,24 @@ describe('TimePicker native momentum and settle ownership', () => {
     expect(native.writes).toEqual([]);
   });
 
+  it('applies an unrelated controlled update only after native momentum and its forward settle finish', () => {
+    const { minutes, rerender } = mount('08:00');
+    flushFrames();
+    const native = trackBrowserScroll(minutes, 0);
+    act(() => native.move(12.2));
+    flushFrames();
+    rerender('08:45');
+    flushFrames();
+    expect(native.writes).toEqual([]);
+
+    fireEvent(minutes, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(native.writes).toEqual([13 * ROW_HEIGHT]);
+    fireEvent(minutes, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(native.writes).toEqual([13 * ROW_HEIGHT, 45 * ROW_HEIGHT]);
+  });
+
   it('smoothly aligns only after true scrollend and can cancel when retouched', () => {
     const { minutes } = mount('08:15');
     flushFrames();
