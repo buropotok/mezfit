@@ -22,15 +22,22 @@
       }
     },
     "B002": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "mezfit-translation-gpt6-20261029004954660-jn30fkr9l5",
       "claim_id": "20261029004954660-jn30fkr9l5",
       "started_at": "2026-10-29T00:49:54.660Z",
       "lease_until": "2026-10-29T02:49:54.660Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T01:06:24.661Z",
+      "result_branch": "data/howto-batch-B002-20261029004954660-jn30fkr9l5",
+      "result_commit": "5338f547ede0a8865e834960867bdc083542fbd5",
+      "result_stats": {
+        "files_in_batch": 100,
+        "translations_added": 50,
+        "already_translated_files": 0,
+        "empty_how_to_files": 50,
+        "new_unique_translations": 36,
+        "reused_translations": 14
+      }
     },
     "B003": {
       "status": "completed",
