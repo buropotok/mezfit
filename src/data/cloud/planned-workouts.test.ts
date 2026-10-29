@@ -471,3 +471,13 @@ it('keeps the Coach own independent workout independent without asking for conve
   expect((await occurrences(db).get(row.id))?.format).toBe('independent');
   expect((await repo.get(created.id))?.format).toBe('independent');
 });
+
+it.each(['foreign', 'revoked'] as const)('confirmed conversion never bypasses %s relationship access', async kind => {
+  const { db, database, pair, repo, row } = await fixture(true);
+  await occurrences(db).update(row.id, { format: 'independent' });
+  if (kind === 'revoked') await db.table('members').delete(pair.members[1].id);
+  const actor = kind === 'foreign' ? new AdHocWorkoutRepository(database, 'tg:303') : repo;
+  await expect(actor.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('PLANNED_WORKOUT_NOT_FOUND');
+  expect((await occurrences(db).get(row.id))?.format).toBe('independent');
+  expect(await db.table('adHocSessions').count()).toBe(0);
+});
