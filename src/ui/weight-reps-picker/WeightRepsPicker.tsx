@@ -273,7 +273,7 @@ function WeightRepsPickerSession({
         } : undefined}
         footer={(
           <div className="ui-weight-reps-picker__footer">
-            <KonstaButton small rounded strong inline disabled={!validDigits}
+            <KonstaButton small rounded inline disabled={!validDigits}
               aria-label="Режим" aria-pressed={mode === 'wheels'} onClick={toggleMode}>
               <Text variant="caption">Режим</Text>
             </KonstaButton>
