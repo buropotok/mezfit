@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useState } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
   getCurrentInvite,
-  getCurrentWorkoutSession,
   getMe,
   type ClientInvitePreview,
   type MeResponse,
@@ -21,10 +20,8 @@ import { PersonalExercises } from './exercises/PersonalExercises';
 import { PublicExerciseMediaPrefetch } from './exercises/PublicExerciseMediaPrefetch';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
 import {
-  NavigationShell,
   type AppDestination,
   type NavigationContext,
-  type NavigationFloatingAction,
 } from './NavigationShell';
 import { SettingsPage } from './settings/SettingsPage';
 import { isScreenDiagnosticsStartParam } from './settings/screenDiagnosticsRoute';
@@ -33,7 +30,7 @@ import { SchedulePlanningContext } from './schedule/SchedulePlanningContext';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
-import { WorkoutSessionScreen, type WorkoutSessionState } from './workout';
+import { ClientWorkoutProvider, ClientWorkoutNavigationShell } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
 import { CoachAdHocWorkoutsScreen } from './workout/CoachAdHocWorkoutsScreen';
 import { ClientSharedWorkoutScreen } from './workout/ClientSharedWorkoutScreen';
@@ -198,9 +195,6 @@ export function App() {
   const [scheduleViewResetKey, setScheduleViewResetKey] = useState(0);
   const [requestedScheduleClientId, setRequestedScheduleClientId] = useState<string | null>(null);
   const [requestedScheduleDraftId, setRequestedScheduleDraftId] = useState<string | null>(null);
-  const [workoutStatus, setWorkoutStatus] = useState<WorkoutSessionState['status'] | null | undefined>(undefined);
-  const [workoutStatusLoadFailed, setWorkoutStatusLoadFailed] = useState(false);
-  const workoutStatusVersionRef = useRef(0);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [backgroundSettings, setBackgroundSettings] = useState(loadBrowserBackgroundSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
@@ -268,34 +262,6 @@ export function App() {
 
     return () => { cancelled = true; };
   }, []);
-
-  const readyClientInitData = state.status === 'ready' && state.activeRole === 'client'
-    ? state.initData
-    : null;
-
-  useEffect(() => {
-    if (!readyClientInitData) return undefined;
-
-    let cancelled = false;
-    const requestVersion = workoutStatusVersionRef.current;
-    setWorkoutStatus(undefined);
-    setWorkoutStatusLoadFailed(false);
-
-    getCurrentWorkoutSession(readyClientInitData)
-      .then(({ session }) => {
-        if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
-          setWorkoutStatus(session?.status ?? null);
-          setWorkoutStatusLoadFailed(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled && workoutStatusVersionRef.current === requestVersion) {
-          setWorkoutStatusLoadFailed(true);
-        }
-      });
-
-    return () => { cancelled = true; };
-  }, [readyClientInitData]);
 
   if (state.status === 'loading') return <main className="center"><p>Подключаем Mezfit…</p></main>;
 
@@ -376,19 +342,6 @@ export function App() {
   const shellContext = state.activeRole === 'coach' && destination === 'settings'
     ? navigationContext ?? coachSettingsRootContext
     : navigationContext;
-  const clientWorkoutFloatingAction: NavigationFloatingAction | null = state.activeRole === 'client'
-    ? {
-        label: workoutStatusLoadFailed
-          ? 'Открыть тренировку'
-          : workoutStatus === 'active'
-            ? 'Продолжить тренировку'
-            : 'Начать тренировку',
-        placement: 'left',
-        isShown: destination !== 'training' && (workoutStatus !== undefined || workoutStatusLoadFailed),
-        onClick: () => changeDestination('training'),
-        icon: 'barbell',
-      }
-    : null;
 
   return (
     <GlassSurfaceProvider blur={glassSettings.blur} optics={glassSettings.optics}>
@@ -397,6 +350,7 @@ export function App() {
         telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
       >
+      <ClientWorkoutProvider enabled={state.activeRole === 'client'}>
       <PublicExerciseMediaPrefetch />
       <WorkedMuscleAssetsPrefetch />
       <ClientCoachProvider
@@ -417,14 +371,13 @@ export function App() {
           clearDraft: () => setRequestedScheduleDraftId(null),
         }}>
         <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
-        <NavigationShell
+        <ClientWorkoutNavigationShell
           me={state.me}
           activeRole={state.activeRole}
           destination={destination}
           context={shellContext}
           onDestinationChange={next => { if (next === 'today') setScheduleViewResetKey(value => value + 1); changeDestination(next); }}
           onRoleSwitch={switchRole}
-          floatingAction={clientWorkoutFloatingAction}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
           previewWidth={previewWidth}
@@ -434,18 +387,9 @@ export function App() {
               actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
               onNavigationContextChange={handleNavigationContextChange} />
           ) : destination === 'training' ? (
-            <ClientSharedWorkoutScreen actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }} onNavigationContextChange={handleNavigationContextChange}
-              legacy={<WorkoutSessionScreen
-                actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
-                initData={state.initData}
-                onClose={() => changeDestination('today')}
-                onNavigationContextChange={handleNavigationContextChange}
-                onSessionLifecycleChange={({ status }) => {
-                  workoutStatusVersionRef.current += 1;
-                  setWorkoutStatus(status);
-                  setWorkoutStatusLoadFailed(false);
-                }}
-              />} />
+            <ClientSharedWorkoutScreen initData={state.initData}
+              actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
+              onNavigationContextChange={handleNavigationContextChange} />
           ) : destination === 'settings' ? (
           <SettingsPage
             backgroundSettings={backgroundSettings}
@@ -477,11 +421,12 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
           )}
-        </NavigationShell>
+        </ClientWorkoutNavigationShell>
         </PlannedWorkoutStartProvider>
         </SchedulePlanningContext.Provider>
         </AssignedProgramsProvider>
       </ClientCoachProvider>
+      </ClientWorkoutProvider>
       </CloudConnectionsProvider>
     </GlassSurfaceProvider>
   );

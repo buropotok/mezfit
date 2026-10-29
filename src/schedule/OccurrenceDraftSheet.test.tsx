@@ -695,3 +695,31 @@ it('waits for accepted PLAN edits before deciding whether closing needs publicat
   expect(await screen.findByRole('button', { name: 'Да' })).toBeTruthy();
   expect(close).not.toHaveBeenCalled();
 });
+
+describe('read-only PLAN execution Start', () => {
+  it('starts the latest published PLAN with explicit capability without flushing or editing PLAN', async () => {
+    const scheduled = { ...draft, saved: true };
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    const flush = vi.spyOn(drafts, 'flushEdits').mockResolvedValue(undefined);
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
+    vi.spyOn(drafts, 'get').mockResolvedValue(scheduled);
+    const start = vi.fn().mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts} readOnly allowReadOnlyStart
+      onClose={vi.fn()} onSave={vi.fn()} onStart={start} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Начать тренировку' }));
+    await waitFor(() => expect(start).toHaveBeenCalledWith(scheduled));
+    expect(flush).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+  it('keeps default read-only and locked PLAN views from starting execution', async () => {
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    const start = vi.fn();
+    const view = render(<OccurrenceDraftSheet draft={{ ...draft, saved: true }} drafts={drafts} readOnly
+      onClose={vi.fn()} onSave={vi.fn()} onStart={start} />);
+    expect((await screen.findByRole('button', { name: 'Начать тренировку' }) as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, saved: true }} drafts={drafts} readOnly allowReadOnlyStart planLocked
+      onClose={vi.fn()} onSave={vi.fn()} onStart={start} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
+    expect(start).not.toHaveBeenCalled();
+  });
+});

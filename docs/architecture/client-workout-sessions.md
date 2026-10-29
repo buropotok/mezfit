@@ -1,7 +1,7 @@
 # Client workout execution foundation
 
-Status: repository and protected ACL preparation. Client UI is not switched in
-this slice; no cloud import or ordinary-account server validation is claimed.
+Status: repository foundation plus Client UI integration. No cloud import or
+ordinary-account server validation is claimed by the UI integration.
 
 ## Scope and ownership
 
@@ -9,8 +9,20 @@ this slice; no cloud import or ordinary-account server validation is claimed.
 existing `AdHocWorkoutRepository`. It reuses the synchronized `adHocSessions`,
 `adHocExercises`, `adHocSets` graph, projection, transaction boundaries, validators,
 PLAN protection and Addon replication. No new tables or schema version are needed.
-The existing Coach-context repository and Client read-only screen keep their
-current behavior until the next UI slice deliberately adopts this repository.
+The Coach-context repository keeps its existing workflow. Client Training and
+calendar execution now deliberately adopt the Client repository through the shared
+`AdHocSessionScreen`. A single account/role-scoped `ClientWorkoutProvider` observes
+active sessions across tabs; both Training and the shell-owned FAB read that
+projection. App no longer requests REST workout status or mounts the legacy
+REST workout fallback. Initial Telegram authentication remains unchanged.
+
+Training offers an own workout and the athlete's published upcoming occurrences,
+using existing plan cards in read-only mode. The explicit `allowReadOnlyStart`
+capability permits execution without enabling PLAN edits or flushing client PLAN
+writes. Calendar uses the same Start owner and repository. Completed results stay
+readable; editing and completion remain subject to repository access/lifecycle.
+Client catalogue selection and athlete identity are explicit on the shared FACT
+screen; it never asks a Client to save a Coach-owned source-program template.
 
 The Client context supports:
 
@@ -102,6 +114,9 @@ CAS: administrators must exclude competing out-of-band configuration changes.
    realm even with guessed IDs; repeat denied tests through direct cloud calls.
 4. Verify Client writes do not change numeric PLAN or old Coach FACT in subsequent
    sets; test Coach-to-Client sequential continuation and linked completion.
-5. The next UI slice adopts the Client repository for the workout screen, calendar
-   and FAB as one source of active-session state. Only then retire the legacy
-   REST fallback; no runtime activation is implied by this foundation PR.
+5. The UI integration removes the App's legacy REST fallback and status hydration.
+   Verify real Client Start from Training/calendar, FACT Save, primary navigation,
+   reload, linked completion and offline/reconnect on iOS/Android WebViews after
+   the approved ACL is installed. Without that installed policy, relationship
+   writes still fail locally with a recoverable message; personal owner workouts
+   work without a relationship-role upgrade. This PR does not dispatch the operator.

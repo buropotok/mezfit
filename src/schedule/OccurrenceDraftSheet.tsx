@@ -82,6 +82,8 @@ export interface OccurrenceDraftSheetProps {
   drafts: WorkoutOccurrenceDraftRepository;
   actor?: ProgramActor;
   readOnly?: boolean;
+  /** Published Client PLAN can be read-only while execution Start is allowed. */
+  allowReadOnlyStart?: boolean;
   /** Owner-controlled lock; pass the frozen occurrence PLAN in draft after Start. */
   planLocked?: boolean;
   /** Called with the latest locally persisted draft after all pending edits flush. */
@@ -184,7 +186,7 @@ export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabl
 }
 
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
-  actor, readOnly = false, saveNotice = '', sourceProgramName, container, flushEditsRef,
+  actor, readOnly = false, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
   inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
@@ -218,8 +220,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     startAlive.current = true;
     return () => { startAlive.current = false; };
   }, []);
-  const access = useRef({ planLocked, readOnly });
-  access.current = { planLocked, readOnly };
+  const access = useRef({ planLocked, readOnly, allowReadOnlyStart });
+  access.current = { planLocked, readOnly, allowReadOnlyStart };
   const [lockToastVersion, setLockToastVersion] = useState(0);
   const onMutationAttempt = () => setLockToastVersion(version => version + 1);
   const mutationBlocked = () => {
@@ -351,17 +353,17 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   };
   const startWorkout = async () => {
     if (!startAlive.current || !draft || !draft.saved || !onStart || busy || starting.current
-      || access.current.planLocked || access.current.readOnly) return;
+      || access.current.planLocked || (access.current.readOnly && !access.current.allowReadOnlyStart)) return;
     starting.current = true;
     setBusy(true);
     setError('');
     try {
-      await flushEdits();
-      if (!startAlive.current || access.current.planLocked || access.current.readOnly) return;
+      if (!access.current.readOnly) await flushEdits();
+      if (!startAlive.current || access.current.planLocked || (access.current.readOnly && !access.current.allowReadOnlyStart)) return;
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       if (!latest.saved) throw new Error('Сначала сохраните тренировку');
-      if (!startAlive.current || access.current.planLocked || access.current.readOnly) return;
+      if (!startAlive.current || access.current.planLocked || (access.current.readOnly && !access.current.allowReadOnlyStart)) return;
       await onStart(latest);
     } catch (reason) {
       if (startAlive.current) setError(reason instanceof Error ? reason.message : 'Не удалось начать тренировку');
@@ -558,7 +560,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           <Button disabled={busy} onClick={() => { void beginSave(); }}>{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
         </footer> : null}
         {draft.saved && onStart ? <div className="occurrence-draft-sheet__start">
-          <StartWorkoutButton disabled={busy || planLocked || readOnly}
+          <StartWorkoutButton disabled={busy || planLocked || (readOnly && !allowReadOnlyStart)}
             onClick={() => { void startWorkout(); }} />
         </div> : null}
         {onCancel || onDelete ? <div className="occurrence-draft-sheet__actions">

@@ -484,7 +484,10 @@ export function TodayPage({
         onClose={closeSession} onNavigationContextChange={setEditorNavigation} />
       {draftRepository ? <OccurrenceDraftSheet suspended={plannedStart?.conflictActive} draft={selected} drafts={draftRepository} actor={actor} readOnly={viewed !== null}
         planLocked={Boolean(selected?.workoutSessionId || (selected?.executionStatus && selected.executionStatus !== 'scheduled'))}
-        onStart={role === 'coach' && plannedStart && !viewed ? async draft => {
+        allowReadOnlyStart={role === 'client'}
+        onStart={plannedStart && (role === 'coach' ? !viewed : selected?.saved
+          && !selected.workoutSessionId && (!selected.executionStatus || selected.executionStatus === 'scheduled')
+          && !cancelledRows.some(row => row.id === (selected.targetOccurrenceId ?? selected.id.slice(6)))) ? async draft => {
           const token = editorGeneration.current;
           const id = await plannedStart.start(draft);
           if (token === editorGeneration.current && activeRepository.current === draftRepository) {

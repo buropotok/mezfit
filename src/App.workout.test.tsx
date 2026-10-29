@@ -15,13 +15,26 @@ vi.mock('./api', async (importOriginal) => {
   };
 });
 
+const local = vi.hoisted(() => ({ db: {}, rows: [] as { id: string; name: string; status: 'active' }[],
+  fail: false, next: null as ((rows: { id: string; name: string; status: 'active' }[]) => void) | null }));
+vi.mock('./data/cloud/client-workouts', () => ({ ClientWorkoutRepository: class {
+  observeOpen(next: typeof local.next, error: (reason: unknown) => void) {
+    local.next = next;
+    if (local.fail) error(new Error('temporary local read failure'));
+    else next?.(local.rows);
+    return { unsubscribe: () => { local.next = null; } };
+  }
+} }));
 vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
   CloudConnectionsProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  useCloudConnections: () => ({
+  useCloudConnections: () => ({ db: local.db,
     actorUserId: 'tg:100', clients: [], coaches: [], status: 'ready',
     error: '', refresh: vi.fn(async () => undefined),
   }),
 }));
+
+vi.mock('./exercises/PublicExerciseMediaPrefetch', () => ({ PublicExerciseMediaPrefetch: () => null }));
+vi.mock('./workout/WorkedMuscleAssetsPrefetch', () => ({ WorkedMuscleAssetsPrefetch: () => null }));
 
 vi.mock('./coach/CoachShell', () => ({
   CoachShell: () => <div>Coach home</div>,
@@ -35,22 +48,11 @@ vi.mock('./schedule/TodayPage', () => ({
   TodayPage: () => <div>Client home</div>,
 }));
 
-vi.mock('./workout', () => ({
-  WorkoutSessionScreen: ({
-    onSessionLifecycleChange,
-  }: {
-    onSessionLifecycleChange?: (session: { sessionId: number; status: 'active' }) => void;
-  }) => (
-    <div>
-      Workout session
-      <button
-        type="button"
-        onClick={() => onSessionLifecycleChange?.({ sessionId: 1, status: 'active' })}
-      >
-        Mark workout active
-      </button>
-    </div>
-  ),
+vi.mock('./workout/ClientSharedWorkoutScreen', () => ({
+  ClientSharedWorkoutScreen: () => <div>Workout session<button onClick={() => {
+    local.rows = [{ id: 'local-session', name: 'Workout', status: 'active' }];
+    local.next?.(local.rows);
+  }}>Mark workout active</button></div>,
 }));
 
 const getCurrentInviteMock = vi.mocked(getCurrentInvite);
@@ -58,6 +60,7 @@ const getCurrentWorkoutSessionMock = vi.mocked(getCurrentWorkoutSession);
 const getMeMock = vi.mocked(getMe);
 
 beforeEach(() => {
+  local.rows = []; local.fail = false; local.next = null;
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
     disconnect() {}
@@ -123,7 +126,7 @@ describe('App workout navigation', () => {
     expect(getCurrentWorkoutSessionMock).not.toHaveBeenCalled();
   });
 
-  it('hydrates an already active client workout after reload before labeling the FAB', async () => {
+  it('reads the existing local client workout after reload without REST before labeling the FAB', async () => {
     getMeMock.mockResolvedValue({
       user: {
         id: 10,
@@ -137,19 +140,17 @@ describe('App workout navigation', () => {
       },
       roles: ['client'],
     });
-    getCurrentWorkoutSessionMock.mockResolvedValue({
-      session: { sessionId: 501, status: 'active' },
-    });
+    local.rows = [{ id: 'local-session', name: 'Workout', status: 'active' }];
 
     render(<App />);
 
     expect(await screen.findByText('Client home')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Начать тренировку' })).toBeNull();
     expect(await screen.findByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
-    expect(getCurrentWorkoutSessionMock).toHaveBeenCalledWith('telegram-init');
+    expect(getCurrentWorkoutSessionMock).not.toHaveBeenCalled();
   });
 
-  it('keeps a recoverable workout entry when status hydration fails transiently', async () => {
+  it('keeps a recoverable workout entry when local observation fails', async () => {
     getMeMock.mockResolvedValue({
       user: {
         id: 10,
@@ -163,7 +164,7 @@ describe('App workout navigation', () => {
       },
       roles: ['client'],
     });
-    getCurrentWorkoutSessionMock.mockRejectedValueOnce(new Error('temporary network failure'));
+    local.fail = true;
 
     render(<App />);
 

@@ -17,6 +17,8 @@ const messages: Readonly<Record<string, string>> = {
   ADHOC_ACTIVE_SESSION_EXISTS: 'Завершите текущую тренировку, чтобы начать новую.',
   ADHOC_SESSION_NOT_FOUND: 'Тренировка недоступна. Вернитесь к списку тренировок.',
   ADHOC_SESSION_COMPLETED: 'Тренировка уже завершена.',
+  CLIENT_EXECUTION_ACL_REQUIRED: 'Запись результатов пока недоступна. Попробуйте позже.',
+  CLIENT_SOURCE_PLAN_FORBIDDEN: 'Выберите запланированную тренировку или начните свою.',
   ADHOC_WRITE_FORBIDDEN: 'Нет доступа к изменению этой тренировки.',
   ADHOC_PROGRAM_SELECTION_REQUIRED: 'Программа уже существует. Выберите её и нужный день.',
   ADHOC_PROGRAM_NOT_FOUND: 'Программа недоступна. Выберите другую программу.',

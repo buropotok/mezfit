@@ -1,130 +1,111 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdHocOpenSession } from '../data/cloud/adhoc-workouts';
-import type { ActiveWorkoutSession } from './workoutSessionTypes';
+import type { UpcomingPlannedWorkout } from '../data/cloud/planned-workouts';
+import type { OccurrenceDraftCardProps } from '../schedule/OccurrenceDraftSheet';
 import { ClientSharedWorkoutScreen } from './ClientSharedWorkoutScreen';
 
-const state = vi.hoisted(() => ({
-  emitList: null as ((rows: AdHocOpenSession[]) => void) | null,
-  emitError: null as (() => void) | null,
-  emitDetail: null as ((value: ActiveWorkoutSession<string> | null, row?: { name: string }) => void) | null,
-  unsubscribeList: vi.fn(),
-  unsubscribeDetail: vi.fn(),
+const state = vi.hoisted(() => ({ db: {}, repository: { exerciseInformation: vi.fn() }, sessions: [] as AdHocOpenSession[],
+  startQuick: vi.fn(), start: vi.fn(), showSession: vi.fn(),
+  upcomingNext: null as ((rows: UpcomingPlannedWorkout[]) => void) | null,
+  unsubscribe: vi.fn(), cards: [] as OccurrenceDraftCardProps[], catalogueRole: '', sessionRepository: null as unknown,
 }));
-const cloud = { db: {}, actorUserId: 'tg:202' };
-
-vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: 'Атлет', avatar: <span>Фото атлета</span>, compactAvatar: null }) }));
-vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
-  useCloudConnections: () => cloud,
-}));
-vi.mock('../data/cloud/adhoc-workouts', () => ({
-  AdHocWorkoutRepository: class {
-    observeForClient(callback: (rows: AdHocOpenSession[]) => void, onError: () => void) {
-      state.emitList = callback;
-      state.emitError = onError;
-      return { unsubscribe: state.unsubscribeList };
-    }
-    observe(_id: string, callback: (value: ActiveWorkoutSession<string> | null, row?: { name: string }) => void) {
-      state.emitDetail = callback;
-      return { unsubscribe: state.unsubscribeDetail };
-    }
-  },
-}));
+vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: state.db, actorUserId: 'tg:202' }) }));
+vi.mock('./ClientWorkoutContext', () => ({ useClientWorkout: () => ({ repository: state.repository,
+  sessions: state.sessions, loaded: true, error: '', retry: vi.fn() }) }));
+vi.mock('./PlannedWorkoutStartContext', () => ({ usePlannedWorkoutStart: () => ({ startQuick: state.startQuick,
+  start: state.start, showSession: state.showSession }) }));
+vi.mock('../data/cloud/planned-workouts', () => ({ PlannedWorkoutsRepository: class {
+  drafts = {};
+  observe(_date: Date, next: typeof state.upcomingNext) { state.upcomingNext = next; return { unsubscribe: state.unsubscribe }; }
+} }));
+vi.mock('../schedule/OccurrenceDraftSheet', () => ({ OccurrenceDraftCard: (props: OccurrenceDraftCardProps) => {
+  state.cards.push(props);
+  return <button onClick={() => { if (props.draft) void props.onStart?.(props.draft).catch(() => undefined); }}>Start planned</button>;
+} }));
+vi.mock('./AdHocSessionScreen', () => ({ AdHocSessionScreen: ({ sessionId, personalCatalogueRole, repository }: {
+  sessionId: string; personalCatalogueRole: string; repository: unknown;
+}) => { state.catalogueRole = personalCatalogueRole; state.sessionRepository = repository;
+  return <span>Session {sessionId}</span>; } }));
+vi.mock('../ui', () => ({ Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span> }));
 vi.mock('konsta/react', () => ({
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ListItem: ({ title, onClick }: { title: string; onClick: () => void }) =>
-    <button onClick={onClick}>{title}</button>,
-}));
-vi.mock('../ui', () => ({
-  Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
-}));
-vi.mock('./WorkoutSessionCard', () => ({
-  WorkoutSessionCard: ({ session, readOnly }: {
-    session: ActiveWorkoutSession<string>; readOnly?: boolean;
-  }) => <div data-testid="shared-fact" data-read-only={readOnly ? 'true' : 'false'}>
-    {session.exercises[0]?.sets[0]?.fact?.metrics.weightKg ?? '—'}
-  </div>,
-}));
-
-function emit(rows: AdHocOpenSession[]) {
-  act(() => state.emitList?.(rows));
-}
-const active = (id: string): AdHocOpenSession => ({ id, name: 'Тренировка клиента', status: 'active' });
-function factSession(weight: number): ActiveWorkoutSession<string> {
-  return {
-    sessionId: 'shared-1', occurrenceId: null, status: 'active', workoutDate: '2026-10-27',
-    startedAt: null, completedAt: null, program: null, phase: null, day: null,
-    exercises: [{
-      sessionExerciseId: 'exercise-1', workoutSessionId: 'shared-1',
-      sourceProgramExerciseId: null, position: 0, status: 'active', notes: null,
-      exercise: {
-        id: 'definition-1', scope: 'global', name: 'Жим лёжа',
-        description: null, tracking_type: 'weight_reps', category_code: 'chest',
-        equipment_code: 'barbell', reference_source: null, reference_key: null,
-        reference_media_url: null, is_favourite: false, can_edit: false,
-      },
-      sets: [{
-        sessionSetId: 'set-1', sourceProgramSetId: null, position: 0, status: 'completed',
-        plan: null, previous: null,
-        fact: {
-          metrics: { weightKg: weight, reps: 19, durationSeconds: null, distanceMeters: null },
-          setLabel: null, rpe: null, comment: null, bands: [],
-        },
-      }],
-    }],
-  };
-}
-const renderScreen = () => render(<ClientSharedWorkoutScreen
-  onNavigationContextChange={() => {}} legacy={<p>Старая тренировка</p>} />);
-
+  ListItem: ({ title, onClick }: { title: string; onClick: () => void }) => <button onClick={onClick}>{title}</button>,
+  Button: ({ children, onClick, disabled }: {
+  children: ReactNode; onClick: () => void; disabled?: boolean;
+}) => <button onClick={onClick} disabled={disabled}>{children}</button> }));
+const navigation = vi.fn();
+const props = { initData: '', onNavigationContextChange: navigation };
+const planned: UpcomingPlannedWorkout = { id: 'occurrence', programName: 'Программа', draft: {
+  id: 'draft:occurrence', targetOccurrenceId: 'occurrence', actorUserId: 'tg:202', realmId: 'shared',
+  athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202', format: 'independent',
+  startsAtUtc: '2026-10-29T08:00:00.000Z', durationMinutes: 60, saved: true,
+  plan: { name: 'День', comment: null, exercises: [] }, originalPlan: { name: 'День', comment: null, exercises: [] },
+  createdAt: '2026-10-29T00:00:00.000Z', updatedAt: '2026-10-29T00:00:00.000Z',
+} };
 beforeEach(() => {
-  vi.clearAllMocks();
-  state.emitList = null; state.emitError = null; state.emitDetail = null;
+  state.sessions = []; state.cards = []; state.upcomingNext = null; state.sessionRepository = null;
+  state.startQuick.mockReset().mockResolvedValue({ id: 'own', createdProgram: false });
+  state.start.mockReset().mockResolvedValue('planned-session'); state.showSession.mockReset(); state.unsubscribe.mockClear();
 });
 afterEach(cleanup);
-
-describe('client Training tab displays Coach-owned FACT', () => {
-  it('keeps the old screen without shared FACT and switches to a live read-only view when it arrives', () => {
-    renderScreen();
-    expect(screen.getByText('Загружаем тренировки…')).toBeTruthy();
-    emit([]);
-    expect(screen.getByText('Старая тренировка')).toBeTruthy();
-
-    emit([active('shared-1')]);
-    expect(screen.queryByText('Старая тренировка')).toBeNull();
-    act(() => state.emitDetail?.(factSession(57), { name: 'Тренировка клиента' }));
-    expect(screen.getByTestId('shared-fact').textContent).toContain('57');
-    expect(screen.getByTestId('shared-fact').getAttribute('data-read-only')).toBe('true');
-
-    act(() => state.emitDetail?.(factSession(62), { name: 'Тренировка клиента' }));
-    expect(screen.getByTestId('shared-fact').textContent).toContain('62');
-    emit([]);
-    expect(screen.queryByTestId('shared-fact')).toBeNull();
-    expect(screen.getByText('Старая тренировка')).toBeTruthy();
+describe('Client local workout screen', () => {
+  it('opens the existing Coach FACT through the athlete repository and Client catalogue', () => {
+    state.sessions = [{ id: 'coach-session', name: 'С тренером', status: 'active' }];
+    render(<ClientSharedWorkoutScreen {...props} />);
+    expect(screen.getByText('Session coach-session')).toBeTruthy();
+    expect(state.sessionRepository).toBe(state.repository);
+    expect(state.catalogueRole).toBe('client');
+    expect(screen.queryByText('Своя тренировка')).toBeNull();
+    expect(state.startQuick).not.toHaveBeenCalled();
   });
-
-  it('lets the client choose between authorized simultaneous Coach sessions', () => {
-    renderScreen();
-    emit([active('shared-1'), { id: 'shared-2', name: 'Вторая тренировка', status: 'active' }]);
-    expect(screen.getByRole('button', { name: 'Вторая тренировка' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Вторая тренировка' }));
-    expect(state.unsubscribeDetail).toHaveBeenCalled();
+  it('keeps selection between authorized pre-existing simultaneous Coach sessions', () => {
+    state.sessions = [{ id: 'first', name: 'Первая', status: 'active' }, { id: 'second', name: 'Вторая', status: 'active' }];
+    render(<ClientSharedWorkoutScreen {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Вторая' }));
+    expect(screen.getByText('Session second')).toBeTruthy();
+    expect(screen.queryByText('Своя тренировка')).toBeNull();
   });
-
-  it('does not block the previous client workout when shared FACT observation fails', () => {
-    renderScreen();
-    act(() => state.emitError?.());
-    expect(screen.getByText('Старая тренировка')).toBeTruthy();
-    expect(screen.getByRole('alert').textContent).toContain('Не удалось прочитать тренировки');
+  it('does not switch the open session when a newer Coach session replicates', () => {
+    state.sessions = [{ id: 'current', name: 'Текущая', status: 'active' }];
+    const view = render(<ClientSharedWorkoutScreen {...props} />);
+    state.sessions = [{ id: 'newer', name: 'Новая', status: 'active' }, ...state.sessions];
+    view.rerender(<ClientSharedWorkoutScreen {...props} />);
+    expect(screen.getByText('Session current')).toBeTruthy();
+    expect(screen.queryByText('Session newer')).toBeNull();
   });
-
-  it('unsubscribes when the Training screen is closed', () => {
-    const view = renderScreen();
-    emit([active('shared-1')]);
+  it('starts an own workout and shows the accepted session without REST or program creation', async () => {
+    render(<ClientSharedWorkoutScreen {...props} />);
+    fireEvent.click(screen.getByText('Своя тренировка'));
+    expect(await screen.findByText('Session own')).toBeTruthy();
+    expect(state.startQuick).toHaveBeenCalledOnce();
+    expect(state.showSession).toHaveBeenCalledWith('own');
+  });
+  it('starts a published plan while keeping its prescription read-only', async () => {
+    render(<ClientSharedWorkoutScreen {...props} />);
+    act(() => state.upcomingNext?.([planned]));
+    expect(state.cards.at(-1)).toMatchObject({ readOnly: true, allowReadOnlyStart: true });
+    fireEvent.click(screen.getByText('Start planned'));
+    expect(await screen.findByText('Session planned-session')).toBeTruthy();
+    expect(state.start).toHaveBeenCalledWith(planned.draft);
+  });
+  it('retains the launch choices and reports an unavailable execution grant', async () => {
+    state.startQuick.mockRejectedValue(new Error('CLIENT_EXECUTION_ACL_REQUIRED'));
+    render(<ClientSharedWorkoutScreen {...props} />);
+    fireEvent.click(screen.getByText('Своя тренировка'));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Запись результатов пока недоступна. Попробуйте позже.');
+    expect(screen.getByText('Своя тренировка')).toBeTruthy();
+    expect(state.showSession).not.toHaveBeenCalled();
+  });
+  it('suppresses navigation after leaving during local Start acceptance', async () => {
+    let resolve!: (value: { id: string }) => void;
+    state.startQuick.mockReturnValue(new Promise(value => { resolve = value; }));
+    const view = render(<ClientSharedWorkoutScreen {...props} />);
+    fireEvent.click(screen.getByText('Своя тренировка'));
     view.unmount();
-    expect(state.unsubscribeList).toHaveBeenCalledTimes(1);
-    expect(state.unsubscribeDetail).toHaveBeenCalledTimes(1);
+    await act(async () => resolve({ id: 'accepted' }));
+    await waitFor(() => expect(state.showSession).not.toHaveBeenCalled());
   });
 });

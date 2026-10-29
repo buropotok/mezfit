@@ -20,6 +20,7 @@ vi.mock('./NavigationShell', () => ({
   ),
 }));
 vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
+  useCloudConnections: () => null,
   CloudConnectionsProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 vi.mock('./data/cloud/AssignedProgramsProvider', () => ({

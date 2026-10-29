@@ -1,97 +1,117 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { List, ListItem } from 'konsta/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, List, ListItem } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { AdHocWorkoutRepository, type AdHocOpenSession } from '../data/cloud/adhoc-workouts';
+import { PlannedWorkoutsRepository, type UpcomingPlannedWorkout } from '../data/cloud/planned-workouts';
+import type { ClientWorkoutRepository } from '../data/cloud/client-workouts';
 import type { ProgramActor } from '../program/ProgramSummary';
+import { OccurrenceDraftCard } from '../schedule/OccurrenceDraftSheet';
 import { Text } from '../ui';
-import { WorkoutSessionCard } from './WorkoutSessionCard';
-import { useWorkoutPerson } from '../schedule/WorkoutPerson';
-import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
-import type { ActiveWorkoutSession } from './workoutSessionTypes';
+import { AdHocSessionScreen } from './AdHocSessionScreen';
+import { useClientWorkout } from './ClientWorkoutContext';
+import { usePlannedWorkoutStart } from './PlannedWorkoutStartContext';
+import { adHocErrorMessage } from './adhoc-workout-errors';
 import './adhoc-workouts.css';
 
-/** Client-only projection of Coach-owned FACT; all edits stay with the Coach. */
-function ClientSharedSession({ repository, sessionId, actor, onNavigationContextChange }: {
-  repository: AdHocWorkoutRepository;
-  sessionId: string;
-  actor?: ProgramActor;
-  onNavigationContextChange: (value: NavigationContext | null) => void;
-}) {
-  const [session, setSession] = useState<ActiveWorkoutSession<string> | null>(null);
-  const [metadata, setMetadata] = useState<AdHocSessionRow | null>(null);
-  const athlete = useWorkoutPerson(metadata?.athleteUserId ?? null, metadata?.realmId ?? '', actor);
-  const coach = useWorkoutPerson(metadata?.coachUserId ?? null, metadata?.realmId ?? '', actor);
-  const [title, setTitle] = useState<string>();
-  const [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    setSession(null); setTitle(undefined); setError('');
-    const subscription = repository.observe(sessionId, (value, row) => {
-      if (!active) return;
-      setSession(value); setMetadata(row ?? null);
-      setTitle(row?.name);
-      setError(value ? '' : 'Тренировка недоступна');
-    }, () => {
-      if (!active) return;
-      setSession(null); setError('Не удалось прочитать тренировку');
-    });
-    return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, sessionId]);
-  return <>
-    {session ? <><Text variant="body">Атлет: {athlete.name}</Text>
-      <div className="workout-participants"><Text variant="body">{session?.format === 'coached' || (!session?.format && metadata?.coachUserId) ? 'С тренером в зале' : 'Самостоятельная'}</Text>
-        {(session?.format === 'coached' || (!session?.format && metadata?.coachUserId)) ? coach.compactAvatar : null}</div>
-      <WorkoutSessionCard showStatus={session.status !== 'active'} athleteName={athlete.name} athleteAvatar={athlete.avatar} readOnly session={session} title={title}
-      onReorderExerciseIds={() => {}}
-      onSaveSet={async () => { throw new Error('Редактирование доступно только тренеру'); }}
-      onNavigationContextChange={onNavigationContextChange} /></> : null}
-    {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    {!session && !error ? <Text variant="body">Загружаем тренировку…</Text> : null}
-  </>;
-}
+const refusePlanSave = async () => { throw new Error('Изменение плана недоступно'); };
+const ignoreClose = () => {};
 
-/** Existing client workout remains the fallback until an authorized shared FACT arrives. */
-export function ClientSharedWorkoutScreen({ legacy, actor, onNavigationContextChange }: {
-  legacy: ReactNode;
+/** Athlete execution and launch choices share the shell's local active-session projection. */
+export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContextChange }: {
+  initData: string;
   actor?: ProgramActor;
   onNavigationContextChange: (value: NavigationContext | null) => void;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud?.db
-    ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null, [cloud?.db, cloud?.actorUserId]);
-  const [sessions, setSessions] = useState<AdHocOpenSession[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const workout = useClientWorkout();
+  const start = usePlannedWorkoutStart();
+  const repository = workout?.repository ?? null;
+  const upcoming = useMemo(() => cloud?.db ? new PlannedWorkoutsRepository(cloud.db, cloud.actorUserId, 'client') : null,
+    [cloud?.db, cloud?.actorUserId]);
+  const [rows, setRows] = useState<UpcomingPlannedWorkout[]>([]);
+  const [plansLoaded, setPlansLoaded] = useState(false);
+  const [plansError, setPlansError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedActiveId, setSelectedActiveId] = useState<string | null>(null);
+  const [retained, setRetained] = useState<{ repository: ClientWorkoutRepository; id: string } | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const generation = useRef(0);
+  const running = useRef(false);
+  const activeSessions = workout?.sessions.filter(row => row.status === 'active') ?? [];
+  const activeId = activeSessions.find(row => row.id === selectedActiveId)?.id ?? activeSessions[0]?.id ?? null;
+  const sessionId = activeId ?? (retained?.repository === repository ? retained.id : null);
   useEffect(() => {
-    setSessions([]); setLoaded(false); setSelectedId(null); setError('');
-    if (!repository) return;
+    ++generation.current; running.current = false;
+    setRetained(null); setSelectedActiveId(null); setBusy(false); setError('');
+    return () => { ++generation.current; };
+  }, [repository]);
+  useEffect(() => {
+    if (repository && activeId) {
+      setRetained({ repository, id: activeId });
+      setSelectedActiveId(activeId);
+    }
+  }, [repository, activeId]);
+  useEffect(() => {
+    setRows([]); setPlansLoaded(false); setPlansError('');
+    if (!upcoming || activeId) return;
     let active = true;
-    const subscription = repository.observeForClient(rows => {
-      if (!active) return;
-      setSessions(rows); setLoaded(true); setError('');
-    }, () => {
-      if (!active) return;
-      setSessions([]); setLoaded(true); setError('Не удалось прочитать тренировки из локальной базы');
+    const subscription = upcoming.observe(new Date(), rows => {
+      if (active) { setRows(rows); setPlansLoaded(true); setPlansError(''); }
+    }, reason => {
+      if (active) { setPlansLoaded(true); setRows([]); setPlansError(adHocErrorMessage(reason, 'Не удалось прочитать плановые тренировки')); }
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository]);
-
-  if (!repository) return <>{legacy}</>;
-  if (!loaded) return <section className="adhoc-workouts"><Text variant="body">Загружаем тренировки…</Text></section>;
-  if (error) return <>{legacy}<section className="adhoc-workouts">
-    <Text variant="footnote" role="alert">{error}</Text>
-  </section></>;
-  if (!sessions.length) return <>{legacy}</>;
-
-  const activeId = selectedId !== null && sessions.some(row => row.id === selectedId)
-    ? selectedId : sessions[0].id;
-  return <section className="adhoc-workouts">
-    {sessions.length > 1 ? <List nested>{sessions.map(row =>
-      <ListItem key={row.id} title={row.name} link onClick={() => setSelectedId(row.id)} />
-    )}</List> : null}
-    <ClientSharedSession key={activeId} repository={repository} sessionId={activeId} actor={actor}
-      onNavigationContextChange={onNavigationContextChange} />
-  </section>;
+  }, [upcoming, activeId, retry]);
+  const exerciseInformation = useCallback((exerciseId: string) => {
+    if (!repository || !sessionId) return Promise.reject(new Error('Тренировка недоступна'));
+    return repository.exerciseInformation(sessionId, exerciseId);
+  }, [repository, sessionId]);
+  const runStart = async (create: () => Promise<{ id: string }>) => {
+    if (!repository || !workout?.loaded || running.current || activeId) return;
+    const token = generation.current;
+    running.current = true; setBusy(true); setError('');
+    try {
+      const { id } = await create();
+      if (token !== generation.current) return;
+      setRetained({ repository, id }); setExpandedId(null);
+      start?.showSession(id);
+    } catch (reason) {
+      if (token === generation.current) setError(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
+      throw reason;
+    } finally {
+      if (token === generation.current) { running.current = false; setBusy(false); }
+    }
+  };
+  return <>
+    {activeSessions.length > 1 ? <List nested>{activeSessions.map(row => <ListItem key={row.id}
+      title={row.name} link onClick={() => setSelectedActiveId(row.id)} />)}</List> : null}
+    {sessionId && repository ? <AdHocSessionScreen key={sessionId} repository={repository} sessionId={sessionId}
+      initData={initData} actor={actor} hideActiveStatus personalCatalogueRole="client"
+      onExerciseInformation={exerciseInformation} onNavigationContextChange={onNavigationContextChange} /> : null}
+    <section className="adhoc-workouts">
+      {!workout?.loaded && !workout?.error ? <Text variant="body" role="status">Загружаем тренировки…</Text> : null}
+      {workout?.error ? <><Text variant="footnote" role="alert">{workout.error}</Text>
+        <Button rounded tonal onClick={workout.retry}>Повторить</Button></> : null}
+      {workout?.loaded && !activeId ? <>
+        <Text variant="headline">Начать тренировку</Text>
+        <Button rounded disabled={busy || !start} onClick={() => {
+          if (start) void runStart(() => start.startQuick()).catch(() => undefined);
+        }}>Своя тренировка</Button>
+        <Text variant="body">Запланированные тренировки</Text>
+        {!plansLoaded ? <Text variant="body" role="status">Загружаем план…</Text> : null}
+        {plansLoaded && !plansError && !rows.length ? <Text variant="footnote">На ближайшие две недели тренировок нет.</Text> : null}
+        {plansError ? <><Text variant="footnote" role="alert">{plansError}</Text>
+          <Button rounded tonal onClick={() => setRetry(value => value + 1)}>Повторить загрузку плана</Button></> : null}
+        {upcoming ? rows.map(row => <OccurrenceDraftCard key={row.id} draft={row.draft} drafts={upcoming.drafts}
+          actor={actor} sourceProgramName={row.programName} readOnly allowReadOnlyStart
+          collapsed={expandedId !== row.id} onCollapsedChange={() => setExpandedId(id => id === row.id ? null : row.id)}
+          onSave={refusePlanSave} onClose={ignoreClose} onNavigationContextChange={onNavigationContextChange}
+          onStart={start && !busy ? draft => runStart(async () => ({ id: await start.start(draft) })) : undefined} />) : null}
+      </> : null}
+      {busy ? <Text variant="body" role="status">Начинаем тренировку…</Text> : null}
+      {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
+    </section>
+  </>;
 }
