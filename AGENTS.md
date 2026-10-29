@@ -395,7 +395,7 @@ Do not freeze accidental implementation details. For meaningful async/integratio
 
 Before opening a PR, review the test code itself. Confirm that tests remain current and relevant to the latest implementation and do not depend on obsolete or deprecated functionality. This is a source/code review requirement and must be performed before PR creation so stale tests or dependencies are identified before CI.
 
-Do not modify tests merely to make new code pass. Tests may be corrected only when they fail because deprecated functionality was explicitly removed by business logic. Before changing such tests, explain the problem in simple business terms and wait for the user's decision.
+Do not modify tests merely to make new code pass. Tests may be corrected when deprecated functionality was explicitly removed by business logic, or when an approved, documented architecture contract changes and the previous assertion is no longer valid. For architecture-contract updates, preserve all unaffected business invariants and replace obsolete assertions with relevant checks of the new contract; never weaken a test to conceal incorrect behavior. Tests introduced in the current PR for unmerged functionality may also be corrected while implementing that functionality. For all other changes to existing tests, explain the issue in simple business terms and wait for the user's decision.
 
 ## 25. Required verification
 
