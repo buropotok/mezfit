@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EXPECTED_CLIENT_SESSION_ROLES } from '../../tools/dexie-roles/client-sessions.mjs';
+import { EXPECTED_COACHED_START_ROLES } from '../../tools/dexie-roles/coached-start.mjs';
 import { EXPECTED_FLEX_ROLES } from '../../tools/dexie-roles/flex-attributes.mjs';
 import { assertRemoteRoles } from './dexie-cloud-membership';
 
@@ -7,8 +7,8 @@ const profile = (source = EXPECTED_FLEX_ROLES) =>
   Object.entries(source).map(([name, role]) => ({ ...structuredClone(role), name, realmId: 'rlm-public' }));
 
 describe('membership preflight for Flex Attributes ACL rollout', () => {
-  it('accepts both the previous complete Client execution policy and complete Flex extension', () => {
-    expect(() => assertRemoteRoles(profile(EXPECTED_CLIENT_SESSION_ROLES))).not.toThrow();
+  it('accepts both the previous complete Coach coached-start policy and complete Flex extension', () => {
+    expect(() => assertRemoteRoles(profile(EXPECTED_COACHED_START_ROLES))).not.toThrow();
     expect(() => assertRemoteRoles(profile())).not.toThrow();
   });
 
@@ -35,7 +35,7 @@ describe('membership preflight for Flex Attributes ACL rollout', () => {
     for (const role of ['coach', 'client']) {
       const roles = profile();
       const candidate = roles.find(item => item.name === role);
-      const original = EXPECTED_CLIENT_SESSION_ROLES[role];
+      const original = EXPECTED_COACHED_START_ROLES[role];
       candidate.permissions = structuredClone(original.permissions);
       expect(() => assertRemoteRoles(roles)).toThrow('CLOUD_MEMBERSHIP_UNAVAILABLE');
     }
