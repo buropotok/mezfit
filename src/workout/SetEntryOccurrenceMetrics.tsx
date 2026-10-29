@@ -6,7 +6,7 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton, LiquidPopover,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
-import { createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
+import { sameSetEntryDraft, createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
 import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
@@ -73,6 +73,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   }, []);
   const [discardConfirm, setDiscardConfirm] = useState(false);
   const draftRef = useRef(draft);
+  const initialDraft = useRef(draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -170,7 +171,9 @@ export function SetEntryOccurrenceMetrics(props: Props) {
 
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
-    if (readOnly) props.onClose();
+    if (readOnly || sameSetEntryDraft(initialDraft.current, draftRef.current)) {
+      setPicker(null); setBandOpen(false); props.onClose();
+    }
     else setDiscardConfirm(true);
   };
   requestClose.current = discardEntry;
