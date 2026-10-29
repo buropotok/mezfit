@@ -4,15 +4,22 @@
   "manifest_sha256": "821da2a0160d96e337ab70b755fb09d19d95f0e73bcd10c88fdc80bb74b5a749",
   "batches": {
     "B001": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "mezfit-translator-mvstt33m-h1d1uuo",
       "claim_id": "claim-mvstt33m-4om1dop5fg",
       "started_at": "2026-10-29T00:49:42.301Z",
       "lease_until": "2026-10-29T02:49:42.301Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T01:03:46.963Z",
+      "result_branch": "data/howto-batch-B001-claim-mvstt33m-4om1dop5fg",
+      "result_commit": "7c1274fa085f54468b10b0a330abaeb75f857b74",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 51,
+        "already_translated": 0,
+        "without_english_instruction": 49,
+        "new_unique_translations": 37,
+        "reused_translations": 14
+      }
     },
     "B002": {
       "status": "in_progress",
