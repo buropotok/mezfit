@@ -99,13 +99,13 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     expect(screen.getByRole('button', { name: 'Изменить целые килограммы' })).toBeTruthy();
   });
 
-  it('retains native scroll and haptic changes for the fractional column', () => {
+  it('retains native fraction scrolling without Telegram haptics', () => {
     const { onChange } = mountControlled();
     const wheel = observeNativeFractions(2);
     act(() => wheel.moveTo(3));
     flushFrame();
     expect(onChange).not.toHaveBeenCalled();
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(triggerTelegramSelectionHaptic).not.toHaveBeenCalled();
     expect(wheel.appWrites).toEqual([]);
     closePicker();
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.75 });
@@ -153,7 +153,7 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
       .getByRole('option', { name: '0,25' }));
     expect(onChange).not.toHaveBeenCalled();
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(triggerTelegramSelectionHaptic).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
     closePicker();
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.25 });
