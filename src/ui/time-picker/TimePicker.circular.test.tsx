@@ -4,7 +4,7 @@ import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimePicker } from './TimePicker';
 
-vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn() }));
+vi.mock('../../telegram', () => ({ triggerTelegramPickerSelectionTick: vi.fn() }));
 
 // RequestAnimationFrame runs on the next frame in WebViews, not synchronously.
 // An immediate callback stub leaves the picker's frame-id guard permanently set.
@@ -68,95 +68,67 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('cyclic TimePicker wheels', () => {
-  it('renders both boundaries continuously and wraps hours and minutes without changing their labels', () => {
-    const { hours, minutes, onChange } = renderWheel('23:59');
+describe('TimePicker regression: retired cyclic scrolling', () => {
+  it('renders finite hours and minutes without duplicate cycles', () => {
+    const { hours, minutes } = renderWheel('23:59');
+    expect(hours.querySelectorAll('button')).toHaveLength(24);
+    expect(minutes.querySelectorAll('button')).toHaveLength(60);
     expect(within(hours).getByRole('option', { name: '23' }).getAttribute('aria-selected')).toBe('true');
     expect(within(minutes).getByRole('option', { name: '59' }).getAttribute('aria-selected')).toBe('true');
-
-    hours.scrollTop = 72 * 24; // 23 -> 00, middle-to-next cycle
-    fireEvent.scroll(hours);
-    flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith('00:59');
-    minutes.scrollTop = 180 * 24; // 59 -> 00, middle-to-next cycle
-    fireEvent.scroll(minutes);
-    flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith('00:00');
-
-    hours.scrollTop = 47 * 24; // 00 -> 23 (previous cycle)
-    fireEvent.scroll(hours);
-    flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith('23:00');
-    minutes.scrollTop = 119 * 24; // 00 -> 59 (previous cycle)
-    fireEvent.scroll(minutes);
-    flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith('23:59');
   });
 
-  it.each([10, 32, 53])('keeps every native minute landing after a fast swipe: %i', minute => {
-    const { minutes, onChange } = renderWheel('08:01');
-    dispatchTouch(minutes, 'touchstart', 230, 100);
-    dispatchTouch(minutes, 'touchmove', 100, 200);
-    dispatchTouch(minutes, 'touchend', 100, 300);
-    const top = (120 + minute) * 24;
-    minutes.scrollTop = top;
-    fireEvent.scroll(minutes);
-    flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith(`08:${minute}`);
-    expect(minutes.scrollTop).toBe(top);
-    expect(within(minutes).getByRole('option', { name: String(minute) })
-      .getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('never writes the native scroll position while momentum passes through a cycle boundary', () => {
-    const { minutes } = renderWheel('08:59');
-    let top = 179 * 24;
-    const writes: number[] = [];
+  it('does not write scrollTop during momentum, then aligns with its direction', () => {
+    const { minutes, onChange } = renderWheel('08:10');
+    let top = 10 * 36;
+    const writes: Array<{ top: number; behavior: ScrollBehavior }> = [];
     Object.defineProperty(minutes, 'scrollTop', {
       configurable: true,
       get: () => top,
-      set: (value: number) => { writes.push(value); top = value; },
+      set: (value: number) => { top = value; },
     });
-    for (const row of [180, 181, 190, 290]) {
-      top = row * 24;
+    Object.defineProperty(minutes, 'scrollTo', {
+      configurable: true,
+      value: ({ top: next, behavior }: { top: number; behavior: ScrollBehavior }) => {
+        writes.push({ top: next, behavior });
+        top = next;
+      },
+    });
+    for (const offset of [10.3, 10.8, 11.2]) {
+      top = offset * 36;
       fireEvent.scroll(minutes);
       flushFrames();
     }
     expect(writes).toEqual([]);
-    expect(top).toBe(290 * 24);
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(top).toBe(170 * 24);
-    expect(writes).toEqual([170 * 24]);
-  });
-
-  it('keeps a precise minute after native scrolling takes over the touch', () => {
-    const { minutes, onChange } = renderWheel();
-    dispatchTouch(minutes, 'touchstart', 230, 100);
-    dispatchTouch(minutes, 'touchmove', 100, 180);
-    dispatchTouch(minutes, 'touchcancel', 100, 190);
-    minutes.scrollTop = (120 + 32) * 24;
-    fireEvent.scroll(minutes);
-    flushFrames();
-    expect(onChange).toHaveBeenLastCalledWith('08:32');
-    fireEvent.click(within(minutes).getByRole('option', { name: '12' }));
+    expect(writes).toEqual([{ top: 12 * 36, behavior: 'smooth' }]);
     expect(onChange).toHaveBeenLastCalledWith('08:12');
   });
 
-  it('flushes the last visible native position when dismissed before the next animation frame', () => {
-    const { minutes, onChange } = renderWheel();
-    minutes.scrollTop = (120 + 37) * 24;
-    fireEvent.scroll(minutes);
-    const dialog = screen.getByRole('dialog', { name: 'Выбор времени' });
-    fireEvent.click(dialog.previousElementSibling as Element);
-    expect(onChange).toHaveBeenLastCalledWith('08:37');
-  });
-
-  it('does not emit a duplicate change when native scrolling selects the current value', () => {
-    const { minutes, onChange } = renderWheel();
-    minutes.scrollTop = 180 * 24;
+  it('never reverses a decreasing wheel when it aligns a fractional position', () => {
+    const { minutes, onChange } = renderWheel('08:30');
+    const writes: number[] = [];
+    Object.defineProperty(minutes, 'scrollTo', {
+      configurable: true,
+      value: ({ top }: { top: number }) => { writes.push(top); minutes.scrollTop = top; },
+    });
+    minutes.scrollTop = 12.3 * 36;
     fireEvent.scroll(minutes);
     flushFrames();
-    expect(onChange).not.toHaveBeenCalled();
+    expect(writes).toEqual([]);
+    fireEvent(minutes, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(writes).toEqual([12 * 36]);
+    expect(onChange).toHaveBeenLastCalledWith('08:12');
+  });
+
+  it('keeps normal tap selection and no longer wraps at the end of the range', () => {
+    const { hours, minutes, onChange } = renderWheel('22:58');
+    fireEvent.click(within(hours).getByRole('option', { name: '23' }));
+    expect(onChange).toHaveBeenLastCalledWith('23:58');
+    fireEvent.click(within(minutes).getByRole('option', { name: '59' }));
+    expect(onChange).toHaveBeenLastCalledWith('23:59');
+    expect(hours.querySelectorAll('button')).toHaveLength(24);
+    expect(minutes.querySelectorAll('button')).toHaveLength(60);
   });
 });
