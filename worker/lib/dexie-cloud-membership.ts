@@ -3,6 +3,7 @@ import roleConfig from '../../cloud/roles.json';
 import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
 import plannedRoleConfig from '../../cloud/planned-session-roles.json';
 import clientSessionRoleConfig from '../../cloud/client-session-roles.json';
+import flexRoleConfig from '../../cloud/flex-attributes-roles.json';
 import cancellationRoleConfig from '../../cloud/calendar-cancellation-roles.json';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
@@ -247,6 +248,21 @@ export function assertRemoteRoles(value: unknown): void {
   const clientExecution = Array.isArray(clientAdd)
     && clientSessionRoleConfig.roles.client.permissions.add.some(table => clientAdd.includes(table));
   if (clientExecution && !cancellation) failUnavailable();
+  // An EAV schema/ACL rollout is valid only when BOTH relationship roles carry
+  // the exact reviewed extension. A partial profile must fail closed.
+  const flexCandidates = (['coach', 'client'] as const).map(name => {
+    const role = value.find((candidate: unknown) => isObject(candidate)
+      && candidate.realmId === 'rlm-public' && candidate.name === name);
+    const permissions = isObject(role) && isObject(role.permissions) ? role.permissions : null;
+    const additions = permissions?.add;
+    const updates = isObject(permissions?.update) ? permissions.update : null;
+    return (Array.isArray(additions)
+      && flexRoleConfig.roles[name].permissions.add.some(table => additions.includes(table)))
+      || (updates !== null && Object.hasOwn(updates, 'flexValues'));
+  });
+  if (flexCandidates.some(Boolean) && !flexCandidates.every(Boolean)) failUnavailable();
+  const flexEnabled = flexCandidates.every(Boolean);
+  if (flexEnabled && !clientExecution) failUnavailable();
   for (const name of ['coach', 'client'] as const) {
     const remote = value.find((candidate: unknown) => isObject(candidate)
       && candidate.realmId === 'rlm-public' && candidate.name === name);
@@ -254,7 +270,11 @@ export function assertRemoteRoles(value: unknown): void {
     const permissions = remote.permissions;
     // Accept complete calendar/ad-hoc/planned profiles during the reviewed rollout.
     // Partial lifecycle grants or changes to PLAN/FACT/Client remain forbidden.
-    const adHoc = name === 'coach' && sameStrings(permissions.add,
+    const nonFlexAdd = flexEnabled && Array.isArray(permissions.add)
+      ? permissions.add.filter((table: string) =>
+        !flexRoleConfig.roles[name].permissions.add.includes(table))
+      : permissions.add;
+    const adHoc = name === 'coach' && sameStrings(nonFlexAdd,
       [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]);
     const plannedFields = [...expected.coach.permissions.update.workoutOccurrences,
       ...plannedRoleConfig.roles.coach.permissions.update.workoutOccurrences];
@@ -274,11 +294,17 @@ export function assertRemoteRoles(value: unknown): void {
         workoutOccurrences: [...expectedUpdates.workoutOccurrences, ...overlay.workoutOccurrences],
       });
     }
-    const expectedAdd = clientExecution && name === 'client'
+    if (flexEnabled) {
+      Object.assign(expectedUpdates, flexRoleConfig.roles[name].permissions.update);
+    }
+    const baselineAdd = clientExecution && name === 'client'
       ? [...expected.client.permissions.add, ...clientSessionRoleConfig.roles.client.permissions.add]
       : adHoc
       ? [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]
       : expected[name].permissions.add;
+    const expectedAdd = flexEnabled
+      ? [...baselineAdd, ...flexRoleConfig.roles[name].permissions.add]
+      : baselineAdd;
     const keys = name === 'coach' ? ['add', 'manage', 'update'] : ['add', 'update'];
     if (!sameStrings(Object.keys(permissions), keys)
       || (name === 'coach' && !sameStrings(permissions.manage, expected.coach.permissions.manage))
