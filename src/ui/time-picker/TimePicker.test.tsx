@@ -82,6 +82,11 @@ afterEach(() => {
 describe('TimePicker', () => {
   it('renders independent hour and minute scroll ribbons with the controlled value selected', () => {
     renderPicker();
+    const dialog = screen.getByRole('dialog', { name: 'Выбор времени' });
+    expect(dialog.style.position).toBe('fixed');
+    expect(dialog.style.top).toBe('100px');
+    fireEvent(window, new Event('resize'));
+    expect(dialog.style.top).toBe('100px');
 
     const hours = screen.getByRole('listbox', { name: 'Часы' });
     const minutes = screen.getByRole('listbox', { name: 'Минуты' });
@@ -102,19 +107,19 @@ describe('TimePicker', () => {
     expect(onChange).toHaveBeenLastCalledWith('10:45');
   });
 
-  it('emits one Telegram selection haptic for each newly selected wheel value', () => {
+  it('keeps Telegram selection feedback disabled while selecting either wheel', () => {
     const picker = renderPicker();
 
     const hours = screen.getByRole('listbox', { name: 'Часы' });
     fireEvent.click(within(hours).getByRole('option', { name: '10' }));
-    expect(selectionHapticMock).toHaveBeenCalledTimes(1);
+    expect(selectionHapticMock).not.toHaveBeenCalled();
 
     picker.setValue('10:15');
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Часы' })).getByRole('option', { name: '10' }));
-    expect(selectionHapticMock).toHaveBeenCalledTimes(1);
+    expect(selectionHapticMock).not.toHaveBeenCalled();
 
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Минуты' })).getByRole('option', { name: '45' }));
-    expect(selectionHapticMock).toHaveBeenCalledTimes(2);
+    expect(selectionHapticMock).not.toHaveBeenCalled();
   });
 
   it('rejects malformed local-time values instead of guessing a timezone-bearing time', () => {
