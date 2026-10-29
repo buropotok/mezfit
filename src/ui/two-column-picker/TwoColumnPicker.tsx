@@ -9,7 +9,7 @@ import {
   type UIEvent,
 } from 'react';
 import { MezfitPopover } from '../konsta-mezfit';
-import { triggerTelegramSelectionHaptic } from '../../telegram';
+import { triggerTelegramPickerSelectionTick } from '../../telegram';
 import { forwardSettledIndex } from '../time-picker/forwardSettle';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
@@ -793,7 +793,7 @@ export function TwoColumnPicker({
       if (lastTickIndexRef.current[side] !== undefined && lastTickIndexRef.current[side] !== index) {
         // One selection tick per observed crossing; skipped native frames
         // must not produce a burst of haptic notifications.
-        triggerTelegramSelectionHaptic();
+        triggerTelegramPickerSelectionTick();
       }
       lastTickIndexRef.current[side] = index;
     }
