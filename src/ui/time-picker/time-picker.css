@@ -73,22 +73,12 @@
   padding: 0;
   border: 0;
   scroll-snap-align: center;
-  scroll-snap-stop: always;
+  scroll-snap-stop: normal;
   color: var(--ui-color-surface-muted);
   background: transparent;
   font-family: var(--ui-font-family);
   -webkit-tap-highlight-color: transparent;
   font-variant-numeric: tabular-nums;
-}
-
-.ui-time-picker__column--free-momentum .ui-time-picker__option {
-  scroll-snap-stop: normal;
-}
-
-/* Fast minute flicks use native inertial scroll snapping to quarter-hour rows.
-   Intermediate rows stay visible, but cannot be the final snap point. */
-.ui-time-picker__column--quarter-snap .ui-time-picker__option:not(.ui-time-picker__option--quarter-stop) {
-  scroll-snap-align: none;
 }
 
 .ui-time-picker__option--selected {

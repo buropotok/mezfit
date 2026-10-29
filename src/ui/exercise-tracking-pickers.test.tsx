@@ -117,7 +117,7 @@ describe('DurationPicker (elapsed time, not time of day)', () => {
     expect(picker.onChange).not.toHaveBeenCalled();
     fireEvent.click(option('Секунды продолжительности', '58'));
     expect(picker.onChange).toHaveBeenLastCalledWith(86398);
-    expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
+    expect(triggerTelegramSelectionHaptic).not.toHaveBeenCalled();
   });
 
   it.each([-1, 86400, 1.5, NaN, Infinity])('rejects invalid seconds %s', (value) => {

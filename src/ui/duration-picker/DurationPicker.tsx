@@ -12,8 +12,8 @@ const pad2 = (value: number) => String(value).padStart(2, '0');
 
 const COLUMNS: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>> = {
   first: { ariaLabel: 'Часы продолжительности', values: HOURS, format: pad2 },
-  second: { ariaLabel: 'Минуты продолжительности', values: MINUTES_SECONDS, format: pad2, freeMomentum: true },
-  third: { ariaLabel: 'Секунды продолжительности', values: MINUTES_SECONDS, format: pad2, freeMomentum: true },
+  second: { ariaLabel: 'Минуты продолжительности', values: MINUTES_SECONDS, format: pad2 },
+  third: { ariaLabel: 'Секунды продолжительности', values: MINUTES_SECONDS, format: pad2 },
 };
 
 const LENS_XS = [48, 144, 240] as const;

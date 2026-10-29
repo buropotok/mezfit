@@ -35,8 +35,8 @@ const FRACTION_COLUMN: ThreeColumnPickerColumn = {
 };
 
 const WHEEL_COLUMNS: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>> = {
-  first: { ariaLabel: 'Повторения', values: REPS_VALUES, format: String, freeMomentum: true },
-  second: { ariaLabel: 'Килограммы', values: KILOGRAM_VALUES, format: String, freeMomentum: true, relativeFlickStep: 10 },
+  first: { ariaLabel: 'Повторения', values: REPS_VALUES, format: String },
+  second: { ariaLabel: 'Килограммы', values: KILOGRAM_VALUES, format: String },
   third: FRACTION_COLUMN,
 };
 
@@ -113,7 +113,7 @@ function WeightRepsPickerSession({
       ...WHEEL_COLUMNS,
       first: value.reps > 100 ? { ...WHEEL_COLUMNS.first, values: [...REPS_VALUES, value.reps] } : WHEEL_COLUMNS.first,
       second: weight.kilograms > 399
-        ? { ...WHEEL_COLUMNS.second, values: [...KILOGRAM_VALUES, weight.kilograms], relativeFlickStep: undefined }
+        ? { ...WHEEL_COLUMNS.second, values: [...KILOGRAM_VALUES, weight.kilograms] }
         : WHEEL_COLUMNS.second,
     };
   }, [mode, value.reps, weight.kilograms]);

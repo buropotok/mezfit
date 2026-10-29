@@ -18,17 +18,13 @@ function declaration(selector, property) {
   return rule.style.getPropertyValue(property).trim();
 }
 
-describe('TimePicker native one-stage minute snap', () => {
-  it('allows every minute during precise drags and only quarter hours after a fast swipe', () => {
+describe('Native wheel scrolling', () => {
+  it('lets inertia pass multiple rows and align on any value', () => {
     expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('y mandatory');
+    expect(declaration('.ui-time-picker__column', 'touch-action')).toBe('pan-y');
     expect(declaration('.ui-time-picker__option', 'scroll-snap-align')).toBe('center');
-    expect(declaration(
-      '.ui-time-picker__column--quarter-snap .ui-time-picker__option:not(.ui-time-picker__option--quarter-stop)',
-      'scroll-snap-align',
-    )).toBe('none');
-    expect(declaration(
-      '.ui-time-picker__column--free-momentum .ui-time-picker__option',
-      'scroll-snap-stop',
-    )).toBe('normal');
+    expect(declaration('.ui-time-picker__option', 'scroll-snap-stop')).toBe('normal');
+    expect(css).not.toContain('--quarter-snap');
+    expect(css).not.toContain('--quarter-stop');
   });
 });

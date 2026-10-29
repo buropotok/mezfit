@@ -30,7 +30,11 @@ export type MezfitPopoverProps = ComponentProps<typeof KonstaPopover> & {
   /** Custom owns its surface and opening animation; shared placement/backdrop stay here. */
   presentation?: 'standard' | 'custom';
   /** Render through a React portal without losing theme/context. */
-  portal?: boolean;
+  portal?: boolean | HTMLElement;
+  /** Fixed, horizontally centered surface at this CSS-pixel viewport offset. */
+  viewportTop?: number;
+  /** Allow native vertical panning through the surface to scrollable children. */
+  scrollable?: boolean;
   onPositioned?: (element: HTMLElement) => void;
 };
 
@@ -74,6 +78,8 @@ export function MezfitPopover(props: MezfitPopoverProps) {
     presentation = 'standard',
     portal = false,
     onPositioned,
+    viewportTop,
+    scrollable = false,
 
     children,
     style = {},
@@ -123,7 +129,19 @@ export function MezfitPopover(props: MezfitPopoverProps) {
   });
 
   const setPopover = () => {
-    if (!target || !elRef.current || !opened) return;
+    if (!elRef.current || !opened) return;
+    if (viewportTop !== undefined) {
+      const view = elRef.current.ownerDocument.defaultView ?? window;
+      setPositions({
+        set: true,
+        anglePosition: 'top',
+        popoverTop: viewportTop,
+        popoverLeft: Math.max(12, (view.innerWidth - elRef.current.offsetWidth) / 2),
+        popoverPosition: 'bottom-left',
+      });
+      return;
+    }
+    if (!target) return;
     setPositions(
       calcPopoverPosition({
         popoverEl: elRef.current,
@@ -161,15 +179,17 @@ export function MezfitPopover(props: MezfitPopoverProps) {
 
   useEffect(() => {
     setPopover();
-  }, [opened, target, targetX, targetY, targetWidth, targetHeight]);
+  }, [opened, target, targetX, targetY, targetWidth, targetHeight, viewportTop]);
 
   const popoverStyle = positions.set
     ? {
         ...(style || {}),
+        position: viewportTop !== undefined ? 'fixed' as const : style.position,
+        touchAction: scrollable ? 'pan-y' : style.touchAction,
         left: positions.popoverLeft,
         top: positions.popoverTop,
       }
-    : style;
+    : { ...style, ...(viewportTop !== undefined ? { position: 'fixed' as const, top: viewportTop } : {}), ...(scrollable ? { touchAction: 'pan-y' } : {}) };
 
   const angleStyle = positions.set
     ? {
@@ -238,7 +258,8 @@ export function MezfitPopover(props: MezfitPopoverProps) {
         {presentation === 'custom' ? children : theme === 'ios' ? (
           <GlassSurface
             ref={glassRef}
-            className={cls('k-glass touch-none', innerClasses)}
+            className={cls('k-glass', scrollable ? 'touch-pan-y' : 'touch-none', innerClasses)}
+            style={scrollable ? { touchAction: 'pan-y' } : undefined}
             preset={glassPreset}
             glass={glass}
             shape={glassShape}
@@ -252,7 +273,7 @@ export function MezfitPopover(props: MezfitPopoverProps) {
       </Component>
     </>
   );
-  return portal && typeof document !== 'undefined' ? createPortal(content, document.body) : content;
+  return portal && typeof document !== 'undefined' ? createPortal(content, typeof portal === 'boolean' ? document.body : portal) : content;
 }
 
 MezfitPopover.displayName = 'MezfitPopover';

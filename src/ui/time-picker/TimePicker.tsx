@@ -27,9 +27,7 @@ const TIME_COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
     ariaLabel: 'Минуты',
     values: MINUTE_VALUES,
     format: formatUnit,
-    freeMomentum: true,
     circular: true,
-    flickSnapStep: 15,
   },
 ];
 

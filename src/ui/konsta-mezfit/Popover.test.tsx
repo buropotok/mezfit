@@ -31,6 +31,21 @@ describe('MezfitPopover', () => {
     expect(html).not.toContain('backdrop-blur-lg');
   });
 
+  it('allows native vertical panning and a fixed viewport position for wheel pickers', () => {
+    const html = renderToStaticMarkup(
+      <KonstaProvider theme="ios" dark>
+        <MezfitPopover opened viewportTop={100} scrollable>
+          <span>Wheel</span>
+        </MezfitPopover>
+      </KonstaProvider>,
+    );
+    expect(html).toContain('position:fixed');
+    expect(html).toContain('top:100px');
+    expect(html).toContain('touch-action:pan-y');
+    expect(html).toContain('touch-pan-y');
+    expect(html).not.toContain('touch-none');
+  });
+
   it('keeps Konsta opened and closed transition mechanics', () => {
     const openedHtml = renderPopover({ opened: true });
     const closedHtml = renderPopover({ opened: false });
