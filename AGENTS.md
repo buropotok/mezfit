@@ -344,6 +344,39 @@ and configuration comparison do not prove ordinary-account server permissions.
 See `docs/architecture/client-workout-sessions.md` for exact grants and rollout.
 
 
+### Approved Flex Attributes EAV foundation (2026-10-29)
+
+The user approved two new realm-scoped extension tables, `flexAttributes`
+and `flexValues`, to hold typed, non-authoritative metadata for authenticated
+users and session FACT. They must never authorize or overwrite PLAN, lifecycle,
+memberships, role/access decisions or protected FACT fields. Personal attributes
+use the actor's personal realm and owner; shared session attributes use the
+session's relationship realm with `owner: realmId`. A generic attribute
+reference is not a server-enforced foreign key; typed repositories must validate
+the entity association and attribute value, and access to a realm never
+implicitly authorizes a referenced entity.
+
+As a narrow additional exception to §21, `tools/dexie-roles/flex-attributes.mjs`
+and `.github/workflows/dexie-flex-attributes.yml` may install **only** the
+additive `flexAttributes: id` and `flexValues: id` cloud schema and append
+**only** `add: [flexAttributes, flexValues]` and
+`update: { flexValues: [value] }` to the existing Coach and Client roles.
+The full current Client execution policy is the required baseline; no
+historical ACL upgrades are implicit. No other roles, grant fields, DELETE,
+manage, owner/identity/realm updates, membership, schema entries or business
+data are authorized. Attribute definitions are add-only; updates can change
+only values, with null representing a cleared value.
+
+Reuse the current protected `DEXIE_CLOUD_WRITE_KEY` environment secret,
+repository-owner/main manual Preview/Apply, explicit literal apply
+confirmation, shared protected-writer concurrency, immediate complete
+configuration recheck, and full readback even following a failed/no-op
+import. Never run this privilege operation on PR/push; do not widen existing
+operators or add secrets. Live ordinary-account ACL checks are required
+before dependent features are activated. See
+`docs/architecture/flex-attributes.md` for the scope, risks and checklist.
+
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.
