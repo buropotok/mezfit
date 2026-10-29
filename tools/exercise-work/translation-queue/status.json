@@ -98,15 +98,22 @@
       }
     },
     "B006": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "mezfit-translator-mvstt33m-h1d1uuo",
       "claim_id": "claim-mvsuc9mr-wwrhehz3zm",
       "started_at": "2026-10-29T01:04:37.124Z",
       "lease_until": "2026-10-29T03:04:37.124Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T01:17:07.303Z",
+      "result_branch": "data/howto-batch-B006-claim-mvsuc9mr-wwrhehz3zm",
+      "result_commit": "6f29b9e4bbd102263333717daee1e2325547dfb0",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 53,
+        "already_translated": 0,
+        "without_english_instruction": 47,
+        "new_unique_translations": 38,
+        "reused_translations": 15
+      }
     },
     "B007": {
       "status": "in_progress",
