@@ -29,6 +29,13 @@ describe('Native wheel scrolling', () => {
     expect(declaration('.ui-time-picker__lens', 'height')).toBe('var(--ui-time-picker-lens-height)');
   });
 
+  it('uses free native scrolling only in compact TimePicker during the momentum experiment', () => {
+    expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__column', 'scroll-snap-type'))
+      .toBe('none');
+    // The shared picker keeps its existing snap rule for non-time wheels.
+    expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('y mandatory');
+  });
+
   it('lets inertia pass multiple rows and align on any value', () => {
     expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('y mandatory');
     expect(declaration('.ui-time-picker__column', 'touch-action')).toBe('pan-y');
