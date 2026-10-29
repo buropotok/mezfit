@@ -113,6 +113,25 @@ describe('TimePicker native momentum ownership', () => {
     expect(native.writes).toEqual([27 * ROW_HEIGHT]);
   });
 
+  it('recenters on the next touch, not on a legacy WebView scroll inactivity timeout', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const { hours } = mount();
+    flushFrames();
+    Object.defineProperty(hours, 'onscrollend', { configurable: true, value: undefined });
+    const native = trackBrowserScroll(hours, 32);
+
+    act(() => native.move(50));
+    flushFrames();
+    act(() => vi.advanceTimersByTime(500));
+    flushFrames();
+    expect(native.writes).toEqual([]);
+
+    touch(hours, 'touchstart', 220);
+    expect(native.writes).toEqual([26 * ROW_HEIGHT]);
+    expect(native.position).toBe(26 * ROW_HEIGHT);
+    touch(hours, 'touchend', 220);
+  });
+
   it('ignores a synthetic button click following a touch flick', () => {
     const { minutes, onChange } = mount();
     flushFrames();
