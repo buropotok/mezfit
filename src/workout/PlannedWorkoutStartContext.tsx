@@ -150,13 +150,13 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
   const value = useMemo(() => repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
   return <Context.Provider value={value}>
     {children}
-    <MezfitDialog opened={coachedPrompt} role="alertdialog" aria-label="Начать тренировку в зале с клиентом?"
+    {coachedPrompt ? <MezfitDialog opened role="alertdialog" aria-label="Начать тренировку в зале с клиентом?"
       title={<Text variant="headline">Вы не можете начать самостоятельную тренировку спортсмена. Начать эту тренировку в зале с клиентом?</Text>}
       onBackdropClick={() => decideCoached(false)}
       buttons={<>
         <MezfitDialogButton onClick={() => decideCoached(false)}><Text variant="body">Нет</Text></MezfitDialogButton>
         <MezfitDialogButton strong onClick={() => decideCoached(true)}><Text variant="body">Да</Text></MezfitDialogButton>
-      </>} />
+      </>} /> : null}
     <PlannedWorkoutConflictSheet occurrence={conflict} opened={conflictOpened}
       onDecision={value => { if (value === 'back') abandoned.current = true; decision.current = value; setConflictOpened(false); }}
       onClosed={() => {
