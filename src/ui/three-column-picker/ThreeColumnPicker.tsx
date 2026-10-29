@@ -733,7 +733,7 @@ export function ThreeColumnPicker({
       angle={false}
       viewportTop={100}
       scrollable
-      portal
+      portal={typeof document !== 'undefined' ? document.getElementById('root') ?? true : false}
       backdrop
       iosHighlight={false}
       onBackdropClick={handleClose}
