@@ -140,6 +140,6 @@ export function PlannedWorkoutsSheet({ opened, actor, onClose, onStarted, onNavi
     </section>
   </MezfitBottomSheet>
     {closeDialog}
-    {error ? <Toast opened position="bottom" role="alert"><Text variant="body">{error}</Text></Toast> : null}
+    {error ? <Toast opened position="center" role="alert"><Text variant="body">{error}</Text></Toast> : null}
   </>;
 }
