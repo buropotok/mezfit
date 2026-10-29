@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { EXPECTED_COACHED_START_ROLES } from '../../tools/dexie-roles/coached-start.mjs';
 import { EXPECTED_CANCELLATION_ROLES } from '../../tools/dexie-roles/calendar-cancellation.mjs';
 import { EXPECTED_CLIENT_SESSION_ROLES } from '../../tools/dexie-roles/client-sessions.mjs';
 import { assertRemoteRoles } from './dexie-cloud-membership';
@@ -29,4 +30,17 @@ describe('membership preflight for Client workout execution', () => {
       expect(() => assertRemoteRoles(roles)).toThrow('CLOUD_MEMBERSHIP_UNAVAILABLE');
     }
   });
+});
+
+it('accepts only the complete Coach format extension without widening Client or identity grants', () => {
+  expect(() => assertRemoteRoles(profile(EXPECTED_COACHED_START_ROLES))).not.toThrow();
+  for (const mutate of [
+    r => { r[1].permissions.update.workoutOccurrences.push('format'); },
+    r => { r[0].permissions.update.workoutOccurrences.push('athleteUserId'); },
+    r => { r[1].permissions.add.pop(); },
+    r => { r[0].permissions.update.workoutOccurrences = r[0].permissions.update.workoutOccurrences.filter(f => f !== 'status'); },
+  ]) {
+    const roles = profile(EXPECTED_COACHED_START_ROLES); mutate(roles);
+    expect(() => assertRemoteRoles(roles)).toThrow('CLOUD_MEMBERSHIP_UNAVAILABLE');
+  }
 });
