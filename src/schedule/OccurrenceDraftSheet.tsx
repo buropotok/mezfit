@@ -92,6 +92,8 @@ export interface OccurrenceDraftSheetProps {
   onClosed?: () => void;
   suspended?: boolean;
   saveNotice?: string;
+  /** Owner awaits pending editor intents before deciding whether to close/publish. */
+  flushEditsRef?: { current: (() => Promise<void>) | null };
   sourceProgramName?: string | null;
   onNavigationContextChange?: (value: NavigationContext | null) => void;
   onClose: () => void;
@@ -105,8 +107,84 @@ export interface OccurrenceDraftCardProps extends OccurrenceDraftSheetProps {
 
 
 
+/** Shared close intent for the calendar sheet and the Training planned-workout picker. */
+export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabled = true, scope = '', beforeClose }: {
+  drafts: WorkoutOccurrenceDraftRepository | null;
+  getIds: () => string[];
+  onSave: OccurrenceDraftSheetProps['onSave'];
+  onClose: () => void;
+  enabled?: boolean;
+  scope?: string;
+  beforeClose?: () => Promise<void>;
+}) {
+  const current = useRef({ drafts, getIds, onSave, onClose, enabled, beforeClose });
+  current.current = { drafts, getIds, onSave, onClose, enabled, beforeClose };
+  const generation = useRef(0);
+  const pending = useRef(false);
+  const [confirm, setConfirm] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    ++generation.current;
+    pending.current = false; setConfirm([]); setSaving(false); setError('');
+    return () => { ++generation.current; };
+  }, [drafts, enabled, scope]);
+  useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(''), 4000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+  const run = async (publish: boolean) => {
+    const owner = current.current;
+    if (pending.current || !owner.enabled) return;
+    pending.current = true; setSaving(true); setError('');
+    const token = generation.current;
+    const active = () => token === generation.current && current.current.enabled;
+    try {
+      const candidates = publish ? confirm : owner.getIds();
+      if (candidates.length && owner.beforeClose) await owner.beforeClose();
+      if (!active()) return;
+      const changed: string[] = [];
+      for (const id of candidates) {
+        if (!owner.drafts) break;
+        await owner.drafts.flushEdits(id);
+        if (!active()) return;
+        const latest = await owner.drafts.get(id);
+        if (!active()) return;
+        if (latest && !latest.saved && latest.previouslyPublished && !latest.workoutSessionId
+          && (!latest.executionStatus || latest.executionStatus === 'scheduled')) {
+          if (publish) await owner.onSave(latest, false);
+          else changed.push(id);
+          if (!active()) return;
+        }
+      }
+      if (!active()) return;
+      if (changed.length) setConfirm(changed);
+      else { setConfirm([]); owner.onClose(); }
+    } catch (reason) {
+      if (active()) setError(reason instanceof Error ? reason.message : 'Не удалось сохранить тренировку');
+    } finally {
+      if (active()) { pending.current = false; setSaving(false); }
+    }
+  };
+  const requestClose = () => { void run(false); };
+  const closeDialog = <>
+    {confirm.length > 0 ? <MezfitDialog opened role="alertdialog" aria-label="Перевести тренировку в статус Запланирована?"
+      title={<Text variant="headline">Тренировка в статусе Черновик. Перевести в статус Запланирована?</Text>}
+      buttons={<>
+        <MezfitDialogButton disabled={saving} onClick={() => {
+          if (pending.current || !current.current.enabled) return;
+          setConfirm([]); current.current.onClose();
+        }}>Нет</MezfitDialogButton>
+        <MezfitDialogButton strong disabled={saving} onClick={() => { void run(true); }}>Да</MezfitDialogButton>
+      </>} /> : null}
+    {error ? <Toast opened position="center" role="alert"><Text variant="body">{error}</Text></Toast> : null}
+  </>;
+  return { requestClose, closeDialog };
+}
+
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
-  actor, readOnly = false, saveNotice = '', sourceProgramName, container,
+  actor, readOnly = false, saveNotice = '', sourceProgramName, container, flushEditsRef,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
   inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
@@ -154,6 +232,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     return () => window.clearTimeout(timer);
   }, [lockToastVersion]);
   const [error, setError] = useState(() => draft ? drafts.pendingEditError(draft.id) : '');
+  useEffect(() => {
+    if (!error) return;
+    const timer = window.setTimeout(() => setError(''), 4000);
+    return () => window.clearTimeout(timer);
+  }, [error]);
   const reportPlanError = (reason: unknown, fallback: string) => {
     if (!startAlive.current) return;
     if (reason instanceof Error && reason.message === lockedPlanMessage) {
@@ -194,6 +277,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       throw reason;
     }
   };
+  // Retain the last flush function until the owner's close decision finishes,
+  // including a row which just disappeared from the published list.
+  if (flushEditsRef) flushEditsRef.current = flushEdits;
   const edit = (apply: Parameters<WorkoutOccurrenceDraftRepository['edit']>[1], timing = false) => {
     if (mutationBlocked() || !draft || busy || starting.current) return;
     const intent = timing ? ++timingIntent.current : 0;
@@ -406,7 +492,6 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           {!inlineCard ? <IconButton label="Закрыть" onClick={onClose}>✕</IconButton> : null}
         </header> : null}
         <div className="occurrence-draft-sheet__body">
-          {error || saveNotice ? <Text variant="footnote" role="alert">{error || saveNotice}</Text> : null}
           <Text variant="body">Атлет: {athlete.name}</Text>
           <div className="occurrence-draft-sheet__format">
             <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
@@ -497,6 +582,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   return <>
     {container ? createPortal(content, container) : inlineCard
       ? <GlassSurface preset="modalTuned" optics={glass.optics}>{content}</GlassSurface> : content}
+    {error || saveNotice ? <Toast opened position="center" role="alert"><Text variant="body">{error || saveNotice}</Text></Toast> : null}
     {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
       <Text variant="body">{lockedPlanMessage}</Text>
     </Toast> : null}
@@ -519,7 +605,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         onChange={time => chooseTime('end', time)} />
       <WorkoutExerciseSelectionSheet opened={exercisePickerOpened} initData=""
         personalCatalogueRole={draft.coachUserId === draft.actorUserId ? 'coach' : 'client'}
-        saving={busy} actionError={error}
+        saving={busy}
         onConfirm={ids => { void selectExercises(ids); }}
         onClose={() => setExercisePickerOpened(false)} />
       {activeExercise && activeSet && editingSet ? <SetEntry
@@ -607,6 +693,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
 /** Keep the animated shell mounted closed before opening; reset each editor by ID. */
 export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
   const opened = props.draft !== null && !props.suspended;
+  const editorFlush = useRef<(() => Promise<void>) | null>(null);
+  const { requestClose, closeDialog } = useOccurrenceDraftClose({ drafts: props.readOnly || props.planLocked ? null : props.drafts,
+    getIds: () => props.draft && (props.draft.saved || props.draft.previouslyPublished) ? [props.draft.id] : [], onSave: props.onSave, onClose: props.onClose,
+    enabled: opened, scope: props.draft?.id, beforeClose: () => editorFlush.current?.() ?? Promise.resolve() });
   const sheetId = useId();
   const [retained, setRetained] = useState(props.draft);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
@@ -658,7 +748,8 @@ export function OccurrenceDraftSheet(props: OccurrenceDraftSheetProps) {
   </MezfitBottomSheet>
     {/* Form renders during slide; closed pickers/dialogs mount only after it finishes. */}
     {draft && container ? <OccurrenceDraftEditor key={draft.id} {...props} draft={draft}
-      container={container} auxiliaryReady={opened && auxiliaryReady} /> : null}
+      container={container} onClose={requestClose} flushEditsRef={editorFlush} auxiliaryReady={opened && auxiliaryReady} /> : null}
+    {closeDialog}
   </>;
 }
 

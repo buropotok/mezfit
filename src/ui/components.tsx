@@ -29,12 +29,15 @@ export type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title
   subtitle?: ReactNode;
   trailing?: ReactNode;
   trailingAction?: ReactNode;
+  /** Give result values their intrinsic width instead of the default 40% cap. */
+  trailingWidth?: 'default' | 'content';
   interactive?: boolean;
 };
 
-export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, trailingAction, interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
+export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, trailingAction, trailingWidth = 'default', interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
   const { pressSpot, startPressSpot } = usePressSpot<HTMLButtonElement>(disabled || !interactive);
   const leadingClassName = leadingShape === 'square' ? ' ui-list-item__leading--square' : '';
+  const resultLayout = trailingWidth === 'content' ? ' ui-list-item--content-trailing' : '';
   const content = <>
     {pressSpot}
     {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
@@ -42,12 +45,12 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
       <span className="ui-list-item__title ui-text--body">{title}</span>
       {subtitle ? <span className="ui-list-item__subtitle ui-text--footnote">{subtitle}</span> : null}
     </span>
-    {trailing ? <span className="ui-list-item__trailing ui-text--footnote">{trailing}</span> : null}
+    {trailing ? <span className={`ui-list-item__trailing ui-text--footnote${trailingWidth === 'content' ? ' ui-list-item__trailing--content' : ''}`}>{trailing}</span> : null}
   </>;
   const actionClassName = trailingAction ? ' ui-list-item-wrap--with-action' : '';
   return (
     <div className={`ui-list-item-wrap${actionClassName}`} role="listitem">
-      {interactive ? <button type={type} className={`ui-list-item ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) startPressSpot(event); }} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static ${className}`.trim()}>{content}</div>}
+      {interactive ? <button type={type} className={`ui-list-item${resultLayout} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) startPressSpot(event); }} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static${resultLayout} ${className}`.trim()}>{content}</div>}
       {trailingAction ? <span className="ui-list-item__trailing-action">{trailingAction}</span> : null}
     </div>
   );

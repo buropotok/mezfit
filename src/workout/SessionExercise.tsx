@@ -334,6 +334,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
           <ListItem
             key={set.sessionSetId}
             className="session-exercise__set-row"
+            trailingWidth="content"
             leading={<SetStatus set={set} />}
             title={(
               <span className="session-exercise__set-title">
@@ -346,8 +347,8 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             subtitle={setSubtitle(set, exercise.data.exercise.tracking_type, planMode, exercise.data.showPreviousPlaceholder)}
             trailing={(
               <span className="session-exercise__set-trailing">
-                {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
                 {!planMode && metrics ? <Text variant="headline" className="session-exercise__set-fact">{metrics}</Text> : null}
+                {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
                 {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
               </span>
             )}

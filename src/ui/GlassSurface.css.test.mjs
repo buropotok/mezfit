@@ -43,8 +43,8 @@ describe('GlassSurface bezel layers', () => {
     const haloRule = css.match(/\.ui-glass-surface--halo-lifted \{[\s\S]*?\n\}/)?.[0];
 
     expect(baseRule).toContain('var(--ui-glass-surface-halo-shadow)');
-    expect(haloRule).toContain('0 0 18px rgb(255 255 255 / 0.16)');
-    expect(haloRule).toContain('0 0 36px rgb(170 205 255 / 0.10)');
+    expect(haloRule).toContain('0 0 18px rgb(255 255 255 / calc(0.16 * var(--ui-glass-surface-halo-opacity, 1)))');
+    expect(haloRule).toContain('0 0 36px rgb(170 205 255 / calc(0.10 * var(--ui-glass-surface-halo-opacity, 1)))');
   });
 
   it('removes both built-in corner layers for contour surfaces', () => {

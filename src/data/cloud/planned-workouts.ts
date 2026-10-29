@@ -43,6 +43,10 @@ export class PlannedWorkoutsRepository {
     }
     return result.sort((a, b) => a.draft.startsAtUtc.localeCompare(b.draft.startsAtUtc) || a.id.localeCompare(b.id));
   }
+  /** Keep an already opened editor alive when a content edit unpublishes its row. */
+  observeDraft(id: string, next: (draft: LocalWorkoutOccurrenceDraft | null) => void, error: (reason: unknown) => void) {
+    return liveQuery(() => this.drafts.get(id)).subscribe({ next, error });
+  }
   observe(reference: Date, next: (rows: UpcomingPlannedWorkout[]) => void, error: (reason: unknown) => void) {
     return liveQuery(() => this.list(reference)).subscribe({ next, error });
   }

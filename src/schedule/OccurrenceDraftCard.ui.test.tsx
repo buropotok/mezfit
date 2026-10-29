@@ -16,10 +16,6 @@ const probes = vi.hoisted(() => ({
   select: undefined as (() => void) | undefined,
   tracking: undefined as (() => Promise<string>) | undefined,
 }));
-vi.mock('konsta/react', async importOriginal => ({
-  ...await importOriginal<typeof import('konsta/react')>(),
-  Toast: ({ opened, children }: { opened?: boolean; children?: ReactNode }) => opened ? <div role="status">{children}</div> : null,
-}));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: {}, actorUserId: 'tg:101' }) }));
 vi.mock('../data/cloud/workout-planning', () => ({ WorkoutPlanningRepository: class {
   programs = { trackingTypeForExercise: () => probes.tracking?.() ?? Promise.resolve('weight_reps') };
@@ -148,6 +144,7 @@ describe('shared scheduled occurrence UI', () => {
     await act(async () => { resolveFlush?.(); });
     await waitFor(() => expect(onStart).toHaveBeenCalledExactlyOnceWith(latest));
     expect(screen.getByRole('alert').textContent).toBe('Старт недоступен');
+    expect(screen.getByRole('alert').classList.contains('bottom-safe-4')).toBe(true);
     expect(props.onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Начать тренировку' }).hasAttribute('disabled')).toBe(false);
   });
@@ -173,6 +170,7 @@ describe('shared scheduled occurrence UI', () => {
     render(<OccurrenceDraftCard {...props} collapsed={false} onCollapsedChange={vi.fn()} onStart={onStart} />);
     fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Правки не сохранены'));
+    expect(screen.getByRole('alert').classList.contains('bottom-safe-4')).toBe(true);
     expect(onStart).not.toHaveBeenCalled();
   });
 
