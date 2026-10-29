@@ -5,7 +5,7 @@
 }
 
 /* Compact TimePicker retains free native scrolling; only after momentum ends
-   does it advance to the next center line in the movement direction. */
+   does it align the cell center nearest to the selection line. */
 .ui-time-picker__popover--compact-time {
   --ui-time-picker-row-height: 36px;
   --ui-time-picker-lens-height: 36px;
