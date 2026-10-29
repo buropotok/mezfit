@@ -4,11 +4,11 @@
   "manifest_sha256": "821da2a0160d96e337ab70b755fb09d19d95f0e73bcd10c88fdc80bb74b5a749",
   "batches": {
     "B001": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "mezfit-translator-mvstt33m-h1d1uuo",
+      "claim_id": "claim-mvstt33m-4om1dop5fg",
+      "started_at": "2026-10-29T00:49:42.301Z",
+      "lease_until": "2026-10-29T02:49:42.301Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
