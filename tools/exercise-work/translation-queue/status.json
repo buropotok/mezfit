@@ -116,15 +116,23 @@
       }
     },
     "B007": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "gpt6-recovery-20261029072029",
       "claim_id": "recover-B007-mvt7rnxj",
       "started_at": "2026-10-29T07:20:29.671Z",
       "lease_until": "2026-10-29T09:20:29.671Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T07:23:26.770Z",
+      "result_branch": "data/howto-batch-B007-recover-B007-mvt7rnxj",
+      "result_commit": "601466d217d9541e0c1b7bec46236d85ed442773",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 52,
+        "already_translated": 0,
+        "without_english_instruction": 48,
+        "new_unique_translations": 37,
+        "reused_translations": 15,
+        "validation": "passed; reused exact prior work"
+      }
     },
     "B008": {
       "status": "completed",
