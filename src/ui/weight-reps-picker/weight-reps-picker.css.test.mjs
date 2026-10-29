@@ -18,6 +18,12 @@ describe('WeightRepsPicker CSS contract', () => {
     expect(weightRepsPickerCss).toContain('padding-inline: 16px');
   });
 
+  it('aligns compact three-wheel columns with the shared TimePicker lens source', () => {
+    expect(weightRepsPickerCss).toContain('.ui-weight-reps-picker__popover.ui-time-picker__popover--compact-time .ui-weight-reps-picker__columns');
+    expect(weightRepsPickerCss).toContain('inset-inline: calc(100% / 18)');
+    expect(weightRepsPickerCss).toContain('width: min(14.4rem, calc(100vw - 72px))');
+  });
+
   it('lays out the FAB keypad as equally sized square cells with the zero in column two', () => {
     expect(weightRepsPickerCss).toContain('grid-template-columns: repeat(3, var(--ui-weight-reps-key-cell))');
     expect(weightRepsPickerCss).toContain('width: 5.5rem');

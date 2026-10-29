@@ -206,7 +206,7 @@ describe('WeightRepsPicker numeric lens editor', () => {
     expect(labels.slice(0, 5)).toEqual(['0', '1', '2', '3', '4']);
     expect(labels).toHaveLength(400);
     fireEvent.touchEnd(kilograms, { changedTouches: [{ clientY: 120 }] });
-    fireEvent.scroll(kilograms, { target: { scrollTop: 33 * 48 } });
+    fireEvent.scroll(kilograms, { target: { scrollTop: 33 * 36 } });
     expect(picker.onChange).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(dialog.previousElementSibling as Element);

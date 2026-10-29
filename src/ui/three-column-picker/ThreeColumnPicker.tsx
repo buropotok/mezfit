@@ -5,9 +5,14 @@ import {
   useRef,
   useState,
   type UIEvent,
+  type MouseEvent,
+  type TouchEvent,
   type ReactNode,
   type Ref,
 } from 'react';
+import { triggerTelegramPickerSelectionTick } from '../../telegram';
+import { forwardSettledIndex } from '../time-picker/forwardSettle';
+import { COMPACT_TIME_GEOMETRY, STANDARD_GEOMETRY, type WheelGeometry } from '../time-picker/wheelGeometry';
 import { MezfitPopover } from '../konsta-mezfit';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
@@ -17,12 +22,8 @@ import {
 } from '../two-column-picker/lensMode';
 import '../time-picker/time-picker.css';
 
-const ROW_HEIGHT = 48;
-const WHEEL_HEIGHT = 240;
 const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
-const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
-const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
@@ -50,6 +51,7 @@ export interface ThreeColumnPickerSeparator {
 
 export interface ThreeColumnPickerProps {
   opened: boolean;
+  geometry?: 'standard' | 'compact-time';
   value: ThreeColumnPickerParts;
   onChange: (value: ThreeColumnPickerParts) => void;
   onClose: () => void;
@@ -97,18 +99,19 @@ function partsEqual(left: ThreeColumnPickerParts, right: ThreeColumnPickerParts)
 function partsToScrollTops(
   columns: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>,
   parts: ThreeColumnPickerParts,
+  geometry: WheelGeometry,
 ): ScrollTops {
   return {
-    first: valueIndex(columns.first, parts.first) * ROW_HEIGHT,
-    second: valueIndex(columns.second, parts.second) * ROW_HEIGHT,
-    third: valueIndex(columns.third, parts.third) * ROW_HEIGHT,
+    first: valueIndex(columns.first, parts.first) * geometry.rowHeight,
+    second: valueIndex(columns.second, parts.second) * geometry.rowHeight,
+    third: valueIndex(columns.third, parts.third) * geometry.rowHeight,
   };
 }
 
-function scrollColumn(element: HTMLDivElement | null, index: number) {
+function scrollColumn(element: HTMLDivElement | null, index: number, geometry: WheelGeometry) {
   if (!element) return;
 
-  const top = index * ROW_HEIGHT;
+  const top = index * geometry.rowHeight;
   if (typeof element.scrollTo === 'function') {
     element.scrollTo({ top, behavior: 'auto' });
   } else {
@@ -116,19 +119,17 @@ function scrollColumn(element: HTMLDivElement | null, index: number) {
   }
 }
 
-function visibleLensItems(values: readonly number[], scrollTop: number) {
-  const centerIndex = Math.round(scrollTop / ROW_HEIGHT);
+function visibleLensItems(values: readonly number[], scrollTop: number, geometry: WheelGeometry) {
+  const centerIndex = Math.round(scrollTop / geometry.rowHeight);
   const start = Math.max(0, centerIndex - 1);
   const end = Math.min(values.length - 1, centerIndex + 1);
 
   return values.slice(start, end + 1).map((value, localIndex) => {
     const index = start + localIndex;
-    const globalCenter = WHEEL_PADDING + index * ROW_HEIGHT + ROW_HEIGHT / 2 - scrollTop;
-
     return {
       index,
       value,
-      y: globalCenter - LENS_TOP,
+      y: LENS_HEIGHT / 2 + (index * geometry.rowHeight - scrollTop) / geometry.lensScaleY,
     };
   });
 }
@@ -146,20 +147,22 @@ function LensText({
   scrollTop,
   lensMode,
   textRef,
+  geometry = STANDARD_GEOMETRY,
 }: {
   x: number;
   column: ThreeColumnPickerColumn;
   scrollTop: number;
   lensMode: ResolvedTwoColumnPickerLensMode;
   textRef?: Ref<SVGTextElement>;
+  geometry?: WheelGeometry;
 }) {
   return (
     <>
-      {visibleLensItems(column.values, scrollTop).map(({ index, value, y }) => {
+      {visibleLensItems(column.values, scrollTop, geometry).map(({ index, value, y }) => {
         const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
-        const transform = lensMode === 'ios' && scale !== 1
-          ? centeredLensScale(x, y, scale)
-          : undefined;
+        const transform = geometry.glyphScaleY !== 1
+          ? `translate(${x} ${y}) scale(${scale} ${scale * geometry.glyphScaleY}) translate(${-x} ${-y})`
+          : lensMode === 'ios' && scale !== 1 ? centeredLensScale(x, y, scale) : undefined;
 
         return (
           <text
@@ -250,8 +253,10 @@ function PickerLens({
   staticLens,
   staticLensValues,
   staticLensCursors,
+  geometry,
 }: {
   assets: TimeLensAssets | null;
+  geometry: WheelGeometry;
   scrollTops: ScrollTops;
   lensMode: ResolvedTwoColumnPickerLensMode;
   columns: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>;
@@ -275,6 +280,7 @@ function PickerLens({
           column={columns[part]}
           scrollTop={scrollTops[part]}
           lensMode={lensMode}
+          geometry={geometry}
         />
       ))}
       {PARTS.map((part, index) => staticLensValues?.[part] !== undefined ? (
@@ -287,9 +293,9 @@ function PickerLens({
           key={index}
           x={x}
           y={LENS_HEIGHT / 2}
-          transform={lensMode === 'ios'
-            ? centeredLensScale(x, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
-            : undefined}
+          transform={geometry.glyphScaleY !== 1
+            ? `translate(${x} ${LENS_HEIGHT / 2}) scale(${lensMode === 'ios' ? IOS_LENS_MAGNIFICATION : 1} ${(lensMode === 'ios' ? IOS_LENS_MAGNIFICATION : 1) * geometry.glyphScaleY}) translate(${-x} ${-LENS_HEIGHT / 2})`
+            : lensMode === 'ios' ? centeredLensScale(x, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION) : undefined}
           textAnchor="middle"
           dominantBaseline="central"
           className="ui-time-picker__lens-separator ui-text--title"
@@ -406,6 +412,10 @@ function ThreeColumnPickerColumnWheel({
   onScroll,
   onScrollEnd,
   onSelect,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel,
   setColumnRef,
 }: {
   part: ThreeColumnPickerPart;
@@ -413,7 +423,11 @@ function ThreeColumnPickerColumnWheel({
   selected: number;
   onScroll: (part: ThreeColumnPickerPart, event: UIEvent<HTMLDivElement>) => void;
   onScrollEnd: (part: ThreeColumnPickerPart) => void;
-  onSelect: (part: ThreeColumnPickerPart, index: number) => void;
+  onSelect: (part: ThreeColumnPickerPart, index: number, event: MouseEvent<HTMLButtonElement>) => void;
+  onTouchStart: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
+  onTouchMove: (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => void;
+  onTouchEnd: (part: ThreeColumnPickerPart) => void;
+  onTouchCancel: (part: ThreeColumnPickerPart) => void;
   setColumnRef: (part: ThreeColumnPickerPart, element: HTMLDivElement | null) => void;
 }) {
   return (
@@ -424,6 +438,10 @@ function ThreeColumnPickerColumnWheel({
       aria-label={column.ariaLabel}
       onScroll={(event) => onScroll(part, event)}
       onScrollEnd={() => onScrollEnd(part)}
+      onTouchStart={event => onTouchStart(part, event)}
+      onTouchMove={event => onTouchMove(part, event)}
+      onTouchEnd={() => onTouchEnd(part)}
+      onTouchCancel={() => onTouchCancel(part)}
     >
       {column.values.map((value, index) => {
         const isSelected = value === selected;
@@ -437,7 +455,7 @@ function ThreeColumnPickerColumnWheel({
             role="option"
             aria-label={column.formatAria?.(value) ?? label}
             aria-selected={isSelected}
-            onClick={() => onSelect(part, index)}
+            onClick={event => onSelect(part, index, event)}
           >
             {label}
           </button>
@@ -449,6 +467,7 @@ function ThreeColumnPickerColumnWheel({
 
 export function ThreeColumnPicker({
   opened,
+  geometry: geometryName = 'standard',
   value,
   onChange,
   onClose,
@@ -468,6 +487,8 @@ export function ThreeColumnPicker({
   pickerClassName,
   columnsClassName,
 }: ThreeColumnPickerProps) {
+  const geometry = geometryName === 'compact-time' ? COMPACT_TIME_GEOMETRY : STANDARD_GEOMETRY;
+  const isCompactWheel = geometryName === 'compact-time';
   const valueParts = value;
   const resolvedLensMode = resolveTwoColumnPickerLensMode('auto');
   const columnRefs = useRef<Record<ThreeColumnPickerPart, HTMLDivElement | null>>({
@@ -480,12 +501,23 @@ export function ThreeColumnPicker({
     second: null,
     third: null,
   });
+  const positionedPartsRef = useRef(new Set<ThreeColumnPickerPart>());
   const draftRef = useRef<ThreeColumnPickerParts>(valueParts);
   const controlledRef = useRef<ThreeColumnPickerParts>(valueParts);
   const onChangeRef = useRef(onChange);
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
   const reconcileFrameRef = useRef<number | null>(null);
+  const initialSyncFrameRef = useRef<number | null>(null);
+  const touchStartRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
+  const suppressTouchClickRef = useRef<Partial<Record<ThreeColumnPickerPart, boolean>>>({});
+  const deferredExternalRef = useRef<ThreeColumnPickerParts | null>(null);
+  const settleTimersRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
+  const lastScrollTopRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
+  const lastTickIndexRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
+  const directionRef = useRef<Partial<Record<ThreeColumnPickerPart, -1 | 0 | 1>>>({});
+  const gestureOriginRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
+  const settlingRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
   // Parent acknowledgements can arrive after further native scroll frames.
   const locallyEmittedRef = useRef<Set<string>>(new Set());
   const scrollingPartsRef = useRef<Set<ThreeColumnPickerPart>>(new Set());
@@ -495,7 +527,7 @@ export function ThreeColumnPicker({
     third: null,
   });
   const [draft, setDraft] = useState<ThreeColumnPickerParts>(valueParts);
-  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts));
+  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, valueParts, geometry));
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
 
@@ -504,6 +536,12 @@ export function ThreeColumnPicker({
   openedRef.current = opened;
 
   const cancelScheduledFrames = (view: Window) => {
+    if (initialSyncFrameRef.current !== null) {
+      view.cancelAnimationFrame(initialSyncFrameRef.current);
+      initialSyncFrameRef.current = null;
+    }
+    Object.values(settleTimersRef.current).forEach(timer => view.clearTimeout(timer));
+    settleTimersRef.current = {};
     PARTS.forEach((part) => {
       const fallbackTimer = scrollEndFallbackRefs.current[part];
       if (fallbackTimer !== null) {
@@ -526,7 +564,10 @@ export function ThreeColumnPicker({
   const syncColumns = (parts: ThreeColumnPickerParts) => {
     PARTS.forEach((part) => {
       const index = columns[part].values.indexOf(parts[part]);
-      if (index >= 0) scrollColumn(columnRefs.current[part], index);
+      if (index >= 0 && columnRefs.current[part]) {
+        scrollColumn(columnRefs.current[part], index, geometry);
+        positionedPartsRef.current.add(part);
+      }
     });
   };
 
@@ -562,31 +603,61 @@ export function ThreeColumnPicker({
     if (!opened) {
       cancelScheduledFrames(view);
       wasOpenedRef.current = false;
+      positionedPartsRef.current.clear();
       locallyEmittedRef.current.clear();
       scrollingPartsRef.current.clear();
+      touchStartRef.current = {};
+      suppressTouchClickRef.current = {};
+      deferredExternalRef.current = null;
+      lastScrollTopRef.current = {};
+      lastTickIndexRef.current = {};
+      directionRef.current = {};
+      gestureOriginRef.current = {};
+      settlingRef.current = {};
       return;
     }
 
     const justOpened = !wasOpenedRef.current;
     wasOpenedRef.current = true;
     const valueChanged = !partsEqual(draftRef.current, valueParts);
-    if (!justOpened && !valueChanged) return;
-    // Delayed echoes of earlier steps must not steer a moving wheel.
-    if (!justOpened && locallyEmittedRef.current.has(partsKey(valueParts))) return;
+    // Acknowledgements must not steer native momentum.
+    if (!justOpened && (!valueChanged || locallyEmittedRef.current.has(partsKey(valueParts)))) {
+      deferredExternalRef.current = null;
+      return;
+    }
+    if (!justOpened && isCompactWheel && (scrollingPartsRef.current.size > 0
+      || Object.keys(touchStartRef.current).length > 0 || Object.keys(settlingRef.current).length > 0)) {
+      deferredExternalRef.current = valueParts;
+      return;
+    }
+    deferredExternalRef.current = null;
     locallyEmittedRef.current.clear();
 
     cancelScheduledFrames(view);
+    positionedPartsRef.current.clear();
     draftRef.current = valueParts;
     setDraft(valueParts);
-    const nextScrollTops = partsToScrollTops(columns, valueParts);
+    const nextScrollTops = partsToScrollTops(columns, valueParts, geometry);
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
+    if (isCompactWheel) {
+      lastScrollTopRef.current = nextScrollTops;
+      lastTickIndexRef.current = {
+        first: valueIndex(columns.first, valueParts.first),
+        second: valueIndex(columns.second, valueParts.second),
+        third: valueIndex(columns.third, valueParts.third),
+      };
+      directionRef.current = {};
+      gestureOriginRef.current = {};
+      settlingRef.current = {};
+    }
 
-    view.requestAnimationFrame(() => {
-      if (!openedRef.current) return;
+    initialSyncFrameRef.current = view.requestAnimationFrame(() => {
+      initialSyncFrameRef.current = null;
+      if (!openedRef.current || (isCompactWheel && scrollingPartsRef.current.size > 0)) return;
       syncColumns(valueParts);
     });
-  }, [opened, target, columns, valueParts.first, valueParts.second, valueParts.third]);
+  }, [opened, target, columns, geometryName, valueParts.first, valueParts.second, valueParts.third]);
 
   useEffect(() => () => {
     const view = target?.ownerDocument.defaultView ?? window;
@@ -607,6 +678,69 @@ export function ThreeColumnPicker({
     onChangeRef.current(next);
   };
 
+  const reconcileDeferredValue = () => {
+    if (scrollingPartsRef.current.size > 0 || Object.keys(settlingRef.current).length > 0) return;
+    gestureOriginRef.current = {};
+    const external = deferredExternalRef.current;
+    deferredExternalRef.current = null;
+    if (external && !locallyEmittedRef.current.has(partsKey(external))) {
+      draftRef.current = external;
+      setDraft(external);
+      const tops = partsToScrollTops(columns, external, geometry);
+      pendingScrollRef.current = tops;
+      setScrollTops(tops);
+      lastScrollTopRef.current = tops;
+      lastTickIndexRef.current = {
+        first: valueIndex(columns.first, external.first),
+        second: valueIndex(columns.second, external.second),
+        third: valueIndex(columns.third, external.third),
+      };
+      syncColumns(external);
+    }
+    locallyEmittedRef.current.clear();
+  };
+
+  const handleTouchStart = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
+    if (!isCompactWheel) return;
+    suppressTouchClickRef.current[part] = false;
+    const view = event.currentTarget.ownerDocument.defaultView ?? window;
+    if (initialSyncFrameRef.current !== null) {
+      view.cancelAnimationFrame(initialSyncFrameRef.current);
+      initialSyncFrameRef.current = null;
+    }
+    if (reconcileFrameRef.current !== null) {
+      view.cancelAnimationFrame(reconcileFrameRef.current);
+      reconcileFrameRef.current = null;
+    }
+    if (settlingRef.current[part] !== undefined) {
+      delete settlingRef.current[part];
+      view.clearTimeout(settleTimersRef.current[part]);
+      delete settleTimersRef.current[part];
+      event.currentTarget.scrollTo({ top: event.currentTarget.scrollTop, behavior: 'auto' });
+    }
+    const touch = event.touches[0];
+    if (touch) touchStartRef.current[part] = touch.clientY;
+    gestureOriginRef.current[part] = event.currentTarget.scrollTop;
+    directionRef.current[part] = 0;
+  };
+
+  const handleTouchMove = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
+    const startY = touchStartRef.current[part];
+    const touch = event.touches[0];
+    if (startY !== undefined && touch && Math.abs(touch.clientY - startY) > 8) {
+      suppressTouchClickRef.current[part] = true;
+    }
+  };
+
+  const handleTouchEnd = (part: ThreeColumnPickerPart) => {
+    delete touchStartRef.current[part];
+  };
+
+  const handleTouchCancel = (part: ThreeColumnPickerPart) => {
+    if (touchStartRef.current[part] !== undefined) suppressTouchClickRef.current[part] = true;
+    delete touchStartRef.current[part];
+  };
+
   const handleScrollEnd = (part: ThreeColumnPickerPart) => {
     if (!openedRef.current) return;
     const element = columnRefs.current[part];
@@ -617,9 +751,52 @@ export function ThreeColumnPicker({
       view.clearTimeout(pendingTimer);
       scrollEndFallbackRefs.current[part] = null;
     }
+    if (isCompactWheel && touchStartRef.current[part] !== undefined) return;
+    if (isCompactWheel) {
+      // Native scrolling is entirely free. Once it genuinely ends, align
+      // forwards to the next center line; never rewind to the nearest row.
+      const currentTop = element.scrollTop;
+      const activeTarget = settlingRef.current[part];
+      if (activeTarget !== undefined) {
+        if (Math.abs(currentTop - activeTarget) > 0.5) return;
+        delete settlingRef.current[part];
+        view.clearTimeout(settleTimersRef.current[part]);
+        delete settleTimersRef.current[part];
+        commitIndex(part, Math.round(activeTarget / geometry.rowHeight));
+        scrollingPartsRef.current.delete(part);
+        reconcileDeferredValue();
+        return;
+      }
+      const column = columns[part];
+      const direction = directionRef.current[part] ?? 0;
+      const index = forwardSettledIndex(currentTop, geometry.rowHeight, direction, column.values.length);
+      const targetTop = index * geometry.rowHeight;
+      commitIndex(part, index);
+      if (Math.abs(targetTop - currentTop) > 0.5) {
+        settlingRef.current[part] = targetTop;
+        element.scrollTo({ top: targetTop, behavior: 'smooth' });
+        // Some Telegram WebViews omit scrollend for programmatic smooth scroll.
+        // This timer starts only AFTER native momentum ended, never during it.
+        settleTimersRef.current[part] = view.setTimeout(() => {
+          if (!openedRef.current || settlingRef.current[part] !== targetTop) return;
+          if (Math.abs(element.scrollTop - targetTop) > 0.5) {
+            element.scrollTo({ top: targetTop, behavior: 'auto' });
+          }
+          delete settlingRef.current[part];
+          delete settleTimersRef.current[part];
+          commitIndex(part, index);
+          scrollingPartsRef.current.delete(part);
+          reconcileDeferredValue();
+        }, 400);
+      } else {
+        scrollingPartsRef.current.delete(part);
+        reconcileDeferredValue();
+      }
+      return;
+    }
     scrollingPartsRef.current.delete(part);
     const column = columns[part];
-    const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / ROW_HEIGHT)));
+    const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / geometry.rowHeight)));
     commitIndex(part, index);
     if (scrollingPartsRef.current.size > 0) return;
 
@@ -634,7 +811,7 @@ export function ThreeColumnPicker({
         setDraft(canonical);
         const activeColumns = columns;
         if (PARTS.every((candidate) => activeColumns[candidate].values.includes(canonical[candidate]))) {
-          const tops = partsToScrollTops(activeColumns, canonical);
+          const tops = partsToScrollTops(activeColumns, canonical, geometry);
           pendingScrollRef.current = tops;
           setScrollTops(tops);
           syncColumns(canonical);
@@ -647,14 +824,15 @@ export function ThreeColumnPicker({
   const scheduleScrollEndFallback = (part: ThreeColumnPickerPart, element: HTMLDivElement) => {
     // Modern WebViews dispatch scrollend. Older ones need an inactivity
     // fallback; restarting its timer never interferes with native deceleration.
-    if (typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend !== 'undefined') return;
+    if (settlingRef.current[part] !== undefined
+      || typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend !== 'undefined') return;
     const view = element.ownerDocument.defaultView ?? window;
     const previous = scrollEndFallbackRefs.current[part];
     if (previous !== null) view.clearTimeout(previous);
     scrollEndFallbackRefs.current[part] = view.setTimeout(() => {
       scrollEndFallbackRefs.current[part] = null;
       handleScrollEnd(part);
-    }, SCROLL_END_FALLBACK_MS);
+    }, isCompactWheel ? 450 : SCROLL_END_FALLBACK_MS);
   };
 
   const handleScroll = (
@@ -664,7 +842,34 @@ export function ThreeColumnPicker({
     if (!openedRef.current) return;
 
     const top = event.currentTarget.scrollTop;
+    positionedPartsRef.current.add(part);
+    const column = columns[part];
+    if (isCompactWheel) {
+      const previous = lastScrollTopRef.current[part];
+      const origin = gestureOriginRef.current[part];
+      if (settlingRef.current[part] === undefined) {
+        // During a touch flick use its net travel, not a tiny reverse bounce
+        // on the last WebView frame, to choose the eventual snap direction.
+        if (origin !== undefined && Math.abs(top - origin) > 1) {
+          directionRef.current[part] = top > origin ? 1 : -1;
+        } else if (origin === undefined && previous !== undefined && Math.abs(top - previous) > 0.5) {
+          directionRef.current[part] = top > previous ? 1 : -1;
+        }
+      }
+      lastScrollTopRef.current[part] = top;
+      const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
+      if (lastTickIndexRef.current[part] !== undefined && lastTickIndexRef.current[part] !== index) {
+        // One selection tick per observed crossing; skipped native frames
+        // must not produce a burst of haptic notifications.
+        triggerTelegramPickerSelectionTick();
+      }
+      lastTickIndexRef.current[part] = index;
+    }
     scrollingPartsRef.current.add(part);
+    if (isCompactWheel && initialSyncFrameRef.current !== null) {
+      (event.currentTarget.ownerDocument.defaultView ?? window).cancelAnimationFrame(initialSyncFrameRef.current);
+      initialSyncFrameRef.current = null;
+    }
     if (reconcileFrameRef.current !== null) {
       (event.currentTarget.ownerDocument.defaultView ?? window).cancelAnimationFrame(reconcileFrameRef.current);
       reconcileFrameRef.current = null;
@@ -684,31 +889,45 @@ export function ThreeColumnPicker({
 
       const nextTop = pendingScrollRef.current[part];
       setScrollTops((current) => ({ ...current, [part]: nextTop }));
-      commitIndex(part, Math.round(nextTop / ROW_HEIGHT));
+      commitIndex(part, Math.round(nextTop / geometry.rowHeight));
     });
   };
 
-  const handleSelect = (part: ThreeColumnPickerPart, index: number) => {
+  const handleSelect = (part: ThreeColumnPickerPart, index: number, event: MouseEvent<HTMLButtonElement>) => {
     if (!openedRef.current) return;
 
+    if (isCompactWheel && suppressTouchClickRef.current[part] && event.detail > 0) return;
+    if (isCompactWheel) {
+      delete settlingRef.current[part];
+      delete gestureOriginRef.current[part];
+      const view = target?.ownerDocument.defaultView ?? window;
+      view.clearTimeout(settleTimersRef.current[part]);
+      delete settleTimersRef.current[part];
+      lastTickIndexRef.current[part] = index;
+      lastScrollTopRef.current[part] = index * geometry.rowHeight;
+    }
+
     commitIndex(part, index);
-    const nextTop = index * ROW_HEIGHT;
+    const nextTop = index * geometry.rowHeight;
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
       [part]: nextTop,
     };
     setScrollTops((current) => ({ ...current, [part]: nextTop }));
     const element = columnRefs.current[part];
-    scrollColumn(element, index);
+    scrollColumn(element, index, geometry);
+    if (element) positionedPartsRef.current.add(part);
     if (element) scheduleScrollEndFallback(part, element);
   };
 
   const flushWheels = () => {
     PARTS.forEach((part) => {
-      if (staticLens?.[part]) return;
+      // A freshly mounted mode may close before its opening RAF positioned
+      // the wheels. Its browser-default scrollTop=0 is not an entered value.
+      if (staticLens?.[part] || !positionedPartsRef.current.has(part)) return;
       const element = columnRefs.current[part];
       if (!element) return;
-      commitIndex(part, Math.round(element.scrollTop / ROW_HEIGHT));
+      commitIndex(part, Math.round(element.scrollTop / geometry.rowHeight));
     });
   };
 
@@ -737,8 +956,8 @@ export function ThreeColumnPicker({
       backdrop
       iosHighlight={false}
       onBackdropClick={handleClose}
-      className={`ui-time-picker__popover${popoverClassName ? ` ${popoverClassName}` : ''}`}
-      style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
+      className={`ui-time-picker__popover${isCompactWheel ? ' ui-time-picker__popover--compact-time' : ''}${popoverClassName ? ` ${popoverClassName}` : ''}`}
+      style={{ width: isCompactWheel ? '270px' : '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
@@ -760,12 +979,17 @@ export function ThreeColumnPicker({
                 onScroll={handleScroll}
                 onScrollEnd={handleScrollEnd}
                 onSelect={handleSelect}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
                 setColumnRef={setColumnRef}
               />
             ))}
           </div>
           <PickerLens
             assets={lensAssets}
+            geometry={geometry}
             scrollTops={scrollTops}
             lensMode={resolvedLensMode}
             columns={columns}
