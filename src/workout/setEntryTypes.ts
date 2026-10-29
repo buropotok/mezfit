@@ -110,3 +110,12 @@ export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
     bands: [...(data.fact?.bands ?? [])],
   };
 }
+
+/** Compare the editable payload, not input gestures or object identity. */
+export function sameSetEntryDraft(a: SetEntryFactDraft, b: SetEntryFactDraft): boolean {
+  return a.metrics.weightKg === b.metrics.weightKg && a.metrics.reps === b.metrics.reps
+    && a.metrics.durationSeconds === b.metrics.durationSeconds && a.metrics.distanceMeters === b.metrics.distanceMeters
+    && a.setLabel === b.setLabel && (a.setType ?? null) === (b.setType ?? null)
+    && a.rpe === b.rpe && a.comment === b.comment
+    && a.bands.length === b.bands.length && a.bands.every((band, index) => band === b.bands[index]);
+}
