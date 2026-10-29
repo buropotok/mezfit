@@ -3,10 +3,10 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { useState } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { triggerTelegramSelectionHaptic } from '../../telegram';
+import { triggerTelegramSelectionHaptic, triggerTelegramPickerSelectionTick } from '../../telegram';
 import { WeightRepsPicker } from '../weight-reps-picker/WeightRepsPicker';
 
-vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn() }));
+vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn(), triggerTelegramPickerSelectionTick: vi.fn() }));
 
 const ROW_HEIGHT = 48;
 let frames: Map<number, FrameRequestCallback>;
@@ -65,6 +65,7 @@ beforeEach(() => {
   frames = new Map();
   nextFrame = 1;
   vi.mocked(triggerTelegramSelectionHaptic).mockClear();
+  vi.mocked(triggerTelegramPickerSelectionTick).mockClear();
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
     const id = nextFrame++;
@@ -157,5 +158,155 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
     closePicker();
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.25 });
+  });
+});
+
+function mountCompact() {
+  const result = mountControlled();
+  fireEvent.click(screen.getByRole('button', { name: 'Режим' }));
+  flushFrame();
+  return result;
+}
+
+function trackWheel(label: string, initialRow: number) {
+  const element = screen.getByRole('listbox', { name: label }) as HTMLDivElement;
+  let top = initialRow * 36;
+  const writes: Array<{ top: number; behavior: ScrollBehavior }> = [];
+  Object.defineProperty(element, 'scrollTop', {
+    configurable: true, get: () => top, set: (next: number) => { top = next; },
+  });
+  Object.defineProperty(element, 'scrollTo', {
+    configurable: true,
+    value: (next: { top: number; behavior: ScrollBehavior }) => { writes.push(next); top = next.top; },
+  });
+  return {
+    element, writes,
+    move(row: number) { top = row * 36; fireEvent.scroll(element); },
+  };
+}
+
+function touchWheel(element: Element, type: string, y: number) {
+  const event = new Event(type, { bubbles: true });
+  Object.defineProperty(event, type === 'touchend' || type === 'touchcancel' ? 'changedTouches' : 'touches', {
+    value: [{ clientY: y }],
+  });
+  fireEvent(element, event);
+}
+
+describe('weight/reps wheels use TimePicker native momentum and compact optics', () => {
+  it('uses the same compact capsule and compensates SVG glyphs at all three centers', () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('iPhone');
+    mountCompact();
+    const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    expect(dialog.style.width).toBe('270px');
+    expect(dialog.classList.contains('ui-time-picker__popover--compact-time')).toBe(true);
+    expect(dialog.style.top).toBe('100px');
+    expect(screen.getAllByRole('listbox')).toHaveLength(3);
+    const texts = Array.from(dialog.querySelectorAll('.ui-time-picker__lens-text'));
+    for (const x of ['80', '176', '240']) {
+      const column = texts.filter(text => text.getAttribute('x') === x);
+      expect(column.map(text => text.getAttribute('y'))).toEqual(['-36', '36', '108']);
+      expect(column[1].getAttribute('transform')).toContain('scale(1.55 3.1)');
+    }
+    expect(dialog.querySelector('.ui-time-picker__lens-separator')?.getAttribute('transform'))
+      .toContain('scale(1.55 3.1)');
+  });
+
+  it.each([
+    { label: 'Повторения', origin: 8, landing: 9.2, aligned: 10, result: { reps: 10, weightKg: 77.5 } },
+    { label: 'Килограммы', origin: 77, landing: 78.2, aligned: 79, result: { reps: 8, weightKg: 79.5 } },
+    { label: 'Доли килограмма', origin: 2, landing: 2.2, aligned: 3, result: { reps: 8, weightKg: 77.75 } },
+  ])('leaves $label free during inertia and settles forward only after scrollend', ({ label, origin, landing, aligned, result }) => {
+    const { onChange } = mountCompact();
+    const wheel = trackWheel(label, origin);
+    wheel.move(landing);
+    flushFrame();
+    expect(wheel.writes).toEqual([]);
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
+    flushFrame();
+    expect(wheel.writes).toEqual([{ top: aligned * 36, behavior: 'smooth' }]);
+    expect(onChange).not.toHaveBeenCalled();
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(result);
+  });
+
+  it('keeps the direction of a flick despite a small reverse WebView bounce', () => {
+    mountCompact();
+    const wheel = trackWheel('Килограммы', 77);
+    touchWheel(wheel.element, 'touchstart', 220);
+    touchWheel(wheel.element, 'touchend', 100);
+    wheel.move(78.2);
+    flushFrame();
+    wheel.move(78.15);
+    flushFrame();
+    expect(wheel.writes).toEqual([]);
+    fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
+    expect(wheel.writes).toEqual([{ top: 79 * 36, behavior: 'smooth' }]);
+  });
+
+  it('settles a decreasing wheel downwards without rewinding it', () => {
+    mountCompact();
+    const wheel = trackWheel('Килограммы', 77);
+    wheel.move(72.3);
+    flushFrame();
+    fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
+    expect(wheel.writes).toEqual([{ top: 72 * 36, behavior: 'smooth' }]);
+  });
+
+  it('uses the same selection tick at observed crossings without bursts for skipped frames', () => {
+    mountCompact();
+    const wheel = trackWheel('Килограммы', 77);
+    wheel.move(78);
+    flushFrame();
+    wheel.move(95);
+    flushFrame();
+    wheel.move(95.1);
+    flushFrame();
+    expect(triggerTelegramPickerSelectionTick).toHaveBeenCalledTimes(2);
+    expect(triggerTelegramSelectionHaptic).not.toHaveBeenCalled();
+  });
+
+  it('ignores a synthetic option click after a flick instead of interrupting inertia', () => {
+    const { onChange } = mountCompact();
+    const wheel = trackWheel('Повторения', 8);
+    touchWheel(wheel.element, 'touchstart', 220);
+    touchWheel(wheel.element, 'touchmove', 100);
+    touchWheel(wheel.element, 'touchcancel', 100);
+    wheel.move(12);
+    flushFrame();
+    fireEvent.click(within(wheel.element).getByRole('option', { name: '30' }), { detail: 1 });
+    expect(wheel.writes).toEqual([]);
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 12, weightKg: 77.5 });
+  });
+
+  it('does not interrupt an older WebView at 200ms and waits 450ms after the last scroll event', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    mountCompact();
+    const wheel = trackWheel('Килограммы', 77);
+    Object.defineProperty(wheel.element, 'onscrollend', { configurable: true, value: undefined });
+    wheel.move(78.2);
+    flushFrame();
+    act(() => vi.advanceTimersByTime(200));
+    expect(wheel.writes).toEqual([]);
+    wheel.move(79.2);
+    flushFrame();
+    act(() => vi.advanceTimersByTime(449));
+    expect(wheel.writes).toEqual([]);
+    act(() => vi.advanceTimersByTime(1));
+    expect(wheel.writes).toEqual([{ top: 80 * 36, behavior: 'smooth' }]);
+  });
+
+  it('returns to the numeric layout with both drafts intact', () => {
+    const { onChange } = mountCompact();
+    fireEvent.click(within(screen.getByRole('listbox', { name: 'Повторения' }))
+      .getByRole('option', { name: '12' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Режим' }));
+    expect(screen.getByRole('dialog', { name: 'Повторения и вес' }).style.width).toBe('336px');
+    expect(document.querySelector('[data-ui-picker-static-value="first"]')?.textContent).toBe('12');
+    expect(onChange).not.toHaveBeenCalled();
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 12, weightKg: 77.5 });
   });
 });
