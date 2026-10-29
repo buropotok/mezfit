@@ -11,7 +11,7 @@ import {
   type Ref,
 } from 'react';
 import { triggerTelegramPickerSelectionTick } from '../../telegram';
-import { forwardSettledIndex } from '../time-picker/forwardSettle';
+import { nearestSettledIndex } from '../time-picker/forwardSettle';
 import { COMPACT_TIME_GEOMETRY, STANDARD_GEOMETRY, type WheelGeometry } from '../time-picker/wheelGeometry';
 import { MezfitPopover } from '../konsta-mezfit';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
@@ -513,10 +513,7 @@ export function ThreeColumnPicker({
   const suppressTouchClickRef = useRef<Partial<Record<ThreeColumnPickerPart, boolean>>>({});
   const deferredExternalRef = useRef<ThreeColumnPickerParts | null>(null);
   const settleTimersRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
-  const lastScrollTopRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
   const lastTickIndexRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
-  const directionRef = useRef<Partial<Record<ThreeColumnPickerPart, -1 | 0 | 1>>>({});
-  const gestureOriginRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
   const settlingRef = useRef<Partial<Record<ThreeColumnPickerPart, number>>>({});
   // Parent acknowledgements can arrive after further native scroll frames.
   const locallyEmittedRef = useRef<Set<string>>(new Set());
@@ -609,10 +606,7 @@ export function ThreeColumnPicker({
       touchStartRef.current = {};
       suppressTouchClickRef.current = {};
       deferredExternalRef.current = null;
-      lastScrollTopRef.current = {};
       lastTickIndexRef.current = {};
-      directionRef.current = {};
-      gestureOriginRef.current = {};
       settlingRef.current = {};
       return;
     }
@@ -641,14 +635,11 @@ export function ThreeColumnPicker({
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
     if (isCompactWheel) {
-      lastScrollTopRef.current = nextScrollTops;
       lastTickIndexRef.current = {
         first: valueIndex(columns.first, valueParts.first),
         second: valueIndex(columns.second, valueParts.second),
         third: valueIndex(columns.third, valueParts.third),
       };
-      directionRef.current = {};
-      gestureOriginRef.current = {};
       settlingRef.current = {};
     }
 
@@ -680,7 +671,6 @@ export function ThreeColumnPicker({
 
   const reconcileDeferredValue = () => {
     if (scrollingPartsRef.current.size > 0 || Object.keys(settlingRef.current).length > 0) return;
-    gestureOriginRef.current = {};
     const external = deferredExternalRef.current;
     deferredExternalRef.current = null;
     if (external && !locallyEmittedRef.current.has(partsKey(external))) {
@@ -689,7 +679,6 @@ export function ThreeColumnPicker({
       const tops = partsToScrollTops(columns, external, geometry);
       pendingScrollRef.current = tops;
       setScrollTops(tops);
-      lastScrollTopRef.current = tops;
       lastTickIndexRef.current = {
         first: valueIndex(columns.first, external.first),
         second: valueIndex(columns.second, external.second),
@@ -720,8 +709,6 @@ export function ThreeColumnPicker({
     }
     const touch = event.touches[0];
     if (touch) touchStartRef.current[part] = touch.clientY;
-    gestureOriginRef.current[part] = event.currentTarget.scrollTop;
-    directionRef.current[part] = 0;
   };
 
   const handleTouchMove = (part: ThreeColumnPickerPart, event: TouchEvent<HTMLDivElement>) => {
@@ -753,8 +740,8 @@ export function ThreeColumnPicker({
     }
     if (isCompactWheel && touchStartRef.current[part] !== undefined) return;
     if (isCompactWheel) {
-      // Native scrolling is entirely free. Once it genuinely ends, align
-      // forwards to the next center line; never rewind to the nearest row.
+      // Native scrolling stays free until it ends, then align the nearest
+      // cell center to the horizontal selection line.
       const currentTop = element.scrollTop;
       const activeTarget = settlingRef.current[part];
       if (activeTarget !== undefined) {
@@ -768,8 +755,7 @@ export function ThreeColumnPicker({
         return;
       }
       const column = columns[part];
-      const direction = directionRef.current[part] ?? 0;
-      const index = forwardSettledIndex(currentTop, geometry.rowHeight, direction, column.values.length);
+      const index = nearestSettledIndex(currentTop, geometry.rowHeight, column.values.length);
       const targetTop = index * geometry.rowHeight;
       commitIndex(part, index);
       if (Math.abs(targetTop - currentTop) > 0.5) {
@@ -845,18 +831,6 @@ export function ThreeColumnPicker({
     positionedPartsRef.current.add(part);
     const column = columns[part];
     if (isCompactWheel) {
-      const previous = lastScrollTopRef.current[part];
-      const origin = gestureOriginRef.current[part];
-      if (settlingRef.current[part] === undefined) {
-        // During a touch flick use its net travel, not a tiny reverse bounce
-        // on the last WebView frame, to choose the eventual snap direction.
-        if (origin !== undefined && Math.abs(top - origin) > 1) {
-          directionRef.current[part] = top > origin ? 1 : -1;
-        } else if (origin === undefined && previous !== undefined && Math.abs(top - previous) > 0.5) {
-          directionRef.current[part] = top > previous ? 1 : -1;
-        }
-      }
-      lastScrollTopRef.current[part] = top;
       const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
       if (lastTickIndexRef.current[part] !== undefined && lastTickIndexRef.current[part] !== index) {
         // One selection tick per observed crossing; skipped native frames
@@ -899,12 +873,10 @@ export function ThreeColumnPicker({
     if (isCompactWheel && suppressTouchClickRef.current[part] && event.detail > 0) return;
     if (isCompactWheel) {
       delete settlingRef.current[part];
-      delete gestureOriginRef.current[part];
       const view = target?.ownerDocument.defaultView ?? window;
       view.clearTimeout(settleTimersRef.current[part]);
       delete settleTimersRef.current[part];
       lastTickIndexRef.current[part] = index;
-      lastScrollTopRef.current[part] = index * geometry.rowHeight;
     }
 
     commitIndex(part, index);
