@@ -75,7 +75,7 @@ first; no implicit role migration or permission widening is permitted.
 
 1. Review PR, source tests and manifests; merge the reviewed PR to `main`.
 2. Verify the protected environment requires reviewers, actor is repository
-   owner, and previous Client execution ACL is installed.
+   owner, and previous Coach coached-start ACL is installed.
 3. Manually dispatch `Apply Dexie Cloud Flex Attributes schema and ACL`
    with `operation=preview`. Inspect full schema/roles compatibility and
    exact added tables/roles.
