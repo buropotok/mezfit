@@ -151,7 +151,7 @@ describe('triggerTelegramSelectionHaptic', () => {
 });
 
 describe('triggerTelegramPickerSelectionTick', () => {
-  it('uses only quiet selectionChanged for spinning number wheels', () => {
+  it('restores the original success notification for each crossed value', () => {
     const selectionChanged = vi.fn();
     const impactOccurred = vi.fn();
     const notificationOccurred = vi.fn();
@@ -160,9 +160,23 @@ describe('triggerTelegramPickerSelectionTick', () => {
 
     triggerTelegramPickerSelectionTick(webApp);
 
-    expect(selectionChanged).toHaveBeenCalledOnce();
-    expect(notificationOccurred).not.toHaveBeenCalled();
+    expect(notificationOccurred).toHaveBeenCalledExactlyOnceWith('success');
     expect(impactOccurred).not.toHaveBeenCalled();
+    expect(selectionChanged).not.toHaveBeenCalled();
+  });
+
+  it('falls back to light impact, then selectionChanged, on older Telegram clients', () => {
+    const impactOccurred = vi.fn();
+    const selectionChanged = vi.fn();
+    const webApp = createWebApp();
+    webApp.HapticFeedback = { selectionChanged, impactOccurred };
+    triggerTelegramPickerSelectionTick(webApp);
+    expect(impactOccurred).toHaveBeenCalledExactlyOnceWith('light');
+    expect(selectionChanged).not.toHaveBeenCalled();
+
+    webApp.HapticFeedback = { selectionChanged };
+    triggerTelegramPickerSelectionTick(webApp);
+    expect(selectionChanged).toHaveBeenCalledOnce();
   });
 
   it('is safe without Telegram haptics or when the native API rejects a tick', () => {
