@@ -96,6 +96,31 @@ describe('TimePicker regression: retired cyclic scrolling', () => {
     expect(onChange).toHaveBeenLastCalledWith('08:12');
   });
 
+  it('ignores a small reverse WebView bounce after a positive flick', () => {
+    const { minutes } = renderWheel('08:10');
+    const writes: number[] = [];
+    Object.defineProperty(minutes, 'scrollTo', {
+      configurable: true,
+      value: ({ top }: { top: number }) => { writes.push(top); minutes.scrollTop = top; },
+    });
+    const start = new Event('touchstart', { bubbles: true });
+    Object.defineProperty(start, 'touches', { value: [{ clientY: 220 }] });
+    fireEvent(minutes, start);
+    const end = new Event('touchend', { bubbles: true });
+    fireEvent(minutes, end);
+
+    minutes.scrollTop = 10.2 * 36;
+    fireEvent.scroll(minutes);
+    flushFrames();
+    minutes.scrollTop = 10.15 * 36;
+    fireEvent.scroll(minutes);
+    flushFrames();
+
+    fireEvent(minutes, new Event('scrollend', { bubbles: true }));
+    flushFrames();
+    expect(writes).toEqual([11 * 36]);
+  });
+
   it('never reverses a decreasing wheel when it aligns a fractional position', () => {
     const { minutes, onChange } = renderWheel('08:30');
     const writes: number[] = [];
