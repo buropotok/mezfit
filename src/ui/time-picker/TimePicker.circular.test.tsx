@@ -74,20 +74,20 @@ describe('cyclic TimePicker wheels', () => {
     expect(within(hours).getByRole('option', { name: '23' }).getAttribute('aria-selected')).toBe('true');
     expect(within(minutes).getByRole('option', { name: '59' }).getAttribute('aria-selected')).toBe('true');
 
-    hours.scrollTop = 48 * 48; // 23 -> 00
+    hours.scrollTop = 72 * 24; // 23 -> 00, middle-to-next cycle
     fireEvent.scroll(hours);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('00:59');
-    minutes.scrollTop = 120 * 48; // 59 -> 00
+    minutes.scrollTop = 180 * 24; // 59 -> 00, middle-to-next cycle
     fireEvent.scroll(minutes);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('00:00');
 
-    hours.scrollTop = 23 * 48; // 00 -> 23 (previous cycle)
+    hours.scrollTop = 47 * 24; // 00 -> 23 (previous cycle)
     fireEvent.scroll(hours);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('23:00');
-    minutes.scrollTop = 59 * 48; // 00 -> 59 (previous cycle)
+    minutes.scrollTop = 119 * 24; // 00 -> 59 (previous cycle)
     fireEvent.scroll(minutes);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('23:59');
@@ -98,7 +98,7 @@ describe('cyclic TimePicker wheels', () => {
     dispatchTouch(minutes, 'touchstart', 230, 100);
     dispatchTouch(minutes, 'touchmove', 100, 200);
     dispatchTouch(minutes, 'touchend', 100, 300);
-    const top = (60 + minute) * 48;
+    const top = (120 + minute) * 24;
     minutes.scrollTop = top;
     fireEvent.scroll(minutes);
     flushFrames();
@@ -110,24 +110,24 @@ describe('cyclic TimePicker wheels', () => {
 
   it('never writes the native scroll position while momentum passes through a cycle boundary', () => {
     const { minutes } = renderWheel('08:59');
-    let top = 119 * 48;
+    let top = 179 * 24;
     const writes: number[] = [];
     Object.defineProperty(minutes, 'scrollTop', {
       configurable: true,
       get: () => top,
       set: (value: number) => { writes.push(value); top = value; },
     });
-    for (const row of [120, 121, 130, 170]) {
-      top = row * 48;
+    for (const row of [180, 181, 190, 290]) {
+      top = row * 24;
       fireEvent.scroll(minutes);
       flushFrames();
     }
     expect(writes).toEqual([]);
-    expect(top).toBe(170 * 48);
+    expect(top).toBe(290 * 24);
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(top).toBe(110 * 48);
-    expect(writes).toEqual([110 * 48]);
+    expect(top).toBe(170 * 24);
+    expect(writes).toEqual([170 * 24]);
   });
 
   it('keeps a precise minute after native scrolling takes over the touch', () => {
@@ -135,7 +135,7 @@ describe('cyclic TimePicker wheels', () => {
     dispatchTouch(minutes, 'touchstart', 230, 100);
     dispatchTouch(minutes, 'touchmove', 100, 180);
     dispatchTouch(minutes, 'touchcancel', 100, 190);
-    minutes.scrollTop = (60 + 32) * 48;
+    minutes.scrollTop = (120 + 32) * 24;
     fireEvent.scroll(minutes);
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('08:32');
@@ -145,7 +145,7 @@ describe('cyclic TimePicker wheels', () => {
 
   it('flushes the last visible native position when dismissed before the next animation frame', () => {
     const { minutes, onChange } = renderWheel();
-    minutes.scrollTop = (60 + 37) * 48;
+    minutes.scrollTop = (120 + 37) * 24;
     fireEvent.scroll(minutes);
     const dialog = screen.getByRole('dialog', { name: 'Выбор времени' });
     fireEvent.click(dialog.previousElementSibling as Element);
@@ -154,7 +154,7 @@ describe('cyclic TimePicker wheels', () => {
 
   it('does not emit a duplicate change when native scrolling selects the current value', () => {
     const { minutes, onChange } = renderWheel();
-    minutes.scrollTop = 120 * 48;
+    minutes.scrollTop = 180 * 24;
     fireEvent.scroll(minutes);
     flushFrames();
     expect(onChange).not.toHaveBeenCalled();

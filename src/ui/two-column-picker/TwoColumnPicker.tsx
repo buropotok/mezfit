@@ -18,12 +18,22 @@ import {
 } from './lensMode';
 import '../time-picker/time-picker.css';
 
-const ROW_HEIGHT = 48;
-const WHEEL_HEIGHT = 240;
 const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
-const WHEEL_PADDING = (WHEEL_HEIGHT - ROW_HEIGHT) / 2;
-const LENS_TOP = (WHEEL_HEIGHT - LENS_HEIGHT) / 2;
+
+// The 72px optical source is scaled to 24px on screen for the compact time wheel.
+interface WheelGeometry {
+  rowHeight: number;
+  circularCopies: number;
+  lensScaleY: number;
+  glyphScaleY: number;
+}
+const STANDARD_GEOMETRY: WheelGeometry = {
+  rowHeight: 48, circularCopies: 3, lensScaleY: 1, glyphScaleY: 1,
+};
+const COMPACT_TIME_GEOMETRY: WheelGeometry = {
+  rowHeight: 24, circularCopies: 5, lensScaleY: 1 / 3, glyphScaleY: 2,
+};
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 // The wheel reserves 2.5rem for its center separator; column centers
@@ -57,6 +67,7 @@ export interface TwoColumnPickerProps {
   ariaLabel: string;
   separator?: string;
   lensMode?: TwoColumnPickerLensMode;
+  geometry?: 'standard' | 'compact-time';
 }
 
 type ScrollTops = TwoColumnPickerParts;
@@ -71,12 +82,12 @@ function wrapIndex(index: number, length: number) {
   return ((index % length) + length) % length;
 }
 
-function wheelIndex(column: TwoColumnPickerColumn, index: number) {
-  return index + (column.circular ? column.values.length : 0);
+function wheelIndex(column: TwoColumnPickerColumn, index: number, geometry: WheelGeometry) {
+  return index + (column.circular ? column.values.length * Math.floor(geometry.circularCopies / 2) : 0);
 }
 
-function renderedLength(column: TwoColumnPickerColumn) {
-  return column.values.length * (column.circular ? 3 : 1);
+function renderedLength(column: TwoColumnPickerColumn, geometry: WheelGeometry) {
+  return column.values.length * (column.circular ? geometry.circularCopies : 1);
 }
 
 function wheelValue(column: TwoColumnPickerColumn, index: number) {
@@ -88,17 +99,18 @@ function wheelValue(column: TwoColumnPickerColumn, index: number) {
 function partsToScrollTops(
   columns: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn],
   parts: TwoColumnPickerParts,
+  geometry: WheelGeometry,
 ): ScrollTops {
   return {
-    left: wheelIndex(columns[0], valueIndex(columns[0], parts.left)) * ROW_HEIGHT,
-    right: wheelIndex(columns[1], valueIndex(columns[1], parts.right)) * ROW_HEIGHT,
+    left: wheelIndex(columns[0], valueIndex(columns[0], parts.left), geometry) * geometry.rowHeight,
+    right: wheelIndex(columns[1], valueIndex(columns[1], parts.right), geometry) * geometry.rowHeight,
   };
 }
 
-function scrollColumn(element: HTMLDivElement | null, index: number) {
+function scrollColumn(element: HTMLDivElement | null, index: number, geometry: WheelGeometry) {
   if (!element) return;
 
-  const top = index * ROW_HEIGHT;
+  const top = index * geometry.rowHeight;
   if (typeof element.scrollTo === 'function') {
     element.scrollTo({ top, behavior: 'auto' });
   } else {
@@ -109,20 +121,21 @@ function scrollColumn(element: HTMLDivElement | null, index: number) {
 function visibleLensItems(
   column: TwoColumnPickerColumn,
   scrollTop: number,
+  geometry: WheelGeometry,
 ) {
-  const centerIndex = Math.round(scrollTop / ROW_HEIGHT);
+  const centerIndex = Math.round(scrollTop / geometry.rowHeight);
   const start = Math.max(0, centerIndex - 1);
-  const end = Math.min(renderedLength(column) - 1, centerIndex + 1);
+  const end = Math.min(renderedLength(column, geometry) - 1, centerIndex + 1);
 
   return Array.from({ length: end - start + 1 }, (_, localIndex) => {
     const index = start + localIndex;
     const value = wheelValue(column, index);
-    const globalCenter = WHEEL_PADDING + index * ROW_HEIGHT + ROW_HEIGHT / 2 - scrollTop;
-
     return {
       index,
       value,
-      y: globalCenter - LENS_TOP,
+      // Reverse the lens's vertical scale so adjacent 24px rows stay
+      // 24px apart on screen and cannot intrude into the center lens.
+      y: LENS_HEIGHT / 2 + (index * geometry.rowHeight - scrollTop) / geometry.lensScaleY,
     };
   });
 }
@@ -139,19 +152,23 @@ function LensText({
   column,
   scrollTop,
   lensMode,
+  geometry,
 }: {
   x: number;
   column: TwoColumnPickerColumn;
   scrollTop: number;
   lensMode: ResolvedTwoColumnPickerLensMode;
+  geometry: WheelGeometry;
 }) {
   return (
     <>
-      {visibleLensItems(column, scrollTop).map(({ index, value, y }) => {
+      {visibleLensItems(column, scrollTop, geometry).map(({ index, value, y }) => {
         const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
-        const transform = lensMode === 'ios' && scale !== 1
-          ? centeredLensScale(x, y, scale)
-          : undefined;
+        // Preserve legibility: an extra source-space vertical scale keeps the
+        // selected glyph near 20px tall after the complete lens is compressed.
+        const transform = geometry.glyphScaleY !== 1
+          ? `translate(${x} ${y}) scale(${scale} ${scale * geometry.glyphScaleY}) translate(${-x} ${-y})`
+          : lensMode === 'ios' && scale !== 1 ? centeredLensScale(x, y, scale) : undefined;
 
         return (
           <text
@@ -177,20 +194,25 @@ function PickerLens({
   columns,
   separator,
   lensMode,
+  geometry,
 }: {
   assets: TimeLensAssets | null;
   scrollTops: ScrollTops;
   columns: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn];
   separator?: string;
   lensMode: ResolvedTwoColumnPickerLensMode;
+  geometry: WheelGeometry;
 }) {
   const reactId = useId().replace(/:/g, '');
   const filterId = `ui-time-picker-lens-${reactId}`;
   const clipId = `ui-time-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-time-picker-lens-source-clip-${reactId}`;
-  const separatorTransform = lensMode === 'ios'
-    ? centeredLensScale(LENS_WIDTH / 2, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
-    : undefined;
+  const separatorMagnification = lensMode === 'ios' ? IOS_LENS_MAGNIFICATION : 1;
+  const separatorTransform = geometry.glyphScaleY !== 1
+    ? `translate(${LENS_WIDTH / 2} ${LENS_HEIGHT / 2}) scale(${separatorMagnification} ${separatorMagnification * geometry.glyphScaleY}) translate(${-LENS_WIDTH / 2} ${-LENS_HEIGHT / 2})`
+    : lensMode === 'ios'
+      ? centeredLensScale(LENS_WIDTH / 2, LENS_HEIGHT / 2, IOS_LENS_MAGNIFICATION)
+      : undefined;
 
   // Fixed units are composited after the displacement filter so they never
   // shift optically or scroll with any numeric ribbon.
@@ -219,6 +241,7 @@ function PickerLens({
         column={columns[0]}
         scrollTop={scrollTops.left}
         lensMode={lensMode}
+        geometry={geometry}
       />
       {separator ? (
         <text
@@ -237,6 +260,7 @@ function PickerLens({
         column={columns[1]}
         scrollTop={scrollTops.right}
         lensMode={lensMode}
+        geometry={geometry}
       />
     </>
   );
@@ -339,6 +363,7 @@ function PickerColumnWheel({
   onTouchEnd,
   onTouchCancel,
   columnRef,
+  geometry,
 }: {
   side: TwoColumnPickerSide;
   column: TwoColumnPickerColumn;
@@ -351,6 +376,7 @@ function PickerColumnWheel({
   onTouchEnd: (side: TwoColumnPickerSide) => void;
   onTouchCancel: (side: TwoColumnPickerSide) => void;
   columnRef: RefObject<HTMLDivElement | null>;
+  geometry: WheelGeometry;
 }) {
   return (
     <div
@@ -365,9 +391,10 @@ function PickerColumnWheel({
       onTouchEnd={() => onTouchEnd(side)}
       onTouchCancel={() => onTouchCancel(side)}
     >
-      {Array.from({ length: renderedLength(column) }, (_, index) => {
+      {Array.from({ length: renderedLength(column, geometry) }, (_, index) => {
         const value = wheelValue(column, index);
-        const duplicate = Boolean(column.circular && (index < column.values.length || index >= column.values.length * 2));
+        const middleStart = column.values.length * Math.floor(geometry.circularCopies / 2);
+        const duplicate = Boolean(column.circular && (index < middleStart || index >= middleStart + column.values.length));
         const isSelected = value === selected;
         const label = column.format(value);
 
@@ -401,7 +428,9 @@ export function TwoColumnPicker({
   ariaLabel,
   separator,
   lensMode = 'auto',
+  geometry: geometryName = 'standard',
 }: TwoColumnPickerProps) {
+  const geometry = geometryName === 'compact-time' ? COMPACT_TIME_GEOMETRY : STANDARD_GEOMETRY;
   valueIndex(columns[0], value.left);
   valueIndex(columns[1], value.right);
   const resolvedLensMode = resolveTwoColumnPickerLensMode(lensMode);
@@ -424,7 +453,7 @@ export function TwoColumnPicker({
   const scrollingRef = useRef(new Set<TwoColumnPickerSide>());
   const locallyEmittedRef = useRef(new Set<string>());
   const endTimersRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
-  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, value));
+  const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, value, geometry));
 
   const [draft, setDraft] = useState<TwoColumnPickerParts>(value);
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
@@ -525,7 +554,7 @@ export function TwoColumnPicker({
 
     draftRef.current = value;
     setDraft(value);
-    const nextScrollTops = partsToScrollTops(columns, value);
+    const nextScrollTops = partsToScrollTops(columns, value, geometry);
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
 
@@ -533,8 +562,8 @@ export function TwoColumnPicker({
     initialSyncFrameRef.current = view.requestAnimationFrame(() => {
       initialSyncFrameRef.current = null;
       if (!openedRef.current || (columns.some(column => column.circular) && scrollingRef.current.size > 0)) return;
-      scrollColumn(leftRef.current, wheelIndex(columns[0], valueIndex(columns[0], value.left)));
-      scrollColumn(rightRef.current, wheelIndex(columns[1], valueIndex(columns[1], value.right)));
+      scrollColumn(leftRef.current, wheelIndex(columns[0], valueIndex(columns[0], value.left), geometry), geometry);
+      scrollColumn(rightRef.current, wheelIndex(columns[1], valueIndex(columns[1], value.right), geometry), geometry);
     });
   }, [columns, opened, target, value.left, value.right]);
 
@@ -573,13 +602,14 @@ export function TwoColumnPicker({
     const column = columns[side === 'left' ? 0 : 1];
     const element = side === 'left' ? leftRef.current : rightRef.current;
     if (!column.circular || !element) return;
-    const row = Math.round(element.scrollTop / ROW_HEIGHT);
-    if (row >= column.values.length && row < column.values.length * 2) return;
-    const index = wheelIndex(column, wrapIndex(row, column.values.length));
-    const top = index * ROW_HEIGHT;
+    const row = Math.round(element.scrollTop / geometry.rowHeight);
+    const middle = column.values.length * Math.floor(geometry.circularCopies / 2);
+    if (row >= middle && row < middle + column.values.length) return;
+    const index = wheelIndex(column, wrapIndex(row, column.values.length), geometry);
+    const top = index * geometry.rowHeight;
     pendingScrollRef.current = { ...pendingScrollRef.current, [side]: top };
     setScrollTops(current => ({ ...current, [side]: top }));
-    scrollColumn(element, index);
+    scrollColumn(element, index, geometry);
   };
 
   const handleTouchStart = (side: TwoColumnPickerSide, event: TouchEvent<HTMLDivElement>) => {
@@ -629,7 +659,7 @@ export function TwoColumnPicker({
     delete endTimersRef.current[side];
     const element = side === 'left' ? leftRef.current : rightRef.current;
     if (!element) return;
-    commitIndex(side, Math.round(element.scrollTop / ROW_HEIGHT));
+    commitIndex(side, Math.round(element.scrollTop / geometry.rowHeight));
     scrollingRef.current.delete(side);
     if (scrollingRef.current.size > 0) return;
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
@@ -643,11 +673,11 @@ export function TwoColumnPicker({
       if (deferred && !locallyEmittedRef.current.has(`${deferred.left}:${deferred.right}`)) {
         draftRef.current = deferred;
         setDraft(deferred);
-        const tops = partsToScrollTops(columns, deferred);
+        const tops = partsToScrollTops(columns, deferred, geometry);
         pendingScrollRef.current = tops;
         setScrollTops(tops);
-        scrollColumn(leftRef.current, wheelIndex(columns[0], valueIndex(columns[0], deferred.left)));
-        scrollColumn(rightRef.current, wheelIndex(columns[1], valueIndex(columns[1], deferred.right)));
+        scrollColumn(leftRef.current, wheelIndex(columns[0], valueIndex(columns[0], deferred.left), geometry), geometry);
+        scrollColumn(rightRef.current, wheelIndex(columns[1], valueIndex(columns[1], deferred.right), geometry), geometry);
         locallyEmittedRef.current.clear();
         return;
       }
@@ -656,11 +686,11 @@ export function TwoColumnPicker({
       if (!circular && (canonical.left !== draftRef.current.left || canonical.right !== draftRef.current.right)) {
         draftRef.current = canonical;
         setDraft(canonical);
-        const tops = partsToScrollTops(columns, canonical);
+        const tops = partsToScrollTops(columns, canonical, geometry);
         pendingScrollRef.current = tops;
         setScrollTops(tops);
-        scrollColumn(leftRef.current, valueIndex(columns[0], canonical.left));
-        scrollColumn(rightRef.current, valueIndex(columns[1], canonical.right));
+        scrollColumn(leftRef.current, valueIndex(columns[0], canonical.left), geometry);
+        scrollColumn(rightRef.current, valueIndex(columns[1], canonical.right), geometry);
       } else {
         // Recenter identical cycles only after confirmed native scrollend.
         (['left', 'right'] as const).forEach(recenterCircularColumn);
@@ -705,7 +735,7 @@ export function TwoColumnPicker({
 
       const nextTop = pendingScrollRef.current[side];
       setScrollTops((current) => ({ ...current, [side]: nextTop }));
-      commitIndex(side, Math.round(nextTop / ROW_HEIGHT));
+      commitIndex(side, Math.round(nextTop / geometry.rowHeight));
     });
   };
 
@@ -716,21 +746,21 @@ export function TwoColumnPicker({
     if (column.circular && suppressTouchClickRef.current[side] && event.detail > 0) return;
 
     commitIndex(side, index);
-    const nextIndex = column.circular ? wheelIndex(column, index % column.values.length) : index;
-    const nextTop = nextIndex * ROW_HEIGHT;
+    const nextIndex = column.circular ? wheelIndex(column, index % column.values.length, geometry) : index;
+    const nextTop = nextIndex * geometry.rowHeight;
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
       [side]: nextTop,
     };
     setScrollTops((current) => ({ ...current, [side]: nextTop }));
-    scrollColumn(side === 'left' ? leftRef.current : rightRef.current, nextIndex);
+    scrollColumn(side === 'left' ? leftRef.current : rightRef.current, nextIndex, geometry);
   };
 
   const handleClose = () => {
     // Flush both actual native positions, including a scroll not yet painted by RAF.
     (['left', 'right'] as const).forEach(side => {
       const element = side === 'left' ? leftRef.current : rightRef.current;
-      if (element) commitIndex(side, Math.round(element.scrollTop / ROW_HEIGHT));
+      if (element) commitIndex(side, Math.round(element.scrollTop / geometry.rowHeight));
     });
     onClose();
   };
@@ -746,7 +776,9 @@ export function TwoColumnPicker({
       backdrop
       iosHighlight={false}
       onBackdropClick={handleClose}
-      className="ui-time-picker__popover"
+      className={geometryName === 'compact-time'
+        ? 'ui-time-picker__popover ui-time-picker__popover--compact-time'
+        : 'ui-time-picker__popover'}
       style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
       aria-modal="true"
@@ -767,6 +799,7 @@ export function TwoColumnPicker({
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
               columnRef={leftRef}
+              geometry={geometry}
             />
             <span className="ui-time-picker__separator ui-text--title" aria-hidden="true">
               {separator ?? ''}
@@ -783,6 +816,7 @@ export function TwoColumnPicker({
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
               columnRef={rightRef}
+              geometry={geometry}
             />
           </div>
 
@@ -792,6 +826,7 @@ export function TwoColumnPicker({
             columns={columns}
             separator={separator}
             lensMode={resolvedLensMode}
+            geometry={geometry}
           />
         </div>
       </div> : null}

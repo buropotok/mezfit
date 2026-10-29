@@ -62,6 +62,7 @@ export function TimePicker({
       separator=":"
       ariaLabel="Выбор времени"
       lensMode={lensMode}
+      geometry="compact-time"
       onChange={({ left, right }) => onChange(formatLocalTime(left, right))}
       onClose={onClose}
     />

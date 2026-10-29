@@ -4,7 +4,7 @@ import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimePicker, type LocalTime } from './TimePicker';
 
-const ROW_HEIGHT = 48;
+const ROW_HEIGHT = 24;
 const frames = new Map<number, FrameRequestCallback>();
 let nextFrame = 0;
 
@@ -94,23 +94,23 @@ describe('TimePicker native momentum ownership', () => {
     const { hours } = mount();
     flushFrames();
     Object.defineProperty(hours, 'onscrollend', { configurable: true, value: undefined });
-    const native = trackBrowserScroll(hours, 32);
+    const native = trackBrowserScroll(hours, 56);
 
-    act(() => native.move(50));
+    act(() => native.move(82));
     flushFrames();
     act(() => vi.advanceTimersByTime(200));
     flushFrames();
     expect(native.writes).toEqual([]);
 
-    act(() => native.move(51));
+    act(() => native.move(83));
     flushFrames();
     expect(native.writes).toEqual([]);
-    expect(native.position).toBe(51 * ROW_HEIGHT);
+    expect(native.position).toBe(83 * ROW_HEIGHT);
 
     // The browser, not the inactivity timer, owns the final aligned position.
     fireEvent(hours, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(native.writes).toEqual([27 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([59 * ROW_HEIGHT]);
   });
 
   it('recenters on the next touch, not on a legacy WebView scroll inactivity timeout', () => {
@@ -118,29 +118,29 @@ describe('TimePicker native momentum ownership', () => {
     const { hours } = mount();
     flushFrames();
     Object.defineProperty(hours, 'onscrollend', { configurable: true, value: undefined });
-    const native = trackBrowserScroll(hours, 32);
+    const native = trackBrowserScroll(hours, 56);
 
-    act(() => native.move(50));
+    act(() => native.move(82));
     flushFrames();
     act(() => vi.advanceTimersByTime(500));
     flushFrames();
     expect(native.writes).toEqual([]);
 
     touch(hours, 'touchstart', 220);
-    expect(native.writes).toEqual([26 * ROW_HEIGHT]);
-    expect(native.position).toBe(26 * ROW_HEIGHT);
+    expect(native.writes).toEqual([58 * ROW_HEIGHT]);
+    expect(native.position).toBe(58 * ROW_HEIGHT);
     touch(hours, 'touchend', 220);
   });
 
   it('ignores a synthetic button click following a touch flick', () => {
     const { minutes, onChange } = mount();
     flushFrames();
-    const native = trackBrowserScroll(minutes, 60);
+    const native = trackBrowserScroll(minutes, 120);
     touch(minutes, 'touchstart', 220);
     touch(minutes, 'touchmove', 100);
     touch(minutes, 'touchcancel', 100);
 
-    act(() => native.move(72));
+    act(() => native.move(132));
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('08:12');
     const calls = onChange.mock.calls.length;
@@ -148,18 +148,18 @@ describe('TimePicker native momentum ownership', () => {
     flushFrames();
     expect(onChange).toHaveBeenCalledTimes(calls);
     expect(native.writes).toEqual([]);
-    expect(native.position).toBe(72 * ROW_HEIGHT);
+    expect(native.position).toBe(132 * ROW_HEIGHT);
   });
 
   it('still accepts a deliberate tap after recentering a previous touch gesture', () => {
     const { hours, onChange } = mount();
     flushFrames();
-    const native = trackBrowserScroll(hours, 32);
-    act(() => native.move(50));
+    const native = trackBrowserScroll(hours, 56);
+    act(() => native.move(82));
     flushFrames();
 
     touch(hours, 'touchstart', 220);
-    expect(native.position).toBe(26 * ROW_HEIGHT);
+    expect(native.position).toBe(58 * ROW_HEIGHT);
     fireEvent.scroll(hours); // WebView may dispatch this after the scrollTo at touchstart.
     flushFrames();
     touch(hours, 'touchend', 220);
@@ -171,19 +171,19 @@ describe('TimePicker native momentum ownership', () => {
 
   it('cancels the delayed opening scroll sync if native scrolling starts first', () => {
     const { hours, onChange } = mount();
-    const native = trackBrowserScroll(hours, 32);
-    act(() => native.move(35));
+    const native = trackBrowserScroll(hours, 56);
+    act(() => native.move(59));
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('11:00');
     expect(native.writes).toEqual([]);
-    expect(native.position).toBe(35 * ROW_HEIGHT);
+    expect(native.position).toBe(59 * ROW_HEIGHT);
   });
 
   it('does not steer a moving wheel when an earlier parent value arrives late', () => {
     const { minutes, rerender, onChange } = mount();
     flushFrames();
-    const native = trackBrowserScroll(minutes, 60);
-    for (const row of [69, 70, 71]) {
+    const native = trackBrowserScroll(minutes, 120);
+    for (const row of [129, 130, 131]) {
       act(() => native.move(row));
       flushFrames();
     }
@@ -191,7 +191,7 @@ describe('TimePicker native momentum ownership', () => {
     rerender('08:09');
     flushFrames();
     expect(native.writes).toEqual([]);
-    act(() => native.move(72));
+    act(() => native.move(132));
     flushFrames();
     expect(onChange).toHaveBeenLastCalledWith('08:12');
     expect(native.writes).toEqual([]);
@@ -200,8 +200,8 @@ describe('TimePicker native momentum ownership', () => {
   it('defers an unrelated external controlled change until genuine scrollend', () => {
     const { minutes, rerender } = mount();
     flushFrames();
-    const native = trackBrowserScroll(minutes, 60);
-    act(() => native.move(72));
+    const native = trackBrowserScroll(minutes, 120);
+    act(() => native.move(132));
     flushFrames();
     rerender('08:45');
     flushFrames();
@@ -209,6 +209,6 @@ describe('TimePicker native momentum ownership', () => {
 
     fireEvent(minutes, new Event('scrollend', { bubbles: true }));
     flushFrames();
-    expect(native.writes).toEqual([105 * ROW_HEIGHT]);
+    expect(native.writes).toEqual([165 * ROW_HEIGHT]);
   });
 });
