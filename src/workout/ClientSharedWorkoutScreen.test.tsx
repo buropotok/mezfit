@@ -30,7 +30,10 @@ vi.mock('./AdHocSessionScreen', () => ({ AdHocSessionScreen: ({ sessionId, perso
 }) => { state.catalogueRole = personalCatalogueRole; state.sessionRepository = repository;
   return <span>Session {sessionId}</span>; } }));
 vi.mock('../ui', () => ({ Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span> }));
-vi.mock('konsta/react', () => ({ Button: ({ children, onClick, disabled }: {
+vi.mock('konsta/react', () => ({
+  List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ListItem: ({ title, onClick }: { title: string; onClick: () => void }) => <button onClick={onClick}>{title}</button>,
+  Button: ({ children, onClick, disabled }: {
   children: ReactNode; onClick: () => void; disabled?: boolean;
 }) => <button onClick={onClick} disabled={disabled}>{children}</button> }));
 const navigation = vi.fn();
@@ -57,6 +60,13 @@ describe('Client local workout screen', () => {
     expect(state.catalogueRole).toBe('client');
     expect(screen.queryByText('Своя тренировка')).toBeNull();
     expect(state.startQuick).not.toHaveBeenCalled();
+  });
+  it('keeps selection between authorized pre-existing simultaneous Coach sessions', () => {
+    state.sessions = [{ id: 'first', name: 'Первая', status: 'active' }, { id: 'second', name: 'Вторая', status: 'active' }];
+    render(<ClientSharedWorkoutScreen {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Вторая' }));
+    expect(screen.getByText('Session second')).toBeTruthy();
+    expect(screen.queryByText('Своя тренировка')).toBeNull();
   });
   it('starts an own workout and shows the accepted session without REST or program creation', async () => {
     render(<ClientSharedWorkoutScreen {...props} />);
