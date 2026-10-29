@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NumPicker } from '../num-picker/NumPicker';
 import { TimePicker } from './TimePicker';
 
-function wrap(node: React.ReactNode) {
+function wrap(node: ReactNode) {
   const target = document.createElement('button');
   document.body.appendChild(target);
   render(
@@ -64,6 +65,8 @@ describe('TimePicker compact optical geometry', () => {
     expect(hour('09')?.getAttribute('y')).toBe('108');
     // The source glyph compensation stays within the vertically scaled capsule.
     expect(hour('08')?.getAttribute('transform')).toContain('scale(1.55 3.1)');
+    const separator = texts.find(element => element.textContent === ':');
+    expect(separator?.getAttribute('transform')).toContain('scale(1.55 3.1)');
   });
 
   it('keeps noncircular NumPicker in the normal geometry', () => {
