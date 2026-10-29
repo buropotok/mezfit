@@ -60,10 +60,17 @@ export interface WeightRepsPickerValue {
   weightKg: number;
 }
 
+export interface WeightRepsPickerFields {
+  reps: boolean;
+  weightKg: boolean;
+}
+
 export interface WeightRepsPickerProps {
   opened: boolean;
   value: WeightRepsPickerValue;
-  onChange: (value: WeightRepsPickerValue) => void;
+  /** Distinguish empty fields from valid numeric zero; omitted for numeric-only callers. */
+  emptyFields?: WeightRepsPickerFields;
+  onChange: (value: WeightRepsPickerValue, filledFields?: WeightRepsPickerFields) => void;
   onClose: () => void;
   target: HTMLElement | null;
 }
@@ -76,6 +83,7 @@ export function WeightRepsPicker(props: WeightRepsPickerProps) {
 function WeightRepsPickerSession({
   opened,
   value: initialValue,
+  emptyFields,
   onChange: onCommit,
   onClose: onDismiss,
   target,
@@ -86,7 +94,15 @@ function WeightRepsPickerSession({
   const [value, setValue] = useState(initialValue);
   const valueRef = useRef(initialValue);
   const closingRef = useRef(false);
+  const [filled, setFilled] = useState<WeightRepsPickerFields>(() => ({
+    reps: !emptyFields?.reps, weightKg: !emptyFields?.weightKg,
+  }));
   const onChange = (next: WeightRepsPickerValue) => {
+    const previous = valueRef.current;
+    setFilled(current => ({
+      reps: current.reps || next.reps !== previous.reps,
+      weightKg: current.weightKg || next.weightKg !== previous.weightKg,
+    }));
     valueRef.current = next;
     setValue(next);
   };
@@ -122,7 +138,8 @@ function WeightRepsPickerSession({
     valueRef.current = initialValue;
     setValue(initialValue);
     setDrafts({});
-  }, [initialValue.reps, initialValue.weightKg]);
+    setFilled({ reps: !emptyFields?.reps, weightKg: !emptyFields?.weightKg });
+  }, [initialValue.reps, initialValue.weightKg, emptyFields?.reps, emptyFields?.weightKg]);
 
   const measureSheet = useCallback(() => {
     if (!popover) return;
@@ -158,7 +175,8 @@ function WeightRepsPickerSession({
   const openNumberSheet = (field: NumericField) => {
     setDrafts(current => current[field] ? current : {
       ...current,
-      [field]: { digits: String(field === 'reps' ? value.reps : weight.kilograms), hasTyped: false },
+      [field]: { digits: (field === 'reps' ? filled.reps : filled.weightKg)
+        ? String(field === 'reps' ? value.reps : weight.kilograms) : '', hasTyped: false },
     });
     setEditing(field);
   };
@@ -202,22 +220,34 @@ function WeightRepsPickerSession({
     };
   };
 
-  const finishPicker = (confirmed = false) => {
+  const filledFields = (): WeightRepsPickerFields => ({
+    reps: filled.reps || drafts.reps !== undefined,
+    weightKg: filled.weightKg || drafts.kilograms !== undefined,
+  });
+
+  const finishPicker = () => {
     if (!validDigits || closingRef.current) return;
     closingRef.current = true;
     const next = numericValue();
-    if (confirmed || next.reps !== initialValue.reps || next.weightKg !== initialValue.weightKg) onCommit(next);
+    const fields = filledFields();
+    // Dismissal accepts the displayed PLAN/FACT even when its numbers did not change.
+    // Empty numeric wheel placeholders never become recorded zero measurements.
+    if (fields.reps || fields.weightKg) {
+      if (emptyFields) onCommit(next, fields);
+      else onCommit(next);
+    }
     cancelEdit();
     onDismiss();
   };
 
   const saveEdit = () => {
     if (!editing || !validDigits) return;
-    finishPicker(true);
+    finishPicker();
   };
 
   const toggleMode = () => {
     if (!validDigits) return;
+    setFilled(filledFields());
     onChange(numericValue());
     cancelEdit();
     onModeChange(mode === 'numbers' ? 'wheels' : 'numbers');
@@ -227,9 +257,11 @@ function WeightRepsPickerSession({
     const label = field === 'reps' ? 'Изменить повторения' : 'Изменить целые килограммы';
     return (
       <IconButton label={label} aria-pressed={editing === field} onClick={() => openNumberSheet(field)}>
-        <span className="ui-visually-hidden" aria-live="polite">
-          {drafts[field]?.digits ?? String(field === 'reps' ? value.reps : weight.kilograms)}
-        </span>
+        {drafts[field] || (field === 'reps' ? filled.reps : filled.weightKg) ? (
+          <span className="ui-visually-hidden" aria-live="polite">
+            {drafts[field]?.digits ?? String(field === 'reps' ? value.reps : weight.kilograms)}
+          </span>
+        ) : <Icon name="pencil-plus" style={{ width: 50, height: 50 }} />}
       </IconButton>
     );
   };
@@ -262,8 +294,8 @@ function WeightRepsPickerSession({
           second: lensAction('kilograms'),
         } : undefined}
         staticLensValues={mode === 'numbers' ? {
-          first: drafts.reps?.digits ?? String(value.reps),
-          second: drafts.kilograms?.digits ?? String(weight.kilograms),
+          first: drafts.reps?.digits ?? (filled.reps ? String(value.reps) : undefined),
+          second: drafts.kilograms?.digits ?? (filled.weightKg ? String(weight.kilograms) : undefined),
         } : undefined}
         staticLensCursors={mode === 'numbers' ? {
           first: editing === 'reps' ? cursor : undefined,
