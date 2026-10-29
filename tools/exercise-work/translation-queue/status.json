@@ -275,11 +275,11 @@
       }
     },
     "B017": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-translation-20261029070405247-pxk6zk",
+      "claim_id": "claim-20261029070405247-784zn41lor",
+      "started_at": "2026-10-29T07:04:05.247Z",
+      "lease_until": "2026-10-29T09:04:05.247Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
