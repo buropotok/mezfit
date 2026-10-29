@@ -48,7 +48,10 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
     return () => { ++generation.current; };
   }, [repository]);
   useEffect(() => {
-    if (repository && activeId) setRetained({ repository, id: activeId });
+    if (repository && activeId) {
+      setRetained({ repository, id: activeId });
+      setSelectedActiveId(activeId);
+    }
   }, [repository, activeId]);
   useEffect(() => {
     setRows([]); setPlansLoaded(false); setPlansError('');
