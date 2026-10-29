@@ -237,7 +237,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         </div>
       </div>
     </MezfitBottomSheet>, portalHost)}
-    {error ? createPortal(<Toast opened position="bottom" role="alert"><Text variant="body">{error}</Text></Toast>, portalHost) : null}
+    {error ? createPortal(<Toast opened position="center" role="alert"><Text variant="body">{error}</Text></Toast>, portalHost) : null}
     {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton disabled={saving} onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
