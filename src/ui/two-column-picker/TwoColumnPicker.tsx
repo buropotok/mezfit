@@ -456,6 +456,7 @@ export function TwoColumnPicker({
   const scrollingRef = useRef(new Set<TwoColumnPickerSide>());
   const locallyEmittedRef = useRef(new Set<string>());
   const endTimersRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
+  const settleTimersRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const lastScrollTopRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const lastTickIndexRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const directionRef = useRef<Partial<Record<TwoColumnPickerSide, -1 | 0 | 1>>>({});
@@ -516,6 +517,8 @@ export function TwoColumnPicker({
       }
       Object.values(endTimersRef.current).forEach(timer => view.clearTimeout(timer));
       endTimersRef.current = {};
+      Object.values(settleTimersRef.current).forEach(timer => view.clearTimeout(timer));
+      settleTimersRef.current = {};
 
       if (reconcileFrameRef.current !== null) {
         view.cancelAnimationFrame(reconcileFrameRef.current);
@@ -591,6 +594,7 @@ export function TwoColumnPicker({
   useEffect(() => () => {
     const view = target?.ownerDocument.defaultView ?? window;
     Object.values(endTimersRef.current).forEach(timer => view.clearTimeout(timer));
+    Object.values(settleTimersRef.current).forEach(timer => view.clearTimeout(timer));
     if (initialSyncFrameRef.current !== null) view.cancelAnimationFrame(initialSyncFrameRef.current);
     if (leftFrameRef.current !== null) view.cancelAnimationFrame(leftFrameRef.current);
     if (rightFrameRef.current !== null) view.cancelAnimationFrame(rightFrameRef.current);
@@ -651,6 +655,8 @@ export function TwoColumnPicker({
     // programmatic alignment, not a native inertial gesture.
     if (settlingRef.current[side] !== undefined) {
       delete settlingRef.current[side];
+      view.clearTimeout(settleTimersRef.current[side]);
+      delete settleTimersRef.current[side];
       event.currentTarget.scrollTo({ top: event.currentTarget.scrollTop, behavior: 'auto' });
     }
     if (column.circular) {
@@ -686,6 +692,7 @@ export function TwoColumnPicker({
     delete endTimersRef.current[side];
     const element = side === 'left' ? leftRef.current : rightRef.current;
     if (!element) return;
+    if (isTimeWheel && touchStartRef.current[side] !== undefined) return;
     if (isTimeWheel) {
       // Native scrolling is entirely free. Once it genuinely ends, align
       // forwards to the next center line; never rewind to the nearest row.
@@ -694,6 +701,8 @@ export function TwoColumnPicker({
       if (activeTarget !== undefined) {
         if (Math.abs(currentTop - activeTarget) > 0.5) return;
         delete settlingRef.current[side];
+        view.clearTimeout(settleTimersRef.current[side]);
+        delete settleTimersRef.current[side];
         commitIndex(side, Math.round(activeTarget / geometry.rowHeight));
         scrollingRef.current.delete(side);
         locallyEmittedRef.current.clear();
@@ -707,6 +716,19 @@ export function TwoColumnPicker({
       if (Math.abs(targetTop - currentTop) > 0.5) {
         settlingRef.current[side] = targetTop;
         element.scrollTo({ top: targetTop, behavior: 'smooth' });
+        // Some Telegram WebViews omit scrollend for programmatic smooth scroll.
+        // This timer starts only AFTER native momentum ended, never during it.
+        settleTimersRef.current[side] = view.setTimeout(() => {
+          if (!openedRef.current || settlingRef.current[side] !== targetTop) return;
+          if (Math.abs(element.scrollTop - targetTop) > 0.5) {
+            element.scrollTo({ top: targetTop, behavior: 'auto' });
+          }
+          delete settlingRef.current[side];
+          delete settleTimersRef.current[side];
+          commitIndex(side, index);
+          scrollingRef.current.delete(side);
+          locallyEmittedRef.current.clear();
+        }, 400);
       } else {
         scrollingRef.current.delete(side);
         locallyEmittedRef.current.clear();
@@ -818,6 +840,9 @@ export function TwoColumnPicker({
 
     if (isTimeWheel) {
       delete settlingRef.current[side];
+      const view = target?.ownerDocument.defaultView ?? window;
+      view.clearTimeout(settleTimersRef.current[side]);
+      delete settleTimersRef.current[side];
       lastTickIndexRef.current[side] = index;
       lastScrollTopRef.current[side] = index * geometry.rowHeight;
     }
