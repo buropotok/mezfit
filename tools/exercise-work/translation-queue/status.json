@@ -257,15 +257,22 @@
       "result_stats": null
     },
     "B016": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "gpt6-translation-20261029065407057-xqxlc",
       "claim_id": "claim-20261029065407059-rwzx8q9nzy",
       "started_at": "2026-10-29T06:54:07.059Z",
       "lease_until": "2026-10-29T08:54:07.059Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-10-29T07:03:14.445Z",
+      "result_branch": "data/howto-batch-B016-claim-20261029065407059-rwzx8q9nzy",
+      "result_commit": "934cb74d20893a3a1299a9018521f4615f1f6e57",
+      "result_stats": {
+        "files_total": 100,
+        "translations_added": 49,
+        "already_translated": 0,
+        "without_english_instruction": 51,
+        "new_unique_translations": 37,
+        "reused_translations": 12
+      }
     },
     "B017": {
       "status": "new",
