@@ -74,7 +74,7 @@ describe('Start cancellation sequencing', () => {
 describe('independent athlete workout Start confirmation', () => {
   const prompt = 'Начать тренировку в зале с клиентом?';
   async function waitForPrompt() {
-    const dialog = screen.getByRole('alertdialog', { name: prompt });
+    const dialog = await screen.findByRole('alertdialog', { name: prompt });
     await waitFor(() => expect(dialog.classList.contains('invisible')).toBe(false));
     return dialog;
   }
