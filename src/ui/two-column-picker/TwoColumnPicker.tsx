@@ -9,6 +9,8 @@ import {
   type UIEvent,
 } from 'react';
 import { MezfitPopover } from '../konsta-mezfit';
+import { triggerTelegramSelectionHaptic } from '../../telegram';
+import { forwardSettledIndex } from '../time-picker/forwardSettle';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
@@ -32,7 +34,7 @@ const STANDARD_GEOMETRY: WheelGeometry = {
   rowHeight: 48, circularCopies: 3, lensScaleY: 1, glyphScaleY: 1,
 };
 const COMPACT_TIME_GEOMETRY: WheelGeometry = {
-  rowHeight: 24, circularCopies: 5, lensScaleY: 1 / 3, glyphScaleY: 2,
+  rowHeight: 36, circularCopies: 1, lensScaleY: 1 / 2, glyphScaleY: 2,
 };
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
@@ -431,6 +433,7 @@ export function TwoColumnPicker({
   geometry: geometryName = 'standard',
 }: TwoColumnPickerProps) {
   const geometry = geometryName === 'compact-time' ? COMPACT_TIME_GEOMETRY : STANDARD_GEOMETRY;
+  const isTimeWheel = geometryName === 'compact-time';
   valueIndex(columns[0], value.left);
   valueIndex(columns[1], value.right);
   const resolvedLensMode = resolveTwoColumnPickerLensMode(lensMode);
@@ -453,6 +456,10 @@ export function TwoColumnPicker({
   const scrollingRef = useRef(new Set<TwoColumnPickerSide>());
   const locallyEmittedRef = useRef(new Set<string>());
   const endTimersRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
+  const lastScrollTopRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
+  const lastTickIndexRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
+  const directionRef = useRef<Partial<Record<TwoColumnPickerSide, -1 | 0 | 1>>>({});
+  const settlingRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, value, geometry));
 
   const [draft, setDraft] = useState<TwoColumnPickerParts>(value);
@@ -499,6 +506,10 @@ export function TwoColumnPicker({
       touchStartRef.current = {};
       suppressTouchClickRef.current = {};
       deferredExternalRef.current = null;
+      lastScrollTopRef.current = {};
+      lastTickIndexRef.current = {};
+      directionRef.current = {};
+      settlingRef.current = {};
       if (initialSyncFrameRef.current !== null) {
         view.cancelAnimationFrame(initialSyncFrameRef.current);
         initialSyncFrameRef.current = null;
@@ -533,8 +544,9 @@ export function TwoColumnPicker({
       deferredExternalRef.current = null;
       return;
     }
-    if (!justOpened && columns.some(column => column.circular)
-      && (scrollingRef.current.size > 0 || Object.keys(touchStartRef.current).length > 0)) {
+    if (!justOpened && (isTimeWheel || columns.some(column => column.circular))
+      && (scrollingRef.current.size > 0 || Object.keys(touchStartRef.current).length > 0
+        || Object.keys(settlingRef.current).length > 0)) {
       // An external change must not snap a circular wheel while native momentum owns it.
       deferredExternalRef.current = value;
       return;
@@ -557,11 +569,20 @@ export function TwoColumnPicker({
     const nextScrollTops = partsToScrollTops(columns, value, geometry);
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
+    if (isTimeWheel) {
+      lastScrollTopRef.current = nextScrollTops;
+      lastTickIndexRef.current = {
+        left: valueIndex(columns[0], value.left),
+        right: valueIndex(columns[1], value.right),
+      };
+      directionRef.current = {};
+      settlingRef.current = {};
+    }
 
     if (initialSyncFrameRef.current !== null) view.cancelAnimationFrame(initialSyncFrameRef.current);
     initialSyncFrameRef.current = view.requestAnimationFrame(() => {
       initialSyncFrameRef.current = null;
-      if (!openedRef.current || (columns.some(column => column.circular) && scrollingRef.current.size > 0)) return;
+      if (!openedRef.current || ((isTimeWheel || columns.some(column => column.circular)) && scrollingRef.current.size > 0)) return;
       scrollColumn(leftRef.current, wheelIndex(columns[0], valueIndex(columns[0], value.left), geometry), geometry);
       scrollColumn(rightRef.current, wheelIndex(columns[1], valueIndex(columns[1], value.right), geometry), geometry);
     });
@@ -614,7 +635,7 @@ export function TwoColumnPicker({
 
   const handleTouchStart = (side: TwoColumnPickerSide, event: TouchEvent<HTMLDivElement>) => {
     const column = columns[side === 'left' ? 0 : 1];
-    if (!column.circular) return;
+    if (!column.circular && !isTimeWheel) return;
     touchEpochRef.current += 1;
     suppressTouchClickRef.current[side] = false;
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
@@ -626,10 +647,16 @@ export function TwoColumnPicker({
       view.cancelAnimationFrame(reconcileFrameRef.current);
       reconcileFrameRef.current = null;
     }
-    // The new touch interrupts the preceding native scroll even on WebViews
-    // without scrollend. Restore the middle cycle before this gesture moves.
-    scrollingRef.current.delete(side);
-    recenterCircularColumn(side);
+    // The new touch owns the wheel again; cancel only an unfinished
+    // programmatic alignment, not a native inertial gesture.
+    if (settlingRef.current[side] !== undefined) {
+      delete settlingRef.current[side];
+      event.currentTarget.scrollTo({ top: event.currentTarget.scrollTop, behavior: 'auto' });
+    }
+    if (column.circular) {
+      scrollingRef.current.delete(side);
+      recenterCircularColumn(side);
+    }
     const touch = event.touches[0];
     if (touch) touchStartRef.current[side] = touch.clientY;
   };
@@ -659,6 +686,33 @@ export function TwoColumnPicker({
     delete endTimersRef.current[side];
     const element = side === 'left' ? leftRef.current : rightRef.current;
     if (!element) return;
+    if (isTimeWheel) {
+      // Native scrolling is entirely free. Once it genuinely ends, align
+      // forwards to the next center line; never rewind to the nearest row.
+      const currentTop = element.scrollTop;
+      const activeTarget = settlingRef.current[side];
+      if (activeTarget !== undefined) {
+        if (Math.abs(currentTop - activeTarget) > 0.5) return;
+        delete settlingRef.current[side];
+        commitIndex(side, Math.round(activeTarget / geometry.rowHeight));
+        scrollingRef.current.delete(side);
+        locallyEmittedRef.current.clear();
+        return;
+      }
+      const column = columns[side === 'left' ? 0 : 1];
+      const direction = directionRef.current[side] ?? 0;
+      const index = forwardSettledIndex(currentTop, geometry.rowHeight, direction, column.values.length);
+      const targetTop = index * geometry.rowHeight;
+      commitIndex(side, index);
+      if (Math.abs(targetTop - currentTop) > 0.5) {
+        settlingRef.current[side] = targetTop;
+        element.scrollTo({ top: targetTop, behavior: 'smooth' });
+      } else {
+        scrollingRef.current.delete(side);
+        locallyEmittedRef.current.clear();
+      }
+      return;
+    }
     commitIndex(side, Math.round(element.scrollTop / geometry.rowHeight));
     scrollingRef.current.delete(side);
     if (scrollingRef.current.size > 0) return;
@@ -706,8 +760,23 @@ export function TwoColumnPicker({
     const column = columns[side === 'left' ? 0 : 1];
     const top = element.scrollTop;
     const view = element.ownerDocument.defaultView ?? window;
+    if (isTimeWheel) {
+      const previous = lastScrollTopRef.current[side];
+      if (previous !== undefined && Math.abs(top - previous) > 0.5
+        && settlingRef.current[side] === undefined) {
+        directionRef.current[side] = top > previous ? 1 : -1;
+      }
+      lastScrollTopRef.current[side] = top;
+      const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
+      if (lastTickIndexRef.current[side] !== undefined && lastTickIndexRef.current[side] !== index) {
+        // One selection tick per observed crossing; skipped native frames
+        // must not produce a burst of haptic notifications.
+        triggerTelegramSelectionHaptic();
+      }
+      lastTickIndexRef.current[side] = index;
+    }
     scrollingRef.current.add(side);
-    if (initialSyncFrameRef.current !== null && columns.some(column => column.circular)) {
+    if (initialSyncFrameRef.current !== null && (isTimeWheel || columns.some(column => column.circular))) {
       view.cancelAnimationFrame(initialSyncFrameRef.current);
       initialSyncFrameRef.current = null;
     }
@@ -715,11 +784,13 @@ export function TwoColumnPicker({
       view.cancelAnimationFrame(reconcileFrameRef.current);
       reconcileFrameRef.current = null;
     }
-    // For circular TimePicker wheels an inactivity timer cannot establish that
-    // momentum ended. Wait for native scrollend or the user's next touch.
-    if (!column.circular && typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend === 'undefined') {
+    // Only legacy WebViews without scrollend need a quiet-window fallback.
+    // TimePicker uses a longer window so normal momentum gaps are not mistaken
+    // for a stop; no timer writes scrollTop during continuing scroll events.
+    if (!column.circular && settlingRef.current[side] === undefined
+      && typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend === 'undefined') {
       view.clearTimeout(endTimersRef.current[side]);
-      endTimersRef.current[side] = view.setTimeout(() => handleScrollEnd(side), 200);
+      endTimersRef.current[side] = view.setTimeout(() => handleScrollEnd(side), isTimeWheel ? 450 : 200);
     }
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
@@ -743,8 +814,13 @@ export function TwoColumnPicker({
     if (!openedRef.current) return;
     const column = columns[side === 'left' ? 0 : 1];
     // An occasional synthetic click after a touch flick must not cancel inertia.
-    if (column.circular && suppressTouchClickRef.current[side] && event.detail > 0) return;
+    if ((column.circular || isTimeWheel) && suppressTouchClickRef.current[side] && event.detail > 0) return;
 
+    if (isTimeWheel) {
+      delete settlingRef.current[side];
+      lastTickIndexRef.current[side] = index;
+      lastScrollTopRef.current[side] = index * geometry.rowHeight;
+    }
     commitIndex(side, index);
     const nextIndex = column.circular ? wheelIndex(column, index % column.values.length, geometry) : index;
     const nextTop = nextIndex * geometry.rowHeight;
@@ -779,7 +855,7 @@ export function TwoColumnPicker({
       className={geometryName === 'compact-time'
         ? 'ui-time-picker__popover ui-time-picker__popover--compact-time'
         : 'ui-time-picker__popover'}
-      style={{ width: '336px', maxWidth: 'calc(100vw - 24px)' }}
+      style={{ width: isTimeWheel ? '270px' : '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
