@@ -3,6 +3,7 @@ import roleConfig from '../../cloud/roles.json';
 import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
 import plannedRoleConfig from '../../cloud/planned-session-roles.json';
 import clientSessionRoleConfig from '../../cloud/client-session-roles.json';
+import coachedStartRoleConfig from '../../cloud/coached-start-roles.json';
 import cancellationRoleConfig from '../../cloud/calendar-cancellation-roles.json';
 import { relationshipRealmId, stableCloudRelationshipId } from '../../shared/relationship-id';
 
@@ -247,6 +248,12 @@ export function assertRemoteRoles(value: unknown): void {
   const clientExecution = Array.isArray(clientAdd)
     && clientSessionRoleConfig.roles.client.permissions.add.some(table => clientAdd.includes(table));
   if (clientExecution && !cancellation) failUnavailable();
+  const coachRole = value.find((candidate: unknown) => isObject(candidate)
+    && candidate.realmId === 'rlm-public' && candidate.name === 'coach');
+  const coachedStart = isObject(coachRole) && isObject(coachRole.permissions)
+    && isObject(coachRole.permissions.update) && Array.isArray(coachRole.permissions.update.workoutOccurrences)
+    && coachRole.permissions.update.workoutOccurrences.includes('format');
+  if (coachedStart && !clientExecution) failUnavailable();
   for (const name of ['coach', 'client'] as const) {
     const remote = value.find((candidate: unknown) => isObject(candidate)
       && candidate.realmId === 'rlm-public' && candidate.name === name);
@@ -257,7 +264,8 @@ export function assertRemoteRoles(value: unknown): void {
     const adHoc = name === 'coach' && sameStrings(permissions.add,
       [...expected.coach.permissions.add, ...adHocRoleConfig.roles.coach.permissions.add]);
     const plannedFields = [...expected.coach.permissions.update.workoutOccurrences,
-      ...plannedRoleConfig.roles.coach.permissions.update.workoutOccurrences];
+      ...plannedRoleConfig.roles.coach.permissions.update.workoutOccurrences,
+      ...(coachedStart ? coachedStartRoleConfig.roles.coach.permissions.update.workoutOccurrences : [])];
     const planned = adHoc && isObject(permissions.update)
       && sameStrings(permissions.update.workoutOccurrences, [...plannedFields, ...(cancellation ? ['inactive'] : [])]);
     if (cancellation && name === 'coach' && !planned) failUnavailable();

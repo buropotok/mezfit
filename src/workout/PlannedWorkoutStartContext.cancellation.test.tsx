@@ -26,9 +26,9 @@ const other: CloudWorkoutOccurrenceRow = { id: 'occupied', realmId: 'other-pair'
   athleteUserId: 'tg:303', coachUserId: 'tg:101', clientUserId: 'tg:303', format: 'coached',
   startsAtUtc: '2026-10-28T10:00:00.000Z', durationMinutes: 60, status: 'scheduled', workoutSessionId: null,
   plan: { name: 'Другая тренировка', comment: null, exercises: [] } };
-function Trigger({ done, failed }: { done: (id: string) => void; failed: (error: unknown) => void }) {
+function Trigger({ done, failed, isCurrent }: { done: (id: string) => void; failed: (error: unknown) => void; isCurrent?: () => boolean }) {
   const start = usePlannedWorkoutStart();
-  return <button onClick={() => { void start?.start(draft).then(done, failed); }}>Начать</button>;
+  return <button onClick={() => { void start?.start(draft, isCurrent).then(done, failed); }}>Начать</button>;
 }
 beforeEach(() => { vi.clearAllMocks(); state.create.mockRejectedValueOnce(new PlannedWorkoutConflict([other])).mockResolvedValue({ id: 'execution' }); state.cancel.mockResolvedValue(undefined); state.flush.mockResolvedValue(undefined); });
 afterEach(cleanup);
@@ -68,5 +68,72 @@ describe('Start cancellation sequencing', () => {
     await act(async () => state.closed?.());
     await waitFor(() => expect(failed).toHaveBeenCalled());
     expect(state.create).toHaveBeenCalledTimes(1); expect(done).not.toHaveBeenCalled();
+  });
+});
+
+describe('independent athlete workout Start confirmation', () => {
+  const prompt = 'Начать тренировку в зале с клиентом?';
+  async function waitForPrompt() {
+    const dialog = await screen.findByRole('alertdialog', { name: prompt });
+    await waitFor(() => expect(dialog.classList.contains('invisible')).toBe(false));
+    return dialog;
+  }
+  function mount(isCurrent?: () => boolean, conflictAfterYes = false) {
+    state.create.mockReset().mockRejectedValueOnce(new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING'));
+    if (conflictAfterYes) state.create.mockRejectedValueOnce(new PlannedWorkoutConflict([other]));
+    state.create.mockResolvedValue({ id: 'execution' });
+    const done = vi.fn(), failed = vi.fn();
+    const view = render(<PlannedWorkoutStartProvider role="coach" onStarted={vi.fn()}>
+      <Trigger done={done} failed={failed} isCurrent={isCurrent} />
+    </PlannedWorkoutStartProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+    return { ...view, done, failed };
+  }
+  it('waits for Yes, then explicitly requests conversion without a duplicate Start on double tap', async () => {
+    const { done, failed } = mount();
+    const dialog = await waitForPrompt();
+    expect(dialog.textContent).toContain('Вы не можете начать самостоятельную тренировку спортсмена.');
+    expect(state.create).toHaveBeenCalledExactlyOnceWith('chosen');
+    const yes = screen.getByRole('button', { name: 'Да' });
+    fireEvent.click(yes); fireEvent.click(yes);
+    await waitFor(() => expect(done).toHaveBeenCalledWith('execution'));
+    expect(state.create).toHaveBeenLastCalledWith('chosen', { asCoached: true });
+    expect(state.create).toHaveBeenCalledTimes(2);
+    expect(failed).not.toHaveBeenCalled();
+  });
+  it('No dismisses without conversion, cancellation or another creation attempt', async () => {
+    const { done, failed } = mount();
+    await waitForPrompt();
+    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
+    await waitFor(() => expect(failed).toHaveBeenCalled());
+    expect(state.create).toHaveBeenCalledTimes(1);
+    expect(state.cancel).not.toHaveBeenCalled(); expect(done).not.toHaveBeenCalled();
+  });
+  it('does not start after navigating away while the prompt is open', async () => {
+    let current = true;
+    const { done, failed } = mount(() => current);
+    await waitForPrompt();
+    current = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+    await waitFor(() => expect(failed).toHaveBeenCalled());
+    expect(state.create).toHaveBeenCalledTimes(1); expect(done).not.toHaveBeenCalled();
+  });
+  it('settles the pending decision on unmount without creating execution', async () => {
+    const { unmount, done, failed } = mount();
+    await waitForPrompt();
+    unmount();
+    await waitFor(() => expect(failed).toHaveBeenCalled());
+    expect(state.create).toHaveBeenCalledTimes(1); expect(done).not.toHaveBeenCalled();
+  });
+  it('retains the existing conflict flow after Yes and retries with explicit conversion', async () => {
+    const { done } = mount(undefined, true);
+    await waitForPrompt();
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+    await screen.findByRole('button', { name: 'Отменить тренировку' });
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить тренировку' }));
+    await act(async () => state.closed?.());
+    await waitFor(() => expect(done).toHaveBeenCalledWith('execution'));
+    expect(state.cancel).toHaveBeenCalledWith('occupied');
+    expect(state.create).toHaveBeenLastCalledWith('chosen', { asCoached: true });
   });
 });

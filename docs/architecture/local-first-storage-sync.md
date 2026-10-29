@@ -132,6 +132,18 @@ The protected operator and real-server validation requirements are documented in
 server-confirmed scheduled Start requirement only for the Coach slice; other
 scheduled lifecycle paths and existing FACT grants remain unchanged.
 
+**Confirmed Coach format conversion (2026-10-29):** Independent scheduled
+workouts may be started as independent only by their athlete. A different
+athlete's authorized Coach must explicitly confirm coached execution. The
+repository changes only the occurrence's format to coached and creates the
+linked execution graph in the same local transaction, retaining all participant,
+realm, PLAN and origin identities. Conflict or materialization failure rolls back
+the conversion. The protected `coached-start` operator adds only Coach
+`workoutOccurrences.format` update permission on the complete Client execution
+profile; Client, source PLAN, FACT, schema and membership grants stay unchanged.
+See `coached-workout-start.md` and AGENTS.md §21 for activation and readback.
+This extends the scheduled Coach exception above only for this conversion.
+
 **Client execution foundation (2026-10-28):** The first Client slice reuses the
 Coach execution graph through an explicit Client repository context: atomic local
 personal/published-occurrence Start, athlete FACT edits and linked completion.

@@ -56,7 +56,7 @@ it('reuses the original occurrence draft and shared editor across reactive updat
   fireEvent.click(screen.getByRole('button', { name: 'Раскрыть день' }));
   fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
   await waitFor(() => expect(started).toHaveBeenCalledWith('execution'));
-  expect(state.start).toHaveBeenCalledWith(changed.draft);
+  expect(state.start).toHaveBeenCalledExactlyOnceWith(changed.draft, expect.any(Function));
   expect(state.show).toHaveBeenCalledWith('execution');
 });
 it('unsubscribes and suppresses stale navigation after closing and reopening during Start', async () => {
@@ -68,8 +68,12 @@ it('unsubscribes and suppresses stale navigation after closing and reopening dur
   act(() => state.next?.([row]));
   fireEvent.click(screen.getByRole('button', { name: 'Раскрыть день' }));
   fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
+  const isCurrent = state.start.mock.calls[0][1];
+  expect(isCurrent()).toBe(true);
   view.rerender(<PlannedWorkoutsSheet opened={false} {...props} />);
+  expect(isCurrent()).toBe(false);
   view.rerender(<PlannedWorkoutsSheet opened {...props} />);
+  expect(isCurrent()).toBe(false);
   await act(async () => resolve('late'));
   expect(started).not.toHaveBeenCalled();
   expect(state.show).not.toHaveBeenCalled();

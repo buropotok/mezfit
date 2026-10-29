@@ -489,7 +489,7 @@ export function TodayPage({
           && !selected.workoutSessionId && (!selected.executionStatus || selected.executionStatus === 'scheduled')
           && !cancelledRows.some(row => row.id === (selected.targetOccurrenceId ?? selected.id.slice(6)))) ? async draft => {
           const token = editorGeneration.current;
-          const id = await plannedStart.start(draft);
+          const id = await plannedStart.start(draft, () => token === editorGeneration.current && activeRepository.current === draftRepository);
           if (token === editorGeneration.current && activeRepository.current === draftRepository) {
             closeEditor(); plannedStart.showSession(id);
           }

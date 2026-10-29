@@ -1,0 +1,13 @@
+{
+  "roles": {
+    "coach": {
+      "permissions": {
+        "update": {
+          "workoutOccurrences": [
+            "format"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -404,3 +404,80 @@ it('prefills result entry from a real pending session projection and saves only 
   expect((await repo.getRow(created.id))?.occurrencePlan).toEqual(row.plan);
   expect(await sourceGraph(db)).toEqual(sourceBefore);
 });
+
+describe('independent client workouts started by a Coach', () => {
+  async function independentFixture() {
+    const value = await fixture(true);
+    await occurrences(value.db).update(value.row.id, { format: 'independent' });
+    const row = await occurrences(value.db).get(value.row.id);
+    if (!row) throw new Error('Missing independent occurrence');
+    return { ...value, row };
+  }
+  async function grantFormat(db: Dexie) {
+    const role = await db.table('roles').get(['rlm-public', 'coach']);
+    await db.table('roles').update(['rlm-public', 'coach'], {
+      'permissions.update.workoutOccurrences': [...role.permissions.update.workoutOccurrences, 'format'],
+    });
+  }
+  it('rejects unconfirmed independent Start without changing the occurrence or creating execution', async () => {
+    const { db, repo, row } = await independentFixture();
+    await expect(repo.createFromOccurrence(row.id)).rejects.toThrow('PLANNED_INDEPENDENT_REQUIRES_COACHING');
+    await expectNoExecution(db, row);
+  });
+  it('requires the installed format grant before conversion', async () => {
+    const { db, repo, row } = await independentFixture();
+    await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('PLANNED_COACHED_START_ACL_REQUIRED');
+    await expectNoExecution(db, row);
+  });
+  it('converts and starts the same occurrence atomically while preserving PLAN and participants', async () => {
+    const { db, repo, row } = await independentFixture();
+    await grantFormat(db);
+    const source = await sourceGraph(db);
+    const created = await repo.createFromOccurrence(row.id, { asCoached: true });
+    expect(await occurrences(db).get(row.id)).toMatchObject({
+      format: 'coached', status: 'in_progress', workoutSessionId: created.id,
+      realmId: row.realmId, athleteUserId: row.athleteUserId, coachUserId: row.coachUserId,
+      clientUserId: row.clientUserId, plan: row.plan,
+    });
+    expect(await repo.getRow(created.id)).toMatchObject({ occurrenceId: row.id,
+      athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, occurrencePlan: row.plan });
+    expect((await repo.get(created.id))?.format).toBe('coached');
+    expect(await sourceGraph(db)).toEqual(source);
+  });
+  it('rolls back conversion when materializing the session fails', async () => {
+    const { db, repo, row } = await independentFixture();
+    await grantFormat(db);
+    db.table('adHocExercises').hook('creating', () => { throw new Error('Storage failure'); });
+    await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('Storage failure');
+    await expectNoExecution(db, row);
+  });
+  it('does not convert when a current coached booking conflicts with Start', async () => {
+    const { db, repo, row } = await independentFixture();
+    await grantFormat(db);
+    const otherPair = await relationshipMembership('101', '303');
+    await db.table('realms').add(otherPair.realm);
+    await db.table('members').bulkAdd(otherPair.members);
+    await occurrences(db).add({ ...row, id: 'other-booking', realmId: otherPair.realm.realmId,
+      owner: otherPair.realm.realmId, format: 'coached', athleteUserId: 'tg:303',
+      clientUserId: 'tg:303', startsAtUtc: new Date(Date.now() - 60_000).toISOString() });
+    await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('На это время назначена тренировка другого клиента');
+    await expectNoExecution(db, row);
+  });
+});
+
+it('keeps the Coach own independent workout independent without asking for conversion', async () => {
+  const { db, repo, row } = await fixture();
+  const created = await repo.createFromOccurrence(row.id);
+  expect((await occurrences(db).get(row.id))?.format).toBe('independent');
+  expect((await repo.get(created.id))?.format).toBe('independent');
+});
+
+it.each(['foreign', 'revoked'] as const)('confirmed conversion never bypasses %s relationship access', async kind => {
+  const { db, database, pair, repo, row } = await fixture(true);
+  await occurrences(db).update(row.id, { format: 'independent' });
+  if (kind === 'revoked') await db.table('members').delete(pair.members[1].id);
+  const actor = kind === 'foreign' ? new AdHocWorkoutRepository(database, 'tg:303') : repo;
+  await expect(actor.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('PLANNED_WORKOUT_NOT_FOUND');
+  expect((await occurrences(db).get(row.id))?.format).toBe('independent');
+  expect(await db.table('adHocSessions').count()).toBe(0);
+});
