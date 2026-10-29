@@ -51,7 +51,9 @@ describe('TimePicker iOS lens mode', () => {
     const selectedMinute = Array.from(lens?.querySelectorAll('text') ?? [])
       .find((node) => node.textContent === '15');
 
-    expect(selectedHour?.getAttribute('transform')).toContain('scale(1.55)');
-    expect(selectedMinute?.getAttribute('transform')).toContain('scale(1.55)');
+    // The 72px SVG source is compressed to a 24px visible lens; compensate
+    // source glyph height so the selected digits stay legible.
+    expect(selectedHour?.getAttribute('transform')).toContain('scale(1.55 3.1)');
+    expect(selectedMinute?.getAttribute('transform')).toContain('scale(1.55 3.1)');
   });
 });
