@@ -282,17 +282,17 @@ export class AdHocWorkoutRepository {
           : occurrence.coachUserId ? occurrence.coachUserId !== this.actorUserId
             : occurrence.realmId !== this.actorUserId || occurrence.athleteUserId !== this.actorUserId))
         throw new Error('PLANNED_WORKOUT_NOT_FOUND');
-      const asCoached = occurrence.format === 'independent' && occurrence.athleteUserId !== this.actorUserId;
-      if (asCoached && (this.clientExecution || occurrence.coachUserId !== this.actorUserId))
-        throw new Error('PLANNED_WORKOUT_NOT_FOUND');
-      if (asCoached && options?.asCoached !== true)
-        throw new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING');
       const existing = await this.getOccurrenceSession(occurrenceId, occurrence.workoutSessionId);
       if (existing) {
         if (existing.status !== 'active') throw new Error('PLANNED_WORKOUT_ALREADY_COMPLETED');
         return { id: existing.id, createdProgram: false };
       }
       if (occurrence.status !== 'scheduled' || occurrence.workoutSessionId) throw new Error('PLANNED_WORKOUT_ALREADY_STARTED');
+      const asCoached = occurrence.format === 'independent' && occurrence.athleteUserId !== this.actorUserId;
+      if (asCoached && (this.clientExecution || occurrence.coachUserId !== this.actorUserId))
+        throw new Error('PLANNED_WORKOUT_NOT_FOUND');
+      if (asCoached && options?.asCoached !== true)
+        throw new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING');
       await this.requireNoActiveSession();
       await this.requirePlannedLifecycleGrant(occurrence.realmId, asCoached);
       const timestamp = now();
