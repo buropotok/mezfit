@@ -1,0 +1,93 @@
+name: Apply Dexie Coach workout format ACL
+
+# Only Coach workoutOccurrences.format; preserve Client, source PLAN, schema and FACT grants.
+# Manual protected operation only; never run on PR/push/issues.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        description: 'Preview or install only reviewed Coach workout format grants'
+        required: true
+        default: preview
+        options: [preview, apply]
+      confirmation:
+        type: string
+        description: 'For apply enter APPLY_COACHED_START_ACL; leave blank for preview'
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dexie-public-catalogue-publishing
+  cancel-in-progress: false
+
+jobs:
+  coached-start-configuration:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: dexie-production
+    env:
+      DEXIE_COACHED_START_OPERATION: ${{ inputs.operation }}
+      DEXIE_COACHED_START_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate protected dispatch and explicit confirmation
+        run: node tools/dexie-roles/coached-start.mjs preflight
+      - name: Prepare existing protected Dexie CLI credentials
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/dexie-schema/manage.mjs prepare
+      - name: Export complete initial schema and roles
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Plan exact Coach format delta
+        id: plan
+        run: node tools/dexie-roles/coached-start.mjs plan
+      - name: Re-export and recheck complete configuration immediately before import
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema current-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles current-roles.json
+          cd "$GITHUB_WORKSPACE"
+          node tools/dexie-roles/coached-start.mjs recheck
+      # The CLI may reach the server and still report failure; mark the attempt first.
+      - name: Record configuration import attempt before mutation
+        id: import_attempt
+        if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
+        run: echo "attempted=true" >> "$GITHUB_OUTPUT"
+      - name: Import only the exact reviewed Coach role
+        if: inputs.operation == 'apply' && steps.import_attempt.outputs.attempted == 'true'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import coached-start-proposal.json
+      # Override implicit success() so a failed import cannot suppress full readback.
+      - name: Export final schema and roles including failed import and no-op apply
+        if: ${{ !cancelled() && (inputs.operation == 'preview' || (inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0'))) }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
+      - name: Verify exact full schema and roles for preview or apply
+        if: ${{ !cancelled() && (inputs.operation == 'preview' || (inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.change_count == '0'))) }}
+        run: node tools/dexie-roles/coached-start.mjs verify
+      - name: Remove temporary credentials and private exports
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
