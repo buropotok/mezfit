@@ -220,9 +220,11 @@ describe('WeightRepsPicker numeric lens editor', () => {
       .getByRole('option', { name: '1234' }).getAttribute('aria-selected')).toBe('true');
     expect(within(screen.getByRole('listbox', { name: 'Килограммы' }))
       .getByRole('option', { name: '450' }).getAttribute('aria-selected')).toBe('true');
+    expect(picker.onChange).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(dialog.previousElementSibling as Element);
-    expect(picker.onChange).not.toHaveBeenCalled();
+    expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 1234, weightKg: 450.75 });
+    expect(picker.onClose).toHaveBeenCalledOnce();
   });
 
   it('keeps a closed picker out of the accessibility and interaction tree', () => {
