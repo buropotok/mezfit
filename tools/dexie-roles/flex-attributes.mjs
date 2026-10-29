@@ -4,7 +4,7 @@ import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { EXPECTED_CLIENT_SESSION_ROLES } from './client-sessions.mjs';
+import { EXPECTED_COACHED_START_ROLES } from './coached-start.mjs';
 
 export const CONFIRMATION = 'APPLY_FLEX_ATTRIBUTES_SCHEMA_AND_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
@@ -23,8 +23,8 @@ export const FLEX_ROLE_OVERLAY = deepFreeze({
   },
 });
 
-export function buildExpectedFlexRoles(baseline = EXPECTED_CLIENT_SESSION_ROLES) {
-  equal(baseline, EXPECTED_CLIENT_SESSION_ROLES, 'UNEXPECTED_FLEX_BASELINE');
+export function buildExpectedFlexRoles(baseline = EXPECTED_COACHED_START_ROLES) {
+  equal(baseline, EXPECTED_COACHED_START_ROLES, 'UNEXPECTED_FLEX_BASELINE');
   const roles = structuredClone(baseline);
   for (const name of ['coach', 'client']) {
     const permissions = FLEX_ROLE_OVERLAY.roles[name].permissions;
@@ -56,7 +56,7 @@ export function planFlexAttributes(overlay, schemaManifest, beforeSchema, before
   const roles = {};
   for (const role of ['coach', 'client']) {
     const current = beforeRoles.roles[role];
-    if (!isDeepStrictEqual(current, EXPECTED_CLIENT_SESSION_ROLES[role])
+    if (!isDeepStrictEqual(current, EXPECTED_COACHED_START_ROLES[role])
       && !isDeepStrictEqual(current, EXPECTED_FLEX_ROLES[role])) {
       fail('UNEXPECTED_FLEX_ROLE_BASELINE');
     }
