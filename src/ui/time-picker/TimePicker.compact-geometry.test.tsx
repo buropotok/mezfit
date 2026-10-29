@@ -65,7 +65,7 @@ describe('TimePicker compact optical geometry', () => {
     expect(hour('09')?.getAttribute('y')).toBe('108');
     // The source glyph compensation stays within the vertically scaled capsule.
     expect(hour('08')?.getAttribute('transform')).toContain('scale(1.55 3.1)');
-    const separator = texts.find(element => element.textContent === ':');
+    const separator = lens?.querySelector('.ui-time-picker__lens-separator');
     expect(separator?.getAttribute('transform')).toContain('scale(1.55 3.1)');
   });
 
