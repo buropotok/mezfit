@@ -120,5 +120,5 @@
 .ui-weight-reps-picker__footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: var(--ui-space-1);
+  padding: var(--ui-space-2) var(--ui-space-3);
 }
