@@ -1,3 +1,4 @@
+import { WorkoutStartDismissed } from '../workout/adhoc-workout-errors';
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { STARTED_PLAN_MESSAGE as lockedPlanMessage } from '../data/cloud/planned-session-policy';
 import { createPortal } from 'react-dom';
@@ -366,7 +367,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       if (!startAlive.current || access.current.planLocked || (access.current.readOnly && !access.current.allowReadOnlyStart)) return;
       await onStart(latest);
     } catch (reason) {
-      if (startAlive.current) setError(reason instanceof Error ? reason.message : 'Не удалось начать тренировку');
+      if (startAlive.current && !(reason instanceof WorkoutStartDismissed))
+        setError(reason instanceof Error ? reason.message : 'Не удалось начать тренировку');
     } finally {
       starting.current = false;
       if (startAlive.current) setBusy(false);
