@@ -460,6 +460,7 @@ export function TwoColumnPicker({
   const lastScrollTopRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const lastTickIndexRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const directionRef = useRef<Partial<Record<TwoColumnPickerSide, -1 | 0 | 1>>>({});
+  const gestureOriginRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const settlingRef = useRef<Partial<Record<TwoColumnPickerSide, number>>>({});
   const pendingScrollRef = useRef<ScrollTops>(partsToScrollTops(columns, value, geometry));
 
@@ -510,6 +511,7 @@ export function TwoColumnPicker({
       lastScrollTopRef.current = {};
       lastTickIndexRef.current = {};
       directionRef.current = {};
+      gestureOriginRef.current = {};
       settlingRef.current = {};
       if (initialSyncFrameRef.current !== null) {
         view.cancelAnimationFrame(initialSyncFrameRef.current);
@@ -579,6 +581,7 @@ export function TwoColumnPicker({
         right: valueIndex(columns[1], value.right),
       };
       directionRef.current = {};
+      gestureOriginRef.current = {};
       settlingRef.current = {};
     }
 
@@ -623,6 +626,7 @@ export function TwoColumnPicker({
 
   const reconcileDeferredTimeValue = () => {
     if (scrollingRef.current.size > 0 || Object.keys(settlingRef.current).length > 0) return;
+    gestureOriginRef.current = {};
     const external = deferredExternalRef.current;
     deferredExternalRef.current = null;
     if (external && !locallyEmittedRef.current.has(`${external.left}:${external.right}`)) {
@@ -688,6 +692,10 @@ export function TwoColumnPicker({
     }
     const touch = event.touches[0];
     if (touch) touchStartRef.current[side] = touch.clientY;
+    if (isTimeWheel) {
+      gestureOriginRef.current[side] = event.currentTarget.scrollTop;
+      directionRef.current[side] = 0;
+    }
   };
 
   const handleTouchMove = (side: TwoColumnPickerSide, event: TouchEvent<HTMLDivElement>) => {
@@ -807,9 +815,15 @@ export function TwoColumnPicker({
     const view = element.ownerDocument.defaultView ?? window;
     if (isTimeWheel) {
       const previous = lastScrollTopRef.current[side];
-      if (previous !== undefined && Math.abs(top - previous) > 0.5
-        && settlingRef.current[side] === undefined) {
-        directionRef.current[side] = top > previous ? 1 : -1;
+      const origin = gestureOriginRef.current[side];
+      if (settlingRef.current[side] === undefined) {
+        // During a touch flick use its net travel, not a tiny reverse bounce
+        // on the last WebView frame, to choose the eventual snap direction.
+        if (origin !== undefined && Math.abs(top - origin) > 1) {
+          directionRef.current[side] = top > origin ? 1 : -1;
+        } else if (origin === undefined && previous !== undefined && Math.abs(top - previous) > 0.5) {
+          directionRef.current[side] = top > previous ? 1 : -1;
+        }
       }
       lastScrollTopRef.current[side] = top;
       const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
@@ -863,6 +877,7 @@ export function TwoColumnPicker({
 
     if (isTimeWheel) {
       delete settlingRef.current[side];
+      delete gestureOriginRef.current[side];
       const view = target?.ownerDocument.defaultView ?? window;
       view.clearTimeout(settleTimersRef.current[side]);
       delete settleTimersRef.current[side];
