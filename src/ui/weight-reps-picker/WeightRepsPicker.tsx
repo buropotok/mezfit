@@ -276,6 +276,7 @@ function WeightRepsPickerSession({
     <>
       <ThreeColumnPicker
         key={mode}
+        geometry={mode === 'wheels' ? 'compact-time' : 'standard'}
         opened={opened}
         value={{ first: value.reps, second: weight.kilograms, third: weight.fraction }}
         onChange={({ first, second, third }) => onChange({
