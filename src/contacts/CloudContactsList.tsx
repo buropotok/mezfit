@@ -1,4 +1,5 @@
-import { Checkbox, List, ListGroup, ListItem } from 'konsta/react';
+import { Checkbox, ListItem } from 'konsta/react';
+import { MezfitContactList, MezfitContactListGroup } from '../ui/konsta-mezfit';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactAvatar } from './CloudContactAvatar';
 
@@ -46,9 +47,8 @@ export function CloudContactsList({ contacts, onSelect, actionLabel = 'Откр�
   actionLabel?: string;
   selectedUserIds?: readonly string[];
 }) {
-  return <List dividers={false}>
-    {groupClientsForContacts([...contacts]).map((group) => <ListGroup key={group.title}>
-      <ListItem title={group.title} groupTitle className="sticky top-0" />
+  return <MezfitContactList>
+    {groupClientsForContacts([...contacts]).map((group) => <MezfitContactListGroup key={group.title} title={group.title}>
       {group.clients.map((contact) => <ListItem key={contact.relationshipId}
         contentClassName="w-full text-left" innerClassName="min-w-0" titleWrapClassName="w-full"
         contacts link chevron={false} media={<CloudContactAvatar contact={contact} />}
@@ -57,6 +57,6 @@ export function CloudContactsList({ contacts, onSelect, actionLabel = 'Откр�
         linkProps={{ type: 'button', 'aria-label': `${actionLabel} ${contact.displayName}`,
           'aria-pressed': selectedUserIds ? selectedUserIds.includes(contact.userId) : undefined,
           onClick: () => onSelect(contact) }} />)}
-    </ListGroup>)}
-  </List>;
+    </MezfitContactListGroup>)}
+  </MezfitContactList>;
 }
