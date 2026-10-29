@@ -34,23 +34,24 @@ afterEach(() => {
 });
 
 describe('TimePicker compact optical geometry', () => {
-  it('uses five circular copies with a single accessible central cycle', () => {
+  it('renders one finite cycle of hours and minutes', () => {
     wrap(<TimePicker opened target={document.body} value="08:15"
       onChange={vi.fn()} onClose={vi.fn()} lensMode="ios" />);
     const dialog = screen.getByRole('dialog', { name: 'Выбор времени' });
     expect(dialog.classList.contains('ui-time-picker__popover--compact-time')).toBe(true);
+    expect(dialog.style.width).toBe('270px');
 
     const hours = screen.getByRole('listbox', { name: 'Часы' });
     const minutes = screen.getByRole('listbox', { name: 'Минуты' });
-    expect(hours.querySelectorAll('button')).toHaveLength(5 * 24);
-    expect(minutes.querySelectorAll('button')).toHaveLength(5 * 60);
+    expect(hours.querySelectorAll('button')).toHaveLength(24);
+    expect(minutes.querySelectorAll('button')).toHaveLength(60);
     expect(within(hours).getAllByRole('option')).toHaveLength(24);
     expect(within(minutes).getAllByRole('option')).toHaveLength(60);
     expect(within(hours).getByRole('option', { name: '08' }).getAttribute('aria-selected')).toBe('true');
     expect(within(minutes).getByRole('option', { name: '15' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('places neighboring SVG digits outside the 72px optical source before 1/3 scaling', () => {
+  it('places neighboring SVG digits outside the 72px optical source before 1/2 scaling', () => {
     wrap(<TimePicker opened target={document.body} value="08:15"
       onChange={vi.fn()} onClose={vi.fn()} lensMode="ios" />);
     const lens = document.querySelector('.ui-time-picker__lens');
