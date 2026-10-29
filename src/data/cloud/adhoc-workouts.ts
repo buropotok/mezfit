@@ -32,7 +32,7 @@ const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'localProgramSync', 'roles'];
 const catalogueTables = ['publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'];
-function hasPlannedLifecycleGrant(value: unknown, role = 'coach'): boolean {
+function hasPlannedLifecycleGrant(value: unknown, role = 'coach', requireFormat = false): boolean {
   if (!value || typeof value !== 'object' || !('realmId' in value) || value.realmId !== 'rlm-public'
     || !('name' in value) || value.name !== role || !('permissions' in value)) return false;
   const permissions = value.permissions;
@@ -41,7 +41,7 @@ function hasPlannedLifecycleGrant(value: unknown, role = 'coach'): boolean {
   if (!Array.isArray(add) || !['adHocSessions', 'adHocExercises', 'adHocSets'].every(table => add.includes(table))
     || !update || typeof update !== 'object' || !('workoutOccurrences' in update)) return false;
   const fields = update.workoutOccurrences;
-  return Array.isArray(fields) && ['status', 'workoutSessionId'].every(field => fields.includes(field));
+  return Array.isArray(fields) && ['status', 'workoutSessionId', ...(requireFormat ? ['format'] : [])].every(field => fields.includes(field));
 }
 /** Local activation guard only; cloud ACL remains the authorization boundary. */
 function hasClientExecutionGrant(value: unknown): boolean {
@@ -260,17 +260,18 @@ export class AdHocWorkoutRepository {
     if (!roles.some(hasClientExecutionGrant)) throw new Error('CLIENT_EXECUTION_ACL_REQUIRED');
   }
 
-  private async requirePlannedLifecycleGrant(realmId: string): Promise<void> {
+  private async requirePlannedLifecycleGrant(realmId: string, requireFormat = false): Promise<void> {
     if (this.clientExecution) return this.requireClientExecutionGrant(realmId);
     if (realmId === this.actorUserId) return;
     const roles = await this.db.table<unknown>('roles').toArray();
-    if (!roles.some(role => hasPlannedLifecycleGrant(role))) throw new Error('PLANNED_START_ACL_REQUIRED');
+    if (!roles.some(role => hasPlannedLifecycleGrant(role, 'coach', requireFormat)))
+      throw new Error(requireFormat ? 'PLANNED_COACHED_START_ACL_REQUIRED' : 'PLANNED_START_ACL_REQUIRED');
   }
 
   /** One local transaction freezes the occurrence PLAN and creates execution.
    * Approved Coach scheduled Start; shared writes require the installed lifecycle ACL.
    */
-  async createFromOccurrence(occurrenceId: string): Promise<{ id: string; createdProgram: false }> {
+  async createFromOccurrence(occurrenceId: string, options?: { asCoached: boolean }): Promise<{ id: string; createdProgram: false }> {
     if (typeof occurrenceId !== 'string' || !occurrenceId) throw new Error('PLANNED_WORKOUT_NOT_FOUND');
     return this.write(['workoutOccurrences', 'localWorkoutSync', 'trainingPlans', 'roles', ...catalogueTables], async () => {
       const workspace = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
@@ -281,6 +282,11 @@ export class AdHocWorkoutRepository {
           : occurrence.coachUserId ? occurrence.coachUserId !== this.actorUserId
             : occurrence.realmId !== this.actorUserId || occurrence.athleteUserId !== this.actorUserId))
         throw new Error('PLANNED_WORKOUT_NOT_FOUND');
+      const asCoached = occurrence.format === 'independent' && occurrence.athleteUserId !== this.actorUserId;
+      if (asCoached && (this.clientExecution || occurrence.coachUserId !== this.actorUserId))
+        throw new Error('PLANNED_WORKOUT_NOT_FOUND');
+      if (asCoached && options?.asCoached !== true)
+        throw new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING');
       const existing = await this.getOccurrenceSession(occurrenceId, occurrence.workoutSessionId);
       if (existing) {
         if (existing.status !== 'active') throw new Error('PLANNED_WORKOUT_ALREADY_COMPLETED');
@@ -288,7 +294,7 @@ export class AdHocWorkoutRepository {
       }
       if (occurrence.status !== 'scheduled' || occurrence.workoutSessionId) throw new Error('PLANNED_WORKOUT_ALREADY_STARTED');
       await this.requireNoActiveSession();
-      await this.requirePlannedLifecycleGrant(occurrence.realmId);
+      await this.requirePlannedLifecycleGrant(occurrence.realmId, asCoached);
       const timestamp = now();
       await this.assertStartAvailable(occurrence.athleteUserId, timestamp, occurrence.id, workspace);
       const source = occurrence.trainingPlanId ? await this.db.trainingPlans.get(occurrence.trainingPlanId) : undefined;
@@ -311,6 +317,7 @@ export class AdHocWorkoutRepository {
         }
       }
       await this.db.workoutOccurrences.update(occurrenceId, { status: 'in_progress', workoutSessionId: id,
+        ...(asCoached ? { format: 'coached' as const } : {}),
         ...(!this.clientExecution ? { publicationStatus: 'published' as const,
           publishedPlan: structuredClone(occurrence.plan) } : {}), updatedAt: timestamp });
       await markWorkoutChanged(this.db, occurrenceId);
