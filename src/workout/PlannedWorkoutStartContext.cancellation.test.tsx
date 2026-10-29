@@ -73,9 +73,15 @@ describe('Start cancellation sequencing', () => {
 
 describe('independent athlete workout Start confirmation', () => {
   const prompt = 'Начать тренировку в зале с клиентом?';
-  function mount(isCurrent?: () => boolean) {
-    state.create.mockReset().mockRejectedValueOnce(new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING'))
-      .mockResolvedValue({ id: 'execution' });
+  async function waitForPrompt() {
+    const dialog = screen.getByRole('alertdialog', { name: prompt });
+    await waitFor(() => expect(dialog.classList.contains('invisible')).toBe(false));
+    return dialog;
+  }
+  function mount(isCurrent?: () => boolean, conflictAfterYes = false) {
+    state.create.mockReset().mockRejectedValueOnce(new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING'));
+    if (conflictAfterYes) state.create.mockRejectedValueOnce(new PlannedWorkoutConflict([other]));
+    state.create.mockResolvedValue({ id: 'execution' });
     const done = vi.fn(), failed = vi.fn();
     const view = render(<PlannedWorkoutStartProvider role="coach" onStarted={vi.fn()}>
       <Trigger done={done} failed={failed} isCurrent={isCurrent} />
@@ -85,7 +91,7 @@ describe('independent athlete workout Start confirmation', () => {
   }
   it('waits for Yes, then explicitly requests conversion without a duplicate Start on double tap', async () => {
     const { done, failed } = mount();
-    const dialog = await screen.findByRole('alertdialog', { name: prompt });
+    const dialog = await waitForPrompt();
     expect(dialog.textContent).toContain('Вы не можете начать самостоятельную тренировку спортсмена.');
     expect(state.create).toHaveBeenCalledExactlyOnceWith('chosen');
     const yes = screen.getByRole('button', { name: 'Да' });
@@ -97,7 +103,7 @@ describe('independent athlete workout Start confirmation', () => {
   });
   it('No dismisses without conversion, cancellation or another creation attempt', async () => {
     const { done, failed } = mount();
-    await screen.findByRole('alertdialog', { name: prompt });
+    await waitForPrompt();
     fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
     await waitFor(() => expect(failed).toHaveBeenCalled());
     expect(state.create).toHaveBeenCalledTimes(1);
@@ -106,7 +112,7 @@ describe('independent athlete workout Start confirmation', () => {
   it('does not start after navigating away while the prompt is open', async () => {
     let current = true;
     const { done, failed } = mount(() => current);
-    await screen.findByRole('alertdialog', { name: prompt });
+    await waitForPrompt();
     current = false;
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(failed).toHaveBeenCalled());
@@ -114,16 +120,14 @@ describe('independent athlete workout Start confirmation', () => {
   });
   it('settles the pending decision on unmount without creating execution', async () => {
     const { unmount, done, failed } = mount();
-    await screen.findByRole('alertdialog', { name: prompt });
+    await waitForPrompt();
     unmount();
     await waitFor(() => expect(failed).toHaveBeenCalled());
     expect(state.create).toHaveBeenCalledTimes(1); expect(done).not.toHaveBeenCalled();
   });
   it('retains the existing conflict flow after Yes and retries with explicit conversion', async () => {
-    const { done } = mount();
-    state.create.mockReset().mockRejectedValueOnce(new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING'))
-      .mockRejectedValueOnce(new PlannedWorkoutConflict([other])).mockResolvedValue({ id: 'execution' });
-    await screen.findByRole('alertdialog', { name: prompt });
+    const { done } = mount(undefined, true);
+    await waitForPrompt();
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await screen.findByRole('button', { name: 'Отменить тренировку' });
     fireEvent.click(screen.getByRole('button', { name: 'Отменить тренировку' }));
