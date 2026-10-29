@@ -31,7 +31,7 @@ describe('Native wheel scrolling', () => {
     expect(declaration('.ui-time-picker__lens', 'height')).toBe('var(--ui-time-picker-lens-height)');
   });
 
-  it('uses free native scrolling only in compact TimePicker during the momentum experiment', () => {
+  it('keeps free native scrolling only in compact TimePicker while other pickers snap', () => {
     expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__column', 'scroll-snap-type'))
       .toBe('none');
     // The shared picker keeps its existing snap rule for non-time wheels.
