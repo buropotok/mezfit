@@ -567,8 +567,8 @@ export function TwoColumnPicker({
     onChangeRef.current(next);
   };
 
-  // Only a real scrollend may move a circular wheel. Some WebViews pause scroll
-  // events during momentum, so their inactivity fallback is bookkeeping only.
+  // A circular wheel may move only on real scrollend or a new touch, which
+  // interrupts native momentum. A WebView scroll-event gap is not a stop.
   const recenterCircularColumn = (side: TwoColumnPickerSide) => {
     const column = columns[side === 'left' ? 0 : 1];
     const element = side === 'left' ? leftRef.current : rightRef.current;
@@ -596,9 +596,10 @@ export function TwoColumnPicker({
       view.cancelAnimationFrame(reconcileFrameRef.current);
       reconcileFrameRef.current = null;
     }
-    // A new touch already interrupts momentum; a legacy WebView can safely
-    // return to the central identical cycle now, never in its timer fallback.
-    if (scrollingRef.current.size === 0) recenterCircularColumn(side);
+    // The new touch interrupts the preceding native scroll even on WebViews
+    // without scrollend. Restore the middle cycle before this gesture moves.
+    scrollingRef.current.delete(side);
+    recenterCircularColumn(side);
     const touch = event.touches[0];
     if (touch) touchStartRef.current[side] = touch.clientY;
   };
@@ -621,7 +622,7 @@ export function TwoColumnPicker({
   };
 
   // Reconcile only after native momentum finishes; never write scrollTop per frame.
-  const handleScrollEnd = (side: TwoColumnPickerSide, nativeEnd = true) => {
+  const handleScrollEnd = (side: TwoColumnPickerSide) => {
     if (!openedRef.current) return;
     const view = target?.ownerDocument.defaultView ?? window;
     view.clearTimeout(endTimersRef.current[side]);
@@ -630,7 +631,7 @@ export function TwoColumnPicker({
     if (!element) return;
     commitIndex(side, Math.round(element.scrollTop / ROW_HEIGHT));
     scrollingRef.current.delete(side);
-    if (scrollingRef.current.size > 0 || !nativeEnd) return;
+    if (scrollingRef.current.size > 0) return;
     if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
     const epoch = touchEpochRef.current;
     reconcileFrameRef.current = view.requestAnimationFrame(() => {
@@ -685,9 +686,11 @@ export function TwoColumnPicker({
       view.cancelAnimationFrame(reconcileFrameRef.current);
       reconcileFrameRef.current = null;
     }
-    if (typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend === 'undefined') {
+    // For circular TimePicker wheels an inactivity timer cannot establish that
+    // momentum ended. Wait for native scrollend or the user's next touch.
+    if (!column.circular && typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend === 'undefined') {
       view.clearTimeout(endTimersRef.current[side]);
-      endTimersRef.current[side] = view.setTimeout(() => handleScrollEnd(side, !column.circular), 200);
+      endTimersRef.current[side] = view.setTimeout(() => handleScrollEnd(side), 200);
     }
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
