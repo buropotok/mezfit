@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie, { type Table } from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { AdHocSessionRow } from './adhoc-workout-types';
-import { CLOUD_DATABASE_STORES_V13 } from './database';
+import { CLOUD_DATABASE_VERSION, CLOUD_DATABASE_STORES_V12, CLOUD_DATABASE_STORES_V13 } from './database';
 import {
   FlexAttributesRepository, flexAttributeId, flexValueId, isValidFlexValue,
   type FlexAttributeRow, type FlexValueRow, type FlexEntityTarget,
@@ -50,6 +50,16 @@ async function addSharedSession(db: TestFlexDatabase) {
 }
 
 describe('FlexAttributesRepository', () => {
+  it('registers v13 tables without altering the existing v12 workout schema', () => {
+    expect(CLOUD_DATABASE_VERSION).toBe(13);
+    expect(CLOUD_DATABASE_STORES_V13.flexAttributes).toBe('id, realmId, [realmId+key]');
+    expect(CLOUD_DATABASE_STORES_V13.flexValues)
+      .toBe('id, realmId, attributeId, [realmId+attributeId], [realmId+entityType+entityId]');
+    for (const [table, declaration] of Object.entries(CLOUD_DATABASE_STORES_V12)) {
+      expect(CLOUD_DATABASE_STORES_V13[table as keyof typeof CLOUD_DATABASE_STORES_V12]).toBe(declaration);
+    }
+  });
+
   it('registers a key and upserts one value with stable IDs without duplicates', async () => {
     const db = create();
     const repo = new FlexAttributesRepository(db, 'tg:1');
