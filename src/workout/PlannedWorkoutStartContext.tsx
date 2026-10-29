@@ -7,7 +7,7 @@ import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurren
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { PlannedWorkoutConflict } from '../data/cloud/planned-workout-conflicts';
 import { PlannedWorkoutConflictSheet } from './PlannedWorkoutConflictSheet';
-import { adHocErrorMessage } from './adhoc-workout-errors';
+import { adHocErrorMessage, WorkoutStartDismissed } from './adhoc-workout-errors';
 
 type CancellationPresentation = (id: string, commit: () => Promise<void>) => Promise<void>;
 export interface ProgramWorkoutStartInput { athleteUserId: string; programId?: string; dayId?: string }
@@ -18,7 +18,7 @@ interface PlannedWorkoutStart {
   dismissConflict: () => void;
   cancel: (id: string) => Promise<void>;
   registerCancellationPresentation: (handler: CancellationPresentation) => () => void;
-  start: (draft: LocalWorkoutOccurrenceDraft) => Promise<string>;
+  start: (draft: LocalWorkoutOccurrenceDraft, isCurrent?: () => boolean) => Promise<string>;
   startQuick: (isCurrent?: () => boolean) => Promise<StartResult>;
   startFromProgram: (input: ProgramWorkoutStartInput, isCurrent?: () => boolean) => Promise<StartResult>;
   showSession: (id: string) => void;
@@ -48,6 +48,12 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
   const onStartedRef = useRef(onStarted);
   onStartedRef.current = onStarted;
   const [blocked, setBlocked] = useState(false);
+  const [coachedPrompt, setCoachedPrompt] = useState(false);
+  const coachedDecision = useRef<((accepted: boolean) => void) | null>(null);
+  const decideCoached = (accepted: boolean) => {
+    const resolve = coachedDecision.current; coachedDecision.current = null;
+    setCoachedPrompt(false); resolve?.(accepted);
+  };
   const [conflict, setConflict] = useState<PlannedWorkoutConflict['occurrences'][number] | null>(null);
   const [conflictOpened, setConflictOpened] = useState(false);
   const [conflictActive, setConflictActive] = useState(false);
@@ -69,8 +75,9 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
   }, [drafts]);
   useEffect(() => {
     ++generation.current; running.current = false; setBlocked(false); setConflictError('');
+    coachedDecision.current?.(false); coachedDecision.current = null; setCoachedPrompt(false);
     pendingDecision.current?.('back'); pendingDecision.current = null; setConflictOpened(false); setConflict(null); setConflictActive(false);
-    return () => { ++generation.current; pendingDecision.current?.('back'); pendingDecision.current = null; };
+    return () => { ++generation.current; coachedDecision.current?.(false); coachedDecision.current = null; pendingDecision.current?.('back'); pendingDecision.current = null; };
   }, [repository, role]);
   const runStart = useCallback(async <T,>(create: () => Promise<T>, prepare?: () => Promise<void>,
     isCurrent: () => boolean = () => true): Promise<T> => {
@@ -103,14 +110,30 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
       throw new Error('Запуск тренировки отменён');
     } finally { if (token === generation.current) { running.current = false; setConflictActive(false); setConflict(null); } }
   }, [repository, role, cancel]);
-  const start = useCallback(async (draft: LocalWorkoutOccurrenceDraft) => {
+  const start = useCallback(async (draft: LocalWorkoutOccurrenceDraft, isCurrent: () => boolean = () => true) => {
     if (!repository || !drafts) throw new Error('Запуск тренировки недоступен');
     const occurrenceId = draft.targetOccurrenceId ?? draft.id.slice(6);
     const token = generation.current;
     try {
-      return await runStart(async () => (await repository.createFromOccurrence(occurrenceId)).id,
-        role === 'coach' ? () => drafts.flushEdits(draft.id) : undefined);
+      let asCoached = false;
+      return await runStart(async () => {
+        try {
+          return (await (asCoached ? repository.createFromOccurrence(occurrenceId, { asCoached: true })
+            : repository.createFromOccurrence(occurrenceId))).id;
+        } catch (reason) {
+          if (role !== 'coach' || asCoached || !(reason instanceof Error)
+            || reason.message !== 'PLANNED_INDEPENDENT_REQUIRES_COACHING') throw reason;
+          if (token !== generation.current || !isCurrent()) throw new WorkoutStartDismissed();
+          const accepted = await new Promise<boolean>(resolve => {
+            coachedDecision.current = resolve; setCoachedPrompt(true);
+          });
+          if (!accepted || token !== generation.current || !isCurrent()) throw new WorkoutStartDismissed();
+          asCoached = true;
+          return (await repository.createFromOccurrence(occurrenceId, { asCoached: true })).id;
+        }
+      }, role === 'coach' ? () => drafts.flushEdits(draft.id) : undefined, isCurrent);
     } catch (reason) {
+      if (reason instanceof WorkoutStartDismissed) throw reason;
       if (token === generation.current && reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS') setBlocked(true);
       throw new Error(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
     }
@@ -127,6 +150,13 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
   const value = useMemo(() => repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
   return <Context.Provider value={value}>
     {children}
+    <MezfitDialog opened={coachedPrompt} role="alertdialog" aria-label="Начать тренировку в зале с клиентом?"
+      title={<Text variant="headline">Вы не можете начать самостоятельную тренировку спортсмена. Начать эту тренировку в зале с клиентом?</Text>}
+      onBackdropClick={() => decideCoached(false)}
+      buttons={<>
+        <MezfitDialogButton onClick={() => decideCoached(false)}><Text variant="body">Нет</Text></MezfitDialogButton>
+        <MezfitDialogButton strong onClick={() => decideCoached(true)}><Text variant="body">Да</Text></MezfitDialogButton>
+      </>} />
     <PlannedWorkoutConflictSheet occurrence={conflict} opened={conflictOpened}
       onDecision={value => { if (value === 'back') abandoned.current = true; decision.current = value; setConflictOpened(false); }}
       onClosed={() => {
