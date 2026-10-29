@@ -96,7 +96,7 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
         <Button rounded tonal onClick={workout.retry}>Повторить</Button></> : null}
       {workout?.loaded && !activeId ? <>
         <Text variant="headline">Начать тренировку</Text>
-        <Button rounded strong disabled={busy || !start} onClick={() => {
+        <Button rounded disabled={busy || !start} onClick={() => {
           if (start) void runStart(() => start.startQuick()).catch(() => undefined);
         }}>Своя тренировка</Button>
         <Text variant="body">Запланированные тренировки</Text>
