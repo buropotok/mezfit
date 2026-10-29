@@ -151,6 +151,24 @@ describe('TimePicker native momentum ownership', () => {
     expect(native.position).toBe(72 * ROW_HEIGHT);
   });
 
+  it('still accepts a deliberate tap after recentering a previous touch gesture', () => {
+    const { hours, onChange } = mount();
+    flushFrames();
+    const native = trackBrowserScroll(hours, 32);
+    act(() => native.move(50));
+    flushFrames();
+
+    touch(hours, 'touchstart', 220);
+    expect(native.position).toBe(26 * ROW_HEIGHT);
+    fireEvent.scroll(hours); // WebView may dispatch this after the scrollTo at touchstart.
+    flushFrames();
+    touch(hours, 'touchend', 220);
+
+    fireEvent.click(within(hours).getByRole('option', { name: '05' }), { detail: 1 });
+    flushFrames();
+    expect(onChange).toHaveBeenLastCalledWith('05:00');
+  });
+
   it('cancels the delayed opening scroll sync if native scrolling starts first', () => {
     const { hours, onChange } = mount();
     const native = trackBrowserScroll(hours, 32);
