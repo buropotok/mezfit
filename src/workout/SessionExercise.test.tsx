@@ -435,3 +435,72 @@ it('shows the complete FACT before RPE in the result area', () => {
   expect(result.closest('.ui-list-item__trailing')?.classList.contains('ui-list-item__trailing--content')).toBe(true);
   expect(result.classList.contains('ui-text--headline')).toBe(true);
 });
+
+describe('planned session with an empty projected FACT object', () => {
+  // AdHocWorkoutRepository.project always supplies factOf(set), including pending sets.
+  const pending: SessionExerciseData = {
+    ...data,
+    sets: [{
+      ...data.sets[1],
+      plan: { weightKg: 23, reps: 5, durationSeconds: null, distanceMeters: null },
+      fact: {
+        metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
+        setLabel: null, setType: null, rpe: null, comment: null, bands: [],
+      },
+    }],
+  };
+
+  it.each(['dismiss', 'save', 'retype'] as const)(
+    'prefills 23 × 5 without pencils and accepts it as FACT via %s', async action => {
+      const { onSaveSet } = renderExercise({ data: pending });
+      const row = screen.getByRole('button', { name: 'Открыть подход 2' });
+      expect(within(row).getByText('ввести факт')).toBeTruthy();
+      expect(within(row).getByText('План: 23 кг × 5')).toBeTruthy();
+      fireEvent.click(row);
+      fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+      expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('5');
+      expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('23');
+      for (const name of ['Изменить повторения', 'Изменить целые килограммы']) {
+        expect(screen.getByRole('button', { name }).querySelector('.ui-icon')).toBeNull();
+      }
+      if (action === 'dismiss') {
+        const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+        fireEvent.click(picker.previousElementSibling as Element);
+      } else {
+        fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+        if (action === 'retype') {
+          fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
+          fireEvent.click(screen.getByRole('button', { name: 'Цифра 5' }));
+        }
+        fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+      }
+      expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+      expect(onSaveSet).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+      expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(false);
+      fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+      await waitFor(() => expect(onSaveSet).toHaveBeenCalledExactlyOnceWith({
+        workoutSessionId: 100, sessionExerciseId: 200, sessionSetId: 302,
+        fact: { metrics: pending.sets[0].plan,
+          setLabel: null, setType: null, rpe: null, comment: null, bands: [] },
+      }));
+      expect(pending.sets[0].fact?.metrics.weightKg).toBeNull();
+      expect(pending.sets[0].fact?.metrics.reps).toBeNull();
+      expect(pending.sets[0].plan?.weightKg).toBe(23);
+    },
+  );
+
+  it('discards picker input on Cancel and does not record the prefilled PLAN', () => {
+    const { onSaveSet } = renderExercise({ data: pending });
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Цифра 9' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+    expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.queryByRole('dialog', { name: 'Подход 2' })).toBeNull();
+    expect(onSaveSet).not.toHaveBeenCalled();
+  });
+});
