@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton } from 'konsta/react';
 import { loadBrowserGlassSettings } from '../../glassSettings';
@@ -13,12 +13,16 @@ import {
 } from '../three-column-picker/ThreeColumnPicker';
 import {
   FRACTION_VALUES,
+  KILOGRAM_VALUES,
   combineWeightKg,
   formatWeightFraction,
   formatWeightFractionAria,
   parseWeightKg,
 } from '../weight-picker/weightUnits';
 import './weight-reps-picker.css';
+
+type PickerMode = 'numbers' | 'wheels';
+const REPS_VALUES = Array.from({ length: 101 }, (_, index) => index);
 
 type NumericField = 'reps' | 'kilograms';
 type NumericDraft = { digits: string; hasTyped: boolean };
@@ -28,6 +32,12 @@ const FRACTION_COLUMN: ThreeColumnPickerColumn = {
   values: FRACTION_VALUES,
   format: formatWeightFraction,
   formatAria: formatWeightFractionAria,
+};
+
+const WHEEL_COLUMNS: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>> = {
+  first: { ariaLabel: 'Повторения', values: REPS_VALUES, format: String, freeMomentum: true },
+  second: { ariaLabel: 'Килограммы', values: KILOGRAM_VALUES, format: String, freeMomentum: true, relativeFlickStep: 10 },
+  third: FRACTION_COLUMN,
 };
 
 const DIGIT_KEYS: readonly { digit: string; icon: UiIconName }[] = [
@@ -58,13 +68,28 @@ export interface WeightRepsPickerProps {
   target: HTMLElement | null;
 }
 
-export function WeightRepsPicker({
+export function WeightRepsPicker(props: WeightRepsPickerProps) {
+  const [mode, setMode] = useState<PickerMode>('numbers');
+  return props.opened ? <WeightRepsPickerSession {...props} mode={mode} onModeChange={setMode} /> : null;
+}
+
+function WeightRepsPickerSession({
   opened,
-  value,
-  onChange,
-  onClose,
+  value: initialValue,
+  onChange: onCommit,
+  onClose: onDismiss,
   target,
-}: WeightRepsPickerProps) {
+  mode,
+  onModeChange,
+}: WeightRepsPickerProps & { mode: PickerMode; onModeChange: (mode: PickerMode) => void }) {
+  // Explicit picker-session draft: publish once on close, never on scroll.
+  const [value, setValue] = useState(initialValue);
+  const valueRef = useRef(initialValue);
+  const closingRef = useRef(false);
+  const onChange = (next: WeightRepsPickerValue) => {
+    valueRef.current = next;
+    setValue(next);
+  };
   const [editing, setEditing] = useState<NumericField | null>(null);
   const [drafts, setDrafts] = useState<Partial<Record<NumericField, NumericDraft>>>({});
   const [popover, setPopover] = useState<HTMLElement | null>(null);
@@ -76,19 +101,28 @@ export function WeightRepsPicker({
   const weight = parseWeightKg(value.weightKg, 'WeightRepsPicker');
   const glass = loadBrowserGlassSettings();
 
-  const columns = useMemo<Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>>(() => ({
-    // These parts have static lens controls: no wheel is rendered for them.
-    first: { ariaLabel: 'Повторения', values: [value.reps], format: String },
-    second: { ariaLabel: 'Килограммы', values: [weight.kilograms], format: String },
-    third: FRACTION_COLUMN,
-  }), [value.reps, weight.kilograms]);
+  const columns = useMemo<Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>>(() => {
+    if (mode === 'numbers') return {
+      first: { ariaLabel: 'Повторения', values: [value.reps], format: String },
+      second: { ariaLabel: 'Килограммы', values: [weight.kilograms], format: String },
+      third: FRACTION_COLUMN,
+    };
+    if (value.reps <= 100 && weight.kilograms <= 399) return WHEEL_COLUMNS;
+    // Preserve a larger numeric value when switching into the historical wheel ranges.
+    return {
+      ...WHEEL_COLUMNS,
+      first: value.reps > 100 ? { ...WHEEL_COLUMNS.first, values: [...REPS_VALUES, value.reps] } : WHEEL_COLUMNS.first,
+      second: weight.kilograms > 399
+        ? { ...WHEEL_COLUMNS.second, values: [...KILOGRAM_VALUES, weight.kilograms], relativeFlickStep: undefined }
+        : WHEEL_COLUMNS.second,
+    };
+  }, [mode, value.reps, weight.kilograms]);
 
   useEffect(() => {
-    if (!opened) {
-      setEditing(null);
-      setDrafts({});
-    }
-  }, [opened]);
+    valueRef.current = initialValue;
+    setValue(initialValue);
+    setDrafts({});
+  }, [initialValue.reps, initialValue.weightKg]);
 
   const measureSheet = useCallback(() => {
     if (!popover) return;
@@ -159,17 +193,34 @@ export function WeightRepsPicker({
   const validDigits = (!drafts.reps || validNumber(drafts.reps.digits))
     && (!drafts.kilograms || (validNumber(drafts.kilograms.digits)
       && Number.isSafeInteger(Number(drafts.kilograms.digits) * 4 + weight.fraction / 25)));
+  const numericValue = (): WeightRepsPickerValue => {
+    const current = valueRef.current;
+    const fraction = parseWeightKg(current.weightKg, 'WeightRepsPicker').fraction;
+    return {
+      reps: drafts.reps ? Number(drafts.reps.digits) : current.reps,
+      weightKg: drafts.kilograms ? combineWeightKg(Number(drafts.kilograms.digits), fraction) : current.weightKg,
+    };
+  };
+
+  const finishPicker = () => {
+    if (!validDigits || closingRef.current) return;
+    closingRef.current = true;
+    const next = numericValue();
+    if (next.reps !== initialValue.reps || next.weightKg !== initialValue.weightKg) onCommit(next);
+    cancelEdit();
+    onDismiss();
+  };
+
   const saveEdit = () => {
     if (!editing || !validDigits) return;
-    const next = {
-      reps: drafts.reps ? Number(drafts.reps.digits) : value.reps,
-      weightKg: drafts.kilograms
-        ? combineWeightKg(Number(drafts.kilograms.digits), weight.fraction)
-        : value.weightKg,
-    };
-    if (next.reps !== value.reps || next.weightKg !== value.weightKg) onChange(next);
+    finishPicker();
+  };
+
+  const toggleMode = () => {
+    if (!validDigits) return;
+    onChange(numericValue());
     cancelEdit();
-    onClose();
+    onModeChange(mode === 'numbers' ? 'wheels' : 'numbers');
   };
 
   const lensAction = (field: NumericField) => {
@@ -194,31 +245,40 @@ export function WeightRepsPicker({
   return (
     <>
       <ThreeColumnPicker
+        key={mode}
         opened={opened}
         value={{ first: value.reps, second: weight.kilograms, third: weight.fraction }}
-        onChange={({ third }) => onChange({
-          reps: value.reps,
-          weightKg: combineWeightKg(weight.kilograms, third),
+        onChange={({ first, second, third }) => onChange({
+          reps: first,
+          weightKg: combineWeightKg(second, third),
         })}
-        onClose={onClose}
+        onClose={finishPicker}
         target={target}
         columns={columns}
         popoverRef={setPopover}
         onPositioned={editing === null ? undefined : measureSheet}
         lensXs={LENS_XS}
         separators={LENS_SEPARATORS}
-        staticLens={{
+        staticLens={mode === 'numbers' ? {
           first: lensAction('reps'),
           second: lensAction('kilograms'),
-        }}
-        staticLensValues={{
+        } : undefined}
+        staticLensValues={mode === 'numbers' ? {
           first: drafts.reps?.digits,
           second: drafts.kilograms?.digits,
-        }}
-        staticLensCursors={{
+        } : undefined}
+        staticLensCursors={mode === 'numbers' ? {
           first: editing === 'reps' ? cursor : undefined,
           second: editing === 'kilograms' ? cursor : undefined,
-        }}
+        } : undefined}
+        footer={(
+          <div className="ui-weight-reps-picker__footer">
+            <KonstaButton small rounded inline disabled={!validDigits}
+              aria-label="Режим" aria-pressed={mode === 'wheels'} onClick={toggleMode}>
+              <Text variant="caption">Режим</Text>
+            </KonstaButton>
+          </div>
+        )}
         ariaLabel="Повторения и вес"
         popoverClassName="ui-weight-reps-picker__popover"
         pickerClassName="ui-weight-reps-picker"

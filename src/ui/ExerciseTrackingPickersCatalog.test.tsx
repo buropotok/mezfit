@@ -106,6 +106,8 @@ describe('UI Kit exercise tracking picker catalog', () => {
     fireEvent.click(backdrop as Element);
     const weightReps = openPicker('Выбрать повторения и вес', 'Повторения и вес');
     select(weightReps, 'Доли килограмма', '0,25');
+    expect(screen.getByText('Повторения: 8 · Вес: 77.75 кг')).toBeTruthy();
+    fireEvent.click(weightReps.previousElementSibling as Element);
     expect(screen.getByText('Повторения: 8 · Вес: 77.25 кг')).toBeTruthy();
   });
 });

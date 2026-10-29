@@ -83,6 +83,11 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+function closePicker() {
+  const dialog = screen.getByRole('dialog', { name: 'Повторения и вес' });
+  fireEvent.click(dialog.previousElementSibling as Element);
+}
+
 describe('three-column static lens slots preserve the native fraction wheel', () => {
   it('removes repetition and integer weight listboxes, leaving one native wheel', () => {
     mountControlled();
@@ -99,48 +104,58 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     const wheel = observeNativeFractions(2);
     act(() => wheel.moveTo(3));
     flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.75 });
+    expect(onChange).not.toHaveBeenCalled();
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
     expect(wheel.appWrites).toEqual([]);
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.75 });
   });
 
-  it('reconciles a rejected fraction after the 200ms fallback in legacy WebViews', () => {
+  it('retains the local fraction draft after the 200ms fallback in legacy WebViews', () => {
     const { onChange } = mountControlled(false);
     const wheel = observeNativeFractions(2);
     Object.defineProperty(wheel.element, 'onscrollend', { configurable: true, value: undefined });
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     act(() => wheel.moveTo(3));
     flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.75 });
+    expect(onChange).not.toHaveBeenCalled();
     expect(wheel.appWrites).toEqual([]);
     act(() => vi.advanceTimersByTime(199));
     expect(wheel.appWrites).toEqual([]);
     act(() => vi.advanceTimersByTime(1));
     flushFrame();
-    expect(wheel.appWrites).toContain(2 * ROW_HEIGHT);
+    expect(wheel.appWrites).toEqual([]);
+    expect(wheel.element.scrollTop).toBe(3 * ROW_HEIGHT);
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.75 });
   });
 
-  it('reconciles a rejected fractional value after scrollend on modern WebViews', () => {
+  it('retains the local fraction draft after scrollend on modern WebViews', () => {
     const { onChange } = mountControlled(false);
     const wheel = observeNativeFractions(2);
     Object.defineProperty(wheel.element, 'onscrollend', { configurable: true, value: null });
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     act(() => wheel.moveTo(3));
     flushFrame();
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.75 });
+    expect(onChange).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(500));
     expect(wheel.appWrites).toEqual([]);
     fireEvent(wheel.element, new Event('scrollend', { bubbles: true }));
     flushFrame();
-    expect(wheel.appWrites).toContain(2 * ROW_HEIGHT);
+    expect(wheel.appWrites).toEqual([]);
+    expect(wheel.element.scrollTop).toBe(3 * ROW_HEIGHT);
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.75 });
   });
 
   it('keeps direct fraction taps independent of the numeric sheet actions', () => {
     const { onChange } = mountControlled();
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
       .getByRole('option', { name: '0,25' }));
-    expect(onChange).toHaveBeenLastCalledWith({ reps: 8, weightKg: 77.25 });
+    expect(onChange).not.toHaveBeenCalled();
     expect(triggerTelegramSelectionHaptic).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+    closePicker();
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.25 });
   });
 });

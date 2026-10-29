@@ -46,7 +46,7 @@ export function ExerciseTrackingPickersCatalog() {
 
       <Surface as="section" className="ui-kit-section">
         <Text variant="title">Вес + повторения</Text>
-        <Text variant="caption" tone="muted">Цифровой ввод неотрицательных повторений и целых килограммов без заданной верхней границы; дробные килограммы с шагом 0,25 кг выбираются колесом 00 / 25 / 5 / 75.</Text>
+        <Text variant="caption" tone="muted">Цифровой ввод неотрицательных повторений и целых килограммов без заданной верхней границы; дробные килограммы с шагом 0,25 кг выбираются колесом 00 / 25 / 5 / 75. Кнопка «Режим» переключает цифровой ввод и три колеса. Значения применяются после закрытия пикера.</Text>
         <Divider />
         <div className="ui-kit-stack">
           <Text>Повторения: {weightRepsValue.reps} · Вес: {weightRepsValue.weightKg} кг</Text>
