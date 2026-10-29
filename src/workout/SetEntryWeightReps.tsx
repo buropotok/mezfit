@@ -261,11 +261,15 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         <MezfitDialogButton strong disabled={saving} onClick={() => { void saveEntry(); }}><Text variant="body">Да</Text></MezfitDialogButton>
       </>} />, portalHost)}
     {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker && !saving}
+      emptyFields={{ reps: draft.metrics.reps === null, weightKg: draft.metrics.weightKg === null }}
       value={{ reps: validPicker ? currentReps : 0, weightKg: validPicker ? currentWeight : 0 }}
       target={target.current} onClose={() => setPickerOpened(false)}
-      onChange={value => {
+      onChange={(value, filled) => {
         metricsConfirmed.current = true;
-        change(old => ({ ...old, metrics: { ...old.metrics, reps: value.reps, weightKg: value.weightKg } }));
+        change(old => ({ ...old, metrics: { ...old.metrics,
+          reps: filled?.reps === false ? null : value.reps,
+          weightKg: filled?.weightKg === false ? null : value.weightKg,
+        } }));
       }} />, portalHost)}
     </>
   );

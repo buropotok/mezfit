@@ -443,3 +443,48 @@ it('opens the existing FACT as numbers and closes both picker layers on Cancel w
   expect(close).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
 });
+
+it('records prefilled PLAN after ordinary picker dismissal without edits or numeric Save', async () => {
+  const save = vi.fn(async () => undefined);
+  render(<KonstaProvider theme="ios" dark>
+    <SetEntry mode="workout" isOpen data={baseData} onClose={vi.fn()} onSave={save} />
+  </KonstaProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+  const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+  fireEvent.click(picker.previousElementSibling as Element);
+  expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+  await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ metrics: baseData.plan })));
+});
+
+it('keeps an untouched empty FACT empty after opening and closing the picker', () => {
+  const close = vi.fn(), save = vi.fn();
+  render(<KonstaProvider theme="ios" dark>
+    <SetEntry mode="workout" isOpen data={{ ...baseData, plan: null }} onClose={close} onSave={save} />
+  </KonstaProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+  expect(screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('.ui-icon')).not.toBeNull();
+  expect(screen.getByRole('button', { name: 'Изменить целые килограммы' }).querySelector('.ui-icon')).not.toBeNull();
+  const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+  fireEvent.click(picker.previousElementSibling as Element);
+  expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Не заполнено');
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+  expect(close).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+});
+
+it('saves a partial PLAN without replacing its missing weight by zero', async () => {
+  const save = vi.fn(async () => undefined);
+  const plan = { weightKg: null, reps: 10, durationSeconds: null, distanceMeters: null };
+  render(<KonstaProvider theme="ios" dark>
+    <SetEntry mode="workout" isOpen data={{ ...baseData, plan }} onClose={vi.fn()} onSave={save} />
+  </KonstaProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+  expect(screen.getByRole('button', { name: 'Изменить целые килограммы' }).querySelector('.ui-icon')).not.toBeNull();
+  const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+  fireEvent.click(picker.previousElementSibling as Element);
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+  await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ metrics: plan })));
+});
