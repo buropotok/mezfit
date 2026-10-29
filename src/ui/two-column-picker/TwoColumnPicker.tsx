@@ -11,6 +11,7 @@ import {
 import { MezfitPopover } from '../konsta-mezfit';
 import { triggerTelegramPickerSelectionTick } from '../../telegram';
 import { forwardSettledIndex } from '../time-picker/forwardSettle';
+import { COMPACT_TIME_GEOMETRY, STANDARD_GEOMETRY, type WheelGeometry } from '../time-picker/wheelGeometry';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
@@ -23,19 +24,6 @@ import '../time-picker/time-picker.css';
 const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
 
-// The compact wheel draws its 72px SVG source inside a real 36px capsule.
-interface WheelGeometry {
-  rowHeight: number;
-  circularCopies: number;
-  lensScaleY: number;
-  glyphScaleY: number;
-}
-const STANDARD_GEOMETRY: WheelGeometry = {
-  rowHeight: 48, circularCopies: 3, lensScaleY: 1, glyphScaleY: 1,
-};
-const COMPACT_TIME_GEOMETRY: WheelGeometry = {
-  rowHeight: 36, circularCopies: 1, lensScaleY: 1 / 2, glyphScaleY: 2,
-};
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 // The wheel reserves 2.5rem for its center separator; column centers
