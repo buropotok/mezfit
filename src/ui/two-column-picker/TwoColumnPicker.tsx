@@ -500,7 +500,10 @@ export function TwoColumnPicker({
     wasOpenedRef.current = true;
     const currentDraft = draftRef.current;
     const valueChanged = currentDraft.left !== value.left || currentDraft.right !== value.right;
-    if (!justOpened && (!valueChanged || locallyEmittedRef.current.has(`${value.left}:${value.right}`))) return;
+    if (!justOpened && (!valueChanged || locallyEmittedRef.current.has(`${value.left}:${value.right}`))) {
+      deferredExternalRef.current = null;
+      return;
+    }
     if (!justOpened && columns.some(column => column.circular)
       && (scrollingRef.current.size > 0 || Object.keys(touchStartRef.current).length > 0)) {
       // An external change must not snap a circular wheel while native momentum owns it.
@@ -669,6 +672,7 @@ export function TwoColumnPicker({
     if (!openedRef.current) return;
 
     const element = event.currentTarget;
+    const column = columns[side === 'left' ? 0 : 1];
     const top = element.scrollTop;
     const view = element.ownerDocument.defaultView ?? window;
     scrollingRef.current.add(side);
@@ -683,7 +687,7 @@ export function TwoColumnPicker({
     }
     if (typeof (element as HTMLDivElement & { onscrollend?: unknown }).onscrollend === 'undefined') {
       view.clearTimeout(endTimersRef.current[side]);
-      endTimersRef.current[side] = view.setTimeout(() => handleScrollEnd(side, false), 200);
+      endTimersRef.current[side] = view.setTimeout(() => handleScrollEnd(side, !column.circular), 200);
     }
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
