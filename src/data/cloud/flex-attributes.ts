@@ -92,8 +92,10 @@ function ownerFor(target: FlexEntityTarget, actorUserId: string): string {
  * tables directly; the supported entity types are intentionally explicit.
  * flexValues must never be interpreted as permissions or PLAN/FACT authority.
  */
+type FlexDatabase = Pick<MezfitCloudDatabase, 'flexAttributes' | 'flexValues' | 'adHocSessions' | 'transaction'>;
+
 export class FlexAttributesRepository {
-  constructor(private readonly db: MezfitCloudDatabase, private readonly actorUserId: string) {
+  constructor(private readonly db: FlexDatabase, private readonly actorUserId: string) {
     if (!userIdPattern.test(actorUserId)) throw new Error('INVALID_FLEX_ACTOR');
   }
 
