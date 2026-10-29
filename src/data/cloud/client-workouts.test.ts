@@ -103,9 +103,10 @@ describe('Client local-first execution foundation', () => {
     // Coach lifecycle guard already requires its installed role; seed the complete local slice.
     await db.table('roles').add({ realmId: 'rlm-public', name: 'coach', permissions: {
       add: ['adHocSessions', 'adHocExercises', 'adHocSets'],
-      update: { workoutOccurrences: ['status', 'workoutSessionId'] },
+      update: { workoutOccurrences: ['status', 'workoutSessionId', 'format'] },
     } });
-    const started = await coach.createFromOccurrence(row.id);
+    // Coach-led execution of this independent occurrence requires confirmed conversion.
+    const started = await coach.createFromOccurrence(row.id, { asCoached: true });
     const { exerciseId, setId } = await firstSet(repo, started.id);
     await coach.saveSet(started.id, setId, fact);
     expect((await repo.getActive())?.id).toBe(started.id);
