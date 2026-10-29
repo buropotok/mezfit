@@ -1,4 +1,5 @@
 import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
+import type { FlexAttributeRow, FlexValueRow } from './flex-attributes';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
@@ -17,7 +18,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 12;
+export const CLOUD_DATABASE_VERSION = 13;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -202,6 +203,13 @@ export const CLOUD_DATABASE_STORES_V12 = {
   adHocSets: '@id, realmId, sessionId, exerciseId, [exerciseId+position]',
 } as const;
 
+/** Realm-scoped extension attribute definitions and values; never source PLAN authority. */
+export const CLOUD_DATABASE_STORES_V13 = {
+  ...CLOUD_DATABASE_STORES_V12,
+  flexAttributes: 'id, realmId, [realmId+key]',
+  flexValues: 'id, realmId, attributeId, [realmId+attributeId], [realmId+entityType+entityId]',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -222,6 +230,8 @@ export function cloudDatabaseName(telegramUserId: string): string {
 }
 
 export class MezfitCloudDatabase extends Dexie {
+  flexAttributes!: Table<FlexAttributeRow, string>;
+  flexValues!: Table<FlexValueRow, string>;
   adHocSessions!: Table<AdHocSessionRow, string, Omit<AdHocSessionRow, 'id'>>;
   adHocExercises!: Table<AdHocExerciseRow, string, Omit<AdHocExerciseRow, 'id'>>;
   adHocSets!: Table<AdHocSetRow, string, Omit<AdHocSetRow, 'id'>>;
@@ -261,7 +271,8 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(9).stores({ ...CLOUD_DATABASE_STORES_V9, localProgramSync: 'id' });
     this.version(10).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
     this.version(11).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id', localWorkoutSync: 'id' });
-    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.version(12).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V13, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
