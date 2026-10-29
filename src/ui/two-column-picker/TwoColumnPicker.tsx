@@ -18,7 +18,6 @@ import {
 } from './lensMode';
 import '../time-picker/time-picker.css';
 
-const WHEEL_HEIGHT = 240;
 const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
 
@@ -131,14 +130,12 @@ function visibleLensItems(
   return Array.from({ length: end - start + 1 }, (_, localIndex) => {
     const index = start + localIndex;
     const value = wheelValue(column, index);
-    const globalCenter = WHEEL_HEIGHT / 2 + index * geometry.rowHeight - scrollTop;
-
     return {
       index,
       value,
       // Reverse the lens's vertical scale so adjacent 24px rows stay
       // 24px apart on screen and cannot intrude into the center lens.
-      y: LENS_HEIGHT / 2 + (globalCenter - WHEEL_HEIGHT / 2) / geometry.lensScaleY,
+      y: LENS_HEIGHT / 2 + (index * geometry.rowHeight - scrollTop) / geometry.lensScaleY,
     };
   });
 }
