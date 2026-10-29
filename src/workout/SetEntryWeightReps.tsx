@@ -4,7 +4,7 @@ import { Button as KonstaButton, List, Toast } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { BadgeChoice, Divider, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import { sameSetEntryDraft, createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
+import { hasSetMeasurements, sameSetEntryDraft, createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
 import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
@@ -118,7 +118,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   // X and navigation Back use the same explicit save/discard decision.
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
-    const newFactConfirmed = !isPlan && !props.data.fact && metricsConfirmed.current;
+    const newFactConfirmed = !isPlan && !hasSetMeasurements(props.data.fact?.metrics) && metricsConfirmed.current;
     if (readOnly || (!newFactConfirmed && sameSetEntryDraft(initialDraft.current, draftRef.current))) {
       setPickerOpened(false); setBandOpen(false); props.onClose();
     }
