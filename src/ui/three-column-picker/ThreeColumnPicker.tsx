@@ -501,6 +501,7 @@ export function ThreeColumnPicker({
     second: null,
     third: null,
   });
+  const positionedPartsRef = useRef(new Set<ThreeColumnPickerPart>());
   const draftRef = useRef<ThreeColumnPickerParts>(valueParts);
   const controlledRef = useRef<ThreeColumnPickerParts>(valueParts);
   const onChangeRef = useRef(onChange);
@@ -563,7 +564,10 @@ export function ThreeColumnPicker({
   const syncColumns = (parts: ThreeColumnPickerParts) => {
     PARTS.forEach((part) => {
       const index = columns[part].values.indexOf(parts[part]);
-      if (index >= 0) scrollColumn(columnRefs.current[part], index, geometry);
+      if (index >= 0 && columnRefs.current[part]) {
+        scrollColumn(columnRefs.current[part], index, geometry);
+        positionedPartsRef.current.add(part);
+      }
     });
   };
 
@@ -599,6 +603,7 @@ export function ThreeColumnPicker({
     if (!opened) {
       cancelScheduledFrames(view);
       wasOpenedRef.current = false;
+      positionedPartsRef.current.clear();
       locallyEmittedRef.current.clear();
       scrollingPartsRef.current.clear();
       touchStartRef.current = {};
@@ -629,6 +634,7 @@ export function ThreeColumnPicker({
     locallyEmittedRef.current.clear();
 
     cancelScheduledFrames(view);
+    positionedPartsRef.current.clear();
     draftRef.current = valueParts;
     setDraft(valueParts);
     const nextScrollTops = partsToScrollTops(columns, valueParts, geometry);
@@ -836,6 +842,7 @@ export function ThreeColumnPicker({
     if (!openedRef.current) return;
 
     const top = event.currentTarget.scrollTop;
+    positionedPartsRef.current.add(part);
     const column = columns[part];
     if (isCompactWheel) {
       const previous = lastScrollTopRef.current[part];
@@ -909,12 +916,15 @@ export function ThreeColumnPicker({
     setScrollTops((current) => ({ ...current, [part]: nextTop }));
     const element = columnRefs.current[part];
     scrollColumn(element, index, geometry);
+    if (element) positionedPartsRef.current.add(part);
     if (element) scheduleScrollEndFallback(part, element);
   };
 
   const flushWheels = () => {
     PARTS.forEach((part) => {
-      if (staticLens?.[part]) return;
+      // A freshly mounted mode may close before its opening RAF positioned
+      // the wheels. Its browser-default scrollTop=0 is not an entered value.
+      if (staticLens?.[part] || !positionedPartsRef.current.has(part)) return;
       const element = columnRefs.current[part];
       if (!element) return;
       commitIndex(part, Math.round(element.scrollTop / geometry.rowHeight));
