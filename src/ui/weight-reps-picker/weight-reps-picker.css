@@ -13,6 +13,18 @@
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/* Share TimePicker's compact optical surface while preserving three columns.
+   Insets scale with the 288px lens source so all numeric centers stay aligned. */
+.ui-weight-reps-picker__popover.ui-time-picker__popover--compact-time .ui-weight-reps-picker__columns {
+  inset-inline: calc(100% / 18);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.ui-weight-reps-picker__popover.ui-time-picker__popover--compact-time .ui-weight-reps-picker__labels {
+  width: min(14.4rem, calc(100vw - 72px));
+  padding-inline: calc(100% / 18);
+}
+
 .ui-weight-reps-picker__input-active {
   animation: ui-weight-reps-input-blink 1s steps(2, start) infinite;
 }
