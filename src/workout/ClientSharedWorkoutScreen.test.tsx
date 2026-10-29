@@ -68,6 +68,14 @@ describe('Client local workout screen', () => {
     expect(screen.getByText('Session second')).toBeTruthy();
     expect(screen.queryByText('Своя тренировка')).toBeNull();
   });
+  it('does not switch the open session when a newer Coach session replicates', () => {
+    state.sessions = [{ id: 'current', name: 'Текущая', status: 'active' }];
+    const view = render(<ClientSharedWorkoutScreen {...props} />);
+    state.sessions = [{ id: 'newer', name: 'Новая', status: 'active' }, ...state.sessions];
+    view.rerender(<ClientSharedWorkoutScreen {...props} />);
+    expect(screen.getByText('Session current')).toBeTruthy();
+    expect(screen.queryByText('Session newer')).toBeNull();
+  });
   it('starts an own workout and shows the accepted session without REST or program creation', async () => {
     render(<ClientSharedWorkoutScreen {...props} />);
     fireEvent.click(screen.getByText('Своя тренировка'));
