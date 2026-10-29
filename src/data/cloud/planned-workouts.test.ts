@@ -454,9 +454,20 @@ describe('independent client workouts started by a Coach', () => {
   it('does not convert when a current coached booking conflicts with Start', async () => {
     const { db, repo, row } = await independentFixture();
     await grantFormat(db);
-    await occurrences(db).add({ ...row, id: 'other-booking', format: 'coached', athleteUserId: 'tg:101',
-      clientUserId: 'tg:101', startsAtUtc: new Date(Date.now() - 60_000).toISOString() });
+    const otherPair = await relationshipMembership('101', '303');
+    await db.table('realms').add(otherPair.realm);
+    await db.table('members').bulkAdd(otherPair.members);
+    await occurrences(db).add({ ...row, id: 'other-booking', realmId: otherPair.realm.realmId,
+      owner: otherPair.realm.realmId, format: 'coached', athleteUserId: 'tg:303',
+      clientUserId: 'tg:303', startsAtUtc: new Date(Date.now() - 60_000).toISOString() });
     await expect(repo.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('На это время назначена тренировка другого клиента');
     await expectNoExecution(db, row);
   });
+});
+
+it('keeps the Coach own independent workout independent without asking for conversion', async () => {
+  const { db, repo, row } = await fixture();
+  const created = await repo.createFromOccurrence(row.id);
+  expect((await occurrences(db).get(row.id))?.format).toBe('independent');
+  expect((await repo.get(created.id))?.format).toBe('independent');
 });
