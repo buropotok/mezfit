@@ -31,15 +31,14 @@ describe('Native wheel scrolling', () => {
     expect(declaration('.ui-time-picker__lens', 'height')).toBe('var(--ui-time-picker-lens-height)');
   });
 
-  it('keeps free native scrolling only in compact TimePicker while other pickers snap', () => {
+  it('keeps every wheel free during native momentum', () => {
     expect(declaration('.ui-time-picker__popover--compact-time .ui-time-picker__column', 'scroll-snap-type'))
       .toBe('none');
-    // The shared picker keeps its existing snap rule for non-time wheels.
-    expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('y mandatory');
+    expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('none');
   });
 
   it('lets inertia pass multiple rows and align on any value', () => {
-    expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('y mandatory');
+    expect(declaration('.ui-time-picker__column', 'scroll-snap-type')).toBe('none');
     expect(declaration('.ui-time-picker__column', 'touch-action')).toBe('pan-y');
     expect(declaration('.ui-time-picker__option', 'scroll-snap-align')).toBe('center');
     expect(declaration('.ui-time-picker__option', 'scroll-snap-stop')).toBe('normal');
