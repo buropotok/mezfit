@@ -78,7 +78,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     expect(onPlanSave).not.toHaveBeenCalled();
   });
 
-  it('saves only the explicit FACT and RPE chosen through the Mezfit slider', async () => {
+  it('saves RPE without silently converting unconfirmed PLAN measurements into FACT', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<KonstaProvider theme="ios" dark>
@@ -89,8 +89,10 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     expect(screen.getByText('RPE: 0')).toBeTruthy();
     expect(screen.getByText('План: 00:02:05 · 2 км 500 м')).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.getByText('00:02:05')).toBeTruthy();
-    expect(screen.getByText('2 км 500 м')).toBeTruthy();
+    expect(within(screen.getByRole('button', { name: 'Изменить продолжительность' }))
+      .getByText('Введите факт')).toBeTruthy();
+    expect(within(screen.getByRole('button', { name: 'Изменить дистанцию' }))
+      .getByText('Введите факт')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Записать значения плана как факт' })).toBeNull();
     fireEvent.input(screen.getByRole<HTMLInputElement>('slider', { name: 'RPE' }),
       { target: { value: '9' } });
@@ -102,7 +104,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     fireEvent.click(save);
     await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
       setLabel: null, rpe: 9,
-      metrics: { durationSeconds: 125, distanceMeters: 2500, reps: null, weightKg: null },
+      metrics: { durationSeconds: null, distanceMeters: null, reps: null, weightKg: null },
     })));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
@@ -163,7 +165,7 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
     ['time_distance', { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: 2500 }],
     ['time_reps', { weightKg: null, reps: 8, durationSeconds: 125, distanceMeters: null }],
     ['time_weight', { weightKg: 70.75, reps: null, durationSeconds: 125, distanceMeters: null }],
-  ] as const)('%s preserves relevant PLAN metrics as FACT when confirming an edited set type', async (trackingType, expectedMetrics) => {
+  ] as const)('%s leaves PLAN measurements unconfirmed when only the set type changes', async (trackingType, expectedMetrics) => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<KonstaProvider theme="ios" dark>
@@ -172,13 +174,16 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
         onClose={onClose} onSave={onSave} />
     </KonstaProvider>);
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
+    expect(screen.getAllByText('Введите факт')).toHaveLength(
+      Object.values(expectedMetrics).filter(value => value !== null).length);
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
-      rpe: null, metrics: expectedMetrics,
+      setType: 'cluster', rpe: null,
+      metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
     }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });

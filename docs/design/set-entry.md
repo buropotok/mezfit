@@ -62,12 +62,12 @@ In `workout` mode:
 - PLAN is the frozen session prescription and is read-only;
 - PREVIOUS is read-only comparison context;
 - FACT is the editable/persisted result;
-- initial editable metrics follow `existing FACT -> matching PLAN fields -> empty metrics`, using only metrics relevant to the tracking type;
+- initial editable metrics come only from existing FACT; if measurements are absent, SetEntry displays `Введите факт`, while PLAN remains read-only context;
 - set type is prefilled from the current set, but RPE defaults to unset (displayed `RPE: 0`) when there is no saved FACT;
 - the `План: ...` and `Пред.: ...` lines are comparison context, not new FACT;
 - the user may edit metrics, set type, RPE, resistance bands and comment locally;
-- **only** the top-center, borderless **Сохранить** action persists FACT, even when the prefilled values were not changed;
-- **X**, app Back and Telegram Back never persist FACT. If there are unsaved changes, show `Изменения не сохранятся!` with `Продолжить` (discard and leave) / `Отмена` (return to editor). Without changes, close silently;
+- tapping a metrics tile opens its existing picker with initial numeric values suggested by PLAN for missing FACT fields; accepting the picker (including tapping outside without changing values) copies the selected values into the local FACT draft;
+- **X** and Back use the existing save/discard confirmation when the FACT draft changed; selecting **Да** persists the draft through `onSave`, selecting **Нет** discards it, and untouched FACT closes without saving;
 - the editor never autosaves FACT and has no PLAN-to-FACT copy/confirmation button.
 
 In `plan` mode:
@@ -105,7 +105,7 @@ type SetEntryProps =
 
 `plan` is always explicit. The workout variant keeps omission as a backward-compatible default so existing direct consumers cannot silently break; production live-workout ownership is nevertheless explicit and `SessionExercise` passes `mode="workout"`. Coach program authoring passes `mode="plan"` plus the planned exercise parent ID.
 
-The parent controls whether the editor is open. Current `workout` and `occurrence-plan` surfaces use the UI Kit `MezfitBottomSheet`. Only FACT has the top-center `Сохранить` action; the independent scheduled occurrence PLAN retains its existing persistence flow. The legacy `plan` mode still uses the shared `Modal`.
+The parent controls whether the editor is open. Current `workout` and `occurrence-plan` surfaces use the UI Kit `MezfitBottomSheet`. The workout saves FACT only after explicit confirmation on close; the independent scheduled occurrence PLAN retains its existing persistence flow. The legacy `plan` mode still uses the shared `Modal`.
 
 ## UI Kit reuse
 
@@ -137,9 +137,9 @@ The component renders only fields relevant to the supplied tracking type.
 
 ### Workout mode
 
-Pressing the centered `Сохранить` action invokes the parent `onSave` with the complete local FACT draft: actual metrics, set label, set type, RPE, comment and selected fitness bands. The parent combines FACT with stable session identity, calls the typed workout API and reconciles canonical session state. The sheet closes only after successful persistence; on failure it remains open for retry. Dismissing through X or Back never writes.
+Confirming **Да** in the save-on-close dialog invokes the parent `onSave` with the complete local FACT draft: actual metrics, set label, set type, RPE, comment and selected fitness bands. The parent combines FACT with stable session identity, calls the typed workout API and reconciles canonical session state. The sheet closes only after successful persistence; on failure it remains open for retry. Pressing X or Back alone never writes: only the subsequent explicit **Да** confirmation invokes persistence.
 
-All tracked metrics are prefilled from the matching scheduled PLAN when there is no existing FACT; this initialization does not persist anything. `RPE: 0` is unset (`rpe: null`), never an invalid numeric zero.
+Opening SetEntry does not prefill missing FACT from PLAN. Only opening the metrics picker presents matching planned numeric values as selectable `value`; dismissing that picker normally accepts its visible numbers into the local draft without immediately writing persistent FACT. Missing PLAN fields remain unfilled until explicitly edited. `RPE: 0` is unset (`rpe: null`), never an invalid numeric zero.
 
 This is the existing workout contract and must not change as a side effect of plan-mode work.
 

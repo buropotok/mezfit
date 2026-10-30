@@ -373,13 +373,13 @@ describe('upcoming planned workout projection', () => {
   });
 });
 
-it('prefills result entry from a real pending session projection and saves only the selected FACT', async () => {
+it('keeps pending session FACT empty until the user selects PLAN values in the picker', async () => {
   const { db, repo, row } = await fixture(true);
   const sourceBefore = await sourceGraph(db);
   const created = await repo.createFromOccurrence(row.id);
   const session = await repo.get(created.id);
   const exercise = session?.exercises[0], set = exercise?.sets[0];
-  if (!session || !exercise || !set) throw new Error('Missing started session set');
+  if (!session || !exercise || !set || !set.plan) throw new Error('Missing started session set or PLAN');
   expect(set.fact).not.toBeNull();
   expect(set.fact?.metrics).toEqual({ weightKg: null, reps: null, durationSeconds: null, distanceMeters: null });
   const before = await sets(db).toArray();
@@ -393,9 +393,10 @@ it('prefills result entry from a real pending session projection and saves only 
     trackingType: exercise.exercise.tracking_type, plan: set.plan,
     previous: set.previous, fact: set.fact, setType: set.setType,
   });
-  expect(entry.metrics).toEqual(set.plan);
-  expect(await sets(db).toArray()).toEqual(before); // opening entry is never a persistent FACT
-  await repo.saveSet(created.id, set.sessionSetId, entry);
+  expect(entry.metrics).toEqual({ weightKg: null, reps: null, durationSeconds: null, distanceMeters: null });
+  expect(await sets(db).toArray()).toEqual(before); // opening SetEntry never copies PLAN into FACT
+  // The picker explicitly accepts the prescribed numbers; only then are they saved as FACT.
+  await repo.saveSet(created.id, set.sessionSetId, { ...entry, metrics: { ...set.plan } });
   const reopened = await repo.get(created.id);
   expect(reopened?.exercises[0].sets[0]).toMatchObject({
     status: 'completed', plan: set.plan, fact: { metrics: set.plan },

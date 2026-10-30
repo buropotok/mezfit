@@ -6,7 +6,7 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton, LiquidPopover,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
-import { sameSetEntryDraft, createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
+import { sameSetEntryDraft, createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
 import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
@@ -54,17 +54,7 @@ function display(key: EditableMetric, value: number | null) {
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
   const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
-  const [draft, setDraft] = useState(() => {
-    const initial = createSetEntryDraft(props.data);
-    if (isPlan || props.data.fact) return initial;
-    // Prefill only the metrics tracked by this exercise; never copy unrelated
-    // historic PLAN fields into an otherwise empty FACT.
-    const metrics = emptySetMetrics();
-    for (const key of FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? []) {
-      metrics[key] = props.data.plan?.[key] ?? null;
-    }
-    return { ...initial, metrics };
-  });
+  const [draft, setDraft] = useState(() => createSetEntryDraft(props.data, isPlan ? 'plan' : 'fact'));
   const saveInFlightRef = useRef(false);
   const mounted = useRef(true);
   useEffect(() => {
@@ -114,6 +104,14 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     draftRef.current = next;
     setDraft(next);
     setError('');
+  };
+  // A picker dismissal accepts its displayed PLAN value without changing the picker primitive.
+  const closeMetricPicker = (key: EditableMetric) => {
+    const planned = props.data.plan?.[key];
+    if (!isPlan && draftRef.current.metrics[key] === null && planned != null && valid(key, planned)) {
+      change(old => ({ ...old, metrics: { ...old.metrics, [key]: planned } }));
+    }
+    setPicker(null);
   };
   const bandItems: LiquidPopoverItem[] = [
     ...([['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
@@ -226,7 +224,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
           {keys.map(key => <div key={key}>
             <SetEntryMetricTile metric={key} blur={glass.blur}
               buttonRef={node => { targets.current[key] = node; }}
-              value={display(key, draft.metrics[key])}
+              value={!isPlan && draft.metrics[key] === null ? 'Введите факт' : display(key, draft.metrics[key])}
               ariaLabel={EDIT_LABELS[key]}
               disabled={inputLocked || !valid(key, suggested(key))}
               onClick={() => {
@@ -310,25 +308,25 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
         value={pickerValue('durationSeconds')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, durationSeconds: value },
         }))} /> : null}
       {key === 'distanceMeters' ? <DistancePicker opened={picker === key}
         value={pickerValue('distanceMeters')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, distanceMeters: value },
         }))} /> : null}
       {key === 'reps' ? <NumPicker opened={picker === key}
         value={pickerValue('reps')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, reps: value },
         }))} /> : null}
       {key === 'weightKg' ? <WeightPicker opened={picker === key}
         value={pickerValue('weightKg')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, weightKg: value },
         }))} /> : null}
