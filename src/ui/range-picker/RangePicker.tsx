@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import {
   TwoColumnPicker,
   type TwoColumnPickerColumn,
@@ -49,15 +50,44 @@ export function applyRangePickerPart(
 /** Uses the unchanged TimePicker wheel/lens geometry and native interaction. */
 export function RangePicker({ opened, value, onChange, onClose, target, lensMode = 'auto' }: RangePickerProps) {
   assertResistanceRange(value);
+  // The underlying wheel may emit several raw positions before applying a
+  // normalized controlled prop during native scrolling. Compare raw events to
+  // raw events, not the newest normalized props, to preserve the active side.
+  const previousRaw = useRef({ left: value.min, right: value.max });
+  const latestRange = useRef(value);
+  const previousSide = useRef<'left' | 'right' | null>(null);
+  const wasOpened = useRef(opened);
+  useEffect(() => {
+    if (opened && wasOpened.current) return;
+    previousRaw.current = { left: value.min, right: value.max };
+    latestRange.current = value;
+    previousSide.current = null;
+    wasOpened.current = opened;
+  }, [opened, value.min, value.max]);
+
   return (
     <TwoColumnPicker
       opened={opened}
       value={{ left: value.min, right: value.max }}
       onChange={({ left, right }) => {
-        const next = left !== value.min
-          ? applyRangePickerPart(value, 'left', left)
-          : applyRangePickerPart(value, 'right', right);
-        if (next.min !== value.min || next.max !== value.max) onChange(next);
+        const rawLeftChanged = left !== previousRaw.current.left;
+        const rawRightChanged = right !== previousRaw.current.right;
+        const normalizedLeftChanged = left !== latestRange.current.min;
+        const normalizedRightChanged = right !== latestRange.current.max;
+        // If both raw coordinates shift because the wheel accepted a
+        // normalized pair, compare against the last emitted valid range.
+        const side = rawLeftChanged !== rawRightChanged
+          ? (rawLeftChanged ? 'left' : 'right')
+          : normalizedLeftChanged !== normalizedRightChanged
+            ? (normalizedLeftChanged ? 'left' : 'right')
+            : previousSide.current;
+        previousRaw.current = { left, right };
+        if (!side) return;
+        previousSide.current = side;
+        const current = latestRange.current;
+        const next = applyRangePickerPart(current, side, side === 'left' ? left : right);
+        latestRange.current = next;
+        if (next.min !== current.min || next.max !== current.max) onChange(next);
       }}
       onClose={onClose}
       target={target}
