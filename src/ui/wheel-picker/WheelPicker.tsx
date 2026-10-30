@@ -921,7 +921,7 @@ export function WheelPicker({
       aria-hidden={opened ? undefined : true}
       inert={!opened ? true : undefined}
     >
-      <div className={`ui-time-picker${pickerClassName ? ` ${pickerClassName}` : ''}`}>
+      {opened ? <div className={`ui-time-picker${pickerClassName ? ` ${pickerClassName}` : ''}`}>
         {header}
         <div className="ui-time-picker__wheel">
           <div className={`ui-time-picker__columns ui-time-picker__columns--${columnCount}${columnsClassName ? ` ${columnsClassName}` : ''}`}>
@@ -976,7 +976,7 @@ export function WheelPicker({
           />
         </div>
         {footer ? <div onClickCapture={flushWheels}>{footer}</div> : null}
-      </div>
+      </div> : null}
     </MezfitPopover>
   );
 }
