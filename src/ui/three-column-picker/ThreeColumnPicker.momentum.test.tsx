@@ -113,7 +113,7 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.75 });
   });
 
-  it('retains the local fraction draft after the 200ms fallback in legacy WebViews', () => {
+  it('retains the local fraction draft after the 450ms fallback in legacy WebViews', () => {
     const { onChange } = mountControlled(false);
     const wheel = observeNativeFractions(2);
     Object.defineProperty(wheel.element, 'onscrollend', { configurable: true, value: undefined });
@@ -122,7 +122,7 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     flushFrame();
     expect(onChange).not.toHaveBeenCalled();
     expect(wheel.appWrites).toEqual([]);
-    act(() => vi.advanceTimersByTime(199));
+    act(() => vi.advanceTimersByTime(449));
     expect(wheel.appWrites).toEqual([]);
     act(() => vi.advanceTimersByTime(1));
     flushFrame();
