@@ -471,7 +471,7 @@ it('opens the existing FACT as numbers and closes both picker layers on Cancel w
   expect(save).not.toHaveBeenCalled();
 });
 
-it('records prefilled PLAN after ordinary picker dismissal without edits or numeric Save', async () => {
+it('accepts planned values as FACT after picker dismissal without changing a digit', async () => {
   const save = vi.fn(async () => undefined);
   render(<KonstaProvider theme="ios" dark>
     <SetEntry mode="workout" isOpen data={baseData} onClose={vi.fn()} onSave={save} />
