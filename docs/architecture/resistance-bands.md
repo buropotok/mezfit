@@ -33,8 +33,8 @@ Flex Attributes transaction through **Сохранить**. Saved values are loa
 local-first from the authenticated personal realm when editing a workout set;
 no cloud pull is required just to open the set. The normal Dexie Cloud Addon
 continues synchronizing settings. Canceling the editor does not write settings.
-The footer color-wheel control's internal accessibility text still refers
-to background color; altering it requires a distinct UI Kit API decision.
+The color-wheel UIkit uses its opt-in accessible label "цвет ленты"
+while keeping the default background-wheel wording for existing callers.
 
 The selected FACT continues storing the stable band code, not a frozen
 color/range snapshot. Immutable historical palette snapshots and relationship
