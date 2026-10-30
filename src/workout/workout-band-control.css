@@ -16,7 +16,3 @@
   max-height: min(45dvh, 320px);
   overflow-y: auto;
 }
-.workout-band-editor .glass-background-lab__wheel {
-  width: min(170px, 55vw);
-  height: min(170px, 55vw);
-}
