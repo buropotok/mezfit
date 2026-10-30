@@ -37,8 +37,8 @@ vi.mock('konsta/react', () => ({
 }));
 vi.mock('../ui', () => ({
   Text: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
-  MezfitDialog: ({ opened, title, children, buttons }: { opened: boolean; title: string; children?: ReactNode; buttons?: ReactNode }) =>
-    opened ? <div role="dialog" aria-label={title}>{children}{buttons}</div> : null,
+  MezfitDialog: ({ opened, title, children, buttons }: { opened: boolean; title: ReactNode; children?: ReactNode; buttons?: ReactNode }) =>
+    opened ? <div role="dialog" aria-labelledby="activity-dialog-title"><span id="activity-dialog-title">{title}</span>{children}{buttons}</div> : null,
   MezfitDialogButton: ({ children, onClick, disabled }: { children?: ReactNode; onClick: () => void; disabled?: boolean }) =>
     <button onClick={onClick} disabled={disabled}>{children}</button>,
   MezfitBottomSheet: ({ opened, label, children }: { opened: boolean; label: string; children?: ReactNode }) =>
@@ -81,6 +81,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('Coach ad-hoc entry points', () => {
+  it.each([
+    ['ADHOC_ATHLETE_ACTIVE_COACH_PROGRAM', 'В текущий момент у атлета незавершённая активность, перейдите в разделе Клиент/Тренировка.'],
+    ['ADHOC_ATHLETE_ACTIVE', 'В текущий момент у атлета незавершённая активность.'],
+  ])('shows the athlete activity dialog on a program Start rejected with %s', async (code, message) => {
+    state.createForAthlete.mockRejectedValueOnce(new Error(code));
+    renderScreen(); await pick('program');
+    fireEvent.click(screen.getByText('Клиент без программы'));
+    expect(await screen.findByRole('dialog', { name: message })).toBeTruthy();
+    expect(screen.queryByText('Сессия from-one')).toBeNull();
+    expect(screen.queryByText('Была создана программа.')).toBeNull();
+  });
   it('starts quick immediately without querying or creating a program', async () => {
     renderScreen(); await pick('quick');
     expect(await screen.findByText('Сессия quick-one')).toBeTruthy();
