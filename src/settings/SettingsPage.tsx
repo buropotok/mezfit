@@ -380,15 +380,8 @@ export function SettingsPage({
             <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
             <Button variant="secondary" onClick={() => setTypographySettingsOpen(true)}>Шрифты</Button>
             <Button variant="secondary" onClick={() => setBackgroundSettingsOpen(true)}>Цвет фона</Button>
+            <Button variant="secondary" onClick={() => setResistanceBandsOpen(true)}>Фитнес-ленты</Button>
           </div>
-        </GlassSurface>
-
-        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
-          <Text variant="title">Тренировки</Text>
-          <Text variant="footnote" tone="muted">Персональные настройки фитнес-лент.</Text>
-          <span className="settings-page__action">
-            <Button onClick={() => setResistanceBandsOpen(true)}>Фитнес-ленты</Button>
-          </span>
         </GlassSurface>
 
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
