@@ -87,10 +87,25 @@ describe('workout fitness bands', () => {
     expect(screen.queryByText('Фиолетовая')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '6–9 кг' }));
     expect(select).toHaveBeenCalledWith('blue');
+    expect(screen.queryByRole('menu')).toBeNull();
     view.rerender(<WorkoutBandControl selected="blue" onSelect={select} />);
     expect(screen.getByText('6–9 кг')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Изменить фитнес-ленту' })
       .querySelector('.set-entry__icon--ripple')?.getAttribute('style')).toContain('color:');
+  });
+
+  it('uses persisted local palette overrides instead of hardcoded display values', async () => {
+    repoState.getValues.mockResolvedValue([
+      { key: 'Band_2_min', valueType: 'number', value: 4 },
+      { key: 'Band_2_max', valueType: 'number', value: 11 },
+      { key: 'Band_2_color', valueType: 'string', value: '#123ABC' },
+    ]);
+    render(<WorkoutBandControl selected="blue" onSelect={vi.fn()} />);
+    await waitFor(() => expect(screen.getByText('4–11 кг')).toBeTruthy());
+    const ripple = screen.getByRole('button', { name: 'Изменить фитнес-ленту' })
+      .querySelector('.set-entry__icon--ripple') as HTMLElement;
+    expect(ripple.style.color).toBe('rgb(18, 58, 188)');
+    expect(repoState.setValues).not.toHaveBeenCalled();
   });
 
   it('pencil opens the bounded wheel with the color control below it and saves personal Flex data', async () => {
