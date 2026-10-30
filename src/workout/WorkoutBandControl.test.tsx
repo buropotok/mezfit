@@ -108,6 +108,17 @@ describe('workout fitness bands', () => {
     expect(repoState.setValues).not.toHaveBeenCalled();
   });
 
+  it('closes a no-change pencil editor without writing preferences or reopening', async () => {
+    render(<WorkoutBandControl selected={null} onSelect={vi.fn()} />);
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Выбрать фитнес-ленту' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать фитнес-ленту' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить параметры ленты 1' }));
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'Диапазон нагрузки резинки' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Диапазон нагрузки резинки' })).toBeNull());
+    expect(repoState.setValues).not.toHaveBeenCalled();
+  });
+
   it('pencil opens the bounded wheel with the color control below it and saves personal Flex data', async () => {
     render(<WorkoutBandControl selected={null} onSelect={vi.fn()} />);
     await waitFor(() => expect((screen.getByRole('button', { name: 'Выбрать фитнес-ленту' }) as HTMLButtonElement).disabled).toBe(false));
