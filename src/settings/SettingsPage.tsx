@@ -37,6 +37,7 @@ import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutS
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import { ScreenDiagnostics } from './ScreenDiagnostics';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
+import { ResistanceBandsSettings } from './ResistanceBandsSettings';
 import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
@@ -272,6 +273,7 @@ export function SettingsPage({
   const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
   const [syncHistoryOpen, setSyncHistoryOpen] = useState(false);
+  const [resistanceBandsOpen, setResistanceBandsOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
   const [backgroundSettingsOpen, setBackgroundSettingsOpen] = useState(false);
   const [typographySettingsOpen, setTypographySettingsOpen] = useState(false);
@@ -299,6 +301,7 @@ export function SettingsPage({
   };
   const closeScreenDiagnostics = useCallback(() => setScreenDiagnosticsOpen(false), []);
   const closeSyncHistory = useCallback(() => setSyncHistoryOpen(false), []);
+  const closeResistanceBands = useCallback(() => setResistanceBandsOpen(false), []);
   useEffect(() => {
     if (initialScreenDiagnosticsOpen) onScreenDiagnosticsDeepLinkConsumed?.();
   }, [initialScreenDiagnosticsOpen, onScreenDiagnosticsDeepLinkConsumed]);
@@ -320,6 +323,10 @@ export function SettingsPage({
   }, []);
 
   useEffect(() => {
+    if (resistanceBandsOpen) {
+      onNavigationContextChange({ title: 'Фитнес-ленты', scrollKey: 'settings:resistance-bands', onBack: closeResistanceBands });
+      return () => onNavigationContextChange(null);
+    }
     if (syncHistoryOpen) {
       onNavigationContextChange({ title: 'История синхронизации', scrollKey: 'settings:sync-history', onBack: closeSyncHistory });
       return () => onNavigationContextChange(null);
@@ -351,9 +358,9 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeScreenDiagnostics, closeSyncHistory, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, screenDiagnosticsOpen, syncHistoryOpen, typographySettingsOpen]);
+  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeResistanceBands, closeScreenDiagnostics, closeSyncHistory, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, resistanceBandsOpen, screenDiagnosticsOpen, syncHistoryOpen, typographySettingsOpen]);
 
-  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen && !syncHistoryOpen) {
+  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen && !syncHistoryOpen && !resistanceBandsOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__diagnostics-entry">
@@ -373,6 +380,7 @@ export function SettingsPage({
             <Button onClick={() => setGlassSettingsOpen(true)}>Настройки стекла</Button>
             <Button variant="secondary" onClick={() => setTypographySettingsOpen(true)}>Шрифты</Button>
             <Button variant="secondary" onClick={() => setBackgroundSettingsOpen(true)}>Цвет фона</Button>
+            <Button variant="secondary" onClick={() => setResistanceBandsOpen(true)}>Фитнес-ленты</Button>
           </div>
         </GlassSurface>
 
@@ -462,6 +470,8 @@ export function SettingsPage({
       </section>
     );
   }
+
+  if (resistanceBandsOpen) return <ResistanceBandsSettings glassBlur={effectiveGlassBlur} />;
 
   if (backgroundSettingsOpen) {
     return (

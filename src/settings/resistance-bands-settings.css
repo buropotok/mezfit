@@ -1,0 +1,20 @@
+.resistance-bands__list { display: grid; gap: var(--ui-space-3); }
+.resistance-bands__row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+.resistance-bands__swatch {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--ui-color-surface-muted);
+  border-radius: 50%;
+}
+.resistance-bands__color {
+  display: grid;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
