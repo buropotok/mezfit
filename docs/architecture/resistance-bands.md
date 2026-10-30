@@ -12,7 +12,7 @@ can be edited without introducing or persisting a color-name field.
 | 2 | Blue, #9FC5E8 | 6–9 |
 | 3 | Yellow, #E7A91B | 10–13 |
 | 4 | Red, #FF6B6B | 14–17 |
-| 5 | Black swatch, #9BAABA | 18–21 |
+| 5 | Black, #252B33 | 18–21 |
 
 The UI Kit RangePicker composes the existing, unchanged TwoColumnPicker with
 TimePicker's compact wheel geometry and supports integral min/max 1–30 kg;
