@@ -106,10 +106,10 @@ export function hasSetMeasurements(metrics: SetMetrics | null | undefined): metr
     .some(value => value !== null);
 }
 
-export function createSetEntryDraft(data: SetEntryData): SetEntryFactDraft {
-  const factMetrics = data.fact?.metrics;
+export function createSetEntryDraft(data: SetEntryData, source: 'fact' | 'plan' = 'fact'): SetEntryFactDraft {
   return {
-    metrics: { ...(hasSetMeasurements(factMetrics) ? factMetrics : data.plan ?? emptySetMetrics()) },
+    // PLAN is a picker suggestion, never an unconfirmed workout FACT.
+    metrics: { ...((source === 'plan' ? data.plan : data.fact?.metrics) ?? emptySetMetrics()) },
     setLabel: data.fact?.setLabel ?? null,
     setType: data.fact?.setType !== undefined ? data.fact.setType : data.setType ?? null,
     rpe: data.fact?.rpe ?? null,
