@@ -26,15 +26,15 @@ describe('workout band editor Save visibility', () => {
     expect(wheel).toBeGreaterThan(controls);
   });
 
-  it('keeps Save outside the only scrollable section in the editor', () => {
+  it('has no nested scrolling or height cap for the editor and color controls', () => {
     const editor = cssRule('.workout-band-editor');
     const actions = cssRule('.workout-band-editor__actions');
     const controls = cssRule('.workout-band-editor__controls');
-    expect(editor).toContain('max-height:');
-    expect(editor).not.toContain('overflow-y: auto');
+    expect(editor).not.toContain('max-height:');
+    expect(editor).not.toContain('overflow');
     expect(actions).toContain('flex: 0 0 auto');
-    expect(actions).not.toContain('overflow-y: auto');
-    expect(controls).toContain('min-height: 0');
-    expect(controls).toContain('overflow-y: auto');
+    expect(actions).not.toContain('overflow');
+    expect(controls).toContain('flex: 0 0 auto');
+    expect(controls).not.toContain('overflow');
   });
 });
