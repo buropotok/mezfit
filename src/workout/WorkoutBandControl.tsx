@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button as KonstaButton } from 'konsta/react';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { FlexAttributesRepository } from '../data/cloud/flex-attributes';
 import {
-  Button, GlassBackgroundColorControls, IconButton, LiquidPopover, RangePicker, Text,
+  GlassBackgroundColorControls, IconButton, LiquidPopover, RangePicker, Text,
   type LiquidPopoverItem,
 } from '../ui';
 import { hsvToHex } from '../ui/colorMath';
@@ -43,6 +44,9 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
   const [menuOpen, setMenuOpen] = useState(false);
   const [editId, setEditId] = useState<ResistanceBandSetting['id'] | null>(null);
   const [editDraft, setEditDraft] = useState<ResistanceBandSetting | null>(null);
+  // WheelPicker's footer flushes the last scroll position in click capture,
+  // before React commits the state update for the Save button's click handler.
+  const editDraftRef = useRef<ResistanceBandSetting | null>(null);
   const [editorOpened, setEditorOpened] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -81,39 +85,48 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
     const band = palette.find(candidate => candidate.id === id);
     if (!band) return;
     setEditId(id);
-    setEditDraft({ ...band });
+    const draft = { ...band };
+    editDraftRef.current = draft;
+    setEditDraft(draft);
     dirtyFieldsRef.current.clear();
     setSaveError('');
     // Open after the liquid close finishes; never stack two interactive popovers.
     setMenuOpen(false);
   };
   const edit = (patch: Partial<ResistanceBandSetting>) => {
-    if (!editDraft || saving) return;
+    const current = editDraftRef.current;
+    if (!current || saving) return;
     for (const field of ['min', 'max', 'color'] as const) {
-      if (patch[field] !== undefined && patch[field] !== editDraft[field]) {
-        dirtyFieldsRef.current.add(bandFieldKey(editDraft.id, field));
+      if (patch[field] !== undefined && patch[field] !== current[field]) {
+        dirtyFieldsRef.current.add(bandFieldKey(current.id, field));
       }
     }
-    setEditDraft({ ...editDraft, ...patch });
+    const next = { ...current, ...patch };
+    editDraftRef.current = next;
+    setEditDraft(next);
   };
   const saveEdit = async () => {
-    if (!repository || !actorUserId || !editDraft || saving) return;
+    // Save uses the exact wheel value flushed during the same click event.
+    const snapshot = editDraftRef.current;
+    if (!repository || !actorUserId || !snapshot || saving) return;
     if (dirtyFieldsRef.current.size === 0) {
       setEditorOpened(false);
       setEditId(null);
       setEditDraft(null);
+      editDraftRef.current = null;
       return;
     }
     setSaving(true);
     setSaveError('');
     try {
-      const next = palette.map(band => band.id === editDraft.id ? { ...editDraft } : band);
+      const next = palette.map(band => band.id === snapshot.id ? { ...snapshot } : band);
       await saveResistanceBands(repository, actorUserId, next, new Set(dirtyFieldsRef.current));
       if (!active.current) return;
       setPalette(next);
       setEditorOpened(false);
       setEditId(null);
       setEditDraft(null);
+      editDraftRef.current = null;
       dirtyFieldsRef.current.clear();
       // The local transaction is committed; normal Dexie Cloud Addon replication
       // handles upload. No network request blocks editing or choosing a band.
@@ -155,15 +168,21 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
     {editDraft ? <RangePicker opened={editorOpened} value={{ min: editDraft.min, max: editDraft.max }}
       minAllowed={1} maxAllowed={30} target={triggerRef.current}
       onChange={range => edit(range)}
-      onClose={() => { setEditorOpened(false); setEditId(null); setEditDraft(null); }}
+      onClose={() => {
+        if (saving) return;
+        setEditorOpened(false);
+        setEditId(null);
+        setEditDraft(null);
+        editDraftRef.current = null;
+      }}
       footer={<div className="workout-band-editor">
         <Text variant="caption">Лента {editDraft.id}</Text>
         <GlassBackgroundColorControls stacked colorSubject="ленты" color={resistanceHexToHsv(editDraft.color)}
           minimumBrightness={0} onChange={color => edit({ color: hsvToHex(color) })} />
         {saveError ? <Text variant="caption" role="alert">{saveError}</Text> : null}
-        <Button onClick={() => { void saveEdit(); }} disabled={saving}>
-          {saving ? 'Сохранение…' : 'Сохранить'}
-        </Button>
+        <KonstaButton rounded strong disabled={saving} onClick={() => { void saveEdit(); }}>
+          <Text variant="body">{saving ? 'Сохранение…' : 'Сохранить'}</Text>
+        </KonstaButton>
       </div>} /> : null}
   </>;
 }
