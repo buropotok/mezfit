@@ -394,7 +394,7 @@ function PickerLens({
         </defs>
 
         {lensMode === 'ios' ? (
-          <g clipPath={`url(#${clipId})`>{lensContent}{fixedUnits}</g>
+          <g clipPath={`url(#${clipId})`}>{lensContent}{fixedUnits}</g>
         ) : (
           <g clipPath={`url(#${clipId})`}>
             <g filter={assets ? `url(#${filterId})` : undefined}>
