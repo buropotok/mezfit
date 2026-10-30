@@ -5,11 +5,11 @@ import type { ReactNode } from 'react';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { WorkoutCompletionProvider, useWorkoutCompletionReview } from './WorkoutCompletionContext';
 const state = vi.hoisted(() => ({ db: {}, next: null as null | ((rows: CloudWorkoutOccurrenceRow[]) => void),
-  observe: vi.fn(), unsubscribe: vi.fn(), cancel: vi.fn(), move: vi.fn() }));
+  fail: null as null | ((reason: unknown) => void), observe: vi.fn(), unsubscribe: vi.fn(), cancel: vi.fn(), move: vi.fn() }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: state.db, actorUserId: 'tg:101' }) }));
 vi.mock('../data/cloud/workout-completion-review', () => ({ WorkoutCompletionReviewRepository: class {
-  observe(id: string, next: (rows: CloudWorkoutOccurrenceRow[]) => void) {
-    state.observe(id); state.next = next; return { unsubscribe: state.unsubscribe };
+  observe(id: string, next: (rows: CloudWorkoutOccurrenceRow[]) => void, fail: (reason: unknown) => void) {
+    state.observe(id); state.next = next; state.fail = fail; return { unsubscribe: state.unsubscribe };
   }
   cancel = state.cancel; move = state.move;
 } }));
@@ -97,4 +97,17 @@ it('cleans up on navigation and ignores late observation callbacks', async () =>
   act(() => late?.([row]));
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(state.unsubscribe).toHaveBeenCalled();
+});
+
+it('does not block completion on a read failure and retries only on an explicit toast action', async () => {
+  render(view()); fireEvent.click(screen.getByText('После завершения'));
+  await waitFor(() => expect(state.observe).toHaveBeenCalled());
+  act(() => state.fail?.(new Error('Ошибка чтения')));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByRole('alert').textContent).toContain('Ошибка чтения');
+  fireEvent.click(screen.getByText('Повторить проверку'));
+  await waitFor(() => expect(state.observe).toHaveBeenCalledTimes(2));
+  act(() => state.next?.([row]));
+  expect(screen.getByRole('dialog')).toBeTruthy();
+  expect(state.cancel).not.toHaveBeenCalled(); expect(state.move).not.toHaveBeenCalled();
 });
