@@ -50,7 +50,7 @@ export class WorkoutCompletionReviewRepository {
     return completedWorkoutOverlaps(completed, rows).filter(row => !linked.has(row.id));
   }
   list(sessionId: string): Promise<CloudWorkoutOccurrenceRow[]> {
-    return this.db.transaction('r', tables, () => this.rows(sessionId));
+    return this.db.transaction('r', tables, async () => this.rows(sessionId));
   }
   observe(sessionId: string, next: (rows: CloudWorkoutOccurrenceRow[]) => void, error: (reason: unknown) => void) {
     return liveQuery(() => this.list(sessionId)).subscribe({ next, error });
