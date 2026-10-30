@@ -154,7 +154,7 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
       onClose={() => { setEditorOpened(false); setEditId(null); setEditDraft(null); }}
       footer={<div className="workout-band-editor">
         <Text variant="caption">Лента {editDraft.id}</Text>
-        <GlassBackgroundColorControls color={resistanceHexToHsv(editDraft.color)}
+        <GlassBackgroundColorControls stacked color={resistanceHexToHsv(editDraft.color)}
           minimumBrightness={0} onChange={color => edit({ color: hsvToHex(color) })} />
         {saveError ? <Text variant="caption" role="alert">{saveError}</Text> : null}
         <Button onClick={() => { void saveEdit(); }} disabled={saving}>
