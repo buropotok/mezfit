@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List, Toast } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
-import { BadgeChoice, Divider, IconButton, LiquidPopover, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker, type LiquidPopoverItem } from '../ui';
+import { BadgeChoice, Divider, IconButton, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { hasSetMeasurements, sameSetEntryDraft, createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
+import { WorkoutBandControl } from './WorkoutBandControl';
 import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
 
@@ -13,11 +14,6 @@ type WeightRepsSetEntryProps = Extract<SetEntryProps, { mode: 'occurrence-plan' 
   Extract<SetEntryProps, { mode?: 'workout' }>;
 
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
-const bands = [
-  ['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
-  ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная'],
-] as const;
-
 function metricsText(weightKg: number | null, reps: number | null): string {
   if (weightKg === null && reps === null) return 'Не заполнено';
   return `${weightKg === null ? '—' : numberFormatter.format(weightKg)} кг × ${reps ?? '—'}`;
@@ -54,9 +50,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   }, [error]);
   const metricsConfirmed = useRef(false);
   const [pickerOpened, setPickerOpened] = useState(false);
-  const [bandOpen, setBandOpen] = useState(false);
   const target = useRef<HTMLElement>(null);
-  const bandTarget = useRef<HTMLButtonElement>(null);
   const requestCloseRef = useRef<() => void>(() => undefined);
 
   const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
@@ -77,7 +71,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     const snapshot = { ...draftRef.current,
       metrics: { ...draftRef.current.metrics }, bands: [...draftRef.current.bands] };
     setPickerOpened(false);
-    setBandOpen(false);
+    
     try {
       if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({
@@ -120,7 +114,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     if (saveInFlightRef.current) return;
     const newFactConfirmed = !isPlan && !hasSetMeasurements(props.data.fact?.metrics) && metricsConfirmed.current;
     if (readOnly || (!newFactConfirmed && sameSetEntryDraft(initialDraft.current, draftRef.current))) {
-      setPickerOpened(false); setBandOpen(false); props.onClose();
+      setPickerOpened(false); props.onClose();
     }
     else setDiscardConfirm(true);
   };
@@ -155,15 +149,6 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   }, [validPicker, isPlan]);
   const selectedBand = draft.bands[0] ?? null;
   const inputLocked = saving || readOnly;
-  const bandItems: LiquidPopoverItem[] = [
-    ...bands.map(([value, label]) => ({
-      id: value,
-      label,
-      onSelect: () => change(old => ({ ...old, bands: old.bands[0] === value ? [] : [value] })),
-    })),
-    { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
-  ];
-
   // Both overlays must be siblings of the app surface, never descendants of
   // transformed SortableList rows or the animated sheet. Keep React context.
   const portalHost = document.getElementById('root') ?? document.body;
@@ -185,9 +170,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               <Text variant="body">{props.data.identity.exerciseName}</Text>
               {props.data.identity.programName ? <Text variant="footnote" tone="muted">{props.data.identity.programName}</Text> : null}
             </div>
-            {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
-              triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
-              trigger={<IconButton ref={bandTarget} disabled={inputLocked} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}><span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" /></IconButton>} /> : null}
+            {!isPlan ? <WorkoutBandControl selected={selectedBand}
+              disabled={inputLocked} onSelect={band => change(old => ({
+                ...old, bands: band ? [band] : [],
+              }))} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения" onClick={props.onOpenHistory} /> : null}
           </div>
           <Divider />
@@ -255,7 +241,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         <MezfitDialogButton disabled={saving} onClick={() => {
           setDiscardConfirm(false);
           setPickerOpened(false);
-          setBandOpen(false);
+          
           props.onClose();
         }}><Text variant="body">Нет</Text></MezfitDialogButton>
         <MezfitDialogButton strong disabled={saving} onClick={() => { void saveEntry(); }}><Text variant="body">Да</Text></MezfitDialogButton>
