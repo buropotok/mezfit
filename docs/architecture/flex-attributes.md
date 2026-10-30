@@ -101,13 +101,15 @@ first; no implicit role migration or permission widening is permitted.
 No data imports or session rows are published by the operator. No new
 `localStorage`, Cloudflare D1 business storage, REST CRUD path or sync engine.
 
-## Planned resistance band usage (separate PR)
+## Resistance band preferences (stage 2)
 
-Five built-in band defaults live in app code. The personal `user` realm
+The five-band personal settings editor and RangePicker are implemented in
+`src/settings/ResistanceBandsSettings.tsx` and described in
+`docs/architecture/resistance-bands.md`. Five built-in band defaults live in app
+code. The personal `user` realm
 stores only changed values, using keys `Band_1_color`, `Band_1_min`,
-`Band_1_max` (similarly for bands 2–5). When a workout is started, the
-relevant palette may be snapshotted into the `adHocSession` realm using the
-same keys. The selected band itself remains an individual set's FACT, not
-a session-wide selection. Editing personal defaults must not rewrite
-historical session values. The subsequent feature PR must specify precise
-snapshot timing and preserve immutable historical meanings.
+`Band_1_max` (similarly for bands 2–5). The selected band remains an individual set's FACT, not a session-wide
+selection. No current workout/session row is rewritten by editing personal
+settings. Snapshotting a palette into an `adHocSession` relationship realm at
+workout Start remains a separate future implementation; it must preserve
+immutable historical meaning and include explicit Coach/Client ACL tests.
