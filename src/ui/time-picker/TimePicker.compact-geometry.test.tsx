@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NumPicker } from '../num-picker/NumPicker';
 import { TimePicker } from './TimePicker';
+import { projectCylinder } from './cylinderProjection';
 
 function wrap(node: ReactNode) {
   const target = document.createElement('button');
@@ -51,7 +52,7 @@ describe('TimePicker compact optical geometry', () => {
     expect(within(minutes).getByRole('option', { name: '15' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('places neighboring SVG digits outside the 72px optical source before 1/2 scaling', () => {
+  it('projects the same cylinder into the lens with its existing optical scale', () => {
     wrap(<TimePicker opened target={document.body} value="08:15"
       onChange={vi.fn()} onClose={vi.fn()} lensMode="ios" />);
     const lens = document.querySelector('.ui-time-picker__lens');
@@ -61,13 +62,28 @@ describe('TimePicker compact optical geometry', () => {
     const texts = Array.from(lens?.querySelectorAll('.ui-time-picker__lens-text') ?? []);
     const hour = (label: string) => texts.find(element =>
       element.textContent === label && element.getAttribute('x') === '62');
-    expect(hour('07')?.getAttribute('y')).toBe('-36');
+    expect(Number(hour('07')?.getAttribute('y'))).toBeCloseTo(36 + projectCylinder(-36)!.y * 2);
     expect(hour('08')?.getAttribute('y')).toBe('36');
-    expect(hour('09')?.getAttribute('y')).toBe('108');
+    expect(Number(hour('09')?.getAttribute('y'))).toBeCloseTo(36 + projectCylinder(36)!.y * 2);
     // The source glyph compensation stays within the vertically scaled capsule.
     expect(hour('08')?.getAttribute('transform')).toContain('scale(1.55 3.1)');
     const separator = lens?.querySelector('.ui-time-picker__lens-separator');
     expect(separator?.getAttribute('transform')).toContain('scale(1.55 3.1)');
+  });
+
+  it('renders a pointer-transparent cylinder and resolves taps against projected rows', () => {
+    const onChange = vi.fn();
+    wrap(<TimePicker opened target={document.body} value="08:15"
+      onChange={onChange} onClose={vi.fn()} lensMode="ios" />);
+    const dialog = screen.getByRole('dialog', { name: 'Выбор времени' });
+    expect(dialog.classList.contains('ui-time-picker__popover--cylinder')).toBe(true);
+    expect(dialog.querySelector('.ui-time-picker__cylinder')?.getAttribute('aria-hidden')).toBe('true');
+    const hours = screen.getByRole('listbox', { name: 'Часы' });
+    vi.spyOn(hours, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 240 } as DOMRect);
+    const y = 100 + 120 + projectCylinder(3 * 36)!.y;
+    // The flat native hit row differs from the projected row under this point.
+    fireEvent.click(within(hours).getByRole('option', { name: '10' }), { detail: 1, clientY: y });
+    expect(onChange).toHaveBeenLastCalledWith('11:15');
   });
 
   it('keeps noncircular NumPicker in the normal geometry', () => {
@@ -75,6 +91,7 @@ describe('TimePicker compact optical geometry', () => {
       onChange={vi.fn()} onClose={vi.fn()} />);
     const dialog = screen.getByRole('dialog', { name: 'Выбор числа' });
     expect(dialog.classList.contains('ui-time-picker__popover--compact-time')).toBe(false);
+    expect(dialog.querySelector('.ui-time-picker__cylinder')).toBeNull();
     const lower = screen.getByRole('listbox', { name: 'Последние две цифры' });
     expect(lower.querySelectorAll('button')).toHaveLength(100);
     expect(within(lower).getByRole('option', { name: '07' }).getAttribute('aria-selected')).toBe('true');
