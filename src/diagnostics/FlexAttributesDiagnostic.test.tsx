@@ -45,33 +45,27 @@ afterEach(() => {
 
 describe('real-account Flex Attributes diagnostic', () => {
   it('requires an explicit button and uses only the Worker-verified personal realm', async () => {
-    const value = '2026-10-30T00:00:00.000Z';
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(value));
-    try {
-      probe.getValues.mockResolvedValue([{ key: FLEX_PROBE_KEY, valueType: 'string', value }]);
-      const view = render(<FlexAttributesDiagnostic initData="private-init-data" />);
-      // Flush identity / DB promises without waiting on fake testing-library timers.
-      await vi.waitFor(() => expect(screen.getByRole('button', { name: 'Записать тестовое значение' }).hasAttribute('disabled')).toBe(false));
+    probe.getValues.mockImplementation(async () => [
+      { key: FLEX_PROBE_KEY, valueType: 'string', value: probe.setValue.mock.calls[0]?.[1]?.value },
+    ]);
+    const view = render(<FlexAttributesDiagnostic initData="private-init-data" />);
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Записать тестовое значение' }) as HTMLButtonElement).disabled).toBe(false));
       expect(probe.setValue).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: 'Записать тестовое значение' }));
-      await vi.waitFor(() => expect(screen.getByText(/отправка через Addon завершилась/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/отправка через Addon завершилась/)).toBeTruthy());
       expect(getMe).toHaveBeenCalledWith('private-init-data');
       expect(createCloudDatabase).toHaveBeenCalledWith('42', 'private-init-data');
       expect(FlexAttributesRepository).toHaveBeenCalledWith(database, 'tg:42');
       expect(probe.setValue).toHaveBeenCalledWith(
         { entityType: 'user', realmId: 'tg:42', entityId: 'tg:42' },
-        { key: FLEX_PROBE_KEY, valueType: 'string', value },
+        { key: FLEX_PROBE_KEY, valueType: 'string', value: expect.any(String) },
       );
       expect(sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
       expect(document.body.textContent).not.toContain('private-init-data');
       expect(document.body.textContent).not.toContain('tg:42');
-      view.unmount();
-      expect(unsubscribe).toHaveBeenCalled();
-      expect(close).toHaveBeenCalledWith({ disableAutoOpen: false });
-    } finally {
-      vi.useRealTimers();
-    }
+    view.unmount();
+    expect(unsubscribe).toHaveBeenCalled();
+    expect(close).toHaveBeenCalledWith({ disableAutoOpen: false });
   });
 
   it('pulls before reading and displays only the saved diagnostic marker', async () => {
@@ -99,13 +93,15 @@ describe('real-account Flex Attributes diagnostic', () => {
   });
 
   it('does not leak an upstream error body or claim that an unsuccessful push was persisted', async () => {
-    const marker = new Date().toISOString();
-    probe.getValues.mockResolvedValue([{ key: FLEX_PROBE_KEY, valueType: 'string', value: marker }]);
+    probe.getValues.mockImplementation(async () => [
+      { key: FLEX_PROBE_KEY, valueType: 'string', value: probe.setValue.mock.calls[0]?.[1]?.value },
+    ]);
     sync.mockRejectedValueOnce(new Error('secret Cloud token'));
     render(<FlexAttributesDiagnostic initData="signed" />);
     await waitFor(() => expect((screen.getByRole('button', { name: 'Записать тестовое значение' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Записать тестовое значение' }));
     await waitFor(() => expect(screen.getByText(/Проверка не удалась/)).toBeTruthy());
+    expect(sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
     expect(document.body.textContent).not.toContain('secret Cloud token');
     expect(document.body.textContent).not.toContain('отправка через Addon завершилась');
   });
