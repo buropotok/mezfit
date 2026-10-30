@@ -6,7 +6,7 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton, LiquidPopover,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
-import { sameSetEntryDraft, createSetEntryDraft, emptySetMetrics, type SetEntryProps, type SetMetrics } from './setEntryTypes';
+import { sameSetEntryDraft, createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
 import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
@@ -54,17 +54,7 @@ function display(key: EditableMetric, value: number | null) {
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
   const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
-  const [draft, setDraft] = useState(() => {
-    const initial = createSetEntryDraft(props.data);
-    if (isPlan || props.data.fact) return initial;
-    // Prefill only the metrics tracked by this exercise; never copy unrelated
-    // historic PLAN fields into an otherwise empty FACT.
-    const metrics = emptySetMetrics();
-    for (const key of FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? []) {
-      metrics[key] = props.data.plan?.[key] ?? null;
-    }
-    return { ...initial, metrics };
-  });
+  const [draft, setDraft] = useState(() => createSetEntryDraft(props.data, isPlan ? 'plan' : 'fact'));
   const saveInFlightRef = useRef(false);
   const mounted = useRef(true);
   useEffect(() => {
@@ -226,7 +216,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
           {keys.map(key => <div key={key}>
             <SetEntryMetricTile metric={key} blur={glass.blur}
               buttonRef={node => { targets.current[key] = node; }}
-              value={display(key, draft.metrics[key])}
+              value={!isPlan && draft.metrics[key] === null ? 'Введите факт' : display(key, draft.metrics[key])}
               ariaLabel={EDIT_LABELS[key]}
               disabled={inputLocked || !valid(key, suggested(key))}
               onClick={() => {
