@@ -17,7 +17,7 @@ function ReviewCard({ row, expanded, busy, onToggle, onCancel, onMove, onKeep }:
   const start = new Date(row.startsAtUtc);
   const end = new Date(start.getTime() + row.durationMinutes * 60_000);
   return <article>
-    <GlassSurface component="button" shape="rounded" preset="modalTuned"
+    <GlassSurface component="button" preset="modalTuned"
       className="workout-completion-sheet__card" disabled={busy}
       aria-label={`Действия: ${athlete.name}, ${row.plan.name}`} aria-expanded={expanded} onClick={onToggle}>
       <WorkoutPlanCardHeader name={row.plan.name} programName={athlete.name} creatorName={athlete.name}
