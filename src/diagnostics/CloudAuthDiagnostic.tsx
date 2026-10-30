@@ -6,6 +6,7 @@ import { Text } from '../ui';
 import { runCloudAuthProbe } from './cloudAuthProbe';
 import { CloudSyncDiagnostic } from './CloudSyncDiagnostic';
 import { CloudAvatarDiagnostic } from './CloudAvatarDiagnostic';
+import { FlexAttributesDiagnostic } from './FlexAttributesDiagnostic';
 
 type ProbeStatus = 'idle' | 'pending' | 'success' | 'failed';
 
@@ -21,6 +22,7 @@ export function CloudAuthDiagnostic() {
   const [status, setStatus] = useState<ProbeStatus>('idle');
   const [showSync, setShowSync] = useState(false);
   const [showAvatars, setShowAvatars] = useState(false);
+  const [showFlex, setShowFlex] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const pendingRef = useRef(false);
   const mountedRef = useRef(false);
@@ -69,14 +71,18 @@ export function CloudAuthDiagnostic() {
                   : 'Нажмите кнопку, чтобы начать проверку.'}
         </Text></p>
         <p><Text variant="footnote" tone="muted">Токены, ключи и Telegram initData не отображаются и не сохраняются.</Text></p>
-        <Button onClick={() => { setShowSync((value) => !value); setShowAvatars(false); }} disabled={!webApp?.initData}>
+        <Button onClick={() => { setShowSync((value) => !value); setShowAvatars(false); setShowFlex(false); }} disabled={!webApp?.initData}>
           {showSync ? 'Скрыть диагностику синхронизации' : 'Проверить синхронизацию'}
         </Button>
         {showSync && webApp?.initData ? <CloudSyncDiagnostic initData={webApp.initData} /> : null}
-        <Button onClick={() => { setShowAvatars((value) => !value); setShowSync(false); }} disabled={!webApp?.initData}>
+        <Button onClick={() => { setShowAvatars((value) => !value); setShowSync(false); setShowFlex(false); }} disabled={!webApp?.initData}>
           {showAvatars ? 'Скрыть диагностику аватаров' : 'Проверить аватары'}
         </Button>
         {showAvatars && webApp?.initData ? <CloudAvatarDiagnostic initData={webApp.initData} /> : null}
+        <Button onClick={() => { setShowFlex((value) => !value); setShowSync(false); setShowAvatars(false); }} disabled={!webApp?.initData}>
+          {showFlex ? 'Скрыть проверку Flex Attributes' : 'Проверить Flex Attributes'}
+        </Button>
+        {showFlex && webApp?.initData ? <FlexAttributesDiagnostic initData={webApp.initData} /> : null}
       </section>
     </main>
   );
