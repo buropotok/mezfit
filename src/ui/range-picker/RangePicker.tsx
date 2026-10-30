@@ -24,9 +24,9 @@ export interface RangePickerProps {
   footer?: ReactNode;
 }
 
-export function assertResistanceRange(value: ResistanceRange): void {
-  if (!Number.isInteger(value.min) || !Number.isInteger(value.max)
-    || value.min < 1 || value.max > 30 || value.min > value.max) {
+export function assertResistanceRange(value: ResistanceRange, minAllowed = 1, maxAllowed = 30): void {
+  if (!Number.isSafeInteger(value.min) || !Number.isSafeInteger(value.max)
+    || value.min < minAllowed || value.max > maxAllowed || value.min > value.max) {
     throw new Error('INVALID_RESISTANCE_RANGE');
   }
 }
@@ -36,9 +36,11 @@ export function applyRangePickerPart(
   current: ResistanceRange,
   part: 'left' | 'right',
   candidate: number,
+  minAllowed = 1,
+  maxAllowed = 30,
 ): ResistanceRange {
-  assertResistanceRange(current);
-  if (!Number.isInteger(candidate) || candidate < 1 || candidate > 30) {
+  assertResistanceRange(current, minAllowed, maxAllowed);
+  if (!Number.isSafeInteger(candidate) || candidate < minAllowed || candidate > maxAllowed) {
     throw new Error('INVALID_RESISTANCE_RANGE');
   }
   return part === 'left'
@@ -49,12 +51,11 @@ export function applyRangePickerPart(
 /** Uses the unchanged TimePicker wheel/lens geometry and native interaction. */
 export function RangePicker({ opened, value, onChange, onClose, target, lensMode = 'auto',
   minAllowed = 1, maxAllowed = 30, footer }: RangePickerProps) {
-  if (!Number.isInteger(minAllowed) || !Number.isInteger(maxAllowed)
-    || minAllowed < 1 || maxAllowed > 30 || minAllowed > maxAllowed
-    || value.min < minAllowed || value.max > maxAllowed) {
+  if (!Number.isSafeInteger(minAllowed) || !Number.isSafeInteger(maxAllowed)
+    || minAllowed < 1 || minAllowed > maxAllowed) {
     throw new Error('INVALID_RESISTANCE_LIMITS');
   }
-  assertResistanceRange(value);
+  assertResistanceRange(value, minAllowed, maxAllowed);
   const columns = useMemo<readonly [TwoColumnPickerColumn, TwoColumnPickerColumn]>(() => {
     const values = Array.from({ length: maxAllowed - minAllowed + 1 }, (_, index) => minAllowed + index);
     return [
@@ -97,7 +98,7 @@ export function RangePicker({ opened, value, onChange, onClose, target, lensMode
         if (!side) return;
         previousSide.current = side;
         const current = latestRange.current;
-        const next = applyRangePickerPart(current, side, side === 'left' ? left : right);
+        const next = applyRangePickerPart(current, side, side === 'left' ? left : right, minAllowed, maxAllowed);
         latestRange.current = next;
         if (next.min !== current.min || next.max !== current.max) onChange(next);
       }}
