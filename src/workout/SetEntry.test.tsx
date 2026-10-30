@@ -362,6 +362,28 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
 
+  it('accepts an unchanged time PLAN only after closing the duration picker', async () => {
+    const onSave = vi.fn(async () => undefined);
+    render(<SetEntry mode="workout" isOpen data={{
+      ...baseData, trackingType: 'time',
+      plan: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
+    }} onClose={vi.fn()} onSave={onSave} />);
+    const tile = screen.getByRole('button', { name: 'Изменить продолжительность' });
+    expect(tile.textContent).toContain('Введите факт');
+    expect(screen.getByText('План: 00:02:05')).toBeTruthy();
+    fireEvent.click(tile);
+    const picker = screen.getByRole('dialog', { name: 'Выбор продолжительности' });
+    expect(tile.textContent).toContain('Введите факт');
+    fireEvent.click(picker.previousElementSibling as Element);
+    expect(tile.textContent).toContain('00:02:05');
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      metrics: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
+    })));
+  });
+
   it('uses the existing DurationPicker and Mezfit RPE slider for time-based FACT', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
