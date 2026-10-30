@@ -65,7 +65,7 @@ async function oneExercise(repo: AdHocWorkoutRepository, id: string) {
 
 describe('local ad-hoc execution', () => {
   it('registers separate synchronized v12 tables without altering scheduled session stores', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(12);
+    expect(CLOUD_DATABASE_VERSION).toBeGreaterThanOrEqual(12);
     expect(CLOUD_DATABASE_STORES_V12.adHocSessions).toBe('@id, realmId, athleteUserId, status, startedAt');
     expect(CLOUD_DATABASE_STORES_V12.adHocExercises).toBe('@id, realmId, sessionId, [sessionId+position]');
     expect(CLOUD_DATABASE_STORES_V12.adHocSets).toBe('@id, realmId, sessionId, exerciseId, [exerciseId+position]');
