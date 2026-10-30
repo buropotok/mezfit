@@ -10,14 +10,14 @@ const repoState = vi.hoisted(() => ({ getValues: vi.fn(), setValues: vi.fn() }))
 const cloudState = vi.hoisted(() => ({ sync: vi.fn() }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: vi.fn() }));
 vi.mock('../data/cloud/flex-attributes', () => ({
-  FlexAttributesRepository: vi.fn().mockImplementation(() => repoState),
+  FlexAttributesRepository: vi.fn(function FlexAttributesRepository() { return repoState; }),
 }));
 vi.mock('../ui', () => ({
   Text: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) =>
     <span role={typeof props.role === 'string' ? props.role : undefined}>{children}</span>,
   Button: ({ children, onClick, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }) =>
     <button onClick={onClick} disabled={props.disabled} aria-label={props['aria-label']}>{children}</button>,
-  GlassSurface: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
+  GlassSurface: ({ children }: { children: ReactNode }) => <section>{children}</section>,
   RangePicker: ({ onChange }: { onChange: (range: { min: number; max: number }) => void }) =>
     <button onClick={() => onChange({ min: 3, max: 8 })}>Колесо диапазона</button>,
   GlassBackgroundColorControls: ({ onChange }: { onChange: (color: { hue: number; saturation: number; value: number }) => void }) =>
