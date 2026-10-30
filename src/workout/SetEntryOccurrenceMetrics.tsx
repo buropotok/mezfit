@@ -3,11 +3,12 @@ import { createPortal } from 'react-dom';
 import { Button as KonstaButton, List, Toast } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { loadBrowserGlassSettings } from '../glassSettings';
-import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton, LiquidPopover,
+import { BadgeChoice, Divider, DistancePicker, DurationPicker, IconButton,
   MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
-  MezfitSlider, NumPicker, Text, WeightPicker, type LiquidPopoverItem } from '../ui';
+  MezfitSlider, NumPicker, Text, WeightPicker } from '../ui';
 import { sameSetEntryDraft, createSetEntryDraft, type SetEntryProps, type SetMetrics } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
+import { WorkoutBandControl } from './WorkoutBandControl';
 import { SetEntryMetricTile } from './SetEntryMetricTile';
 import './set-entry-weight-reps.css';
 
@@ -73,8 +74,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   }, [error]);
   const [picker, setPicker] = useState<EditableMetric | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [bandOpen, setBandOpen] = useState(false);
-  const bandTarget = useRef<HTMLButtonElement>(null);
   const targets = useRef<Partial<Record<EditableMetric, HTMLElement | null>>>({});
   const requestClose = useRef<() => void>(() => undefined);
   const glass = loadBrowserGlassSettings();
@@ -113,17 +112,6 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     }
     setPicker(null);
   };
-  const bandItems: LiquidPopoverItem[] = [
-    ...([['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
-      ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная']] as const)
-      .map(([id, label]) => ({
-        id, label, onSelect: () => change(old => ({
-          ...old, bands: old.bands[0] === id ? [] : [id],
-        })),
-      })),
-    { id: 'none', label: 'Без ленты', onSelect: () => change(old => ({ ...old, bands: [] })) },
-  ];
-
   // PLAN and FACT are committed only after confirming Save on close.
   const saveEntry = async () => {
     if (saveInFlightRef.current || readOnly) return;
@@ -134,7 +122,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     const snapshot = { ...draftRef.current, metrics: { ...draftRef.current.metrics },
       bands: [...draftRef.current.bands] };
     setPicker(null);
-    setBandOpen(false);
+    
     try {
       if (props.mode === 'occurrence-plan') {
         await props.onPlanSave({ ...snapshot.metrics, setType: snapshot.setType ?? null });
@@ -170,7 +158,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
     if (readOnly || sameSetEntryDraft(initialDraft.current, draftRef.current)) {
-      setPicker(null); setBandOpen(false); props.onClose();
+      setPicker(null); props.onClose();
     }
     else setDiscardConfirm(true);
   };
@@ -207,12 +195,10 @@ export function SetEntryOccurrenceMetrics(props: Props) {
               {props.data.identity.programName ? <Text variant="footnote" tone="muted">
                 {props.data.identity.programName}</Text> : null}
             </div>
-            {!isPlan ? <LiquidPopover isOpen={bandOpen} onOpenChange={setBandOpen}
-              triggerRef={bandTarget} items={bandItems} label="Фитнес-лента"
-              trigger={<IconButton ref={bandTarget}
-                disabled={inputLocked} label={selectedBand ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}>
-                <span className="set-entry__icon set-entry__icon--ripple" aria-hidden="true" />
-              </IconButton>} /> : null}
+            {!isPlan ? <WorkoutBandControl selected={selectedBand}
+              disabled={inputLocked} onSelect={band => change(old => ({
+                ...old, bands: band ? [band] : [],
+              }))} /> : null}
             {props.onOpenHistory ? <IconButton icon="history" label="История упражнения"
               onClick={props.onOpenHistory} /> : null}
           </div>
@@ -300,7 +286,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <MezfitDialogButton disabled={saving} onClick={() => {
           setDiscardConfirm(false);
           setPicker(null);
-          setBandOpen(false);
+          
           props.onClose();
         }}><Text variant="body">Нет</Text></MezfitDialogButton>
         <MezfitDialogButton strong disabled={saving} onClick={() => { void saveEntry(); }}><Text variant="body">Да</Text></MezfitDialogButton>
