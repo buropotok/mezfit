@@ -14,6 +14,32 @@ can be edited without introducing or persisting a color-name field.
 | 4 | Red, #FF6B6B | 14–17 |
 | 5 | Black, #252B33 | 18–21 |
 
+## Workout set entry (this change)
+
+Both workout FACT set-entry variants use the same five palette rows. The
+existing ripple trigger displays the selected band in its personal color and
+the `Text variant="caption"` load range beneath it. The LiquidPopover menu
+contains exactly five selectable `tilde` entries labelled by load only, plus
+the existing `Без ленты` action; each band row has an independent pencil
+action. Selecting a band closes the popover and retains the existing single
+FACT band code (`green`, `blue`, `yellow`, `red`, `black`). No new FACT
+schema or secondary writer is added. Existing legacy `purple` FACT codes
+are not rewritten by this palette editor.
+
+Pencil closes the liquid menu and opens RangePicker with the 1–30 kg wheel
+bounds. The already-existing UI Kit color control is supplied as the native
+wheel footer; the user changes both range and color and confirms the local
+Flex Attributes transaction through **Сохранить**. Saved values are loaded
+local-first from the authenticated personal realm when editing a workout set;
+no cloud pull is required just to open the set. The normal Dexie Cloud Addon
+continues synchronizing settings. Canceling the editor does not write settings.
+The footer color-wheel control's internal accessibility text still refers
+to background color; altering it requires a distinct UI Kit API decision.
+
+The selected FACT continues storing the stable band code, not a frozen
+color/range snapshot. Immutable historical palette snapshots and relationship
+sharing were not requested in this change; they remain separate domain work.
+
 The UI Kit RangePicker composes the existing, unchanged TwoColumnPicker with
 TimePicker's compact wheel geometry and supports integral min/max 1–30 kg;
 max is never less than min. The color editor composes the existing
@@ -40,10 +66,9 @@ No Konsta internals or primitive mechanics/styles are altered.
   rather than writing an invalid range or clobbering another field.
   A completed local save then waits for `Dexie Cloud Addon` push. Push failures
   are reported as *local save, cloud unconfirmed*, never as remote success.
-- This PR is personal preferences only. Existing workout FACT `bands`
-  values retain their current domain codes. Historical session snapshots and
-  client/coach relationship sharing remain separate work; **no existing
-  workout data or session semantics are rewritten here**.
+- This palette remains personal. Workout selection stores the existing
+  single code in the normal FACT Save callback, rather than creating another
+  persistence route. No existing workout records are migrated or rewritten.
 
 ## Test stand acceptance
 
