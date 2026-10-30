@@ -72,61 +72,45 @@ afterEach(() => {
 });
 
 describe('NumPicker', () => {
-  it('represents values below 100 with an empty hundreds column', () => {
+  it('renders a single finite column containing every integer from 0 through 999', () => {
     renderPicker({ value: 7 });
-
-    const hundreds = screen.getByRole('listbox', { name: 'Сотни' });
-    const lower = screen.getByRole('listbox', { name: 'Последние две цифры' });
-
-    expect(within(hundreds).getByRole('option', { name: 'Без сотен' }).getAttribute('aria-selected')).toBe('true');
-    expect(within(lower).getByRole('option', { name: '07' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getAllByRole('listbox')).toHaveLength(1);
+    const column = screen.getByRole('listbox', { name: 'Число' });
+    expect(within(column).getAllByRole('option')).toHaveLength(1000);
+    expect(within(column).getByRole('option', { name: '7' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('dialog', { name: 'Выбор числа' }).querySelector('.ui-time-picker__cylinder')).not.toBeNull();
   });
 
-  it('combines hundreds and the last two digits into a controlled number', () => {
-    const onChange = vi.fn();
-    const picker = renderPicker({ value: 7, onChange });
-
-    fireEvent.click(
-      within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '2' }),
-    );
-    expect(onChange).toHaveBeenLastCalledWith(207);
-
+  it('chooses whole numbers and retains controlled updates and finite endpoints', () => {
+    const picker = renderPicker({ value: 7 });
+    const select = (value: string) => fireEvent.click(within(screen.getByRole('listbox', { name: 'Число' }))
+      .getByRole('option', { name: value }));
+    select('207');
+    expect(picker.onChange).toHaveBeenLastCalledWith(207);
     picker.setValue(207);
-    fireEvent.click(
-      within(screen.getByRole('listbox', { name: 'Последние две цифры' })).getByRole('option', { name: '42' }),
-    );
-    expect(onChange).toHaveBeenLastCalledWith(242);
-  });
-
-  it('selects the complete 0–999 range and emits exactly 999', () => {
-    const onChange = vi.fn();
-    const picker = renderPicker({ value: 0, onChange });
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
-    expect(onChange).toHaveBeenLastCalledWith(900);
-    picker.setValue(900);
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Последние две цифры' })).getByRole('option', { name: '99' }));
-    expect(onChange).toHaveBeenLastCalledWith(999);
+    select('242');
+    expect(picker.onChange).toHaveBeenLastCalledWith(242);
+    picker.setValue(242);
+    select('999');
+    expect(picker.onChange).toHaveBeenLastCalledWith(999);
     picker.setValue(999);
-    expect(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }).getAttribute('aria-selected')).toBe('true');
-    expect(within(screen.getByRole('listbox', { name: 'Последние две цифры' })).getByRole('option', { name: '99' }).getAttribute('aria-selected')).toBe('true');
-    onChange.mockClear();
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
-    expect(onChange).not.toHaveBeenCalled();
+    vi.mocked(picker.onChange).mockClear();
+    select('999');
+    expect(picker.onChange).not.toHaveBeenCalled();
+    select('0');
+    expect(picker.onChange).toHaveBeenLastCalledWith(0);
   });
 
-  it('reopens with the parent value, never emits on unchanged selection and closes without a write', () => {
-    const onChange = vi.fn();
-    const onClose = vi.fn();
-    const picker = renderPicker({ value: 399, onChange, onClose });
+  it('reopens with the controlled value and closes unchanged without a write', () => {
+    const picker = renderPicker({ value: 399 });
     picker.setValue(999, false);
     picker.setValue(999, true);
-    expect(within(screen.getByRole('listbox', { name: 'Сотни' }))
-      .getByRole('option', { name: '9' }).getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(within(screen.getByRole('listbox', { name: 'Сотни' })).getByRole('option', { name: '9' }));
-    const dialog = screen.getByRole('dialog', { name: 'Выбор числа' });
-    fireEvent.click(dialog.previousElementSibling as Element);
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(onChange).not.toHaveBeenCalled();
+    const option = within(screen.getByRole('listbox', { name: 'Число' })).getByRole('option', { name: '999' });
+    expect(option.getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(option);
+    fireEvent.click(screen.getByRole('dialog', { name: 'Выбор числа' }).previousElementSibling as Element);
+    expect(picker.onClose).toHaveBeenCalledTimes(1);
+    expect(picker.onChange).not.toHaveBeenCalled();
   });
 
   it('rejects values outside the supported integer range', () => {
