@@ -50,19 +50,19 @@ describe('real-account Flex Attributes diagnostic', () => {
     ]);
     const view = render(<FlexAttributesDiagnostic initData="private-init-data" />);
     await waitFor(() => expect((screen.getByRole('button', { name: 'Записать тестовое значение' }) as HTMLButtonElement).disabled).toBe(false));
-      expect(probe.setValue).not.toHaveBeenCalled();
-      fireEvent.click(screen.getByRole('button', { name: 'Записать тестовое значение' }));
+    expect(probe.setValue).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Записать тестовое значение' }));
     await waitFor(() => expect(screen.getByText(/отправка через Addon завершилась/)).toBeTruthy());
-      expect(getMe).toHaveBeenCalledWith('private-init-data');
-      expect(createCloudDatabase).toHaveBeenCalledWith('42', 'private-init-data');
-      expect(FlexAttributesRepository).toHaveBeenCalledWith(database, 'tg:42');
-      expect(probe.setValue).toHaveBeenCalledWith(
+    expect(getMe).toHaveBeenCalledWith('private-init-data');
+    expect(createCloudDatabase).toHaveBeenCalledWith('42', 'private-init-data');
+    expect(FlexAttributesRepository).toHaveBeenCalledWith(database, 'tg:42');
+    expect(probe.setValue).toHaveBeenCalledWith(
         { entityType: 'user', realmId: 'tg:42', entityId: 'tg:42' },
         { key: FLEX_PROBE_KEY, valueType: 'string', value: expect.any(String) },
       );
-      expect(sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
-      expect(document.body.textContent).not.toContain('private-init-data');
-      expect(document.body.textContent).not.toContain('tg:42');
+    expect(sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
+    expect(document.body.textContent).not.toContain('private-init-data');
+    expect(document.body.textContent).not.toContain('tg:42');
     view.unmount();
     expect(unsubscribe).toHaveBeenCalled();
     expect(close).toHaveBeenCalledWith({ disableAutoOpen: false });
