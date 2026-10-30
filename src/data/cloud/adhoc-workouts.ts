@@ -193,7 +193,7 @@ export class AdHocWorkoutRepository {
   }
   createQuick(): Promise<{ id: string; createdProgram: boolean }> {
     return this.write(['workoutOccurrences'], async () => {
-      await this.requireNoActiveSession();
+      await this.requireNoActiveSession(this.actorUserId);
       const timestamp = now();
       await this.assertStartAvailable(this.actorUserId, timestamp);
       const id = await this.db.adHocSessions.add({
@@ -212,7 +212,7 @@ export class AdHocWorkoutRepository {
       || (dayId !== undefined && (typeof dayId !== 'string' || !dayId || !programId)))
       return Promise.reject(new Error('ADHOC_INVALID_TARGET'));
     return this.write(['workoutOccurrences', ...programTables, ...catalogueTables], async () => {
-      await this.requireNoActiveSession();
+      await this.requireNoActiveSession(athleteUserId);
       // Eligibility, default graph and execution snapshot share one transaction.
       const programs = await this.listPrograms(athleteUserId);
       let selectedProgramId = programId, selectedDayId = dayId;
@@ -288,12 +288,12 @@ export class AdHocWorkoutRepository {
         return { id: existing.id, createdProgram: false };
       }
       if (occurrence.status !== 'scheduled' || occurrence.workoutSessionId) throw new Error('PLANNED_WORKOUT_ALREADY_STARTED');
+      await this.requireNoActiveSession(occurrence.athleteUserId);
       const asCoached = occurrence.format === 'independent' && occurrence.athleteUserId !== this.actorUserId;
       if (asCoached && (this.clientExecution || occurrence.coachUserId !== this.actorUserId))
         throw new Error('PLANNED_WORKOUT_NOT_FOUND');
       if (asCoached && options?.asCoached !== true)
         throw new Error('PLANNED_INDEPENDENT_REQUIRES_COACHING');
-      await this.requireNoActiveSession();
       await this.requirePlannedLifecycleGrant(occurrence.realmId, asCoached);
       const timestamp = now();
       await this.assertStartAvailable(occurrence.athleteUserId, timestamp, occurrence.id, workspace);
@@ -594,7 +594,18 @@ export class AdHocWorkoutRepository {
   getActive(): Promise<{ id: string; name: string } | null> {
     return this.db.transaction('r', executionTables, async () => this.findActive());
   }
-  private async requireNoActiveSession(): Promise<void> {
+  private async requireNoActiveSession(athleteUserId: string): Promise<void> {
+    // Check the athlete, regardless of who started the activity. The transaction
+    // serializes local starts; only authorized, locally replicated rows are read.
+    const rows = await this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray();
+    for (const row of rows) {
+      if (row.status !== 'active' || !await this.accessible(row)) continue;
+      if (this.clientExecution || athleteUserId === this.actorUserId)
+        throw new Error('ADHOC_ACTIVE_SESSION_EXISTS');
+      throw new Error(row.programId && row.coachUserId === this.actorUserId
+        ? 'ADHOC_ATHLETE_ACTIVE_COACH_PROGRAM' : 'ADHOC_ATHLETE_ACTIVE');
+    }
+    // Preserve the Coach's existing single current-workout restriction as well.
     if (await this.findActive()) throw new Error('ADHOC_ACTIVE_SESSION_EXISTS');
   }
   async list(): Promise<AdHocOpenSession[]> {
