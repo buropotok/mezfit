@@ -65,12 +65,9 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
           if (active && !savingRef.current && saveRevisionRef.current === startingSaveRevision) {
             setBands(current => {
               const merged = mergeResistanceBands(refreshed, current, dirtyFieldsRef.current);
-              // A newer remote endpoint may conflict with the edited bound.
-              // Keep the valid draft and refuse save until the user resolves it.
-              if (merged.some(band => band.min > band.max)) {
-                setError('Диапазон изменился на другом устройстве. Откройте настройки заново.');
-                return current;
-              }
+              // Do not display an invalid mixed range; the repository will
+              // also reject incompatible concurrent endpoints on Save.
+              if (merged.some(band => band.min > band.max)) return current;
               return merged;
             });
           }
