@@ -180,7 +180,7 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
         <GlassBackgroundColorControls stacked colorSubject="ленты" color={resistanceHexToHsv(editDraft.color)}
           minimumBrightness={0} onChange={color => edit({ color: hsvToHex(color) })} />
         {saveError ? <Text variant="caption" role="alert">{saveError}</Text> : null}
-        <KonstaButton rounded strong disabled={saving} onClick={() => { void saveEdit(); }}>
+        <KonstaButton rounded disabled={saving} onClick={() => { void saveEdit(); }}>
           <Text variant="body">{saving ? 'Сохранение…' : 'Сохранить'}</Text>
         </KonstaButton>
       </div>} /> : null}
