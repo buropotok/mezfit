@@ -392,7 +392,7 @@ function PickerColumnWheel({
           <button
             key={index}
             type="button"
-            className={`ui-time-picker__option ui-text--body${isSelected ? ' ui-time-picker__option--selected' : ''}`}
+            className={`ui-time-picker__option ui-text--${geometry === COMPACT_TIME_GEOMETRY ? 'title' : 'body'}${isSelected ? ' ui-time-picker__option--selected' : ''}`}
             role={duplicate ? undefined : 'option'}
             aria-hidden={duplicate || undefined}
             tabIndex={duplicate ? -1 : 0}
