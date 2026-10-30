@@ -104,7 +104,7 @@ export function FlexAttributesDiagnostic({ initData }: { initData: string }) {
         }
         // Addon 4.4.15 waits until the pending mutation queue is drained.
         await session.db.cloud.sync({ purpose: 'push', wait: true });
-        if (activeRef.current) {
+        if (activeRef.current && sessionRef.current === session) {
           setMarker(nextMarker);
           setOperation('written');
         }
@@ -112,15 +112,16 @@ export function FlexAttributesDiagnostic({ initData }: { initData: string }) {
         await session.db.cloud.sync({ purpose: 'pull', wait: true });
         const values = await session.repo.getValues(target);
         const recorded = values.find((entry) => entry.key === FLEX_PROBE_KEY);
-        if (activeRef.current) {
-          setMarker(recorded?.valueType === 'string' && typeof recorded.value === 'string'
-            ? recorded.value : null);
-          setOperation(recorded ? 'read' : 'not-found');
+        if (activeRef.current && sessionRef.current === session) {
+          const validMarker = recorded?.valueType === 'string' && typeof recorded.value === 'string'
+            ? recorded.value : null;
+          setMarker(validMarker);
+          setOperation(validMarker === null ? 'not-found' : 'read');
         }
       }
     } catch {
       // No raw Cloud/Worker errors or credentials are exposed by the diagnostic.
-      if (activeRef.current) setOperation('failed');
+      if (activeRef.current && sessionRef.current === session) setOperation('failed');
     } finally {
       pendingRef.current = false;
     }
