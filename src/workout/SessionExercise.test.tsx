@@ -312,6 +312,7 @@ describe('SessionExercise and SetEntry boundary', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
     expect(screen.getByRole('dialog', { name: 'Подход 2' })).toBeTruthy();
     expect(screen.getByText('Силовой блок')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
 
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
     expect(onSaveSet).not.toHaveBeenCalled();
@@ -325,8 +326,8 @@ describe('SessionExercise and SetEntry boundary', () => {
       sessionSetId: 302,
       fact: {
         metrics: {
-          weightKg: 85,
-          reps: 8,
+          weightKg: null,
+          reps: null,
           durationSeconds: null,
           distanceMeters: null,
         },
@@ -358,7 +359,7 @@ describe('SessionExercise and SetEntry boundary', () => {
     render(<WorkoutOwner />);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
-      .toContain('85 кг × 8');
+      .toContain('Введите факт');
     fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
     const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(within(picker).getByRole('button', { name: 'Изменить повторения' }));
@@ -451,12 +452,13 @@ describe('planned session with an empty projected FACT object', () => {
   };
 
   it.each(['dismiss', 'save', 'retype'] as const)(
-    'prefills 23 × 5 without pencils and accepts it as FACT via %s', async action => {
+    'offers PLAN 23 × 5 only in picker and accepts it as FACT via %s', async action => {
       const { onSaveSet } = renderExercise({ data: pending });
       const row = screen.getByRole('button', { name: 'Открыть подход 2' });
       expect(within(row).getByText('ввести факт')).toBeTruthy();
       expect(within(row).getByText('План: 23 кг × 5')).toBeTruthy();
       fireEvent.click(row);
+      expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
       fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
       expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('5');
       expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('23');
@@ -475,6 +477,7 @@ describe('planned session with an empty projected FACT object', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
       }
       expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('23 кг × 5');
       expect(onSaveSet).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
       expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }).classList.contains('invisible')).toBe(false);
@@ -497,6 +500,7 @@ describe('planned session with an empty projected FACT object', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     fireEvent.click(screen.getByRole('button', { name: 'Цифра 9' }));
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
     expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
