@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { FlexAttributesRepository } from '../data/cloud/flex-attributes';
@@ -12,9 +13,9 @@ vi.mock('../data/cloud/flex-attributes', () => ({
   FlexAttributesRepository: vi.fn().mockImplementation(() => repoState),
 }));
 vi.mock('../ui', () => ({
-  Text: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) =>
+  Text: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) =>
     <span role={typeof props.role === 'string' ? props.role : undefined}>{children}</span>,
-  Button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }) =>
+  Button: ({ children, onClick, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }) =>
     <button onClick={onClick} disabled={props.disabled} aria-label={props['aria-label']}>{children}</button>,
   GlassSurface: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
   RangePicker: ({ onChange }: { onChange: (range: { min: number; max: number }) => void }) =>
