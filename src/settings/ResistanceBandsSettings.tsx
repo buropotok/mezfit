@@ -178,7 +178,8 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
             : status === 'saving' ? 'Сохраняем изменения…'
               : status === 'synced' ? 'Настройки отправлены в Dexie Cloud.'
                 : status === 'pending' ? 'Ожидается синхронизация.'
-                  : error || 'Измените настройки и нажмите «Сохранить ленты».'}
+                  : status === 'error' ? 'Не удалось завершить операцию с настройками.'
+                    : 'Измените настройки и нажмите «Сохранить ленты».'}
         </Text></p>
         {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       </GlassSurface>
