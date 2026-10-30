@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import type { NavigationContext } from '../NavigationShell';
 import { CoachShell } from './CoachShell';
@@ -45,7 +45,10 @@ vi.mock('../program/CloudProgramDetailsPage', () => ({
     <section aria-label="Детали программы" data-plan-id={planId} data-viewer-role={viewerRole}>Детали {planId}</section>,
 }));
 
-afterEach(() => cleanup());
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+});
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('CoachShell selected client program navigation', () => {
   it('opens the exact shared coach detail view and returns to the same client program tab', async () => {
@@ -67,7 +70,7 @@ describe('CoachShell selected client program navigation', () => {
       expect.objectContaining({ title: 'Детали программы', scrollKey: `cloud-plan:${plan.id}` }),
     ));
     const context = onNavigationContextChange.mock.calls.map(([value]: [NavigationContext | null]) => value)
-      .findLast((value) => value?.title === 'Детали программы');
+      .reverse().find((value) => value?.title === 'Детали программы');
     expect(context?.onBack).toBeTypeOf('function');
     act(() => context?.onBack?.());
 
