@@ -12,6 +12,7 @@ import { MezfitPopover } from '../konsta-mezfit';
 import { triggerTelegramPickerSelectionTick } from '../../telegram';
 import { nearestSettledIndex } from '../time-picker/forwardSettle';
 import { COMPACT_TIME_GEOMETRY, STANDARD_GEOMETRY, type WheelGeometry } from '../time-picker/wheelGeometry';
+import { CYLINDER_HEIGHT, cylinderIndexAt, projectCylinder, visibleCylinderRows } from '../time-picker/cylinderProjection';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
@@ -120,12 +121,15 @@ function visibleLensItems(
   return Array.from({ length: end - start + 1 }, (_, localIndex) => {
     const index = start + localIndex;
     const value = wheelValue(column, index);
+    const projection = geometry === COMPACT_TIME_GEOMETRY
+      ? projectCylinder(index * geometry.rowHeight - scrollTop) : null;
     return {
       index,
       value,
-      // Reverse the lens's vertical scale so adjacent 24px rows stay
-      // 24px apart on screen and cannot intrude into the center lens.
-      y: LENS_HEIGHT / 2 + (index * geometry.rowHeight - scrollTop) / geometry.lensScaleY,
+      projection,
+      // Reverse the optical source scale: the lens and the outer visual
+      // layer use the same projected center positions on screen.
+      y: LENS_HEIGHT / 2 + (projection?.y ?? index * geometry.rowHeight - scrollTop) / geometry.lensScaleY,
     };
   });
 }
@@ -152,12 +156,12 @@ function LensText({
 }) {
   return (
     <>
-      {visibleLensItems(column, scrollTop, geometry).map(({ index, value, y }) => {
+      {visibleLensItems(column, scrollTop, geometry).map(({ index, value, y, projection }) => {
         const scale = lensMode === 'ios' ? iosLensScale(y) : 1;
         // Preserve legibility: an extra source-space vertical scale keeps the
         // selected glyph near 20px tall after the complete lens is compressed.
         const transform = geometry.glyphScaleY !== 1
-          ? `translate(${x} ${y}) scale(${scale} ${scale * geometry.glyphScaleY}) translate(${-x} ${-y})`
+          ? `translate(${x} ${y}) scale(${scale * (projection?.scaleX ?? 1)} ${scale * geometry.glyphScaleY * (projection?.scaleY ?? 1)}) translate(${-x} ${-y})`
           : lensMode === 'ios' && scale !== 1 ? centeredLensScale(x, y, scale) : undefined;
 
         return (
@@ -341,6 +345,32 @@ function PickerLens({
   );
 }
 
+/** Visual projection only: native columns still own touch, inertia and selection. */
+function CylinderRows({ columns, scrollTops, geometry }: {
+  columns: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn];
+  scrollTops: ScrollTops;
+  geometry: WheelGeometry;
+}) {
+  return (
+    <svg className="ui-time-picker__cylinder" viewBox={`0 0 ${LENS_WIDTH} ${CYLINDER_HEIGHT}`}
+      preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      {columns.map((column, side) => visibleCylinderRows(column.values.length,
+        side === 0 ? scrollTops.left : scrollTops.right, geometry.rowHeight).map(row => {
+        const x = LENS_COLUMN_XS[side];
+        const y = CYLINDER_HEIGHT / 2 + row.y;
+        return (
+          <text key={`${side}:${row.index}`} x={x} y={y}
+            transform={`translate(${x} ${y}) scale(${row.scaleX} ${row.scaleY}) translate(${-x} ${-y})`}
+            opacity={row.opacity} textAnchor="middle" dominantBaseline="central"
+            className="ui-time-picker__cylinder-text ui-text--title">
+            {column.format(column.values[row.index])}
+          </text>
+        );
+      }))}
+    </svg>
+  );
+}
+
 function PickerColumnWheel({
   side,
   column,
@@ -398,7 +428,16 @@ function PickerColumnWheel({
             tabIndex={duplicate ? -1 : 0}
             aria-label={duplicate ? undefined : column.formatAria?.(value) ?? label}
             aria-selected={duplicate ? undefined : isSelected}
-            onClick={(event) => onSelect(side, index, event)}
+            onClick={(event) => {
+              let tapped = index;
+              const element = columnRef.current;
+              if (geometry === COMPACT_TIME_GEOMETRY && element && event.detail > 0) {
+                const bounds = element.getBoundingClientRect();
+                if (bounds.height > 0) tapped = cylinderIndexAt(column.values.length, element.scrollTop,
+                  geometry.rowHeight, (event.clientY - bounds.top) * CYLINDER_HEIGHT / bounds.height);
+              }
+              onSelect(side, tapped, event);
+            }}
           >
             {label}
           </button>
@@ -874,7 +913,7 @@ export function TwoColumnPicker({
       iosHighlight={false}
       onBackdropClick={handleClose}
       className={geometryName === 'compact-time'
-        ? 'ui-time-picker__popover ui-time-picker__popover--compact-time'
+        ? 'ui-time-picker__popover ui-time-picker__popover--compact-time ui-time-picker__popover--cylinder'
         : 'ui-time-picker__popover'}
       style={{ width: isTimeWheel ? '270px' : '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
@@ -917,6 +956,7 @@ export function TwoColumnPicker({
             />
           </div>
 
+          {isTimeWheel ? <CylinderRows columns={columns} scrollTops={scrollTops} geometry={geometry} /> : null}
           <PickerLens
             assets={lensAssets}
             scrollTops={scrollTops}
