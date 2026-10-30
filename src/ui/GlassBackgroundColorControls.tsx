@@ -10,6 +10,7 @@ export function GlassBackgroundColorControls({
   onChange,
   minimumBrightness = 20,
   stacked = false,
+  colorSubject = 'фона',
   children,
 }: {
   color: HsvColor;
