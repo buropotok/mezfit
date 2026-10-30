@@ -23,6 +23,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
   const [bands, setBands] = useState<ResistanceBandSetting[]>(() =>
     RESISTANCE_BAND_DEFAULTS.map(band => ({ ...band })));
   const [status, setStatus] = useState<Status>('loading');
+  const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<ResistanceBandSetting['id'] | null>(null);
   const [picker, setPicker] = useState<{ id: ResistanceBandSetting['id']; target: HTMLElement } | null>(null);
   const [error, setError] = useState('');
@@ -33,6 +34,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
     let active = true;
     activeRef.current = true;
     setStatus('loading');
+    setLoaded(false);
     setError('');
     if (!repo || !actorUserId) {
       setStatus('error');
@@ -46,6 +48,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
         const local = await loadResistanceBands(repo, actorUserId);
         if (!active) return;
         setBands(local);
+        setLoaded(true);
         setStatus('ready');
         try {
           if (!db) return;
@@ -78,7 +81,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
   };
 
   const save = async () => {
-    if (!repo || !db || !actorUserId || savingRef.current || status === 'loading') return;
+    if (!repo || !db || !actorUserId || !loaded || savingRef.current || status === 'loading') return;
     savingRef.current = true;
     setStatus('saving');
     setError('');
@@ -125,7 +128,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
               <Text variant="body">Лента {band.id}</Text>
               <Button
                 variant={editing === band.id ? 'primary' : 'secondary'}
-                disabled={status === 'saving' || status === 'loading'}
+                disabled={!loaded || status === 'saving' || status === 'loading'}
                 aria-label={`Изменить диапазон ленты ${band.id}`}
                 onClick={(event) => {
                   setEditing(band.id);
@@ -156,10 +159,10 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
           />
         ) : null}
         <div className="settings-page__actions">
-          <Button onClick={() => { void save(); }} disabled={!repo || status === 'saving' || status === 'loading'}>
+          <Button onClick={() => { void save(); }} disabled={!repo || !loaded || status === 'saving' || status === 'loading'}>
             {status === 'saving' ? 'Сохраняем…' : 'Сохранить ленты'}
           </Button>
-          <Button variant="secondary" disabled={status === 'saving' || status === 'loading'}
+          <Button variant="secondary" disabled={!loaded || status === 'saving' || status === 'loading'}
             onClick={() => {
               userEditingRef.current = true;
               setPicker(null);
