@@ -33,6 +33,21 @@ function Trigger({ done, failed, isCurrent }: { done: (id: string) => void; fail
 beforeEach(() => { vi.clearAllMocks(); state.create.mockRejectedValueOnce(new PlannedWorkoutConflict([other])).mockResolvedValue({ id: 'execution' }); state.cancel.mockResolvedValue(undefined); state.flush.mockResolvedValue(undefined); });
 afterEach(cleanup);
 describe('Start cancellation sequencing', () => {
+  it.each([
+    ['ADHOC_ATHLETE_ACTIVE_COACH_PROGRAM', 'В текущий момент у атлета незавершённая активность, перейдите в разделе Клиент/Тренировка.'],
+    ['ADHOC_ATHLETE_ACTIVE', 'В текущий момент у атлета незавершённая активность.'],
+  ])('shows the Coach activity message for %s without conversion or cancellation', async (code, message) => {
+    state.create.mockReset().mockRejectedValue(new Error(code));
+    const done = vi.fn(), failed = vi.fn();
+    render(<PlannedWorkoutStartProvider role="coach" onStarted={vi.fn()}><Trigger done={done} failed={failed} /></PlannedWorkoutStartProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Начать' }));
+    await waitFor(() => expect(failed).toHaveBeenCalledOnce());
+    expect(screen.getByText(message)).toBeTruthy();
+    expect(screen.queryByRole('alertdialog', { name: 'Начать тренировку в зале с клиентом?' })).toBeNull();
+    expect(state.cancel).not.toHaveBeenCalled();
+    expect(state.create).toHaveBeenCalledOnce();
+    expect(done).not.toHaveBeenCalled();
+  });
   it('waits for the conflict Sheet to fully close, then cancels and retries Start', async () => {
     const done = vi.fn(), failed = vi.fn();
     render(<PlannedWorkoutStartProvider role="coach" onStarted={vi.fn()}><Trigger done={done} failed={failed} /></PlannedWorkoutStartProvider>);

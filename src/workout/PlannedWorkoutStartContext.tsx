@@ -7,7 +7,7 @@ import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurren
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { PlannedWorkoutConflict } from '../data/cloud/planned-workout-conflicts';
 import { PlannedWorkoutConflictSheet } from './PlannedWorkoutConflictSheet';
-import { adHocErrorMessage, WorkoutStartDismissed } from './adhoc-workout-errors';
+import { adHocErrorMessage, isActiveWorkoutError, WorkoutStartDismissed } from './adhoc-workout-errors';
 
 type CancellationPresentation = (id: string, commit: () => Promise<void>) => Promise<void>;
 export interface ProgramWorkoutStartInput { athleteUserId: string; programId?: string; dayId?: string }
@@ -47,7 +47,7 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
   const generation = useRef(0);
   const onStartedRef = useRef(onStarted);
   onStartedRef.current = onStarted;
-  const [blocked, setBlocked] = useState(false);
+  const [blocked, setBlocked] = useState('');
   const [coachedPrompt, setCoachedPrompt] = useState(false);
   const coachedDecision = useRef<((accepted: boolean) => void) | null>(null);
   const decideCoached = (accepted: boolean) => {
@@ -74,7 +74,7 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
     else await commit();
   }, [drafts]);
   useEffect(() => {
-    ++generation.current; running.current = false; setBlocked(false); setConflictError('');
+    ++generation.current; running.current = false; setBlocked(''); setConflictError('');
     coachedDecision.current?.(false); coachedDecision.current = null; setCoachedPrompt(false);
     pendingDecision.current?.('back'); pendingDecision.current = null; setConflictOpened(false); setConflict(null); setConflictActive(false);
     return () => { ++generation.current; coachedDecision.current?.(false); coachedDecision.current = null; pendingDecision.current?.('back'); pendingDecision.current = null; };
@@ -134,7 +134,7 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
       }, role === 'coach' ? () => drafts.flushEdits(draft.id) : undefined, isCurrent);
     } catch (reason) {
       if (reason instanceof WorkoutStartDismissed) throw reason;
-      if (token === generation.current && reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS') setBlocked(true);
+      if (token === generation.current && isActiveWorkoutError(reason)) setBlocked(adHocErrorMessage(reason));
       throw new Error(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
     }
   }, [repository, drafts, runStart, role]);
@@ -168,8 +168,8 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
       buttons={<MezfitDialogButton strong onClick={() => setConflictError('')}>Понятно</MezfitDialogButton>}>
       <Text variant="body">{conflictError}</Text>
     </MezfitDialog>
-    <MezfitDialog opened={blocked} title="Завершите текущую тренировку, чтобы начать новую."
-      onBackdropClick={() => setBlocked(false)}
-      buttons={<MezfitDialogButton strong onClick={() => setBlocked(false)}>Понятно</MezfitDialogButton>} />
+    <MezfitDialog opened={Boolean(blocked)} title={<Text variant="headline">{blocked}</Text>}
+      onBackdropClick={() => setBlocked('')}
+      buttons={<MezfitDialogButton strong onClick={() => setBlocked('')}><Text variant="body">Понятно</Text></MezfitDialogButton>} />
   </Context.Provider>;
 }

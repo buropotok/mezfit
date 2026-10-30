@@ -56,12 +56,11 @@ describe('one active ad-hoc session per creator', () => {
     expect(await repo.getActive()).toEqual({ id: first.id, name: 'Тренировка' });
     await expect(repo.createQuick()).rejects.toThrow('ADHOC_ACTIVE_SESSION_EXISTS');
     await expect(repo.createForAthlete('tg:303')).rejects.toThrow('ADHOC_ACTIVE_SESSION_EXISTS');
-    // A readable session created by the coach does not occupy the client's slot.
+    // The athlete is occupied even when a different participant created it.
     const client = new AdHocWorkoutRepository(database, 'tg:202');
     expect(await client.getActive()).toBeNull();
     expect(await client.get(first.id)).not.toBeNull();
-    const personal = await client.createQuick();
-    expect((await client.getActive())?.id).toBe(personal.id);
+    await expect(client.createQuick()).rejects.toThrow('ADHOC_ACTIVE_SESSION_EXISTS');
   });
 
   it('restores active status after reopen and permits a new start while a template choice is pending', async () => {

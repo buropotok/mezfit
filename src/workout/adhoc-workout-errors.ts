@@ -20,6 +20,8 @@ const messages: Readonly<Record<string, string>> = {
   ADHOC_RELATIONSHIP_IDENTITY_INVALID: 'Тренировка недоступна: участники не соответствуют совместной записи. Код: ADHOC_RELATIONSHIP_IDENTITY_INVALID.',
   ADHOC_RELATIONSHIP_UNAVAILABLE: 'Тренировка недоступна: не подтверждён доступ к связи тренера и клиента на устройстве. Код: ADHOC_RELATIONSHIP_UNAVAILABLE.',
   ADHOC_ACTIVE_SESSION_EXISTS: 'Завершите текущую тренировку, чтобы начать новую.',
+  ADHOC_ATHLETE_ACTIVE_COACH_PROGRAM: 'В текущий момент у атлета незавершённая активность, перейдите в разделе Клиент/Тренировка.',
+  ADHOC_ATHLETE_ACTIVE: 'В текущий момент у атлета незавершённая активность.',
   ADHOC_SESSION_NOT_FOUND: 'Тренировка недоступна. Вернитесь к списку тренировок.',
   ADHOC_SESSION_COMPLETED: 'Тренировка уже завершена.',
   CLIENT_EXECUTION_ACL_REQUIRED: 'Запись результатов пока недоступна. Попробуйте позже.',
@@ -41,6 +43,11 @@ const messages: Readonly<Record<string, string>> = {
   ADHOC_TOO_MANY_EXERCISES: 'В тренировку можно добавить не более 100 упражнений.',
   ADHOC_TOO_MANY_SETS: 'В упражнение можно добавить не более 100 подходов.',
 };
+
+export function isActiveWorkoutError(reason: unknown): reason is Error {
+  return reason instanceof Error && ['ADHOC_ACTIVE_SESSION_EXISTS', 'ADHOC_ATHLETE_ACTIVE_COACH_PROGRAM',
+    'ADHOC_ATHLETE_ACTIVE'].includes(reason.message);
+}
 
 export function adHocErrorMessage(reason: unknown, fallback = 'Не удалось сохранить изменения. Повторите действие.'): string {
   if (!(reason instanceof Error)) return fallback;

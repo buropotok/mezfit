@@ -8,11 +8,11 @@ import { ScheduleWorkoutCreator } from '../schedule/ScheduleWorkoutCreator';
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { PlannedWorkoutsSheet } from './PlannedWorkoutsSheet';
 import { AdHocSessionScreen } from './AdHocSessionScreen';
-import { adHocErrorMessage } from './adhoc-workout-errors';
+import { adHocErrorMessage, isActiveWorkoutError } from './adhoc-workout-errors';
 import { usePlannedWorkoutStart, type ProgramWorkoutStartInput } from './PlannedWorkoutStartContext';
 import './adhoc-workouts.css';
 
-const alreadyActive = (reason: unknown) => reason instanceof Error && reason.message === 'ADHOC_ACTIVE_SESSION_EXISTS';
+const ownActivityMessage = 'Завершите текущую тренировку, чтобы начать новую.';
 const ignoreScheduledCreation = () => {};
 
 export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextChange }: {
@@ -33,7 +33,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   const [childNavigation, setChildNavigation] = useState<NavigationContext | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [blocked, setBlocked] = useState(false);
+  const [blocked, setBlocked] = useState('');
   const [toast, setToast] = useState(false);
   const [retry, setRetry] = useState(0);
   const generation = useRef(0);
@@ -47,7 +47,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   useEffect(() => {
     ++generation.current; running.current = false; activeId.current = null;
     setBusy(false); setError(''); setSessionId(null); setSourceOpen(false); setPlannedOpen(false);
-    setPendingStep(null); setChildNavigation(null); setSessions([]); setSessionsLoaded(false); setBlocked(false);
+    setPendingStep(null); setChildNavigation(null); setSessions([]); setSessionsLoaded(false); setBlocked('');
     return () => { ++generation.current; };
   }, [repository]);
   useEffect(() => {
@@ -89,13 +89,13 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
   }, []);
   const quick = useCallback(async () => {
     if (running.current || !repository) return;
-    if (activeId.current) { setBlocked(true); return; }
+    if (activeId.current) { setBlocked(ownActivityMessage); return; }
     const token = generation.current;
     running.current = true; setBusy(true); setError('');
     try { openCreated(await (start ? start.startQuick(() => token === generation.current) : repository.createQuick()), token); }
     catch (reason) {
       if (token !== generation.current) return;
-      if (alreadyActive(reason)) setBlocked(true);
+      if (isActiveWorkoutError(reason)) setBlocked(adHocErrorMessage(reason));
       else setError(adHocErrorMessage(reason, 'Не удалось создать тренировку'));
     } finally { if (token === generation.current) { running.current = false; setBusy(false); } }
   }, [repository, openCreated, start]);
@@ -107,14 +107,14 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
         : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId)), token);
     } catch (reason) {
       if (token !== generation.current) return;
-      if (alreadyActive(reason)) { closeSource(); setBlocked(true); }
+      if (isActiveWorkoutError(reason)) { closeSource(); setBlocked(adHocErrorMessage(reason)); }
       else throw new Error(adHocErrorMessage(reason));
     }
   }, [repository, openCreated, closeSource, start]);
   const action = useMemo<NavigationFloatingAction | null>(() => {
     if (sourceOpen || plannedOpen || start?.conflictActive) return null;
     const common = { label: 'Создать тренировку', icon: 'plus' as const, disabled: busy || !repository || !sessionsLoaded };
-    if (hasActive) return { ...common, disabled: busy, onClick: () => setBlocked(true) };
+    if (hasActive) return { ...common, disabled: busy, onClick: () => setBlocked(ownActivityMessage) };
     return { ...common, popoverItems: [
       { id: 'quick', label: 'Быстрая тренировка', icon: 'treadmill', onSelect: () => setPendingStep('quick') },
       { id: 'program', label: 'Из программы', icon: 'barbell', onSelect: () => setPendingStep('program') },
@@ -122,7 +122,7 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     ], onPresentationChange: presented => {
       if (presented || !pendingStep) return;
       const next = pendingStep; setPendingStep(null); setError('');
-      if (activeId.current) { setBlocked(true); return; }
+      if (activeId.current) { setBlocked(ownActivityMessage); return; }
       if (next === 'quick') void quick();
       else if (next === 'program') setSourceOpen(true);
       else setPlannedOpen(true);
@@ -151,9 +151,9 @@ export function CoachAdHocWorkoutsScreen({ initData, actor, onNavigationContextC
     <PlannedWorkoutsSheet opened={plannedOpen} actor={actor} onClose={closePlanned} onError={setError}
       onStarted={id => { setSessionId(id); setPlannedOpen(false); setChildNavigation(null); }}
       onNavigationContextChange={setChildNavigation} />
-    <MezfitDialog opened={blocked} title="Завершите текущую тренировку, чтобы начать новую."
-      onBackdropClick={() => setBlocked(false)}
-      buttons={<MezfitDialogButton strong onClick={() => setBlocked(false)}>Понятно</MezfitDialogButton>} />
+    <MezfitDialog opened={Boolean(blocked)} title={<Text variant="headline">{blocked}</Text>}
+      onBackdropClick={() => setBlocked('')}
+      buttons={<MezfitDialogButton strong onClick={() => setBlocked('')}><Text variant="body">Понятно</Text></MezfitDialogButton>} />
     <Toast opened={toast} position="center" role="status" aria-live="polite">
       <Text variant="body">Была создана программа.</Text>
     </Toast>
