@@ -262,7 +262,7 @@ function SetEntryEditor(props: Exclude<SetEntryProps, { mode: 'occurrence-plan' 
   const isPlan = props.mode === 'plan';
   const bandsId = useId();
   const savingRef = useRef(false);
-  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(data));
+  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(data, isPlan ? 'plan' : 'fact'));
   const [bandsOpen, setBandsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
