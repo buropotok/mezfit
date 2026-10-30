@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { NavigationContext } from '../NavigationShell';
 import { SettingsPage } from './SettingsPage';
@@ -19,7 +19,7 @@ describe('SettingsPage personal bands navigation', () => {
     const context = onNavigationContextChange.mock.lastCall?.[0];
     expect(context?.title).toBe('Фитнес-ленты');
     expect(context?.scrollKey).toBe('settings:resistance-bands');
-    context?.onBack?.();
+    act(() => { context?.onBack?.(); });
     expect(screen.getByRole('button', { name: 'Фитнес-ленты' })).toBeTruthy();
   });
 });
