@@ -17,6 +17,9 @@ import './workout-band-control.css';
 // Keep the persisted FACT band codes stable. The five editable palette rows
 // have fixed personal identities; an existing legacy purple FACT is not rewritten.
 const BAND_CODES: readonly ResistanceBandCode[] = ['green', 'blue', 'yellow', 'red', 'black'];
+const BAND_CODE_BY_ID: Record<ResistanceBandSetting['id'], ResistanceBandCode> = {
+  1: 'green', 2: 'blue', 3: 'yellow', 4: 'red', 5: 'black',
+};
 const bandIndex = (code: ResistanceBandCode | null) =>
   code === null ? -1 : BAND_CODES.indexOf(code);
 
@@ -74,8 +77,10 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
   const selectedBand = selectedIndex < 0 ? null : palette[selectedIndex];
   const beginEdit = (id: ResistanceBandSetting['id']) => {
     if (disabled || !loaded || !repository || loadError) return;
+    const band = palette.find(candidate => candidate.id === id);
+    if (!band) return;
     setEditId(id);
-    setEditDraft({ ...palette[id - 1] });
+    setEditDraft({ ...band });
     dirtyFieldsRef.current.clear();
     setSaveError('');
     // Open after the liquid close finishes; never stack two interactive popovers.
@@ -116,12 +121,12 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
   };
 
   const items: LiquidPopoverItem[] = palette.map(band => ({
-    id: BAND_CODES[band.id - 1],
+    id: BAND_CODE_BY_ID[band.id],
     label: `${band.min}–${band.max} кг`,
     icon: 'tilde',
     iconColor: band.color,
-    active: selected === BAND_CODES[band.id - 1],
-    onSelect: () => onSelect(selected === BAND_CODES[band.id - 1] ? null : BAND_CODES[band.id - 1]),
+    active: selected === BAND_CODE_BY_ID[band.id],
+    onSelect: () => onSelect(selected === BAND_CODE_BY_ID[band.id] ? null : BAND_CODE_BY_ID[band.id]),
     trailingAction: repository && !loadError ? {
       icon: 'pencil',
       label: `Изменить параметры ленты ${band.id}`,
