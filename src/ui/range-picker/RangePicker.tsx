@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
   TwoColumnPicker,
   type TwoColumnPickerColumn,
@@ -10,12 +10,6 @@ export interface ResistanceRange {
   max: number;
 }
 
-const VALUES = Array.from({ length: 30 }, (_, index) => index + 1);
-const COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
-  { ariaLabel: 'Минимальная нагрузка, кг', values: VALUES, format: String },
-  { ariaLabel: 'Максимальная нагрузка, кг', values: VALUES, format: String },
-];
-
 export interface RangePickerProps {
   opened: boolean;
   value: ResistanceRange;
@@ -23,6 +17,11 @@ export interface RangePickerProps {
   onClose: () => void;
   target: HTMLElement | null;
   lensMode?: TwoColumnPickerLensMode;
+  /** Inclusive wheel bounds; editable range itself remains value.min/value.max. */
+  minAllowed?: number;
+  maxAllowed?: number;
+  /** Optional controls beneath the wheels, e.g. a color picker. */
+  footer?: ReactNode;
 }
 
 export function assertResistanceRange(value: ResistanceRange): void {
@@ -48,8 +47,21 @@ export function applyRangePickerPart(
 }
 
 /** Uses the unchanged TimePicker wheel/lens geometry and native interaction. */
-export function RangePicker({ opened, value, onChange, onClose, target, lensMode = 'auto' }: RangePickerProps) {
+export function RangePicker({ opened, value, onChange, onClose, target, lensMode = 'auto',
+  minAllowed = 1, maxAllowed = 30, footer }: RangePickerProps) {
+  if (!Number.isInteger(minAllowed) || !Number.isInteger(maxAllowed)
+    || minAllowed < 1 || maxAllowed > 30 || minAllowed > maxAllowed
+    || value.min < minAllowed || value.max > maxAllowed) {
+    throw new Error('INVALID_RESISTANCE_LIMITS');
+  }
   assertResistanceRange(value);
+  const columns = useMemo<readonly [TwoColumnPickerColumn, TwoColumnPickerColumn]>(() => {
+    const values = Array.from({ length: maxAllowed - minAllowed + 1 }, (_, index) => minAllowed + index);
+    return [
+      { ariaLabel: 'Минимальная нагрузка, кг', values, format: String },
+      { ariaLabel: 'Максимальная нагрузка, кг', values, format: String },
+    ];
+  }, [minAllowed, maxAllowed]);
   // The underlying wheel may emit several raw positions before applying a
   // normalized controlled prop during native scrolling. Compare raw events to
   // raw events, not the newest normalized props, to preserve the active side.
@@ -91,7 +103,8 @@ export function RangePicker({ opened, value, onChange, onClose, target, lensMode
       }}
       onClose={onClose}
       target={target}
-      columns={COLUMNS}
+      columns={columns}
+      footer={footer}
       separator="–"
       ariaLabel="Диапазон нагрузки резинки, кг"
       geometry="compact-time"
