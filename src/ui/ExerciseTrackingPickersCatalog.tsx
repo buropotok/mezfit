@@ -33,7 +33,7 @@ export function ExerciseTrackingPickersCatalog() {
     <>
       <Surface as="section" className="ui-kit-section">
         <Text variant="title">Num picker</Text>
-        <Text variant="caption" tone="muted">Целые числа от 0 до 999. Слева — сотни 0–9, справа — последние две цифры 00–99.</Text>
+        <Text variant="caption" tone="muted">Целые числа от 0 до 999. Одна колонка, нативная инерция и остановка на ближайшем числе.</Text>
         <Divider />
         <div className="ui-kit-stack">
           <Text>Выбрано: {numValue}</Text>

@@ -73,7 +73,7 @@
   );
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: none;
   scrollbar-width: none;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
@@ -121,14 +121,6 @@
 
 .ui-time-picker__option--selected {
   color: var(--ui-color-surface-text);
-}
-
-.ui-time-picker__separator {
-  display: grid;
-  place-items: center;
-  color: var(--ui-color-surface-muted);
-  font-family: var(--ui-font-family);
-  opacity: 0;
 }
 
 .ui-time-picker__lens {
@@ -201,11 +193,23 @@
   height: 100%;
   pointer-events: none;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0 42.5%, transparent 42.5% 57.5%, #000 57.5% 100%);
-  mask-image: linear-gradient(to bottom, #000 0 42.5%, transparent 42.5% 57.5%, #000 57.5% 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 calc(50% - var(--ui-time-picker-lens-height) / 2), transparent calc(50% - var(--ui-time-picker-lens-height) / 2) calc(50% + var(--ui-time-picker-lens-height) / 2), #000 calc(50% + var(--ui-time-picker-lens-height) / 2) 100%);
+  mask-image: linear-gradient(to bottom, #000 0 calc(50% - var(--ui-time-picker-lens-height) / 2), transparent calc(50% - var(--ui-time-picker-lens-height) / 2) calc(50% + var(--ui-time-picker-lens-height) / 2), #000 calc(50% + var(--ui-time-picker-lens-height) / 2) 100%);
 }
 
 .ui-time-picker__cylinder-text {
   fill: var(--ui-color-surface-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* Column adapters share the same wheel mechanics and optical track. */
+.ui-time-picker__popover--compact-time .ui-time-picker__columns--1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ui-time-picker__popover--compact-time .ui-time-picker__columns--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+}
+.ui-time-picker__popover--compact-time .ui-time-picker__columns--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }

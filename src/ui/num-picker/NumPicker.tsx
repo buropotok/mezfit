@@ -1,36 +1,6 @@
-import {
-  TwoColumnPicker,
-  type TwoColumnPickerColumn,
-} from '../two-column-picker/TwoColumnPicker';
+import { OneColumnPicker } from '../one-column-picker/OneColumnPicker';
 
-const HUNDREDS_VALUES = Array.from({ length: 10 }, (_, index) => index);
-const LOWER_VALUES = Array.from({ length: 100 }, (_, index) => index);
-
-function formatHundreds(value: number) {
-  return value === 0 ? '' : String(value);
-}
-
-function formatHundredsAria(value: number) {
-  return value === 0 ? 'Без сотен' : String(value);
-}
-
-function formatLower(value: number) {
-  return String(value).padStart(2, '0');
-}
-
-const NUMBER_COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
-  {
-    ariaLabel: 'Сотни',
-    values: HUNDREDS_VALUES,
-    format: formatHundreds,
-    formatAria: formatHundredsAria,
-  },
-  {
-    ariaLabel: 'Последние две цифры',
-    values: LOWER_VALUES,
-    format: formatLower,
-  },
-];
+const NUMBER_COLUMN = { ariaLabel: 'Число', values: Array.from({ length: 1000 }, (_, index) => index), format: String };
 
 export interface NumPickerProps {
   opened: boolean;
@@ -55,17 +25,14 @@ export function NumPicker({
 }: NumPickerProps) {
   assertNumPickerValue(value);
 
-  const hundreds = Math.floor(value / 100);
-  const lower = value % 100;
-
   return (
-    <TwoColumnPicker
+    <OneColumnPicker
       opened={opened}
       target={target}
-      value={{ left: hundreds, right: lower }}
-      columns={NUMBER_COLUMNS}
+      value={value}
+      column={NUMBER_COLUMN}
       ariaLabel="Выбор числа"
-      onChange={({ left, right }) => onChange(left * 100 + right)}
+      onChange={onChange}
       onClose={onClose}
     />
   );
