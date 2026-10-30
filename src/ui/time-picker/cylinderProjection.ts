@@ -1,12 +1,15 @@
 export const CYLINDER_HEIGHT = 240;
 const RADIUS = CYLINDER_HEIGHT / 2;
 const PERSPECTIVE = RADIUS * 4;
+// Finite-distance perspective exposes less than a full semicircle. Stop at
+// its tangent so projected centers never fold back over the preceding rows.
+const HORIZON = Math.acos(RADIUS / (PERSPECTIVE + RADIUS));
 
 /** Project an arc-length offset onto the visible half of a cylinder.
  *  Logical row spacing remains unchanged in the native scroll container. */
 export function projectCylinder(offset: number) {
   const angle = offset / RADIUS;
-  if (Math.abs(angle) >= Math.PI / 2) return null;
+  if (Math.abs(angle) >= HORIZON) return null;
   const cosine = Math.cos(angle);
   const depth = RADIUS * (1 - cosine);
   const perspective = PERSPECTIVE / (PERSPECTIVE + depth);
