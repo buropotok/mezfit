@@ -5,7 +5,7 @@ import {
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
-import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Tabs, TabsContent, Text } from '../ui';
+import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { GlassSurface } from '../ui/GlassSurface';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
@@ -34,6 +34,15 @@ const tabs: ReadonlyArray<{ value: ClientTab; label: string }> = [
   { value: 'progress', label: 'Прогресс' },
   { value: 'history', label: 'История' },
 ];
+
+const clientPlaceholderCopy: Record<ClientTab, { title: string; text: string }> = {
+  overview: { title: 'Обзор', text: 'Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера.' },
+  program: { title: 'Программа', text: 'Редактор назначенной программы будет следующим вертикальным срезом.' },
+  exercises: { title: 'Упражнения', text: 'Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud.' },
+  calendar: { title: 'Календарь', text: 'Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence.' },
+  progress: { title: 'Прогресс', text: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.' },
+  history: { title: 'История', text: 'Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом.' },
+};
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
@@ -69,9 +78,10 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
 function ClientWorkspace({ client }: { client: CloudContact }) {
   const [tab, setTab] = useState<ClientTab>('overview');
   const name = displayName(client);
+  const content = clientPlaceholderCopy[tab];
 
   return (
-    <Tabs className="stack client-workspace" value={tab} onValueChange={(value) => setTab(value as ClientTab)}>
+    <div className="stack client-workspace">
       <div className="client-workspace-tabs" role="group" aria-label={`Разделы клиента ${name}`}>
         <LiquidGlassTextOnly tabs={tabs} value={tab} hidden={false} fullWidth
           onValueChange={(value) => {
@@ -79,13 +89,8 @@ function ClientWorkspace({ client }: { client: CloudContact }) {
           }} />
       </div>
 
-      <TabsContent value="overview"><Placeholder title="Обзор" text="Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера." /></TabsContent>
-      <TabsContent value="program"><Placeholder title="Программа" text="Редактор назначенной программы будет следующим вертикальным срезом." /></TabsContent>
-      <TabsContent value="exercises"><Placeholder title="Упражнения" text="Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud." /></TabsContent>
-      <TabsContent value="calendar"><Placeholder title="Календарь" text="Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence." /></TabsContent>
-      <TabsContent value="progress"><Placeholder title="Прогресс" text="Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра." /></TabsContent>
-      <TabsContent value="history"><Placeholder title="История" text="Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом." /></TabsContent>
-    </Tabs>
+      <Placeholder title={content.title} text={content.text} />
+    </div>
   );
 }
 
