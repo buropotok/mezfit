@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   RangePicker,
@@ -16,12 +17,14 @@ vi.mock('../two-column-picker/TwoColumnPicker', () => ({
     geometry: string;
     ariaLabel: string;
     onChange: (value: { left: number; right: number }) => void;
+    footer?: ReactNode;
   }) => {
     picker.onChange = props.onChange;
     return <div role="dialog" aria-label={props.ariaLabel}>
       <span>{props.value.left}–{props.value.right}</span>
       <span data-testid="wheel-geometry">{props.geometry}</span>
       <span data-testid="wheel-range">{props.columns[0].values[0]}–{props.columns[1].values.at(-1)}</span>
+      {props.footer}
       <button onClick={() => props.onChange({ left: 21, right: props.value.right })}>Установить минимум</button>
       <button onClick={() => props.onChange({ left: props.value.left, right: 3 })}>Установить максимум</button>
     </div>;
@@ -59,6 +62,14 @@ describe('RangePicker UIkit primitive', () => {
     // Deferred normalized props may land between two right-wheel events.
     act(() => { picker.onChange?.({ left: 8, right: 7 }); });
     expect(onChange).toHaveBeenLastCalledWith({ min: 7, max: 7 });
+  });
+
+  it('exposes configurable min/max and renders the supplied footer beneath the wheels', () => {
+    render(<RangePicker opened value={{ min: 4, max: 11 }} target={null}
+      minAllowed={1} maxAllowed={30} onChange={() => {}} onClose={() => {}}
+      footer={<button>Выбрать цвет</button>} />);
+    expect(screen.getByTestId('wheel-range').textContent).toBe('1–30');
+    expect(screen.getByRole('button', { name: 'Выбрать цвет' })).toBeTruthy();
   });
 
   it('rejects invalid ranges while allowing equal endpoints', () => {
