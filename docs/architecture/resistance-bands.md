@@ -32,9 +32,13 @@ No Konsta internals or primitive mechanics/styles are altered.
   is no ordinary-user delete grant. A fresh account has no band rows until
   changing settings.
 - The screen reads the local working copy immediately, then attempts a
-  background initial pull; a local edit cannot be overwritten by an older
-  completion. Saving validates all values and commits the needed EAV changes
-  in one transaction, then waits for `Dexie Cloud Addon` push. Push failures
+  background initial pull; it merges remote values into fields the user has
+  **not** touched and preserves the actively edited values. When saving, only
+  explicitly edited `Band_{1..5}_{color|min|max}` keys are included in the EAV
+  transaction; comparisons use the latest local synchronized records, not
+  stale defaults on a second device. A concurrent min/max conflict is rejected
+  rather than writing an invalid range or clobbering another field.
+  A completed local save then waits for `Dexie Cloud Addon` push. Push failures
   are reported as *local save, cloud unconfirmed*, never as remote success.
 - This PR is personal preferences only. Existing workout FACT `bands`
   values retain their current domain codes. Historical session snapshots and
@@ -60,6 +64,13 @@ in the real Telegram Mini App:
    connection and retry Save.
 5. Under a separate Telegram user, check that their personal palette is
    independent. A different account must not read the first user's values.
+6. Two-device overlap test: on device B open the editor but do not edit Band 4.
+   On device A change Band 4's color and sync. On device B change only Band 2's
+   range and save, including while its initial pull is running. Confirm on
+   device A that Band 4's color is not reset and Band 2 retains B's range.
+   If two devices change incompatible ends of the *same* range, the save must
+   refuse to create an invalid min/max pair rather than silently resetting
+   the other endpoint.
 
 These checks verify the actual settings product path, not a synthetic
 diagnostic marker. Shared session ACL and immutable session snapshots still
