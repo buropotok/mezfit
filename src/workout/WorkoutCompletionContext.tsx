@@ -34,23 +34,23 @@ export function WorkoutCompletionProvider({ enabled, scope, onNavigationContextC
   const [rows, setRows] = useState<CloudWorkoutOccurrenceRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [retry, setRetry] = useState(0);
+  const [failedSessionId, setFailedSessionId] = useState<string | null>(null);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
     seen.current.clear(); ignored.current.clear(); running.current = false;
-    setSessionId(null); setRows([]); setBusy(false); setError('');
+    setSessionId(null); setFailedSessionId(null); setRows([]); setBusy(false); setError('');
     onNavigationContextChange(null);
   }, [repository, scope, onNavigationContextChange]);
   const current = useCallback(() => alive.current && activeScope.current.scope === scope
     && activeScope.current.repository === repository, [scope, repository]);
   const close = useCallback(() => {
     if (running.current) return;
-    setSessionId(null); setRows([]); setError('');
+    setSessionId(null); setFailedSessionId(null); setRows([]); setError('');
   }, []);
   const reviewCompleted = useCallback((id: string) => {
     if (!repository || !current() || seen.current.has(id)) return;
     seen.current.add(id); ignored.current.clear();
-    setRows([]); setSessionId(id); setError('');
+    setRows([]); setFailedSessionId(null); setSessionId(id); setError('');
   }, [repository, current]);
   useEffect(() => {
     if (!repository || !sessionId) return;
@@ -62,12 +62,12 @@ export function WorkoutCompletionProvider({ enabled, scope, onNavigationContextC
       if (!remaining.length) setSessionId(null);
     }, reason => {
       if (active && current()) {
-        setRows([]);
+        setRows([]); setSessionId(null); setFailedSessionId(sessionId);
         setError(adHocErrorMessage(reason, 'Тренировка завершена. Не удалось проверить пересечения'));
       }
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, sessionId, retry, current]);
+  }, [repository, sessionId, current]);
   useEffect(() => {
     if (!error) return;
     const timer = window.setTimeout(() => setError(''), 5000);
@@ -100,7 +100,9 @@ export function WorkoutCompletionProvider({ enabled, scope, onNavigationContextC
       onError={reason => setError(adHocErrorMessage(reason))}
       onNavigationContextChange={onNavigationContextChange} /> : null}
     {error ? <Toast opened position="center" role="alert"><Text variant="body">{error}</Text>
-      {sessionId && !rows.length ? <Button small rounded inline onClick={() => setRetry(value => value + 1)}>
+      {failedSessionId ? <Button small rounded inline onClick={() => {
+        setSessionId(failedSessionId); setFailedSessionId(null); setError('');
+      }}>
         <Text variant="body">Повторить проверку</Text>
       </Button> : null}
     </Toast> : null}
