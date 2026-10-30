@@ -10,9 +10,11 @@ import type { ActiveWorkoutSession } from './workoutSessionTypes';
 
 const overlays = vi.hoisted(() => ({
   finish: null as (() => void) | null,
+  review: vi.fn(),
   select: null as ((ids: string[]) => void) | null,
 }));
 
+vi.mock('./WorkoutCompletionContext', () => ({ useWorkoutCompletionReview: () => ({ active: false, reviewCompleted: overlays.review }) }));
 vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: 'Атлет', avatar: <span>Фото атлета</span>, compactAvatar: null }) }));
 vi.mock('konsta/react', () => ({
   Button: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
@@ -112,6 +114,7 @@ function fixture() {
 
 afterEach(() => {
   cleanup();
+  overlays.review.mockReset();
   overlays.finish = null;
   overlays.select = null;
 });
@@ -256,4 +259,29 @@ it.each([null, 'occurrence-one'])('shows one deletion dialog matching session ki
     expect(screen.getByRole('dialog', { name: 'Удалить упражнение?' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Удалить' })).toBeTruthy();
   }
+});
+
+it('requests review only after explicit completion commits, even if the session screen unmounts', async () => {
+  const { observations, complete, unmount } = fixture();
+  act(() => observations[0].next(session, row));
+  expect(overlays.review).not.toHaveBeenCalled();
+  let finish: () => void = () => {};
+  complete.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+  fireEvent.click(screen.getByRole('button', { name: 'Завершить тренировку' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Завершить' }));
+  await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  expect(overlays.review).not.toHaveBeenCalled();
+  unmount();
+  await act(async () => finish());
+  expect(overlays.review).toHaveBeenCalledExactlyOnceWith('session-a1');
+});
+it('does not request overlap review when completion fails', async () => {
+  const { observations, complete } = fixture();
+  act(() => observations[0].next(session, row));
+  complete.mockRejectedValueOnce(new Error('Не удалось завершить'));
+  fireEvent.click(screen.getByRole('button', { name: 'Завершить тренировку' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Завершить' }));
+  await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  await act(async () => {});
+  expect(overlays.review).not.toHaveBeenCalled();
 });

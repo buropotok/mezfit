@@ -5,6 +5,7 @@ import roles from '../../../cloud/roles.json';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { CLOUD_DATABASE_STORES_V12, type MezfitCloudDatabase } from './database';
 import { AdHocWorkoutRepository, type AdHocExerciseRow, type AdHocSetRow } from './adhoc-workouts';
+import { WorkoutCompletionReviewRepository } from './workout-completion-review';
 import { PlannedWorkoutsRepository, plannedWorkoutRange } from './planned-workouts';
 import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
@@ -480,4 +481,64 @@ it.each(['foreign', 'revoked'] as const)('confirmed conversion never bypasses %s
   await expect(actor.createFromOccurrence(row.id, { asCoached: true })).rejects.toThrow('PLANNED_WORKOUT_NOT_FOUND');
   expect((await occurrences(db).get(row.id))?.format).toBe('independent');
   expect(await db.table('adHocSessions').count()).toBe(0);
+});
+
+describe('post-completion review against real local storage', () => {
+  async function completedFixture() {
+    const value = await fixture(true);
+    const created = await value.repo.createFromOccurrence(value.row.id);
+    const start = new Date(Date.now() - 60 * 60_000).toISOString();
+    await value.db.table('adHocSessions').update(created.id, { startedAt: start });
+    const overlapping: CloudWorkoutOccurrenceRow = { ...value.row, id: 'review-target',
+      publicationStatus: 'published', startsAtUtc: new Date(Date.parse(start) + 10 * 60_000).toISOString(),
+      durationMinutes: 15 };
+    await occurrences(value.db).add(overlapping);
+    await value.repo.complete(created.id);
+    return { ...value, created, overlapping, review: new WorkoutCompletionReviewRepository(value.database, 'tg:101') };
+  }
+  it('reads overlaps without writing PLAN, FACT or completion and reacts to cancellation', async () => {
+    const { db, repo, created, overlapping, review } = await completedFixture();
+    const completed = await repo.getRow(created.id);
+    const graph = await sourceGraph(db);
+    const facts = await sets(db).toArray();
+    expect(await review.list(created.id)).toEqual([overlapping]);
+    expect(await repo.getRow(created.id)).toEqual(completed);
+    await review.cancel(created.id, overlapping.id);
+    expect(await review.list(created.id)).toEqual([]);
+    expect((await occurrences(db).get(overlapping.id))?.cancelledAt).toBeTruthy();
+    expect(await repo.getRow(created.id)).toEqual(completed);
+    expect(await sets(db).toArray()).toEqual(facts);
+    expect(await sourceGraph(db)).toEqual(graph);
+  });
+  it('moves the same PLAN preserving its duration, publication and contents, and rejects remaining overlap', async () => {
+    const { db, repo, created, overlapping, review } = await completedFixture();
+    await expect(review.move(created.id, overlapping.id, overlapping.startsAtUtc))
+      .rejects.toThrow('Выберите время вне завершённой тренировки');
+    expect(await occurrences(db).get(overlapping.id)).toEqual(overlapping);
+    const completed = await repo.getRow(created.id);
+    if (!completed?.completedAt) throw new Error('Missing completed fixture');
+    const next = new Date(Date.parse(completed.completedAt) + 24 * 60 * 60_000).toISOString();
+    await review.move(created.id, overlapping.id, next);
+    expect(await occurrences(db).get(overlapping.id)).toMatchObject({ startsAtUtc: next,
+      durationMinutes: overlapping.durationMinutes, publicationStatus: 'published', plan: overlapping.plan });
+    expect(await review.list(created.id)).toEqual([]);
+    expect(await repo.getRow(created.id)).toEqual(completed);
+  });
+  it('rechecks linked execution before actions even if the occurrence status is stale', async () => {
+    const { db, repo, created, overlapping, review } = await completedFixture();
+    await db.table('adHocSessions').add({ ...(await repo.getRow(created.id)), id: 'already-started',
+      occurrenceId: overlapping.id, status: 'active', completedAt: null });
+    expect(await review.list(created.id)).toEqual([]);
+    await expect(review.cancel(created.id, overlapping.id)).rejects.toThrow('Пересечение больше недоступно');
+    expect(await occurrences(db).get(overlapping.id)).toEqual(overlapping);
+  });
+  it('denies revoked relationship access and never rolls back completion on review failure', async () => {
+    const { db, repo, created, overlapping, pair, review } = await completedFixture();
+    const completed = await repo.getRow(created.id);
+    await db.table('members').delete(pair.members[1].id);
+    await expect(review.list(created.id)).rejects.toThrow('Завершённая тренировка недоступна');
+    await expect(review.cancel(created.id, overlapping.id)).rejects.toThrow();
+    expect(await db.table('adHocSessions').get(created.id)).toEqual(completed);
+    expect(await occurrences(db).get(overlapping.id)).toEqual(overlapping);
+  });
 });

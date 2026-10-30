@@ -1,0 +1,10 @@
+.workout-completion-sheet { display: flex; flex-direction: column; gap: 20px; padding: 20px; }
+.workout-completion-sheet > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.workout-completion-sheet__list { display: flex; flex-direction: column; gap: 16px; }
+.workout-completion-sheet__card { width: 100%; padding: 16px; text-align: left; }
+.workout-completion-sheet__disclosure { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 250ms ease, opacity 250ms ease; }
+.workout-completion-sheet__disclosure--open { grid-template-rows: 1fr; opacity: 1; }
+.workout-completion-sheet__disclosure > div { min-height: 0; overflow: hidden; }
+.workout-completion-sheet__actions, .workout-completion-sheet__move { display: flex; flex-direction: column; gap: 12px; }
+.workout-completion-sheet__actions { padding: 12px 0 0; }
+@media (prefers-reduced-motion: reduce) { .workout-completion-sheet__disclosure { transition: none; } }
