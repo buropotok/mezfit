@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
   TwoColumnPicker,
   type TwoColumnPickerColumn,
@@ -10,12 +10,6 @@ export interface ResistanceRange {
   max: number;
 }
 
-const VALUES = Array.from({ length: 30 }, (_, index) => index + 1);
-const COLUMNS: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn] = [
-  { ariaLabel: 'Минимальная нагрузка, кг', values: VALUES, format: String },
-  { ariaLabel: 'Максимальная нагрузка, кг', values: VALUES, format: String },
-];
-
 export interface RangePickerProps {
   opened: boolean;
   value: ResistanceRange;
@@ -23,11 +17,16 @@ export interface RangePickerProps {
   onClose: () => void;
   target: HTMLElement | null;
   lensMode?: TwoColumnPickerLensMode;
+  /** Inclusive wheel bounds; editable range itself remains value.min/value.max. */
+  minAllowed?: number;
+  maxAllowed?: number;
+  /** Optional controls beneath the wheels, e.g. a color picker. */
+  footer?: ReactNode;
 }
 
-export function assertResistanceRange(value: ResistanceRange): void {
-  if (!Number.isInteger(value.min) || !Number.isInteger(value.max)
-    || value.min < 1 || value.max > 30 || value.min > value.max) {
+export function assertResistanceRange(value: ResistanceRange, minAllowed = 1, maxAllowed = 30): void {
+  if (!Number.isSafeInteger(value.min) || !Number.isSafeInteger(value.max)
+    || value.min < minAllowed || value.max > maxAllowed || value.min > value.max) {
     throw new Error('INVALID_RESISTANCE_RANGE');
   }
 }
@@ -37,9 +36,11 @@ export function applyRangePickerPart(
   current: ResistanceRange,
   part: 'left' | 'right',
   candidate: number,
+  minAllowed = 1,
+  maxAllowed = 30,
 ): ResistanceRange {
-  assertResistanceRange(current);
-  if (!Number.isInteger(candidate) || candidate < 1 || candidate > 30) {
+  assertResistanceRange(current, minAllowed, maxAllowed);
+  if (!Number.isSafeInteger(candidate) || candidate < minAllowed || candidate > maxAllowed) {
     throw new Error('INVALID_RESISTANCE_RANGE');
   }
   return part === 'left'
@@ -48,8 +49,20 @@ export function applyRangePickerPart(
 }
 
 /** Uses the unchanged TimePicker wheel/lens geometry and native interaction. */
-export function RangePicker({ opened, value, onChange, onClose, target, lensMode = 'auto' }: RangePickerProps) {
-  assertResistanceRange(value);
+export function RangePicker({ opened, value, onChange, onClose, target, lensMode = 'auto',
+  minAllowed = 1, maxAllowed = 30, footer }: RangePickerProps) {
+  if (!Number.isSafeInteger(minAllowed) || !Number.isSafeInteger(maxAllowed)
+    || minAllowed < 1 || minAllowed > maxAllowed) {
+    throw new Error('INVALID_RESISTANCE_LIMITS');
+  }
+  assertResistanceRange(value, minAllowed, maxAllowed);
+  const columns = useMemo<readonly [TwoColumnPickerColumn, TwoColumnPickerColumn]>(() => {
+    const values = Array.from({ length: maxAllowed - minAllowed + 1 }, (_, index) => minAllowed + index);
+    return [
+      { ariaLabel: 'Минимальная нагрузка, кг', values, format: String },
+      { ariaLabel: 'Максимальная нагрузка, кг', values, format: String },
+    ];
+  }, [minAllowed, maxAllowed]);
   // The underlying wheel may emit several raw positions before applying a
   // normalized controlled prop during native scrolling. Compare raw events to
   // raw events, not the newest normalized props, to preserve the active side.
@@ -85,13 +98,14 @@ export function RangePicker({ opened, value, onChange, onClose, target, lensMode
         if (!side) return;
         previousSide.current = side;
         const current = latestRange.current;
-        const next = applyRangePickerPart(current, side, side === 'left' ? left : right);
+        const next = applyRangePickerPart(current, side, side === 'left' ? left : right, minAllowed, maxAllowed);
         latestRange.current = next;
         if (next.min !== current.min || next.max !== current.max) onChange(next);
       }}
       onClose={onClose}
       target={target}
-      columns={COLUMNS}
+      columns={columns}
+      footer={footer}
       separator="–"
       ariaLabel="Диапазон нагрузки резинки, кг"
       geometry="compact-time"
