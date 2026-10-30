@@ -105,6 +105,14 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     setDraft(next);
     setError('');
   };
+  // A picker dismissal accepts its displayed PLAN value without changing the picker primitive.
+  const closeMetricPicker = (key: EditableMetric) => {
+    const planned = props.data.plan?.[key];
+    if (!isPlan && draftRef.current.metrics[key] === null && planned != null && valid(key, planned)) {
+      change(old => ({ ...old, metrics: { ...old.metrics, [key]: planned } }));
+    }
+    setPicker(null);
+  };
   const bandItems: LiquidPopoverItem[] = [
     ...([['yellow', 'Жёлтая'], ['red', 'Красная'], ['green', 'Зелёная'],
       ['blue', 'Синяя'], ['purple', 'Фиолетовая'], ['black', 'Чёрная']] as const)
@@ -300,25 +308,25 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     {keys.map(key => createPortal(<>
       {key === 'durationSeconds' ? <DurationPicker opened={picker === key}
         value={pickerValue('durationSeconds')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, durationSeconds: value },
         }))} /> : null}
       {key === 'distanceMeters' ? <DistancePicker opened={picker === key}
         value={pickerValue('distanceMeters')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, distanceMeters: value },
         }))} /> : null}
       {key === 'reps' ? <NumPicker opened={picker === key}
         value={pickerValue('reps')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, reps: value },
         }))} /> : null}
       {key === 'weightKg' ? <WeightPicker opened={picker === key}
         value={pickerValue('weightKg')} target={targets.current[key] ?? null}
-        onClose={() => setPicker(null)}
+        onClose={() => closeMetricPicker(key)}
         onChange={value => change(old => ({
           ...old, metrics: { ...old.metrics, weightKg: value },
         }))} /> : null}
