@@ -93,6 +93,7 @@ it('cleans up on navigation and ignores late observation callbacks', async () =>
   await waitFor(() => expect(state.observe).toHaveBeenCalled());
   const late = state.next;
   mounted.rerender(view('today'));
+  mounted.rerender(view('training'));
   act(() => late?.([row]));
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(state.unsubscribe).toHaveBeenCalled();
