@@ -6,6 +6,7 @@ import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { GlassSurface, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
+import { useWorkoutCompletionReview } from './WorkoutCompletionContext';
 
 import type { ProgramExerciseInformation } from '../data/cloud/program-management';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
@@ -39,6 +40,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   onNavigationContextChange: (value: NavigationContext | null) => void;
   onExerciseInformation?: (exerciseId: string) => Promise<ProgramExerciseInformation>;
 }) {
+  const completionReview = useWorkoutCompletionReview();
   const [session, setSession] = useState<ActiveWorkoutSession<string> | null>(null);
   const [row, setRow] = useState<AdHocSessionRow | null>(null);
   const readOnly = requestedReadOnly || (personalCatalogueRole === 'client' && row?.athleteUserId !== repository.actorUserId);
@@ -177,6 +179,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           if (pending.current) return;
           void mutate(async () => {
             await repository.complete(sessionId);
+            if (personalCatalogueRole === 'coach') completionReview?.reviewCompleted(sessionId);
             if (alive.current) { setFinishConfirm(false); setNestedNavigation(null); }
           }).catch(report);
         }}>Завершить</MezfitDialogButton>
@@ -184,7 +187,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       <Text variant="body">Тренировка сохранится в истории.</Text>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitDialog>
-    <MezfitDialog opened={!readOnly && personalCatalogueRole === 'coach' && row?.creatorUserId === repository.actorUserId && row?.status === 'completed' && row.templateSaveDecision === 'pending'}
+    <MezfitDialog opened={!completionReview?.active && !readOnly && personalCatalogueRole === 'coach' && row?.creatorUserId === repository.actorUserId && row?.status === 'completed' && row.templateSaveDecision === 'pending'}
       title="Сохранить шаблон тренировки в программе?" buttons={<>
         <MezfitDialogButton disabled={busy} onClick={() => {
           if (!pending.current) void mutate(() => repository.resolveTemplate(sessionId, false)).catch(report);
