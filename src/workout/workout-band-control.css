@@ -7,9 +7,31 @@
   min-width: 44px;
 }
 .workout-band-editor {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 12px 14px 16px;
   max-height: min(45dvh, 320px);
+  min-height: 0;
+}
+
+/* Keep Save visible on opening; only the color controls may scroll. */
+.workout-band-editor__actions {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+}
+
+.workout-band-editor__action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workout-band-editor__controls {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
