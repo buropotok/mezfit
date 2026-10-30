@@ -89,7 +89,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
       try {
         await db.cloud.sync({ purpose: 'push', wait: true });
         if (activeRef.current) {
-          userEditingRef.current = false;
+          // A previously started pull must not overwrite this committed edit.
           setStatus('synced');
         }
       } catch {
