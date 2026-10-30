@@ -32,6 +32,7 @@ import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp }
 import { Button, GlassSurfaceProvider } from './ui';
 import { ClientWorkoutProvider, ClientWorkoutNavigationShell } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
+import { WorkoutCompletionProvider } from './workout/WorkoutCompletionContext';
 import { CoachAdHocWorkoutsScreen } from './workout/CoachAdHocWorkoutsScreen';
 import { ClientSharedWorkoutScreen } from './workout/ClientSharedWorkoutScreen';
 import { WorkedMuscleAssetsPrefetch } from './workout/WorkedMuscleAssetsPrefetch';
@@ -192,6 +193,7 @@ export function App() {
   const [previewWidth, setPreviewWidth] = useState<320 | null>(null);
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
+  const [completionNavigation, setCompletionNavigation] = useState<NavigationContext | null>(null);
   const [scheduleViewResetKey, setScheduleViewResetKey] = useState(0);
   const [requestedScheduleClientId, setRequestedScheduleClientId] = useState<string | null>(null);
   const [requestedScheduleDraftId, setRequestedScheduleDraftId] = useState<string | null>(null);
@@ -324,6 +326,7 @@ export function App() {
 
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
   const changeDestination = (next: AppDestination) => {
+    setCompletionNavigation(null);
     setNavigationContext(null);
     if (state.activeRole === 'coach') {
       if (next === 'settings' && coachDestination !== 'settings') {
@@ -335,6 +338,7 @@ export function App() {
     }
   };
   const switchRole = (role: Role) => {
+    setCompletionNavigation(null);
     setNavigationContext(null);
     setRequestedScheduleDraftId(null);
     dispatch({ type: 'switch-role', role });
@@ -371,11 +375,13 @@ export function App() {
           clearDraft: () => setRequestedScheduleDraftId(null),
         }}>
         <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
+        <WorkoutCompletionProvider enabled={state.activeRole === 'coach' && (destination === 'today' || destination === 'training')}
+          scope={state.activeRole + ':' + destination} onNavigationContextChange={setCompletionNavigation}>
         <ClientWorkoutNavigationShell
           me={state.me}
           activeRole={state.activeRole}
           destination={destination}
-          context={shellContext}
+          context={completionNavigation ?? shellContext}
           onDestinationChange={next => { if (next === 'today') setScheduleViewResetKey(value => value + 1); changeDestination(next); }}
           onRoleSwitch={switchRole}
           glassPreset={glassSettings.preset}
@@ -422,6 +428,7 @@ export function App() {
           />
           )}
         </ClientWorkoutNavigationShell>
+        </WorkoutCompletionProvider>
         </PlannedWorkoutStartProvider>
         </SchedulePlanningContext.Provider>
         </AssignedProgramsProvider>
