@@ -25,7 +25,10 @@ export function WorkoutCompletionProvider({ enabled, scope, onNavigationContextC
   const repository = useMemo(() => enabled && cloud
     ? new WorkoutCompletionReviewRepository(cloud.db, cloud.actorUserId) : null,
     [enabled, cloud?.db, cloud?.actorUserId]);
-  const activeScope = useRef({ scope, repository }); activeScope.current = { scope, repository };
+  const activeScope = useRef({ scope, repository, generation: 0 });
+  if (activeScope.current.scope !== scope || activeScope.current.repository !== repository)
+    activeScope.current = { scope, repository, generation: activeScope.current.generation + 1 };
+  const generation = activeScope.current.generation;
   const alive = useRef(false);
   const seen = useRef(new Set<string>());
   const ignored = useRef(new Set<string>());
@@ -41,8 +44,7 @@ export function WorkoutCompletionProvider({ enabled, scope, onNavigationContextC
     setSessionId(null); setFailedSessionId(null); setRows([]); setBusy(false); setError('');
     onNavigationContextChange(null);
   }, [repository, scope, onNavigationContextChange]);
-  const current = useCallback(() => alive.current && activeScope.current.scope === scope
-    && activeScope.current.repository === repository, [scope, repository]);
+  const current = useCallback(() => alive.current && activeScope.current.generation === generation, [generation]);
   const close = useCallback(() => {
     if (running.current) return;
     setSessionId(null); setFailedSessionId(null); setRows([]); setError('');
