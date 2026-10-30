@@ -137,7 +137,7 @@ The component renders only fields relevant to the supplied tracking type.
 
 ### Workout mode
 
-Confirming **Да** in the save-on-close dialog invokes the parent `onSave` with the complete local FACT draft: actual metrics, set label, set type, RPE, comment and selected fitness bands. The parent combines FACT with stable session identity, calls the typed workout API and reconciles canonical session state. The sheet closes only after successful persistence; on failure it remains open for retry. Dismissing through X or Back never writes.
+Confirming **Да** in the save-on-close dialog invokes the parent `onSave` with the complete local FACT draft: actual metrics, set label, set type, RPE, comment and selected fitness bands. The parent combines FACT with stable session identity, calls the typed workout API and reconciles canonical session state. The sheet closes only after successful persistence; on failure it remains open for retry. Pressing X or Back alone never writes: only the subsequent explicit **Да** confirmation invokes persistence.
 
 Opening SetEntry does not prefill missing FACT from PLAN. Only opening the metrics picker presents matching planned numeric values as selectable `value`; dismissing that picker normally accepts its visible numbers into the local draft without immediately writing persistent FACT. Missing PLAN fields remain unfilled until explicitly edited. `RPE: 0` is unset (`rpe: null`), never an invalid numeric zero.
 
