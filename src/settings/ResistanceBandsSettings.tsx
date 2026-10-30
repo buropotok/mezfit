@@ -5,10 +5,13 @@ import { Button, GlassBackgroundColorControls, GlassSurface, RangePicker, Text }
 import { hsvToHex } from '../ui/colorMath';
 import {
   RESISTANCE_BAND_DEFAULTS,
+  bandFieldKey,
   loadResistanceBands,
+  mergeResistanceBands,
   resistanceHexToHsv,
   saveResistanceBands,
   type ResistanceBandSetting,
+  type ResistanceBandFieldKey,
 } from './resistanceBands';
 import './resistance-bands-settings.css';
 
@@ -29,12 +32,16 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
   const [error, setError] = useState('');
   const savingRef = useRef(false);
   const activeRef = useRef(false);
+  const dirtyFieldsRef = useRef<Set<ResistanceBandFieldKey>>(new Set());
+  const saveRevisionRef = useRef(0);
 
   useEffect(() => {
     let active = true;
     activeRef.current = true;
     setStatus('loading');
     setLoaded(false);
+    dirtyFieldsRef.current.clear();
+    saveRevisionRef.current = 0;
     setError('');
     if (!repo || !actorUserId) {
       setStatus('error');
@@ -52,9 +59,21 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
         setStatus('ready');
         try {
           if (!db) return;
+          const startingSaveRevision = saveRevisionRef.current;
           await db.cloud.sync({ purpose: 'pull', wait: true });
           const refreshed = await loadResistanceBands(repo, actorUserId);
-          if (active && !savingRef.current && !userEditingRef.current) setBands(refreshed);
+          if (active && !savingRef.current && saveRevisionRef.current === startingSaveRevision) {
+            setBands(current => {
+              const merged = mergeResistanceBands(refreshed, current, dirtyFieldsRef.current);
+              // A newer remote endpoint may conflict with the edited bound.
+              // Keep the valid draft and refuse save until the user resolves it.
+              if (merged.some(band => band.min > band.max)) {
+                setError('Диапазон изменился на другом устройстве. Откройте настройки заново.');
+                return current;
+              }
+              return merged;
+            });
+          }
         } catch {
           // Offline local settings remain usable and accurately reported below.
         }
@@ -71,10 +90,13 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
     };
   }, [repo, actorUserId, db]);
 
-  const userEditingRef = useRef(false);
   const changeBand = (id: ResistanceBandSetting['id'], patch: Partial<ResistanceBandSetting>) => {
     if (savingRef.current) return;
-    userEditingRef.current = true;
+    for (const field of ['color', 'min', 'max'] as const) {
+      if (patch[field] !== undefined && patch[field] !== bands[id - 1][field]) {
+        dirtyFieldsRef.current.add(bandFieldKey(id, field));
+      }
+    }
     setStatus('ready');
     setError('');
     setBands(previous => previous.map(band => band.id === id ? { ...band, ...patch, id } : band));
@@ -83,16 +105,19 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
   const save = async () => {
     if (!repo || !db || !actorUserId || !loaded || savingRef.current || status === 'loading') return;
     savingRef.current = true;
+    saveRevisionRef.current += 1;
+    const changed = new Set(dirtyFieldsRef.current);
     setStatus('saving');
     setError('');
     try {
-      await saveResistanceBands(repo, actorUserId, bands);
+      await saveResistanceBands(repo, actorUserId, bands, changed);
       if (!activeRef.current) return;
       // Sync success and local success are different outcomes.
       try {
         await db.cloud.sync({ purpose: 'push', wait: true });
         if (activeRef.current) {
-          // A previously started pull must not overwrite this committed edit.
+          // Preserve the current snapshot; an old pull cannot overwrite it.
+          dirtyFieldsRef.current.clear();
           setStatus('synced');
         }
       } catch {
@@ -164,7 +189,11 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
           </Button>
           <Button variant="secondary" disabled={!loaded || status === 'saving' || status === 'loading'}
             onClick={() => {
-              userEditingRef.current = true;
+              for (const band of RESISTANCE_BAND_DEFAULTS) {
+                for (const field of ['color', 'min', 'max'] as const) {
+                  dirtyFieldsRef.current.add(bandFieldKey(band.id, field));
+                }
+              }
               setPicker(null);
               setBands(RESISTANCE_BAND_DEFAULTS.map(band => ({ ...band })));
               setStatus('ready');
