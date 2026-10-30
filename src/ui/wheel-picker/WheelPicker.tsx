@@ -30,7 +30,7 @@ const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
 // of native scroll events instead of changing scrollTop during momentum.
-const SCROLL_END_FALLBACK_MS = 200;
+const SCROLL_END_FALLBACK_MS = 450;
 export type WheelPickerPart = 'first' | 'second' | 'third';
 
 export interface WheelPickerParts {
@@ -131,7 +131,7 @@ function visibleLensItems(values: readonly number[], scrollTop: number, geometry
 
   return values.slice(start, end + 1).map((value, localIndex) => {
     const index = start + localIndex;
-    const projection = geometry === COMPACT_TIME_GEOMETRY ? projectCylinder(index * geometry.rowHeight - scrollTop) : null;
+    const projection = projectCylinder(index * geometry.rowHeight - scrollTop);
     return {
       projection,
       index,
@@ -537,11 +537,9 @@ export function WheelPicker({
   });
   const positionedPartsRef = useRef(new Set<WheelPickerPart>());
   const draftRef = useRef<WheelPickerParts>(valueParts);
-  const controlledRef = useRef<WheelPickerParts>(valueParts);
   const onChangeRef = useRef(onChange);
   const openedRef = useRef(opened);
   const wasOpenedRef = useRef(false);
-  const reconcileFrameRef = useRef<number | null>(null);
   const initialSyncFrameRef = useRef<number | null>(null);
   const touchStartRef = useRef<Partial<Record<WheelPickerPart, number>>>({});
   const suppressTouchClickRef = useRef<Partial<Record<WheelPickerPart, boolean>>>({});
@@ -562,7 +560,6 @@ export function WheelPicker({
   const [scrollTops, setScrollTops] = useState<ScrollTops>(pendingScrollRef.current);
   const [lensAssets, setLensAssets] = useState<TimeLensAssets | null>(null);
 
-  controlledRef.current = valueParts;
   onChangeRef.current = onChange;
   openedRef.current = opened;
 
@@ -586,10 +583,6 @@ export function WheelPicker({
       }
     });
 
-    if (reconcileFrameRef.current !== null) {
-      view.cancelAnimationFrame(reconcileFrameRef.current);
-      reconcileFrameRef.current = null;
-    }
   };
 
   const syncColumns = (parts: WheelPickerParts) => {
@@ -653,7 +646,7 @@ export function WheelPicker({
       deferredExternalRef.current = null;
       return;
     }
-    if (!justOpened && isCompactWheel && (scrollingPartsRef.current.size > 0
+    if (!justOpened && (scrollingPartsRef.current.size > 0
       || Object.keys(touchStartRef.current).length > 0 || Object.keys(settlingRef.current).length > 0)) {
       deferredExternalRef.current = valueParts;
       return;
@@ -668,18 +661,16 @@ export function WheelPicker({
     const nextScrollTops = partsToScrollTops(columns, valueParts, geometry);
     pendingScrollRef.current = nextScrollTops;
     setScrollTops(nextScrollTops);
-    if (isCompactWheel) {
-      lastTickIndexRef.current = {
-        first: valueIndex(columns.first, valueParts.first),
-        second: valueIndex(columns.second, valueParts.second),
-        third: valueIndex(columns.third, valueParts.third),
-      };
-      settlingRef.current = {};
-    }
+    lastTickIndexRef.current = {
+      first: valueIndex(columns.first, valueParts.first),
+      second: valueIndex(columns.second, valueParts.second),
+      third: valueIndex(columns.third, valueParts.third),
+    };
+    settlingRef.current = {};
 
     initialSyncFrameRef.current = view.requestAnimationFrame(() => {
       initialSyncFrameRef.current = null;
-      if (!openedRef.current || (isCompactWheel && scrollingPartsRef.current.size > 0)) return;
+      if (!openedRef.current || scrollingPartsRef.current.size > 0) return;
       syncColumns(valueParts);
     });
   }, [opened, target, columns, geometryName, valueParts.first, valueParts.second, valueParts.third]);
@@ -724,16 +715,11 @@ export function WheelPicker({
   };
 
   const handleTouchStart = (part: WheelPickerPart, event: TouchEvent<HTMLDivElement>) => {
-    if (!isCompactWheel) return;
     suppressTouchClickRef.current[part] = false;
     const view = event.currentTarget.ownerDocument.defaultView ?? window;
     if (initialSyncFrameRef.current !== null) {
       view.cancelAnimationFrame(initialSyncFrameRef.current);
       initialSyncFrameRef.current = null;
-    }
-    if (reconcileFrameRef.current !== null) {
-      view.cancelAnimationFrame(reconcileFrameRef.current);
-      reconcileFrameRef.current = null;
     }
     if (settlingRef.current[part] !== undefined) {
       delete settlingRef.current[part];
@@ -772,73 +758,46 @@ export function WheelPicker({
       view.clearTimeout(pendingTimer);
       scrollEndFallbackRefs.current[part] = null;
     }
-    if (isCompactWheel && touchStartRef.current[part] !== undefined) return;
-    if (isCompactWheel) {
-      // Native scrolling stays free until it ends, then align the nearest
-      // cell center to the horizontal selection line.
-      const currentTop = element.scrollTop;
-      const activeTarget = settlingRef.current[part];
-      if (activeTarget !== undefined) {
-        if (Math.abs(currentTop - activeTarget) > 0.5) return;
-        delete settlingRef.current[part];
-        view.clearTimeout(settleTimersRef.current[part]);
-        delete settleTimersRef.current[part];
-        commitIndex(part, Math.round(activeTarget / geometry.rowHeight));
-        scrollingPartsRef.current.delete(part);
-        reconcileDeferredValue();
-        return;
-      }
-      const column = columns[part];
-      const index = nearestSettledIndex(currentTop, geometry.rowHeight, column.values.length);
-      const targetTop = index * geometry.rowHeight;
-      commitIndex(part, index);
-      if (Math.abs(targetTop - currentTop) > 0.5) {
-        settlingRef.current[part] = targetTop;
-        element.scrollTo({ top: targetTop, behavior: 'smooth' });
-        // Some Telegram WebViews omit scrollend for programmatic smooth scroll.
-        // This timer starts only AFTER native momentum ended, never during it.
-        settleTimersRef.current[part] = view.setTimeout(() => {
-          if (!openedRef.current || settlingRef.current[part] !== targetTop) return;
-          if (Math.abs(element.scrollTop - targetTop) > 0.5) {
-            element.scrollTo({ top: targetTop, behavior: 'auto' });
-          }
-          delete settlingRef.current[part];
-          delete settleTimersRef.current[part];
-          commitIndex(part, index);
-          scrollingPartsRef.current.delete(part);
-          reconcileDeferredValue();
-        }, 400);
-      } else {
-        scrollingPartsRef.current.delete(part);
-        reconcileDeferredValue();
-      }
+    if (touchStartRef.current[part] !== undefined) return;
+    // Native scrolling stays free until it ends, then align the nearest
+    // cell center to the horizontal selection line.
+    const currentTop = element.scrollTop;
+    const activeTarget = settlingRef.current[part];
+    if (activeTarget !== undefined) {
+      if (Math.abs(currentTop - activeTarget) > 0.5) return;
+      delete settlingRef.current[part];
+      view.clearTimeout(settleTimersRef.current[part]);
+      delete settleTimersRef.current[part];
+      commitIndex(part, Math.round(activeTarget / geometry.rowHeight));
+      scrollingPartsRef.current.delete(part);
+      reconcileDeferredValue();
       return;
     }
-    scrollingPartsRef.current.delete(part);
     const column = columns[part];
-    const index = Math.max(0, Math.min(column.values.length - 1, Math.round(element.scrollTop / geometry.rowHeight)));
+    const index = nearestSettledIndex(currentTop, geometry.rowHeight, column.values.length);
+    const targetTop = index * geometry.rowHeight;
     commitIndex(part, index);
-    if (scrollingPartsRef.current.size > 0) return;
-
-    // Only reconcile a rejected controlled value after all wheels stop.
-    if (reconcileFrameRef.current !== null) view.cancelAnimationFrame(reconcileFrameRef.current);
-    reconcileFrameRef.current = view.requestAnimationFrame(() => {
-      reconcileFrameRef.current = null;
-      if (!openedRef.current || scrollingPartsRef.current.size > 0) return;
-      const canonical = controlledRef.current;
-      if (!partsEqual(draftRef.current, canonical)) {
-        draftRef.current = canonical;
-        setDraft(canonical);
-        const activeColumns = columns;
-        if (PARTS.every((candidate) => activeColumns[candidate].values.includes(canonical[candidate]))) {
-          const tops = partsToScrollTops(activeColumns, canonical, geometry);
-          pendingScrollRef.current = tops;
-          setScrollTops(tops);
-          syncColumns(canonical);
+    if (Math.abs(targetTop - currentTop) > 0.5) {
+      settlingRef.current[part] = targetTop;
+      element.scrollTo({ top: targetTop, behavior: 'smooth' });
+      // Some Telegram WebViews omit scrollend for programmatic smooth scroll.
+      // This timer starts only AFTER native momentum ended, never during it.
+      settleTimersRef.current[part] = view.setTimeout(() => {
+        if (!openedRef.current || settlingRef.current[part] !== targetTop) return;
+        if (Math.abs(element.scrollTop - targetTop) > 0.5) {
+          element.scrollTo({ top: targetTop, behavior: 'auto' });
         }
-      }
-      locallyEmittedRef.current.clear();
-    });
+        delete settlingRef.current[part];
+        delete settleTimersRef.current[part];
+        commitIndex(part, index);
+        scrollingPartsRef.current.delete(part);
+        reconcileDeferredValue();
+      }, 400);
+    } else {
+      scrollingPartsRef.current.delete(part);
+      reconcileDeferredValue();
+    }
+    return;
   };
 
   const scheduleScrollEndFallback = (part: WheelPickerPart, element: HTMLDivElement) => {
@@ -852,7 +811,7 @@ export function WheelPicker({
     scrollEndFallbackRefs.current[part] = view.setTimeout(() => {
       scrollEndFallbackRefs.current[part] = null;
       handleScrollEnd(part);
-    }, isCompactWheel ? 450 : SCROLL_END_FALLBACK_MS);
+    }, SCROLL_END_FALLBACK_MS);
   };
 
   const handleScroll = (
@@ -864,23 +823,17 @@ export function WheelPicker({
     const top = event.currentTarget.scrollTop;
     positionedPartsRef.current.add(part);
     const column = columns[part];
-    if (isCompactWheel) {
-      const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
-      if (lastTickIndexRef.current[part] !== undefined && lastTickIndexRef.current[part] !== index) {
-        // One selection tick per observed crossing; skipped native frames
-        // must not produce a burst of haptic notifications.
-        triggerTelegramPickerSelectionTick();
-      }
-      lastTickIndexRef.current[part] = index;
+    const index = Math.max(0, Math.min(column.values.length - 1, Math.round(top / geometry.rowHeight)));
+    if (lastTickIndexRef.current[part] !== undefined && lastTickIndexRef.current[part] !== index) {
+      // One selection tick per observed crossing; skipped native frames
+      // must not produce a burst of haptic notifications.
+      triggerTelegramPickerSelectionTick();
     }
+    lastTickIndexRef.current[part] = index;
     scrollingPartsRef.current.add(part);
-    if (isCompactWheel && initialSyncFrameRef.current !== null) {
+    if (initialSyncFrameRef.current !== null) {
       (event.currentTarget.ownerDocument.defaultView ?? window).cancelAnimationFrame(initialSyncFrameRef.current);
       initialSyncFrameRef.current = null;
-    }
-    if (reconcileFrameRef.current !== null) {
-      (event.currentTarget.ownerDocument.defaultView ?? window).cancelAnimationFrame(reconcileFrameRef.current);
-      reconcileFrameRef.current = null;
     }
     pendingScrollRef.current = {
       ...pendingScrollRef.current,
@@ -904,14 +857,12 @@ export function WheelPicker({
   const handleSelect = (part: WheelPickerPart, index: number, event: MouseEvent<HTMLButtonElement>) => {
     if (!openedRef.current) return;
 
-    if (isCompactWheel && suppressTouchClickRef.current[part] && event.detail > 0) return;
-    if (isCompactWheel) {
-      delete settlingRef.current[part];
-      const view = target?.ownerDocument.defaultView ?? window;
-      view.clearTimeout(settleTimersRef.current[part]);
-      delete settleTimersRef.current[part];
-      lastTickIndexRef.current[part] = index;
-    }
+    if (suppressTouchClickRef.current[part] && event.detail > 0) return;
+    delete settlingRef.current[part];
+    const view = target?.ownerDocument.defaultView ?? window;
+    view.clearTimeout(settleTimersRef.current[part]);
+    delete settleTimersRef.current[part];
+    lastTickIndexRef.current[part] = index;
 
     commitIndex(part, index);
     const nextTop = index * geometry.rowHeight;
@@ -962,7 +913,7 @@ export function WheelPicker({
       backdrop
       iosHighlight={false}
       onBackdropClick={handleClose}
-      className={`ui-time-picker__popover${isCompactWheel ? ' ui-time-picker__popover--compact-time ui-time-picker__popover--cylinder' : ''}${popoverClassName ? ` ${popoverClassName}` : ''}`}
+      className={`ui-time-picker__popover${isCompactWheel ? ' ui-time-picker__popover--compact-time ui-time-picker__popover--cylinder' : ' ui-time-picker__popover--cylinder'}${popoverClassName ? ` ${popoverClassName}` : ''}`}
       style={{ width: isCompactWheel ? '270px' : '336px', maxWidth: 'calc(100vw - 24px)' }}
       role="dialog"
       aria-modal="true"
@@ -980,7 +931,7 @@ export function WheelPicker({
               <WheelPickerColumnWheel
                 key={part}
                 part={part}
-                cylinder={isCompactWheel}
+                cylinder
                 getColumnElement={() => columnRefs.current[part]}
                 geometry={geometry}
                 column={columns[part]}
@@ -996,7 +947,7 @@ export function WheelPicker({
               />
             ))}
           </div>
-          {isCompactWheel ? (
+          {(
             <svg className="ui-time-picker__cylinder" viewBox={`0 0 ${LENS_WIDTH} ${CYLINDER_HEIGHT}`}
               preserveAspectRatio="none" aria-hidden="true" focusable="false">
               {PARTS.map((part, index) => staticLens?.[part] ? null : visibleCylinderRows(columns[part].values.length,
@@ -1009,7 +960,7 @@ export function WheelPicker({
                   className="ui-time-picker__cylinder-text ui-text--title">{columns[part].format(columns[part].values[row.index])}</text>;
               }))}
             </svg>
-          ) : null}
+          )}
           <PickerLens
             parts={PARTS}
             assets={lensAssets}
