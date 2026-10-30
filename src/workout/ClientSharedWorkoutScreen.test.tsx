@@ -61,11 +61,13 @@ describe('Client local workout screen', () => {
     expect(screen.queryByText('Своя тренировка')).toBeNull();
     expect(state.startQuick).not.toHaveBeenCalled();
   });
-  it('keeps selection between authorized pre-existing simultaneous Coach sessions', () => {
+  it('does not offer a switcher or another Start for pre-existing duplicate sessions', () => {
     state.sessions = [{ id: 'first', name: 'Первая', status: 'active' }, { id: 'second', name: 'Вторая', status: 'active' }];
     render(<ClientSharedWorkoutScreen {...props} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Вторая' }));
-    expect(screen.getByText('Session second')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Первая' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Вторая' })).toBeNull();
+    expect(screen.getByText('Session first')).toBeTruthy();
+    expect(screen.queryByText('Session second')).toBeNull();
     expect(screen.queryByText('Своя тренировка')).toBeNull();
   });
   it('does not switch the open session when a newer Coach session replicates', () => {
