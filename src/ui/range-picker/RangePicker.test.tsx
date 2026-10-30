@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   RangePicker,
@@ -33,13 +33,32 @@ afterEach(() => { cleanup(); picker.onChange = null; });
 describe('RangePicker UIkit primitive', () => {
   it('reuses TimePicker wheel geometry without changing the interaction', () => {
     const onChange = vi.fn();
-    render(<RangePicker opened value={{ min: 2, max: 5 }} target={null} onChange={onChange} onClose={() => {}} />);
+    const view = render(<RangePicker opened value={{ min: 2, max: 5 }} target={null} onChange={onChange} onClose={() => {}} />);
     expect(screen.getByTestId('wheel-geometry').textContent).toBe('compact-time');
     expect(screen.getByTestId('wheel-range').textContent).toBe('1–30');
     fireEvent.click(screen.getByRole('button', { name: 'Установить минимум' }));
     expect(onChange).toHaveBeenCalledWith({ min: 21, max: 21 });
+    // A distinct interaction starts with fresh wheel state and props.
+    view.unmount();
+    render(<RangePicker opened value={{ min: 2, max: 5 }} target={null} onChange={onChange} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Установить максимум' }));
     expect(onChange).toHaveBeenCalledWith({ min: 2, max: 3 });
+  });
+
+  it('keeps the right wheel active through repeated crossed-range updates and a deferred normalization', () => {
+    const onChange = vi.fn();
+    const close = vi.fn();
+    const view = render(<RangePicker opened value={{ min: 10, max: 13 }} target={null} onChange={onChange} onClose={close} />);
+    act(() => { picker.onChange?.({ left: 10, right: 9 }); });
+    expect(onChange).toHaveBeenLastCalledWith({ min: 9, max: 9 });
+    view.rerender(<RangePicker opened value={{ min: 9, max: 9 }} target={null} onChange={onChange} onClose={close} />);
+    // Native wheel can continue emitting old left=10 while the right wheel is in motion.
+    act(() => { picker.onChange?.({ left: 10, right: 8 }); });
+    expect(onChange).toHaveBeenLastCalledWith({ min: 8, max: 8 });
+    view.rerender(<RangePicker opened value={{ min: 8, max: 8 }} target={null} onChange={onChange} onClose={close} />);
+    // Deferred normalized props may land between two right-wheel events.
+    act(() => { picker.onChange?.({ left: 8, right: 7 }); });
+    expect(onChange).toHaveBeenLastCalledWith({ min: 7, max: 7 });
   });
 
   it('rejects invalid ranges while allowing equal endpoints', () => {
