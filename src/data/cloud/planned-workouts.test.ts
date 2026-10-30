@@ -379,7 +379,7 @@ it('keeps pending session FACT empty until the user selects PLAN values in the p
   const created = await repo.createFromOccurrence(row.id);
   const session = await repo.get(created.id);
   const exercise = session?.exercises[0], set = exercise?.sets[0];
-  if (!session || !exercise || !set) throw new Error('Missing started session set');
+  if (!session || !exercise || !set || !set.plan) throw new Error('Missing started session set or PLAN');
   expect(set.fact).not.toBeNull();
   expect(set.fact?.metrics).toEqual({ weightKg: null, reps: null, durationSeconds: null, distanceMeters: null });
   const before = await sets(db).toArray();
