@@ -209,3 +209,15 @@
   fill: var(--ui-color-surface-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* Column adapters share the same wheel mechanics and optical track. */
+.ui-time-picker__popover--compact-time .ui-time-picker__columns--1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ui-time-picker__popover--compact-time .ui-time-picker__columns--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+}
+.ui-time-picker__popover--compact-time .ui-time-picker__columns--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
