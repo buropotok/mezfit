@@ -26,17 +26,21 @@ vi.mock('../ui/LiquidGlassTextOnly', () => ({
   </div>,
 }));
 
-vi.mock('../ui/GlassSurface', () => ({
-  GlassSurface: ({ component: Component = 'div', preset, optics, blur, className, children }: {
-    component?: ElementType;
-    preset?: string;
-    optics?: boolean;
-    blur?: number;
-    className?: string;
-    children: ReactNode;
-  }) => <Component className={className} data-glass-preset={preset}
-    data-glass-optics={String(optics)} data-glass-blur={blur}>{children}</Component>,
-}));
+vi.mock('../ui/GlassSurface', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../ui/GlassSurface')>();
+  return {
+    ...actual,
+    GlassSurface: ({ component: Component = 'div', preset, optics, blur, className, children }: {
+      component?: ElementType;
+      preset?: string;
+      optics?: boolean;
+      blur?: number;
+      className?: string;
+      children: ReactNode;
+    }) => <Component className={className} data-glass-preset={preset}
+      data-glass-optics={String(optics)} data-glass-blur={blur}>{children}</Component>,
+  };
+});
 
 afterEach(() => cleanup());
 
