@@ -97,8 +97,11 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
     setEditDraft({ ...editDraft, ...patch });
   };
   const saveEdit = async () => {
-    if (!repository || !actorUserId || !editDraft || saving || dirtyFieldsRef.current.size === 0) {
+    if (!repository || !actorUserId || !editDraft || saving) return;
+    if (dirtyFieldsRef.current.size === 0) {
       setEditorOpened(false);
+      setEditId(null);
+      setEditDraft(null);
       return;
     }
     setSaving(true);
