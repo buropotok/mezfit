@@ -6,9 +6,6 @@
   flex: 0 0 auto;
   min-width: 44px;
 }
-.workout-band-control .ui-text--caption {
-  white-space: nowrap;
-}
 .workout-band-editor {
   display: grid;
   gap: 12px;
