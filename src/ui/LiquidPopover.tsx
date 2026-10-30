@@ -42,6 +42,10 @@ export type LiquidPopoverItem = {
   id: string;
   label: string;
   icon?: UiIconName;
+  /** Optional per-row icon tint; does not alter default menu appearance. */
+  iconColor?: string;
+  /** Separate trailing action. Its click never selects the main row. */
+  trailingAction?: { icon: UiIconName; label: string; onSelect: () => void };
   onSelect?: () => void;
   disabled?: boolean;
   active?: boolean;
@@ -207,6 +211,24 @@ function paintContentTexture(
         context.drawImage(tintCanvas, iconRect.left - bounds.left, iconRect.top - bounds.top);
       }
     }
+    if (item.trailingAction && layout === 'menu') {
+      const trailing = row.parentElement?.querySelector<HTMLElement>('.ui-liquid-popover__trailing');
+      const trailingImage = iconImages?.get(item.trailingAction.icon);
+      if (trailing && trailingImage?.complete && trailingImage.naturalWidth > 0) {
+        const trailingRect = trailing.getBoundingClientRect();
+        const tintCanvas = canvas.ownerDocument.createElement('canvas');
+        tintCanvas.width = Math.max(1, Math.ceil(trailingRect.width));
+        tintCanvas.height = Math.max(1, Math.ceil(trailingRect.height));
+        const tint = tintCanvas.getContext('2d');
+        if (tint) {
+          tint.drawImage(trailingImage, 0, 0, tintCanvas.width, tintCanvas.height);
+          tint.globalCompositeOperation = 'source-in';
+          tint.fillStyle = getComputedStyle(trailing).color;
+          tint.fillRect(0, 0, tintCanvas.width, tintCanvas.height);
+          context.drawImage(tintCanvas, trailingRect.left - bounds.left, trailingRect.top - bounds.top);
+        }
+      }
+    }
     context.fillStyle = style.color;
     context.font =
       `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
@@ -343,6 +365,9 @@ export function LiquidPopover({
       item.id,
       item.label,
       item.icon,
+      item.iconColor,
+      item.trailingAction?.icon,
+      item.trailingAction?.label,
       item.disabled,
       item.active,
       item.dividerBefore,
@@ -361,6 +386,9 @@ export function LiquidPopover({
       item.id,
       item.label,
       item.icon,
+      item.iconColor,
+      item.trailingAction?.icon,
+      item.trailingAction?.label,
       item.disabled,
       item.active,
       item.dividerBefore,
@@ -401,11 +429,13 @@ export function LiquidPopover({
         prewarmRef.current = canvas;
     };
     for (const item of itemsRef.current) {
-      if (!item.icon || iconImagesRef.current.has(item.icon)) continue;
-      const image = element.ownerDocument.createElement('img');
-      image.onload = prepare;
-      image.src = getUiIconAsset(item.icon, 'outline');
-      iconImagesRef.current.set(item.icon, image);
+      for (const icon of [item.icon, item.trailingAction?.icon]) {
+        if (!icon || iconImagesRef.current.has(icon)) continue;
+        const image = element.ownerDocument.createElement('img');
+        image.onload = prepare;
+        image.src = getUiIconAsset(icon, 'outline');
+        iconImagesRef.current.set(icon, image);
+      }
     }
     prepare();
     const observer =
@@ -786,9 +816,8 @@ export function LiquidPopover({
         aria-hidden="true"
         inert
       >
-        {layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{text}</Text> : items.map((item) => (
-          <Fragment key={item.id}>
-            {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
+        {layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{text}</Text> : items.map(item => {
+          const row = (
             <div
               ref={(element) => {
                 if (element) rowRefs.current.set(item.id, element);
@@ -797,12 +826,21 @@ export function LiquidPopover({
               className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
             >
               {item.icon && layout === 'menu' ? (
-                <span className="ui-menu-item__leading"><Icon name={item.icon} /></span>
+                <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
               ) : null}
               <span className="ui-menu-item__label">{item.label}</span>
             </div>
-          </Fragment>
-        ))}
+          );
+          return <Fragment key={item.id}>
+            {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
+            {item.trailingAction && layout === 'menu'
+              ? <div className="ui-liquid-popover__item--with-action">
+                {row}
+                <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span>
+              </div>
+              : row}
+          </Fragment>;
+        })}
       </div>
       {cloneElement(trigger, {
         'aria-haspopup': role,
@@ -869,11 +907,8 @@ export function LiquidPopover({
             style={presentationGridStyle}
             inert={!settled}
           >
-            {presentation.layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{presentation.text}</Text> : presentation.items.map((item) => (
-              <Fragment key={item.id}>
-                {item.dividerBefore ? (
-                  <div role="separator" className="ui-menu-divider" />
-                ) : null}
+            {presentation.layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{presentation.text}</Text> : presentation.items.map((item) => {
+              const primary = (
                 <button
                   ref={(element) => {
                     if (element) nativeRowRefs.current.set(item.id, element);
@@ -899,12 +934,25 @@ export function LiquidPopover({
                   aria-current={item['aria-current']}
                 >
                   {item.icon && presentation.layout === 'menu' ? (
-                    <span className="ui-menu-item__leading"><Icon name={item.icon} /></span>
+                    <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
                   ) : null}
                   <span className="ui-menu-item__label">{item.label}</span>
                 </button>
-              </Fragment>
-            ))}
+              );
+              return <Fragment key={item.id}>
+                {item.dividerBefore ? <div role="separator" className="ui-menu-divider" /> : null}
+                {item.trailingAction && presentation.layout === 'menu'
+                  ? <div className="ui-liquid-popover__item--with-action">
+                    {primary}
+                    <button type="button" className="ui-liquid-popover__trailing"
+                      aria-label={item.trailingAction.label} disabled={item.disabled}
+                      onClick={() => { item.trailingAction?.onSelect(); onOpenChange(false); }}>
+                      <Icon name={item.trailingAction.icon} />
+                    </button>
+                  </div>
+                  : primary}
+              </Fragment>;
+            })}
           </div>
         </div>
       </MezfitPopover>
