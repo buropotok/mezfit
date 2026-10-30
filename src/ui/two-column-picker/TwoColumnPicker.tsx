@@ -127,8 +127,8 @@ function visibleLensItems(
       index,
       value,
       projection,
-      // Reverse the lens's vertical scale so adjacent 24px rows stay
-      // 24px apart on screen and cannot intrude into the center lens.
+      // Reverse the optical source scale: the lens and the outer visual
+      // layer use the same projected center positions on screen.
       y: LENS_HEIGHT / 2 + (projection?.y ?? index * geometry.rowHeight - scrollTop) / geometry.lensScaleY,
     };
   });
