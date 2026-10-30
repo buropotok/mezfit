@@ -133,6 +133,16 @@ describe('WorkoutSessionCard string identities', () => {
     expect(screen.queryByRole('button', { name: 'Удалить подход' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'История упражнения' }));
     expect(onOpenExerciseHistory).toHaveBeenCalledWith('definition-d1');
+    const metric = screen.getByRole('button', { name: 'Изменить вес и повторения' });
+    expect(metric.textContent).toContain('Введите факт');
+    fireEvent.click(metric);
+    const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('8');
+    expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('80');
+    // A tap outside accepts the numeric PLAN as FACT without modifying the picker.
+    fireEvent.click(picker.previousElementSibling as Element);
+    expect(metric.textContent).toContain('80 кг × 8');
+    expect(onSaveSet).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Дропсет' }));
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Подход 1' }))
       .getByRole('button', { name: 'Закрыть подход' }));
