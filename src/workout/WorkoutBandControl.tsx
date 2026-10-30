@@ -176,13 +176,19 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
         editDraftRef.current = null;
       }}
       footer={<div className="workout-band-editor">
-        <Text variant="caption">Лента {editDraft.id}</Text>
-        <GlassBackgroundColorControls stacked colorSubject="ленты" color={resistanceHexToHsv(editDraft.color)}
-          minimumBrightness={0} onChange={color => edit({ color: hsvToHex(color) })} />
-        {saveError ? <Text variant="caption" role="alert">{saveError}</Text> : null}
-        <KonstaButton rounded disabled={saving} onClick={() => { void saveEdit(); }}>
-          <Text variant="body">{saving ? 'Сохранение…' : 'Сохранить'}</Text>
-        </KonstaButton>
+        <div className="workout-band-editor__actions">
+          <div className="workout-band-editor__action-row">
+            <Text variant="caption">Лента {editDraft.id}</Text>
+            <KonstaButton rounded disabled={saving} onClick={() => { void saveEdit(); }}>
+              <Text variant="body">{saving ? 'Сохранение…' : 'Сохранить'}</Text>
+            </KonstaButton>
+          </div>
+          {saveError ? <Text variant="caption" role="alert">{saveError}</Text> : null}
+        </div>
+        <div className="workout-band-editor__controls">
+          <GlassBackgroundColorControls stacked colorSubject="ленты" color={resistanceHexToHsv(editDraft.color)}
+            minimumBrightness={0} onChange={color => edit({ color: hsvToHex(color) })} />
+        </div>
       </div>} /> : null}
   </>;
 }
