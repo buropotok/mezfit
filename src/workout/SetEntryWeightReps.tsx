@@ -35,7 +35,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
   const glass = loadBrowserGlassSettings();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data));
+  const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data, isPlan ? 'plan' : 'fact'));
   const [discardConfirm, setDiscardConfirm] = useState(false);
   const saveInFlightRef = useRef(false);
   const mounted = useRef(true);
@@ -196,7 +196,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
           <SetEntryMetricTile metric="weight_reps" buttonRef={target} blur={glass.blur}
-            value={metricsText(draft.metrics.weightKg, draft.metrics.reps)}
+            value={!isPlan && draft.metrics.weightKg === null && draft.metrics.reps === null
+              ? 'Введите факт' : metricsText(draft.metrics.weightKg, draft.metrics.reps)}
             ariaLabel="Изменить вес и повторения" disabled={!validPicker || inputLocked}
             onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }} />
           {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
