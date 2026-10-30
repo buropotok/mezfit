@@ -136,3 +136,15 @@ round-button menu in Auto, SVG and Canvas modes. Each example is independent,
 shares the source-morph slider, and shows the platform-resolved Auto mode.
 Missing Canvas/`Path2D` support still follows the existing native
 content fallback. The iOS workaround does not affect the Konsta package.
+
+## Optional per-item action and tint
+
+Menu items may supply `iconColor` for the existing leading icon and an
+independent `trailingAction: { icon, label, onSelect }` for a second button at
+the end of the row. Clicking the trailing action runs only its callback and
+closes the single-select popover. Its accessible name is the supplied `label`;
+the main choice retains its existing semantics. The off-screen measuring
+rows, animation texture and interactive rows use the same two-action geometry.
+Menus without `trailingAction` retain their original row DOM, dimensions,
+colors and behavior. The fitness-band editor uses `tilde` as its leading icon
+and `pencil` as the trailing action.

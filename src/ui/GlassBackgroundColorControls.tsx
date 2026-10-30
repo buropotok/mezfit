@@ -9,11 +9,16 @@ export function GlassBackgroundColorControls({
   color,
   onChange,
   minimumBrightness = 20,
+  stacked = false,
+  colorSubject = 'фона',
   children,
 }: {
   color: HsvColor;
   onChange: (color: HsvColor) => void;
   minimumBrightness?: number;
+  /** Opt-in single-column layout for narrow editor popovers. */
+  stacked?: boolean;
+  colorSubject?: string;
   children?: ReactNode;
 }) {
   const brightnessId = useId();
@@ -63,13 +68,13 @@ export function GlassBackgroundColorControls({
 
   const backgroundColor = hsvToHex(color);
   return (
-    <div className="glass-background-lab__controls">
+    <div className={`glass-background-lab__controls${stacked ? " glass-background-lab__controls--stacked" : ""}`}>
       <div className="glass-background-lab__wheel-wrap">
         <Text variant="footnote" tone="muted">Оттенок и насыщенность</Text>
         <button
           type="button"
           className="glass-background-lab__wheel"
-          aria-label={`Выбрать цвет фона. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
+          aria-label={`Выбрать цвет ${colorSubject}. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={releasePointer}

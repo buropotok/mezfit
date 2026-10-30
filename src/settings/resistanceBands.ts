@@ -16,7 +16,7 @@ export const RESISTANCE_BAND_DEFAULTS: readonly ResistanceBandSetting[] = Object
   { id: 2, color: '#9FC5E8', min: 6, max: 9 },
   { id: 3, color: '#E7A91B', min: 10, max: 13 },
   { id: 4, color: '#FF6B6B', min: 14, max: 17 },
-  { id: 5, color: '#9BAABA', min: 18, max: 21 },
+  { id: 5, color: '#252B33', min: 18, max: 21 },
 ]);
 
 const COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;

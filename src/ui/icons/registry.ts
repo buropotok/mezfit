@@ -32,6 +32,7 @@ import menu2Url from './menu-2.svg';
 import xUrl from './x.svg';
 import messageCircleUrl from './message-circle-outline.svg';
 import pencilUrl from './pencil-outline.svg';
+import tildeUrl from './tilde.svg';
 import plusOutlineUrl from './plus-outline.svg';
 import textPlusUrl from './text-plus.svg';
 import userPlusUrl from './user-plus-outline.svg';
@@ -98,6 +99,7 @@ const uiIconRegistry = {
   x: { outline: xUrl, filled: xUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },
+  tilde: { outline: tildeUrl, filled: tildeUrl },
   plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },
   'text-plus': { outline: textPlusUrl, filled: textPlusUrl },
   'user-plus': { outline: userPlusUrl, filled: userPlusUrl },
