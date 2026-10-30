@@ -86,14 +86,14 @@ describe('TimePicker compact optical geometry', () => {
     expect(onChange).toHaveBeenLastCalledWith('11:15');
   });
 
-  it('keeps noncircular NumPicker in the normal geometry', () => {
+  it('uses the same cylindrical geometry for the single-column NumPicker', () => {
     wrap(<NumPicker opened target={document.body} value={207}
       onChange={vi.fn()} onClose={vi.fn()} />);
     const dialog = screen.getByRole('dialog', { name: 'Выбор числа' });
-    expect(dialog.classList.contains('ui-time-picker__popover--compact-time')).toBe(false);
-    expect(dialog.querySelector('.ui-time-picker__cylinder')).toBeNull();
-    const lower = screen.getByRole('listbox', { name: 'Последние две цифры' });
-    expect(lower.querySelectorAll('button')).toHaveLength(100);
-    expect(within(lower).getByRole('option', { name: '07' }).getAttribute('aria-selected')).toBe('true');
+    expect(dialog.classList.contains('ui-time-picker__popover--compact-time')).toBe(true);
+    expect(dialog.querySelector('.ui-time-picker__cylinder')).not.toBeNull();
+    const lower = screen.getByRole('listbox', { name: 'Число' });
+    expect(lower.querySelectorAll('button')).toHaveLength(1000);
+    expect(within(lower).getByRole('option', { name: '207' }).getAttribute('aria-selected')).toBe('true');
   });
 });
