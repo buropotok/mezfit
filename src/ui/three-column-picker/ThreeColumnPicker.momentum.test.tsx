@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { triggerTelegramSelectionHaptic, triggerTelegramPickerSelectionTick } from '../../telegram';
+import { projectCylinder } from '../time-picker/cylinderProjection';
 import { WeightRepsPicker } from '../weight-reps-picker/WeightRepsPicker';
 
 vi.mock('../../telegram', () => ({ triggerTelegramSelectionHaptic: vi.fn(), triggerTelegramPickerSelectionTick: vi.fn() }));
@@ -205,7 +206,9 @@ describe('weight/reps wheels use TimePicker native momentum and compact optics',
     const texts = Array.from(dialog.querySelectorAll('.ui-time-picker__lens-text'));
     for (const x of ['80', '176', '240']) {
       const column = texts.filter(text => text.getAttribute('x') === x);
-      expect(column.map(text => text.getAttribute('y'))).toEqual(['-36', '36', '108']);
+      expect(Number(column[0].getAttribute('y'))).toBeCloseTo(36 + projectCylinder(-36)!.y * 2);
+      expect(column[1].getAttribute('y')).toBe('36');
+      expect(Number(column[2].getAttribute('y'))).toBeCloseTo(36 + projectCylinder(36)!.y * 2);
       expect(column[1].getAttribute('transform')).toContain('scale(1.55 3.1)');
     }
     expect(dialog.querySelector('.ui-time-picker__lens-separator')?.getAttribute('transform'))
