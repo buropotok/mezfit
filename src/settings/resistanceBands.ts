@@ -20,7 +20,9 @@ export const RESISTANCE_BAND_DEFAULTS: readonly ResistanceBandSetting[] = Object
 ]);
 
 const COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
-const valueKey = (id: ResistanceBandSetting['id'], field: 'color' | 'min' | 'max') =>
+export type ResistanceBandField = 'color' | 'min' | 'max';
+export type ResistanceBandFieldKey = `Band_${ResistanceBandSetting['id']}_${ResistanceBandField}`;
+export const bandFieldKey = (id: ResistanceBandSetting['id'], field: ResistanceBandField): ResistanceBandFieldKey =>
   `Band_${id}_${field}`;
 
 export function assertResistanceBands(bands: readonly ResistanceBandSetting[]): void {
@@ -38,9 +40,9 @@ export function assertResistanceBands(bands: readonly ResistanceBandSetting[]): 
 /** Invalid remote values are ignored rather than propagated into the picker. */
 export function resolveResistanceBands(values: readonly FlexResolvedValue[]): ResistanceBandSetting[] {
   return RESISTANCE_BAND_DEFAULTS.map(defaults => {
-    const color = values.find(row => row.key === valueKey(defaults.id, 'color'));
-    const min = values.find(row => row.key === valueKey(defaults.id, 'min'));
-    const max = values.find(row => row.key === valueKey(defaults.id, 'max'));
+    const color = values.find(row => row.key === bandFieldKey(defaults.id, 'color'));
+    const min = values.find(row => row.key === bandFieldKey(defaults.id, 'min'));
+    const max = values.find(row => row.key === bandFieldKey(defaults.id, 'max'));
     const resolved = {
       ...defaults,
       color: color?.valueType === 'string' && typeof color.value === 'string'
@@ -74,15 +76,23 @@ export async function saveResistanceBands(
   repo: BandRepository,
   actorUserId: string,
   bands: readonly ResistanceBandSetting[],
+  dirtyFields: ReadonlySet<ResistanceBandFieldKey>,
 ): Promise<void> {
   assertResistanceBands(bands);
+  if (dirtyFields.size === 0) return;
   const target = personalBandTarget(actorUserId);
   const stored = await repo.getValues(target);
+  // Validate against the latest locally synchronized palette, not stale UI
+  // values. This also detects incompatible concurrent range updates.
+  const current = resolveResistanceBands(stored);
+  const merged = mergeResistanceBands(current, bands, dirtyFields);
+  assertResistanceBands(merged);
   const entries: FlexAttributeInput[] = [];
   for (const band of bands) {
     const defaults = RESISTANCE_BAND_DEFAULTS[band.id - 1];
     for (const field of ['color', 'min', 'max'] as const) {
-      const key = valueKey(band.id, field);
+      const key = bandFieldKey(band.id, field);
+      if (!dirtyFields.has(key)) continue;
       const type = field === 'color' ? 'string' : 'number';
       const value = field === 'color' ? band.color.toUpperCase() : band[field];
       const defaultValue = defaults[field];
@@ -93,6 +103,28 @@ export async function saveResistanceBands(
     }
   }
   if (entries.length) await repo.setValues(target, entries);
+}
+
+/** Preserve edited fields and refresh untouched fields from the current realm. */
+export function mergeResistanceBands(
+  latest: readonly ResistanceBandSetting[],
+  draft: readonly ResistanceBandSetting[],
+  dirtyFields: ReadonlySet<ResistanceBandFieldKey>,
+): ResistanceBandSetting[] {
+  assertResistanceBands(latest);
+  assertResistanceBands(draft);
+  return latest.map((band, index) => {
+    const edited = draft[index];
+    const merged = { ...band };
+    for (const field of ['color', 'min', 'max'] as const) {
+      if (dirtyFields.has(bandFieldKey(band.id, field))) {
+        if (field === 'color') merged.color = edited.color;
+        else if (field === 'min') merged.min = edited.min;
+        else merged.max = edited.max;
+      }
+    }
+    return merged;
+  });
 }
 
 /** Convert palette color to the existing UI Kit HSV color wheel inputs. */
