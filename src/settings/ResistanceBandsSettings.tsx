@@ -136,7 +136,7 @@ export function ResistanceBandsSettings({ glassBlur }: { glassBlur?: number }) {
           ))}
         </div>
         {selected ? (
-          <div className="resistance-bands__color" aria-label={`Изменить цвет ленты ${selected.id}`}>
+          <div className="resistance-bands__color" role="group" aria-label={`Изменить цвет ленты ${selected.id}`}>
             <Text variant="headline">Лента {selected.id}</Text>
             <Text variant="footnote" tone="muted">Цветовая настройка</Text>
             <GlassBackgroundColorControls
