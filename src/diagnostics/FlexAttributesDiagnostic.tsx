@@ -49,8 +49,10 @@ export function FlexAttributesDiagnostic({ initData }: { initData: string }) {
         // Server-verified identity: never use initDataUnsafe or a caller-provided user ID.
         const me = await getMe(initData);
         if (!active) return;
-        const telegramId = me.user.telegramUserId;
-        if (!/^[1-9]\d*$/.test(telegramId)) throw new Error('INVALID_AUTHENTICATED_ACCOUNT');
+        const telegramId: unknown = me?.user?.telegramUserId;
+        if (typeof telegramId !== 'string' || !/^[1-9]\d*$/.test(telegramId)) {
+          throw new Error('INVALID_AUTHENTICATED_ACCOUNT');
+        }
         const actorUserId = 'tg:' + telegramId;
         db = createCloudDatabase(telegramId, initData);
         const cloudDb = db;
