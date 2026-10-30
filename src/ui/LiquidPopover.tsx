@@ -816,27 +816,31 @@ export function LiquidPopover({
         aria-hidden="true"
         inert
       >
-        {layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{text}</Text> : items.map((item) => (
-          <Fragment key={item.id}>
-            {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
-            <div className={item.trailingAction && layout === 'menu' ? 'ui-liquid-popover__item--with-action' : undefined}>
-              <div
-                ref={(element) => {
-                  if (element) rowRefs.current.set(item.id, element);
-                  else rowRefs.current.delete(item.id);
-                }}
-                className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
-              >
-                {item.icon && layout === 'menu' ? (
-                  <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
-                ) : null}
-                <span className="ui-menu-item__label">{item.label}</span>
-              </div>
-              {item.trailingAction && layout === 'menu'
-                ? <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span> : null}
+        {layout === 'text' ? <Text variant="body" className="ui-liquid-popover__text">{text}</Text> : items.map(item => {
+          const row = (
+            <div
+              ref={(element) => {
+                if (element) rowRefs.current.set(item.id, element);
+                else rowRefs.current.delete(item.id);
+              }}
+              className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
+            >
+              {item.icon && layout === 'menu' ? (
+                <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
+              ) : null}
+              <span className="ui-menu-item__label">{item.label}</span>
             </div>
-          </Fragment>
-        ))}
+          );
+          return <Fragment key={item.id}>
+            {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
+            {item.trailingAction && layout === 'menu'
+              ? <div className="ui-liquid-popover__item--with-action">
+                {row}
+                <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span>
+              </div>
+              : row}
+          </Fragment>;
+        })}
       </div>
       {cloneElement(trigger, {
         'aria-haspopup': role,
