@@ -18,6 +18,7 @@ export function GlassBackgroundColorControls({
   minimumBrightness?: number;
   /** Opt-in single-column layout for narrow editor popovers. */
   stacked?: boolean;
+  colorSubject?: string;
   children?: ReactNode;
 }) {
   const brightnessId = useId();
@@ -73,7 +74,7 @@ export function GlassBackgroundColorControls({
         <button
           type="button"
           className="glass-background-lab__wheel"
-          aria-label={`Выбрать цвет фона. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
+          aria-label={`Выбрать цвет ${colorSubject}. Оттенок ${Math.round(color.hue)}°, насыщенность ${Math.round(color.saturation)}%`}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={releasePointer}
