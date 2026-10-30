@@ -98,7 +98,7 @@ describe('UI Kit exercise tracking picker catalog', () => {
   it('keeps the revised NumPicker and WeightRepsPicker demonstrations interactive', () => {
     renderCatalog();
     const num = openPicker('Выбрать число', 'Выбор числа');
-    select(num, 'Сотни', '9');
+    select(num, 'Число', '923');
     expect(screen.getByText('Выбрано: 923')).toBeTruthy();
 
     const backdrop = num.previousElementSibling;
