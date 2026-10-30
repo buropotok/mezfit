@@ -68,8 +68,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   repoState.getValues.mockResolvedValue([]);
   repoState.setValues.mockResolvedValue(undefined);
-  vi.mocked(useCloudConnections).mockReturnValue({ db, actorUserId: 'tg:42' }
-    as unknown as NonNullable<ReturnType<typeof useCloudConnections>>);
+  const connection = { db, actorUserId: 'tg:42' };
+  const connectionValue = connection as unknown as ReturnType<typeof useCloudConnections>;
+  vi.mocked(useCloudConnections).mockReturnValue(connectionValue);
 });
 afterEach(() => { cleanup(); });
 
