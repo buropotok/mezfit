@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   WheelPicker,
   type WheelPickerColumn,
@@ -16,6 +17,8 @@ export interface TwoColumnPickerProps {
   columns: readonly [TwoColumnPickerColumn, TwoColumnPickerColumn];
   ariaLabel: string;
   separator?: string;
+  /** Optional content beneath the two wheels, rendered by the existing WheelPicker footer. */
+  footer?: ReactNode;
   lensMode?: TwoColumnPickerLensMode;
   geometry?: 'standard' | 'compact-time';
 }
