@@ -611,7 +611,7 @@ export function WheelPicker({
     let cancelled = false;
     const view = documentRef.defaultView;
     const build = () => {
-      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef, lensXs));
+      if (!cancelled) setLensAssets(buildTimeLensAssets(documentRef, lensXs.slice(0, columnCount)));
     };
 
     if (!view || typeof view.requestAnimationFrame !== 'function') {
@@ -626,7 +626,7 @@ export function WheelPicker({
       cancelled = true;
       view.cancelAnimationFrame(frame);
     };
-  }, [lensAssets, lensXs, opened, resolvedLensMode, target]);
+  }, [columnCount, lensAssets, lensXs, opened, resolvedLensMode, target]);
 
   useEffect(() => {
     const view = target?.ownerDocument.defaultView ?? window;
