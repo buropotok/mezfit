@@ -69,6 +69,15 @@ describe('five fitness bands settings connected to personal Flex EAV', () => {
     expect(document.body.textContent).not.toContain('Настройки отправлены в Dexie Cloud.');
   });
 
+  it('does not allow saving fallback defaults if the personal palette could not be read', async () => {
+    repoState.getValues.mockRejectedValueOnce(new Error('private cloud error'));
+    render(<ResistanceBandsSettings />);
+    await waitFor(() => expect(screen.getByText('Не удалось загрузить настройки лент.')).toBeTruthy());
+    expect((screen.getByRole('button', { name: 'Сохранить ленты' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(repoState.setValues).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('private cloud error');
+  });
+
   it('shows defaults but disables saving without an authenticated cloud identity', () => {
     vi.mocked(useCloudConnections).mockReturnValue(null);
     render(<ResistanceBandsSettings />);
