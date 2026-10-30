@@ -75,6 +75,7 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
 
   const selectedIndex = bandIndex(selected);
   const selectedBand = selectedIndex < 0 ? null : palette[selectedIndex];
+  const visibleBand = loaded && !loadError ? selectedBand : null;
   const beginEdit = (id: ResistanceBandSetting['id']) => {
     if (disabled || !loaded || !repository || loadError) return;
     const band = palette.find(candidate => candidate.id === id);
@@ -144,9 +145,9 @@ export function WorkoutBandControl({ selected, onSelect, disabled = false }: Wor
         triggerRef={triggerRef} items={items} label="Фитнес-лента"
         trigger={<IconButton ref={triggerRef} disabled={disabled || !loaded} label={selected ? 'Изменить фитнес-ленту' : 'Выбрать фитнес-ленту'}>
           <span className="set-entry__icon set-entry__icon--ripple"
-            style={{ color: selectedBand?.color }} aria-hidden="true" />
+            style={{ color: visibleBand?.color }} aria-hidden="true" />
         </IconButton>} />
-      {selectedBand ? <Text variant="caption">{selectedBand.min}–{selectedBand.max} кг</Text> : null}
+      {visibleBand ? <Text variant="caption">{visibleBand.min}–{visibleBand.max} кг</Text> : null}
     </div>
     {editDraft ? <RangePicker opened={editorOpened} value={{ min: editDraft.min, max: editDraft.max }}
       minAllowed={1} maxAllowed={30} target={triggerRef.current}
