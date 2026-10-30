@@ -68,7 +68,7 @@ describe('weight and repetitions SetEntry', () => {
   it('renders the existing bottom sheet and UI Kit weight/reps picker trigger', () => {
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={vi.fn()} onSave={vi.fn(async () => undefined)} />);
     expect(screen.getByRole('dialog', { name: 'Подход 3' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
     expect(screen.getByText('План: 80 кг × 10')).toBeTruthy();
     expect(screen.getByText('Пред.: 77,5 кг × 10')).toBeTruthy();
     expect(screen.getByRole('group', { name: 'Тип подхода' })).toBeTruthy();
@@ -158,7 +158,7 @@ describe('weight and repetitions SetEntry', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
       setType: 'cluster', setLabel: null, rpe: 8,
-      metrics: { weightKg: 80, reps: 10, durationSeconds: null, distanceMeters: null },
+      metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
     }));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
@@ -233,17 +233,21 @@ describe('weight and repetitions SetEntry', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('prefills FACT from PLAN and saves without a separate copy-plan action', async () => {
+  it('shows empty FACT until opening the plan-valued picker and saves only after picker acceptance', async () => {
     const onSave = vi.fn(async () => undefined);
     const onClose = vi.fn();
     render(<SetEntry mode="workout" isOpen data={baseData} onClose={onClose} onSave={onSave} />);
-    expect(screen.getByText('80 кг × 10')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
+    expect(screen.getByText('План: 80 кг × 10')).toBeTruthy();
     expect(screen.getByText('RPE: 0')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Записать.*как факт/ })).toBeNull();
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
+    expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('10');
+    expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('80');
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('80 кг × 10');
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
@@ -375,7 +379,7 @@ describe('weight and repetitions SetEntry', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
-      rpe: 7, metrics: { weightKg: null, reps: null, durationSeconds: 125, distanceMeters: null },
+      rpe: 7, metrics: { weightKg: null, reps: null, durationSeconds: null, distanceMeters: null },
     })));
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
   });
@@ -406,6 +410,7 @@ it('closes without a prompt when metadata changes are reverted to the initial va
 it.each([false, true])('accepts PLAN as new FACT after saving the numeric form (retyped=%s)', async retyped => {
   const close = vi.fn(), save = vi.fn(async () => undefined);
   render(<SetEntry mode="workout" isOpen data={baseData} onClose={close} onSave={save} />);
+  expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
   fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
   expect(document.querySelector('[data-ui-picker-static-value="first"] text')?.textContent).toBe('10');
   expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('80');
@@ -453,6 +458,7 @@ it('records prefilled PLAN after ordinary picker dismissal without edits or nume
   const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
   fireEvent.click(picker.previousElementSibling as Element);
   expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('80 кг × 10');
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
   fireEvent.click(screen.getByRole('button', { name: 'Да' }));
   await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ metrics: baseData.plan })));
@@ -468,7 +474,7 @@ it('keeps an untouched empty FACT empty after opening and closing the picker', (
   expect(screen.getByRole('button', { name: 'Изменить целые килограммы' }).querySelector('.ui-icon')).not.toBeNull();
   const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
   fireEvent.click(picker.previousElementSibling as Element);
-  expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Не заполнено');
+  expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
   expect(close).toHaveBeenCalledOnce();
   expect(save).not.toHaveBeenCalled();
@@ -495,11 +501,11 @@ describe('session FACT objects without measurements', () => {
     setLabel: null, setType: 'cluster', rpe: 6, comment: 'Сохранить комментарий', bands: ['red'],
   };
 
-  it('prefills the PLAN while preserving FACT metadata and leaving both source objects unchanged', () => {
+  it('keeps pending FACT empty while preserving its metadata and the independent PLAN', () => {
     const snapshot = structuredClone({ ...baseData, fact: emptyFact });
     const draft = createSetEntryDraft(snapshot);
-    expect(draft.metrics).toEqual(baseData.plan);
-    expect(draft.metrics).not.toBe(snapshot.plan);
+    expect(draft.metrics).toEqual(emptyFact.metrics);
+    expect(draft.metrics).not.toBe(snapshot.fact?.metrics);
     expect(draft).toMatchObject({ setType: 'cluster', rpe: 6,
       comment: 'Сохранить комментарий', bands: ['red'] });
     expect(snapshot.fact).toEqual(emptyFact);
@@ -513,7 +519,7 @@ describe('session FACT objects without measurements', () => {
     expect(createSetEntryDraft({ ...baseData, fact: { ...emptyFact, metrics } }).metrics).toEqual(metrics);
   });
 
-  it('closes untouched session input without prompting or saving the prefilled PLAN', () => {
+  it('closes untouched session input without prompting or writing the PLAN as FACT', () => {
     const close = vi.fn(), save = vi.fn();
     render(<KonstaProvider theme="ios" dark>
       <SetEntry mode="workout" isOpen data={{ ...baseData, fact: emptyFact }} onClose={close} onSave={save} />
