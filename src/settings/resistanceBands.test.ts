@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { hsvToHex } from '../ui/colorMath';
+import type { FlexAttributeInput, FlexEntityTarget, FlexResolvedValue } from '../data/cloud/flex-attributes';
 import {
   RESISTANCE_BAND_DEFAULTS,
   assertResistanceBands,
@@ -10,10 +11,10 @@ import {
   saveResistanceBands,
 } from './resistanceBands';
 
-function fakeRepo(initial: Array<{ key: string; valueType: 'string' | 'number'; value: string | number | null }> = []) {
+function fakeRepo(initial: FlexResolvedValue[] = []) {
   const entries = new Map(initial.map(row => [row.key, row]));
-  const getValues = vi.fn(async () => [...entries.values()]);
-  const setValues = vi.fn(async (_target: unknown, input: Array<{ key: string; valueType: 'string' | 'number'; value: string | number | null }>) => {
+  const getValues = vi.fn(async (_target: FlexEntityTarget) => [...entries.values()]);
+  const setValues = vi.fn(async (_target: FlexEntityTarget, input: readonly FlexAttributeInput[]) => {
     input.forEach(row => entries.set(row.key, row));
   });
   return { getValues, setValues };
@@ -32,9 +33,8 @@ describe('personal resistance bands over Flex Attributes', () => {
   it('writes only user-modified attributes as one Flex transaction', async () => {
     const repo = fakeRepo();
     const bands = RESISTANCE_BAND_DEFAULTS.map(band => ({ ...band }));
-    bands[1].min = 4;
-    bands[1].max = 11;
-    bands[3].color = '#123ABC';
+    bands[1] = { ...bands[1], min: 4, max: 11 };
+    bands[3] = { ...bands[3], color: '#123ABC' };
     await saveResistanceBands(repo, 'tg:2', bands);
     expect(repo.setValues).toHaveBeenCalledOnce();
     expect(repo.setValues).toHaveBeenCalledWith(
