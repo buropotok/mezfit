@@ -23,6 +23,15 @@ function Trigger({ done, failed }: { done: (id: string) => void; failed: (error:
 }
 beforeEach(() => { vi.clearAllMocks(); state.enabled = true; state.create.mockResolvedValue({ id: 'execution' }); });
 afterEach(cleanup);
+it('keeps the Client activity message and does not navigate on a blocked Start', async () => {
+  state.create.mockRejectedValue(new Error('ADHOC_ACTIVE_SESSION_EXISTS'));
+  const done = vi.fn(), failed = vi.fn();
+  render(<PlannedWorkoutStartProvider role="client" onStarted={vi.fn()}><Trigger done={done} failed={failed} /></PlannedWorkoutStartProvider>);
+  fireEvent.click(screen.getByText('Start'));
+  await waitFor(() => expect(failed).toHaveBeenCalledOnce());
+  expect(screen.getByText('Завершите текущую тренировку, чтобы начать новую.')).toBeTruthy();
+  expect(done).not.toHaveBeenCalled();
+});
 it('uses the Client repository without flushing or authoring assigned PLAN', async () => {
   const done = vi.fn(), failed = vi.fn();
   render(<PlannedWorkoutStartProvider role="client" onStarted={vi.fn()}><Trigger done={done} failed={failed} /></PlannedWorkoutStartProvider>);
