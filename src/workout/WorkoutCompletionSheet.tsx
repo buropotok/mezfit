@@ -4,7 +4,7 @@ import type { NavigationContext } from '../NavigationShell';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { calendarDate, calendarTime, localScheduleInstant } from '../schedule/calendar-time';
 import { useWorkoutPerson } from '../schedule/WorkoutPerson';
-import { Button as PickerButton, DatePicker, GlassSurface, Icon, IconButton, MezfitBottomSheet, Text, TimePicker,
+import { DatePicker, GlassSurface, Icon, IconButton, MezfitBottomSheet, Text, TimePicker,
   type LocalDate, type LocalTime } from '../ui';
 import { WorkoutPlanCardHeader } from './WorkoutPlanCard';
 import './workout-completion-sheet.css';
@@ -23,13 +23,15 @@ function ReviewCard({ row, expanded, busy, onToggle, onCancel, onMove, onKeep }:
       <WorkoutPlanCardHeader name={row.plan.name} programName={athlete.name} creatorName={athlete.name}
         athleteName={athlete.name} athleteAvatar={athlete.avatar} collapsed
         scheduledTiming={{ date: start.toLocaleDateString('ru-RU'), time: `${calendarTime(start)} – ${calendarTime(end)}` }}>
-        <Icon name={expanded ? 'chevron-down' : 'chevron-right'} />
+        <span className={`workout-plan-card__chevron${expanded ? ' workout-plan-card__chevron--expanded' : ''}`}>
+          <Icon name="chevron-right" />
+        </span>
       </WorkoutPlanCardHeader>
     </GlassSurface>
     <div className={`workout-completion-sheet__disclosure${expanded ? ' workout-completion-sheet__disclosure--open' : ''}`}
       aria-hidden={!expanded} inert={!expanded ? true : undefined}>
       <div><div className="workout-completion-sheet__actions">
-        <Button rounded strong disabled={busy} onClick={onCancel}><Text variant="body">Отменить тренировку</Text></Button>
+        <Button rounded disabled={busy} onClick={onCancel}><Text variant="body">Отменить тренировку</Text></Button>
         <Button rounded tonal disabled={busy} onClick={onMove}><Text variant="body">Перенести тренировку</Text></Button>
         <Button rounded tonal disabled={busy} onClick={onKeep}><Text variant="body">Оставить как есть</Text></Button>
       </div></div>
@@ -46,22 +48,22 @@ function MoveWorkout({ row, busy, onBack, onMove, onError }: {
   const [time, setTime] = useState<LocalTime>(calendarTime(original));
   const [dateOpen, setDateOpen] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
-  const target = useRef<HTMLButtonElement>(null);
+  const [target, setTarget] = useState<HTMLElement | null>(null);
   return <div className="workout-completion-sheet__move">
     <Text variant="body">{row.plan.name}</Text>
     <Button rounded tonal disabled={busy} onClick={() => setDateOpen(true)}>
       <Text variant="body">Дата: {date.split('-').reverse().join('.')}</Text>
     </Button>
-    <PickerButton ref={target} disabled={busy} onClick={() => setTimeOpen(true)}>
+    <Button rounded tonal disabled={busy} onClick={event => { setTarget(event.currentTarget); setTimeOpen(true); }}>
       <Text variant="body">Начало: {time}</Text>
-    </PickerButton>
+    </Button>
     <Text variant="footnote" tone="muted">Длительность: {row.durationMinutes} мин</Text>
-    <Button rounded strong disabled={busy || dateOpen || timeOpen} onClick={() => {
+    <Button rounded disabled={busy || dateOpen || timeOpen} onClick={() => {
       try { onMove(localScheduleInstant(date, time)); } catch (reason) { onError(reason); }
     }}><Text variant="body">Перенести</Text></Button>
     <Button rounded tonal disabled={busy} onClick={onBack}><Text variant="body">Назад</Text></Button>
     <DatePicker opened={dateOpen} value={date} onChange={value => { setDate(value); setDateOpen(false); }} onClose={() => setDateOpen(false)} />
-    <TimePicker opened={timeOpen} value={time} onChange={setTime} onClose={() => setTimeOpen(false)} target={target.current} />
+    <TimePicker opened={timeOpen} value={time} onChange={setTime} onClose={() => setTimeOpen(false)} target={target} />
   </div>;
 }
 
