@@ -4,7 +4,7 @@ import type { NavigationContext } from '../NavigationShell';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import { calendarDate, calendarTime, localScheduleInstant } from '../schedule/calendar-time';
 import { useWorkoutPerson } from '../schedule/WorkoutPerson';
-import { DatePicker, GlassSurface, Icon, IconButton, MezfitBottomSheet, Text, TimePicker,
+import { Button as PickerButton, DatePicker, GlassSurface, Icon, IconButton, MezfitBottomSheet, Text, TimePicker,
   type LocalDate, type LocalTime } from '../ui';
 import { WorkoutPlanCardHeader } from './WorkoutPlanCard';
 import './workout-completion-sheet.css';
@@ -52,9 +52,9 @@ function MoveWorkout({ row, busy, onBack, onMove, onError }: {
     <Button rounded tonal disabled={busy} onClick={() => setDateOpen(true)}>
       <Text variant="body">Дата: {date.split('-').reverse().join('.')}</Text>
     </Button>
-    <Button ref={target} rounded tonal disabled={busy} onClick={() => setTimeOpen(true)}>
+    <PickerButton ref={target} disabled={busy} onClick={() => setTimeOpen(true)}>
       <Text variant="body">Начало: {time}</Text>
-    </Button>
+    </PickerButton>
     <Text variant="footnote" tone="muted">Длительность: {row.durationMinutes} мин</Text>
     <Button rounded strong disabled={busy || dateOpen || timeOpen} onClick={() => {
       try { onMove(localScheduleInstant(date, time)); } catch (reason) { onError(reason); }
