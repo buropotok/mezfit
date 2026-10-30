@@ -37,6 +37,7 @@ const tabs: ReadonlyArray<{ value: ClientTab; label: string }> = [
 
 const clientPlaceholderCopy: Record<ClientTab, { title: string; text: string }> = {
   overview: { title: 'Обзор', text: 'Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера.' },
+  program: { title: 'Программа', text: 'Редактор назначенной программы будет следующим вертикальным срезом.' },
   exercises: { title: 'Упражнения', text: 'Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud.' },
   calendar: { title: 'Календарь', text: 'Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence.' },
   progress: { title: 'Прогресс', text: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.' },
