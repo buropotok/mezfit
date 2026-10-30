@@ -55,6 +55,34 @@ describe('five fitness bands settings connected to personal Flex EAV', () => {
     expect(cloudState.sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
   });
 
+  it('preserves a remote color arriving during an edit and saves only the touched range', async () => {
+    let releasePull: () => void = () => undefined;
+    const blockedPull = new Promise<void>(resolve => { releasePull = resolve; });
+    cloudState.sync.mockImplementation(async (request: { purpose: string }) => {
+      if (request.purpose === 'pull') await blockedPull;
+    });
+    const remote = [{ key: 'Band_4_color', valueType: 'string', value: '#123ABC' }];
+    repoState.getValues.mockResolvedValueOnce([]).mockResolvedValue(remote);
+    render(<ResistanceBandsSettings />);
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Изменить диапазон ленты 1' }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить диапазон ленты 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Колесо диапазона' }));
+    releasePull();
+    await waitFor(() => {
+      const fourth = screen.getByText('Лента 4').parentElement?.querySelector('.resistance-bands__swatch') as HTMLElement | null;
+      expect(fourth?.style.backgroundColor).toBe('rgb(18, 58, 188)');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить ленты' }));
+    await waitFor(() => expect(screen.getByText('Настройки отправлены в Dexie Cloud.')).toBeTruthy());
+    expect(repoState.setValues).toHaveBeenCalledWith(
+      { entityType: 'user', entityId: 'tg:42', realmId: 'tg:42' },
+      [{ key: 'Band_1_min', valueType: 'number', value: 3 },
+        { key: 'Band_1_max', valueType: 'number', value: 8 }],
+    );
+    const written = repoState.setValues.mock.calls[0]?.[1] as Array<{ key: string }>;
+    expect(written.some(row => row.key === 'Band_4_color')).toBe(false);
+  });
+
   it('never claims cloud persistence when the push fails', async () => {
     cloudState.sync.mockImplementation(async (request: { purpose: string }) => {
       if (request.purpose === 'push') throw new Error('private token');
