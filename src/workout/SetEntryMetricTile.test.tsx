@@ -63,7 +63,8 @@ describe('shared entry metric card for exercise tracking types', () => {
         expect(control.classList.contains('set-entry-weight-reps__metric-tile')).toBe(true);
         expect(control.getAttribute('aria-disabled')).toBe('false');
         expect(within(control).getByText(label).classList.contains('ui-text--body')).toBe(true);
-        expect(within(control).getByText(value).classList.contains('ui-text--body')).toBe(true);
+        const displayed = mode === 'occurrence-plan' ? value : 'Введите факт';
+        expect(within(control).getByText(displayed).classList.contains('ui-text--body')).toBe(true);
       }
       expect(screen.queryByText('Повторения × Вес')).toBeNull();
     });
