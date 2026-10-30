@@ -60,7 +60,7 @@ it('moves the selected workout through existing date/time pickers without changi
   fireEvent.click(within(dialog).getByRole('button', { name: /^Начало:/ }));
   fireEvent.click(screen.getByText('Новое время'));
   expect(screen.getByText('Длительность: 60 мин')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Перенести', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Перенести' }));
   expect(props.onMove).toHaveBeenCalledWith(row, new Date(2026, 10, 1, 13, 0).toISOString());
   expect(props.onCancel).not.toHaveBeenCalled();
 });
