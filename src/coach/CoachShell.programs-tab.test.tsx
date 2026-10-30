@@ -52,7 +52,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('CoachShell selected client program navigation', () => {
   it('opens the exact shared coach detail view and returns to the same client program tab', async () => {
-    const onNavigationContextChange = vi.fn();
+    const onNavigationContextChange = vi.fn<(context: NavigationContext | null) => void>();
     render(<CoachShell destination="clients" initData="verified"
       onNavigationContextChange={onNavigationContextChange} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Открыть клиента Анна Иванова' }));
@@ -69,7 +69,7 @@ describe('CoachShell selected client program navigation', () => {
     await waitFor(() => expect(onNavigationContextChange).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Детали программы', scrollKey: `cloud-plan:${plan.id}` }),
     ));
-    const context = onNavigationContextChange.mock.calls.map(([value]: [NavigationContext | null]) => value)
+    const context = onNavigationContextChange.mock.calls.map(([value]) => value)
       .reverse().find((value) => value?.title === 'Детали программы');
     expect(context?.onBack).toBeTypeOf('function');
     act(() => context?.onBack?.());
