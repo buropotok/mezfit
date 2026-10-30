@@ -98,3 +98,22 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Opt-in two-action menu row. Default menu rows retain their existing DOM and geometry. */
+.ui-liquid-popover__item--with-action { position: relative; }
+.ui-liquid-popover__item--with-action > .ui-menu-item { padding-right: 3.5rem; }
+.ui-liquid-popover__trailing {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--ui-color-surface-muted);
+  cursor: pointer;
+}
+.ui-liquid-popover__trailing svg { width: 20px; height: 20px; }
+.ui-liquid-popover__trailing:disabled { cursor: default; opacity: .5; }
