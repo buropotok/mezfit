@@ -23,7 +23,7 @@ async function fixture(installed = true) {
   databases.push(db);
   const stores: Record<string, string | null> = {};
   for (const [table, schema] of Object.entries(CLOUD_DATABASE_STORES_V12)) stores[table] = schema?.replaceAll('@', '') ?? null;
-  db.version(12).stores({ ...stores, localWorkoutSync: 'id' });
+  db.version(12).stores({ ...stores, localWorkoutSync: 'id', localProgramSync: 'id' });
   for (const table of ['adHocSessions', 'adHocExercises', 'adHocSets'])
     db.table(table).hook('creating', key => key === undefined ? crypto.randomUUID() : undefined);
   const pair = await relationshipMembership('101', '202');
@@ -67,7 +67,7 @@ async function firstSet(repo: ClientWorkoutRepository, id: string) {
 describe('Client local-first execution foundation', () => {
   it.each([true, false])('blocks Coach starts on an athlete-started activity, assigned program: %s', async assigned => {
     const { db, row, repo, coach } = await fixture();
-    if (assigned) await db.table('workoutOccurrences').update(row.id, { trainingPlanId: 'assigned-program' });
+    if (assigned) await db.table('workoutOccurrences').update(row.id, { trainingPlanId: 'assigned-program', programDayId: 'assigned-day' });
     const started = await repo.createFromOccurrence(row.id);
     const code = assigned ? 'ADHOC_ATHLETE_ACTIVE_COACH_PROGRAM' : 'ADHOC_ATHLETE_ACTIVE';
     const second = { ...row, id: 'second-workout' };
