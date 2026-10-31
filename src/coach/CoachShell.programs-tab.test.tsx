@@ -13,6 +13,8 @@ const plan: CloudTrainingPlanRow = {
   createdAt: '', updatedAt: '', startedAt: null, finishedAt: null,
 };
 
+vi.mock('../data/cloud/program-management-activation', () => ({ CLOUD_PROGRAM_MANAGEMENT_ENABLED: true }));
+
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
     db: {}, actorUserId: 'tg:101', clients: [client], coaches: [],
