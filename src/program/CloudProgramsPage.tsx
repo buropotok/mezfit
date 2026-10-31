@@ -87,7 +87,7 @@ function ProgramRow({
 export function CloudProgramsPage({
   repository, clients, onOpen, cloudStatus, cloudError, syncStatus, syncError,
   onRetryCloud, onRetrySync, personalOnly = false, controls, hideToolbar = false,
-  viewerRole = 'coach', coaches = [], onNavigationContextChange,
+  viewerRole = 'coach', coaches = [], onNavigationContextChange, clientScope,
 }: {
   repository: ProgramManagementRepository;
   clients: readonly CloudContact[];
@@ -102,6 +102,8 @@ export function CloudProgramsPage({
   coaches?: readonly CloudContact[];
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   personalOnly?: boolean;
+  /** Restrict the coach view to this exact client relationship without changing list actions. */
+  clientScope?: CloudContact;
   controls?: ProgramControls;
   hideToolbar?: boolean;
 }) {
@@ -148,7 +150,11 @@ export function CloudProgramsPage({
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retryKey, personalOnly, viewerRole]);
 
-  const personal = programs.filter((plan) => plan.coachUserId === null && plan.clientUserId === null
+  const scopedPrograms = useMemo(() => clientScope
+    ? programs.filter((plan) => plan.coachUserId === repository.actorUserId
+      && plan.clientUserId === clientScope.userId && plan.realmId === clientScope.relationshipId)
+    : programs, [programs, repository.actorUserId, clientScope?.userId, clientScope?.relationshipId]);
+  const personal = scopedPrograms.filter((plan) => plan.coachUserId === null && plan.clientUserId === null
     && plan.realmId === repository.actorUserId && plan.athleteUserId === repository.actorUserId);
   const matches = (plan: CloudTrainingPlanRow) => filter === 'all' || plan.status === filter;
   const query = search.trim().toLocaleLowerCase('ru-RU');
@@ -156,7 +162,7 @@ export function CloudProgramsPage({
     && plan.name.toLocaleLowerCase('ru-RU').includes(query));
   const groups = useMemo(() => {
     const byRealm = new Map<string, CloudTrainingPlanRow[]>();
-    for (const plan of programs) {
+    for (const plan of scopedPrograms) {
       if (!plan.coachUserId || !plan.clientUserId || (filter !== 'all' && plan.status !== filter)) continue;
       if (viewerRole === 'client' && (plan.clientUserId !== repository.actorUserId || plan.status === 'draft')) continue;
       const rows = byRealm.get(plan.realmId) ?? [];
@@ -171,7 +177,7 @@ export function CloudProgramsPage({
       return { realmId, personName, contact, plans: personName.toLocaleLowerCase('ru-RU').includes(query)
         ? plans : plans.filter((plan) => plan.name.toLocaleLowerCase('ru-RU').includes(query)) };
     }).filter((group) => group.plans.length > 0);
-  }, [programs, filter, query, clients, coaches, viewerRole, repository.actorUserId]);
+  }, [scopedPrograms, filter, query, clients, coaches, viewerRole, repository.actorUserId]);
 
   useEffect(() => {
     if (!onNavigationContextChange) return;
@@ -196,7 +202,7 @@ export function CloudProgramsPage({
       setError('');
     },
   }), [repository.actorUserId]);
-  useNavigationFloatingAction('programs', floatingAction);
+  useNavigationFloatingAction('programs', clientScope ? null : floatingAction);
 
   const run = async (fn: () => Promise<unknown>) => {
     if (busy) return;
@@ -296,7 +302,7 @@ export function CloudProgramsPage({
       {loading || cloudStatus === 'loading' ? (
         <Text variant="footnote" tone="muted">Загружаем программы…</Text>
       ) : null}
-      <section className="cloud-plan-group" aria-label="Мои программы">
+      {!clientScope ? <section className="cloud-plan-group" aria-label="Мои программы">
         <Text variant="headline" role="heading" aria-level={2}>Мои программы</Text>
         {personalVisible.length ? <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
           <div className="cloud-plan-group-content"><List>{personalVisible.map((plan) => (
@@ -305,16 +311,18 @@ export function CloudProgramsPage({
         </GlassSurface> : !loading && !error && cloudStatus === 'ready' ? <Text variant="body">
           {personal.length ? 'Программ с выбранными параметрами нет' : 'Мы не создали ни одной личной программы'}
         </Text> : null}
-      </section>
-      {!personalOnly ? <section className="cloud-plan-group" aria-label={viewerRole === 'client' ? 'Тренерские программы' : 'Программы клиентов'}>
-        <Text variant="headline" role="heading" aria-level={2}>{viewerRole === 'client' ? 'Тренерские программы' : 'Программы клиентов'}</Text>
+      </section> : null}
+      {!personalOnly ? <section className="cloud-plan-group" aria-label={clientScope
+        ? `Программы клиента ${clientScope.displayName}`
+        : viewerRole === 'client' ? 'Тренерские программы' : 'Программы клиентов'}>
+        {!clientScope ? <Text variant="headline" role="heading" aria-level={2}>{viewerRole === 'client' ? 'Тренерские программы' : 'Программы клиентов'}</Text> : null}
         {groups.map((group) => (
           <section key={group.realmId} className="cloud-plan-group" aria-label={group.personName}>
-            <div className="cloud-plan-person-row">
+            {!clientScope ? <div className="cloud-plan-person-row">
               {group.contact ? <CloudContactAvatar contact={group.contact} /> : null}
               <Text variant="headline" role="heading" aria-level={3}>{group.personName}</Text>
-            </div>
-            <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
+            </div> : null}
+            <GlassSurface preset="modalTuned" optics={false} blur={clientScope ? 2 : undefined} className="cloud-plan-group-surface">
               <div className="cloud-plan-group-content"><List>{group.plans.map((plan) => (
                 <ProgramRow key={plan.id} plan={plan} busy={busy} readOnly={viewerRole === 'client'} onOpen={onOpen} onAction={action} />
               ))}</List></div>

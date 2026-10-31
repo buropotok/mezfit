@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -35,9 +35,8 @@ const tabs: ReadonlyArray<{ value: ClientTab; label: string }> = [
   { value: 'history', label: 'История' },
 ];
 
-const clientPlaceholderCopy: Record<ClientTab, { title: string; text: string }> = {
+const clientPlaceholderCopy: Record<Exclude<ClientTab, 'program'>, { title: string; text: string }> = {
   overview: { title: 'Обзор', text: 'Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера.' },
-  program: { title: 'Программа', text: 'Редактор назначенной программы будет следующим вертикальным срезом.' },
   exercises: { title: 'Упражнения', text: 'Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud.' },
   calendar: { title: 'Календарь', text: 'Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence.' },
   progress: { title: 'Прогресс', text: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.' },
@@ -75,21 +74,25 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ client }: { client: CloudContact }) {
-  const [tab, setTab] = useState<ClientTab>('overview');
+function ClientWorkspace({ client, tab, onTabChange, programContent }: {
+  client: CloudContact;
+  tab: ClientTab;
+  onTabChange: (tab: ClientTab) => void;
+  programContent?: ReactNode;
+}) {
   const name = displayName(client);
-  const content = clientPlaceholderCopy[tab];
+  const content = tab === 'program' ? null : clientPlaceholderCopy[tab];
 
   return (
     <div className="stack client-workspace">
       <div className="client-workspace-tabs" role="group" aria-label={`Разделы клиента ${name}`}>
         <LiquidGlassTextOnly tabs={tabs} value={tab} hidden={false} fullWidth
           onValueChange={(value) => {
-            if (tabs.some((item) => item.value === value)) setTab(value as ClientTab);
+            if (tabs.some((item) => item.value === value)) onTabChange(value as ClientTab);
           }} />
       </div>
 
-      <Placeholder title={content.title} text={content.text} />
+      {tab === 'program' ? programContent : content ? <Placeholder title={content.title} text={content.text} /> : null}
     </div>
   );
 }
@@ -167,6 +170,12 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
+  const [clientTab, setClientTab] = useState<ClientTab>('overview');
+  const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
+  const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
+  const selectedClientProgram = clientSelectedProgram && selectedClient
+    && clientSelectedProgram.clientUserId === selectedClient.userId
+    && clientSelectedProgram.realmId === selectedClient.relationshipId ? clientSelectedProgram : null;
   const selectedClientAvatarUrl = useCloudContactAvatarUrl(selectedClient);
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
   const [programDetailNavigation, setProgramDetailNavigation] = useState<NavigationContext | null>(null);
@@ -237,6 +246,18 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       return undefined;
     }
 
+    if (selectedClientProgram && destination === 'clients') {
+      onNavigationContextChange(clientProgramDetailNavigation ?? {
+        title: 'Детали программы',
+        scrollKey: `cloud-plan:${selectedClientProgram.id}`,
+        onBack: () => {
+          setClientSelectedProgram(null);
+          setClientProgramDetailNavigation(null);
+        },
+      });
+      return () => onNavigationContextChange(null);
+    }
+
     const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
       title: selectedClientName,
@@ -251,10 +272,36 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [programDetailNavigation, destination, selectedClient, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [programDetailNavigation, clientProgramDetailNavigation, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
-    return <ClientWorkspace client={selectedClient} />;
+    if (selectedClientProgram && destination === 'clients' && programRepository) {
+      return <CloudProgramDetailsPage key={selectedClientProgram.id}
+        onNavigationContextChange={setClientProgramDetailNavigation}
+        actor={actor} viewerRole="coach" repository={programRepository} planId={selectedClientProgram.id}
+        cloudStatus={cloudConnections?.status ?? 'loading'}
+        cloudError={cloudConnections?.error ?? ''}
+        syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+        syncError={cloudConnections?.syncError ?? ''}
+        onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
+        onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />;
+    }
+    const programContent = CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository
+      ? <CloudProgramsPage repository={programRepository} clients={[selectedClient]}
+        clientScope={selectedClient} hideToolbar
+        onOpen={(plan) => {
+          setClientProgramDetailNavigation(null);
+          setClientSelectedProgram(plan);
+        }}
+        cloudStatus={cloudConnections?.status ?? 'loading'}
+        cloudError={cloudConnections?.error ?? ''}
+        syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+        syncError={cloudConnections?.syncError ?? ''}
+        onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
+        onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
+      : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
+    return <ClientWorkspace client={selectedClient} tab={clientTab}
+      onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null} />;
   }
 
   if (destination === 'today') {
@@ -322,6 +369,9 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       const client = clients?.find((item) => item.userId === userId);
       if (!client) throw new Error('Клиент больше не связан с тренером');
       setSelectedClientId(client.userId);
+      setClientTab('overview');
+      setClientSelectedProgram(null);
+      setClientProgramDetailNavigation(null);
     };
 
     const saveProgram = async () => {
@@ -415,7 +465,12 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         clients={clients}
         error={message}
         onRetry={() => { void loadClients(); }}
-        onSelect={(client) => setSelectedClientId(client.userId)}
+        onSelect={(client) => {
+          setSelectedClientId(client.userId);
+          setClientTab('overview');
+          setClientSelectedProgram(null);
+          setClientProgramDetailNavigation(null);
+        }}
         onAdd={createInvite}
         busy={busy}
         presentation="contacts"
