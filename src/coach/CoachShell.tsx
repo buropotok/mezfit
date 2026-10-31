@@ -306,7 +306,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
     return <ClientWorkspace client={selectedClient} tab={clientTab}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
-        key={selectedClient.relationshipId} client={selectedClient} /> : null} />;
+        key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient} /> : null} />;
   }
 
   if (destination === 'today') {
