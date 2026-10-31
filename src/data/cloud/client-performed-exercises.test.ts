@@ -41,7 +41,7 @@ function fact(id: string, sessionId: string, exerciseId: string, realmId: string
   };
 }
 async function fixture() {
-  const db = new Dexie('client-performed-' + crypto.randomUUID());
+  const db = new Dexie('client-performed-' + crypto.randomUUID(), { addons: [] });
   databases.push(db);
   db.version(1).stores({
     realms: 'realmId', members: 'id, realmId, userId',
