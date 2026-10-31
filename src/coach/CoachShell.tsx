@@ -305,7 +305,8 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
     return <ClientWorkspace client={selectedClient} tab={clientTab}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
-      exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage client={selectedClient} /> : null} />;
+      exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
+        key={selectedClient.relationshipId} client={selectedClient} /> : null} />;
   }
 
   if (destination === 'today') {
