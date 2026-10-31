@@ -173,8 +173,9 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const [clientTab, setClientTab] = useState<ClientTab>('overview');
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
-  const selectedClientProgram = clientSelectedProgram?.clientUserId === selectedClient?.userId
-    && clientSelectedProgram.realmId === selectedClient?.relationshipId ? clientSelectedProgram : null;
+  const selectedClientProgram = clientSelectedProgram && selectedClient
+    && clientSelectedProgram.clientUserId === selectedClient.userId
+    && clientSelectedProgram.realmId === selectedClient.relationshipId ? clientSelectedProgram : null;
   const selectedClientAvatarUrl = useCloudContactAvatarUrl(selectedClient);
   const [selectedProgram, setSelectedProgram] = useState<ProgramListItem | null>(null);
   const [programDetailNavigation, setProgramDetailNavigation] = useState<NavigationContext | null>(null);
