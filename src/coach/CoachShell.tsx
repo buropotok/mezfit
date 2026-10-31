@@ -10,6 +10,7 @@ import { GlassSurface } from '../ui/GlassSurface';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
 import { CloudContactsList } from '../contacts/CloudContactsList';
+import { ClientPerformedExercisesPage } from './ClientPerformedExercisesPage';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
@@ -35,9 +36,8 @@ const tabs: ReadonlyArray<{ value: ClientTab; label: string }> = [
   { value: 'history', label: 'История' },
 ];
 
-const clientPlaceholderCopy: Record<Exclude<ClientTab, 'program'>, { title: string; text: string }> = {
+const clientPlaceholderCopy: Record<Exclude<ClientTab, 'program' | 'exercises'>, { title: string; text: string }> = {
   overview: { title: 'Обзор', text: 'Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера.' },
-  exercises: { title: 'Упражнения', text: 'Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud.' },
   calendar: { title: 'Календарь', text: 'Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence.' },
   progress: { title: 'Прогресс', text: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.' },
   history: { title: 'История', text: 'Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом.' },
@@ -74,14 +74,15 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ client, tab, onTabChange, programContent }: {
+function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesContent }: {
   client: CloudContact;
   tab: ClientTab;
   onTabChange: (tab: ClientTab) => void;
   programContent?: ReactNode;
+  exercisesContent?: ReactNode;
 }) {
   const name = displayName(client);
-  const content = tab === 'program' ? null : clientPlaceholderCopy[tab];
+  const content = tab === 'program' || tab === 'exercises' ? null : clientPlaceholderCopy[tab];
 
   return (
     <div className="stack client-workspace">
@@ -92,7 +93,9 @@ function ClientWorkspace({ client, tab, onTabChange, programContent }: {
           }} />
       </div>
 
-      {tab === 'program' ? programContent : content ? <Placeholder title={content.title} text={content.text} /> : null}
+      {tab === 'program' ? programContent
+        : tab === 'exercises' ? exercisesContent
+          : content ? <Placeholder title={content.title} text={content.text} /> : null}
     </div>
   );
 }
@@ -301,7 +304,8 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
     return <ClientWorkspace client={selectedClient} tab={clientTab}
-      onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null} />;
+      onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
+      exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage client={selectedClient} /> : null} />;
   }
 
   if (destination === 'today') {
