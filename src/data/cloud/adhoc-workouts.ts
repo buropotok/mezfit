@@ -22,6 +22,8 @@ import type { ExistingSetFact, SetEntryFactDraft, SetType } from '../../workout/
 export type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 
 export type AdHocOpenSession = Pick<AdHocSessionRow, 'id' | 'name' | 'status'>;
+export type PerformedClientExercise = { key: string; name: string };
+
 /** Read-only calendar projection; format is not persisted on the execution row. */
 export type CalendarWorkoutSession = AdHocSessionRow & Pick<CloudWorkoutOccurrenceRow, 'format'>;
 
@@ -137,6 +139,45 @@ export class AdHocWorkoutRepository {
     }
     return result;
   }
+  /**
+   * Exercises with at least one completed FACT set in the Coach's authorized
+   * relationship with this client. A program prescription or skipped/pending set
+   * is never proof of execution. Snapshot names survive catalogue edits.
+   */
+  async listPerformedClientExercises(athleteUserId: string, relationshipId: string): Promise<PerformedClientExercise[]> {
+    return this.db.transaction('r', executionTables, async () => {
+      const sessions = await this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray();
+      const found = new Map<string, PerformedClientExercise & { lastPerformedAt: string }>();
+      for (const session of sessions) {
+        if (!isAdHocSessionRow(session) || session.realmId !== relationshipId
+          || session.coachUserId !== this.actorUserId || session.clientUserId !== athleteUserId
+          || !(await this.accessible(session))) continue;
+        const completedExerciseIds = new Set((await this.sets(session))
+          .filter(set => set.setStatus === 'completed').map(set => set.exerciseId));
+        if (!completedExerciseIds.size) continue;
+        for (const row of await this.exercises(session)) {
+          if (!completedExerciseIds.has(row.id)) continue;
+          const snapshot = row.exercise;
+          const key = `${snapshot.scope}:${snapshot.catalogueCoachUserId ?? ''}:${snapshot.exerciseDefinitionId}`;
+          const previous = found.get(key);
+          if (!previous || session.startedAt > previous.lastPerformedAt)
+            found.set(key, { key, name: snapshot.name, lastPerformedAt: session.startedAt });
+        }
+      }
+      return [...found.values()]
+        .sort((a, b) => a.name.localeCompare(b.name, 'ru-RU') || a.key.localeCompare(b.key))
+        .map(({ key, name }) => ({ key, name }));
+    });
+  }
+
+  observePerformedClientExercises(
+    athleteUserId: string, relationshipId: string,
+    onChange: (exercises: PerformedClientExercise[]) => void, onError: (reason: unknown) => void,
+  ): { unsubscribe(): void } {
+    return liveQuery(() => this.listPerformedClientExercises(athleteUserId, relationshipId))
+      .subscribe({ next: onChange, error: onError });
+  }
+
   async getRow(id: string): Promise<AdHocSessionRow | null> {
     const row = await this.db.adHocSessions.get(id);
     return row && await this.accessible(row) ? row : null;
