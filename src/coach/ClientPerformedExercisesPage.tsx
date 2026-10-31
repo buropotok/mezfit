@@ -31,6 +31,7 @@ export function ClientPerformedExercisesPage({ client }: { client: CloudContact 
       },
       (reason) => {
         if (!active) return;
+        setExercises([]);
         setLoading(false);
         setError(reason instanceof Error ? reason.message : 'Не удалось загрузить упражнения');
       },
