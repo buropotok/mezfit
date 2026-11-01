@@ -49,6 +49,8 @@ describe('client exercise FACT statistics', () => {
     const may31 = new Date(2026, 4, 31, 12);
     const leapMay31 = new Date(2024, 4, 31, 12);
     expect(shiftCalendarMonths(may31, -3).getTime()).toBe(new Date(2026, 1, 28, 12).getTime());
+    expect(shiftCalendarMonths(shiftCalendarMonths(may31, -3), 3, may31.getDate()).getTime())
+      .toBe(may31.getTime());
     expect(shiftCalendarMonths(leapMay31, -3).getTime()).toBe(new Date(2024, 1, 29, 12).getTime());
     expect(shiftCalendarMonths(new Date(2026, 7, 31, 12), -6).getTime())
       .toBe(new Date(2026, 1, 28, 12).getTime());
