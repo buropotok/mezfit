@@ -7,11 +7,11 @@ import { ClientPerformedExercisesPage } from './ClientPerformedExercisesPage';
 const fakeDb = vi.hoisted(() => ({}));
 const performed = vi.hoisted(() => [
   { key: 'public::bench', name: 'Жим лёжа', category: 'chest',
-    sessionId: 's1', sessionExerciseId: 'e1', startedAt: '2026-10-28T12:00:00.000Z',
+    sessionId: 's1', sessionExerciseId: 'e1', startedAt: new Date().toISOString(),
     trackingType: 'weight_reps', mediaUrl: '/media/bench.gif',
     sets: [{ actualReps: 8, actualWeightKg: 60, actualDurationSeconds: null, actualDistanceMeters: null }] },
   { key: 'public::squat', name: 'Приседания', category: 'legs',
-    sessionId: 's1', sessionExerciseId: 'e2', startedAt: '2026-10-28T12:00:00.000Z',
+    sessionId: 's1', sessionExerciseId: 'e2', startedAt: new Date().toISOString(),
     trackingType: 'weight_reps', mediaUrl: '/media/squat.gif',
     sets: [{ actualReps: 5, actualWeightKg: 70, actualDurationSeconds: null, actualDistanceMeters: null }] },
 ]);
