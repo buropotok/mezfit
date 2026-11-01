@@ -199,7 +199,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
           ? <List className="client-exercises__list">{list.map(item => (
             <div className="client-exercises__row" key={item.key}>
               <GlassSurface component="button" preset="modalTuned" optics={false}
-                shape={{ radius: 12 }} className="client-exercises__media"
+                shape="capsule" className="client-exercises__media"
                 aria-label={`Информация об упражнении: ${item.name}`}
                 onClick={() => setInfo(item.latest)}>
                 <ExerciseMedia exercise={{ id: item.key, name: item.name,
