@@ -313,6 +313,17 @@ nav a{margin-right:16px}h2{margin-top:48px}small{color:#aaa}
     (out / "review.html").write_text(html, encoding="utf-8")
 
 
+def evidence_row(left: Fingerprint, right: Fingerprint, score: float) -> list[object]:
+    """Keep separate evidence visible; fused confidence is not ground truth."""
+    _, hash_score, structure_score = compare_pair(left, right)
+    visual = 0.45 * hash_score + 0.55 * structure_score
+    movement = compare_motion(left.motion, right.motion)
+    return [
+        left.path.name, right.path.name, f"{score:.5f}",
+        f"{visual:.5f}", "" if movement is None else f"{movement:.5f}",
+    ]
+
+
 def evaluate_reviewed_controls(
     left: list[Fingerprint], right: list[Fingerprint],
     scores: dict[tuple[int, int], float], matches: list[tuple[int, int, float]], out: Path,
@@ -378,10 +389,11 @@ def main() -> None:
     scores = candidate_pairs(left, right)
     matches, reviews, r2_only, github_only = classify(len(left), len(right), scores)
     args.out.mkdir(parents=True, exist_ok=True)
-    write_csv(args.out / "matches.csv", ["r2_gif", "github_gif", "score"],
-              [[left[i].path.name, right[j].path.name, f"{score:.5f}"] for i, j, score in matches])
-    write_csv(args.out / "review.csv", ["r2_gif", "github_gif", "score"],
-              [[left[i].path.name, right[j].path.name, f"{score:.5f}"] for i, j, score in reviews])
+    evidence_header = ["r2_gif", "github_gif", "score", "appearance_score", "motion_score"]
+    write_csv(args.out / "matches.csv", evidence_header,
+              [evidence_row(left[i], right[j], score) for i, j, score in matches])
+    write_csv(args.out / "review.csv", evidence_header,
+              [evidence_row(left[i], right[j], score) for i, j, score in reviews])
     write_csv(args.out / "r2_only.csv", ["r2_gif"], [[left[i].path.name] for i in r2_only])
     write_csv(args.out / "github_only.csv", ["github_gif"], [[right[j].path.name] for j in github_only])
     render_html(args.out, left, right, matches, reviews, r2_only, github_only)
