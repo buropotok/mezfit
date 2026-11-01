@@ -52,10 +52,10 @@ vi.mock('../ui', () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
   IconButton: ({ children, label, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
     <button aria-label={label} {...props}>{children}</button>,
-  GlassSurface: ({ children, component, onClick, ...rest }: {
-    children: ReactNode; component?: string; onClick?: () => void;
+  GlassSurface: ({ children, component, onClick, 'aria-label': ariaLabel }: {
+    children: ReactNode; component?: string; onClick?: () => void; 'aria-label'?: string;
   }) => component === 'button'
-    ? <button onClick={onClick}>{children}</button>
+    ? <button onClick={onClick} aria-label={ariaLabel}>{children}</button>
     : <section>{children}</section>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ListItem: ({ title, trailing, onClick }: { title: ReactNode; trailing?: ReactNode; onClick: () => void }) =>
@@ -81,15 +81,15 @@ describe('coach client exercise history interactions', () => {
   it('filters the list through the funnel LiquidPopover, not the Radar diagram', () => {
     render(<ClientPerformedExercisesPage client={client} />);
     expect(screen.getByText('Radar')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Жим лёжа/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Приседания/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Жим лёжа 1 раз$/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Приседания 1 раз$/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Фильтр по категориям' }));
     fireEvent.click(screen.getByRole('button', { name: 'Грудь' }));
-    expect(screen.getByRole('button', { name: /Жим лёжа/ })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Приседания/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /^Жим лёжа 1 раз$/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Приседания 1 раз$/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Фильтр по категориям' }));
     fireEvent.click(screen.getByRole('button', { name: 'Все категории' }));
-    expect(screen.getByRole('button', { name: /Приседания/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Приседания 1 раз$/ })).toBeTruthy();
   });
 
   it('opens the reused information sheet only from GIF, while name opens statistics', () => {
@@ -98,7 +98,7 @@ describe('coach client exercise history interactions', () => {
     expect(screen.getByRole('dialog', { name: 'Информация об упражнении' })).toBeTruthy();
     expect(screen.queryByText('Статистика упражнения')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть описание' }));
-    fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Жим лёжа 1 раз$/ }));
     expect(screen.getByText('Статистика упражнения')).toBeTruthy();
   });
 });
