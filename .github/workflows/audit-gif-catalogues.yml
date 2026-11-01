@@ -1,0 +1,152 @@
+name: Audit GIF libraries (R2 vs GitHub)
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/audit-gif-catalogues.yml
+      - tools/gif-audit/**
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Create permanent R2 snapshot and audit, or audit the existing snapshot'
+        required: true
+        type: choice
+        default: snapshot-and-audit
+        options:
+          - snapshot-and-audit
+          - audit-only
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-gif-visual-audit
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/gif-audit/requirements.txt
+      - run: python -m pip install -r tools/gif-audit/requirements.txt
+      - run: python -m unittest discover -s tools/gif-audit -p 'test_*.py'
+
+  snapshot:
+    needs: validate
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'buropotok/mezfit' &&
+      github.actor == github.repository_owner &&
+      inputs.operation == 'snapshot-and-audit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/gif-audit/requirements.txt
+      - run: python -m pip install -r tools/gif-audit/requirements.txt
+      - name: Check whether immutable snapshot already exists
+        id: exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-remote --heads origin refs/heads/data/r2-gif-snapshot > "$RUNNER_TEMP/r2-branch.txt"
+          if grep -q 'refs/heads/data/r2-gif-snapshot' "$RUNNER_TEMP/r2-branch.txt"; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install existing Wrangler CLI
+        if: steps.exists.outputs.exists == 'false'
+        run: npm ci
+      - name: Download all 1324 approved R2 GIFs without cloud writes
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python tools/gif-audit/download_r2.py download
+      - name: Commit original GIFs to a dedicated persistent branch
+        if: steps.exists.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git switch -c data/r2-gif-snapshot
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add audit/gif-sources/r2/
+          git diff --cached --quiet && { echo 'Snapshot is empty'; exit 1; }
+          git commit -m 'data: preserve pinned R2 exercise GIF snapshot'
+          git push origin HEAD:refs/heads/data/r2-gif-snapshot
+      - name: Confirm snapshot branch exists
+        shell: bash
+        run: git ls-remote --exit-code origin refs/heads/data/r2-gif-snapshot
+
+  audit:
+    needs: [validate, snapshot]
+    if: >-
+      always() &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'buropotok/mezfit' &&
+      github.actor == github.repository_owner &&
+      needs.validate.result == 'success' &&
+      (needs.snapshot.result == 'success' ||
+       (inputs.operation == 'audit-only' && needs.snapshot.result == 'skipped'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # Read-only token is required to fetch the snapshot if repo becomes private.
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/gif-audit/requirements.txt
+      - run: python -m pip install -r tools/gif-audit/requirements.txt
+      - name: Restore permanent R2 media from dedicated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/data/r2-gif-snapshot:refs/remotes/origin/data/r2-gif-snapshot
+          git restore --source=refs/remotes/origin/data/r2-gif-snapshot --worktree -- audit/gif-sources/r2/
+          python tools/gif-audit/download_r2.py verify
+      - name: Compute visual matches and delta (no exercise metadata)
+        run: python tools/gif-audit/compare.py
+      - name: Publish summary
+        if: success()
+        shell: bash
+        run: cat audit/gif-report/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload comparison report (HTML + CSV)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gif-visual-delta-report
+          path: audit/gif-report/
+          if-no-files-found: error
+          retention-days: 30
