@@ -47,6 +47,21 @@ def save_csv(target: Path, header: list[str], rows: list[list[object]]) -> None:
         writer.writerows(rows)
 
 
+def control_auc(rows: list[list[object]], column: int) -> float | None:
+    """Pairwise ROC-AUC on *measurable* reviewed examples; diagnostic only."""
+    positive = [float(row[column]) for row in rows
+                if row[2] == "yes" and row[column] != ""]
+    negative = [float(row[column]) for row in rows
+                if row[2] == "no" and row[column] != ""]
+    if not positive or not negative:
+        return None
+    wins = sum(
+        1.0 if yes > no else 0.5 if yes == no else 0.0
+        for yes in positive for no in negative
+    )
+    return wins / (len(positive) * len(negative))
+
+
 def collect(estimator: PoseEstimator, paths: list[Path]) -> dict[str, PoseSignature]:
     results = {}
     for index, path in enumerate(paths, 1):
@@ -241,6 +256,9 @@ def main() -> None:
         f"- Human-negative pairs with a pose score: {measurable_negative}/15.",
         f"- Human-positive pairs with usable joint motion: {motion_positive}/15.",
         f"- Human-negative pairs with usable joint motion: {motion_negative}/15.",
+        f"- Static-pose control ROC-AUC: {control_auc(evaluation, 5)} (measurable subset).",
+        f"- Joint-motion control ROC-AUC: {control_auc(evaluation, 6)} (measurable subset).",
+        "- Both ROC-AUC numbers are diagnostic: 30 nonrandom reviewed pairs, NOT population estimates.",
         "- Pose and joint-motion similarities are experimental, not match probabilities.",
         "- Missing skeletons never count as evidence of mismatch.",
         "- Controls are evaluated, never used for tuning or ranking.",
