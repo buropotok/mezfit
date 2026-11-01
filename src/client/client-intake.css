@@ -16,5 +16,3 @@
 .client-intake__inputs { min-width: 0; }
 .client-intake__date { display: grid; justify-items: start; gap: 8px; }
 .client-intake__status { padding: 24px 16px; display: grid; gap: 16px; }
-.client-intake__overview { padding: 16px; display: grid; gap: 16px; }
-.client-intake__overview-row { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
