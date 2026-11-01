@@ -53,6 +53,8 @@ describe('client exercise FACT statistics', () => {
     expect(exerciseMetric([a, b], 'weight')).toBe(60);
     expect(maxWorkoutVolume([a, b])).toBe(500);
     expect(maxSetReps([a, b])).toBe(10);
+    expect(exerciseMetric([fact('one', 'chest', 's3', '2026-10-28T12:00:00.000Z', 80, 1)], 'oneRepMax')).toBe(80);
+    expect(exerciseMetric([fact('none', 'chest', 's4', '2026-10-28T12:00:00.000Z', 80, null)], 'oneRepMax')).toBe(0);
   });
 
   it('keeps time and distance independent of weight/reps', () => {
