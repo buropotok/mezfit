@@ -171,17 +171,20 @@ export async function publishCategoryArtwork({ mode, rawKey, fetchFn = fetch, as
 
 async function main() {
   const mode = process.argv[2];
-  if (process.argv.length !== 3 || !['preview', 'apply'].includes(mode))
+  if (process.argv.length !== 3 || !['validate', 'preview', 'apply'].includes(mode))
     fail('INVALID_CATEGORY_ARTWORK_COMMAND');
   authorizeCategoryArtworkOperation(process.env);
-  if (mode !== process.env.CATEGORY_ARTWORK_OPERATION) fail('OPERATION_MISMATCH');
   if (JSON.parse(await readFile('dexie-cloud.json', 'utf8')).dbUrl !== DB_URL)
     fail('UNEXPECTED_DATABASE_URL');
+  const assets = await assetsFromCheckout();
+  if (mode === 'validate') {
+    console.log(JSON.stringify({ status: 'source-validated', assets: assets.length }));
+    return;
+  }
+  if (mode !== process.env.CATEGORY_ARTWORK_OPERATION) fail('OPERATION_MISMATCH');
   const rawKey = process.env.DEXIE_CLOUD_WRITE_KEY;
   if (!rawKey) fail('MISSING_PROTECTED_PUBLISH_KEY');
-  const outcome = await publishCategoryArtwork({
-    mode, rawKey, assets: await assetsFromCheckout(),
-  });
+  const outcome = await publishCategoryArtwork({ mode, rawKey, assets });
   console.log(JSON.stringify(outcome));
 }
 
