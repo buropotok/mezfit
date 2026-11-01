@@ -57,12 +57,16 @@ describe('exercise catalogue real UI composition', () => {
     const leading = chest.querySelector('.ui-list-item__leading');
     expect(leading?.classList.contains('ui-list-item__leading--square')).toBe(false);
     expect(chest.querySelector('img')).toBeNull();
-    expect(chest.querySelector('svg')?.getAttribute('width')).toBe('72');
+    const chestIcon = chest.querySelector('.mezfit-public-exercises__category-fallback > .ui-icon');
+    expect(chestIcon).not.toBeNull();
+    expect(chestIcon?.getAttribute('style')).toContain('mask-image:');
+    expect(chest.querySelector('svg')).toBeNull();
     expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback img').length).toBe(0);
+    // Every category, including Other, uses the shared UIkit barbell while Blob art is unavailable.
+    expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback > .ui-icon').length).toBe(9);
     const other = screen.getByRole('button', { name: /Другое/ });
-    expect(other.querySelector('svg')?.getAttribute('width')).toBe('72');
-    expect(other.querySelector('svg')?.getAttribute('stroke')).toBe('#fff');
-    expect(other.querySelector('svg')?.getAttribute('stroke-width')).toBe('2');
+    const otherIcon = other.querySelector('.mezfit-public-exercises__category-fallback > .ui-icon');
+    expect(otherIcon?.getAttribute('style')).toBe(chestIcon?.getAttribute('style'));
   });
 
 });
