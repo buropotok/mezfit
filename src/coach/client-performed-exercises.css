@@ -10,8 +10,8 @@
 .client-exercises__list { display: grid; gap: 8px; min-width: 0; }
 .client-exercises__row { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 8px; align-items: center; min-width: 0; }
 .client-exercises__media {
-  display: grid; place-items: center; width: 60px; height: 60px; padding: 0; overflow: hidden;
-  cursor: pointer; border: 0;
+  display: grid; place-items: center; width: 60px; height: 60px; overflow: hidden;
+  cursor: pointer;
 }
 .client-exercises__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .client-exercises__stats { display: grid; gap: 16px; min-width: 0; }
