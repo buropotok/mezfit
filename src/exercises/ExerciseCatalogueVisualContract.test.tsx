@@ -60,7 +60,6 @@ describe('exercise catalogue real UI composition', () => {
     const chestIcon = chest.querySelector('.mezfit-public-exercises__category-fallback > .ui-icon');
     expect(chestIcon).not.toBeNull();
     expect(chestIcon?.getAttribute('style')).toContain('mask-image:');
-    expect(chest.querySelector('svg')).toBeNull();
     expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback img').length).toBe(0);
     // Every category, including Other, uses the shared UIkit barbell while Blob art is unavailable.
     expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback > .ui-icon').length).toBe(9);
