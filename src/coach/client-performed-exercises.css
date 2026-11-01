@@ -2,6 +2,9 @@
 .client-exercises__toolbar { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
 .client-exercises__period-label { min-width: 0; flex: 1; text-align: center; }
 .client-exercises__radar, .client-exercises__list-panel, .client-exercises__chart-panel {
+  min-width: 0;
+}
+.client-exercises__panel-content {
   display: grid; gap: 16px; min-width: 0; padding: 16px;
 }
 .client-exercises__list-heading, .client-exercises__chart-heading {
@@ -30,6 +33,9 @@
 .client-exercises__stats { display: grid; gap: 16px; min-width: 0; }
 .client-exercises__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .client-exercises__metric-tile {
+  min-height: 132px; text-align: center;
+}
+.client-exercises__metric-content {
   min-height: 132px; padding: 16px; display: flex; flex-direction: column;
-  justify-content: space-between; gap: 16px; text-align: center;
+  justify-content: space-between; gap: 16px;
 }
