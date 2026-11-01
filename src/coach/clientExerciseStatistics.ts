@@ -110,8 +110,11 @@ function metricForSession(facts: readonly ClientExerciseFact[], metric: Exercise
     case 'sets': return sets.length;
     case 'volume': return sets.reduce((sum, set) => sum + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
     case 'weight': return Math.max(0, ...weights);
-    case 'oneRepMax': return Math.max(0, ...sets.map(set => (set.actualWeightKg ?? 0)
-      * ((set.actualReps ?? 0) <= 1 ? 1 : 1 + (set.actualReps ?? 0) / 30)));
+    case 'oneRepMax': return Math.max(0, ...sets.map(set => {
+      const reps = set.actualReps ?? 0;
+      const weight = set.actualWeightKg ?? 0;
+      return reps === 0 ? 0 : reps === 1 ? weight : weight * (1 + reps / 30);
+    }));
     case 'workouts': return 1;
     case 'duration': return durations.reduce((sum, value) => sum + value, 0);
     case 'distance': return distances.reduce((sum, value) => sum + value, 0);
