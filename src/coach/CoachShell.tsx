@@ -11,7 +11,6 @@ import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
 import { CloudContactsList } from '../contacts/CloudContactsList';
 import { ClientPerformedExercisesPage } from './ClientPerformedExercisesPage';
-import { ClientIntakeOverview } from '../client/ClientIntake';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
@@ -75,13 +74,12 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesContent, overviewContent, hideTabs = false }: {
+function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesContent, hideTabs = false }: {
   client: CloudContact;
   tab: ClientTab;
   onTabChange: (tab: ClientTab) => void;
   programContent?: ReactNode;
   exercisesContent?: ReactNode;
-  overviewContent?: ReactNode;
   hideTabs?: boolean;
 }) {
   const name = displayName(client);
@@ -98,11 +96,7 @@ function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesCo
 
       {tab === 'program' ? programContent
         : tab === 'exercises' ? exercisesContent
-          : tab === 'overview' && overviewContent ? <>
-              {overviewContent}
-              {content ? <Placeholder title={content.title} text={content.text} /> : null}
-            </>
-            : content ? <Placeholder title={content.title} text={content.text} /> : null}
+          : content ? <Placeholder title={content.title} text={content.text} /> : null}
     </div>
   );
 }
@@ -317,8 +311,6 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
     return <ClientWorkspace client={selectedClient} tab={clientTab}
-      overviewContent={<ClientIntakeOverview relationshipId={selectedClient.relationshipId}
-        clientUserId={selectedClient.userId} />}
       hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
