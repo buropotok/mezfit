@@ -52,10 +52,11 @@ vi.mock('../ui', () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
   IconButton: ({ children, label, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
     <button aria-label={label} {...props}>{children}</button>,
-  GlassSurface: ({ children, component, onClick, 'aria-label': ariaLabel }: {
-    children: ReactNode; component?: string; onClick?: () => void; 'aria-label'?: string;
+  GlassSurface: ({ children, component, onClick, shape, 'aria-label': ariaLabel }: {
+    children: ReactNode; component?: string; onClick?: () => void;
+    shape?: string; 'aria-label'?: string;
   }) => component === 'button'
-    ? <button onClick={onClick} aria-label={ariaLabel}>{children}</button>
+    ? <button onClick={onClick} aria-label={ariaLabel} data-shape={shape}>{children}</button>
     : <section>{children}</section>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ListItem: ({ title, trailing, onClick }: { title: ReactNode; trailing?: ReactNode; onClick: () => void }) =>
@@ -105,7 +106,9 @@ describe('coach client exercise history interactions', () => {
 
   it('opens the reused information sheet only from GIF, while name opens statistics', () => {
     render(<ClientPerformedExercisesPage client={client} onDetailNavigationChange={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Информация об упражнении: Жим лёжа' }));
+    const mediaButton = screen.getByRole('button', { name: 'Информация об упражнении: Жим лёжа' });
+    expect(mediaButton.getAttribute('data-shape')).toBe('capsule');
+    fireEvent.click(mediaButton);
     expect(screen.getByRole('dialog', { name: 'Информация об упражнении' })).toBeTruthy();
     expect(screen.queryByText('Статистика упражнения')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть описание' }));
