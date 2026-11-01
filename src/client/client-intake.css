@@ -4,7 +4,7 @@
   inset: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--ui-color-page, #101018);
+  background: var(--ui-color-canvas);
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
 }
 .client-intake__form {
