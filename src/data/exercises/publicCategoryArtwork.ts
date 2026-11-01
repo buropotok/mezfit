@@ -16,7 +16,7 @@ export interface PublicCategoryArtworkRow {
   mime: 'image/webp' | 'image/svg+xml';
   size: number;
   /** Dexie Cloud Addon resolves authorized BlobRefs into locally cached Blob values. */
-  image: Blob | unknown;
+  image: unknown;
 }
 
 const categories = new Set<string>(PUBLIC_CATEGORY_ARTWORK_IDS);
