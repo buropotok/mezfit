@@ -60,7 +60,7 @@ export function ClientIntakeForm({ defaults, onSave }: {
   return <section className="client-intake__form" aria-label="Анкета клиента">
     <Text variant="large-title">Анкета клиента</Text>
     <Text variant="body" tone="muted">Заполните данные для тренера. Имя, фамилию и Telegram можно изменить — первоначально они взяты из вашего профиля.</Text>
-    <Text variant="caption" tone="muted">Анкета доступна только вам и тренерам, с которыми вы связаны в Mezfit.</Text>
+    <Text variant="caption" tone="muted">Сейчас данные сохраняются в вашем личном профиле. Доступ тренера будет подключён отдельно.</Text>
     <List nested strong dividers={false} className="client-intake__inputs">
       <ListInput floatingLabel inputId={`${id}-first`} label="Имя" required
         value={draft.firstName} maxLength={100} disabled={saving}
@@ -124,10 +124,6 @@ export function ClientRegistrationGate({ defaults, children }: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
-  const coaches = useMemo(() => cloud?.coaches.map(contact => ({
-    relationshipId: contact.relationshipId, coachUserId: contact.userId,
-  })) ?? [], [cloud?.coaches]);
-
   useEffect(() => {
     if (!repository) return undefined;
     let active = true;
@@ -145,14 +141,6 @@ export function ClientRegistrationGate({ defaults, children }: {
     return () => { active = false; sub.unsubscribe(); };
   }, [repository, retry]);
 
-  useEffect(() => {
-    if (!repository || !profile || !coaches.length) return;
-    // Relationship-local copies follow the authoritative personal record.
-    void repository.shareWithCoaches(profile, coaches).catch(() => {
-      // Dexie offline writes remain queued; re-evaluate when relationship/sync state changes.
-    });
-  }, [repository, profile?.updatedAt, cloud?.syncStatus, coaches]);
-
   if (profile) return <>{children}</>;
   return <>
     {children}
@@ -164,64 +152,7 @@ export function ClientRegistrationGate({ defaults, children }: {
             <Text variant="body" role="alert">{error || cloud?.error || 'Нет доступа к данным анкеты'}</Text>
             <Button onClick={() => setRetry(value => value + 1)}>Повторить</Button>
           </section>
-          : <ClientIntakeForm defaults={defaults} onSave={async draft => {
-            const saved = await repository.saveOwn(draft);
-            await repository.shareWithCoaches(saved, coaches);
-          }} />}
+          : <ClientIntakeForm defaults={defaults} onSave={draft => repository.saveOwn(draft).then(() => undefined)} />}
     </div>
   </>;
-}
-
-export function ClientIntakeOverview({ relationshipId, clientUserId }: {
-  relationshipId: string; clientUserId: string;
-}) {
-  const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud?.db && cloud.actorUserId
-    ? new ClientIntakeRepository(cloud.db, cloud.actorUserId) : null,
-  [cloud?.db, cloud?.actorUserId]);
-  const [profile, setProfile] = useState<ClientIntake | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!repository) return undefined;
-    let active = true;
-    setLoading(true); setError(''); setProfile(null);
-    const subscription = repository.observeForCoach(relationshipId, clientUserId, result => {
-      if (!active) return;
-      setProfile(result);
-      setLoading(false);
-    }, reason => {
-      if (!active) return;
-      setError(reason instanceof Error ? reason.message : 'Не удалось прочитать анкету');
-      setLoading(false);
-    });
-    return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, relationshipId, clientUserId]);
-
-  if (!repository) return <Text variant="body" tone="muted">Анкета временно недоступна.</Text>;
-  if (loading) return <Text variant="body" tone="muted">Загрузка анкеты клиента…</Text>;
-  if (error) return <Text variant="body" role="alert">{error}</Text>;
-  if (!profile) return <GlassSurface preset="modalTuned" optics={false}
-    contentClassName="client-intake__overview">
-    <Text variant="headline">Анкета клиента</Text>
-    <Text variant="body" tone="muted">Клиент ещё не заполнил анкету или данные пока не синхронизированы.</Text>
-  </GlassSurface>;
-  const entries = [
-    ['Имя', profile.firstName], ['Фамилия', profile.lastName],
-    ['E-mail', profile.email], ['Телефон', profile.phone],
-    ['Telegram', profile.telegramUsername ? `@${profile.telegramUsername}` : ''],
-    ['Дата рождения', readableDate(profile.birthDate)],
-    ['Возраст', String(ageFromBirthDate(profile.birthDate) ?? '')],
-    ['Пол', sexes.find(entry => entry.value === profile.sex)?.label ?? ''],
-    ['Вес', profile.weightKg === null ? '' : `${profile.weightKg} кг`],
-  ];
-  return <GlassSurface component="section" preset="modalTuned" optics={false}
-    contentClassName="client-intake__overview">
-    <Text variant="headline">Анкета клиента</Text>
-    {entries.map(([label, value]) => <div className="client-intake__overview-row" key={label}>
-      <Text variant="footnote" tone="muted">{label}</Text>
-      <Text variant="body">{value || '—'}</Text>
-    </div>)}
-  </GlassSurface>;
 }
