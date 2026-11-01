@@ -1,0 +1,101 @@
+name: Publish public category artwork to Dexie Cloud
+
+# One protected, human-approved operator. Never publish from push or PR CI.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        description: 'Preview or publish exactly eight category artwork blobs'
+        required: true
+        default: preview
+        options: [preview, apply]
+      confirmation:
+        type: string
+        description: 'For apply enter PUBLISH_PUBLIC_CATEGORY_ARTWORK_V1'
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dexie-public-catalogue-publishing
+  cancel-in-progress: false
+
+jobs:
+  category-artwork:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: dexie-production
+    env:
+      CATEGORY_ARTWORK_OPERATION: ${{ inputs.operation }}
+      CATEGORY_ARTWORK_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require owner/main/manual dispatch and exact apply confirmation
+        run: node tools/exercises/category-artwork-operator.mjs preflight
+      - name: Prepare existing protected Dexie publisher credentials
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/dexie-schema/manage.mjs prepare
+      - name: Read schema and roles before any potential write
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
+      - name: Plan only the exact public artwork table addition
+        id: plan
+        run: node tools/exercises/category-artwork-operator.mjs plan
+      - name: Preview artwork files and existing cloud rows when schema is installed
+        if: inputs.operation == 'preview' && steps.plan.outputs.missing_count == '0'
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/exercises/publish-category-artwork.mjs preview
+      - name: Re-export cloud configuration immediately before schema import
+        if: inputs.operation == 'apply' && steps.plan.outputs.missing_count != '0'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema current-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles current-roles.json
+          cd "$GITHUB_WORKSPACE"
+          node tools/exercises/category-artwork-operator.mjs recheck
+      - name: Record any attempted schema mutation
+        id: import_attempt
+        if: inputs.operation == 'apply' && steps.plan.outputs.missing_count != '0'
+        run: echo "attempted=true" >> "$GITHUB_OUTPUT"
+      - name: Import only the reviewed new table (never roles)
+        if: inputs.operation == 'apply' && steps.import_attempt.outputs.attempted == 'true'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud import category-artwork-import.json
+      - name: Read complete schema and roles after any import attempt
+        if: ${{ !cancelled() && inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.missing_count == '0') }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema after-schema.json
+          npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles after-roles.json
+      - name: Verify all unrelated schema and permissions are unchanged
+        if: ${{ !cancelled() && inputs.operation == 'apply' && (steps.import_attempt.outputs.attempted == 'true' || steps.plan.outputs.missing_count == '0') }}
+        run: node tools/exercises/category-artwork-operator.mjs verify
+      - name: Upload the eight immutable Blob objects and verify their bytes
+        if: inputs.operation == 'apply'
+        env:
+          DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
+        run: node tools/exercises/publish-category-artwork.mjs apply
+      - name: Remove all private Dexie key material and exports
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
