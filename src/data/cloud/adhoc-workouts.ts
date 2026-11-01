@@ -145,17 +145,32 @@ export class AdHocWorkoutRepository {
    * is never proof of execution. Snapshot names survive catalogue edits.
    */
   async listPerformedClientExercises(athleteUserId: string, relationshipId: string): Promise<PerformedClientExercise[]> {
-    const sessions = await this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray();
+    // Read every FACT dependency before asynchronous membership checks so
+    // Dexie liveQuery tracks changes in all three execution tables.
+    const [sessions, exercises, sets] = await Promise.all([
+      this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray(),
+      this.db.adHocExercises.where('realmId').equals(relationshipId).toArray(),
+      this.db.adHocSets.where('realmId').equals(relationshipId).toArray(),
+    ]);
+    const validExercises = new Map(exercises
+      .filter(row => isAdHocExerciseRow(row) && !row.deletedAt && row.owner === relationshipId)
+      .map(row => [row.id, row]));
+    const completedBySession = new Map<string, Set<string>>();
+    for (const set of sets) {
+      if (!isAdHocSetRow(set) || set.deletedAt || set.owner !== relationshipId
+        || set.setStatus !== 'completed') continue;
+      const completed = completedBySession.get(set.sessionId) ?? new Set<string>();
+      completed.add(set.exerciseId);
+      completedBySession.set(set.sessionId, completed);
+    }
     const found = new Map<string, PerformedClientExercise & { lastPerformedAt: string }>();
     for (const session of sessions) {
       if (!isAdHocSessionRow(session) || session.realmId !== relationshipId
         || session.coachUserId !== this.actorUserId || session.clientUserId !== athleteUserId
         || !(await this.accessible(session))) continue;
-      const completedExerciseIds = new Set((await this.sets(session))
-        .filter(set => set.setStatus === 'completed').map(set => set.exerciseId));
-      if (!completedExerciseIds.size) continue;
-      for (const row of await this.exercises(session)) {
-        if (!completedExerciseIds.has(row.id)) continue;
+      for (const id of completedBySession.get(session.id) ?? []) {
+        const row = validExercises.get(id);
+        if (!row || row.sessionId !== session.id) continue;
         const snapshot = row.exercise;
         const key = `${snapshot.scope}:${snapshot.catalogueCoachUserId ?? ''}:${snapshot.exerciseDefinitionId}`;
         const previous = found.get(key);
