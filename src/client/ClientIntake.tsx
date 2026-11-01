@@ -142,9 +142,7 @@ export function ClientRegistrationGate({ defaults, children }: {
   }, [repository, retry]);
 
   if (profile) return <>{children}</>;
-  return <>
-    {children}
-    <div className="client-intake__onboarding" role="dialog" aria-modal="true" aria-label="Регистрация клиента">
+  return <div className="client-intake__onboarding" role="dialog" aria-modal="true" aria-label="Регистрация клиента">
       {!repository || loading || cloud?.status === 'loading'
         ? <section className="client-intake__status"><Text variant="body">Загрузка анкеты…</Text></section>
         : error || cloud?.status === 'error'
@@ -153,6 +151,5 @@ export function ClientRegistrationGate({ defaults, children }: {
             <Button onClick={() => setRetry(value => value + 1)}>Повторить</Button>
           </section>
           : <ClientIntakeForm defaults={defaults} onSave={draft => repository.saveOwn(draft).then(() => undefined)} />}
-    </div>
-  </>;
+  </div>;
 }
