@@ -71,7 +71,9 @@ jobs:
         id: exists
         shell: bash
         run: |
-          if git ls-remote --exit-code origin refs/heads/data/r2-gif-snapshot >/dev/null; then
+          set -euo pipefail
+          git ls-remote --heads origin refs/heads/data/r2-gif-snapshot > "$RUNNER_TEMP/r2-branch.txt"
+          if grep -q 'refs/heads/data/r2-gif-snapshot' "$RUNNER_TEMP/r2-branch.txt"; then
             echo 'exists=true' >> "$GITHUB_OUTPUT"
           else
             echo 'exists=false' >> "$GITHUB_OUTPUT"
