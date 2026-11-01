@@ -12,15 +12,15 @@ from pathlib import Path
 
 import numpy as np
 
-from pose import PoseEstimator, PoseSignature, similarity
-from pose_motion import Kinematics, extract as joint_motion, similarity as compare_joint_motion
+from pose import PoseEstimator, PoseSignature, SWAPPED, similarity
+from pose_motion import Kinematics, MIRROR, extract as joint_motion, similarity as compare_joint_motion
 
 ROOT = Path(__file__).resolve().parents[2]
 R2 = ROOT / "audit/gif-sources/r2"
 GITHUB = ROOT / "assets/media"
 REPORT = ROOT / "audit/gif-report"
 LABELS = ROOT / "tools/gif-audit/control-30-reviewed.csv"
-CANDIDATES = 12
+CANDIDATES = 8
 OUTPUT_PER_GIF = 3
 
 
@@ -71,14 +71,27 @@ def retrieve_all(
     position_b = np.stack([github[name].vector for name in right])
     motion_a = np.stack([left_motion[name].vector for name in left])
     motion_b = np.stack([right_motion[name].vector for name in right])
+    # Mirror-invariant candidate retrieval: matching left/right movements
+    # must not depend on whether the athlete was drawn facing the other way.
+    mirrored_position_b = np.stack([
+        PoseSignature(
+            points=github[name].points[:, SWAPPED, :] * np.array([-1, 1], dtype=np.float32),
+            visible=github[name].visible[:, SWAPPED],
+        ).vector for name in right
+    ])
+    mirrored_motion_b = np.stack([
+        right_motion[name].vector.reshape(3, 8)[:, list(MIRROR)].reshape(-1)
+        for name in right
+    ])
     channels = {
         "pose_position": (
-            position_a @ position_b.T,
+            np.maximum(position_a @ position_b.T,
+                       position_a @ mirrored_position_b.T),
             np.array([r2[name].reliable for name in left]),
             np.array([github[name].reliable for name in right]),
         ),
         "joint_motion": (
-            motion_a @ motion_b.T,
+            np.maximum(motion_a @ motion_b.T, motion_a @ mirrored_motion_b.T),
             np.array([left_motion[name].reliable for name in left]),
             np.array([right_motion[name].reliable for name in right]),
         ),
@@ -194,7 +207,7 @@ def main() -> None:
         for name, item in sorted(catalogue.items())
     ]
     save_csv(args.out / "pose-coverage.csv",
-             ["library", "gif", "detected_frames_of_8", "reliable"], coverage)
+             ["library", "gif", "detected_frames_of_16", "reliable"], coverage)
     evaluation = []
     for row in labels:
         a, b = left[row["r2_gif"]], right[row["github_gif"]]
