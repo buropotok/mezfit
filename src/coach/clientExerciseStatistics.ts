@@ -44,7 +44,7 @@ export function periodBounds(period: ExercisePeriod, today = new Date()): { star
 export function periodOptions(facts: readonly ClientExerciseFact[], today = new Date()): Array<{ value: ExercisePeriod; label: string }> {
   const base: ExercisePeriod[] = ['30d', '3m', '6m', 'year', 'all'];
   const years = new Set<number>([today.getFullYear()]);
-  const months = new Set<string>();
+  const months = new Set<`${number}-${number}`>();
   for (const fact of facts) {
     const date = new Date(fact.startedAt);
     years.add(date.getFullYear());
@@ -55,9 +55,10 @@ export function periodOptions(facts: readonly ClientExerciseFact[], today = new 
     ...[...years].sort((a, b) => b - a).map(year => ({
       value: `year:${year}` as ExercisePeriod, label: String(year),
     })),
-    ...[...months].sort((a, b) => b.localeCompare(a, undefined, { numeric: true })).map(id => ({
-      value: `month:${id}` as ExercisePeriod, label: periodBounds(`month:${id}`, today).label,
-    })),
+    ...[...months].sort((a, b) => b.localeCompare(a, undefined, { numeric: true })).map(id => {
+      const value: ExercisePeriod = `month:${id}`;
+      return { value, label: periodBounds(value, today).label };
+    }),
   ];
 }
 
