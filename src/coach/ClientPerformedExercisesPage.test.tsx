@@ -92,6 +92,17 @@ describe('coach client exercise history interactions', () => {
     expect(screen.getByRole('button', { name: /^Приседания 1 раз$/ })).toBeTruthy();
   });
 
+  it('prevents navigating into future rolling windows while allowing earlier periods', () => {
+    render(<ClientPerformedExercisesPage client={client} />);
+    fireEvent.click(screen.getByRole('button', { name: /Период: 30 дней/ }));
+    fireEvent.click(screen.getByRole('button', { name: '3 месяца' }));
+    expect((screen.getByRole('button', { name: 'Следующий период' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Предыдущий период' }));
+    expect((screen.getByRole('button', { name: 'Следующий период' }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Следующий период' }));
+    expect((screen.getByRole('button', { name: 'Следующий период' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('opens the reused information sheet only from GIF, while name opens statistics', () => {
     render(<ClientPerformedExercisesPage client={client} onDetailNavigationChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Информация об упражнении: Жим лёжа' }));
