@@ -313,6 +313,59 @@ nav a{margin-right:16px}h2{margin-top:48px}small{color:#aaa}
     (out / "review.html").write_text(html, encoding="utf-8")
 
 
+def evaluate_reviewed_controls(
+    left: list[Fingerprint], right: list[Fingerprint],
+    scores: dict[tuple[int, int], float], matches: list[tuple[int, int, float]], out: Path,
+) -> str:
+    """Measure candidate recall and sample errors without leaking labels into matching.
+
+    The 30 volunteered decisions are diagnostic only. They never influence
+    retrieval, scoring, thresholds, or pairing.
+    """
+    labels_file = ROOT / "tools/gif-audit/control-30-reviewed.csv"
+    lookup_a = {item.path.name: i for i, item in enumerate(left)}
+    lookup_b = {item.path.name: i for i, item in enumerate(right)}
+    confirmed = {(i, j) for i, j, _ in matches}
+    records = []
+    with labels_file.open(newline="", encoding="utf-8") as source:
+        rows = list(csv.DictReader(source))
+    if len(rows) != 30 or {row["decision"] for row in rows} != {"yes", "no"}:
+        raise ValueError("Reviewed control set is missing or malformed")
+    seen = set()
+    for label in rows:
+        name_a, name_b = label["r2_gif"], label["github_gif"]
+        if name_a not in lookup_a or name_b not in lookup_b:
+            raise ValueError(f"Reviewed control media is absent: {name_a}, {name_b}")
+        key = (lookup_a[name_a], lookup_b[name_b])
+        if key in seen:
+            raise ValueError("Duplicate reviewed pair")
+        seen.add(key)
+        fused, hash_score, ssim_score = compare_pair(left[key[0]], right[key[1]])
+        appearance = 0.45 * hash_score + 0.55 * ssim_score
+        movement = compare_motion(left[key[0]].motion, right[key[1]].motion)
+        records.append([
+            name_a, name_b, label["decision"], int(key in scores),
+            int(key in confirmed), f"{appearance:.5f}",
+            "" if movement is None else f"{movement:.5f}", f"{fused:.5f}",
+        ])
+    write_csv(
+        out / "control-30-evaluation.csv",
+        ["r2_gif", "github_gif", "human_decision", "retrieved_as_candidate",
+         "auto_matched", "appearance_score", "motion_score", "combined_score"],
+        records,
+    )
+    positives = [row for row in records if row[2] == "yes"]
+    negatives = [row for row in records if row[2] == "no"]
+    positive_retrieved = sum(row[3] for row in positives)
+    false_accepts = sum(row[4] for row in negatives)
+    true_accepts = sum(row[4] for row in positives)
+    return (f"### Manually reviewed control sample (diagnostic, not a population estimate)\\n"
+            f"- Human-positive pairs retrieved: {positive_retrieved}/{len(positives)}\\n"
+            f"- Human-positive pairs automatically matched: {true_accepts}/{len(positives)}\\n"
+            f"- Human-negative pairs incorrectly matched: {false_accepts}/{len(negatives)}\\n"
+            f"- See control-30-evaluation.csv for independent visual and motion scores.\\n")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, default=DEFAULT_REPORT)
@@ -332,6 +385,7 @@ def main() -> None:
     write_csv(args.out / "r2_only.csv", ["r2_gif"], [[left[i].path.name] for i in r2_only])
     write_csv(args.out / "github_only.csv", ["github_gif"], [[right[j].path.name] for j in github_only])
     render_html(args.out, left, right, matches, reviews, r2_only, github_only)
+    control_summary = evaluate_reviewed_controls(left, right, scores, matches, args.out)
     summary = (f"## GIF visual audit\\n\\n"
                f"R2: {len(left)} files; GitHub: {len(right)} files.\\n\\n"
                f"- Confirmed 1:1: {len(matches)}\\n"
@@ -339,7 +393,8 @@ def main() -> None:
                f"- R2 only (no plausible candidate): {len(r2_only)}\\n"
                f"- GitHub only (no plausible candidate): {len(github_only)}\\n\\n"
                f"Conservative thresholds: match {MATCH_THRESHOLD}, review {REVIEW_THRESHOLD}, margin {MATCH_MARGIN}. "
-               f"These thresholds require calibration against manually verified examples before migration.\\n")
+               f"These thresholds require calibration against manually verified examples before migration.\\n\\n"
+               f"{control_summary}")
     (args.out / "summary.md").write_text(summary.replace("\\n", "\n"), encoding="utf-8")
     print(summary.replace("\\n", "\n"), flush=True)
 
