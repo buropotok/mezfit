@@ -20,4 +20,3 @@
   min-height: 132px; padding: 16px; display: flex; flex-direction: column;
   justify-content: space-between; gap: 16px; text-align: center;
 }
-.client-exercises__metric-text { overflow-wrap: anywhere; }
