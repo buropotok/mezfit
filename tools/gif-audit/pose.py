@@ -115,7 +115,12 @@ def similarity(a: PoseSignature, b: PoseSignature) -> float | None:
                 distances = np.linalg.norm(
                     a.points[index, common] - points_b[other, common], axis=1,
                 )
-                frame_scores.append(float(np.median(np.clip(distances, 0, 4))))
+                # Median alone can report a perfect match when a single
+                # wrist or ankle takes a different path: most joints stay
+                # identical and hide the meaningful local motion. The
+                # clipped mean retains such differences while limiting
+                # the effect of one badly located landmark.
+                frame_scores.append(float(np.mean(np.clip(distances, 0, 2))))
             if len(frame_scores) < MIN_VALID_FRAMES:
                 continue
             score = float(np.exp(-np.mean(frame_scores) / 0.85))
