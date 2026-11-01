@@ -18,6 +18,7 @@ import { ClientProgramsPage } from './client/ClientProgramsPage';
 import { CoachShell } from './coach/CoachShell';
 import { PersonalExercises } from './exercises/PersonalExercises';
 import { PublicExerciseMediaPrefetch } from './exercises/PublicExerciseMediaPrefetch';
+import { PublicCategoryArtworkProvider } from './exercises/PublicCategoryArtworkProvider';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
 import {
   type AppDestination,
@@ -354,6 +355,7 @@ export function App() {
         telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
       >
+      <PublicCategoryArtworkProvider>
       <ClientWorkoutProvider enabled={state.activeRole === 'client'}>
       <PublicExerciseMediaPrefetch />
       <WorkedMuscleAssetsPrefetch />
@@ -434,6 +436,7 @@ export function App() {
         </AssignedProgramsProvider>
       </ClientCoachProvider>
       </ClientWorkoutProvider>
+      </PublicCategoryArtworkProvider>
       </CloudConnectionsProvider>
     </GlassSurfaceProvider>
   );
