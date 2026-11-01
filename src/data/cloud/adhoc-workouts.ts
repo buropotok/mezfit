@@ -13,7 +13,8 @@ import { orderedPlanRows } from './program-day-tree';
 import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
 import { isWorkoutExerciseSnapshot, type CloudWorkoutOccurrenceRow, type CloudProgramExerciseSnapshot, type CloudWorkoutExerciseSnapshot } from './workout-foundation-types';
 import { snapshotProgramDay, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
-import { isExerciseTrackingType } from '../exercises/publicExerciseTypes';
+import { isExerciseTrackingType, isPublicExerciseRow } from '../exercises/publicExerciseTypes';
+import { PUBLIC_EXERCISE_CATEGORIES } from '../exercises/publicExerciseFilters';
 import { isSetType } from '../../../shared/set-type';
 import type { ActiveWorkoutSession } from '../../workout/workoutSessionTypes';
 import type { SessionExerciseData, SessionExerciseSetData } from '../../workout/sessionExerciseTypes';
@@ -23,6 +24,20 @@ export type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-wor
 
 export type AdHocOpenSession = Pick<AdHocSessionRow, 'id' | 'name' | 'status'>;
 export type PerformedClientExercise = { key: string; name: string };
+/** One executed occurrence; only completed FACT from an accessible relationship is exposed. */
+export type ClientExerciseFact = {
+  key: string;
+  name: string;
+  category: string;
+  mediaUrl: string | null;
+  trackingType: CloudWorkoutExerciseSnapshot['trackingType'];
+  sessionId: string;
+  sessionExerciseId: string;
+  startedAt: string;
+  sets: ReadonlyArray<Pick<AdHocSetRow,
+    'actualReps' | 'actualWeightKg' | 'actualDurationSeconds' | 'actualDistanceMeters'>>;
+};
+
 
 /** Read-only calendar projection; format is not persisted on the execution row. */
 export type CalendarWorkoutSession = AdHocSessionRow & Pick<CloudWorkoutOccurrenceRow, 'format'>;
@@ -190,6 +205,73 @@ export class AdHocWorkoutRepository {
     onChange: (exercises: PerformedClientExercise[]) => void, onError: (reason: unknown) => void,
   ): { unsubscribe(): void } {
     return liveQuery(() => this.listPerformedClientExercises(athleteUserId, relationshipId))
+      .subscribe({ next: onChange, error: onError });
+  }
+
+  /** Completed FACT instances for counts, period analytics and historical exercise cards. */
+  async listClientExerciseFacts(athleteUserId: string, relationshipId: string): Promise<ClientExerciseFact[]> {
+    // Register all execution tables with liveQuery before awaiting authorization.
+    const [sessions, exercises, sets] = await Promise.all([
+      this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray(),
+      this.db.adHocExercises.where('realmId').equals(relationshipId).toArray(),
+      this.db.adHocSets.where('realmId').equals(relationshipId).toArray(),
+    ]);
+    const completedSets = new Map<string, AdHocSetRow[]>();
+    for (const set of sets) {
+      if (!isAdHocSetRow(set) || set.deletedAt || set.realmId !== relationshipId
+        || set.owner !== relationshipId || set.setStatus !== 'completed') continue;
+      const group = completedSets.get(set.exerciseId) ?? [];
+      group.push(set);
+      completedSets.set(set.exerciseId, group);
+    }
+    const validExercises = new Map<string, AdHocExerciseRow[]>();
+    for (const row of exercises) {
+      if (!isAdHocExerciseRow(row) || row.deletedAt || row.realmId !== relationshipId
+        || row.owner !== relationshipId) continue;
+      const group = validExercises.get(row.sessionId) ?? [];
+      group.push(row);
+      validExercises.set(row.sessionId, group);
+    }
+    const facts: ClientExerciseFact[] = [];
+    const categories = new Map<string, string>();
+    for (const session of sessions) {
+      if (!isAdHocSessionRow(session) || session.realmId !== relationshipId
+        || session.coachUserId !== this.actorUserId || session.clientUserId !== athleteUserId
+        || !(await this.accessible(session))) continue;
+      for (const row of validExercises.get(session.id) ?? []) {
+        const validSets = (completedSets.get(row.id) ?? []).filter(set => set.sessionId === session.id);
+        if (!validSets.length) continue;
+        const snapshot = row.exercise;
+        const key = `${snapshot.scope}:${snapshot.catalogueCoachUserId ?? ''}:${snapshot.exerciseDefinitionId}`;
+        let category = categories.get(key);
+        if (category === undefined) {
+          const definition = snapshot.scope === 'public'
+            ? await this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId) : null;
+          const candidate = definition && isPublicExerciseRow(definition)
+            ? definition.category : snapshot.catalogueDefinition?.category;
+          category = PUBLIC_EXERCISE_CATEGORIES.some(item => item[0] === candidate)
+            ? candidate ?? 'other' : 'other';
+          categories.set(key, category);
+        }
+        facts.push({
+          key, name: snapshot.name, mediaUrl: snapshot.mediaUrl,
+          category, trackingType: snapshot.trackingType,
+          sessionId: session.id, sessionExerciseId: row.id, startedAt: session.startedAt,
+          sets: validSets.map(set => ({
+            actualReps: set.actualReps, actualWeightKg: set.actualWeightKg,
+            actualDurationSeconds: set.actualDurationSeconds, actualDistanceMeters: set.actualDistanceMeters,
+          })),
+        });
+      }
+    }
+    return facts;
+  }
+
+  observeClientExerciseFacts(
+    athleteUserId: string, relationshipId: string,
+    onChange: (facts: ClientExerciseFact[]) => void, onError: (reason: unknown) => void,
+  ): { unsubscribe(): void } {
+    return liveQuery(() => this.listClientExerciseFacts(athleteUserId, relationshipId))
       .subscribe({ next: onChange, error: onError });
   }
 
