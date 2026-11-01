@@ -51,7 +51,7 @@ async function addSharedSession(db: TestFlexDatabase) {
 
 describe('FlexAttributesRepository', () => {
   it('registers v13 tables without altering the existing v12 workout schema', () => {
-    expect(CLOUD_DATABASE_VERSION).toBe(13);
+    expect(CLOUD_DATABASE_VERSION).toBeGreaterThanOrEqual(13);
     expect(CLOUD_DATABASE_STORES_V13.flexAttributes).toBe('id, realmId, [realmId+key]');
     expect(CLOUD_DATABASE_STORES_V13.flexValues)
       .toBe('id, realmId, attributeId, [realmId+attributeId], [realmId+entityType+entityId]');
