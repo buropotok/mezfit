@@ -117,7 +117,7 @@ export function ClientRegistrationGate({ defaults, children }: {
   children: ReactNode;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud
+  const repository = useMemo(() => cloud?.db && cloud.actorUserId
     ? new ClientIntakeRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   const [profile, setProfile] = useState<ClientIntake | null>(null);
@@ -153,24 +153,30 @@ export function ClientRegistrationGate({ defaults, children }: {
     });
   }, [repository, profile?.updatedAt, cloud?.syncStatus, coaches]);
 
-  if (!repository || loading || cloud?.status === 'loading')
-    return <section className="client-intake__status"><Text variant="body">Загрузка анкеты…</Text></section>;
-  if (error || cloud?.status === 'error') return <section className="client-intake__status">
-    <Text variant="body" role="alert">{error || cloud?.error || 'Нет доступа к данным анкеты'}</Text>
-    <Button onClick={() => setRetry(value => value + 1)}>Повторить</Button>
-  </section>;
   if (profile) return <>{children}</>;
-  return <ClientIntakeForm defaults={defaults} onSave={async draft => {
-    const saved = await repository.saveOwn(draft);
-    await repository.shareWithCoaches(saved, coaches);
-  }} />;
+  return <>
+    {children}
+    <div className="client-intake__onboarding" role="dialog" aria-modal="true" aria-label="Регистрация клиента">
+      {!repository || loading || cloud?.status === 'loading'
+        ? <section className="client-intake__status"><Text variant="body">Загрузка анкеты…</Text></section>
+        : error || cloud?.status === 'error'
+          ? <section className="client-intake__status">
+            <Text variant="body" role="alert">{error || cloud?.error || 'Нет доступа к данным анкеты'}</Text>
+            <Button onClick={() => setRetry(value => value + 1)}>Повторить</Button>
+          </section>
+          : <ClientIntakeForm defaults={defaults} onSave={async draft => {
+            const saved = await repository.saveOwn(draft);
+            await repository.shareWithCoaches(saved, coaches);
+          }} />}
+    </div>
+  </>;
 }
 
 export function ClientIntakeOverview({ relationshipId, clientUserId }: {
   relationshipId: string; clientUserId: string;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud
+  const repository = useMemo(() => cloud?.db && cloud.actorUserId
     ? new ClientIntakeRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   const [profile, setProfile] = useState<ClientIntake | null>(null);
@@ -193,6 +199,7 @@ export function ClientIntakeOverview({ relationshipId, clientUserId }: {
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, relationshipId, clientUserId]);
 
+  if (!repository) return <Text variant="body" tone="muted">Анкета временно недоступна.</Text>;
   if (loading) return <Text variant="body" tone="muted">Загрузка анкеты клиента…</Text>;
   if (error) return <Text variant="body" role="alert">{error}</Text>;
   if (!profile) return <GlassSurface preset="modalTuned" optics={false}
