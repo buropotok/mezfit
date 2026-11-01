@@ -13,7 +13,7 @@ import {
 import { MezfitRadarChart } from '../ui/Charts';
 import { ClientExerciseStatisticsView } from './ClientExerciseStatisticsView';
 import {
-  filterFacts, periodBounds, periodOptions, radarCategories, summarizeExercises,
+  filterFacts, periodBounds, periodOptions, radarCategories, shiftCalendarMonths, summarizeExercises,
   type ExercisePeriod,
 } from './clientExerciseStatistics';
 import './client-performed-exercises.css';
@@ -37,10 +37,13 @@ function shiftPeriod(period: ExercisePeriod, current: Date, direction: number): 
     return { period: `month:${next.getFullYear()}-${next.getMonth() + 1}`, date: current };
   }
   if (period === 'all') return { period, date: current };
-  const next = new Date(current);
-  if (period === '30d') next.setDate(next.getDate() + 30 * direction);
-  else next.setMonth(next.getMonth() + (period === '3m' ? 3 : period === '6m' ? 6 : 12) * direction);
-  return { period, date: next };
+  if (period === '30d') {
+    const next = new Date(current);
+    next.setDate(next.getDate() + 30 * direction);
+    return { period, date: next };
+  }
+  const months = period === '3m' ? 3 : period === '6m' ? 6 : 12;
+  return { period, date: shiftCalendarMonths(current, months * direction) };
 }
 
 /** Read-only Coach relationship FACT history; the filter only changes local derived data. */
@@ -121,9 +124,16 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     return () => onDetailNavigationChange(null);
   }, [selected?.key, selected?.name, informationNavigation, client.relationshipId, onDetailNavigationChange]);
 
+  const nextPeriod = shiftPeriod(period, anchor, 1);
+  const nextBounds = periodBounds(nextPeriod.period, nextPeriod.date);
+  const endOfToday = periodBounds('30d').end;
+  const calendarPeriod = period.startsWith('year:') || period.startsWith('month:');
+  const canGoForward = period !== 'all' && (calendarPeriod
+    ? nextBounds.start < endOfToday
+    : nextBounds.end <= endOfToday);
   const changePeriod = (direction: number) => {
-    const next = shiftPeriod(period, anchor, direction);
-    if (period !== 'all' && periodBounds(next.period, next.date).start > Date.now()) return;
+    if (direction > 0 && !canGoForward) return;
+    const next = direction > 0 ? nextPeriod : shiftPeriod(period, anchor, direction);
     setPeriod(next.period);
     setAnchor(next.date);
   };
@@ -140,8 +150,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
         }))}
         trigger={<IconButton ref={periodTrigger} label={`Период: ${bounds.label}`} icon="calendar" />} />
       <Text variant="body" className="client-exercises__period-label">{bounds.label}{rangeSuffix}</Text>
-      <IconButton icon="chevron-right" label="Следующий период" disabled={period === 'all'
-        || periodBounds(shiftPeriod(period, anchor, 1).period, shiftPeriod(period, anchor, 1).date).start > Date.now()}
+      <IconButton icon="chevron-right" label="Следующий период" disabled={!canGoForward}
         onClick={() => changePeriod(1)} />
     </div>
 
