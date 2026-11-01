@@ -1,7 +1,7 @@
 # GIF visual delta audit
 
 This is an operator-only, read-only comparison of **media bytes**, not exercise records.
-A GIF in one source can have at most one confirmed partner in the other source.
+A GIF in one source can have at most one provisional automatic 1:1 partner in the other source.
 Names, numeric IDs, and taxonomy are never features of the matcher.
 
 ## Source inventory and persistence
@@ -28,11 +28,15 @@ Names, numeric IDs, and taxonomy are never features of the matcher.
    If comparison fails, the branch with downloaded GIFs remains available.
    An incomplete download fails without publishing a snapshot branch.
 4. For later runs select `audit-only`: it reads the permanent snapshot branch,
-   needs no Cloudflare token and does not update any Git branch.
+   needs no Cloudflare token and does not update any Git branch. Choose
+   `pose_scope=controls` for the first MediaPipe pilot; only use
+   `pose_scope=all` if pose detection is useful on real examples.
 5. Download the `gif-visual-delta-report` Action artifact (30-day retention).
    It contains `matches.csv`, `review.csv`, `r2_only.csv`,
    `github_only.csv`, `review.html`, `summary.md`, and
-   `control-30-evaluation.csv` (v2).
+   `control-30-evaluation.csv` (v2). When `pose_scope` is enabled, the
+   report additionally contains `pose-control-30.csv` and `pose-coverage.csv`;
+   the `all` scope also produces `pose-candidates.csv`.
    The GIF files themselves stay permanently in Git history on the data branch.
 
 The report HTML loads both animated GIFs from GitHub raw URLs. It requires
@@ -79,11 +83,50 @@ no shortlisted plausible candidate; `only` is not proven uniqueness.
 Fixed corner masks may not remove a watermark in the center; different
 models, camera crops or frame timing can still require manual review.
 
-A future *separately evaluated* increment may use pose keypoints (MediaPipe)
-and visual embeddings (DINOv2) for difficult male/female redraws. Those
-models are **not installed or invoked in v2**: no external model download,
-GPU, new secret or mandatory AI inference is introduced into GitHub Actions.
-Do not adjust labels/tests to fit arbitrary scoring thresholds.
+## Optional MediaPipe Pose Landmarker audit (v3 pilot)
+
+The manual workflow offers an additional `pose_scope` input:
+
+- `controls` (default): run Google's MediaPipe Pose Landmarker **Lite** on
+  only the 30 owner-reviewed pair examples (up to 60 distinct GIFs).
+  Emit `pose-control-30.csv`, `pose-coverage.csv` and Job Summary statistics
+  for measurable positive/negative pairs, but **do not tune thresholds on
+  this nonrandom sample**.
+- `all`: extract poses from all **1324 R2 + 1168 GitHub GIFs**, then perform
+  independent bidirectional nearest-neighbour pose retrieval and emit
+  `pose-candidates.csv` with proposed pairs marked **review-only**. A
+  standard CPU runner may take significantly longer than the original audit;
+  missing skeletons cannot establish uniqueness.
+- `off`: preserve v2-only analysis (no MediaPipe installation/download).
+
+MediaPipe is installed **in a dedicated Python virtual environment**, only on a
+manual run with pose enabled: `mediapipe==0.10.32` in
+`requirements-pose.txt`, Python 3.12. This avoids mixing its OpenCV packages
+with the base visual matcher. The model is
+downloaded directly from Google's versioned Lite task URL and verified against
+SHA-256
+`59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a`.
+The CPU model runs against decoded GIF frames on the Actions runner. No exercise
+names, numeric IDs or metadata influence the pose embedding or retrieval.
+
+Each GIF contributes 8 evenly spaced frames, each frame 320×320 with preserved
+aspect ratio. The model returns up to 33 landmarks; the matcher uses 12
+shoulder/elbow/wrist/hip/knee/ankle landmarks after torso-relative
+normalization, aligns cyclic animation phases, and considers mirrored
+animations. A GIF needs at least 4 frames with
+confident detection and at least 6 usable joints per frame; otherwise pose
+similarity is **unavailable**, not zero or evidence of a mismatch. Pose scores
+are uncalibrated and require manual verification; MediaPipe is trained primarily
+on real people and may fail on drawings/athletic anatomy. MediaPipe's own
+diagnostics/metrics policy should be considered when using the SDK.
+
+**This pilot does not modify v2's similarity weights, matches.csv, delta lists,
+R2 objects, original GitHub GIFs, or persistent R2 snapshot branch.** Pose
+scores are deliberately separate. Only after measuring real-world coverage and
+held-out accuracy should pose features be considered for automatic matching.
+DINOv2 is not included.
+
+Do not change test assertions or manually reviewed labels to fit desired scores.
 
 No source repository GIFs, R2 objects, D1 indexes, Dexie Cloud catalogue rows,
 exercise metadata, Worker routes, API tokens or deployment settings are edited.
