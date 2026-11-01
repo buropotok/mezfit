@@ -63,6 +63,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
   const [category, setCategory] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [info, setInfo] = useState<ClientExerciseFact | null>(null);
+  const [informationNavigation, setInformationNavigation] = useState<NavigationContext | null>(null);
   const periodTrigger = useRef<HTMLButtonElement>(null);
   const filterTrigger = useRef<HTMLButtonElement>(null);
   const infoLoad = useCallback(() => {
@@ -109,14 +110,15 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     ? ` · до ${new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(anchor)}` : '';
 
   useEffect(() => {
-    if (!selected || !onDetailNavigationChange) return undefined;
-    onDetailNavigationChange({
+    if (!onDetailNavigationChange) return undefined;
+    if (!selected && !informationNavigation) return undefined;
+    onDetailNavigationChange(informationNavigation ?? {
       title: selected.name,
       scrollKey: `client-exercise:${client.relationshipId}:${selected.key}`,
       onBack: () => setSelectedKey(null),
     });
     return () => onDetailNavigationChange(null);
-  }, [selected?.key, selected?.name, client.relationshipId, onDetailNavigationChange]);
+  }, [selected?.key, selected?.name, informationNavigation, client.relationshipId, onDetailNavigationChange]);
 
   const changePeriod = (direction: number) => {
     const next = shiftPeriod(period, anchor, direction);
@@ -136,7 +138,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
           onSelect: () => { setPeriod(option.value); setAnchor(new Date()); },
         }))}
         trigger={<IconButton ref={periodTrigger} label={`Период: ${bounds.label}`} icon="calendar" />} />
-      <Text variant="body">{bounds.label}{rangeSuffix}</Text>
+      <Text variant="body" className="client-exercises__period-label">{bounds.label}{rangeSuffix}</Text>
       <IconButton icon="chevron-right" label="Следующий период" disabled={period === 'all'
         || periodBounds(shiftPeriod(period, anchor, 1).period, shiftPeriod(period, anchor, 1).date).start > Date.now()}
         onClick={() => changePeriod(1)} />
@@ -198,6 +200,6 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     </> : null}
     {info ? <ProgramExerciseInformationSheet key={info.sessionExerciseId}
       exerciseId={info.sessionExerciseId} load={infoLoad}
-      onClose={() => setInfo(null)} onNavigationContextChange={onDetailNavigationChange} /> : null}
+      onClose={() => setInfo(null)} onNavigationContextChange={setInformationNavigation} /> : null}
   </div>;
 }
