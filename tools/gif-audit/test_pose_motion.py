@@ -5,13 +5,17 @@ No model download, external media, API access or exercise names are needed.
 from __future__ import annotations
 
 from math import pi, sin
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
+import csv
 import unittest
 
 import numpy as np
 
 from pose import from_landmarks
 from pose_motion import extract, similarity, _bounded_dtw
+from pose_diagnostics import retrieve_all
 
 
 def sequence(*, kind: str = "arm", phase: int = 0, scale: float = 1.0,
@@ -87,6 +91,29 @@ class JointMotionTests(unittest.TestCase):
         b.valid[:] = False
         weights = np.ones(8, dtype=np.float32)
         self.assertIsNone(_bounded_dtw(a, b, weights, radius=4))
+
+    def test_independent_retrieval_keeps_correct_pairs_in_shortlist(self):
+        left = {"a.gif": sequence(kind="arm"), "b.gif": sequence(kind="leg")}
+        right = {
+            "c.gif": sequence(kind="arm", phase=4, scale=1.2),
+            "d.gif": sequence(kind="leg", phase=3),
+        }
+        left_angles = {name: extract(sig) for name, sig in left.items()}
+        right_angles = {name: extract(sig) for name, sig in right.items()}
+        labels = [{"r2_gif": "a.gif", "github_gif": "c.gif", "decision": "yes"}]
+        with TemporaryDirectory() as folder:
+            total, ranked, metrics = retrieve_all(
+                left, right, left_angles, right_angles, labels, Path(folder),
+            )
+            with (Path(folder) / "pose-candidates.csv").open(newline="") as handle:
+                rows = list(csv.DictReader(handle))
+        self.assertGreater(total, 0)
+        self.assertGreater(ranked, 0)
+        self.assertIn("1/1", metrics)
+        self.assertIn(("a.gif", "c.gif"),
+                      {(row["r2_gif"], row["github_gif"]) for row in rows})
+        self.assertTrue(all(row["ranked_by"] in ("pose_position", "joint_motion")
+                            for row in rows))
 
     def test_mismatched_sequence_length_is_rejected(self):
         a = extract(sequence(kind="arm"))
