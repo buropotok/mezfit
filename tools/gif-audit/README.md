@@ -35,8 +35,10 @@ Names, numeric IDs, and taxonomy are never features of the matcher.
    It contains `matches.csv`, `review.csv`, `r2_only.csv`,
    `github_only.csv`, `review.html`, `summary.md`, and
    `control-30-evaluation.csv` (v2). When `pose_scope` is enabled, the
-   report additionally contains `pose-control-30.csv` and `pose-coverage.csv`;
-   the `all` scope also produces `pose-candidates.csv`.
+   report additionally contains `pose-control-30.csv` (including
+   `joint_motion_score`) and `pose-coverage.csv` (`detected_frames_of_16`);
+   the `all` scope also produces `pose-candidates.csv` with independent
+   retrieval channels and manual-review candidates.
    The GIF files themselves stay permanently in Git history on the data branch.
 
 The report HTML loads both animated GIFs from GitHub raw URLs. It requires
@@ -90,13 +92,16 @@ The manual workflow offers an additional `pose_scope` input:
 - `controls` (default): run Google's MediaPipe Pose Landmarker **Lite** on
   only the 30 owner-reviewed pair examples (up to 60 distinct GIFs).
   Emit `pose-control-30.csv`, `pose-coverage.csv` and Job Summary statistics
-  for measurable positive/negative pairs, but **do not tune thresholds on
-  this nonrandom sample**.
+  for measurable positive/negative pairs, including **separate static pose
+  and angular movement scores**. Never tune thresholds on this nonrandom sample.
 - `all`: extract poses from all **1324 R2 + 1168 GitHub GIFs**, then perform
-  independent bidirectional nearest-neighbour pose retrieval and emit
-  `pose-candidates.csv` with proposed pairs marked **review-only**. A
-  standard CPU runner may take significantly longer than the original audit;
-  missing skeletons cannot establish uniqueness.
+  independent bidirectional **pose-position and joint-motion** retrieval.
+  `pose-candidates.csv` shows both scores and which channel retrieved/ranked
+  the pair. Job Summary reports annotated positive-pair **Recall@5/10/20**
+  for each channel on the full cross-library search space (R2→GitHub only).
+  These 15 known-positive examples are diagnostic, not an unbiased population
+  performance estimate. All candidates remain **review-only**.
+  CPU runtime increases substantially; missing skeletons cannot establish uniqueness.
 - `off`: preserve v2-only analysis (no MediaPipe installation/download).
 
 MediaPipe is installed **in a dedicated Python virtual environment**, only on a
@@ -109,16 +114,25 @@ SHA-256
 The CPU model runs against decoded GIF frames on the Actions runner. No exercise
 names, numeric IDs or metadata influence the pose embedding or retrieval.
 
-Each GIF contributes 8 evenly spaced frames, each frame 320×320 with preserved
-aspect ratio. The model returns up to 33 landmarks; the matcher uses 12
-shoulder/elbow/wrist/hip/knee/ankle landmarks after torso-relative
-normalization, aligns cyclic animation phases, and considers mirrored
-animations. A GIF needs at least 4 frames with
-confident detection and at least 6 usable joints per frame; otherwise pose
-similarity is **unavailable**, not zero or evidence of a mismatch. Pose scores
-are uncalibrated and require manual verification; MediaPipe is trained primarily
-on real people and may fail on drawings/athletic anatomy. MediaPipe's own
-diagnostics/metrics policy should be considered when using the SDK.
+Each audit GIF now contributes **16** evenly spaced frames (previous pilot:
+8), each frame 320×320 with preserved aspect ratio. The model returns up to 33
+landmarks; comparison uses 12 shoulder/elbow/wrist/hip/knee/ankle landmarks
+normalized to torso size. The original position-based comparison remains
+available separately. The new deterministic joint-motion channel computes the
+eight left/right elbow, shoulder, hip and knee angles, robust joint excursions,
+and a bounded cyclic Dynamic Time Warping distance. Joints that move in either
+clip receive increased weight. Candidate discovery uses separate position and
+angle-motion vectors and includes mirror-invariant retrieval. For unreliable
+joint sequences and static/isometric clips, motion is reported **unavailable**,
+not zero or proof of nonmatch.
+
+Both pose channels are *diagnostic*: there is no global score averaging with
+SSIM/Optical Flow, no automatic 1:1 assignment and no model confidence
+interpreted as a match probability. Pose scores are uncalibrated and require
+manual verification; MediaPipe is trained primarily on real people and may fail
+on drawings/athletic anatomy. Angles do not identify equipment or exercise
+intent. A real male/female-specific validation set is still needed before
+these channels can influence automatic matching.
 
 **This pilot does not modify v2's similarity weights, matches.csv, delta lists,
 R2 objects, original GitHub GIFs, or persistent R2 snapshot branch.** Pose
