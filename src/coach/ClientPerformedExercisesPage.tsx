@@ -172,7 +172,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     </> : null}
     {!loading && !error && !selected ? <>
       <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}
-        shape={{ radius: 16 }} wrapContent={false} className="client-exercises__radar">
+        className="client-exercises__radar" contentClassName="client-exercises__panel-content">
         <Text variant="headline">Выполнено упражнений</Text>
         {radar.length
           ? <MezfitRadarChart label="Распределение выполнений по категориям"
@@ -181,7 +181,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
           : <Text variant="body" tone="muted">За выбранный период выполнений нет.</Text>}
       </GlassSurface>
       <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}
-        shape={{ radius: 16 }} wrapContent={false} className="client-exercises__list-panel">
+        className="client-exercises__list-panel" contentClassName="client-exercises__panel-content">
         <div className="client-exercises__list-heading">
           <Text variant="headline">{category ? displayCategory(category) : 'Все категории'}</Text>
           <LiquidPopover isOpen={categoryMenuOpen} onOpenChange={setCategoryMenuOpen}
