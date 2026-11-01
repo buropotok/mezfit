@@ -15,7 +15,7 @@ const performed = vi.hoisted(() => [
     trackingType: 'weight_reps', mediaUrl: '/media/squat.gif',
     sets: [{ actualReps: 5, actualWeightKg: 70, actualDurationSeconds: null, actualDistanceMeters: null }] },
 ]);
-const exerciseInfo = vi.hoisted(() => vi.fn(async () => ({ row: null, taxonomy: [], name: 'Жим', mediaUrl: null })));
+const exerciseInfo = vi.hoisted(() => vi.fn(async (_sessionId: string, _exerciseId: string) => ({ row: null, taxonomy: [], name: 'Жим', mediaUrl: null })));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({ db: fakeDb, actorUserId: 'tg:101' }),
 }));
