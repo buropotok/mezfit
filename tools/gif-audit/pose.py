@@ -14,6 +14,7 @@ import numpy as np
 from PIL import Image
 
 SAMPLE_COUNT = 8
+AUDIT_SAMPLE_COUNT = 16
 CANVAS = 320
 # Left/right shoulders, elbows, wrists, hips, knees and ankles.
 JOINTS = (11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28)
@@ -26,8 +27,8 @@ SWAPPED = (1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10)
 
 @dataclass(frozen=True)
 class PoseSignature:
-    points: np.ndarray   # (8, 12, 2) normalized to torso length
-    visible: np.ndarray  # (8, 12) boolean, missing joints never filled as facts
+    points: np.ndarray   # (frames, 12, 2) normalized to torso length
+    visible: np.ndarray  # (frames, 12) boolean, missing joints never filled as facts
 
     @property
     def detected_frames(self) -> int:
@@ -54,10 +55,10 @@ class PoseSignature:
 
 def from_landmarks(frames: list[list[object] | None]) -> PoseSignature:
     """Normalize x/y coordinates without assuming a particular gender/body size."""
-    if len(frames) != SAMPLE_COUNT:
-        raise ValueError(f"Expected {SAMPLE_COUNT} sampled frames")
-    points = np.zeros((SAMPLE_COUNT, len(JOINTS), 2), dtype=np.float32)
-    visible = np.zeros((SAMPLE_COUNT, len(JOINTS)), dtype=bool)
+    if len(frames) not in (SAMPLE_COUNT, AUDIT_SAMPLE_COUNT):
+        raise ValueError(f"Expected {SAMPLE_COUNT} or {AUDIT_SAMPLE_COUNT} sampled frames")
+    points = np.zeros((len(frames), len(JOINTS), 2), dtype=np.float32)
+    visible = np.zeros((len(frames), len(JOINTS)), dtype=bool)
     for frame_index, landmarks in enumerate(frames):
         if not landmarks or len(landmarks) < 33:
             continue
@@ -100,15 +101,17 @@ def similarity(a: PoseSignature, b: PoseSignature) -> float | None:
     if not a.reliable or not b.reliable:
         return None
     best: float | None = None
+    if a.points.shape[0] != b.points.shape[0]:
+        raise ValueError("Pose sequences must use equal sample counts")
     for mirror in (False, True):
         points_b = b.points[:, SWAPPED, :].copy() if mirror else b.points
         visible_b = b.visible[:, SWAPPED] if mirror else b.visible
         if mirror:
             points_b[:, :, 0] *= -1
-        for phase in range(SAMPLE_COUNT):
+        for phase in range(a.points.shape[0]):
             frame_scores = []
-            for index in range(SAMPLE_COUNT):
-                other = (index + phase) % SAMPLE_COUNT
+            for index in range(a.points.shape[0]):
+                other = (index + phase) % a.points.shape[0]
                 common = a.visible[index] & visible_b[other]
                 if np.count_nonzero(common) < MIN_VALID_JOINTS:
                     continue
@@ -128,8 +131,10 @@ def similarity(a: PoseSignature, b: PoseSignature) -> float | None:
     return best
 
 
-def sampled_frames(path: Path) -> list[np.ndarray]:
-    """Eight time-uniform composited RGB frames, scaled for pose detection."""
+def sampled_frames(path: Path, sample_count: int = SAMPLE_COUNT) -> list[np.ndarray]:
+    """Time-uniform composited RGB frames, scaled for pose detection."""
+    if sample_count not in (SAMPLE_COUNT, AUDIT_SAMPLE_COUNT):
+        raise ValueError("Unsupported pose sample count")
     result: list[np.ndarray] = []
     with Image.open(path) as gif:
         if gif.format != "GIF" or not 1 <= gif.n_frames <= 2000:
@@ -140,8 +145,8 @@ def sampled_frames(path: Path) -> list[np.ndarray]:
             durations.append(max(20, min(int(gif.info.get("duration") or 100), 5000)))
         times = np.cumsum(durations)
         total = int(times[-1])
-        for sample in range(SAMPLE_COUNT):
-            time_ms = (sample + 0.5) * total / SAMPLE_COUNT
+        for sample in range(sample_count):
+            time_ms = (sample + 0.5) * total / sample_count
             chosen = min(gif.n_frames - 1, bisect_right(times, time_ms))
             gif.seek(chosen)
             rgb = np.asarray(gif.convert("RGB"))
@@ -184,7 +189,7 @@ class PoseEstimator:
 
     def extract(self, path: Path) -> PoseSignature:
         landmarks = []
-        for rgb in sampled_frames(path):
+        for rgb in sampled_frames(path, AUDIT_SAMPLE_COUNT):
             image = self.mp.Image(image_format=self.mp.ImageFormat.SRGB, data=rgb)
             prediction = self.landmarker.detect(image)
             landmarks.append(prediction.pose_landmarks[0] if prediction.pose_landmarks else None)
