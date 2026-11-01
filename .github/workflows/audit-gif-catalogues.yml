@@ -15,6 +15,15 @@ on:
         options:
           - snapshot-and-audit
           - audit-only
+      pose_scope:
+        description: 'Optional MediaPipe Pose Landmarker diagnostics'
+        required: true
+        type: choice
+        default: controls
+        options:
+          - controls
+          - all
+          - 'off'
 
 permissions:
   contents: read
@@ -138,6 +147,29 @@ jobs:
           python tools/gif-audit/download_r2.py verify
       - name: Compute visual matches and delta (no exercise metadata)
         run: python tools/gif-audit/compare.py
+      - name: Install optional MediaPipe Pose Landmarker
+        if: ${{ inputs.pose_scope != 'off' }}
+        run: |
+          python -m pip install -r tools/gif-audit/requirements-pose.txt
+          python -m pip check
+      - name: Download and SHA256-verify pinned MediaPipe Lite model
+        if: ${{ inputs.pose_scope != 'off' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          model="$RUNNER_TEMP/pose_landmarker_lite.task"
+          curl --fail --location --silent --show-error --retry 3 --max-time 120 \
+            "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task" \
+            --output "$model"
+          echo "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a  $model" | sha256sum --check
+      - name: Compute pose diagnostics (never change automatic matches)
+        if: ${{ inputs.pose_scope != 'off' }}
+        env:
+          POSE_SCOPE: ${{ inputs.pose_scope }}
+        run: |
+          python tools/gif-audit/pose_diagnostics.py \
+            --scope "$POSE_SCOPE" \
+            --model "$RUNNER_TEMP/pose_landmarker_lite.task"
       - name: Publish summary
         if: success()
         shell: bash
