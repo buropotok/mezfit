@@ -104,7 +104,8 @@ export function planCategoryArtworkPublication(existing, assets) {
     if (!row) { pending.push(asset); continue; }
     if (!record(row.image) || typeof row.image.ref !== 'string'
       || !/^[0-9]+:[A-Za-z0-9_-]{6,}$/.test(row.image.ref)
-      || !isDeepStrictEqual(row, expectedRow(asset, row.image.ref))) {
+      || !Object.entries(expectedRow(asset, row.image.ref)).every(
+        ([field, expected]) => isDeepStrictEqual(row[field], expected))) {
       fail('CONFLICTING_PUBLIC_CATEGORY_ARTWORK_ROW');
     }
   }
