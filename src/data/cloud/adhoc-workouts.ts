@@ -152,9 +152,11 @@ export class AdHocWorkoutRepository {
       this.db.adHocExercises.where('realmId').equals(relationshipId).toArray(),
       this.db.adHocSets.where('realmId').equals(relationshipId).toArray(),
     ]);
-    const validExercises = new Map(exercises
-      .filter(row => isAdHocExerciseRow(row) && !row.deletedAt && row.owner === relationshipId)
-      .map(row => [row.id, row]));
+    const validExercises = new Map<string, AdHocExerciseRow>();
+    for (const row of exercises) {
+      if (isAdHocExerciseRow(row) && !row.deletedAt && row.owner === relationshipId)
+        validExercises.set(row.id, row);
+    }
     const completedBySession = new Map<string, Set<string>>();
     for (const set of sets) {
       if (!isAdHocSetRow(set) || set.deletedAt || set.owner !== relationshipId
