@@ -16,13 +16,15 @@ from PIL import Image
 from scipy.optimize import linear_sum_assignment
 from skimage.metrics import structural_similarity
 
+from motion import MotionSignature, compare as compare_motion, signature as motion_signature
+
 ROOT = Path(__file__).resolve().parents[2]
 R2 = ROOT / "audit/gif-sources/r2"
 GITHUB = ROOT / "assets/media"
 DEFAULT_REPORT = ROOT / "audit/gif-report"
 SAMPLES = 16
-TOP_K = 14
-EXACT_CANDIDATES = 5
+TOP_K = 24
+EXACT_CANDIDATES = 8
 MATCH_THRESHOLD = 0.86
 REVIEW_THRESHOLD = 0.62
 MATCH_MARGIN = 0.035
@@ -37,6 +39,7 @@ class Fingerprint:
     vector: np.ndarray
     n_frames: int
     duration_ms: int
+    motion: MotionSignature
 
 
 def normalized_frame(image: Image.Image) -> np.ndarray:
@@ -96,7 +99,7 @@ def fingerprint(path: Path) -> Fingerprint:
         features -= features.mean()
         features /= max(float(np.linalg.norm(features)), 1e-6)
         return Fingerprint(path, array, tuple(perceptual_hash(f) for f in array),
-                           features, gif.n_frames, total)
+                           features, gif.n_frames, total, motion_signature(array))
 
 
 def fingerprint_library(directory: Path, *, expected_count: int | None = None) -> list[Fingerprint]:
@@ -156,32 +159,62 @@ def compare_pair(left: Fingerprint, right: Fingerprint) -> tuple[float, float, f
                   for i, j in picks]
     hscore = float(np.mean(hashes))
     sscore = float(np.mean(structures))
-    return 0.45 * hscore + 0.55 * sscore, hscore, sscore
+    appearance = 0.45 * hscore + 0.55 * sscore
+    movement = compare_motion(left.motion, right.motion)
+    # Unreliable motion is neutral: static/isometric GIFs retain visual matching.
+    combined = appearance if movement is None else 0.70 * appearance + 0.30 * movement
+    return combined, hscore, sscore
 
 
 def candidate_pairs(left: list[Fingerprint], right: list[Fingerprint]) -> dict[tuple[int, int], float]:
-    matrix_a = np.stack([item.vector for item in left])
-    matrix_b = np.stack([item.vector for item in right])
-    coarse = matrix_a @ matrix_b.T
-    pairs = set()
-    for i in range(len(left)):
-        for j in np.argsort(coarse[i])[-TOP_K:]:
-            pairs.add((i, int(j)))
-    for j in range(len(right)):
-        for i in np.argsort(coarse[:, j])[-TOP_K:]:
-            pairs.add((int(i), j))
-    # Evaluate inexpensive phase-invariant hashes before running SSIM.
-    by_left: dict[int, list[tuple[float, int]]] = {}
-    by_right: dict[int, list[tuple[float, int]]] = {}
+    appearance_a = np.stack([item.vector for item in left])
+    appearance_b = np.stack([item.vector for item in right])
+    visual = appearance_a @ appearance_b.T
+
+    # Independent motion retrieval is essential: a male/female redraw of the
+    # same movement can be absent from the visually nearest neighbours.
+    motion_a = np.stack([item.motion.vector for item in left])
+    motion_b = np.stack([item.motion.vector for item in right])
+    movements = motion_a @ motion_b.T
+    good_a = np.array([item.motion.reliable for item in left])
+    good_b = np.array([item.motion.reliable for item in right])
+    movements[~good_a, :] = -np.inf
+    movements[:, ~good_b] = -np.inf
+
+    pairs: set[tuple[int, int]] = set()
+    for coarse in (visual, movements):
+        for i in range(len(left)):
+            for j in np.argsort(coarse[i])[-TOP_K:]:
+                if np.isfinite(coarse[i, j]):
+                    pairs.add((i, int(j)))
+        for j in range(len(right)):
+            for i in np.argsort(coarse[:, j])[-TOP_K:]:
+                if np.isfinite(coarse[i, j]):
+                    pairs.add((int(i), j))
+
+    # Preserve top candidates of *both* channels. Hash-only shortlisting
+    # would discard precisely the appearance-changing pairs we want to find.
+    by_left_hash: dict[int, list[tuple[float, int]]] = {}
+    by_right_hash: dict[int, list[tuple[float, int]]] = {}
+    by_left_motion: dict[int, list[tuple[float, int]]] = {}
+    by_right_motion: dict[int, list[tuple[float, int]]] = {}
     for i, j in pairs:
-        score, _ = best_phase(left[i], right[j])
-        by_left.setdefault(i, []).append((score, j))
-        by_right.setdefault(j, []).append((score, i))
-    refined = set()
-    for i, values in by_left.items():
-        refined.update((i, j) for _, j in sorted(values, reverse=True)[:EXACT_CANDIDATES])
-    for j, values in by_right.items():
-        refined.update((i, j) for _, i in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+        hash_score, _ = best_phase(left[i], right[j])
+        by_left_hash.setdefault(i, []).append((hash_score, j))
+        by_right_hash.setdefault(j, []).append((hash_score, i))
+        movement = compare_motion(left[i].motion, right[j].motion)
+        if movement is not None:
+            by_left_motion.setdefault(i, []).append((movement, j))
+            by_right_motion.setdefault(j, []).append((movement, i))
+    refined: set[tuple[int, int]] = set()
+    for index, values in by_left_hash.items():
+        refined.update((index, candidate) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+    for index, values in by_right_hash.items():
+        refined.update((candidate, index) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+    for index, values in by_left_motion.items():
+        refined.update((index, candidate) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+    for index, values in by_right_motion.items():
+        refined.update((candidate, index) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
     scores = {}
     for count, (i, j) in enumerate(sorted(refined), 1):
         scores[(i, j)] = compare_pair(left[i], right[j])[0]
@@ -273,11 +306,75 @@ nav a{margin-right:16px}h2{margin-top:48px}small{color:#aaa}
 <p>Matching uses only animation content, never filenames or exercise metadata.</p>
 <p><small>Review pairs are unconfirmed; they are not counted as unique GIFs. Images load from GitHub and require access to the repository.</small></p>""" +
             f'<p>Matched: {len(matches)} · Review pairs: {len(reviews)} · R2 only: {len(r2_only)} · GitHub only: {len(github_only)}</p>' +
-            table("Confirmed 1:1 matches", match_rows) +
+            table("Provisional automatic 1:1 matches", match_rows) +
             table("Uncertain candidates — manual review", review_rows) +
             table("R2 only", r2_rows) +
             table("GitHub only", github_rows) + "</html>")
     (out / "review.html").write_text(html, encoding="utf-8")
+
+
+def evidence_row(left: Fingerprint, right: Fingerprint, score: float) -> list[object]:
+    """Keep separate evidence visible; fused confidence is not ground truth."""
+    _, hash_score, structure_score = compare_pair(left, right)
+    visual = 0.45 * hash_score + 0.55 * structure_score
+    movement = compare_motion(left.motion, right.motion)
+    return [
+        left.path.name, right.path.name, f"{score:.5f}",
+        f"{visual:.5f}", "" if movement is None else f"{movement:.5f}",
+    ]
+
+
+def evaluate_reviewed_controls(
+    left: list[Fingerprint], right: list[Fingerprint],
+    scores: dict[tuple[int, int], float], matches: list[tuple[int, int, float]], out: Path,
+) -> str:
+    """Measure candidate recall and sample errors without leaking labels into matching.
+
+    The 30 volunteered decisions are diagnostic only. They never influence
+    retrieval, scoring, thresholds, or pairing.
+    """
+    labels_file = ROOT / "tools/gif-audit/control-30-reviewed.csv"
+    lookup_a = {item.path.name: i for i, item in enumerate(left)}
+    lookup_b = {item.path.name: i for i, item in enumerate(right)}
+    confirmed = {(i, j) for i, j, _ in matches}
+    records = []
+    with labels_file.open(newline="", encoding="utf-8") as source:
+        rows = list(csv.DictReader(source))
+    if len(rows) != 30 or {row["decision"] for row in rows} != {"yes", "no"}:
+        raise ValueError("Reviewed control set is missing or malformed")
+    seen = set()
+    for label in rows:
+        name_a, name_b = label["r2_gif"], label["github_gif"]
+        if name_a not in lookup_a or name_b not in lookup_b:
+            raise ValueError(f"Reviewed control media is absent: {name_a}, {name_b}")
+        key = (lookup_a[name_a], lookup_b[name_b])
+        if key in seen:
+            raise ValueError("Duplicate reviewed pair")
+        seen.add(key)
+        fused, hash_score, ssim_score = compare_pair(left[key[0]], right[key[1]])
+        appearance = 0.45 * hash_score + 0.55 * ssim_score
+        movement = compare_motion(left[key[0]].motion, right[key[1]].motion)
+        records.append([
+            name_a, name_b, label["decision"], int(key in scores),
+            int(key in confirmed), f"{appearance:.5f}",
+            "" if movement is None else f"{movement:.5f}", f"{fused:.5f}",
+        ])
+    write_csv(
+        out / "control-30-evaluation.csv",
+        ["r2_gif", "github_gif", "human_decision", "retrieved_as_candidate",
+         "auto_matched", "appearance_score", "motion_score", "combined_score"],
+        records,
+    )
+    positives = [row for row in records if row[2] == "yes"]
+    negatives = [row for row in records if row[2] == "no"]
+    positive_retrieved = sum(row[3] for row in positives)
+    false_accepts = sum(row[4] for row in negatives)
+    true_accepts = sum(row[4] for row in positives)
+    return (f"### Manually reviewed control sample (diagnostic, not a population estimate)\\n"
+            f"- Human-positive pairs retrieved: {positive_retrieved}/{len(positives)}\\n"
+            f"- Human-positive pairs automatically matched: {true_accepts}/{len(positives)}\\n"
+            f"- Human-negative pairs incorrectly matched: {false_accepts}/{len(negatives)}\\n"
+            f"- See control-30-evaluation.csv for independent visual and motion scores.\\n")
 
 
 def main() -> None:
@@ -292,21 +389,24 @@ def main() -> None:
     scores = candidate_pairs(left, right)
     matches, reviews, r2_only, github_only = classify(len(left), len(right), scores)
     args.out.mkdir(parents=True, exist_ok=True)
-    write_csv(args.out / "matches.csv", ["r2_gif", "github_gif", "score"],
-              [[left[i].path.name, right[j].path.name, f"{score:.5f}"] for i, j, score in matches])
-    write_csv(args.out / "review.csv", ["r2_gif", "github_gif", "score"],
-              [[left[i].path.name, right[j].path.name, f"{score:.5f}"] for i, j, score in reviews])
+    evidence_header = ["r2_gif", "github_gif", "score", "appearance_score", "motion_score"]
+    write_csv(args.out / "matches.csv", evidence_header,
+              [evidence_row(left[i], right[j], score) for i, j, score in matches])
+    write_csv(args.out / "review.csv", evidence_header,
+              [evidence_row(left[i], right[j], score) for i, j, score in reviews])
     write_csv(args.out / "r2_only.csv", ["r2_gif"], [[left[i].path.name] for i in r2_only])
     write_csv(args.out / "github_only.csv", ["github_gif"], [[right[j].path.name] for j in github_only])
     render_html(args.out, left, right, matches, reviews, r2_only, github_only)
+    control_summary = evaluate_reviewed_controls(left, right, scores, matches, args.out)
     summary = (f"## GIF visual audit\\n\\n"
                f"R2: {len(left)} files; GitHub: {len(right)} files.\\n\\n"
-               f"- Confirmed 1:1: {len(matches)}\\n"
+               f"- Provisional auto matches (review required): {len(matches)}\\n"
                f"- Candidate pairs for review: {len(reviews)}\\n"
                f"- R2 only (no plausible candidate): {len(r2_only)}\\n"
                f"- GitHub only (no plausible candidate): {len(github_only)}\\n\\n"
-               f"Conservative thresholds: match {MATCH_THRESHOLD}, review {REVIEW_THRESHOLD}, margin {MATCH_MARGIN}. "
-               f"These thresholds require calibration against manually verified examples before migration.\\n")
+               f"Experimental thresholds: auto match {MATCH_THRESHOLD}, review {REVIEW_THRESHOLD}, margin {MATCH_MARGIN}. "
+               f"These thresholds require calibration against manually verified examples before migration.\\n\\n"
+               f"{control_summary}")
     (args.out / "summary.md").write_text(summary.replace("\\n", "\n"), encoding="utf-8")
     print(summary.replace("\\n", "\n"), flush=True)
 
