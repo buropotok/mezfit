@@ -52,15 +52,16 @@ vi.mock('../ui', () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>,
   IconButton: ({ children, label, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) =>
     <button aria-label={label} {...props}>{children}</button>,
-  GlassSurface: ({ children, component, onClick, shape, 'aria-label': ariaLabel }: {
-    children: ReactNode; component?: string; onClick?: () => void;
-    shape?: string; 'aria-label'?: string;
-  }) => component === 'button'
-    ? <button onClick={onClick} aria-label={ariaLabel} data-shape={shape}>{children}</button>
-    : <section>{children}</section>,
+  GlassSurface: ({ children }: { children: ReactNode }) => <section>{children}</section>,
   List: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ListItem: ({ title, trailing, onClick }: { title: ReactNode; trailing?: ReactNode; onClick: () => void }) =>
-    <button onClick={onClick}>{title} {trailing}</button>,
+  ListItem: ({ title, trailing, leading, leadingShape, onClick }: {
+    title: ReactNode; trailing?: ReactNode; leading?: ReactNode;
+    leadingShape?: string; onClick: () => void;
+  }) => <div className="ui-list-item-wrap" role="listitem">
+    <button className="ui-list-item" data-leading-shape={leadingShape} onClick={onClick}>
+      <span aria-hidden="true">{leading}</span>{title} {trailing}
+    </button>
+  </div>,
   LiquidPopover: ({ trigger, items, isOpen, onOpenChange }: {
     trigger: ReactElement<{ onClick?: () => void }>;
     items: { id: string; label: string; onSelect?: () => void }[];
@@ -107,7 +108,10 @@ describe('coach client exercise history interactions', () => {
   it('opens the reused information sheet only from GIF, while name opens statistics', () => {
     render(<ClientPerformedExercisesPage client={client} onDetailNavigationChange={vi.fn()} />);
     const mediaButton = screen.getByRole('button', { name: 'Информация об упражнении: Жим лёжа' });
-    expect(mediaButton.getAttribute('data-shape')).toBe('capsule');
+    expect(mediaButton.closest('.ui-list-item')).toBeNull();
+    const listItem = mediaButton.parentElement?.querySelector('.ui-list-item');
+    expect(listItem?.getAttribute('data-leading-shape')).toBe('square');
+    expect(listItem?.querySelector('img')?.getAttribute('src')).toBe('/media/bench.gif');
     fireEvent.click(mediaButton);
     expect(screen.getByRole('dialog', { name: 'Информация об упражнении' })).toBeTruthy();
     expect(screen.queryByText('Статистика упражнения')).toBeNull();
