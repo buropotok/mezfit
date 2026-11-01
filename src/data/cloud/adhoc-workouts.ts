@@ -145,29 +145,27 @@ export class AdHocWorkoutRepository {
    * is never proof of execution. Snapshot names survive catalogue edits.
    */
   async listPerformedClientExercises(athleteUserId: string, relationshipId: string): Promise<PerformedClientExercise[]> {
-    return this.db.transaction('r', executionTables, async () => {
-      const sessions = await this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray();
-      const found = new Map<string, PerformedClientExercise & { lastPerformedAt: string }>();
-      for (const session of sessions) {
-        if (!isAdHocSessionRow(session) || session.realmId !== relationshipId
-          || session.coachUserId !== this.actorUserId || session.clientUserId !== athleteUserId
-          || !(await this.accessible(session))) continue;
-        const completedExerciseIds = new Set((await this.sets(session))
-          .filter(set => set.setStatus === 'completed').map(set => set.exerciseId));
-        if (!completedExerciseIds.size) continue;
-        for (const row of await this.exercises(session)) {
-          if (!completedExerciseIds.has(row.id)) continue;
-          const snapshot = row.exercise;
-          const key = `${snapshot.scope}:${snapshot.catalogueCoachUserId ?? ''}:${snapshot.exerciseDefinitionId}`;
-          const previous = found.get(key);
-          if (!previous || session.startedAt > previous.lastPerformedAt)
-            found.set(key, { key, name: snapshot.name, lastPerformedAt: session.startedAt });
-        }
+    const sessions = await this.db.adHocSessions.where('athleteUserId').equals(athleteUserId).toArray();
+    const found = new Map<string, PerformedClientExercise & { lastPerformedAt: string }>();
+    for (const session of sessions) {
+      if (!isAdHocSessionRow(session) || session.realmId !== relationshipId
+        || session.coachUserId !== this.actorUserId || session.clientUserId !== athleteUserId
+        || !(await this.accessible(session))) continue;
+      const completedExerciseIds = new Set((await this.sets(session))
+        .filter(set => set.setStatus === 'completed').map(set => set.exerciseId));
+      if (!completedExerciseIds.size) continue;
+      for (const row of await this.exercises(session)) {
+        if (!completedExerciseIds.has(row.id)) continue;
+        const snapshot = row.exercise;
+        const key = `${snapshot.scope}:${snapshot.catalogueCoachUserId ?? ''}:${snapshot.exerciseDefinitionId}`;
+        const previous = found.get(key);
+        if (!previous || session.startedAt > previous.lastPerformedAt)
+          found.set(key, { key, name: snapshot.name, lastPerformedAt: session.startedAt });
       }
-      return [...found.values()]
-        .sort((a, b) => a.name.localeCompare(b.name, 'ru-RU') || a.key.localeCompare(b.key))
-        .map(({ key, name }) => ({ key, name }));
-    });
+    }
+    return [...found.values()]
+      .sort((a, b) => a.name.localeCompare(b.name, 'ru-RU') || a.key.localeCompare(b.key))
+      .map(({ key, name }) => ({ key, name }));
   }
 
   observePerformedClientExercises(
