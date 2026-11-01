@@ -112,8 +112,8 @@ names, numeric IDs or metadata influence the pose embedding or retrieval.
 Each GIF contributes 8 evenly spaced frames, each frame 320×320 with preserved
 aspect ratio. The model returns up to 33 landmarks; the matcher uses 12
 shoulder/elbow/wrist/hip/knee/ankle landmarks after torso-relative
-normalization, aligns cyclic animation
-phases, and consider mirrored animations. A GIF needs at least 4 frames with
+normalization, aligns cyclic animation phases, and considers mirrored
+animations. A GIF needs at least 4 frames with
 confident detection and at least 6 usable joints per frame; otherwise pose
 similarity is **unavailable**, not zero or evidence of a mismatch. Pose scores
 are uncalibrated and require manual verification; MediaPipe is trained primarily
