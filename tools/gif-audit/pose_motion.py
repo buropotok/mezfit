@@ -77,37 +77,36 @@ def extract(pose: PoseSignature) -> Kinematics:
 
 def _bounded_dtw(a: Kinematics, b: Kinematics, weights: np.ndarray,
                  radius: int) -> float | None:
+    """Sakoe-Chiba constrained DTW; vectorize all joint-wise frame costs."""
     n, m = a.angles.shape[0], b.angles.shape[0]
+    common = a.valid[:, None, :] & b.valid[None, :, :]
+    counts = common.sum(axis=2)
+    differences = np.abs(a.angles[:, None, :] - b.angles[None, :, :])
+    joint_weights = weights[None, None, :] * common
+    numerator = np.sum(differences * joint_weights, axis=2)
+    denominator = np.maximum(np.sum(joint_weights, axis=2), 1e-6)
+    local = np.where(
+        counts >= MIN_ANGLE_CHANNELS,
+        numerator / denominator + 0.08 * (len(ANGLES) - counts) / len(ANGLES),
+        0.65,
+    )
     cost = np.full((n + 1, m + 1), np.inf, dtype=np.float32)
-    valid_count = np.zeros((n + 1, m + 1), dtype=np.int16)
+    useful = np.zeros((n + 1, m + 1), dtype=np.int16)
     cost[0, 0] = 0
     for i in range(1, n + 1):
         for j in range(max(1, i - radius), min(m, i + radius) + 1):
-            present = a.valid[i - 1] & b.valid[j - 1]
-            count = int(np.count_nonzero(present))
-            if count >= MIN_ANGLE_CHANNELS:
-                discrepancy = np.abs(a.angles[i - 1, present] -
-                                      b.angles[j - 1, present])
-                weight = weights[present]
-                local = float(np.sum(discrepancy * weight) / max(np.sum(weight), 1e-6))
-                local += 0.08 * (8 - count) / 8
-                useful = 1
-            else:
-                # No valid angle intersection: penalize, never treat as match.
-                local = 0.65
-                useful = 0
             previous = (
-                (cost[i - 1, j - 1], valid_count[i - 1, j - 1]),
-                (cost[i - 1, j] + 0.08, valid_count[i - 1, j]),
-                (cost[i, j - 1] + 0.08, valid_count[i, j - 1]),
+                (cost[i - 1, j - 1], useful[i - 1, j - 1]),
+                (cost[i - 1, j] + 0.08, useful[i - 1, j]),
+                (cost[i, j - 1] + 0.08, useful[i, j - 1]),
             )
-            score, usable = min(previous, key=lambda state: state[0])
-            cost[i, j] = score + local
-            valid_count[i, j] = usable + useful
-    if not np.isfinite(cost[n, m]) or valid_count[n, m] < max(MIN_USABLE_FRAMES, n // 2):
+            score, observed = min(previous, key=lambda state: state[0])
+            cost[i, j] = score + local[i - 1, j - 1]
+            useful[i, j] = observed + int(counts[i - 1, j - 1] >= MIN_ANGLE_CHANNELS)
+    if not np.isfinite(cost[n, m]) or useful[n, m] < max(MIN_USABLE_FRAMES, n // 2):
         return None
-    # Dividing by n discourages unlimited frame repetition in warping.
     return float(cost[n, m] / max(n, m))
+
 
 
 def similarity(left: Kinematics, right: Kinematics) -> float | None:
