@@ -17,8 +17,14 @@ export type ExerciseSummary = {
 
 const startOfDay = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
-const offsetMonths = (date: Date, months: number): Date =>
-  new Date(date.getFullYear(), date.getMonth() + months, date.getDate());
+/** Move by calendar months without overflowing short months (including leap Februaries). */
+export function shiftCalendarMonths(date: Date, months: number): Date {
+  const year = date.getFullYear();
+  const targetMonth = date.getMonth() + months;
+  const lastDay = new Date(year, targetMonth + 1, 0).getDate();
+  return new Date(year, targetMonth, Math.min(date.getDate(), lastDay),
+    date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+}
 
 /** Calendar date and half-open bounds are resolved on the viewing device. */
 export function periodBounds(period: ExercisePeriod, today = new Date()): { start: number; end: number; label: string } {
@@ -28,7 +34,7 @@ export function periodBounds(period: ExercisePeriod, today = new Date()): { star
   if (period === '30d') return { start: new Date(current.getFullYear(), current.getMonth(), current.getDate() - 29).getTime(), end: endOfToday, label: '30 дней' };
   if (period === '3m' || period === '6m' || period === 'year') {
     const months = period === '3m' ? 3 : period === '6m' ? 6 : 12;
-    return { start: offsetMonths(current, -months).getTime(), end: endOfToday,
+    return { start: shiftCalendarMonths(current, -months).getTime(), end: endOfToday,
       label: period === '3m' ? '3 месяца' : period === '6m' ? '6 месяцев' : 'Год' };
   }
   if (period.startsWith('year:')) {
@@ -47,6 +53,7 @@ export function periodOptions(facts: readonly ClientExerciseFact[], today = new 
   const months = new Set<`${number}-${number}`>();
   for (const fact of facts) {
     const date = new Date(fact.startedAt);
+    if (!Number.isFinite(date.getTime())) continue;
     years.add(date.getFullYear());
     months.add(`${date.getFullYear()}-${date.getMonth() + 1}`);
   }
