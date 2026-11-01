@@ -222,11 +222,13 @@ def classify(n_left: int, n_right: int, scores: dict[tuple[int, int], float]):
     matched_left = {i for i, _, _ in matches}
     matched_right = {j for _, j, _ in matches}
 
+    # A plausible alternative to an already-matched file still needs review;
+    # it is not evidence that the unmatched file is unique.
     reviews = [(i, j, score) for (i, j), score in scores.items()
-               if score >= REVIEW_THRESHOLD and (i not in matched_left or j not in matched_right)
-               and (i not in matched_left and j not in matched_right)]
-    review_left = {i for i, _, _ in reviews}
-    review_right = {j for _, j, _ in reviews}
+               if score >= REVIEW_THRESHOLD
+               and (i not in matched_left or j not in matched_right)]
+    review_left = {i for i, _, _ in reviews if i not in matched_left}
+    review_right = {j for _, j, _ in reviews if j not in matched_right}
     r2_only = [i for i in range(n_left) if i not in matched_left | review_left]
     github_only = [j for j in range(n_right) if j not in matched_right | review_right]
     return sorted(matches), sorted(reviews, key=lambda row: -row[2]), r2_only, github_only
