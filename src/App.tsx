@@ -9,6 +9,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { ClientRegistrationGate } from './client/ClientIntake';
 import { applyBackgroundSettings, loadBrowserBackgroundSettings, saveBrowserBackgroundSettings } from './backgroundSettings';
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
 import { CloudConnectionsProvider } from './data/cloud/CloudConnectionsProvider';
@@ -420,6 +421,10 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
         ) : (
+          <ClientRegistrationGate
+            defaults={{ firstName: state.me.user.firstName,
+              lastName: state.me.user.lastName ?? '',
+              telegramUsername: state.me.user.username ?? '' }}>
           <ClientShell
             initData={state.initData}
             currentUserId={state.me.user.id}
@@ -428,6 +433,7 @@ export function App() {
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}
           />
+          </ClientRegistrationGate>
           )}
         </ClientWorkoutNavigationShell>
         </WorkoutCompletionProvider>
