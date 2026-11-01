@@ -59,6 +59,14 @@ class MatchingTests(unittest.TestCase):
         self.assertEqual(len(reviews), 2)
         self.assertEqual(r2_only, [])
 
+    def test_unmatched_gif_similar_to_matched_partner_stays_in_review(self):
+        matches, reviews, r2_only, github_only = compare.classify(
+            2, 1, {(0, 0): 0.97, (1, 0): 0.74})
+        self.assertEqual({(i, j) for i, j, _ in matches}, {(0, 0)})
+        self.assertEqual({(i, j) for i, j, _ in reviews}, {(1, 0)})
+        self.assertEqual(r2_only, [])
+        self.assertEqual(github_only, [])
+
     def test_media_inventory_is_pinned_and_unique(self):
         revision, ids = download_r2.approved_keys()
         self.assertEqual(len(revision), 40)
