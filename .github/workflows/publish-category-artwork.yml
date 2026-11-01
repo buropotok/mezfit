@@ -44,6 +44,8 @@ jobs:
           node-version: 22
       - name: Require owner/main/manual dispatch and exact apply confirmation
         run: node tools/exercises/category-artwork-operator.mjs preflight
+      - name: Validate the eight immutable input images without any remote write
+        run: node tools/exercises/publish-category-artwork.mjs validate
       - name: Prepare existing protected Dexie publisher credentials
         env:
           DEXIE_CLOUD_WRITE_KEY: ${{ secrets.DEXIE_CLOUD_WRITE_KEY }}
