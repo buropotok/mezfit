@@ -13,13 +13,14 @@ from pathlib import Path
 import numpy as np
 
 from pose import PoseEstimator, PoseSignature, similarity
+from pose_motion import Kinematics, extract as joint_motion, similarity as compare_joint_motion
 
 ROOT = Path(__file__).resolve().parents[2]
 R2 = ROOT / "audit/gif-sources/r2"
 GITHUB = ROOT / "assets/media"
 REPORT = ROOT / "audit/gif-report"
 LABELS = ROOT / "tools/gif-audit/control-30-reviewed.csv"
-CANDIDATES = 8
+CANDIDATES = 12
 OUTPUT_PER_GIF = 3
 
 
@@ -59,50 +60,108 @@ def collect(estimator: PoseEstimator, paths: list[Path]) -> dict[str, PoseSignat
 
 def retrieve_all(
     r2: dict[str, PoseSignature], github: dict[str, PoseSignature],
-    out: Path,
-) -> tuple[int, int]:
-    """Independent pose-only retrieval: do not inject unverified pairs into auto matches."""
-    left = sorted(r2)
-    right = sorted(github)
-    va = np.stack([r2[name].vector for name in left])
-    vb = np.stack([github[name].vector for name in right])
-    coarse = va @ vb.T
-    good_left = np.array([r2[name].reliable for name in left])
-    good_right = np.array([github[name].reliable for name in right])
-    coarse[~good_left, :] = -np.inf
-    coarse[:, ~good_right] = -np.inf
-    pairs: set[tuple[int, int]] = set()
-    for i in range(len(left)):
-        if good_left[i]:
-            for j in np.argsort(coarse[i])[-CANDIDATES:]:
+    left_motion: dict[str, Kinematics], right_motion: dict[str, Kinematics],
+    labels: list[dict[str, str]], out: Path,
+) -> tuple[int, int, str]:
+    """Union both independent retrieval channels, without auto-confirmation."""
+    left, right = sorted(r2), sorted(github)
+    names_a = {name: i for i, name in enumerate(left)}
+    names_b = {name: j for j, name in enumerate(right)}
+    position_a = np.stack([r2[name].vector for name in left])
+    position_b = np.stack([github[name].vector for name in right])
+    motion_a = np.stack([left_motion[name].vector for name in left])
+    motion_b = np.stack([right_motion[name].vector for name in right])
+    channels = {
+        "pose_position": (
+            position_a @ position_b.T,
+            np.array([r2[name].reliable for name in left]),
+            np.array([github[name].reliable for name in right]),
+        ),
+        "joint_motion": (
+            motion_a @ motion_b.T,
+            np.array([left_motion[name].reliable for name in left]),
+            np.array([right_motion[name].reliable for name in right]),
+        ),
+    }
+    pairs: dict[tuple[int, int], set[str]] = {}
+    ranks: dict[str, dict[int, list[int]]] = {}
+    for channel, (coarse, good_left, good_right) in channels.items():
+        coarse[~good_left, :] = -np.inf
+        coarse[:, ~good_right] = -np.inf
+        ranks[channel] = {}
+        for i in range(len(left)):
+            if not good_left[i]:
+                continue
+            order = [
+                int(j) for j in np.argsort(coarse[i])[::-1]
+                if np.isfinite(coarse[i, j])
+            ][:20]
+            ranks[channel][i] = order
+            for j in order[:CANDIDATES]:
+                pairs.setdefault((i, j), set()).add(channel)
+        for j in range(len(right)):
+            if not good_right[j]:
+                continue
+            order = np.argsort(coarse[:, j])[-CANDIDATES:]
+            for i in order:
                 if np.isfinite(coarse[i, j]):
-                    pairs.add((i, int(j)))
-    for j in range(len(right)):
-        if good_right[j]:
-            for i in np.argsort(coarse[:, j])[-CANDIDATES:]:
-                if np.isfinite(coarse[i, j]):
-                    pairs.add((int(i), j))
+                    pairs.setdefault((int(i), j), set()).add(channel)
 
-    per_left: dict[int, list[tuple[float, int]]] = {}
-    per_right: dict[int, list[tuple[float, int]]] = {}
-    for index, (i, j) in enumerate(sorted(pairs), 1):
-        score = similarity(r2[left[i]], github[right[j]])
-        if score is not None:
-            per_left.setdefault(i, []).append((score, j))
-            per_right.setdefault(j, []).append((score, i))
+    # Run the relatively expensive temporal comparison only on shortlist pairs.
+    rows = []
+    for index, ((i, j), origins) in enumerate(sorted(pairs.items()), 1):
+        position_score = similarity(r2[left[i]], github[right[j]])
+        movement_score = compare_joint_motion(left_motion[left[i]], right_motion[right[j]])
+        rows.append((i, j, origins, position_score, movement_score))
         if index % 1000 == 0:
-            print(f"MediaPipe: ranked {index}/{len(pairs)} pose candidates", flush=True)
-    # Preserve direction to avoid presenting one candidate as a confirmed 1:1.
+            print(f"Pose: ranked {index}/{len(pairs)} cross-library candidates", flush=True)
+
     output = []
-    for i, values in per_left.items():
-        for score, j in sorted(values, reverse=True)[:OUTPUT_PER_GIF]:
-            output.append(["R2", left[i], right[j], f"{score:.5f}"])
-    for j, values in per_right.items():
-        for score, i in sorted(values, reverse=True)[:OUTPUT_PER_GIF]:
-            output.append(["GitHub", left[i], right[j], f"{score:.5f}"])
+    # Each channel retains its own ranking in each direction. A weak position
+    # score cannot suppress a promising kinematic candidate, and vice versa.
+    for channel in ("pose_position", "joint_motion"):
+        for direction in ("R2", "GitHub"):
+            groups: dict[int, list[tuple[float, tuple]]] = {}
+            for row in rows:
+                i, j, _, position_score, movement_score = row
+                score = position_score if channel == "pose_position" else movement_score
+                if score is None:
+                    continue
+                index = i if direction == "R2" else j
+                groups.setdefault(index, []).append((score, row))
+            for group in groups.values():
+                for _, (i, j, origins, pos_score, motion_score) in sorted(
+                    group, key=lambda value: (-value[0], left[value[1][0]], right[value[1][1]])
+                )[:OUTPUT_PER_GIF]:
+                    output.append([
+                        direction, channel, left[i], right[j],
+                        ",".join(sorted(origins)),
+                        "" if pos_score is None else f"{pos_score:.5f}",
+                        "" if motion_score is None else f"{motion_score:.5f}",
+                    ])
     save_csv(out / "pose-candidates.csv",
-             ["retrieval_direction", "r2_gif", "github_gif", "pose_score"], output)
-    return len(pairs), len(output)
+             ["retrieval_direction", "ranked_by", "r2_gif", "github_gif",
+              "retrieved_by", "pose_score", "joint_motion_score"], output)
+
+    positives = [row for row in labels if row["decision"] == "yes"]
+    details = []
+    for channel in ("pose_position", "joint_motion"):
+        for k in (5, 10, 20):
+            observed = 0
+            hits = 0
+            for row in positives:
+                i, j = names_a[row["r2_gif"]], names_b[row["github_gif"]]
+                if i in ranks[channel]:
+                    observed += 1
+                    hits += int(j in ranks[channel][i][:k])
+            details.append(f"{channel} positive recall@{k} (R2→GitHub): {hits}/{observed} measurable")
+    union_retrieved = sum(
+        (names_a[row["r2_gif"]], names_b[row["github_gif"]]) in pairs
+        for row in positives
+    )
+    details.insert(0, f"Human-positive pairs in independent combined shortlist: {union_retrieved}/{len(positives)}")
+    return len(pairs), len(output), "\n".join(f"- {line}" for line in details)
+
 
 
 def main() -> None:
@@ -127,6 +186,8 @@ def main() -> None:
     with PoseEstimator(args.model) as estimator:
         left = collect(estimator, source_a)
         right = collect(estimator, source_b)
+    left_motion = {name: joint_motion(item) for name, item in left.items()}
+    right_motion = {name: joint_motion(item) for name, item in right.items()}
     coverage = [
         [library, name, item.detected_frames, int(item.reliable)]
         for library, catalogue in (("R2", left), ("GitHub", right))
@@ -138,18 +199,24 @@ def main() -> None:
     for row in labels:
         a, b = left[row["r2_gif"]], right[row["github_gif"]]
         score = similarity(a, b)
+        kinematic = compare_joint_motion(
+            left_motion[row["r2_gif"]], right_motion[row["github_gif"]]
+        )
         evaluation.append([
             row["r2_gif"], row["github_gif"], row["decision"],
             a.detected_frames, b.detected_frames,
             "" if score is None else f"{score:.5f}",
+            "" if kinematic is None else f"{kinematic:.5f}",
         ])
     save_csv(args.out / "pose-control-30.csv",
              ["r2_gif", "github_gif", "human_decision", "r2_detected_frames",
-              "github_detected_frames", "pose_score"], evaluation)
+              "github_detected_frames", "pose_score", "joint_motion_score"], evaluation)
     reliable_a = sum(s.reliable for s in left.values())
     reliable_b = sum(s.reliable for s in right.values())
     measurable_positive = sum(r[5] != "" for r in evaluation if r[2] == "yes")
     measurable_negative = sum(r[5] != "" for r in evaluation if r[2] == "no")
+    motion_positive = sum(r[6] != "" for r in evaluation if r[2] == "yes")
+    motion_negative = sum(r[6] != "" for r in evaluation if r[2] == "no")
     summary_lines = [
         "",
         "## MediaPipe Pose Landmarker diagnostics",
@@ -159,15 +226,20 @@ def main() -> None:
         f"- GitHub reliable skeletons: {reliable_b}/{len(right)} GIFs.",
         f"- Human-positive pairs with a pose score: {measurable_positive}/15.",
         f"- Human-negative pairs with a pose score: {measurable_negative}/15.",
-        "- Pose similarity is experimental, not a match probability.",
+        f"- Human-positive pairs with usable joint motion: {motion_positive}/15.",
+        f"- Human-negative pairs with usable joint motion: {motion_negative}/15.",
+        "- Pose and joint-motion similarities are experimental, not match probabilities.",
         "- Missing skeletons never count as evidence of mismatch.",
         "- Controls are evaluated, never used for tuning or ranking.",
     ]
     if args.scope == "all":
-        total_pairs, ranked = retrieve_all(left, right, args.out)
-        summary_lines.append(
-            f"- Independent pose retrieval: {total_pairs} candidate pairs, {ranked} ranked rows."
+        total_pairs, ranked, retrieval = retrieve_all(
+            left, right, left_motion, right_motion, labels, args.out
         )
+        summary_lines.append(
+            f"- Independent pose/kinematics retrieval: {total_pairs} candidate pairs, {ranked} ranked rows."
+        )
+        summary_lines.append(retrieval)
         summary_lines.append("- See pose-candidates.csv (review only, not confirmed).")
     summary_lines.append("- See pose-coverage.csv and pose-control-30.csv.")
     summary = "\n".join(summary_lines) + "\n"
