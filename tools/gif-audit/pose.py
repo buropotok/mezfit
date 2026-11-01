@@ -42,12 +42,12 @@ class PoseSignature:
         """Mean and temporal spread, for independent appearance-free retrieval."""
         if not self.reliable:
             return np.zeros(48, dtype=np.float32)
-        coordinates = np.where(self.visible[:, :, None], self.points, np.nan)
-        with np.errstate(invalid="ignore"):
-            mean = np.nanmean(coordinates, axis=0)
-            spread = np.nanstd(coordinates, axis=0)
-        result = np.concatenate([mean.flatten(), spread.flatten()])
-        result = np.nan_to_num(result, nan=0.0).astype(np.float32)
+        mask = self.visible[:, :, None].astype(np.float32)
+        count = np.maximum(np.sum(mask, axis=0), 1)
+        mean = np.sum(self.points * mask, axis=0) / count
+        variance = np.sum(((self.points - mean) * mask) ** 2, axis=0) / count
+        spread = np.sqrt(variance)
+        result = np.concatenate([mean.flatten(), spread.flatten()]).astype(np.float32)
         norm = float(np.linalg.norm(result))
         return result / norm if norm > 1e-6 else np.zeros_like(result)
 
