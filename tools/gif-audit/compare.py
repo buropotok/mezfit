@@ -306,7 +306,7 @@ nav a{margin-right:16px}h2{margin-top:48px}small{color:#aaa}
 <p>Matching uses only animation content, never filenames or exercise metadata.</p>
 <p><small>Review pairs are unconfirmed; they are not counted as unique GIFs. Images load from GitHub and require access to the repository.</small></p>""" +
             f'<p>Matched: {len(matches)} · Review pairs: {len(reviews)} · R2 only: {len(r2_only)} · GitHub only: {len(github_only)}</p>' +
-            table("Confirmed 1:1 matches", match_rows) +
+            table("Provisional automatic 1:1 matches", match_rows) +
             table("Uncertain candidates — manual review", review_rows) +
             table("R2 only", r2_rows) +
             table("GitHub only", github_rows) + "</html>")
@@ -400,11 +400,11 @@ def main() -> None:
     control_summary = evaluate_reviewed_controls(left, right, scores, matches, args.out)
     summary = (f"## GIF visual audit\\n\\n"
                f"R2: {len(left)} files; GitHub: {len(right)} files.\\n\\n"
-               f"- Confirmed 1:1: {len(matches)}\\n"
+               f"- Provisional auto matches (review required): {len(matches)}\\n"
                f"- Candidate pairs for review: {len(reviews)}\\n"
                f"- R2 only (no plausible candidate): {len(r2_only)}\\n"
                f"- GitHub only (no plausible candidate): {len(github_only)}\\n\\n"
-               f"Conservative thresholds: match {MATCH_THRESHOLD}, review {REVIEW_THRESHOLD}, margin {MATCH_MARGIN}. "
+               f"Experimental thresholds: auto match {MATCH_THRESHOLD}, review {REVIEW_THRESHOLD}, margin {MATCH_MARGIN}. "
                f"These thresholds require calibration against manually verified examples before migration.\\n\\n"
                f"{control_summary}")
     (args.out / "summary.md").write_text(summary.replace("\\n", "\n"), encoding="utf-8")
