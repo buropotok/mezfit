@@ -1,9 +1,7 @@
 import { liveQuery } from 'dexie';
-import { isApprovedAssignedPair } from './assigned-programs';
 import type { MezfitCloudDatabase } from './database';
 import {
-  FlexAttributesRepository, flexAttributeId, flexValueId,
-  type FlexAttributeInput, type FlexResolvedValue,
+  FlexAttributesRepository, type FlexAttributeInput, type FlexResolvedValue,
 } from './flex-attributes';
 import { parseLocalDate, getTodayLocalDate } from '../../ui/date-picker/datePickerDate';
 
@@ -21,7 +19,6 @@ export interface ClientIntake {
 }
 export type ClientIntakeDraft = Omit<ClientIntake, 'updatedAt'>;
 export type ClientIntakeDefaults = Pick<ClientIntakeDraft, 'firstName' | 'lastName' | 'telegramUsername'>;
-export interface IntakeRelationship { relationshipId: string; coachUserId: string }
 
 const keys = {
   firstName: 'ClientIntake_FirstName',
@@ -142,85 +139,4 @@ export class ClientIntakeRepository {
     return profile;
   }
 
-  private async approvedRelationship(realmId: string, coachUserId: string, clientUserId: string) {
-    if (!userIdPattern.test(coachUserId) || !userIdPattern.test(clientUserId)) {
-      throw new Error('CLIENT_INTAKE_FORBIDDEN');
-    }
-    const [realm, members] = await Promise.all([
-      this.db.realms.get(realmId),
-      this.db.members.where('realmId').equals(realmId).toArray(),
-    ]);
-    if (!await isApprovedAssignedPair(realm, members, coachUserId, clientUserId)) {
-      throw new Error('CLIENT_INTAKE_FORBIDDEN');
-    }
-  }
-
-  async readForCoach(realmId: string, clientUserId: string): Promise<ClientIntake | null> {
-    return this.db.transaction('r', this.db.realms, this.db.members,
-      this.db.flexAttributes, this.db.flexValues, async () => {
-        await this.approvedRelationship(realmId, this.actorUserId, clientUserId);
-        const rows = await this.db.flexValues.where('[realmId+entityType+entityId]')
-          .equals([realmId, 'user', clientUserId]).toArray();
-        const values: FlexResolvedValue[] = [];
-        for (const field of fields) {
-          const attributeId = flexAttributeId(realmId, keys[field.key]);
-          const attribute = await this.db.flexAttributes.get(attributeId);
-          const row = rows.find(value => value.attributeId === attributeId);
-          if (attribute?.owner !== realmId || attribute.realmId !== realmId
-            || attribute.valueType !== field.type
-            || row?.owner !== realmId || row.realmId !== realmId
-            || row.id !== flexValueId({ entityType: 'user', entityId: clientUserId, realmId }, attributeId)) continue;
-          values.push({ key: keys[field.key], valueType: field.type, value: row.value });
-        }
-        return deserialize(values);
-      });
-  }
-
-  observeForCoach(realmId: string, clientUserId: string,
-    onChange: (profile: ClientIntake | null) => void, onError: (error: unknown) => void) {
-    return liveQuery(() => this.readForCoach(realmId, clientUserId))
-      .subscribe({ next: onChange, error: onError });
-  }
-
-  /** Only the client mirrors a record into an approved relationship; coach is read-only in UI. */
-  async shareWithCoach(profile: ClientIntake, relationship: IntakeRelationship): Promise<void> {
-    const { relationshipId: realmId, coachUserId } = relationship;
-    const clientUserId = this.actorUserId;
-    await this.db.transaction('rw', this.db.realms, this.db.members,
-      this.db.flexAttributes, this.db.flexValues, async () => {
-        await this.approvedRelationship(realmId, coachUserId, clientUserId);
-        const target = { entityType: 'user' as const, entityId: clientUserId, realmId };
-        const stampId = flexValueId(target, flexAttributeId(realmId, keys.updatedAt));
-        const existing = await this.db.flexValues.get(stampId);
-        if (typeof existing?.value === 'string'
-          && Date.parse(existing.value) >= Date.parse(profile.updatedAt)) return;
-        for (const entry of serialize(profile)) {
-          const attributeId = flexAttributeId(realmId, entry.key);
-          const existingAttribute = await this.db.flexAttributes.get(attributeId);
-          if (existingAttribute && (existingAttribute.owner !== realmId
-            || existingAttribute.realmId !== realmId || existingAttribute.valueType !== entry.valueType)) {
-            throw new Error('CLIENT_INTAKE_CONFLICT');
-          }
-          if (!existingAttribute) await this.db.flexAttributes.add({
-            id: attributeId, realmId, owner: realmId, key: entry.key,
-            valueType: entry.valueType,
-          });
-          const valueId = flexValueId(target, attributeId);
-          const old = await this.db.flexValues.get(valueId);
-          if (old && (old.owner !== realmId || old.realmId !== realmId
-            || old.entityId !== clientUserId || old.entityType !== 'user'
-            || old.attributeId !== attributeId)) throw new Error('CLIENT_INTAKE_CONFLICT');
-          if (old) await this.db.flexValues.update(valueId, { value: entry.value });
-          else await this.db.flexValues.add({
-            id: valueId, realmId, owner: realmId,
-            entityType: 'user', entityId: clientUserId, attributeId,
-            value: entry.value,
-          });
-        }
-      });
-  }
-
-  async shareWithCoaches(profile: ClientIntake, coaches: readonly IntakeRelationship[]): Promise<void> {
-    for (const coach of coaches) await this.shareWithCoach(profile, coach);
-  }
 }
