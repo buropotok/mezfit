@@ -1,7 +1,6 @@
 import 'fake-indexeddb/auto';
 import Dexie, { type Table } from 'dexie';
-import { afterEach, describe, expect, it } from 'vitest';
-import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MezfitCloudDatabase } from './database';
 import type { FlexAttributeRow, FlexValueRow } from './flex-attributes';
 import {
@@ -59,25 +58,28 @@ describe('client onboarding domain', () => {
     expect(rows.every(row => row.owner === 'tg:202' && row.realmId === 'tg:202')).toBe(true);
   });
 
-  it('shares only to a verified coach relationship and permits coach read-only projection', async () => {
+  it('never reads a different actor personal realm', async () => {
     const { db, repo } = create();
-    const approved = await relationshipMembership('101', '202');
-    await db.table('realms').add(approved.realm);
-    await db.table('members').bulkAdd(approved.members);
-    const saved = await repo.saveOwn(draft);
-    await repo.shareWithCoach(saved, { relationshipId: approved.realm.realmId, coachUserId: 'tg:101' });
-    const coach = new ClientIntakeRepository(db as unknown as MezfitCloudDatabase, 'tg:101');
-    expect(await coach.readForCoach(approved.realm.realmId, 'tg:202')).toMatchObject(draft);
-    const before = await db.flexValues.count();
-    await repo.shareWithCoach(saved, { relationshipId: approved.realm.realmId, coachUserId: 'tg:101' });
-    expect(await db.flexValues.count()).toBe(before);
-    await expect(coach.readForCoach(approved.realm.realmId, 'tg:303'))
-      .rejects.toThrow('CLIENT_INTAKE_FORBIDDEN');
-    await expect(repo.shareWithCoach(saved, { relationshipId: approved.realm.realmId, coachUserId: 'tg:303' }))
-      .rejects.toThrow('CLIENT_INTAKE_FORBIDDEN');
-    await db.table('members').where('realmId').equals(approved.realm.realmId).delete();
-    await expect(coach.readForCoach(approved.realm.realmId, 'tg:202'))
-      .rejects.toThrow('CLIENT_INTAKE_FORBIDDEN');
+    await repo.saveOwn(draft);
+    const foreign = new ClientIntakeRepository(db as unknown as MezfitCloudDatabase, 'tg:101');
+    expect(await foreign.readOwn()).toBeNull();
+    await foreign.saveOwn({ ...draft, firstName: 'Другой' });
+    expect(await repo.readOwn()).toMatchObject({ firstName: 'Ольга' });
+    expect(await foreign.readOwn()).toMatchObject({ firstName: 'Другой' });
+    expect(await db.flexValues.count()).toBe(18);
+  });
+
+  it('reacts to profile creation through the local Dexie query', async () => {
+    const { repo } = create();
+    const observed: Array<string | null> = [];
+    const observer = repo.observeOwn(value => observed.push(value?.firstName ?? null), reason => {
+      throw reason;
+    });
+    try {
+      await vi.waitFor(() => expect(observed).toContain(null));
+      await repo.saveOwn(draft);
+      await vi.waitFor(() => expect(observed).toContain('Ольга'));
+    } finally { observer.unsubscribe(); }
   });
 
   it('rejects malformed contact data without persisting the completed marker', async () => {
