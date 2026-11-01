@@ -16,13 +16,15 @@ from PIL import Image
 from scipy.optimize import linear_sum_assignment
 from skimage.metrics import structural_similarity
 
+from motion import MotionSignature, compare as compare_motion, signature as motion_signature
+
 ROOT = Path(__file__).resolve().parents[2]
 R2 = ROOT / "audit/gif-sources/r2"
 GITHUB = ROOT / "assets/media"
 DEFAULT_REPORT = ROOT / "audit/gif-report"
 SAMPLES = 16
-TOP_K = 14
-EXACT_CANDIDATES = 5
+TOP_K = 24
+EXACT_CANDIDATES = 8
 MATCH_THRESHOLD = 0.86
 REVIEW_THRESHOLD = 0.62
 MATCH_MARGIN = 0.035
@@ -37,6 +39,7 @@ class Fingerprint:
     vector: np.ndarray
     n_frames: int
     duration_ms: int
+    motion: MotionSignature
 
 
 def normalized_frame(image: Image.Image) -> np.ndarray:
@@ -96,7 +99,7 @@ def fingerprint(path: Path) -> Fingerprint:
         features -= features.mean()
         features /= max(float(np.linalg.norm(features)), 1e-6)
         return Fingerprint(path, array, tuple(perceptual_hash(f) for f in array),
-                           features, gif.n_frames, total)
+                           features, gif.n_frames, total, motion_signature(array))
 
 
 def fingerprint_library(directory: Path, *, expected_count: int | None = None) -> list[Fingerprint]:
@@ -156,32 +159,62 @@ def compare_pair(left: Fingerprint, right: Fingerprint) -> tuple[float, float, f
                   for i, j in picks]
     hscore = float(np.mean(hashes))
     sscore = float(np.mean(structures))
-    return 0.45 * hscore + 0.55 * sscore, hscore, sscore
+    appearance = 0.45 * hscore + 0.55 * sscore
+    movement = compare_motion(left.motion, right.motion)
+    # Unreliable motion is neutral: static/isometric GIFs retain visual matching.
+    combined = appearance if movement is None else 0.70 * appearance + 0.30 * movement
+    return combined, hscore, sscore
 
 
 def candidate_pairs(left: list[Fingerprint], right: list[Fingerprint]) -> dict[tuple[int, int], float]:
-    matrix_a = np.stack([item.vector for item in left])
-    matrix_b = np.stack([item.vector for item in right])
-    coarse = matrix_a @ matrix_b.T
-    pairs = set()
-    for i in range(len(left)):
-        for j in np.argsort(coarse[i])[-TOP_K:]:
-            pairs.add((i, int(j)))
-    for j in range(len(right)):
-        for i in np.argsort(coarse[:, j])[-TOP_K:]:
-            pairs.add((int(i), j))
-    # Evaluate inexpensive phase-invariant hashes before running SSIM.
-    by_left: dict[int, list[tuple[float, int]]] = {}
-    by_right: dict[int, list[tuple[float, int]]] = {}
+    appearance_a = np.stack([item.vector for item in left])
+    appearance_b = np.stack([item.vector for item in right])
+    visual = appearance_a @ appearance_b.T
+
+    # Independent motion retrieval is essential: a male/female redraw of the
+    # same movement can be absent from the visually nearest neighbours.
+    motion_a = np.stack([item.motion.vector for item in left])
+    motion_b = np.stack([item.motion.vector for item in right])
+    movements = motion_a @ motion_b.T
+    good_a = np.array([item.motion.reliable for item in left])
+    good_b = np.array([item.motion.reliable for item in right])
+    movements[~good_a, :] = -np.inf
+    movements[:, ~good_b] = -np.inf
+
+    pairs: set[tuple[int, int]] = set()
+    for coarse in (visual, movements):
+        for i in range(len(left)):
+            for j in np.argsort(coarse[i])[-TOP_K:]:
+                if np.isfinite(coarse[i, j]):
+                    pairs.add((i, int(j)))
+        for j in range(len(right)):
+            for i in np.argsort(coarse[:, j])[-TOP_K:]:
+                if np.isfinite(coarse[i, j]):
+                    pairs.add((int(i), j))
+
+    # Preserve top candidates of *both* channels. Hash-only shortlisting
+    # would discard precisely the appearance-changing pairs we want to find.
+    by_left_hash: dict[int, list[tuple[float, int]]] = {}
+    by_right_hash: dict[int, list[tuple[float, int]]] = {}
+    by_left_motion: dict[int, list[tuple[float, int]]] = {}
+    by_right_motion: dict[int, list[tuple[float, int]]] = {}
     for i, j in pairs:
-        score, _ = best_phase(left[i], right[j])
-        by_left.setdefault(i, []).append((score, j))
-        by_right.setdefault(j, []).append((score, i))
-    refined = set()
-    for i, values in by_left.items():
-        refined.update((i, j) for _, j in sorted(values, reverse=True)[:EXACT_CANDIDATES])
-    for j, values in by_right.items():
-        refined.update((i, j) for _, i in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+        hash_score, _ = best_phase(left[i], right[j])
+        by_left_hash.setdefault(i, []).append((hash_score, j))
+        by_right_hash.setdefault(j, []).append((hash_score, i))
+        movement = compare_motion(left[i].motion, right[j].motion)
+        if movement is not None:
+            by_left_motion.setdefault(i, []).append((movement, j))
+            by_right_motion.setdefault(j, []).append((movement, i))
+    refined: set[tuple[int, int]] = set()
+    for index, values in by_left_hash.items():
+        refined.update((index, candidate) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+    for index, values in by_right_hash.items():
+        refined.update((candidate, index) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+    for index, values in by_left_motion.items():
+        refined.update((index, candidate) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
+    for index, values in by_right_motion.items():
+        refined.update((candidate, index) for _, candidate in sorted(values, reverse=True)[:EXACT_CANDIDATES])
     scores = {}
     for count, (i, j) in enumerate(sorted(refined), 1):
         scores[(i, j)] = compare_pair(left[i], right[j])[0]
