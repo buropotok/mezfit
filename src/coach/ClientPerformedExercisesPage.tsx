@@ -27,7 +27,7 @@ const countLabel = (count: number) => {
 const displayCategory = (id: string) =>
   PUBLIC_EXERCISE_CATEGORIES.find(([key]) => key === id)?.[1] ?? 'Другое';
 
-function shiftPeriod(period: ExercisePeriod, current: Date, direction: number): {
+function shiftPeriod(period: ExercisePeriod, current: Date, direction: number, preferredDay = current.getDate()): {
   period: ExercisePeriod; date: Date;
 } {
   if (period.startsWith('year:')) return { period: `year:${Number(period.slice(5)) + direction}`, date: current };
@@ -43,7 +43,7 @@ function shiftPeriod(period: ExercisePeriod, current: Date, direction: number): 
     return { period, date: next };
   }
   const months = period === '3m' ? 3 : period === '6m' ? 6 : 12;
-  return { period, date: shiftCalendarMonths(current, months * direction) };
+  return { period, date: shiftCalendarMonths(current, months * direction, preferredDay) };
 }
 
 /** Read-only Coach relationship FACT history; the filter only changes local derived data. */
@@ -61,6 +61,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
   const [retryKey, setRetryKey] = useState(0);
   const [period, setPeriod] = useState<ExercisePeriod>('30d');
   const [anchor, setAnchor] = useState(() => new Date());
+  const [anchorDay, setAnchorDay] = useState(() => new Date().getDate());
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
@@ -124,7 +125,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     return () => onDetailNavigationChange(null);
   }, [selected?.key, selected?.name, informationNavigation, client.relationshipId, onDetailNavigationChange]);
 
-  const nextPeriod = shiftPeriod(period, anchor, 1);
+  const nextPeriod = shiftPeriod(period, anchor, 1, anchorDay);
   const nextBounds = periodBounds(nextPeriod.period, nextPeriod.date);
   const endOfToday = periodBounds('30d').end;
   const calendarPeriod = period.startsWith('year:') || period.startsWith('month:');
@@ -133,7 +134,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     : nextBounds.end <= endOfToday);
   const changePeriod = (direction: number) => {
     if (direction > 0 && !canGoForward) return;
-    const next = direction > 0 ? nextPeriod : shiftPeriod(period, anchor, direction);
+    const next = direction > 0 ? nextPeriod : shiftPeriod(period, anchor, direction, anchorDay);
     setPeriod(next.period);
     setAnchor(next.date);
   };
@@ -146,7 +147,12 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
         triggerRef={periodTrigger} label="Период статистики"
         items={periodChoices.map(option => ({
           id: option.value, label: option.label, active: period === option.value,
-          onSelect: () => { setPeriod(option.value); setAnchor(new Date()); },
+          onSelect: () => {
+            const current = new Date();
+            setPeriod(option.value);
+            setAnchor(current);
+            setAnchorDay(current.getDate());
+          },
         }))}
         trigger={<IconButton ref={periodTrigger} label={`Период: ${bounds.label}`} icon="calendar" />} />
       <Text variant="body" className="client-exercises__period-label">{bounds.label}{rangeSuffix}</Text>
