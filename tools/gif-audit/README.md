@@ -1,7 +1,7 @@
 # GIF visual delta audit
 
 This is an operator-only, read-only comparison of **media bytes**, not exercise records.
-A GIF in one source can have at most one confirmed partner in the other source.
+A GIF in one source can have at most one provisional automatic 1:1 partner in the other source.
 Names, numeric IDs, and taxonomy are never features of the matcher.
 
 ## Source inventory and persistence
@@ -99,8 +99,10 @@ The manual workflow offers an additional `pose_scope` input:
   missing skeletons cannot establish uniqueness.
 - `off`: preserve v2-only analysis (no MediaPipe installation/download).
 
-MediaPipe is installed only on a manual run with pose enabled:
-`mediapipe==0.10.32` in `requirements-pose.txt`, Python 3.12. The model is
+MediaPipe is installed **in a dedicated Python virtual environment**, only on a
+manual run with pose enabled: `mediapipe==0.10.32` in
+`requirements-pose.txt`, Python 3.12. This avoids mixing its OpenCV packages
+with the base visual matcher. The model is
 downloaded directly from Google's versioned Lite task URL and verified against
 SHA-256
 `59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a`.
@@ -108,8 +110,9 @@ The CPU model runs against decoded GIF frames on the Actions runner. No exercise
 names, numeric IDs or metadata influence the pose embedding or retrieval.
 
 Each GIF contributes 8 evenly spaced frames, each frame 320×320 with preserved
-aspect ratio. Extract up to 33 landmarks, compare the shoulders/elbows/wrists/
-hips/knees/ankles after torso-relative normalization, align cyclic animation
+aspect ratio. The model returns up to 33 landmarks; the matcher uses 12
+shoulder/elbow/wrist/hip/knee/ankle landmarks after torso-relative
+normalization, aligns cyclic animation
 phases, and consider mirrored animations. A GIF needs at least 4 frames with
 confident detection and at least 6 usable joints per frame; otherwise pose
 similarity is **unavailable**, not zero or evidence of a mismatch. Pose scores
