@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import type { ClientExerciseFact } from '../data/cloud/adhoc-workouts';
-import { Button, GlassSurface, LiquidPopover, Text } from '../ui';
+import { GlassSurface, IconButton, LiquidPopover, Text } from '../ui';
 import { MezfitLineChart } from '../ui/Charts';
 import {
   exerciseMetric, maxSetReps, maxWorkoutVolume, metricChoices, metricSeries,
@@ -64,9 +64,7 @@ export function ClientExerciseStatisticsView({ facts, trackingType }: {
             id: option.id, label: option.label, active: metric === option.id,
             onSelect: () => setMetric(option.id),
           }))}
-          trigger={<Button ref={triggerRef} variant="secondary" size="compact">
-            {options.find(option => option.id === metric)?.label ?? 'Показатель'}
-          </Button>} />
+          trigger={<IconButton ref={triggerRef} label="Выбрать показатель графика" icon="dots-vertical" />} />
       </div>
       {data.length
         ? <MezfitLineChart label="Динамика упражнения" data={data} xKey="day"
