@@ -161,7 +161,8 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     </GlassSurface> : null}
 
     {!loading && !error && selected ? <>
-      <ClientExerciseStatisticsView key={selected.key} trackingType={selected.trackingType} facts={detailFacts} />
+      <ClientExerciseStatisticsView key={`${selected.key}:${selected.trackingType}`}
+        trackingType={selected.trackingType} facts={detailFacts} />
     </> : null}
     {!loading && !error && !selected ? <>
       <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}
