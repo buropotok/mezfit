@@ -24,8 +24,6 @@ import {
 } from '../ui';
 import './public-exercises.css';
 
-
-
 function TablerStar({ filled }: { filled: boolean }) {
   return <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"
     fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5"
