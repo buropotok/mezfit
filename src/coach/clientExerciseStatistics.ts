@@ -25,7 +25,7 @@ export function periodBounds(period: ExercisePeriod, today = new Date()): { star
   const current = startOfDay(today);
   const endOfToday = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1).getTime();
   if (period === 'all') return { start: -Infinity, end: Infinity, label: 'Весь период' };
-  if (period === '30d') return { start: endOfToday - 30 * 86_400_000, end: endOfToday, label: '30 дней' };
+  if (period === '30d') return { start: new Date(current.getFullYear(), current.getMonth(), current.getDate() - 29).getTime(), end: endOfToday, label: '30 дней' };
   if (period === '3m' || period === '6m' || period === 'year') {
     const months = period === '3m' ? 3 : period === '6m' ? 6 : 12;
     return { start: offsetMonths(current, -months).getTime(), end: endOfToday,
@@ -88,10 +88,14 @@ export function summarizeExercises(facts: readonly ClientExerciseFact[]): Exerci
 }
 
 export function radarCategories(facts: readonly ClientExerciseFact[]) {
-  const counts = new Map<string, number>();
-  for (const fact of facts) counts.set(fact.category, (counts.get(fact.category) ?? 0) + 1);
-  return PUBLIC_EXERCISE_CATEGORIES.filter(([id]) => counts.has(id)).map(([id, label]) => ({
-    category: id, label, count: counts.get(id) ?? 0,
+  const categories = new Map<string, Set<string>>();
+  for (const fact of facts) {
+    const group = categories.get(fact.category) ?? new Set<string>();
+    group.add(`${fact.key}:${fact.sessionId}`);
+    categories.set(fact.category, group);
+  }
+  return PUBLIC_EXERCISE_CATEGORIES.filter(([id]) => categories.has(id)).map(([id, label]) => ({
+    category: id, label, count: categories.get(id)?.size ?? 0,
   }));
 }
 
