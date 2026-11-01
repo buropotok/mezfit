@@ -198,16 +198,15 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
         {list.length
           ? <List className="client-exercises__list">{list.map(item => (
             <div className="client-exercises__row" key={item.key}>
-              <GlassSurface component="button" preset="modalTuned" optics={false}
-                shape="capsule" className="client-exercises__media"
-                aria-label={`Информация об упражнении: ${item.name}`}
-                onClick={() => setInfo(item.latest)}>
-                <ExerciseMedia exercise={{ id: item.key, name: item.name,
+              <ListItem leadingShape="square"
+                leading={<ExerciseMedia exercise={{ id: item.key, name: item.name,
                   reference_source: null, reference_key: null }}
-                  sourceUrl={item.mediaUrl} variant="thumbnail" />
-              </GlassSurface>
-              <ListItem title={item.name} trailing={countLabel(item.workouts)}
+                  sourceUrl={item.mediaUrl} variant="thumbnail" />}
+                title={item.name} trailing={countLabel(item.workouts)}
                 trailingWidth="content" onClick={() => setSelectedKey(item.key)} />
+              <button type="button" className="client-exercises__media-action"
+                aria-label={`Информация об упражнении: ${item.name}`}
+                onClick={() => setInfo(item.latest)} />
             </div>
           ))}</List>
           : <Text variant="body" tone="muted">{category
