@@ -1,0 +1,35 @@
+.client-exercises { display: grid; gap: 16px; min-width: 0; }
+.client-exercises__toolbar { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+.client-exercises__period-label { min-width: 0; flex: 1; text-align: center; }
+.client-exercises__radar, .client-exercises__list-panel, .client-exercises__chart-panel {
+  display: grid; gap: 16px; min-width: 0; padding: 16px;
+}
+.client-exercises__list-heading, .client-exercises__chart-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;
+}
+.client-exercises__list { display: grid; gap: 8px; min-width: 0; }
+.client-exercises__row { position: relative; min-width: 0; }
+/* Match the workout card: transparent media-only hit target above the square ListItem leading. */
+.client-exercises__media-action {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: .5rem;
+  inset-inline-start: .5rem;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.client-exercises__media-action:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: 2px;
+}
+.client-exercises__stats { display: grid; gap: 16px; min-width: 0; }
+.client-exercises__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.client-exercises__metric-tile {
+  min-height: 132px; padding: 16px; display: flex; flex-direction: column;
+  justify-content: space-between; gap: 16px; text-align: center;
+}

@@ -74,24 +74,25 @@ function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   );
 }
 
-function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesContent }: {
+function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesContent, hideTabs = false }: {
   client: CloudContact;
   tab: ClientTab;
   onTabChange: (tab: ClientTab) => void;
   programContent?: ReactNode;
   exercisesContent?: ReactNode;
+  hideTabs?: boolean;
 }) {
   const name = displayName(client);
   const content = tab === 'program' || tab === 'exercises' ? null : clientPlaceholderCopy[tab];
 
   return (
     <div className="stack client-workspace">
-      <div className="client-workspace-tabs" role="group" aria-label={`Разделы клиента ${name}`}>
+      {!hideTabs ? <div className="client-workspace-tabs" role="group" aria-label={`Разделы клиента ${name}`}>
         <LiquidGlassTextOnly tabs={tabs} value={tab} hidden={false} fullWidth
           onValueChange={(value) => {
             if (tabs.some((item) => item.value === value)) onTabChange(value as ClientTab);
           }} />
-      </div>
+      </div> : null}
 
       {tab === 'program' ? programContent
         : tab === 'exercises' ? exercisesContent
@@ -176,6 +177,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const [clientTab, setClientTab] = useState<ClientTab>('overview');
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
+  const [clientExerciseNavigation, setClientExerciseNavigation] = useState<NavigationContext | null>(null);
   const selectedClientProgram = clientSelectedProgram && selectedClient
     && clientSelectedProgram.clientUserId === selectedClient.userId
     && clientSelectedProgram.realmId === selectedClient.relationshipId ? clientSelectedProgram : null;
@@ -261,6 +263,11 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       return () => onNavigationContextChange(null);
     }
 
+    if (clientTab === 'exercises' && clientExerciseNavigation && destination === 'clients') {
+      onNavigationContextChange(clientExerciseNavigation);
+      return () => onNavigationContextChange(null);
+    }
+
     const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
       title: selectedClientName,
@@ -275,7 +282,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [programDetailNavigation, clientProgramDetailNavigation, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (selectedClient) {
     if (selectedClientProgram && destination === 'clients' && programRepository) {
@@ -304,9 +311,11 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
     return <ClientWorkspace client={selectedClient} tab={clientTab}
+      hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
-        key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient} /> : null} />;
+        key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
+        onDetailNavigationChange={setClientExerciseNavigation} /> : null} />;
   }
 
   if (destination === 'today') {
