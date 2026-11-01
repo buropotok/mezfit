@@ -14,7 +14,7 @@ import unittest
 import numpy as np
 
 from pose import from_landmarks
-from pose_motion import extract, similarity, _bounded_dtw
+from pose_motion import Kinematics, extract, similarity, _bounded_dtw, _frame_costs
 from pose_diagnostics import control_auc, retrieve_all
 
 
@@ -91,6 +91,24 @@ class JointMotionTests(unittest.TestCase):
         b.valid[:] = False
         weights = np.ones(8, dtype=np.float32)
         self.assertIsNone(_bounded_dtw(a, b, weights, radius=4))
+
+    def test_cyclic_cost_reuse_preserves_dtw_results(self):
+        a = extract(sequence(kind="arm"))
+        b = extract(sequence(kind="arm", phase=3))
+        weight = np.ones(8, dtype=np.float32)
+        raw, overlap = _frame_costs(a, b, weight)
+        shifted = Kinematics(
+            angles=np.roll(b.angles, 4, axis=0),
+            valid=np.roll(b.valid, 4, axis=0),
+            excursions=b.excursions,
+        )
+        direct = _bounded_dtw(a, shifted, weight, 4)
+        reused = _bounded_dtw(
+            a, b, weight, 4,
+            (np.roll(raw, 4, axis=1), np.roll(overlap, 4, axis=1)),
+        )
+        self.assertIsNotNone(direct)
+        self.assertAlmostEqual(direct, reused, places=5)
 
     def test_independent_retrieval_keeps_correct_pairs_in_shortlist(self):
         left = {"a.gif": sequence(kind="arm"), "b.gif": sequence(kind="leg")}
