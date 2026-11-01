@@ -9,20 +9,19 @@ const state = vi.hoisted(() => ({
   rows: [] as unknown[],
   unsubscribed: 0,
 }));
-vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
-  useCloudConnections: () => ({
-    db: {
-      cloud: {
-        blobProgress: {
-          subscribe({ next }: { next: () => void }) {
-            state.onProgress = next;
-            return { unsubscribe: () => { state.unsubscribed++; } };
-          },
+vi.mock('../data/cloud/CloudConnectionsProvider', () => {
+  const db = {
+    cloud: {
+      blobProgress: {
+        subscribe({ next }: { next: () => void }) {
+          state.onProgress = next;
+          return { unsubscribe: () => { state.unsubscribed++; } };
         },
       },
     },
-  }),
-}));
+  };
+  return { useCloudConnections: () => ({ db }) };
+});
 vi.mock('../data/exercises/publicCategoryArtwork', async importOriginal => {
   const original = await importOriginal<typeof import('../data/exercises/publicCategoryArtwork')>();
   return {
