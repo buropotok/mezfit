@@ -98,14 +98,14 @@ function deserialize(values: readonly FlexResolvedValue[]): ClientIntake | null 
     firstName, lastName: text('lastName') ?? '',
     email: text('email') ?? '', phone: text('phone') ?? '',
     telegramUsername: text('telegramUsername') ?? '',
-    birthDate, sex: sex as ClientIntakeSex,
+    birthDate, sex: sex === 'male' || sex === 'female' ? sex : 'undisclosed',
     weightKg: weight?.valueType === 'number' && typeof weight.value === 'number'
       ? weight.value : null, updatedAt,
   };
   return validateClientIntake(profile) ? null : profile;
 }
 
-/** Own private record is authoritative; relationship copies are explicitly coach-visible. */
+/** Client registration stays in the actor's private realm; coach visibility needs a separate approved access contract. */
 export class ClientIntakeRepository {
   private readonly flexible: FlexAttributesRepository<MezfitCloudDatabase>;
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
