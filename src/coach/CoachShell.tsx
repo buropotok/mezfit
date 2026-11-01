@@ -98,7 +98,10 @@ function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesCo
 
       {tab === 'program' ? programContent
         : tab === 'exercises' ? exercisesContent
-          : tab === 'overview' && overviewContent ? overviewContent
+          : tab === 'overview' && overviewContent ? <>
+              {overviewContent}
+              {content ? <Placeholder title={content.title} text={content.text} /> : null}
+            </>
             : content ? <Placeholder title={content.title} text={content.text} /> : null}
     </div>
   );
