@@ -12,7 +12,7 @@ const formatNumber = (value: number): string =>
 
 function MetricTile({ label, value, unit = '' }: { label: string; value: number; unit?: string }) {
   return <GlassSurface component="article" preset="modalTuned" optics={false} blur={2}
-    className="client-exercises__metric-tile" wrapContent={false}>
+    shape={{ radius: 16 }} className="client-exercises__metric-tile" wrapContent={false}>
     <Text variant="footnote" tone="muted">{label}</Text>
     <Text variant="title">{formatNumber(value)}{unit ? ` ${unit}` : ''}</Text>
   </GlassSurface>;
@@ -55,7 +55,7 @@ export function ClientExerciseStatisticsView({ facts, trackingType }: {
 
   return <div className="client-exercises__stats">
     <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}
-      wrapContent={false} className="client-exercises__chart-panel">
+      shape={{ radius: 16 }} wrapContent={false} className="client-exercises__chart-panel">
       <div className="client-exercises__chart-heading">
         <Text variant="headline">Динамика показателей</Text>
         <LiquidPopover isOpen={menuOpen} onOpenChange={setMenuOpen}
