@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ClientExerciseFact } from '../data/cloud/adhoc-workouts';
 import {
   exerciseMetric, filterFacts, maxSetReps, maxWorkoutVolume,
-  metricSeries, periodBounds, radarCategories, summarizeExercises,
+  metricSeries, periodBounds, periodOptions, radarCategories, shiftCalendarMonths, summarizeExercises,
 } from './clientExerciseStatistics';
 
 function fact(
@@ -43,6 +43,29 @@ describe('client exercise FACT statistics', () => {
     expect(periodBounds('month:2026-10', now)).toMatchObject({ label: 'октябрь 2026 г.' });
     expect(metricSeries(recent.filter(item => item.key === b.key), 'reps'))
       .toEqual([{ day: '10-28', value: 8 }]);
+  });
+
+  it('clamps rolling month bounds to the last day of February, including leap years', () => {
+    const may31 = new Date(2026, 4, 31, 12);
+    const leapMay31 = new Date(2024, 4, 31, 12);
+    expect(shiftCalendarMonths(may31, -3).getTime()).toBe(new Date(2026, 1, 28, 12).getTime());
+    expect(shiftCalendarMonths(leapMay31, -3).getTime()).toBe(new Date(2024, 1, 29, 12).getTime());
+    expect(shiftCalendarMonths(new Date(2026, 7, 31, 12), -6).getTime())
+      .toBe(new Date(2026, 1, 28, 12).getTime());
+    expect(periodBounds('3m', may31).start).toBe(new Date(2026, 1, 28).getTime());
+    const exercise = fact('public::press', 'chest', 'february', new Date(2026, 1, 28, 12).toISOString());
+    expect(filterFacts([exercise], '3m', may31)).toHaveLength(1);
+    expect(periodBounds('3m', leapMay31).start).toBe(new Date(2024, 1, 29).getTime());
+  });
+
+  it('skips invalid timestamps when constructing calendar period choices', () => {
+    const today = new Date(2026, 10, 1, 12);
+    const invalid = fact('public::press', 'chest', 'bad', 'invalid-timestamp');
+    const options = periodOptions([invalid], today);
+    expect(options.some(item => item.value.includes('NaN'))).toBe(false);
+    expect(options.filter(item => item.value.startsWith('month:'))).toEqual([]);
+    expect(options.filter(item => item.value.startsWith('year:')).map(item => item.value))
+      .toEqual(['year:2026']);
   });
 
   it('computes weight/reps metrics only from completed FACT set data', () => {
