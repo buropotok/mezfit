@@ -91,14 +91,15 @@ function deserialize(values: readonly FlexResolvedValue[]): ClientIntake | null 
   const firstName = text('firstName');
   const birthDate = text('birthDate');
   const sex = text('sex');
+  const validSex = sex === 'male' || sex === 'female' || sex === 'undisclosed' ? sex : null;
   const weight = entries.get(keys.weightKg);
   if (!updatedAt || !Number.isFinite(Date.parse(updatedAt)) || firstName === null
-    || birthDate === null || sex === null) return null;
+    || birthDate === null || validSex === null) return null;
   const profile: ClientIntake = {
     firstName, lastName: text('lastName') ?? '',
     email: text('email') ?? '', phone: text('phone') ?? '',
     telegramUsername: text('telegramUsername') ?? '',
-    birthDate, sex: sex === 'male' || sex === 'female' ? sex : 'undisclosed',
+    birthDate, sex: validSex,
     weightKg: weight?.valueType === 'number' && typeof weight.value === 'number'
       ? weight.value : null, updatedAt,
   };
