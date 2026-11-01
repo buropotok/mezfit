@@ -15,7 +15,7 @@ import numpy as np
 
 from pose import from_landmarks
 from pose_motion import extract, similarity, _bounded_dtw
-from pose_diagnostics import retrieve_all
+from pose_diagnostics import control_auc, retrieve_all
 
 
 def sequence(*, kind: str = "arm", phase: int = 0, scale: float = 1.0,
@@ -114,6 +114,15 @@ class JointMotionTests(unittest.TestCase):
                       {(row["r2_gif"], row["github_gif"]) for row in rows})
         self.assertTrue(all(row["ranked_by"] in ("pose_position", "joint_motion")
                             for row in rows))
+
+    def test_control_auc_uses_only_evaluable_human_labels(self):
+        labelled = [
+            ["a", "b", "yes", "0.90"],
+            ["a", "c", "no", "0.30"],
+            ["a", "d", "yes", ""],
+        ]
+        self.assertEqual(control_auc(labelled, 3), 1.0)
+        self.assertIsNone(control_auc(labelled[:1], 3))
 
     def test_mismatched_sequence_length_is_rejected(self):
         a = extract(sequence(kind="arm"))
