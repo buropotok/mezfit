@@ -111,12 +111,13 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
 
   useEffect(() => {
     if (!onDetailNavigationChange) return undefined;
-    if (!selected && !informationNavigation) return undefined;
-    onDetailNavigationChange(informationNavigation ?? {
+    const context = informationNavigation ?? (selected ? {
       title: selected.name,
       scrollKey: `client-exercise:${client.relationshipId}:${selected.key}`,
       onBack: () => setSelectedKey(null),
-    });
+    } : null);
+    if (!context) return undefined;
+    onDetailNavigationChange(context);
     return () => onDetailNavigationChange(null);
   }, [selected?.key, selected?.name, informationNavigation, client.relationshipId, onDetailNavigationChange]);
 
