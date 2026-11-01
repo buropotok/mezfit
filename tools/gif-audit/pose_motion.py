@@ -75,10 +75,8 @@ def extract(pose: PoseSignature) -> Kinematics:
     return Kinematics(angles=angles, valid=valid, excursions=excursion)
 
 
-def _bounded_dtw(a: Kinematics, b: Kinematics, weights: np.ndarray,
-                 radius: int) -> float | None:
-    """Sakoe-Chiba constrained DTW; vectorize all joint-wise frame costs."""
-    n, m = a.angles.shape[0], b.angles.shape[0]
+def _frame_costs(a: Kinematics, b: Kinematics,
+                 weights: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     common = a.valid[:, None, :] & b.valid[None, :, :]
     counts = common.sum(axis=2)
     differences = np.abs(a.angles[:, None, :] - b.angles[None, :, :])
@@ -89,7 +87,16 @@ def _bounded_dtw(a: Kinematics, b: Kinematics, weights: np.ndarray,
         counts >= MIN_ANGLE_CHANNELS,
         numerator / denominator + 0.08 * (len(ANGLES) - counts) / len(ANGLES),
         0.65,
-    )
+    ).astype(np.float32)
+    return local, counts >= MIN_ANGLE_CHANNELS
+
+
+def _bounded_dtw(a: Kinematics, b: Kinematics, weights: np.ndarray,
+                 radius: int,
+                 precomputed: tuple[np.ndarray, np.ndarray] | None = None) -> float | None:
+    """Sakoe-Chiba constrained DTW; allow precomputed cyclic-frame costs."""
+    n, m = a.angles.shape[0], b.angles.shape[0]
+    local, overlapping = precomputed if precomputed is not None else _frame_costs(a, b, weights)
     cost = np.full((n + 1, m + 1), np.inf, dtype=np.float32)
     useful = np.zeros((n + 1, m + 1), dtype=np.int16)
     cost[0, 0] = 0
@@ -102,7 +109,7 @@ def _bounded_dtw(a: Kinematics, b: Kinematics, weights: np.ndarray,
             )
             score, observed = min(previous, key=lambda state: state[0])
             cost[i, j] = score + local[i - 1, j - 1]
-            useful[i, j] = observed + int(counts[i - 1, j - 1] >= MIN_ANGLE_CHANNELS)
+            useful[i, j] = observed + int(overlapping[i - 1, j - 1])
     if not np.isfinite(cost[n, m]) or useful[n, m] < max(MIN_USABLE_FRAMES, n // 2):
         return None
     return float(cost[n, m] / max(n, m))
@@ -131,11 +138,16 @@ def similarity(left: Kinematics, right: Kinematics) -> float | None:
             continue
         amplitude_gap = float(np.sum(weights * np.abs(left.excursions - b_excursion)) /
                               max(np.sum(weights), 1e-6))
+        other = Kinematics(angles=b_values, valid=b_valid, excursions=b_excursion)
+        raw_cost, raw_overlap = _frame_costs(left, other, weights)
         for phase in range(n):
-            shifted = Kinematics(angles=np.roll(b_values, phase, axis=0),
-                                 valid=np.roll(b_valid, phase, axis=0),
-                                 excursions=b_excursion)
-            distance = _bounded_dtw(left, shifted, weights, radius)
+            # Cyclic shift permutes columns of the same cost matrix. Reusing
+            # them avoids 16 repeated joint-wise broadcasts per candidate.
+            precomputed = (
+                np.roll(raw_cost, phase, axis=1),
+                np.roll(raw_overlap, phase, axis=1),
+            )
+            distance = _bounded_dtw(left, other, weights, radius, precomputed)
             if distance is None:
                 continue
             score = float(np.exp(-3.0 * (distance + 0.5 * amplitude_gap)))
