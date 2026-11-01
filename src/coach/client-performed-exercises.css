@@ -1,0 +1,25 @@
+.client-exercises { display: grid; gap: 16px; min-width: 0; }
+.client-exercises__toolbar { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+.client-exercises__toolbar > .ui-text { min-width: 0; flex: 1; text-align: center; }
+.client-exercises__radar, .client-exercises__list-panel, .client-exercises__chart-panel {
+  display: grid; gap: 16px; min-width: 0; padding: 16px;
+}
+.client-exercises__list-heading, .client-exercises__chart-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;
+}
+.client-exercises__chart-heading > .ui-text { min-width: 0; }
+.client-exercises__list { display: grid; gap: 8px; min-width: 0; }
+.client-exercises__row { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 8px; align-items: center; min-width: 0; }
+.client-exercises__media {
+  display: grid; place-items: center; width: 60px; height: 60px; padding: 0; overflow: hidden;
+  cursor: pointer; border: 0;
+}
+.client-exercises__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.client-exercises__row > .ui-list-item-wrap { min-width: 0; }
+.client-exercises__stats { display: grid; gap: 16px; min-width: 0; }
+.client-exercises__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.client-exercises__metric-tile {
+  min-height: 132px; padding: 16px; display: flex; flex-direction: column;
+  justify-content: space-between; gap: 16px; text-align: center;
+}
+.client-exercises__metric-tile .ui-text { overflow-wrap: anywhere; }
