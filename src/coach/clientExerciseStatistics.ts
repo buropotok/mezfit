@@ -18,11 +18,11 @@ export type ExerciseSummary = {
 const startOfDay = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
 /** Move by calendar months without overflowing short months (including leap Februaries). */
-export function shiftCalendarMonths(date: Date, months: number): Date {
+export function shiftCalendarMonths(date: Date, months: number, preferredDay = date.getDate()): Date {
   const year = date.getFullYear();
   const targetMonth = date.getMonth() + months;
   const lastDay = new Date(year, targetMonth + 1, 0).getDate();
-  return new Date(year, targetMonth, Math.min(date.getDate(), lastDay),
+  return new Date(year, targetMonth, Math.min(preferredDay, lastDay),
     date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
 }
 
