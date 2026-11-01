@@ -121,7 +121,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-          persist-credentials: false
+          # Read-only token is required to fetch the snapshot if repo becomes private.
+          persist-credentials: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
