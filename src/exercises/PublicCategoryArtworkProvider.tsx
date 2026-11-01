@@ -30,11 +30,14 @@ export function PublicCategoryArtworkProvider({ children }: { children: ReactNod
       if (!alive) return;
       const next = new Map<PublicCategoryArtworkId, CachedArtwork>();
       for (const row of rows) {
+        if (!row || typeof row.category !== 'string') continue;
+        const previous = cached.get(row.category);
         if (!isPublicCategoryArtworkRow(row)) {
-          // A BlobRef may arrive before the corresponding bytes are hydrated.
+          // The Addon can temporarily expose a BlobRef for the same local release.
+          if (previous && row.id === 'category-artwork:' + row.category
+            && row.version === previous.version) next.set(row.category, previous);
           continue;
         }
-        const previous = cached.get(row.category);
         if (previous?.version === row.version) {
           next.set(row.category, previous);
         } else {
@@ -66,7 +69,7 @@ export function PublicCategoryArtworkProvider({ children }: { children: ReactNod
     let blobSubscription: { unsubscribe(): void } | undefined;
     const start = () => {
       if (!alive) return;
-      subscription = repository.observe(install, () => undefined);
+      subscription = repository.observe(rows => { ++readRevision; install(rows); }, () => undefined);
       blobSubscription = db.cloud.blobProgress?.subscribe({ next: refresh });
     };
     // Work is deferred until after first paint, including Telegram iOS WebViews
