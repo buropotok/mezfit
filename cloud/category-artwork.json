@@ -1,0 +1,46 @@
+{
+  "table": "publicExerciseCategoryArtworks",
+  "realmId": "rlm-public",
+  "assets": [
+    {
+      "category": "chest",
+      "file": "public/muscles_chest.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "arms",
+      "file": "public/muscles_arm.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "back",
+      "file": "public/muscles_back.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "legs",
+      "file": "public/muscles_leg.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "shoulders",
+      "file": "public/muscles_shoulders.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "core",
+      "file": "public/muscles_core.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "full_body",
+      "file": "public/muscles_fullbody.webp",
+      "mime": "image/webp"
+    },
+    {
+      "category": "cardio",
+      "file": "public/gym-keeper/categories/muscles_cardio.svg",
+      "mime": "image/svg+xml"
+    }
+  ]
+}

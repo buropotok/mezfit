@@ -12,7 +12,7 @@ import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes'
 import { PublicExerciseMedia } from './PublicExerciseMedia';
 import { WorkedMuscles } from '../workout/WorkedMuscles';
 import { WORKED_MUSCLE_LABELS } from '../workout/workedMuscleData';
-import { publicExerciseCategoryArtwork } from './publicExerciseCategoryArtwork';
+import { usePublicCategoryArtwork } from './PublicCategoryArtworkProvider';
 import { CoachExerciseCatalogFab } from './CoachExerciseCatalogFab';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { GlassSurface } from '../ui/GlassSurface';
@@ -53,6 +53,15 @@ function TablerBarbell() {
 }
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
+
+function CategoryArtwork({ category }: { category: string }) {
+  const url = usePublicCategoryArtwork(category);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [url]);
+  return url && !failed
+    ? <img src={url} alt="" width={72} height={72} decoding="async" onError={() => setFailed(true)} />
+    : <TablerBarbell />;
+}
 const PAGE_SIZE = 80;
 
 type PublishedSnapshot = Extract<PublicExerciseSnapshot, { status: 'ready' }>;
@@ -324,9 +333,7 @@ export function ExerciseCatalogContent({
               title={label}
               subtitle={`${tabExercises.filter((row) => row.category === id).length} упражнений`}
               leading={<span className="mezfit-public-exercises__category-fallback">
-                {publicExerciseCategoryArtwork(id)
-                  ? <img src={publicExerciseCategoryArtwork(id)!} alt="" width={72} height={72} decoding="async" loading="eager" />
-                  : <TablerBarbell /> }
+                {id === 'other' ? <TablerBarbell /> : <CategoryArtwork category={id} />}
               </span>}
               onClick={() => { setCategory(id); setVisibleLimit(PAGE_SIZE); }}
             />

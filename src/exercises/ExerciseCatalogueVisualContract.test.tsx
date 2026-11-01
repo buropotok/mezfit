@@ -49,19 +49,16 @@ afterEach(() => {
 });
 
 describe('exercise catalogue real UI composition', () => {
-  it('renders the 72px category artwork without the 48px clipped square slot', () => {
+  it('shows the UIkit fallback while cloud Blob media is not yet locally synchronized', () => {
     const { container } = render(
       <KonstaProvider theme="ios" dark><ExerciseCatalogContent snapshot={snapshot} /></KonstaProvider>,
     );
     const chest = screen.getByRole('button', { name: /Грудь/ });
     const leading = chest.querySelector('.ui-list-item__leading');
     expect(leading?.classList.contains('ui-list-item__leading--square')).toBe(false);
-    const artwork = chest.querySelector('img');
-    expect(artwork?.getAttribute('src')).toBe('/muscles_chest.webp');
-    expect(artwork?.getAttribute('width')).toBe('72');
-    expect(artwork?.getAttribute('height')).toBe('72');
-    expect(artwork?.getAttribute('loading')).toBe('eager');
-    expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback img').length).toBe(8);
+    expect(chest.querySelector('img')).toBeNull();
+    expect(chest.querySelector('svg')?.getAttribute('width')).toBe('72');
+    expect(container.querySelectorAll('.mezfit-public-exercises__category-fallback img').length).toBe(0);
     const other = screen.getByRole('button', { name: /Другое/ });
     expect(other.querySelector('svg')?.getAttribute('width')).toBe('72');
     expect(other.querySelector('svg')?.getAttribute('stroke')).toBe('#fff');

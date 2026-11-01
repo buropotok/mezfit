@@ -8,6 +8,7 @@ import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
+import type { PublicCategoryArtworkRow } from '../exercises/publicCategoryArtwork';
 import type { CoachExerciseOverrideRow, CoachExerciseDefinitionRow, CoachExerciseFavouriteRow } from '../exercises/coachExerciseTypes';
 import type {
   CloudProgramPhaseRow, CloudProgramDayRow, CloudProgramExerciseRow, CloudProgramSetRow,
@@ -18,7 +19,7 @@ import type {
  * Cloud storage stays separate from legacy D1-hydrated IndexedDB until its
  * repositories have replaced the corresponding D1 domain endpoints.
  */
-export const CLOUD_DATABASE_VERSION = 13;
+export const CLOUD_DATABASE_VERSION = 14;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -210,6 +211,12 @@ export const CLOUD_DATABASE_STORES_V13 = {
   flexValues: 'id, realmId, attributeId, [realmId+attributeId], [realmId+entityType+entityId]',
 } as const;
 
+/** Public catalogue imagery is synchronized as authorized BlobRefs. */
+export const CLOUD_DATABASE_STORES_V14 = {
+  ...CLOUD_DATABASE_STORES_V13,
+  publicExerciseCategoryArtworks: 'id, realmId, category',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -254,6 +261,7 @@ export class MezfitCloudDatabase extends Dexie {
   publicExerciseDefinitions!: Table<PublicExerciseRow, string>;
   publicExerciseTaxonomy!: Table<PublicTaxonomyRow, string>;
   publicExerciseCatalogues!: Table<PublicExerciseCatalogueRow, string>;
+  publicExerciseCategoryArtworks!: Table<PublicCategoryArtworkRow, string>;
   coachExerciseOverrides!: Table<CoachExerciseOverrideRow, string>;
   coachExerciseDefinitions!: Table<CoachExerciseDefinitionRow, string>;
   coachExerciseFavourites!: Table<CoachExerciseFavouriteRow, string>;
@@ -272,7 +280,8 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(10).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id' });
     this.version(11).stores({ ...CLOUD_DATABASE_STORES_V10, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.version(12).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
-    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V13, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.version(13).stores({ ...CLOUD_DATABASE_STORES_V13, localProgramSync: 'id', localWorkoutSync: 'id' });
+    this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V14, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
