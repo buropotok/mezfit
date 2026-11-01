@@ -146,6 +146,7 @@ jobs:
           git restore --source=refs/remotes/origin/data/r2-gif-snapshot --worktree -- audit/gif-sources/r2/
           python tools/gif-audit/download_r2.py verify
       - name: Compute visual matches and delta (no exercise metadata)
+        id: visual
         run: python tools/gif-audit/compare.py
       - name: Install optional MediaPipe Pose Landmarker
         if: ${{ inputs.pose_scope != 'off' }}
@@ -171,11 +172,11 @@ jobs:
             --scope "$POSE_SCOPE" \
             --model "$RUNNER_TEMP/pose_landmarker_lite.task"
       - name: Publish summary
-        if: success()
+        if: ${{ always() && steps.visual.outcome == 'success' }}
         shell: bash
         run: cat audit/gif-report/summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload comparison report (HTML + CSV)
-        if: success()
+        if: ${{ always() && steps.visual.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: gif-visual-delta-report
