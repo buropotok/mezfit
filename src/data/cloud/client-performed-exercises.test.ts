@@ -121,7 +121,10 @@ describe('performed client exercises from FACT', () => {
     const error = vi.fn();
     const subscription = repo.observePerformedClientExercises('tg:202', realmId, next, error);
     try {
-      await vi.waitFor(() => expect(next).toHaveBeenCalledWith([]));
+      await vi.waitFor(() => {
+        if (error.mock.lastCall) throw error.mock.lastCall[0];
+        expect(next).toHaveBeenCalledWith([]);
+      });
       await db.table('adHocSets').update('f1', { actualReps: 8, setStatus: 'completed' });
       await vi.waitFor(() => expect(next).toHaveBeenCalledWith([{ key: 'public::press', name: 'Жим' }]));
       expect(error).not.toHaveBeenCalled();
