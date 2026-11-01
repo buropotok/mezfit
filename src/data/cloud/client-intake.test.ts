@@ -82,7 +82,7 @@ describe('client onboarding domain', () => {
 
   it('rejects malformed contact data without persisting the completed marker', async () => {
     const { db, repo } = create();
-    await expect(repo.saveOwn({ ...draft, phone: 'abc' })).rejects.toContain('Проверьте номер');
+    await expect(repo.saveOwn({ ...draft, phone: 'abc' })).rejects.toThrow('Проверьте номер');
     expect(await db.flexValues.count()).toBe(0);
   });
 });
