@@ -56,6 +56,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 it('opens the reused editor and persists only deliberately changed fields', async () => {
+  source.save.mockResolvedValueOnce({ ...initial(), profile: { ...profile, firstName: 'Новое переопределение' } });
   render(<PublishedUserProfile contact={contact} />);
   expect(screen.getByText('Имя тренера')).toBeTruthy();
   expect(screen.getByText('Переопределено в этой связи')).toBeTruthy();
@@ -64,6 +65,7 @@ it('opens the reused editor and persists only deliberately changed fields', asyn
   await waitFor(() => expect(source.save).toHaveBeenCalledWith('tg:202', 'realm-1', { firstName: 'Новое переопределение' }));
   await screen.findByText('Переопределения сохранены на устройстве.');
   expect(screen.queryByLabelText('Редактор переопределений')).toBeNull();
+  expect(screen.getByText('Новое переопределение')).toBeTruthy();
 });
 
 it('resets a field to current published data and retains a retryable error on failure', async () => {
@@ -112,4 +114,12 @@ it('withholds editing during a partial override download and from a read-only pa
   expect(screen.queryByRole('button', { name: 'Изменить анкету' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Сбросить: Имя' })).toBeNull();
   view.unmount();
+});
+
+it('retains the open editor while the published source is temporarily incomplete', () => {
+  render(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
+  act(() => source.next?.({ ...initial(), published: null, profile: null }));
+  expect(screen.getByLabelText('Редактор переопределений')).toBeTruthy();
+  expect(screen.getByText('Не удалось обновить анкету. Черновик сохранён в форме.')).toBeTruthy();
 });
