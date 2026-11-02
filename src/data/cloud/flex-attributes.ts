@@ -147,6 +147,8 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
         const expectedOwner = ownerFor(target, this.actorUserId);
         for (const entry of values) {
           const attribute = await this.db.flexAttributes.get(entry.attributeId);
+          // Shared values may download before their add-only definitions. Keep observing.
+          if (!attribute && target.entityType === 'publishedUser') continue;
           if (!isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
             || attribute.owner !== expectedOwner || entry.owner !== expectedOwner
             || entry.id !== flexValueId(target, attribute.id)
