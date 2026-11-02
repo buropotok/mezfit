@@ -1,4 +1,4 @@
-# Own user profile and shared profile navigation — PR 1
+# User profile, publication and shared profile navigation
 
 ## Ownership and storage
 
@@ -49,8 +49,9 @@ and the updated app must be deployed consistently.
 `ProfileWorkspace` owns the common Text Only tabs and accepts a typed `self` or
 `contact` view and authorized Basics/Program/Exercises content slots. CoachShell
 continues to supply its existing client-program and performed-exercise views.
-Contact Basics reads only membership-visible name and Telegram ID and explicitly
-states that the profile is not published. It never reads a contact's private realm.
+Contact Basics reads the published canonical profile through the authorized
+relationship realm. Until it exists, it shows membership-visible name and Telegram
+ID and an explicit not-published state. It never reads a contact's private realm.
 Own unsupported sections use explicit placeholders.
 
 `UserProfileNavigationShell` observes the actor-scoped repository, retaining only
@@ -88,11 +89,11 @@ pending Start generations and dismiss transient workflow state.
 
 ## Form surface contract
 
-The reused form uses Konsta 5.4.0 ListInput floating labels, List/ListItem/Radio and
-the existing side-panel DatePicker. Its three input surfaces are exclusively
+The reused form uses Konsta 5.4.0 ListInput floating labels, transparent Lists,
+the existing LiquidPopover for sex and the side-panel DatePicker. Its two input surfaces are exclusively
 GlassSurface `preset=modalTuned`, `optics=false`, `shape=auto`; blur inherits the
 App provider. Lists use `strong=false`, inputs use public `colors.bgIos`, and
-radio rows use public `colors.activeBgIos`. No feature CSS targets Konsta/private
+no Radio/ListItem sex surface remains. No feature CSS targets Konsta/private
 UI Kit selectors, backgrounds, radii or typography. Shared semantic Text presets
 own product copy. No second glass wrapper encloses the own Basics form.
 
@@ -111,6 +112,60 @@ A-007 remains an external dependency: this PR consumes authenticated MeResponse,
 whose Telegram metadata refresh policy is owned by Worker bootstrap. It does not
 silently introduce a second identity source or change that policy.
 
-Publication into relationship realms, override keys, contact edits, Blob avatars,
-photo upload, Worker avatar routes and workout/program business rules are outside
-this PR.
+## Automatic publication (PR 2)
+
+The private `user / actorUserId / actorUserId` target remains the editable source.
+A role-independent UserProfilePublicationProvider observes repository snapshots
+above the navigation tree. A changed saved profile, a newly confirmed relationship,
+or completion of a partial shared download triggers idempotent local publication.
+No background Worker, REST CRUD, second database, outbox, private Addon internals,
+new tables/fields, or schema/ACL changes are introduced.
+
+UserProfileRepository publishes only the eight canonical `profile_*` values to
+`entityType=publishedUser, entityId=actorUserId, realmId=relationshipRealmId`.
+Each shared definition and value retains the existing shared owner sentinel
+`owner=realmId`; private ownership is unchanged. Generic Flex validation admits
+only the exact existing Worker-provisioned realm and two accepted role memberships.
+Repository writes to this target require entityId=actorUserId; reads permit either
+member through that same authorized relationship. The original approved-pair
+validator is extracted unchanged into relationship-access.ts and re-exported by
+assigned-programs.ts, avoiding a program/database initialization dependency in Flex.
+
+Publication commits all eligible copies atomically in local Dexie, independently
+of the prior successful private Save. Failure leaves that private profile intact
+and exposes Retry. Repeated publication changes no identical values or IDs.
+Newer published timestamps win over a stale local source. Partial existing copies,
+including values whose definitions have not arrived, are never overwritten or
+acknowledged early. Completion is observed reactively; readers require all typed
+canonical fields. Definitions are add-only, explicit clears remain empty/null,
+and no override key is created, cleared or rewritten by publication.
+
+The capsule beside the title uses the existing BadgeChoice/Badge colors:
+green Synchronized, yellow Pending, red Error, gray Offline/Not saved/Loading.
+Its LiquidPopover explains the state. Green requires a completed public Addon
+push barrier after publication and an unchanged snapshot of the private profile,
+authorized relationship set and complete published copies. This is ephemeral
+presentation confirmation, not persisted parallel business data or a custom
+sync transport. Edits during an awaited push remain pending. Save never waits
+for that barrier. Account switches discard stale callbacks and acknowledgements;
+retries do not create a render or transport retry loop.
+
+Telegram ID and username stay outside the editable/published draft; identity is
+read only from existing authenticated/membership sources. Telegram ID, Telegram,
+Birth date and Sex use Headline labels with Body values. Sex is selected through
+LiquidPopover and displayed as “Пол: муж/жен/не указан”. The last-modified
+caption is below Save. Layout wraps within 320px without primitive geometry,
+background or typography overrides.
+
+The installed Flex grants still govern remote access. Existing generic shared
+metadata grants allow either authorized member to update extension values at the
+server; this feature's own-only publication restriction is a repository contract,
+not a new server-enforced immutable-author guarantee. Published profile metadata
+must never authorize identity, membership, PLAN or protected FACT. Live ordinary
+Coach/Client cloud permission and two-device checks remain required; CI/local
+transaction tests do not prove server activation or remote acknowledgement.
+
+PR 3 owns override read/write/reset and override→profile resolution. PR 4 owns
+Blob avatar values/upload/override. PR 5 owns contact-card migration and retirement
+of old Worker avatar APIs. Those features and workout/program business changes
+remain outside PR 2.
