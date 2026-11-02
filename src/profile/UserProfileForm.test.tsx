@@ -93,7 +93,7 @@ describe('user profile form', () => {
 
   it('uses Headline labels, Body values and the compact sex popover', () => {
     render(<UserProfileForm defaults={defaults} {...identity} onSave={async () => {}} />);
-    for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол'])
+    for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол:'])
       expect(screen.getByText(label).getAttribute('data-variant')).toBe('headline');
     expect(screen.getByText('@anna_fit').getAttribute('data-variant')).toBe('body');
     expect(screen.getByText('202').getAttribute('data-variant')).toBe('body');
@@ -102,7 +102,7 @@ describe('user profile form', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Пол: не указан' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Мужской' }));
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(screen.getByText('Пол: муж').getAttribute('data-variant')).toBe('body');
+    expect(screen.getByText('муж').getAttribute('data-variant')).toBe('body');
   });
 
   it('edits saved values, preserves the draft on save failure, and allows retry', async () => {
