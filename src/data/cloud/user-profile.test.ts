@@ -107,6 +107,47 @@ async function seedLegacy(db: ProfileDb, firstName = 'До обновления'
 }
 
 describe('legacy profile transition', () => {
+  it('does not materialize missing optional legacy values before they synchronize', async () => {
+    const { db, repo } = create();
+    const flexible = new FlexAttributesRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    const target = { entityType: 'user' as const, entityId: 'tg:202', realmId: 'tg:202' };
+    await flexible.setValues(target, [
+      { key: legacyKeys.firstName, valueType: 'string', value: 'До обновления' },
+      { key: legacyKeys.birthDate, valueType: 'string', value: draft.birthDate },
+      { key: legacyKeys.sex, valueType: 'string', value: draft.sex },
+      { key: legacyKeys.updatedAt, valueType: 'string', value: '2026-01-01T00:00:00.000Z' },
+    ]);
+    await repo.migrateOwn();
+    expect(await repo.readOwn()).toBeNull();
+    expect((await db.flexAttributes.toArray()).some(row => row.key.startsWith('profile_'))).toBe(false);
+
+    await seedLegacy(db);
+    await repo.migrateOwn();
+    expect(await repo.readOwn()).toMatchObject({ ...draft, firstName: 'До обновления',
+      updatedAt: '2026-01-01T00:00:00.000Z' });
+    const values = await db.flexValues.toArray();
+    await repo.migrateOwn();
+    expect(await db.flexValues.toArray()).toEqual(values);
+  });
+
+  it.each(['lastName', 'email', 'phone', 'weightKg'] as const)(
+    'does not turn a mistyped legacy %s into an empty canonical value', async field => {
+      const { db, repo } = create();
+      const flexible = new FlexAttributesRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+      const profile = { ...draft, updatedAt: '2026-01-01T00:00:00.000Z' };
+      await flexible.setValues({ entityType: 'user', entityId: 'tg:202', realmId: 'tg:202' },
+        (Object.keys(legacyKeys) as Array<keyof typeof legacyKeys>).map(key => ({
+          key: legacyKeys[key],
+          valueType: key === field ? (key === 'weightKg' ? 'string' : 'number')
+            : key === 'weightKg' ? 'number' : 'string',
+          value: key === field ? (key === 'weightKg' ? '62' : 123) : profile[key],
+        })));
+      await repo.migrateOwn();
+      expect(await repo.readOwn()).toBeNull();
+      expect((await db.flexAttributes.toArray()).some(row => row.key.startsWith('profile_'))).toBe(false);
+    },
+  );
+
   it('reads existing registration, upgrades atomically, and retains add-only definitions', async () => {
     const { db, repo } = create();
     await seedLegacy(db);
