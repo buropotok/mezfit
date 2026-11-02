@@ -7,6 +7,7 @@ import argparse
 import csv
 import difflib
 import heapq
+import hashlib
 import json
 import re
 from collections import defaultdict
@@ -128,7 +129,9 @@ def load_audit(audit_dir, bucket, r2_ids):
             add_evidence(bucket, r2_ids, gh, ident, "joint_motion", number(d["joint_motion_score"]))
 
 
-def generate(audit_dir, output_dir):
+def generate(audit_dir, output_dir, github_ref):
+    if not re.fullmatch(r"[a-f0-9]{40}", github_ref):
+        raise ValueError("GitHub source must be pinned by a 40-char commit SHA")
     r2, gh = read_r2(), read_gh()
     # Sparse per-GIF pair registry: only retain retrieved evidence.
     bucket = {name: {} for name in gh}
@@ -198,8 +201,14 @@ def generate(audit_dir, output_dir):
             raise ValueError("Fewer than five candidates for " + name)
         entries.append({"gif": name, "name": title, "candidates": candidates})
 
+    fingerprint = "\n".join(
+        item["gif"] + ":" + ",".join(c["id"] for c in item["candidates"])
+        for item in entries
+    )
+    revision = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
     out = {
         "schema_version": 1, "direction": "github_gif_to_r2_gif",
+        "candidate_revision": revision, "github_ref": github_ref,
         "r2_count": len(r2), "github_count": len(gh),
         "round_size": ROUND_SIZE, "max_rounds": ROUND_COUNT,
         "sources": {
@@ -227,8 +236,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--audit-dir", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--github-ref", required=True)
     args = parser.parse_args()
-    generate(args.audit_dir, args.out)
+    generate(args.audit_dir, args.out, args.github_ref)
 
 
 if __name__ == "__main__":
