@@ -29,7 +29,8 @@ jobs:
         run: |
           python3 tools/gif-review-pages/build_data.py \
             --audit-dir audit-artifact \
-            --out gif-review-preview
+            --out gif-review-preview \
+            --github-ref "$GITHUB_SHA"
       - name: Check generated review inventory
         run: |
           python3 - <<'PY'
@@ -37,6 +38,7 @@ jobs:
           from pathlib import Path
           p = Path("gif-review-preview/candidates.json")
           d = json.loads(p.read_text(encoding="utf-8"))
+          assert len(d["candidate_revision"]) == 64
           assert d["github_count"] == 1168
           assert d["r2_count"] == 1324
           assert len(d["items"]) == 1168
