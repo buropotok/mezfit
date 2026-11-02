@@ -19,18 +19,29 @@ jobs:
           && github.event.workflow_run.head_repository.full_name == github.repository
           && github.event.workflow_run.pull_requests[0].number != null }}
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
+    # This workflow must not use the GitHub Actions bot identity for Codex requests.
+    permissions: {}
     steps:
       - name: Request Codex review for the current PR head
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.CODEX_REVIEW_PAT }}
           PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_STARTED: ${{ github.event.workflow_run.created_at }}
         run: |
           set -euo pipefail
+
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::Missing Actions secret CODEX_REVIEW_PAT (fine-grained user PAT)."
+            exit 1
+          fi
+
+          # Prevent using a GitHub App/bot or a different user's token.
+          actor=$(gh api user --jq '.login')
+          if [[ "${actor,,}" != "${GITHUB_REPOSITORY_OWNER,,}" ]]; then
+            echo "::error::CODEX_REVIEW_PAT must belong to the repository owner."
+            exit 1
+          fi
 
           pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
           if ! jq -e --arg sha "$HEAD_SHA" --arg repo "$GITHUB_REPOSITORY" '
@@ -43,10 +54,10 @@ jobs:
             exit 0
           fi
 
-          # A re-run of the same CI run must not post a duplicate comment.
+          # A re-run of the same CI run must not post a duplicate user-authored comment.
           comments=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100")
-          if jq -e --arg since "$RUN_STARTED" '
-            any(.[][]; .user.login == "github-actions[bot]"
+          if jq -e --arg since "$RUN_STARTED" --arg actor "$actor" '
+            any(.[][];  .user.login == $actor
               and .body == "@codex review. Комментарии на русском"
               and .created_at >= $since)
           ' <<<"$comments" >/dev/null; then
@@ -55,7 +66,7 @@ jobs:
           fi
 
           gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
-            -f body='@codex review. Комментарии на русском'
+            -f body='@codex review. Комментарии на русском' --jq '.html_url'
 
   report-failure:
     if: >-
