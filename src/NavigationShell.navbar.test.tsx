@@ -121,12 +121,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Тренировка"]')).not.toBeNull();
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Аналитика"]')).not.toBeNull();
-    expect(tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]')).not.toBeNull();
+    expect(tabsRoot.querySelector('[role="tab"][aria-label="Мой профиль"]')).not.toBeNull();
     expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
     expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
     expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
     expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
-    expectTabIcon(tabsRoot, 'Настройки', 'settings');
+    expect(tabsRoot.querySelector('[aria-label="Мой профиль"] [role="img"]')).not.toBeNull();
     if (!programsTab) throw new Error('Missing Programs liquid glass tab');
 
     fireEvent.click(programsTab);
@@ -249,7 +249,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
     fireEvent.click(menuButton);
     const menuLabels = view.getAllByRole('menuitem').map((item) => item.textContent);
-    expect(menuLabels).toEqual(['Упражнения', 'Календарь', 'Настройки', 'О приложении']);
+    expect(menuLabels).toEqual(['Мой профиль', 'Упражнения', 'Календарь', 'Настройки', 'О приложении']);
   });
 
   it('keeps level-one tabs interactive while rendering the surface action in the shared FAB slot', () => {
@@ -311,12 +311,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(view.container.querySelector('[data-liquid-glass-fab-slot]')).not.toBeNull();
   });
 
-  it('keeps Settings as the fifth selected primary tab with no FAB', () => {
+  it('keeps My profile as the fifth selected primary tab with no FAB', () => {
     const view = render(
       <NavigationShell
         me={me}
         activeRole="client"
-        destination="settings"
+        destination="profile"
         context={null}
         onDestinationChange={vi.fn()}
         onRoleSwitch={vi.fn()}
@@ -326,14 +326,14 @@ describe('NavigationShell MezfitNavbar integration', () => {
           content: <span>W</span>,
         }}
       >
-        <div>Settings content</div>
+        <div>Profile content</div>
       </NavigationShell>,
     );
 
     const tabsRoot = getPrimaryTabsRoot(view.container);
-    const settingsTab = tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]');
+    const profileTab = tabsRoot.querySelector('[role="tab"][aria-label="Мой профиль"]');
     expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
-    expect(settingsTab?.getAttribute('aria-selected')).toBe('true');
+    expect(profileTab?.getAttribute('aria-selected')).toBe('true');
     expect(view.container.querySelector('[data-liquid-glass-fab-slot]')).toBeNull();
   });
 
