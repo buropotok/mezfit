@@ -13,6 +13,7 @@ import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occ
 import { WorkoutOccurrenceDraftRepository as Repository } from '../data/cloud/workout-occurrence-drafts';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { TodayPage } from './TodayPage';
+import type { NavigationContext } from '../NavigationShell';
 const state = vi.hoisted(() => ({ clients: [] as CloudContact[], filterAction: null as null | { onClick: () => void }, db: null as MezfitCloudDatabase | null,
   move: null as null | ((value: DayScheduleEventMove) => void),
   resize: null as null | ((value: DayScheduleEventResize) => void),
@@ -257,5 +258,45 @@ describe('local-first calendar experience', () => {
     for (const segment of segments) expect(segment.getAttribute('data-editable')).toBe('false');
     fireEvent.click(screen.getAllByText('Черновик')[1]);
     expect(await screen.findByRole('button', { name: 'Сохранить' })).toBeTruthy();
+  });
+}
+  it('shows scheduled workout markers to the client and removes them after cancellation', async () => {
+    const id = await repo().create({ ...draft, id: 'draft:client-marker' });
+    const occurrenceId = await repo().save(id);
+    const navigation = { current: null as NavigationContext | null };
+    render(<TodayPage initData="" role="client"
+      onNavigationContextChange={context => { navigation.current = context; }} />);
+    await waitFor(() => expect(navigation.current?.calendar?.dayStatuses).toEqual([
+      { date: '2026-10-19', status: 'missed' },
+    ]));
+    await act(async () => { await repo().cancel(occurrenceId); });
+    await waitFor(() => expect(navigation.current?.calendar?.dayStatuses).toEqual([]));
+  });
+
+  it('hides markers in unfiltered coach schedule and follows applied client filters', async () => {
+    const pair = await relationshipMembership('101', '202');
+    await db.table('realms').put(pair.realm);
+    await db.table('members').bulkPut(pair.members);
+    state.clients = [{ userId: 'tg:202', telegramUserId: '202', relationshipId: pair.realm.realmId,
+      displayName: 'Анна' }];
+    const id = await repo().create({ ...draft, id: 'draft:coach-marker',
+      realmId: pair.realm.realmId, athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' });
+    await repo().save(id);
+    const navigation = { current: null as NavigationContext | null };
+    render(<TodayPage initData="" role="coach"
+      onNavigationContextChange={context => { navigation.current = context; }} />);
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Расписание' })
+      .getAttribute('aria-busy')).toBeNull());
+    expect(navigation.current?.calendar?.dayStatuses).toEqual([]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Поиск клиента' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать клиента Анна' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Применить фильтр' }));
+    await waitFor(() => expect(navigation.current?.calendar?.dayStatuses).toEqual([
+      { date: '2026-10-19', status: 'missed' },
+    ]));
+    const chips = screen.getByLabelText('Выбранные клиенты');
+    fireEvent.click(chips.querySelector('[role="button"]')!);
+    await waitFor(() => expect(navigation.current?.calendar?.dayStatuses).toEqual([]));
   });
 });
