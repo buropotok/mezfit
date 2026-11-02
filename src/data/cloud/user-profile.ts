@@ -138,7 +138,7 @@ export class UserProfileRepository {
   }
 
   private async publishedVersion(profile: UserProfile, realmIds: readonly string[]): Promise<string> {
-    const copies = [];
+    const copies: Array<readonly [string, UserProfile | null]> = [];
     for (const realmId of realmIds) {
       const values = await this.flexible.getValues({
         entityType: 'publishedUser', entityId: this.actorUserId, realmId,
