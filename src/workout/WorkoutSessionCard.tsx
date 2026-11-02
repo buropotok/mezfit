@@ -164,6 +164,11 @@ function WorkoutFactCard<Id extends string | number = number>({
   const copyRunning = useRef(false);
   const [copyError, setCopyError] = useState('');
   const [copyNotice, setCopyNotice] = useState('');
+  useEffect(() => {
+    if (!copyNotice) return;
+    const timeout = window.setTimeout(() => setCopyNotice(''), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [copyNotice]);
   const today = new Date();
   const copyPickerDate = [today.getFullYear(), today.getMonth() + 1, today.getDate()]
     .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0')).join('-');
@@ -439,7 +444,7 @@ function WorkoutFactCard<Id extends string | number = number>({
         )}
       />
 
-      <DatePicker opened={copyOpened} value={copyPickerDate}
+      {onCopy && copyOpened ? <DatePicker opened value={copyPickerDate}
         onClose={() => setCopyOpened(false)} onChange={date => {
           if (!onCopy || copyRunning.current) return;
           setCopyOpened(false); copyRunning.current = true; setCopyBusy(true);
@@ -447,7 +452,7 @@ function WorkoutFactCard<Id extends string | number = number>({
           void onCopy(date).then(() => setCopyNotice('Копия тренировки добавлена в расписание'))
             .catch(reason => setCopyError(reason instanceof Error ? reason.message : 'Не удалось скопировать тренировку'))
             .finally(() => { copyRunning.current = false; setCopyBusy(false); });
-        }} />
+        }} /> : null}
       {copyError ? <Text variant="footnote" role="alert">{copyError}</Text> : null}
       {copyNotice ? <Text variant="footnote" role="status">{copyNotice}</Text> : null}
       <MezfitDialog

@@ -203,6 +203,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [copyBusy, setCopyBusy] = useState(false);
   const copyRunning = useRef(false);
   const [copyNotice, setCopyNotice] = useState('');
+  useEffect(() => {
+    if (!copyNotice) return;
+    const timeout = window.setTimeout(() => setCopyNotice(''), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [copyNotice]);
   const actionsRef = useRef<HTMLButtonElement>(null);
   const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
   const glass = loadBrowserGlassSettings();
@@ -627,9 +632,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       </Suspense> : null}
       {planner ? <WorkoutProgramSheet opened={programSheetOpen && !planLocked && !readOnly} planner={planner} draft={draft}
         onClose={closeProgramSheet} onNavigationContextChange={onNavigationContextChange} /> : null}
-      <DatePicker opened={copyDateOpened} value={copyDate}
+      {copyDateOpened ? <DatePicker opened value={copyDate}
         onChange={date => { setCopyDate(date); setCopyDateOpened(false); void copyOnDate(date); }}
-        onClose={() => setCopyDateOpened(false)} />
+        onClose={() => setCopyDateOpened(false)} /> : null}
       <DatePicker opened={dateOpened} value={localDate(start)}
         onChange={date => editStart(date, localTime(start))}
         onClose={() => setDateOpened(false)} />

@@ -82,7 +82,8 @@ export class WorkoutPlanningRepository {
     ]);
     const proposed = new Date(selected.year, selected.month - 1, selected.day, 8, 0, 0, 0);
     const relevant = [...new Map([...athlete, ...coach]
-      .filter(row => bookingsShareParticipant(source, row)).map(row => [row.id, row])).values()];
+      .filter(row => bookingsShareParticipant({ ...source, startsAtUtc: proposed.toISOString() }, row))
+      .map(row => [row.id, row])).values()];
     const slot = nextAvailableSlot(relevant, proposed, source.durationMinutes);
     if (!slot || slot.getFullYear() !== selected.year || slot.getMonth() !== selected.month - 1
       || slot.getDate() !== selected.day)
