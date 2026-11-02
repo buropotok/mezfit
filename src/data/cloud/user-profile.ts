@@ -290,7 +290,7 @@ export class UserProfileRepository {
   }
 
   /** Only fields deliberately edited by the Coach are fixed as overrides. */
-  async saveContactOverrides(userId: string, realmId: string, patch: Partial<UserProfileDraft>): Promise<void> {
+  async saveContactOverrides(userId: string, realmId: string, patch: Partial<UserProfileDraft>): Promise<ContactUserProfile> {
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('INVALID_PROFILE_OVERRIDE');
     const entries: FlexAttributeInput[] = [];
     for (const field of Object.keys(patch)) {
@@ -299,20 +299,25 @@ export class UserProfileRepository {
       entries.push({ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string',
         value: JSON.stringify(normalized[field]) });
     }
-    await this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
+    return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
       this.db.adHocSessions, this.db.realms, this.db.members], async () => {
       const contact = await this.readContact(userId, realmId);
       if (!contact.canEdit) throw new Error('FLEX_ENTITY_FORBIDDEN');
       if (!contact.published || contact.incomplete)
         throw new Error('Анкета загружена не полностью. Повторите сохранение позже.');
       await this.flexible.setProfileOverrides({ entityType: 'publishedUser', entityId: userId, realmId }, entries);
+      return this.readContact(userId, realmId);
     });
   }
 
-  async resetContactOverride(userId: string, realmId: string, field: UserProfileField): Promise<void> {
+  async resetContactOverride(userId: string, realmId: string, field: UserProfileField): Promise<ContactUserProfile> {
     if (!isProfileField(field)) throw new Error('INVALID_PROFILE_OVERRIDE_FIELD');
-    await this.flexible.setProfileOverrides({ entityType: 'publishedUser', entityId: userId, realmId },
-      [{ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string', value: null }]);
+    return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      await this.flexible.setProfileOverrides({ entityType: 'publishedUser', entityId: userId, realmId },
+        [{ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string', value: null }]);
+      return this.readContact(userId, realmId);
+    });
   }
 
   async readOwn(): Promise<UserProfile | null> {
