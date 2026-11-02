@@ -1,6 +1,9 @@
 # Flex Attributes foundation — realm-scoped EAV
 
-Status: infrastructure PR; cloud activation and ordinary-account authorization have **not** run.
+Status: the protected schema/ACL apply and full configuration readback succeeded on
+2026-10-30 ([run 40980110480](https://github.com/buropotok/mezfit/actions/runs/40980110480)).
+PR 2 verified that workflow evidence, not current live ordinary-account behavior;
+ordinary Coach/Client and two-device authorization checks still require verification.
 
 ## Scope
 
@@ -36,7 +39,11 @@ records is the relationship realm ID sentinel, not the editing user. Personal
 records use the actor as both realm and owner. New entity types may be supported
 by new repository validation without changing either table schema.
 
-The initial entity type allowlist is `user` and `adHocSession`.
+The entity type allowlist is `user`, `adHocSession`, and the PR 2 `publishedUser`
+projection. The latter is restricted to exact approved coach-client relationships;
+reads address either member, writes address only the current actor at the repository
+boundary. Its definitions and values use the existing shared realm owner sentinel.
+No cloud schema change is required for this new value of the existing entityType field.
 No generic code may form arbitrary targets from untrusted UI input.
 There is **no actual polymorphic database foreign key**: the application
 repository checks the parent, while the server uses realm membership/role ACL.
@@ -125,6 +132,9 @@ Definitions remain add-only. The explicit upgrade preserves `ClientIntake_*`
 records and timestamps and will not copy an older legacy snapshot over a newer
 canonical profile or an incomplete incoming download (even without its marker). Read/observe are
 side-effect free and recognize newer legacy records arriving from another
-old-version device. `override_*` remains reserved and unused. No publication,
-Blob values, schema or permission changes are part of this feature.
+old-version device. PR 2 adds idempotent publication of canonical values into confirmed relationship
+realms through the same Flex boundary and a typed publishedUser target. The private
+profile remains the source; no foreign personal realm is read. `override_*` stays
+reserved and is never touched by publication. Blob values, schema and permission
+changes remain outside this feature.
 See [user-profile.md](user-profile.md) for compatibility and UI ownership.

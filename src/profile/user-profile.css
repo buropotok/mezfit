@@ -7,3 +7,7 @@
 .user-profile__inputs { min-width: 0; }
 .user-profile__date { display: grid; justify-items: start; gap: 8px; }
 .user-profile__status { padding: 24px 16px; display: grid; gap: 16px; }
+
+.user-profile__heading { display: flex; align-items: center; gap: 8px; }
+.user-profile__heading-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.user-profile__sync { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; margin-left: auto; max-width: 50%; }

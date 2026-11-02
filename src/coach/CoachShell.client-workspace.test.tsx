@@ -4,14 +4,23 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CoachShell } from './CoachShell';
 
+const profileDb = vi.hoisted(() => ({}));
+
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
+    db: profileDb, actorUserId: 'tg:202',
     status: 'ready',
     error: '',
     clients: [{ relationshipId: 'realm-1', userId: 'tg:101', telegramUserId: '101', displayName: 'Анна Иванова' }],
     refresh: vi.fn(async () => undefined),
   }),
 }));
+
+vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
+  observePublished(_userId: string, _realmId: string, next: (profile: null) => void) {
+    next(null); return { unsubscribe() {} };
+  }
+} }));
 
 // Assert the UIkit public contract without replacing its internal gesture mechanics.
 vi.mock('../ui/LiquidGlassTextOnly', () => ({

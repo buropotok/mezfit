@@ -47,13 +47,9 @@ export function ProfileWorkspace({ view, tab, onTabChange, basicsContent, progra
     {content !== undefined ? content : <GlassSurface component="section" preset="modalTuned" optics={false}
       shape="auto" contentClassName="stack client-workspace-surface">
       <Text variant="title">{label}</Text>
-      {view.kind === 'contact' && tab === 'basics' ? <>
-        <Text variant="body">{view.contact.displayName}</Text>
-        <Text variant="footnote">Telegram ID: {view.contact.telegramUserId}</Text>
-        <Text variant="body" tone="muted">Анкета клиента ещё не опубликована.</Text>
-      </> : <Text variant="body" tone="muted">{view.kind === 'contact'
+      <Text variant="body" tone="muted">{view.kind === 'contact'
         ? contactPlaceholders[tab] ?? 'Этот раздел профиля пока недоступен.'
-        : 'Этот раздел собственного профиля пока недоступен.'}</Text>}
+        : 'Этот раздел собственного профиля пока недоступен.'}</Text>
     </GlassSurface>}
   </div>;
 }

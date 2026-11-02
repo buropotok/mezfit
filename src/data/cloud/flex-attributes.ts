@@ -1,11 +1,12 @@
 import type Dexie from 'dexie';
+import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
 
 /**
  * Flex definitions are scoped to a realm. A shared session never references
  * an attribute definition hidden in an athlete's personal realm.
  */
-export type FlexEntityType = 'user' | 'adHocSession';
+export type FlexEntityType = 'user' | 'adHocSession' | 'publishedUser';
 export type FlexValueType = 'string' | 'number' | 'boolean';
 export type FlexPrimitive = string | number | boolean | null;
 
@@ -93,7 +94,8 @@ function ownerFor(target: FlexEntityTarget, actorUserId: string): string {
  * tables directly; the supported entity types are intentionally explicit.
  * flexValues must never be interpreted as permissions or PLAN/FACT authority.
  */
-type FlexTables = Pick<MezfitCloudDatabase, 'flexAttributes' | 'flexValues' | 'adHocSessions'>;
+type FlexTables = Pick<MezfitCloudDatabase, 'flexAttributes' | 'flexValues' | 'adHocSessions'>
+  & Partial<Pick<MezfitCloudDatabase, 'realms' | 'members'>>;
 
 /** Keep Dexie's own transaction type coupled to the concrete database class. */
 export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
@@ -101,7 +103,22 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     if (!userIdPattern.test(actorUserId)) throw new Error('INVALID_FLEX_ACTOR');
   }
 
-  private async assertTarget(target: FlexEntityTarget): Promise<void> {
+  private targetTables(target: FlexEntityTarget) {
+    const tables = [this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions];
+    return target.entityType === 'publishedUser' && this.db.realms && this.db.members
+      ? [...tables, this.db.realms, this.db.members] : tables;
+  }
+
+  private async assertTarget(target: FlexEntityTarget, writing = false): Promise<void> {
+    if (target.entityType === 'publishedUser') {
+      if (!this.db.realms || !this.db.members || (writing && target.entityId !== this.actorUserId))
+        throw new Error('FLEX_ENTITY_FORBIDDEN');
+      const pairs = await profileRelationships({ realms: this.db.realms, members: this.db.members }, this.actorUserId);
+      if (!pairs.some(pair => pair.realmId === target.realmId
+        && (target.entityId === pair.coachUserId || target.entityId === pair.clientUserId)))
+        throw new Error('FLEX_ENTITY_FORBIDDEN');
+      return;
+    }
     if (target.entityType === 'user') {
       if (target.realmId !== this.actorUserId || target.entityId !== this.actorUserId) {
         throw new Error('FLEX_ENTITY_FORBIDDEN');
@@ -120,7 +137,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
 
   async getValues(target: FlexEntityTarget): Promise<FlexResolvedValue[]> {
     return this.db.transaction('r',
-      this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions, async () => {
+      this.targetTables(target), async () => {
         await this.assertTarget(target);
         const values = await this.db.flexValues
           .where('[realmId+entityType+entityId]')
@@ -130,6 +147,8 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
         const expectedOwner = ownerFor(target, this.actorUserId);
         for (const entry of values) {
           const attribute = await this.db.flexAttributes.get(entry.attributeId);
+          // Shared values may download before their add-only definitions. Keep observing.
+          if (!attribute && target.entityType === 'publishedUser') continue;
           if (!isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
             || attribute.owner !== expectedOwner || entry.owner !== expectedOwner
             || entry.id !== flexValueId(target, attribute.id)
@@ -152,8 +171,8 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
       keys.add(entry.key);
     }
     await this.db.transaction('rw',
-      this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions, async () => {
-        await this.assertTarget(target);
+      this.targetTables(target), async () => {
+        await this.assertTarget(target, true);
         const owner = ownerFor(target, this.actorUserId);
         for (const entry of entries) {
           const attributeId = flexAttributeId(target.realmId, entry.key);

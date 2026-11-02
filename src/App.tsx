@@ -9,6 +9,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { UserProfilePublicationProvider } from './profile/UserProfilePublicationProvider';
 import { UserProfileNavigationShell } from './profile/UserProfileNavigationShell';
 import { applyBackgroundSettings, loadBrowserBackgroundSettings, saveBrowserBackgroundSettings } from './backgroundSettings';
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
@@ -374,6 +375,7 @@ export function App() {
         telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
       >
+      <UserProfilePublicationProvider>
       <PublicCategoryArtworkProvider>
       <ClientWorkoutProvider enabled={state.activeRole === 'client'}>
       <PublicExerciseMediaPrefetch />
@@ -456,6 +458,7 @@ export function App() {
       </ClientCoachProvider>
       </ClientWorkoutProvider>
       </PublicCategoryArtworkProvider>
+      </UserProfilePublicationProvider>
       </CloudConnectionsProvider>
     </GlassSurfaceProvider>
   );

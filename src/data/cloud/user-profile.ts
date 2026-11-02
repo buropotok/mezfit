@@ -1,7 +1,8 @@
 import { liveQuery } from 'dexie';
+import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
 import {
-  FlexAttributesRepository, type FlexAttributeInput, type FlexResolvedValue,
+  FlexAttributesRepository, flexAttributeId, flexValueId, type FlexAttributeInput, type FlexResolvedValue,
 } from './flex-attributes';
 import { parseLocalDate, getTodayLocalDate } from '../../ui/date-picker/datePickerDate';
 
@@ -134,6 +135,76 @@ export class UserProfileRepository {
 
   private ownTarget() {
     return { entityType: 'user' as const, entityId: this.actorUserId, realmId: this.actorUserId };
+  }
+
+  private async publishedVersion(profile: UserProfile, realmIds: readonly string[]): Promise<string> {
+    const copies: Array<readonly [string, UserProfile | null]> = [];
+    for (const realmId of realmIds) {
+      const values = await this.flexible.getValues({
+        entityType: 'publishedUser', entityId: this.actorUserId, realmId,
+      });
+      copies.push([realmId, deserialize(values, USER_PROFILE_KEYS)]);
+    }
+    return JSON.stringify([profile, copies]);
+  }
+
+  /** Derived presentation version; no parallel persistent sync metadata. */
+  async publicationVersion(): Promise<string | null> {
+    return this.db.transaction('r', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const profile = await this.readOwn();
+      if (!profile) return null;
+      const pairs = await profileRelationships(this.db, this.actorUserId);
+      return this.publishedVersion(profile, pairs.map(pair => pair.realmId));
+    });
+  }
+
+  observePublicationVersion(next: (version: string | null) => void, error: (reason: unknown) => void) {
+    return liveQuery(() => this.publicationVersion()).subscribe({ next, error });
+  }
+
+  /** Application publication only. Addon still owns replication and retries. */
+  async publishOwn(): Promise<string | null> {
+    return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const profile = await this.readOwn();
+      if (!profile) return null;
+      const pairs = await profileRelationships(this.db, this.actorUserId);
+      let incomplete = false;
+      for (const pair of pairs) {
+        const target = { entityType: 'publishedUser' as const, entityId: this.actorUserId, realmId: pair.realmId };
+        const values = await this.flexible.getValues(target);
+        const previous = deserialize(values, USER_PROFILE_KEYS);
+        const canonicalValues = values.filter(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key));
+        const expectedRows = await this.db.flexValues.bulkGet(fields.map(({ key }) =>
+          flexValueId(target, flexAttributeId(pair.realmId, USER_PROFILE_KEYS[key]))));
+        const count = expectedRows.filter(row => row !== undefined).length;
+        const hasCanonical = canonicalValues.length > 0;
+        // A partial incoming download is not permission to rewrite newer fields.
+        if (count > canonicalValues.length || (hasCanonical && !previous)) { incomplete = true; continue; }
+        if (previous && Date.parse(previous.updatedAt) > Date.parse(profile.updatedAt)) continue;
+        await this.flexible.setValues(target, serialize(profile));
+      }
+      // Do not acknowledge an incomplete copy. Its completion invalidates the observed version.
+      return incomplete ? null : this.publishedVersion(profile, pairs.map(pair => pair.realmId));
+    });
+  }
+
+  /** Public Addon push barrier confirms only the version captured by the caller. */
+  async confirmOwnSync(version: string): Promise<boolean> {
+    await this.db.cloud.sync({ purpose: 'push', wait: true });
+    return await this.publicationVersion() === version;
+  }
+
+  observePublished(userId: string, realmId: string,
+    next: (profile: UserProfile | null) => void, error: (reason: unknown) => void) {
+    return liveQuery(() => this.readPublished(userId, realmId)).subscribe({ next, error });
+  }
+
+  async readPublished(userId: string, realmId: string): Promise<UserProfile | null> {
+    return deserialize(await this.flexible.getValues({
+      entityType: 'publishedUser', entityId: userId, realmId,
+    }), USER_PROFILE_KEYS);
   }
 
   async readOwn(): Promise<UserProfile | null> {

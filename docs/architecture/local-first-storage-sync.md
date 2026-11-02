@@ -230,6 +230,9 @@ observes and atomically saves the eight `profile_*` Flex values for
 editing use the same Basics tab in `ProfileWorkspace`. A Client with no saved
 profile is offered that tab once without blocking navigation. All editable fields
 are optional; Telegram ID comes from authenticated identity. A failed local write is retryable; a successful local save does
-not wait for cloud confirmation. No schema, ACL, Worker CRUD or publication
-changes are included. Legacy `ClientIntake_*` values remain readable and are
+not wait for cloud confirmation. PR 2 adds idempotent local publication of saved profile defaults to every confirmed
+relationship realm as a typed publishedUser Flex target. Private saves do not wait
+for that projection or cloud confirmation. A reactive status capsule distinguishes
+local commit from an awaited Addon push acknowledgement. No schema, ACL or Worker
+CRUD changes are included. Legacy `ClientIntake_*` values remain readable and are
 upgraded without physical deletes. See [user-profile.md](user-profile.md).

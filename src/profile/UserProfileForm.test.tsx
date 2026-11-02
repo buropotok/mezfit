@@ -11,18 +11,17 @@ vi.mock('konsta/react', () => ({
     onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   }) => <label>{label}<input aria-label={label} type={type}
     value={value} disabled={disabled} onChange={onChange} /></label>,
-  ListItem: ({ title, children, media }: { title: string; children: ReactNode; media: ReactNode }) => (
-    <div>{title}{media}{children}</div>
-  ),
-  Radio: ({ checked, onChange, value }: {
-    checked: boolean; onChange: () => void; value: string;
-  }) => <input type="radio" aria-label={value} checked={checked} onChange={onChange} />,
+
 }));
 vi.mock('../ui', () => ({
-  Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Text: ({ children, variant }: { children: ReactNode; variant: string }) => <span data-variant={variant}>{children}</span>,
   Button: ({ children, onClick, disabled }: {
     children: ReactNode; onClick?: () => void; disabled?: boolean;
   }) => <button disabled={disabled} onClick={onClick}>{children}</button>,
+  LiquidPopover: ({ trigger, isOpen, items }: { trigger: ReactNode; isOpen: boolean;
+    items: Array<{ id: string; label: string; onSelect: () => void }> }) =>
+    <>{trigger}{isOpen ? <div role="menu">{items.map(item =>
+      <button key={item.id} role="menuitem" onClick={item.onSelect}>{item.label}</button>)}</div> : null}</>,
   DatePicker: ({ opened, surface, onChange }: {
     opened: boolean; surface: string; onChange: (value: string) => void;
   }) => opened ? <div role="dialog" data-surface={surface}>
@@ -46,7 +45,7 @@ describe('user profile form', () => {
     expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('Анна');
     expect((screen.getByLabelText('Фамилия') as HTMLInputElement).value).toBe('Иванова');
     expect(screen.queryByLabelText('Telegram username')).toBeNull();
-    expect(screen.getByText('Telegram: @anna_fit')).toBeTruthy();
+    expect(screen.getByText('@anna_fit')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать дату рождения' }));
     expect(screen.getByRole('dialog').getAttribute('data-surface')).toBe('panel');
     fireEvent.click(screen.getByRole('button', { name: '31 мая 1990' }));
@@ -66,7 +65,7 @@ describe('user profile form', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith({
       firstName: '', lastName: '', email: '', phone: '', birthDate: '', sex: 'undisclosed', weightKg: null,
     }));
-    expect(screen.getByText('Telegram ID: 202')).toBeTruthy();
+    expect(screen.getByText('202')).toBeTruthy();
   });
 
   it('allows a previously entered birth date to be cleared', async () => {
@@ -82,14 +81,28 @@ describe('user profile form', () => {
   it('uses only auto-shaped modal glass with inherited blur and transparent Konsta lists', () => {
     const view = render(<UserProfileForm defaults={defaults} {...identity} onSave={async () => {}} />);
     const surfaces = view.container.querySelectorAll('[data-profile-glass]');
-    expect(surfaces).toHaveLength(3);
+    expect(surfaces).toHaveLength(2);
     surfaces.forEach(surface => {
       expect(surface.getAttribute('data-preset')).toBe('modalTuned');
       expect(surface.getAttribute('data-optics')).toBe('false');
       expect(surface.getAttribute('data-shape')).toBe('auto');
       expect(surface.hasAttribute('data-blur')).toBe(false);
     });
-    expect(view.container.querySelectorAll('[data-list-strong="false"]')).toHaveLength(3);
+    expect(view.container.querySelectorAll('[data-list-strong="false"]')).toHaveLength(2);
+  });
+
+  it('uses Headline labels, Body values and the compact sex popover', () => {
+    render(<UserProfileForm defaults={defaults} {...identity} onSave={async () => {}} />);
+    for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол:'])
+      expect(screen.getByText(label).getAttribute('data-variant')).toBe('headline');
+    expect(screen.getByText('@anna_fit').getAttribute('data-variant')).toBe('body');
+    expect(screen.getByText('202').getAttribute('data-variant')).toBe('body');
+    expect(screen.queryByText(/для расчёта возраста/)).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Пол: не указан' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Мужской' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(screen.getByText('муж').getAttribute('data-variant')).toBe('body');
   });
 
   it('edits saved values, preserves the draft on save failure, and allows retry', async () => {
@@ -99,6 +112,9 @@ describe('user profile form', () => {
       initialProfile={{ ...defaults, firstName: 'Сохранённое имя', email: '', phone: '', birthDate: '1990-05-31',
         sex: 'undisclosed', weightKg: 62, updatedAt: '2026-11-02T00:00:00Z' }} onSave={onSave} />);
     expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('Сохранённое имя');
+    const modified = screen.getByText(/^Изменено:/);
+    const save = screen.getByRole('button', { name: 'Сохранить анкету' });
+    expect(save.compareDocumentPosition(modified) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Новое имя' } });
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить анкету' }));
     await screen.findByText('Не удалось сохранить');
