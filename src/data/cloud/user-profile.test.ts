@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import Dexie, { type Table } from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import type { MezfitCloudDatabase } from './database';
 import { FlexAttributesRepository, flexAttributeId, type FlexAttributeRow, type FlexValueRow } from './flex-attributes';
 import {
@@ -246,5 +247,113 @@ describe('legacy profile transition', () => {
     await coach.updateOwn({ ...draft, firstName: 'Новое имя' });
     expect(await client.readOwn()).toMatchObject({ firstName: 'Новое имя' });
     expect(await db.flexValues.count()).toBe(8);
+  });
+});
+
+async function profileLink(db: ProfileDb, coach = '101', client = '202') {
+  const fixture = await relationshipMembership(coach, client);
+  await db.table('realms').put({ ...fixture.realm, owner: null });
+  await db.table('members').bulkPut(fixture.members.map(member => ({
+    ...member, owner: null, accepted: true, invite: false,
+  })));
+  return fixture.realm.realmId;
+}
+
+describe('published profile defaults', () => {
+  it('publishes every confirmed link idempotently and updates clears without touching overrides', async () => {
+    const { db, repo } = create();
+    const first = await profileLink(db);
+    const second = await profileLink(db, '102');
+    await repo.saveOwn(draft);
+    await repo.publishOwn();
+    expect(await repo.readPublished('tg:202', first)).toMatchObject(draft);
+    expect(await repo.readPublished('tg:202', second)).toMatchObject(draft);
+    const count = await db.flexValues.count();
+    await repo.publishOwn();
+    expect(await db.flexValues.count()).toBe(count);
+    const flexible = new FlexAttributesRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    const target = { entityType: 'publishedUser' as const, entityId: 'tg:202', realmId: first };
+    await flexible.setValue(target, { key: 'override_firstName', valueType: 'string', value: 'Свой вариант' });
+    await repo.saveOwn({ ...draft, phone: '', weightKg: null });
+    await repo.publishOwn();
+    expect(await repo.readPublished('tg:202', first)).toMatchObject({ phone: '', weightKg: null });
+    expect((await flexible.getValues(target)).find(row => row.key === 'override_firstName')?.value).toBe('Свой вариант');
+    expect((await db.flexValues.where('realmId').equals(first).toArray()).every(row => row.owner === first)).toBe(true);
+  });
+
+  it('publishes an existing profile to a newly confirmed relationship', async () => {
+    const { db, repo } = create();
+    await repo.saveOwn(draft);
+    const versions: Array<string | null> = [];
+    const subscription = repo.observePublicationVersion(version => versions.push(version), reason => { throw reason; });
+    try {
+      await vi.waitFor(() => expect(versions.length).toBeGreaterThan(0));
+      const previous = versions[versions.length - 1];
+      const realm = await profileLink(db);
+      await vi.waitFor(() => expect(versions[versions.length - 1]).not.toBe(previous));
+      await repo.publishOwn();
+      expect(await repo.readPublished('tg:202', realm)).toMatchObject(draft);
+    } finally { subscription.unsubscribe(); }
+  });
+
+  it('reads only an authorized shared profile and forbids peer writes and foreign personal realms', async () => {
+    const { db, repo } = create();
+    const realm = await profileLink(db);
+    await repo.saveOwn(draft);
+    await repo.publishOwn();
+    const peer = new UserProfileRepository(db as unknown as MezfitCloudDatabase, 'tg:101');
+    expect(await peer.readPublished('tg:202', realm)).toMatchObject(draft);
+    await expect(peer.readPublished('tg:202', 'tg:202')).rejects.toThrow('FLEX_ENTITY_FORBIDDEN');
+    const outsider = new UserProfileRepository(db as unknown as MezfitCloudDatabase, 'tg:303');
+    await expect(outsider.readPublished('tg:202', realm)).rejects.toThrow('FLEX_ENTITY_FORBIDDEN');
+    const flexible = new FlexAttributesRepository(db as unknown as MezfitCloudDatabase, 'tg:101');
+    await expect(flexible.setValue({ entityType: 'publishedUser', entityId: 'tg:202', realmId: realm },
+      { key: 'profile_firstName', valueType: 'string', value: 'Чужое изменение' })).rejects.toThrow('FLEX_ENTITY_FORBIDDEN');
+    const before = await repo.publicationVersion();
+    await db.table('members').where('userId').equals('tg:101').delete();
+    expect(await repo.publicationVersion()).not.toBe(before);
+    await expect(peer.readPublished('tg:202', realm)).rejects.toThrow('FLEX_ENTITY_FORBIDDEN');
+  });
+
+  it('does not overwrite a newer published snapshot with a stale personal version', async () => {
+    const { db, repo } = create();
+    const realm = await profileLink(db);
+    await repo.saveOwn(draft);
+    await repo.publishOwn();
+    const flexible = new FlexAttributesRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    await flexible.setValues({ entityType: 'publishedUser', entityId: 'tg:202', realmId: realm }, [
+      { key: 'profile_firstName', valueType: 'string', value: 'Новее на другом устройстве' },
+      { key: 'profile_updatedAt', valueType: 'string', value: '2099-01-01T00:00:00Z' },
+    ]);
+    await repo.publishOwn();
+    expect(await repo.readPublished('tg:202', realm)).toMatchObject({ firstName: 'Новее на другом устройстве' });
+  });
+
+  it('keeps the private save when publication fails and retries the complete shared transaction', async () => {
+    const { db, repo } = create();
+    const first = await profileLink(db);
+    const second = await profileLink(db, '102');
+    await repo.saveOwn(draft);
+    await db.flexAttributes.add({ id: flexAttributeId(second, 'profile_updatedAt'), realmId: second,
+      owner: second, key: 'profile_updatedAt', valueType: 'number' });
+    await expect(repo.publishOwn()).rejects.toThrow('FLEX_ATTRIBUTE_CONFLICT');
+    expect(await repo.readOwn()).toMatchObject(draft);
+    expect(await db.flexValues.where('realmId').equals(first).count()).toBe(0);
+    expect(await db.flexValues.where('realmId').equals(second).count()).toBe(0);
+  });
+
+  it('never acknowledges edits committed during the public push barrier', async () => {
+    const { db, repo } = create();
+    await repo.saveOwn(draft);
+    const version = await repo.publishOwn();
+    if (!version) throw new Error('Missing publication version');
+    let finish: (() => void) | undefined;
+    const sync = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    Object.defineProperty(db, 'cloud', { value: { sync }, configurable: true });
+    const confirmation = repo.confirmOwnSync(version);
+    await repo.saveOwn({ ...draft, phone: '' });
+    finish?.();
+    expect(await confirmation).toBe(false);
+    expect(sync).toHaveBeenCalledWith({ purpose: 'push', wait: true });
   });
 });
