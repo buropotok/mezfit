@@ -17,6 +17,8 @@ export interface TelegramHapticFeedback {
   notificationOccurred?(type: TelegramHapticNotificationType): void;
 }
 
+export type TelegramHomeScreenStatus = 'unsupported' | 'unknown' | 'added' | 'missed';
+
 export interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: {
@@ -28,6 +30,10 @@ export interface TelegramWebApp {
   ready(): void;
   expand(): void;
   disableVerticalSwipes?(): void;
+  addToHomeScreen?(): void;
+  checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
+  onEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
+  offEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
   BackButton?: TelegramBackButton;
   HapticFeedback?: TelegramHapticFeedback;
 }
