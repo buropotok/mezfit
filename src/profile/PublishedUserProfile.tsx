@@ -9,18 +9,18 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud?.db && cloud.actorUserId ? new UserProfileRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
-  const [snapshot, setSnapshot] = useState<{ key: string; profile: UserProfile | null; error: boolean } | null>(null);
+  const [snapshot, setSnapshot] = useState<{ repository: UserProfileRepository; key: string; profile: UserProfile | null; error: boolean } | null>(null);
   const [retry, setRetry] = useState(0);
   const key = cloud?.actorUserId + ':' + contact.relationshipId + ':' + contact.userId;
   useEffect(() => {
     if (!repository) return;
     let active = true;
     const subscription = repository.observePublished(contact.userId, contact.relationshipId,
-      profile => { if (active) setSnapshot({ key, profile, error: false }); },
-      () => { if (active) setSnapshot({ key, profile: null, error: true }); });
+      profile => { if (active) setSnapshot({ repository, key, profile, error: false }); },
+      () => { if (active) setSnapshot({ repository, key, profile: null, error: true }); });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, contact.userId, contact.relationshipId, key, retry]);
-  const current = snapshot?.key === key ? snapshot : null;
+  const current = snapshot?.repository === repository && snapshot?.key === key ? snapshot : null;
   const profile = current?.profile;
   const fields = profile ? [
     ['Имя', profile.firstName || 'Не указано'],
