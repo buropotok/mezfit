@@ -49,6 +49,10 @@ vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
 }));
 
 vi.mock('./exercises/PublicExerciseMediaPrefetch', () => ({ PublicExerciseMediaPrefetch: () => null }));
+vi.mock('./exercises/PublicCategoryArtworkProvider', () => ({
+  PublicCategoryArtworkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  usePublicCategoryArtwork: () => null,
+}));
 vi.mock('./workout/WorkedMuscleAssetsPrefetch', () => ({ WorkedMuscleAssetsPrefetch: () => null }));
 
 vi.mock('./coach/CoachShell', () => ({
@@ -247,7 +251,9 @@ describe('App own profile navigation', () => {
     fireEvent.click(menu);
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Настройки' }));
     expect(screen.queryByRole('region', { name: 'Анкета пользователя' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    const back = screen.getByRole('button', { name: 'Назад' });
+    fireEvent.click(back);
+    fireEvent.animationEnd(back);
     expect(await screen.findByRole('region', { name: 'Анкета пользователя' })).toBeTruthy();
   });
 
@@ -262,7 +268,9 @@ describe('App own profile navigation', () => {
     expect(items[0].textContent).toBe('Мой профиль');
     fireEvent.click(items[0]);
     await screen.findByRole('region', { name: 'Анкета пользователя' });
-    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    const back = screen.getByRole('button', { name: 'Назад' });
+    fireEvent.click(back);
+    fireEvent.animationEnd(back);
     expect(await screen.findByText('Coach home')).toBeTruthy();
     expect(getPrimaryTabsRoot(view.container).querySelector('[aria-label="Клиенты"]')).toBeTruthy();
   });
