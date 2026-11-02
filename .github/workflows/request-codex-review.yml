@@ -1,0 +1,58 @@
+name: Request Codex review after CI
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: codex-review-${{ github.event.workflow_run.head_repository.id }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  request-review:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.event == 'pull_request'
+          && github.event.workflow_run.head_repository.full_name == github.repository
+          && github.event.workflow_run.pull_requests[0].number != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Request Codex review for the current PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_STARTED: ${{ github.event.workflow_run.created_at }}
+        run: |
+          set -euo pipefail
+
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
+          if ! jq -e --arg sha "$HEAD_SHA" --arg repo "$GITHUB_REPOSITORY" '
+            .state == "open"
+            and .base.ref == "main"
+            and .head.sha == $sha
+            and .head.repo.full_name == $repo
+          ' <<<"$pr" >/dev/null; then
+            echo "PR is closed, was updated, or does not belong to this repository; skipping."
+            exit 0
+          fi
+
+          # A re-run of the same CI run must not post a duplicate comment.
+          comments=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100")
+          if jq -e --arg since "$RUN_STARTED" '
+            any(.[][]; .user.login == "github-actions[bot]"
+              and .body == "@codex review. Комментарии на русском"
+              and .created_at >= $since)
+          ' <<<"$comments" >/dev/null; then
+            echo "Codex review was already requested for this CI revision."
+            exit 0
+          fi
+
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+            -f body='@codex review. Комментарии на русском'
