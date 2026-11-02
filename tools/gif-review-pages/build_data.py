@@ -10,6 +10,7 @@ import heapq
 import hashlib
 import json
 import re
+import subprocess
 from collections import defaultdict
 from pathlib import Path
 
@@ -205,7 +206,12 @@ def generate(audit_dir, output_dir, github_ref):
         item["gif"] + ":" + ",".join(c["id"] for c in item["candidates"])
         for item in entries
     )
-    revision = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
+    # Identical candidate order alone is insufficient if underlying GH GIFs
+    # changed: also fingerprint the versioned media Git tree.
+    media_tree = subprocess.check_output(
+        ["git", "rev-parse", "HEAD:assets/media"], cwd=ROOT, text=True
+    ).strip()
+    revision = hashlib.sha256((media_tree + "\n" + fingerprint).encode("utf-8")).hexdigest()
     out = {
         "schema_version": 1, "direction": "github_gif_to_r2_gif",
         "candidate_revision": revision, "github_ref": github_ref,
