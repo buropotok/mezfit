@@ -40,10 +40,15 @@ vi.mock('../ui', () => ({
     <button disabled={disabled} onClick={onClick}>{children}</button>,
   GlassSurface: ({ children }: { children: ReactNode }) => <section>{children}</section>,
 }));
+vi.mock('./UserAvatarEditor', () => ({ UserAvatarEditor: () => null }));
 vi.mock('./UserProfileForm', () => ({
-  UserProfileForm: ({ initialProfile, onSave, onCancel }: { initialProfile: UserProfileDraft;
+  UserProfileForm: ({ initialProfile, onSave, onCancel, overridden, onReset }: { initialProfile: UserProfileDraft;
+    overridden?: UserProfileField[]; onReset: (field: UserProfileField) => Promise<unknown>;
     onSave: (draft: UserProfileDraft, fields: UserProfileField[]) => Promise<void>; onCancel: () => void }) =>
     <div aria-label="Редактор переопределений">
+      <span>{initialProfile.firstName}</span>
+      {overridden?.includes('firstName') ? <><span>Переопределено в этой связи</span>
+        <button onClick={() => { void onReset('firstName'); }}>Сбросить: Имя</button></> : null}
       <button onClick={() => { void onSave({ ...initialProfile, firstName: 'Новое переопределение' }, ['firstName']); }}>Записать имя</button>
       <button onClick={onCancel}>Отменить</button>
     </div>,
@@ -59,8 +64,10 @@ it('opens the reused editor and persists only deliberately changed fields', asyn
   source.save.mockResolvedValueOnce({ ...initial(), profile: { ...profile, firstName: 'Новое переопределение' } });
   render(<PublishedUserProfile contact={contact} />);
   expect(screen.getByText('Имя тренера')).toBeTruthy();
-  expect(screen.getByText('Переопределено в этой связи')).toBeTruthy();
+  expect(screen.queryByText('Переопределено в этой связи')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Сбросить: Имя' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
+  expect(screen.getByText('Переопределено в этой связи')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Записать имя' }));
   await waitFor(() => expect(source.save).toHaveBeenCalledWith('tg:202', 'realm-1', { firstName: 'Новое переопределение' }));
   await screen.findByText('Переопределения сохранены на устройстве.');
@@ -71,6 +78,7 @@ it('opens the reused editor and persists only deliberately changed fields', asyn
 it('resets a field to current published data and retains a retryable error on failure', async () => {
   source.reset.mockRejectedValueOnce(new Error('IndexedDB unavailable')).mockResolvedValueOnce(resetData());
   render(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
   fireEvent.click(screen.getByRole('button', { name: 'Сбросить: Имя' }));
   await screen.findByText('Не удалось сбросить переопределение. Повторите действие.');
   expect(screen.getByText('Имя тренера')).toBeTruthy();
@@ -143,8 +151,9 @@ it('does not revive a pending reset or its completion when returning to the same
   let finish: ((data: ContactUserProfile) => void) | undefined;
   source.reset.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
   const view = render(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
   fireEvent.click(screen.getByRole('button', { name: 'Сбросить: Имя' }));
-  expect(screen.getByRole('button', { name: 'Изменить анкету' })).toHaveProperty('disabled', true);
+  expect(screen.queryByRole('button', { name: 'Изменить анкету' })).toBeNull();
   view.rerender(<PublishedUserProfile contact={{ ...contact, userId: 'tg:303', relationshipId: 'realm-2' }} />);
   view.rerender(<PublishedUserProfile contact={contact} />);
   expect(screen.getByRole('button', { name: 'Изменить анкету' })).toHaveProperty('disabled', false);
