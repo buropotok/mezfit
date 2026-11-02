@@ -137,6 +137,17 @@ export class UserProfileRepository {
     return { entityType: 'user' as const, entityId: this.actorUserId, realmId: this.actorUserId };
   }
 
+  private async publishedVersion(profile: UserProfile, realmIds: readonly string[]): Promise<string> {
+    const copies = [];
+    for (const realmId of realmIds) {
+      const values = await this.flexible.getValues({
+        entityType: 'publishedUser', entityId: this.actorUserId, realmId,
+      });
+      copies.push([realmId, deserialize(values, USER_PROFILE_KEYS)]);
+    }
+    return JSON.stringify([profile, copies]);
+  }
+
   /** Derived presentation version; no parallel persistent sync metadata. */
   async publicationVersion(): Promise<string | null> {
     return this.db.transaction('r', [this.db.flexAttributes, this.db.flexValues,
@@ -144,7 +155,7 @@ export class UserProfileRepository {
       const profile = await this.readOwn();
       if (!profile) return null;
       const pairs = await profileRelationships(this.db, this.actorUserId);
-      return JSON.stringify([profile, pairs.map(pair => pair.realmId)]);
+      return this.publishedVersion(profile, pairs.map(pair => pair.realmId));
     });
   }
 
@@ -159,14 +170,21 @@ export class UserProfileRepository {
       const profile = await this.readOwn();
       if (!profile) return null;
       const pairs = await profileRelationships(this.db, this.actorUserId);
+      let incomplete = false;
       for (const pair of pairs) {
         const target = { entityType: 'publishedUser' as const, entityId: this.actorUserId, realmId: pair.realmId };
-        const previous = deserialize(await this.flexible.getValues(target), USER_PROFILE_KEYS);
-        // A newer snapshot from another device must not be replaced by a stale personal read.
+        const values = await this.flexible.getValues(target);
+        const previous = deserialize(values, USER_PROFILE_KEYS);
+        const count = await this.db.flexValues.where('[realmId+entityType+entityId]')
+          .equals([pair.realmId, 'publishedUser', this.actorUserId]).count();
+        const hasCanonical = values.some(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key));
+        // A partial incoming download is not permission to rewrite newer fields.
+        if (count > values.length || (hasCanonical && !previous)) { incomplete = true; continue; }
         if (previous && Date.parse(previous.updatedAt) > Date.parse(profile.updatedAt)) continue;
         await this.flexible.setValues(target, serialize(profile));
       }
-      return JSON.stringify([profile, pairs.map(pair => pair.realmId)]);
+      // Do not acknowledge an incomplete copy. Its completion invalidates the observed version.
+      return incomplete ? null : this.publishedVersion(profile, pairs.map(pair => pair.realmId));
     });
   }
 
