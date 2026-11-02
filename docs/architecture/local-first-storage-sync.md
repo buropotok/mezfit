@@ -220,3 +220,15 @@ No historical rewrite or Restore UI is part of this slice. Existing cancelled
 records, including formerly discarded test drafts, remain in the basket until
 manually deactivated. The exact protected `inactive` grant and rollout are in
 `calendar-cancellation.md` and AGENTS.md §21.
+
+
+## Own user profile (PR 1)
+
+Coach and Client share one private user profile. `UserProfileRepository` reads,
+observes and atomically saves the eight `profile_*` Flex values for
+`entityType=user`, `entityId=realmId=owner=actorUserId`. Registration and later
+editing use the same Basics tab in `ProfileWorkspace`. Only Client registration
+is mandatory. A failed local write is retryable; a successful local save does
+not wait for cloud confirmation. No schema, ACL, Worker CRUD or publication
+changes are included. Legacy `ClientIntake_*` values remain readable and are
+upgraded without physical deletes. See [user-profile.md](user-profile.md).
