@@ -1,6 +1,8 @@
 import { useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { GlassSurface } from './GlassSurface';
+import avatarCss from './avatar.css?inline';
+import typographyCss from './typography.css?inline';
 import glassSurfaceCss from './GlassSurface.css?inline';
 import { resolveUiIconPair } from './Icon';
 import type { GlassPresetName } from './glassMaterial';
@@ -183,6 +185,8 @@ function Scene({
           <>
             <style>{noFabPrototypeCss}</style>
             <style>{glassSurfaceCss}</style>
+            <style>{avatarCss}</style>
+            <style>{typographyCss}</style>
             <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute', pointerEvents: 'none' }}>
               <filter id="standalone-lens-filter" colorInterpolationFilters="sRGB" />
             </svg>

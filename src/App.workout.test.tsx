@@ -4,6 +4,21 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
 import { App } from './App';
+import type { UserProfile } from './data/cloud/user-profile';
+
+// These scenarios start after mandatory registration; registration itself is tested separately.
+vi.mock('./data/cloud/user-profile', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./data/cloud/user-profile')>();
+  return { ...actual, UserProfileRepository: class {
+    constructor(_db: unknown, readonly actorUserId: string) {}
+    async migrateOwn() {}
+    observeOwn(next: (profile: UserProfile | null) => void) {
+      next({ firstName: 'Клиент', lastName: '', email: '', phone: '', birthDate: '2000-01-01',
+        sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' });
+      return { unsubscribe() {} };
+    }
+  } };
+});
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
@@ -212,5 +227,43 @@ describe('App workout navigation', () => {
 
     expect(await screen.findByText('Client home')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Продолжить тренировку' })).toBeTruthy();
+  });
+});
+
+
+describe('App own profile navigation', () => {
+  it('returns the client from Settings to My profile through the shared Back path', async () => {
+    window.history.replaceState({}, '', '/');
+    getMeMock.mockResolvedValue({ user: { id: 10, telegramUserId: '100', username: 'client',
+      firstName: 'Client', lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false }, roles: ['client'] });
+    const view = render(<App />);
+    await screen.findByText('Client home');
+    const profileTab = getPrimaryTabsRoot(view.container).querySelector('[role="tab"][aria-label="Мой профиль"]');
+    if (!profileTab) throw new Error('Missing My profile tab');
+    fireEvent.click(profileTab);
+    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    const menu = screen.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menu);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Настройки' }));
+    expect(screen.queryByRole('region', { name: 'Анкета пользователя' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    expect(await screen.findByRole('region', { name: 'Анкета пользователя' })).toBeTruthy();
+  });
+
+  it('opens the coach own profile from the first system-menu entry and returns home', async () => {
+    window.history.replaceState({}, '', '/');
+    const view = render(<App />);
+    await screen.findByText('Coach home');
+    const menu = screen.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menu);
+    const items = await screen.findAllByRole('menuitem');
+    expect(items[0].textContent).toBe('Мой профиль');
+    fireEvent.click(items[0]);
+    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+    expect(await screen.findByText('Coach home')).toBeTruthy();
+    expect(getPrimaryTabsRoot(view.container).querySelector('[aria-label="Клиенты"]')).toBeTruthy();
   });
 });
