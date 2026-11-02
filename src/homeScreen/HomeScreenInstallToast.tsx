@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Toast } from 'konsta/react';
-import { getTelegramWebApp, type TelegramHomeScreenStatus } from '../telegram';
+import { requestTelegramHomeScreenShortcut, subscribeTelegramHomeScreenStatus, type TelegramHomeScreenStatus } from '../telegram';
 import { Text } from '../ui/primitives';
 
 const UNKNOWN_PROMPT_DISMISSED_KEY = 'mezfit.homeScreen.unknownPromptDismissed.v1';
@@ -31,54 +31,20 @@ export function HomeScreenInstallToast() {
     setOpened(false);
   }, [status]);
 
-  useEffect(() => {
-    const webApp = getTelegramWebApp();
-    if (!webApp?.initData || !webApp.checkHomeScreenStatus || !webApp.addToHomeScreen) return;
-
-    let active = true;
-    let added = false;
-    let listening = false;
-    const handleAdded = () => {
-      if (!active) return;
-      added = true;
+  useEffect(() => subscribeTelegramHomeScreenStatus(
+    (nextStatus) => {
+      setStatus(nextStatus);
+      setOpened(
+        nextStatus === 'missed'
+        || (nextStatus === 'unknown' && !unknownPromptWasDismissed()),
+      );
+    },
+    () => {
       rememberUnknownPromptDismissal();
       setStatus('added');
       setOpened(false);
-    };
-
-    try {
-      if (webApp.onEvent) {
-        webApp.onEvent('homeScreenAdded', handleAdded);
-        listening = true;
-      }
-    } catch {
-      // A missing event subscription must not block the status check.
-    }
-
-    try {
-      webApp.checkHomeScreenStatus((nextStatus) => {
-        if (!active || added) return;
-        setStatus(nextStatus);
-        setOpened(
-          nextStatus === 'missed'
-          || (nextStatus === 'unknown' && !unknownPromptWasDismissed()),
-        );
-      });
-    } catch {
-      // Unsupported/failed native checks never display a speculative reminder.
-    }
-
-    return () => {
-      active = false;
-      if (listening) {
-        try {
-          webApp.offEvent?.('homeScreenAdded', handleAdded);
-        } catch {
-          // Cleanup is best-effort on clients with incomplete event support.
-        }
-      }
-    };
-  }, []);
+    },
+  ), []);
 
   useEffect(() => {
     if (!opened) return;
@@ -89,11 +55,7 @@ export function HomeScreenInstallToast() {
   const install = () => {
     // Invoke the Telegram request synchronously from the user's tap.
     dismiss();
-    try {
-      getTelegramWebApp()?.addToHomeScreen?.();
-    } catch {
-      // On a subsequent launch, Telegram can report 'missed' again.
-    }
+    requestTelegramHomeScreenShortcut();
   };
 
   return (
