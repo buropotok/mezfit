@@ -28,7 +28,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
     busy.current = false;
     return () => { active.current = { repository: null, key: '' }; };
   }, [repository, key]);
-  const isCurrent = () => active.current.repository === repository && active.current.key === key;
+  const isCurrent = (owner: typeof active.current) => active.current === owner;
   useEffect(() => {
     if (!repository) return;
     let active = true;
@@ -46,19 +46,20 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   const notice = message?.repository === repository && message?.key === key ? message : null;
   const reset = async (field: UserProfileField) => {
     if (!repository || busy.current) return;
+    const owner = active.current;
     busy.current = true;
     setPending({ repository, key });
     setMessage(null);
     try {
       const saved = await repository.resetContactOverride(contact.userId, contact.relationshipId, field);
-      if (isCurrent()) {
+      if (isCurrent(owner)) {
         setSnapshot({ repository, key, data: saved, error: false });
         setMessage({ repository, key, text: 'Сброс сохранён на устройстве. Используются данные клиента.', error: false });
       }
     } catch {
-      if (isCurrent()) setMessage({ repository, key, text: 'Не удалось сбросить переопределение. Повторите действие.', error: true });
+      if (isCurrent(owner)) setMessage({ repository, key, text: 'Не удалось сбросить переопределение. Повторите действие.', error: true });
     } finally {
-      if (isCurrent()) { busy.current = false; setPending(null); }
+      if (isCurrent(owner)) { busy.current = false; setPending(null); }
     }
   };
   if (editing && repository && editor) return <section className="stack">
@@ -67,9 +68,10 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
       defaults={{ firstName: '', lastName: '' }} telegramUserId={contact.telegramUserId} telegramUsername={null}
       onCancel={() => setEditor(null)}
       onSave={async (draft, changedFields) => {
+        const owner = active.current;
         const patch: Partial<UserProfileDraft> = Object.fromEntries((changedFields ?? []).map(field => [field, draft[field]]));
         const saved = await repository.saveContactOverrides(contact.userId, contact.relationshipId, patch);
-        if (!isCurrent()) return;
+        if (!isCurrent(owner)) return;
         setSnapshot({ repository, key, data: saved, error: false });
         setEditor(null);
         setMessage({ repository, key, text: 'Переопределения сохранены на устройстве.', error: false });
