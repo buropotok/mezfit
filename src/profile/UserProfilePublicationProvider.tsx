@@ -43,7 +43,7 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
       }
     });
     return () => { alive = false; subscription.unsubscribe(); };
-  }, [repository, retry]);
+  }, [repository, retry, cloud?.avatarLoadRevision]);
   useEffect(() => {
     if (!repository || !current) return;
     let alive = true;
