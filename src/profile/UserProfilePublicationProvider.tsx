@@ -88,6 +88,6 @@ export function UserProfileSyncStatus() {
     <Badge color={status?.color ?? 'gray'} textVariant="caption" title={status?.error || undefined}>
       {status?.label ?? 'Загрузка'}
     </Badge>
-    {status?.error ? <Button variant="secondary" size="small" onClick={status.retry}>Повторить</Button> : null}
+    {status?.error ? <Button variant="secondary" size="compact" onClick={status.retry}>Повторить</Button> : null}
   </span>;
 }
