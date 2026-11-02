@@ -68,9 +68,12 @@ export function deriveWorkoutDayStatuses(
       && (!row.workoutSessionId || row.workoutSessionId === candidate.id)
       ? candidate : null;
 
-    if (session?.status === 'completed' || row.status === 'completed') {
+    const effectiveStatus = session
+      ? session.status === 'completed' ? 'completed' : 'in_progress'
+      : row.status;
+    if (effectiveStatus === 'completed') {
       mark(row.startsAtUtc, 'completed');
-    } else if (session?.status === 'active' || row.status === 'in_progress' || row.workoutSessionId) {
+    } else if (effectiveStatus === 'in_progress' || row.workoutSessionId) {
       // An already started workout cannot become missed, even if it began late.
       mark(row.startsAtUtc, 'scheduled');
     } else if (now >= end) {
