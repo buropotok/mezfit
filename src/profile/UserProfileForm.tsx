@@ -77,7 +77,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
     }
   };
   return <section className="user-profile__form" aria-label="Анкета пользователя">
-    <div className="user-profile__heading"><Text variant="title">Анкета пользователя</Text>{syncStatus}</div>
+    <div className="user-profile__heading"><div className="user-profile__heading-title"><Text variant="title">Анкета пользователя</Text></div>{syncStatus}</div>
     <Text variant="body" tone="muted">Все поля необязательны. Имя и фамилию можно изменить независимо от Telegram.</Text>
     <Text variant="caption" tone="muted">Анкета сохраняется в личном профиле и автоматически публикуется для подтверждённых контактов.</Text>
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
