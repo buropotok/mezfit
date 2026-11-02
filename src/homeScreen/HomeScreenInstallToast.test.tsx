@@ -110,12 +110,25 @@ describe('HomeScreenInstallToast', () => {
     let callback: ((value: TelegramHomeScreenStatus) => void) | undefined;
     const telegram = mockTelegram('missed');
     const webApp = window.Telegram!.WebApp;
-    webApp.checkHomeScreenStatus = vi.fn((listener) => { callback = listener; });
+    webApp.checkHomeScreenStatus = vi.fn((listener?: (value: TelegramHomeScreenStatus) => void) => { callback = listener; });
     const app = render(<HomeScreenInstallToast />);
     expect(telegram.onEvent).toHaveBeenCalledOnce();
 
     app.unmount();
     act(() => callback?.('missed'));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('ignores a stale missed status after Telegram confirms installation', () => {
+    const telegram = mockTelegram('missed');
+    let respond: ((value: TelegramHomeScreenStatus) => void) | undefined;
+    window.Telegram!.WebApp.checkHomeScreenStatus = vi.fn(
+      (listener?: (value: TelegramHomeScreenStatus) => void) => { respond = listener; },
+    );
+    render(<HomeScreenInstallToast />);
+
+    act(() => telegram.fireAdded());
+    act(() => respond?.('missed'));
     expect(screen.queryByRole('status')).toBeNull();
   });
 
