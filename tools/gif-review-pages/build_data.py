@@ -159,28 +159,33 @@ def order_candidates(pairs, gh_words, r2_words):
             selected.append(item)
             taken.add(item["id"])
 
-    # Four strongest semantic candidates, including ALL highest-priority exact
-    # ones up to capacity; leave one slot for truly independent visual retrieval.
-    for item in strong[:ROUND_SIZE - 1]:
-        append(item)
-    for item in visual:
-        if len(selected) >= ROUND_SIZE:
-            break
-        if item["kind"] == 0:
+    # For EACH round: four strong semantic hypotheses + one independent
+    # visual hypothesis. No exhausted round degenerates into arbitrary
+    # alphabetically similar titles while motion evidence is available.
+    for round_index in range(ROUND_COUNT):
+        limit = min(len(all_rows), (round_index + 1) * ROUND_SIZE)
+        for item in strong:
+            if len(selected) >= limit - 1:
+                break
             append(item)
-    # When all visual retrievals also share the movement name, take the
-    # strongest remaining visually supported name instead of a random pair.
-    for item in visual:
-        if len(selected) >= ROUND_SIZE:
-            break
-        append(item)
-    # If no visual data is available, finish the page from names.
-    for item in strong:
-        if len(selected) >= ROUND_SIZE:
-            break
-        append(item)
-    # Rank other candidates for subsequent rounds. Include non-strong
-    # semantic matches and visually retrieved pairs; preserve all evidence.
+        # Use a different visual-only hypothesis rather than duplicating the
+        # already displayed semantic family in the exploration position.
+        for item in visual:
+            if len(selected) >= limit:
+                break
+            if item["kind"] == 0:
+                append(item)
+        for item in visual:
+            if len(selected) >= limit:
+                break
+            append(item)
+        for item in strong:
+            if len(selected) >= limit:
+                break
+            append(item)
+
+    # Any tail beyond the six supported rounds is still included in the
+    # evidence report for diagnosis, but is not shown without a new revision.
     remainder = sorted(
         (item for item in all_rows if item["id"] not in taken),
         key=lambda x: (-x["kind"], -x["semantic"], -x["visual_support"],
