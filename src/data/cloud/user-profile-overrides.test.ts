@@ -134,7 +134,7 @@ describe('relationship profile overrides', () => {
     const { db, coach, realmId, target } = await fixture();
     const attributeId = flexAttributeId(realmId, USER_PROFILE_OVERRIDE_KEYS.firstName);
     await db.flexValues.add({ ...target, id: flexValueId(target, attributeId), owner: realmId,
-      attributeId, value: JSON.stringify('Другое устройство') });
+      attributeId, value: 'Другое устройство' });
     const observed: ContactUserProfile[] = [];
     const sub = coach.observeContact('tg:202', realmId, value => observed.push(value), reason => { throw reason; });
     try {
@@ -154,4 +154,13 @@ describe('relationship profile overrides', () => {
     expect((await coach.resetContactOverride('tg:202', realmId, 'weightKg')).profile?.weightKg).toBe(62);
     expect(await db.flexAttributes.count()).toBe(count);
   });
+});
+
+it('commits override save and reset offline without awaiting or controlling cloud transport', async () => {
+  const { db, coach, realmId } = await fixture();
+  const sync = vi.fn().mockRejectedValue(new Error('Offline'));
+  Object.defineProperty(db, 'cloud', { value: { sync }, configurable: true });
+  expect((await coach.saveContactOverrides('tg:202', realmId, { firstName: 'Офлайн' })).profile?.firstName).toBe('Офлайн');
+  expect((await coach.resetContactOverride('tg:202', realmId, 'firstName')).profile?.firstName).toBe('Анна');
+  expect(sync).not.toHaveBeenCalled();
 });
