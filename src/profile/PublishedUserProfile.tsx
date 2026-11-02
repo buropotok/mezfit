@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { UserProfileRepository, ageFromBirthDate, type ContactUserProfile, type UserProfileField } from '../data/cloud/user-profile';
+import { UserProfileRepository, ageFromBirthDate, type ContactUserProfile, type UserProfile, type UserProfileDraft, type UserProfileField } from '../data/cloud/user-profile';
 import { Button, GlassSurface, Text } from '../ui';
 import { UserProfileForm } from './UserProfileForm';
 
@@ -18,8 +18,8 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   const [snapshot, setSnapshot] = useState<{ repository: UserProfileRepository; key: string; data: ContactUserProfile | null; error: boolean } | null>(null);
   const [retry, setRetry] = useState(0);
   const key = cloud?.actorUserId + ':' + contact.relationshipId + ':' + contact.userId;
-  const [editor, setEditor] = useState<{ repository: UserProfileRepository; key: string } | null>(null);
-  const [pending, setPending] = useState<typeof editor>(null);
+  const [editor, setEditor] = useState<{ repository: UserProfileRepository; key: string; profile: UserProfile } | null>(null);
+  const [pending, setPending] = useState<{ repository: UserProfileRepository; key: string } | null>(null);
   const [message, setMessage] = useState<{ repository: UserProfileRepository; key: string; text: string; error: boolean } | null>(null);
   const active = useRef<{ repository: UserProfileRepository | null; key: string }>({ repository, key });
   const busy = useRef(false);
@@ -61,13 +61,13 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
       if (isCurrent()) { busy.current = false; setPending(null); }
     }
   };
-  if (editing && profile && repository) return <section className="stack">
-    {current?.error || data?.incomplete ? <Text variant="body" role="alert">Не удалось обновить анкету. Черновик сохранён в форме.</Text> : null}
-    <UserProfileForm key={key} purpose="contact" initialProfile={profile}
+  if (editing && repository) return <section className="stack">
+    {current?.error || data?.incomplete || !profile ? <Text variant="body" role="alert">Не удалось обновить анкету. Черновик сохранён в форме.</Text> : null}
+    <UserProfileForm key={key} purpose="contact" initialProfile={profile ?? editor.profile}
       defaults={{ firstName: '', lastName: '' }} telegramUserId={contact.telegramUserId} telegramUsername={null}
       onCancel={() => setEditor(null)}
       onSave={async (draft, changedFields) => {
-        const patch = Object.fromEntries((changedFields ?? []).map(field => [field, draft[field]]));
+        const patch: Partial<UserProfileDraft> = Object.fromEntries((changedFields ?? []).map(field => [field, draft[field]]));
         const saved = await repository.saveContactOverrides(contact.userId, contact.relationshipId, patch);
         if (!isCurrent()) return;
         setSnapshot({ repository, key, data: saved, error: false });
@@ -106,7 +106,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
         </> : null}
       </div>)}
         {data?.canEdit && repository ? <Button disabled={resetting}
-          onClick={() => { setMessage(null); setEditor({ repository, key }); }}>Изменить анкету</Button> : null}
+          onClick={() => { setMessage(null); setEditor({ repository, key, profile }); }}>Изменить анкету</Button> : null}
         {age !== null ? <Text variant="body">Возраст: {age}</Text> : null}
         <Text variant="caption" tone="muted">Изменено: {new Date(profile.updatedAt).toLocaleString('ru-RU')}</Text>
       </>}
