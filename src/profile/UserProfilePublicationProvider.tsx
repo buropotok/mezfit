@@ -25,6 +25,8 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
   const current = input?.repository === repository ? input : null;
   const active = useRef({ repository, version: current?.version });
   const pushing = useRef<object | null>(null);
+  const attemptedPush = useRef<{ repository: UserProfileRepository; version: string; retry: number } | null>(null);
+  useLayoutEffect(() => { pushing.current = null; attemptedPush.current = null; }, [repository]);
   useLayoutEffect(() => {
     active.current = { repository, version: current?.version };
     return () => { active.current = { repository: null, version: undefined }; };
@@ -52,6 +54,9 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
   const synced = confirmed?.repository === repository && confirmed.version === version;
   useEffect(() => {
     if (!repository || !version || !ready || synced || cloud?.syncStatus !== 'synced' || pushing.current) return;
+    if (attemptedPush.current?.repository === repository && attemptedPush.current.version === version
+      && attemptedPush.current.retry === retry) return;
+    attemptedPush.current = { repository, version, retry };
     const token = {};
     pushing.current = token;
     // Phase changes during this public push must not cancel its acknowledgement.
