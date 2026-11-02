@@ -150,7 +150,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
         onCopy={planner && row && (session?.format !== 'coached' || row.coachUserId === repository.actorUserId)
-          ? date => planner.copySession(sessionId, date).then(() => undefined) : undefined}
+          ? async date => { await queue.current; await planner.copySession(sessionId, date); } : undefined}
         onRename={!readOnly ? name => mutate(() => repository.rename(sessionId, name)) : undefined}
         onCommentChange={!readOnly && session?.status === 'active' ? comment => mutate(() => repository.comment(sessionId, comment)) : undefined}
         onNavigationContextChange={setNestedNavigation} />

@@ -155,8 +155,8 @@ describe('copy an executed session as PLAN only', () => {
     const result = await planner.drafts.get(copy);
     expect(result).toMatchObject({ saved: true, startsAtUtc: '2026-11-05T08:00:00.000Z',
       plan: { name: 'Факт', comment: null, exercises: [{
-        notes: 'Следить за техникой', sets: [{
-          setType: 'cluster', plannedReps: null, plannedWeightKg: null,
+        notes: null, sets: [{
+          setType: 'cluster', setLabel: null, plannedReps: null, plannedWeightKg: null,
           plannedDurationSeconds: null, plannedDistanceMeters: null,
           comment: null, materialLinks: [], chatLinks: [],
         }],

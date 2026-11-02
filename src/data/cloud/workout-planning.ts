@@ -134,13 +134,13 @@ export class WorkoutPlanningRepository {
         .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
       plan = { name: session.name, comment: null, exercises: activeExercises.map((exercise, position) => ({
         id: exercise.id, sourceProgramExerciseId: null, position,
-        exercise: structuredClone(exercise.exercise), notes: exercise.notes,
+        exercise: structuredClone(exercise.exercise), notes: null,
         sets: sets.filter(set => isAdHocSetRow(set) && !set.deletedAt && set.exerciseId === exercise.id
           && set.realmId === session.realmId && set.owner === session.realmId)
           .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id))
           .map((set, setPosition) => ({
             id: set.id, sourceProgramSetId: null, position: setPosition,
-            setType: set.setType, setLabel: set.setLabel, comment: null,
+            setType: set.setType, setLabel: null, comment: null,
             materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
             plannedDurationSeconds: null, plannedDistanceMeters: null,
           })),
