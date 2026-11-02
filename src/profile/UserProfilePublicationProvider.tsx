@@ -14,7 +14,7 @@ const Context = createContext<ProfileDelivery | null>(null);
 /** Account-scoped publication survives screen and role changes. Context holds status only. */
 export function UserProfilePublicationProvider({ children }: { children: ReactNode }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud
+  const repository = useMemo(() => cloud?.db && cloud.actorUserId
     ? new UserProfileRepository(cloud.db, cloud.actorUserId) : null, [cloud?.db, cloud?.actorUserId]);
   const [input, setInput] = useState<{ repository: UserProfileRepository; version: string | null } | null>(null);
   const [published, setPublished] = useState<typeof input>(null);
@@ -37,7 +37,10 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
     const subscription = repository.observePublicationVersion(version => {
       if (alive) setInput({ repository, version });
     }, () => {
-      if (alive) setFailure({ repository, message: 'Не удалось прочитать данные анкеты для публикации.' });
+      if (alive) {
+        setInput(null);
+        setFailure({ repository, message: 'Не удалось прочитать данные анкеты для публикации.' });
+      }
     });
     return () => { alive = false; subscription.unsubscribe(); };
   }, [repository, retry]);
