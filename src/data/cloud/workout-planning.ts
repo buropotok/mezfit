@@ -75,11 +75,10 @@ export class WorkoutPlanningRepository {
     const selected = parseLocalDate(date);
     if (!selected) throw new Error('Некорректная дата тренировки');
     const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
-    const [athlete, coach] = await Promise.all([
-      scheduling.listCalendar(source.athleteUserId, true),
-      source.format === 'coached' && source.coachUserId
-        ? scheduling.listCalendar(source.coachUserId, true) : Promise.resolve([]),
-    ]);
+    // Keep membership-backed local calendar reads serialized for Dexie/WebView.
+    const athlete = await scheduling.listCalendar(source.athleteUserId, true);
+    const coach = source.format === 'coached' && source.coachUserId
+      ? await scheduling.listCalendar(source.coachUserId, true) : [];
     const proposed = new Date(selected.year, selected.month - 1, selected.day, 8, 0, 0, 0);
     const relevant = [...new Map([...athlete, ...coach]
       .filter(row => bookingsShareParticipant({ ...source, startsAtUtc: proposed.toISOString() }, row))
