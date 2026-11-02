@@ -5,6 +5,12 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassFloatingActionSlot, LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
 
+// Vitest skips CSS processing; load the real stylesheet for the Shadow DOM contract.
+vi.mock('./avatar.css?inline', async () => {
+  const { readFile } = await import('node:fs/promises');
+  return { default: await readFile(new URL('./avatar.css', import.meta.url), 'utf8') };
+});
+
 const tabs:LiquidGlassIconOnlyTab[]=['Сегодня','Клиенты','Программы','Аналитика','Настройки'].map((label,i)=>({value:String(i),label,icon:{outline:<svg data-art={`${i}-outline`}/>,filled:<svg data-art={`${i}-filled`}/>}}));
 const namedTabs:LiquidGlassIconOnlyTab[]=[
   {value:'today',label:'Сегодня',icon:'calendar-event'},
