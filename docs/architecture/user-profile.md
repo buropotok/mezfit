@@ -80,6 +80,11 @@ its source destination per role and supplies the existing level-two Back context
 Coach My profile is the first system menu item and also uses that established Back
 context. Role switching does not create another profile. Profile tab state is
 retained across destination changes and reset for account/role changes.
+The surrounding PlannedWorkoutStartProvider keeps a stable Context/children tree
+when its enabled capability changes. Disabled destinations expose a null Start
+context and instantiate no Start repositories; they do not remount NavigationShell,
+profile state or the live liquid-tab scene. Capability changes still invalidate
+pending Start generations and dismiss transient workflow state.
 
 ## Form surface contract
 
