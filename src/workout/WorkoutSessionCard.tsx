@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Avatar,
   Badge,
+  DatePicker,
   GlassSurface,
   Icon,
   IconButton,
@@ -12,6 +13,7 @@ import {
   SortableList,
   Text,
   type LiquidPopoverItem,
+  type LocalDate,
 } from '../ui';
 import type { NavigationContext } from '../NavigationShell';
 import { WorkoutPlanCard, type WorkoutPlanCardProps } from './WorkoutPlanCard';
@@ -110,6 +112,7 @@ export interface WorkoutFactCardProps<Id extends string | number = number> {
   onEditResults?: () => void | Promise<void>;
   onWorkoutHistory?: () => void | Promise<void>;
   onShare?: () => void | Promise<void>;
+  onCopy?: (date: LocalDate) => Promise<void>;
   onCommentChange?: (comment: string) => void | Promise<void>;
   onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
   onDeleteExercise?: (sessionExerciseId: Id) => void;
@@ -143,6 +146,7 @@ function WorkoutFactCard<Id extends string | number = number>({
   onEditResults,
   onWorkoutHistory,
   onShare,
+  onCopy,
   onCommentChange,
   onOpenExerciseMenu,
   onDeleteExercise,
@@ -154,7 +158,15 @@ function WorkoutFactCard<Id extends string | number = number>({
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [pendingDialog, setPendingDialog] = useState<'rename' | 'comment' | null>(null);
+  const [pendingDialog, setPendingDialog] = useState<'rename' | 'comment' | 'copy' | null>(null);
+  const [copyOpened, setCopyOpened] = useState(false);
+  const [copyBusy, setCopyBusy] = useState(false);
+  const copyRunning = useRef(false);
+  const [copyError, setCopyError] = useState('');
+  const [copyNotice, setCopyNotice] = useState('');
+  const today = new Date();
+  const copyPickerDate = [today.getFullYear(), today.getMonth() + 1, today.getDate()]
+    .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0')).join('-');
   const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Partial<Record<Id, boolean>>>({});
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(sourceTitle);
@@ -251,6 +263,10 @@ function WorkoutFactCard<Id extends string | number = number>({
       onSelect: () => void onWorkoutHistory(),
     });
   }
+  if (onCopy) {
+    menuItems.push({ id: 'copy', label: 'Скопировать тренировку', icon: 'copy-plus',
+      disabled: copyBusy, onSelect: () => setPendingDialog('copy') });
+  }
   if (onShare) {
     menuItems.push({
       id: 'share',
@@ -344,7 +360,8 @@ function WorkoutFactCard<Id extends string | number = number>({
                 onPresentationChange={(presented) => {
                   if (presented || pendingDialog === null) return;
                   if (pendingDialog === 'rename') setRenameOpen(true);
-                  else setCommentOpen(true);
+                  else if (pendingDialog === 'comment') setCommentOpen(true);
+                  else setCopyOpened(true);
                   setPendingDialog(null);
                 }}
                 triggerRef={menuTriggerRef}
@@ -422,6 +439,17 @@ function WorkoutFactCard<Id extends string | number = number>({
         )}
       />
 
+      <DatePicker opened={copyOpened} value={copyPickerDate}
+        onClose={() => setCopyOpened(false)} onChange={date => {
+          if (!onCopy || copyRunning.current) return;
+          setCopyOpened(false); copyRunning.current = true; setCopyBusy(true);
+          setCopyError(''); setCopyNotice('');
+          void onCopy(date).then(() => setCopyNotice('Копия тренировки добавлена в расписание'))
+            .catch(reason => setCopyError(reason instanceof Error ? reason.message : 'Не удалось скопировать тренировку'))
+            .finally(() => { copyRunning.current = false; setCopyBusy(false); });
+        }} />
+      {copyError ? <Text variant="footnote" role="alert">{copyError}</Text> : null}
+      {copyNotice ? <Text variant="footnote" role="status">{copyNotice}</Text> : null}
       <MezfitDialog
         opened={renameOpen}
         title="Изменить название"
