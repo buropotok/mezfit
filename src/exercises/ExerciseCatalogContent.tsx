@@ -17,6 +17,7 @@ import { usePublicCategoryArtwork } from './PublicCategoryArtworkProvider';
 import { CoachExerciseCatalogFab } from './CoachExerciseCatalogFab';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { GlassSurface } from '../ui/GlassSurface';
+import { Icon } from '../ui/Icon';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import {
   Button, IconButton, LiquidPopover, List, ListItem,
@@ -45,10 +46,6 @@ const CLIENT_CATALOG_TABS = [
 ] as const;
 const EMPTY_FAVOURITES: ReadonlySet<string> = new Set();
 
-function TablerBarbell() {
-  return <svg aria-hidden="true" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h2m2 0h12m2 0h2M4 9v6m2-9v12m12-12v12m2-9v6" /></svg>;
-}
-
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
 
 function CategoryArtwork({ category }: { category: string }) {
@@ -57,7 +54,7 @@ function CategoryArtwork({ category }: { category: string }) {
   useEffect(() => setFailed(false), [url]);
   return url && !failed
     ? <img src={url} alt="" width={72} height={72} decoding="async" onError={() => setFailed(true)} />
-    : <TablerBarbell />;
+    : <Icon name="barbell" />;
 }
 const PAGE_SIZE = 80;
 
@@ -330,7 +327,7 @@ export function ExerciseCatalogContent({
               title={label}
               subtitle={`${tabExercises.filter((row) => row.category === id).length} упражнений`}
               leading={<span className="mezfit-public-exercises__category-fallback">
-                {id === 'other' ? <TablerBarbell /> : <CategoryArtwork category={id} />}
+                {id === 'other' ? <Icon name="barbell" /> : <CategoryArtwork category={id} />}
               </span>}
               onClick={() => { setCategory(id); setVisibleLimit(PAGE_SIZE); }}
             />
