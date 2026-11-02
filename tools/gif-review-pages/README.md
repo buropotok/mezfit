@@ -10,6 +10,10 @@ This never changes exercise definitions, R2, the app, or Dexie Cloud.
 - Generator: tools/gif-review-pages/build_data.py (Python 3 standard library).
 - Deployment: .github/workflows/deploy-gif-review-pages.yml.
 - On merge to main, the dedicated workflow publishes the standalone static site.
+- Media URLs are pinned to the checkout commit SHA; candidate ranking is fingerprinted
+  by candidate_revision. Changes to catalogues do not automatically overwrite a
+  review session in progress; only the operator workflow/source changes or an
+  explicitly dispatched rebuild republish the candidate data.
 - Repository owner must enable **Settings → Pages → Build and deployment →
   GitHub Actions**. Until this is enabled and the publishing workflow succeeds,
   the proposed https://buropotok.github.io/mezfit/ address is NOT live.
@@ -71,7 +75,11 @@ occupies that address without explicitly deciding to replace that site.
    discards stale later-round choices for the same GH GIF.
 
 CSV schema:
-github_gif,github_name_en,round,status,r2_id,r2_gif,r2_name_en,updated_at.
+candidate_revision,github_gif,github_name_en,round,status,r2_id,r2_gif,r2_name_en,updated_at.
+CSV import requires the same candidate_revision as the published page. Each
+revision has a separate localStorage key so refreshing a newer ranking cannot
+silently reinterpret previous round choices. Export old revisions before
+intentionally republishing the candidate source.
 status is one of matched, none, skip. Multiple GH GIFs may select the same R2 GIF;
 the tool does not enforce 1:1 matching. Unreviewed GH GIFs have no CSV row and
 are not silently treated as nonmatches.
