@@ -214,7 +214,6 @@ interface Props {
   glassOptics?: boolean;
   previewWidth?: 320 | null;
   children: ReactNode;
-  registrationRequired?: boolean;
 }
 
 // LiquidPopover motion values are seconds; FAB compression is fixed at 120 ms.
@@ -270,7 +269,6 @@ export function NavigationShell({
   glassOptics = false,
   previewWidth = null,
   children,
-  registrationRequired = false,
 }: Props) {
   const cloud = useCloudConnections();
   const ownAvatarContact = activeRole === 'client'
@@ -306,7 +304,7 @@ export function NavigationShell({
   const level: NavigationLevel = nestedContext ? 2 : 1;
   const destinationFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const surfaceFloatingAction = registeredFloatingAction?.destination === null ? registeredFloatingAction.action : null;
-  const resolvedPrimaryFloatingAction = level === 1 && !registrationRequired
+  const resolvedPrimaryFloatingAction = level === 1
     ? surfaceFloatingAction ?? destinationFloatingAction ?? (currentItem.showFab === false ? null : floatingAction ?? null)
     : null;
   const resolvedSurfaceFloatingAction = level === 2 ? surfaceFloatingAction : null;
@@ -361,7 +359,7 @@ export function NavigationShell({
   useEffect(() => {
     setMenuOpen(false);
     setCoachSelectorOpen(false);
-  }, [activeRole, registrationRequired]);
+  }, [activeRole]);
 
   useEffect(() => {
     contextRef.current = nestedContext;
@@ -453,7 +451,6 @@ export function NavigationShell({
   }, []);
 
   const chooseDestination = (next: AppDestination) => {
-    if (registrationRequired) return;
     setCalendarOpen(false);
     onDestinationChange(next);
     setMenuOpen(false);
@@ -549,14 +546,14 @@ export function NavigationShell({
             identity={identity}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
-            onCalendar={() => { if (!registrationRequired) setCalendarOpen((open) => !open); }}
+            onCalendar={() => setCalendarOpen((open) => !open)}
             calendarOpen={calendarOpen}
             renderMenuControl={renderMenuControl}
             rightControlRef={menuOriginRef}
             rightControlHidden={menuOpen || menuPresented}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
-            menuDisabled={registrationRequired || menuOpen || menuPresented}
+            menuDisabled={menuOpen || menuPresented}
           />
         </div>
 
