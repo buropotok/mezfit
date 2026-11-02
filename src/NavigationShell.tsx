@@ -272,7 +272,9 @@ export function NavigationShell({
 }: Props) {
   const cloud = useCloudConnections();
   const ownAvatarContact = activeRole === 'client'
-    ? cloud?.selfAvatars?.find(contact => contact.userId === `tg:${me.user.telegramUserId}` && contact.avatarVersion) ?? null
+    ? cloud?.selfAvatars?.find(contact => contact.userId === `tg:${me.user.telegramUserId}` && contact.avatarVersion)
+      ?? { userId: `tg:${me.user.telegramUserId}`, relationshipId: `tg:${me.user.telegramUserId}`,
+        telegramUserId: me.user.telegramUserId, displayName: me.user.firstName }
     : null;
   const ownAvatarSrc = useCloudContactAvatarUrl(ownAvatarContact);
   const ownAvatar = <span style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
