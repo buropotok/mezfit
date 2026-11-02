@@ -7,10 +7,10 @@ import type { UserProfile } from '../data/cloud/user-profile';
 import { PublishedUserProfile } from './PublishedUserProfile';
 
 const source = vi.hoisted(() => ({
-  requested: vi.fn(), next: null as ((profile: UserProfile | null) => void) | null,
+  db: {}, requested: vi.fn(), next: null as ((profile: UserProfile | null) => void) | null,
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
-  useCloudConnections: () => ({ db: {}, actorUserId: 'tg:101' }),
+  useCloudConnections: () => ({ db: source.db, actorUserId: 'tg:101' }),
 }));
 vi.mock('../data/cloud/user-profile', async importOriginal => {
   const original = await importOriginal<typeof import('../data/cloud/user-profile')>();
