@@ -1,4 +1,5 @@
 import { liveQuery } from 'dexie';
+import { UserAvatarRepository } from './user-avatar';
 import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
 import {
@@ -201,7 +202,7 @@ export class UserProfileRepository {
     for (const realmId of realmIds) {
       const values = await this.flexible.getValues({
         entityType: 'publishedUser', entityId: this.actorUserId, realmId,
-      });
+      }, Object.values(USER_PROFILE_KEYS));
       copies.push([realmId, deserialize(values, USER_PROFILE_KEYS)]);
     }
     return JSON.stringify([profile, copies]);
@@ -212,9 +213,11 @@ export class UserProfileRepository {
     return this.db.transaction('r', [this.db.flexAttributes, this.db.flexValues,
       this.db.adHocSessions, this.db.realms, this.db.members], async () => {
       const profile = await this.readOwn();
-      if (!profile) return null;
+      const avatarVersion = await new UserAvatarRepository(this.db, this.actorUserId).publicationVersion();
+      if (!profile) return avatarVersion;
       const pairs = await profileRelationships(this.db, this.actorUserId);
-      return this.publishedVersion(profile, pairs.map(pair => pair.realmId));
+      const version = await this.publishedVersion(profile, pairs.map(pair => pair.realmId));
+      return avatarVersion ? JSON.stringify([version, avatarVersion]) : version;
     });
   }
 
@@ -226,13 +229,14 @@ export class UserProfileRepository {
   async publishOwn(): Promise<string | null> {
     return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
       this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const avatarComplete = await new UserAvatarRepository(this.db, this.actorUserId).publishOwn();
       const profile = await this.readOwn();
-      if (!profile) return null;
+      if (!profile) return avatarComplete ? this.publicationVersion() : null;
       const pairs = await profileRelationships(this.db, this.actorUserId);
       let incomplete = false;
       for (const pair of pairs) {
         const target = { entityType: 'publishedUser' as const, entityId: this.actorUserId, realmId: pair.realmId };
-        const values = await this.flexible.getValues(target);
+        const values = await this.flexible.getValues(target, [...Object.values(USER_PROFILE_KEYS), ...Object.values(USER_PROFILE_OVERRIDE_KEYS)]);
         const previous = deserialize(values, USER_PROFILE_KEYS);
         const canonicalValues = values.filter(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key));
         const expectedRows = await this.db.flexValues.bulkGet(fields.map(({ key }) =>
@@ -245,7 +249,7 @@ export class UserProfileRepository {
         await this.flexible.setValues(target, serialize(profile));
       }
       // Do not acknowledge an incomplete copy. Its completion invalidates the observed version.
-      return incomplete ? null : this.publishedVersion(profile, pairs.map(pair => pair.realmId));
+      return incomplete || !avatarComplete ? null : this.publicationVersion();
     });
   }
 
@@ -263,7 +267,7 @@ export class UserProfileRepository {
   async readPublished(userId: string, realmId: string): Promise<UserProfile | null> {
     return deserialize(await this.flexible.getValues({
       entityType: 'publishedUser', entityId: userId, realmId,
-    }), USER_PROFILE_KEYS);
+    }, Object.values(USER_PROFILE_KEYS)), USER_PROFILE_KEYS);
   }
 
 
@@ -272,7 +276,7 @@ export class UserProfileRepository {
     return this.db.transaction('r', [this.db.flexAttributes, this.db.flexValues,
       this.db.adHocSessions, this.db.realms, this.db.members], async () => {
       const target = { entityType: 'publishedUser' as const, entityId: userId, realmId };
-      const values = await this.flexible.getValues(target);
+      const values = await this.flexible.getValues(target, [...Object.values(USER_PROFILE_KEYS), ...Object.values(USER_PROFILE_OVERRIDE_KEYS)]);
       const published = deserialize(values, USER_PROFILE_KEYS);
       const expected = await this.db.flexValues.bulkGet(Object.values(USER_PROFILE_OVERRIDE_KEYS)
         .map(key => flexValueId(target, flexAttributeId(realmId, key))));
@@ -324,7 +328,7 @@ export class UserProfileRepository {
   }
 
   async readOwn(): Promise<UserProfile | null> {
-    return resolveOwnProfile(await this.flexible.getValues(this.ownTarget()));
+    return resolveOwnProfile(await this.flexible.getValues(this.ownTarget(), [...Object.values(USER_PROFILE_KEYS), ...Object.values(legacyKeys)]));
   }
 
   observeOwn(onChange: (profile: UserProfile | null) => void, onError: (error: unknown) => void) {
@@ -334,7 +338,7 @@ export class UserProfileRepository {
   /** Explicit, atomic upgrade. Read/observe never write or run a sync loop. */
   async migrateOwn(): Promise<void> {
     await this.db.transaction('rw', this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions, async () => {
-      const values = await this.flexible.getValues(this.ownTarget());
+      const values = await this.flexible.getValues(this.ownTarget(), [...Object.values(USER_PROFILE_KEYS), ...Object.values(legacyKeys)]);
       const profile = resolveOwnProfile(values);
       const canonical = deserialize(values, USER_PROFILE_KEYS);
       const hasCanonical = values.some(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key));
@@ -366,7 +370,7 @@ export class UserProfileRepository {
     const error = validateUserProfile(normalized);
     if (error) throw new Error(error);
     return this.db.transaction('rw', this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions, async () => {
-      const values = await this.flexible.getValues(this.ownTarget());
+      const values = await this.flexible.getValues(this.ownTarget(), [...Object.values(USER_PROFILE_KEYS), ...Object.values(legacyKeys)]);
       const previous = resolveOwnProfile(values);
       if (values.some(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key))
         && !deserialize(values, USER_PROFILE_KEYS)) {
