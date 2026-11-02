@@ -1,5 +1,5 @@
 import type { MezfitCloudDatabase } from './database';
-import { isApprovedAssignedPair } from './assigned-programs';
+import { isApprovedAssignedPair } from './relationship-access';
 
 /** Only Worker-confirmed two-member relationships may receive profile defaults. */
 export async function profileRelationships(
