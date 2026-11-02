@@ -1,10 +1,13 @@
+import Dexie from 'dexie';
 import type { MezfitCloudDatabase } from './database';
 import { isApprovedAssignedPair } from './relationship-access';
 
 /** Only Worker-confirmed two-member relationships may receive profile defaults. */
-export async function profileRelationships(
+export function profileRelationships(
   db: Pick<MezfitCloudDatabase, 'realms' | 'members'>, actorUserId: string,
 ) {
+  // Keep discovery, native crypto and its continuations in one transaction lifetime.
+  return Dexie.waitFor((async () => {
   const [realms, members] = await Promise.all([db.realms.toArray(), db.members.toArray()]);
   const pairs: Array<{ realmId: string; coachUserId: string; clientUserId: string }> = [];
   for (const realm of realms) {
@@ -17,4 +20,5 @@ export async function profileRelationships(
       pairs.push({ realmId: realm.realmId, coachUserId, clientUserId });
   }
   return pairs.sort((a, b) => a.realmId.localeCompare(b.realmId));
+  })());
 }
