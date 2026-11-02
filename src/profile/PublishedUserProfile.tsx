@@ -26,6 +26,12 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   useLayoutEffect(() => {
     active.current = { repository, key };
     busy.current = false;
+    // A new visit must not reactivate the prior visit's editor, pending action
+    // or notice when the user returns to the same relationship.
+    setSnapshot(null);
+    setEditor(null);
+    setPending(null);
+    setMessage(null);
     return () => { active.current = { repository: null, key: '' }; };
   }, [repository, key]);
   const isCurrent = (owner: typeof active.current) => active.current === owner;
