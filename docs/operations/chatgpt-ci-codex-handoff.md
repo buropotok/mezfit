@@ -22,8 +22,8 @@
 4. Если CI завершён успешно, найти свежую сводку Codex. При отсутствии результата или `code_review.status != "completed"` — `CODEX_PENDING`. Сводка может редактироваться на месте: прочитать **актуальное body**, не ориентироваться только на `created_at` или появление комментария.
 5. Обрабатывать сводку только если `code_review.commit_sha` **полностью совпадает** с текущим HEAD SHA. Если в сводке старый SHA, неопределённое состояние или незнакомая версия маркера — `CODEX_PENDING` / `NEEDS_INSPECTION`, без автоматических правок.
 6. Если `status == "completed"` и `has_unresolved_findings == true`, собрать замечания Codex к проверенной ревизии из inline-комментариев/threads и review submissions: текст, `comment_id`, `review_id` (если есть), `path`, `line` (если есть), ссылку и SHA привязки. Сформировать `CODEX_FIX_REQUIRED` **только если замечания реально получены**; если сводка говорит об ошибках, а замечания недоступны — `NEEDS_INSPECTION`.
-7. Если `status == "completed"`, `has_any_findings == false` и `has_unresolved_findings == false` — `CODEX_CLEAN` для этого SHA. Если `has_any_findings == true`, но `has_unresolved_findings == false`, проверить threads/историю: это не доказательство отсутствия замечаний и не повод повторно исправлять уже закрытые вопросы.
-8. Если GitHub API вернул ошибку, сообщения конфликтуют или источник не подтверждён — `NEEDS_INSPECTION`; никакого «чистого ревью» по умолчанию.
+7. Если `status == "completed"`, `has_any_findings == false` и `has_unresolved_findings == false` — `CODEX_CLEAN` для этого SHA. Если `has_any_findings == true`, но `has_unresolved_findings == false`, вернуть `NEEDS_INSPECTION`: отдельно проверить уже разрешённые threads/историю, не объявлять ревью без замечаний и не повторять закрытые исправления.
+8. Если PR закрыт/смёржен, GitHub API вернул ошибку, сообщения конфликтуют или источник не подтверждён — `NEEDS_INSPECTION` с причиной; никакого «чистого ревью» и автоматических изменений по умолчанию.
 
 ## Единый результат проверки
 
@@ -80,6 +80,7 @@
 | Повторный зелёный CI того же SHA после старого падения | `CODEX_PENDING` либо статус нового Codex, старую ошибку игнорировать |
 | Свежий Codex summary `completed` + реальный inline finding | `CODEX_FIX_REQUIRED` |
 | Summary `completed`, но inline finding недоступен | `NEEDS_INSPECTION` |
+| `has_any_findings == true`, `has_unresolved_findings == false` | `NEEDS_INSPECTION` без повторных исправлений |
 | Свежий Codex summary `completed`, оба finding-флага `false` | `CODEX_CLEAN` |
 | PR закрыт/смёржен, неверный SHA, незнакомый маркер или ошибка API | Нет автоматических правок |
 
