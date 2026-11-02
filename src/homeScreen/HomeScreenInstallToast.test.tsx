@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { StrictMode, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TelegramHomeScreenStatus, TelegramWebApp } from '../telegram';
 import { HomeScreenInstallToast } from './HomeScreenInstallToast';
@@ -83,6 +83,12 @@ describe('HomeScreenInstallToast', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('keeps an unknown reminder visible across React StrictMode effect replay', () => {
+    mockTelegram('unknown');
+    render(<StrictMode><HomeScreenInstallToast /></StrictMode>);
+    expect(screen.getByRole('status')).toBeTruthy();
+  });
+
   it('still offers missed after a previous unknown reminder was dismissed', () => {
     mockTelegram('unknown');
     const first = render(<HomeScreenInstallToast />);
@@ -136,6 +142,13 @@ describe('HomeScreenInstallToast', () => {
     mockTelegram('missed');
     delete window.Telegram!.WebApp.checkHomeScreenStatus;
     render(<HomeScreenInstallToast />);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('does not show a speculative reminder when the Telegram status check fails', () => {
+    mockTelegram('missed');
+    window.Telegram!.WebApp.checkHomeScreenStatus = () => { throw new Error('native check unavailable'); };
+    expect(() => render(<HomeScreenInstallToast />)).not.toThrow();
     expect(screen.queryByRole('status')).toBeNull();
   });
 
