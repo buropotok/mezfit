@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
@@ -236,6 +236,55 @@ describe('App workout navigation', () => {
 
 
 describe('App own profile navigation', () => {
+  it.each([
+    ['Мой профиль', 'Настройки', 'Мой профиль'],
+    ['Настройки', 'Мой профиль', 'Настройки'],
+  ])('returns home after reopening a parent through %s → %s → %s', async (first, second, third) => {
+    window.history.replaceState({}, '', '/');
+    render(<App />);
+    await screen.findByText('Coach home');
+
+    for (const label of [first, second, third]) {
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Меню страницы' }).hasAttribute('disabled')).toBe(false);
+      });
+      const menu = screen.getByRole('button', { name: 'Меню страницы' });
+      fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+      fireEvent.click(menu);
+      fireEvent.click(await screen.findByRole('menuitem', { name: label }));
+      if (label === 'Мой профиль') {
+        await screen.findByRole('region', { name: 'Анкета пользователя' });
+      } else {
+        expect(screen.queryByRole('region', { name: 'Анкета пользователя' })).toBeNull();
+      }
+    }
+
+    // Browser Back uses the same current NavigationContext as navbar/Telegram Back.
+    fireEvent.popState(window);
+    expect(await screen.findByText('Coach home')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Назад' })).toBeNull();
+  });
+
+  it('unwinds Settings opened from the coach profile before returning home', async () => {
+    window.history.replaceState({}, '', '/');
+    render(<App />);
+    await screen.findByText('Coach home');
+    for (const label of ['Мой профиль', 'Настройки']) {
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Меню страницы' }).hasAttribute('disabled')).toBe(false);
+      });
+      const menu = screen.getByRole('button', { name: 'Меню страницы' });
+      fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+      fireEvent.click(menu);
+      fireEvent.click(await screen.findByRole('menuitem', { name: label }));
+    }
+
+    fireEvent.popState(window);
+    expect(await screen.findByRole('region', { name: 'Анкета пользователя' })).toBeTruthy();
+    fireEvent.popState(window);
+    expect(await screen.findByText('Coach home')).toBeTruthy();
+  });
+
   it('returns the client from Settings to My profile through the shared Back path', async () => {
     window.history.replaceState({}, '', '/');
     getMeMock.mockResolvedValue({ user: { id: 10, telegramUserId: '100', username: 'client',
