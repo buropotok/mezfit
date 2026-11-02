@@ -26,3 +26,4 @@ Startup background blur is separated from icon optics, so startup icons keep dis
 - Runtime timers, RAFs, observers, animations, and listeners are disposed with the scene.
 - The shared settled touch runtime includes the same lost-pointer-capture cleanup and tap-spring watchdog as `LiquidGlassIconOnly`, preventing a transient lens state from remaining visible if WebView animation callbacks are dropped.
 - Captured `pointerup` / `pointercancel` are handled on both the owner document and the toolbar pane, so Telegram/WebView retargeting cannot leave the pressed lens or global pointer lifecycle active.
+- Tap-spring classification reads the original gesture owner's activated hold state, rather than measuring a second elapsed-time threshold. Delayed WebView timers therefore cannot make the highlight and spring disagree about the same gesture. The 140 ms hold threshold and all tuned animation/geometry values are unchanged.
