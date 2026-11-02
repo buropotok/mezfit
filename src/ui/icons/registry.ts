@@ -20,6 +20,7 @@ import clipboardListOutlineUrl from './liquid-glass-clipboard-list-outline.svg';
 import clockUrl from './clock.svg';
 import searchUrl from './search.svg';
 import copyUrl from './copy.svg';
+import copyPlusUrl from './copy-plus.svg';
 import trashUrl from './trash.svg';
 import alertCircleUrl from './alert-circle.svg';
 import checkUrl from './check.svg';
@@ -88,6 +89,7 @@ const uiIconRegistry = {
   search: { outline: searchUrl, filled: searchUrl },
   clock: { outline: clockUrl, filled: clockUrl },
   copy: { outline: copyUrl, filled: copyUrl },
+  'copy-plus': { outline: copyPlusUrl, filled: copyPlusUrl },
   trash: { outline: trashUrl, filled: trashUrl },
   'alert-circle': { outline: alertCircleUrl, filled: alertCircleUrl },
   check: { outline: checkUrl, filled: checkUrl },

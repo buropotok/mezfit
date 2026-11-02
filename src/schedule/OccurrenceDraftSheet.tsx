@@ -198,6 +198,16 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [planCollapsed, setPlanCollapsed] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [openProgramAfterMenu, setOpenProgramAfterMenu] = useState(false);
+  const [openCopyAfterMenu, setOpenCopyAfterMenu] = useState(false);
+  const [copyDateOpened, setCopyDateOpened] = useState(false);
+  const [copyBusy, setCopyBusy] = useState(false);
+  const copyRunning = useRef(false);
+  const [copyNotice, setCopyNotice] = useState('');
+  useEffect(() => {
+    if (!copyNotice) return;
+    const timeout = window.setTimeout(() => setCopyNotice(''), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [copyNotice]);
   const actionsRef = useRef<HTMLButtonElement>(null);
   const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
   const glass = loadBrowserGlassSettings();
@@ -205,6 +215,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const athlete = useWorkoutPerson(draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const now = useSessionClock(Boolean(draft?.executionTiming && !draft.executionTiming.completedAt));
   const [dateOpened, setDateOpened] = useState(false);
+  const [copyDate, setCopyDate] = useState<LocalDate>(() => localDate(new Date()));
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
   const [timeSelection, setTimeSelection] = useState<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const timeSelectionRef = useRef<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
@@ -470,13 +481,36 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const endLabel = draft?.executionTiming && !draft.executionTiming.completedAt ? '…' : localTime(end);
   const scheduledTiming = { date: localDate(start).split('-').reverse().join('.'),
     time: `${localTime(start)} – ${endLabel}` };
+  const copyOnDate = async (date: LocalDate) => {
+    if (!planner || !draft || copyRunning.current) return;
+    copyRunning.current = true; setCopyBusy(true); setError(''); setCopyNotice('');
+    try {
+      if (!readOnly && !planLocked) await flushEdits();
+      const id = draft.targetOccurrenceId ?? draft.id.slice(6);
+      await planner.copyOccurrence(id, date);
+      if (startAlive.current) setCopyNotice('Копия тренировки добавлена в расписание');
+    } catch (reason) {
+      if (startAlive.current) reportPlanError(reason, 'Не удалось скопировать тренировку');
+    } finally {
+      copyRunning.current = false;
+      if (startAlive.current) setCopyBusy(false);
+    }
+  };
   const actionsMenu = planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
             trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
-            items={[{ id: 'program', label: 'Добавить в программу', icon: 'copy', disabled: busy,
+            items={[{ id: 'copy', label: 'Скопировать тренировку', icon: 'copy-plus', disabled: busy || copyBusy
+              || (draft?.format === 'coached' && draft.coachUserId !== draft.actorUserId),
+              onSelect: () => { setOpenCopyAfterMenu(true); setActionsOpen(false); } },
+              { id: 'program', label: 'Добавить в программу', icon: 'text-plus', disabled: busy || readOnly || planLocked,
               onSelect: () => { if (mutationBlocked()) return; setOpenProgramAfterMenu(true); setActionsOpen(false); } }]}
             onPresentationChange={presented => {
-              if (presented || !openProgramAfterMenu) return;
+              if (presented) return;
+              if (openCopyAfterMenu) {
+                setOpenCopyAfterMenu(false); setCopyDate(localDate(new Date())); setCopyDateOpened(true);
+                return;
+              }
+              if (!openProgramAfterMenu) return;
               setOpenProgramAfterMenu(false);
               void flushEdits().then(() => { if (!mutationBlocked()) setProgramSheetOpen(true); })
                 .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
@@ -586,7 +620,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   return <>
     {container ? createPortal(content, container) : inlineCard
       ? <GlassSurface preset="modalTuned" optics={glass.optics}>{content}</GlassSurface> : content}
-    {error || saveNotice ? <Toast opened position="center" role="alert"><Text variant="body">{error || saveNotice}</Text></Toast> : null}
+    {error || saveNotice || copyNotice ? <Toast opened position="center" role={error || saveNotice ? 'alert' : 'status'}><Text variant="body">{error || saveNotice || copyNotice}</Text></Toast> : null}
     {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
       <Text variant="body">{lockedPlanMessage}</Text>
     </Toast> : null}
@@ -598,6 +632,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       </Suspense> : null}
       {planner ? <WorkoutProgramSheet opened={programSheetOpen && !planLocked && !readOnly} planner={planner} draft={draft}
         onClose={closeProgramSheet} onNavigationContextChange={onNavigationContextChange} /> : null}
+      {copyDateOpened ? <DatePicker opened value={copyDate}
+        onChange={date => { setCopyDate(date); setCopyDateOpened(false); void copyOnDate(date); }}
+        onClose={() => setCopyDateOpened(false)} /> : null}
       <DatePicker opened={dateOpened} value={localDate(start)}
         onChange={date => editStart(date, localTime(start))}
         onClose={() => setDateOpened(false)} />

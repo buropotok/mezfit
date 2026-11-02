@@ -94,7 +94,7 @@ export class WorkoutOccurrenceDraftRepository {
     });
   }
 
-  async create(draft: LocalWorkoutOccurrenceDraft): Promise<string> {
+  async create(draft: LocalWorkoutOccurrenceDraft, options: { published?: boolean } = {}): Promise<string> {
     if (!isLocalWorkoutOccurrenceDraft(draft) || draft.actorUserId !== this.actorUserId)
       throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
     return this.transaction(async () => {
@@ -106,7 +106,7 @@ export class WorkoutOccurrenceDraftRepository {
         ...(draft.autoCreatedProgram ? { autoCreatedProgram: true } : {}),
         athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
         format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
-        status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId,
+        status: 'scheduled', workoutSessionId: null, publicationStatus: options.published ? 'published' : 'draft', draftAuthorUserId: this.actorUserId,
         plan: structuredClone(draft.plan), originalPlan: structuredClone(draft.originalPlan), publishedPlan: null,
         createdByUserId: this.actorUserId, createdAt: draft.createdAt, updatedAt: draft.updatedAt,
       });

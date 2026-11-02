@@ -2,6 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import type { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
+import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { GlassSurface, MezfitDialog, MezfitDialogButton, Text } from '../ui';
@@ -41,6 +43,9 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   onExerciseInformation?: (exerciseId: string) => Promise<ProgramExerciseInformation>;
 }) {
   const completionReview = useWorkoutCompletionReview();
+  const cloud = useCloudConnections();
+  const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
+    [cloud?.db, cloud?.actorUserId]);
   const [session, setSession] = useState<ActiveWorkoutSession<string> | null>(null);
   const [row, setRow] = useState<AdHocSessionRow | null>(null);
   const readOnly = requestedReadOnly || (personalCatalogueRole === 'client' && row?.athleteUserId !== repository.actorUserId);
@@ -144,6 +149,8 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         onExerciseInformation={onExerciseInformation ? id => {
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
+        onCopy={planner && row && (session?.format !== 'coached' || row.coachUserId === repository.actorUserId)
+          ? async date => { await queue.current; await planner.copySession(sessionId, date); } : undefined}
         onRename={!readOnly ? name => mutate(() => repository.rename(sessionId, name)) : undefined}
         onCommentChange={!readOnly && session?.status === 'active' ? comment => mutate(() => repository.comment(sessionId, comment)) : undefined}
         onNavigationContextChange={setNestedNavigation} />

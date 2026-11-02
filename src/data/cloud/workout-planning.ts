@@ -1,5 +1,10 @@
 import type { MezfitCloudDatabase } from './database';
 import type { CloudProgramDayOutline, CloudProgramPhaseRow } from './workout-foundation-types';
+import { AdHocWorkoutRepository } from './adhoc-workouts';
+import { isAdHocExerciseRow, isAdHocSetRow } from './adhoc-workout-types';
+import { bookingsShareParticipant } from './workout-slot-validation';
+import { parseLocalDate } from '../../ui/date-picker/datePickerDate';
+import type { LocalDate } from '../../ui/date-picker/DatePicker';
 import type { CloudTrainingPlanRow } from './database';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { ProgramManagementRepository } from './program-management';
@@ -7,6 +12,15 @@ import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 import { draftFromProgramDay, type LocalWorkoutOccurrenceDraft, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
 import { nextAvailableSlot } from '../../schedule/available-slot';
+
+/** Copies retain immutable prescription, but never reuse child occurrence identities. */
+function freshPlan(plan: WorkoutOccurrencePlan): WorkoutOccurrencePlan {
+  return { ...structuredClone(plan), exercises: plan.exercises.map(exercise => ({
+    ...structuredClone(exercise), id: crypto.randomUUID(),
+    sets: exercise.sets.map(set => ({ ...structuredClone(set), id: crypto.randomUUID() })),
+  })) };
+}
+
 
 const AUTHORING_TABLES = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'workoutOccurrences', 'localProgramSync', 'localWorkoutSync', 'realms', 'members', 'roles'];
@@ -52,6 +66,95 @@ export class WorkoutPlanningRepository {
     const slot = nextAvailableSlot(relevant, new Date(), 60);
     if (!slot) throw new Error('Не удалось найти свободное время. Выберите другой период в расписании');
     return slot.toISOString();
+  }
+
+  /** Creates a new published calendar booking on the selected *local* day. */
+  private async copyPlan(source: Pick<LocalWorkoutOccurrenceDraft,
+    'realmId' | 'athleteUserId' | 'coachUserId' | 'clientUserId' | 'format' | 'durationMinutes' | 'plan' | 'trainingPlanId' | 'programDayId'>,
+    date: LocalDate): Promise<string> {
+    const selected = parseLocalDate(date);
+    if (!selected) throw new Error('Некорректная дата тренировки');
+    const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
+    // Keep membership-backed local calendar reads serialized for Dexie/WebView.
+    const athlete = await scheduling.listCalendar(source.athleteUserId, true);
+    const coach = source.format === 'coached' && source.coachUserId
+      ? await scheduling.listCalendar(source.coachUserId, true) : [];
+    const proposed = new Date(selected.year, selected.month - 1, selected.day, 8, 0, 0, 0);
+    const relevant = [...new Map([...athlete, ...coach]
+      .filter(row => bookingsShareParticipant({ ...source, startsAtUtc: proposed.toISOString() }, row))
+      .map(row => [row.id, row])).values()];
+    const slot = nextAvailableSlot(relevant, proposed, source.durationMinutes);
+    if (!slot || slot.getFullYear() !== selected.year || slot.getMonth() !== selected.month - 1
+      || slot.getDate() !== selected.day)
+      throw new Error('На выбранную дату нет свободного слота для этой тренировки');
+    const timestamp = new Date().toISOString();
+    const plan = freshPlan(source.plan);
+    const draft: LocalWorkoutOccurrenceDraft = {
+      id: 'draft:' + crypto.randomUUID(), actorUserId: this.actorUserId,
+      realmId: source.realmId, athleteUserId: source.athleteUserId,
+      coachUserId: source.coachUserId, clientUserId: source.clientUserId,
+      format: source.format, startsAtUtc: slot.toISOString(), durationMinutes: source.durationMinutes,
+      ...(source.trainingPlanId && source.programDayId
+        ? { trainingPlanId: source.trainingPlanId, programDayId: source.programDayId } : {}),
+      plan, originalPlan: structuredClone(plan), createdAt: timestamp, updatedAt: timestamp,
+    };
+    // One local transaction: no intermediate unpublished copy and no cloud/HTTP wait.
+    return this.drafts.create(draft, { published: true });
+  }
+
+  /** The locally authorized occurrence snapshot is the source of truth, even after Start. */
+  async copyOccurrence(occurrenceId: string, date: LocalDate): Promise<string> {
+    const source = await this.drafts.get('draft:' + occurrenceId);
+    if (!source) throw new Error('Исходная тренировка недоступна');
+    return this.copyPlan(source, date);
+  }
+
+  /** FACT is not a prescription. A planned session uses its frozen occurrencePlan. */
+  async copySession(sessionId: string, date: LocalDate): Promise<string> {
+    const session = await new AdHocWorkoutRepository(this.db, this.actorUserId).getRow(sessionId);
+    if (!session) throw new Error('Исходная сессия недоступна');
+    const linked = session.occurrenceId ? await this.db.workoutOccurrences.get(session.occurrenceId) : null;
+    const occurrence = linked && linked.realmId === session.realmId
+      && linked.athleteUserId === session.athleteUserId && linked.coachUserId === session.coachUserId
+      && linked.clientUserId === session.clientUserId && linked.workoutSessionId === session.id
+      ? linked : null;
+    if (session.occurrenceId && (!occurrence || !session.occurrencePlan))
+      throw new Error('План запущенной тренировки недоступен');
+    let plan: WorkoutOccurrencePlan;
+    if (session.occurrencePlan) {
+      plan = structuredClone(session.occurrencePlan);
+    } else {
+      const [exercises, sets] = await Promise.all([
+        this.db.adHocExercises.where('sessionId').equals(session.id).toArray(),
+        this.db.adHocSets.where('sessionId').equals(session.id).toArray(),
+      ]);
+      const activeExercises = exercises.filter(row => isAdHocExerciseRow(row) && !row.deletedAt
+        && row.realmId === session.realmId && row.owner === session.realmId)
+        .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+      plan = { name: session.name, comment: null, exercises: activeExercises.map((exercise, position) => ({
+        id: exercise.id, sourceProgramExerciseId: null, position,
+        exercise: structuredClone(exercise.exercise), notes: null,
+        sets: sets.filter(set => isAdHocSetRow(set) && !set.deletedAt && set.exerciseId === exercise.id
+          && set.realmId === session.realmId && set.owner === session.realmId)
+          .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id))
+          .map((set, setPosition) => ({
+            id: set.id, sourceProgramSetId: null, position: setPosition,
+            setType: set.setType, setLabel: null, comment: null,
+            materialLinks: [], chatLinks: [], plannedReps: null, plannedWeightKg: null,
+            plannedDurationSeconds: null, plannedDistanceMeters: null,
+          })),
+      })) };
+    }
+    return this.copyPlan({
+      realmId: session.realmId, athleteUserId: session.athleteUserId,
+      coachUserId: session.coachUserId, clientUserId: session.clientUserId,
+      format: occurrence?.format ?? (session.coachUserId ? 'coached' : 'independent'),
+      durationMinutes: occurrence?.durationMinutes ?? 60, plan,
+      ...((occurrence?.trainingPlanId && occurrence.programDayId)
+        ? { trainingPlanId: occurrence.trainingPlanId, programDayId: occurrence.programDayId }
+        : session.programId && session.dayId
+          ? { trainingPlanId: session.programId, programDayId: session.dayId } : {}),
+    }, date);
   }
 
   async createFromProgramDay(program: CloudTrainingPlanRow, day: CloudProgramDayOutline,
