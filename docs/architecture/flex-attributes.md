@@ -138,3 +138,15 @@ profile remains the source; no foreign personal realm is read. `override_*` stay
 reserved and is never touched by publication. Blob values, schema and permission
 changes remain outside this feature.
 See [user-profile.md](user-profile.md) for compatibility and UI ownership.
+
+## Relationship profile overrides (PR 3)
+
+The same publishedUser target additionally holds the seven allowlisted override_*
+keys. UserProfileRepository validates a changed-field patch, resolves overrides
+over profile_* per field and resets by writing Flex null. Definitions are add-only
+strings; text/sex are direct strings and nullable weight is a JSON scalar string
+so an explicit cleared weight differs from reset. Flex's setProfileOverrides
+allows only override_* keys for the Coach's Client in that confirmed pair; ordinary
+peer profile writes remain forbidden. Existing server grants and shared visibility
+are unchanged. No schema, ACL, physical deletion or custom transport is added.
+See user-profile.md for the exact semantics and limits.
