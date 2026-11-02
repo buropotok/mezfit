@@ -33,9 +33,13 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
   }, [repository, current?.version]);
   useEffect(() => {
     if (!repository) return;
-    const subscription = repository.observePublicationVersion(version => setInput({ repository, version }),
-      () => setFailure({ repository, message: 'Не удалось прочитать данные анкеты для публикации.' }));
-    return () => subscription.unsubscribe();
+    let alive = true;
+    const subscription = repository.observePublicationVersion(version => {
+      if (alive) setInput({ repository, version });
+    }, () => {
+      if (alive) setFailure({ repository, message: 'Не удалось прочитать данные анкеты для публикации.' });
+    });
+    return () => { alive = false; subscription.unsubscribe(); };
   }, [repository, retry]);
   useEffect(() => {
     if (!repository || !current) return;
