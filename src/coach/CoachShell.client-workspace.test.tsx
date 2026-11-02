@@ -17,8 +17,9 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
 }));
 
 vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
-  observePublished(_userId: string, _realmId: string, next: (profile: null) => void) {
-    next(null); return { unsubscribe() {} };
+  observeContact(_userId: string, _realmId: string, next: (profile: { published: null; profile: null;
+    overridden: []; canEdit: false; incomplete: false }) => void) {
+    next({ published: null, profile: null, overridden: [], canEdit: false, incomplete: false }); return { unsubscribe() {} };
   }
 } }));
 
