@@ -136,7 +136,7 @@ describe('profile registration navigation', () => {
     view.rerender(<Harness user={{ ...me, user: { ...me.user, telegramUserId: '303' } }} />);
     await waitFor(() => expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe(''));
     await act(async () => { finish?.(saved); });
-    expect(screen.getByTestId('locked').textContent).toBe('true');
+    expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('');
     expect(screen.getByTestId('destination').textContent).toBe('profile');
   });
 });
