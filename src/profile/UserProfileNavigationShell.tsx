@@ -48,7 +48,7 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
   useEffect(() => { setTab('basics'); }, [props.activeRole, cloud?.actorUserId]);
   const current = snapshot?.repository === repository ? snapshot : null;
   useEffect(() => {
-    if (props.activeRole !== 'client' || !repository || !current?.loaded || current.error
+    if (props.activeRole !== 'client' || !repository || !current
       || initialProfileVisit.current === repository.actorUserId) return;
     initialProfileVisit.current = repository.actorUserId;
     // Offer the empty profile once; subsequent reads and retries never trap navigation.
