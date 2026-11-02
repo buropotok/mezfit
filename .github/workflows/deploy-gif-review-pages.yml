@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: \${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout current approved sources
         uses: actions/checkout@v4
@@ -41,8 +41,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: gif-visual-delta-report
-          run-id: \${{ inputs.gif_audit_run_id || '41322174596' }}
-          github-token: \${{ github.token }}
+          run-id: ${{ inputs.gif_audit_run_id || '41322174596' }}
+          github-token: ${{ github.token }}
           path: audit-artifact
       - name: Create static review site and CSV evidence
         shell: bash
