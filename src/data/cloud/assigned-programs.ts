@@ -1,6 +1,6 @@
 import { liveQuery } from 'dexie';
 import { relationshipRealmId } from '../../../shared/relationship-id';
-import { isApprovedAssignedPair } from './relationship-access';
+import { isApprovedAssignedPair, telegramId } from './relationship-access';
 export { isApprovedAssignedPair } from './relationship-access';
 import { createCloudDatabase, type CloudTrainingPlanRow, type MezfitCloudDatabase } from './database';
 
