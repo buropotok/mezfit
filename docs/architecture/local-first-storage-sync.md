@@ -226,9 +226,10 @@ manually deactivated. The exact protected `inactive` grant and rollout are in
 
 Coach and Client share one private user profile. `UserProfileRepository` reads,
 observes and atomically saves the eight `profile_*` Flex values for
-`entityType=user`, `entityId=realmId=owner=actorUserId`. Registration and later
-editing use the same Basics tab in `ProfileWorkspace`. Only Client registration
-is mandatory. A failed local write is retryable; a successful local save does
+`entityType=user`, `entityId=realmId=owner=actorUserId`. First entry and later
+editing use the same Basics tab in `ProfileWorkspace`. A Client with no saved
+profile is offered that tab once without blocking navigation. All editable fields
+are optional; Telegram ID comes from authenticated identity. A failed local write is retryable; a successful local save does
 not wait for cloud confirmation. No schema, ACL, Worker CRUD or publication
 changes are included. Legacy `ClientIntake_*` values remain readable and are
 upgraded without physical deletes. See [user-profile.md](user-profile.md).
