@@ -57,7 +57,7 @@ jobs:
           # A re-run of the same CI run must not post a duplicate user-authored comment.
           comments=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100")
           if jq -e --arg since "$RUN_STARTED" --arg actor "$actor" '
-            any(.[][];  .user.login == $actor
+            any(.[][]; .user.login == $actor
               and .body == "@codex review. Комментарии на русском"
               and .created_at >= $since)
           ' <<<"$comments" >/dev/null; then
