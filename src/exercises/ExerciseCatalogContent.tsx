@@ -17,9 +17,10 @@ import { usePublicCategoryArtwork } from './PublicCategoryArtworkProvider';
 import { CoachExerciseCatalogFab } from './CoachExerciseCatalogFab';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { GlassSurface } from '../ui/GlassSurface';
+import { Icon } from '../ui/Icon';
 import { useNavigationBackTransition, type NavigationContext } from '../NavigationShell';
 import {
-  Button, Icon, IconButton, LiquidPopover, List, ListItem,
+  Button, IconButton, LiquidPopover, List, ListItem,
   MezfitDialog, MezfitDialogButton, MezfitSearchbar, Surface, Text,
 } from '../ui';
 import './public-exercises.css';
