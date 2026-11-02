@@ -6,6 +6,7 @@ import {
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { PublishedUserProfile } from '../profile/PublishedUserProfile';
 import { ProfileWorkspace, type ProfileTab } from '../profile/ProfileWorkspace';
 import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
 import { CloudContactsList } from '../contacts/CloudContactsList';
@@ -254,6 +255,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
     return <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
+      basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
       hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
