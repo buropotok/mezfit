@@ -91,7 +91,8 @@ function deserialize(values: readonly FlexResolvedValue[], keys: Record<keyof Us
     const row = entries.get(keys[key]);
     return row?.valueType === 'string' && typeof row.value === 'string' ? row.value : null;
   };
-  if (keys === USER_PROFILE_KEYS && fields.some(({ key, type }) => {
+  // Optional business values still need explicit rows before either key set is complete.
+  if (fields.some(({ key, type }) => {
     const row = entries.get(keys[key]);
     return !row || row.valueType !== type || (key === 'weightKg'
       ? row.value !== null && typeof row.value !== 'number'
