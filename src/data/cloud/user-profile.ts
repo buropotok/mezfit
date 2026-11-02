@@ -18,6 +18,65 @@ export interface UserProfile {
   updatedAt: string;
 }
 export type UserProfileDraft = Omit<UserProfile, 'updatedAt'>;
+
+export type UserProfileField = keyof UserProfileDraft;
+export const USER_PROFILE_OVERRIDE_KEYS = {
+  firstName: 'override_firstName', lastName: 'override_lastName',
+  email: 'override_email', phone: 'override_phone', birthDate: 'override_birthDate',
+  sex: 'override_sex', weightKg: 'override_weightKg',
+} as const;
+export interface ContactUserProfile {
+  published: UserProfile | null;
+  profile: UserProfile | null;
+  overridden: UserProfileField[];
+  canEdit: boolean;
+  incomplete: boolean;
+}
+function isProfileField(key: string): key is UserProfileField {
+  return Object.hasOwn(USER_PROFILE_OVERRIDE_KEYS, key);
+}
+
+/** Text and sex remain Flex strings. Weight alone uses a JSON scalar string:
+ * Flex null resets it; the string "null" explicitly clears the nullable weight. */
+function normalizedOverride(field: UserProfileField, value: unknown): UserProfileDraft {
+  const draft = initialUserProfile({ firstName: '', lastName: '' });
+  if (field === 'weightKg') {
+    if (value !== null && typeof value !== 'number') throw new Error('INVALID_PROFILE_OVERRIDE');
+    draft.weightKg = value;
+  } else if (field === 'sex') {
+    if (value !== 'male' && value !== 'female' && value !== 'undisclosed')
+      throw new Error('INVALID_PROFILE_OVERRIDE');
+    draft.sex = value;
+  } else {
+    if (typeof value !== 'string') throw new Error('INVALID_PROFILE_OVERRIDE');
+    draft[field] = field === 'email' ? value.trim().toLowerCase()
+      : field === 'birthDate' ? value : value.trim();
+  }
+  const error = validateUserProfile(draft);
+  if (error) throw new Error(error);
+  return draft;
+}
+
+function resolveContactProfile(published: UserProfile | null, values: readonly FlexResolvedValue[]) {
+  const overridden: UserProfileField[] = [];
+  const profile = published ? { ...published } : null;
+  for (const key of Object.keys(USER_PROFILE_OVERRIDE_KEYS)) {
+    if (!isProfileField(key)) continue;
+    const entry = values.find(row => row.key === USER_PROFILE_OVERRIDE_KEYS[key]);
+    if (!entry || entry.value === null) continue;
+    if (entry.valueType !== 'string' || typeof entry.value !== 'string')
+      throw new Error('INVALID_STORED_PROFILE_OVERRIDE');
+    let decoded: unknown = entry.value;
+    if (key === 'weightKg') {
+      try { decoded = JSON.parse(entry.value); } catch { throw new Error('INVALID_STORED_PROFILE_OVERRIDE'); }
+    }
+    const normalized = normalizedOverride(key, decoded);
+    overridden.push(key);
+    if (profile) Object.assign(profile, { [key]: normalized[key] });
+  }
+  return { profile, overridden };
+}
+
 export type UserProfileDefaults = Pick<UserProfileDraft, 'firstName' | 'lastName'>;
 
 export const USER_PROFILE_KEYS = {
@@ -205,6 +264,63 @@ export class UserProfileRepository {
     return deserialize(await this.flexible.getValues({
       entityType: 'publishedUser', entityId: userId, realmId,
     }), USER_PROFILE_KEYS);
+  }
+
+
+  /** One atomic, reactive relationship view; never query a contact's personal realm. */
+  async readContact(userId: string, realmId: string): Promise<ContactUserProfile> {
+    return this.db.transaction('r', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const target = { entityType: 'publishedUser' as const, entityId: userId, realmId };
+      const values = await this.flexible.getValues(target);
+      const published = deserialize(values, USER_PROFILE_KEYS);
+      const expected = await this.db.flexValues.bulkGet(Object.values(USER_PROFILE_OVERRIDE_KEYS)
+        .map(key => flexValueId(target, flexAttributeId(realmId, key))));
+      const incomplete = expected.filter(row => row !== undefined).length
+        > values.filter(row => Object.values(USER_PROFILE_OVERRIDE_KEYS).some(key => key === row.key)).length;
+      const pairs = await profileRelationships(this.db, this.actorUserId);
+      const canEdit = pairs.some(pair => pair.realmId === realmId
+        && pair.coachUserId === this.actorUserId && pair.clientUserId === userId);
+      const resolved = resolveContactProfile(published, values);
+      return { published, ...resolved, canEdit, incomplete };
+    });
+  }
+
+  observeContact(userId: string, realmId: string,
+    next: (profile: ContactUserProfile) => void, error: (reason: unknown) => void) {
+    return liveQuery(() => this.readContact(userId, realmId)).subscribe({ next, error });
+  }
+
+  /** Only fields deliberately edited by the Coach are fixed as overrides. */
+  async saveContactOverrides(userId: string, realmId: string, patch: Partial<UserProfileDraft>): Promise<ContactUserProfile> {
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('INVALID_PROFILE_OVERRIDE');
+    const entries: FlexAttributeInput[] = [];
+    for (const field of Object.keys(patch)) {
+      if (!isProfileField(field)) throw new Error('INVALID_PROFILE_OVERRIDE_FIELD');
+      const normalized = normalizedOverride(field, patch[field]);
+      const encoded = field === 'weightKg' ? JSON.stringify(normalized[field]) : normalized[field];
+      if (typeof encoded !== 'string') throw new Error('INVALID_PROFILE_OVERRIDE');
+      entries.push({ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string', value: encoded });
+    }
+    return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const contact = await this.readContact(userId, realmId);
+      if (!contact.canEdit) throw new Error('FLEX_ENTITY_FORBIDDEN');
+      if (!contact.published || contact.incomplete)
+        throw new Error('Анкета загружена не полностью. Повторите сохранение позже.');
+      await this.flexible.setProfileOverrides({ entityType: 'publishedUser', entityId: userId, realmId }, entries);
+      return this.readContact(userId, realmId);
+    });
+  }
+
+  async resetContactOverride(userId: string, realmId: string, field: UserProfileField): Promise<ContactUserProfile> {
+    if (!isProfileField(field)) throw new Error('INVALID_PROFILE_OVERRIDE_FIELD');
+    return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      await this.flexible.setProfileOverrides({ entityType: 'publishedUser', entityId: userId, realmId },
+        [{ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string', value: null }]);
+      return this.readContact(userId, realmId);
+    });
   }
 
   async readOwn(): Promise<UserProfile | null> {

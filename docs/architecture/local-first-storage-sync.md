@@ -236,3 +236,13 @@ for that projection or cloud confirmation. A reactive status capsule distinguish
 local commit from an awaited Addon push acknowledgement. No schema, ACL or Worker
 CRUD changes are included. Legacy `ClientIntake_*` values remain readable and are
 upgraded without physical deletes. See [user-profile.md](user-profile.md).
+
+## Relationship profile overrides (PR 3)
+
+Coach edits in Contact / Basics commit a changed-field patch through
+UserProfileRepository → FlexAttributesRepository → Dexie. The relationship's
+override_* values resolve before published profile_* values; Client personal data
+and future publication stay independent. Reset commits Flex null for one field.
+Neither operation awaits or controls cloud transport. Existing shared-realm ACL
+and visibility remain unchanged. There are no new tables, schema/role grants,
+Worker endpoints or sync metadata. See user-profile.md.

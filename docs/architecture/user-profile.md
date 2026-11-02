@@ -49,8 +49,8 @@ and the updated app must be deployed consistently.
 `ProfileWorkspace` owns the common Text Only tabs and accepts a typed `self` or
 `contact` view and authorized Basics/Program/Exercises content slots. CoachShell
 continues to supply its existing client-program and performed-exercise views.
-Contact Basics reads the published canonical profile through the authorized
-relationship realm. Until it exists, it shows membership-visible name and Telegram
+Contact Basics resolves relationship overrides over the published canonical profile
+through the authorized relationship realm. Until it exists, it shows membership-visible name and Telegram
 ID and an explicit not-published state. It never reads a contact's private realm.
 Own unsupported sections use explicit placeholders.
 
@@ -170,7 +170,70 @@ must never authorize identity, membership, PLAN or protected FACT. Live ordinary
 Coach/Client cloud permission and two-device checks remain required; CI/local
 transaction tests do not prove server activation or remote acknowledgement.
 
-PR 3 owns override read/write/reset and override→profile resolution. PR 4 owns
-Blob avatar values/upload/override. PR 5 owns contact-card migration and retirement
-of old Worker avatar APIs. Those features and workout/program business changes
-remain outside PR 2.
+## Relationship overrides (PR 3)
+
+UserProfileRepository exposes readContact/observeContact, saveContactOverrides and
+resetContactOverride. It remains the sole profile repository. The resolved view
+contains the immutable published snapshot, effective values, overridden field
+names, edit capability and incomplete-download state. No private peer realm is read.
+
+Seven fields are eligible: first/last name, email, phone, birth date, sex and weight.
+Telegram identity, avatar and publication timestamp are not override fields.
+Each override uses its matching override_* key in the existing publishedUser
+target: entityId=clientUserId, realmId=relationship realm, owner=realmId sentinel.
+There are no new entities, tables, schema or ACL changes. The Coach in that exact
+Worker-confirmed pair may mutate Client overrides through the domain API; a Client,
+outsider, different Coach or revoked member cannot use it. Flex's dedicated
+setProfileOverrides entry point admits only override_* writes for that pair;
+ordinary peer profile_* writes remain forbidden. Existing generic shared Flex
+server permissions remain unchanged: both members can access shared metadata.
+This is not a new server-enforced single-writer or private Coach-notes mechanism.
+
+Resolution is per field: an active override wins, otherwise the published value
+wins. Empty text and undisclosed sex are explicit overrides. Text and sex keep
+their native Flex string values. Nullable weight alone uses a JSON scalar string:
+"62" represents 62 kg; "null" explicitly hides the supplied weight. A Flex null
+resets any override, including weight, restoring the latest published value.
+This distinction requires no active flags, companion records or physical deletes.
+All keys in USER_PROFILE_OVERRIDE_KEYS have the add-only valueType=string.
+Stored scalars are decoded as unknown and validated with the existing business
+validation. Unknown fields and malformed values are rejected before batch mutation.
+
+Save validates the patch and writes only deliberately edited fields in one local
+transaction. It neither copies untouched published values nor modifies profile_*,
+the Client's personal data or other relationships. Publication continues to update
+only profile_* and preserves overrides. Reset writes only the selected override
+value to null. Both operations return the committed resolved view; failures roll
+back all writes and remain retryable. Cloud Addon alone handles transmission:
+these operations never await push, change credentials or drive another sync loop.
+
+Values arriving before their add-only definitions expose an incomplete state.
+The UI withholds edit/reset controls until the resolved view is ready, and Save
+refuses to overwrite that partial download. Invalid stored overrides produce an
+error rather than silently selecting another user's data. Read/observe stay
+side-effect free.
+
+Contact Basics starts in view mode with per-field override labels and Reset.
+Edit reuses UserProfileForm inline in the same ProfileWorkspace tab. The form
+tracks changed field names; background publications do not freeze untouched fields
+as overrides. Failed saves, refresh errors and partial publication preserve the
+mounted draft. Account/repository/contact changes invalidate old mutation responses.
+The editor is outside the read-only glass wrapper, retaining exactly the existing
+two auto-shaped modalTuned/optics=false input surfaces and inherited blur.
+Sex uses the same LiquidPopover and birth date the same side-panel DatePicker.
+No UI Kit mechanics, CSS, primitive geometry, navigation/history or programme and
+workout business logic changes are introduced.
+
+Domain tests cover precedence, explicit clears versus reset, latest publication,
+normalization, local reopen, idempotency, relationship/role isolation, revoked
+access, validation, transactional rollback, late definitions, malformed values,
+retry and offline commits without transport. UI tests cover changed-only patches,
+reset failures, draft preservation and stale completions. Existing read-only and
+Coach workspace assertions remain intact; their source fixtures now supply the
+resolved relationship view. Commands run only in GitHub Actions after PR creation.
+Physical WebView and remote multi-account permission checks remain separate.
+
+PR 4 owns Blob avatar values/upload/override. PR 5 owns contact-card migration and
+retirement of old Worker avatar APIs. Neither is implemented here. Overrides affect
+Basics only; contact-list and navbar identity sources remain unchanged. License
+diagnostics are also outside this PR.

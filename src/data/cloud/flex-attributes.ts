@@ -109,13 +109,14 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
       ? [...tables, this.db.realms, this.db.members] : tables;
   }
 
-  private async assertTarget(target: FlexEntityTarget, writing = false): Promise<void> {
+  private async assertTarget(target: FlexEntityTarget, writing = false, override = false): Promise<void> {
     if (target.entityType === 'publishedUser') {
-      if (!this.db.realms || !this.db.members || (writing && target.entityId !== this.actorUserId))
+      if (!this.db.realms || !this.db.members || (writing && !override && target.entityId !== this.actorUserId))
         throw new Error('FLEX_ENTITY_FORBIDDEN');
       const pairs = await profileRelationships({ realms: this.db.realms, members: this.db.members }, this.actorUserId);
       if (!pairs.some(pair => pair.realmId === target.realmId
-        && (target.entityId === pair.coachUserId || target.entityId === pair.clientUserId)))
+        && (target.entityId === pair.coachUserId || target.entityId === pair.clientUserId)
+        && (!override || (pair.coachUserId === this.actorUserId && pair.clientUserId === target.entityId))))
         throw new Error('FLEX_ENTITY_FORBIDDEN');
       return;
     }
@@ -163,6 +164,17 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
 
   /** Atomically register new keys and upsert their values in the target realm. */
   async setValues(target: FlexEntityTarget, entries: readonly FlexAttributeInput[]): Promise<void> {
+    await this.writeValues(target, entries);
+  }
+
+  /** Coach-authored overrides for this relationship only; never write peer profile_* values. */
+  async setProfileOverrides(target: FlexEntityTarget, entries: readonly FlexAttributeInput[]): Promise<void> {
+    if (target.entityType !== 'publishedUser' || entries.some(entry => !entry.key.startsWith('override_')))
+      throw new Error('FLEX_ENTITY_FORBIDDEN');
+    await this.writeValues(target, entries, true);
+  }
+
+  private async writeValues(target: FlexEntityTarget, entries: readonly FlexAttributeInput[], override = false): Promise<void> {
     if (entries.length === 0) return;
     const keys = new Set<string>();
     for (const entry of entries) {
@@ -172,7 +184,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     }
     await this.db.transaction('rw',
       this.targetTables(target), async () => {
-        await this.assertTarget(target, true);
+        await this.assertTarget(target, true, override);
         const owner = ownerFor(target, this.actorUserId);
         for (const entry of entries) {
           const attributeId = flexAttributeId(target.realmId, entry.key);

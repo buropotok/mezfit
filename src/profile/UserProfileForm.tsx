@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { List, ListInput } from 'konsta/react';
-import type { UserProfile, UserProfileDefaults, UserProfileDraft, UserProfileSex } from '../data/cloud/user-profile';
+import type { UserProfile, UserProfileDefaults, UserProfileDraft, UserProfileField, UserProfileSex } from '../data/cloud/user-profile';
 import { ageFromBirthDate, initialUserProfile, validateUserProfile } from '../data/cloud/user-profile';
 import { Button, DatePicker, GlassSurface, LiquidPopover, Text } from '../ui';
 import { getTodayLocalDate, parseLocalDate } from '../ui/date-picker/datePickerDate';
@@ -23,13 +23,15 @@ function readableDate(value: string): string {
     .format(new Date(parts.year, parts.month - 1, parts.day)) : '';
 }
 
-export function UserProfileForm({ defaults, initialProfile, telegramUserId, telegramUsername, onSave, syncStatus }: {
+export function UserProfileForm({ defaults, initialProfile, telegramUserId, telegramUsername, onSave, syncStatus, purpose = 'self', onCancel }: {
   syncStatus?: ReactNode;
+  purpose?: 'self' | 'contact';
+  onCancel?: () => void;
   defaults: UserProfileDefaults;
   initialProfile: UserProfile | null;
   telegramUserId: string;
   telegramUsername: string | null;
-  onSave: (draft: UserProfileDraft) => Promise<void>;
+  onSave: (draft: UserProfileDraft, changedFields?: readonly UserProfileField[]) => Promise<void>;
 }) {
   const id = useId();
   const [draft, setDraft] = useState<UserProfileDraft>(() => initialProfile ? initialUserProfileDraft(initialProfile) : initialUserProfile(defaults));
@@ -42,6 +44,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
   const [saved, setSaved] = useState(false);
   const busy = useRef(false);
   const dirty = useRef(false);
+  const changedFields = useRef(new Set<UserProfileField>());
   useEffect(() => {
     if (initialProfile && !dirty.current && !busy.current) setDraft(initialUserProfileDraft(initialProfile));
   }, [initialProfile]);
@@ -50,6 +53,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
 
   const update = <K extends keyof UserProfileDraft>(key: K, value: UserProfileDraft[K]) => {
     dirty.current = true;
+    changedFields.current.add(key);
     setDraft(current => ({ ...current, [key]: value }));
     setSaveError('');
     setSaved(false);
@@ -66,8 +70,10 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
     setSaving(true);
     setSaveError('');
     try {
-      await onSave(draft);
+      if (purpose === 'contact') await onSave(draft, [...changedFields.current]);
+      else await onSave(draft);
       dirty.current = false;
+      changedFields.current.clear();
       if (alive.current) setSaved(true);
     } catch (reason) {
       if (alive.current) setSaveError(reason instanceof Error ? reason.message : 'Не удалось сохранить анкету');
@@ -78,8 +84,12 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
   };
   return <section className="user-profile__form" aria-label="Анкета пользователя">
     <div className="user-profile__heading"><div className="user-profile__heading-title"><Text variant="title">Анкета пользователя</Text></div>{syncStatus}</div>
-    <Text variant="body" tone="muted">Все поля необязательны. Имя и фамилию можно изменить независимо от Telegram.</Text>
-    <Text variant="caption" tone="muted">Анкета сохраняется в личном профиле и автоматически публикуется для подтверждённых контактов.</Text>
+    <Text variant="body" tone="muted">{purpose === 'contact'
+      ? 'Сохраняются только изменённые вами поля. Собственная анкета клиента не меняется.'
+      : 'Все поля необязательны. Имя и фамилию можно изменить независимо от Telegram.'}</Text>
+    <Text variant="caption" tone="muted">{purpose === 'contact'
+      ? 'Переопределения действуют только в этой связи. Сброс доступен рядом с каждым изменённым полем.'
+      : 'Анкета сохраняется в личном профиле и автоматически публикуется для подтверждённых контактов.'}</Text>
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <List nested strong={false} dividers={false} className="user-profile__inputs">
         <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-first`} label="Имя"
@@ -98,8 +108,8 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
     </GlassSurface>
     <Text variant="headline">Telegram ID</Text>
     <Text variant="body">{telegramUserId}</Text>
-    <Text variant="headline">Telegram</Text>
-    <Text variant="body">{telegramUsername ? '@' + telegramUsername : 'Не указан'}</Text>
+    {purpose === 'self' ? <><Text variant="headline">Telegram</Text>
+      <Text variant="body">{telegramUsername ? '@' + telegramUsername : 'Не указан'}</Text></> : null}
     <div className="user-profile__date">
       <Text variant="headline">Дата рождения</Text>
       <Button variant="secondary" disabled={saving} onClick={() => setPickerOpen(true)}>
@@ -124,11 +134,12 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       </List>
     </GlassSurface>
     {attempted && validation ? <Text variant="footnote" role="alert">{validation}</Text> : null}
-    {saved ? <Text variant="footnote" role="status">Анкета сохранена на устройстве.</Text> : null}
+    {saved ? <Text variant="footnote" role="status">{purpose === 'contact' ? 'Переопределения сохранены на устройстве.' : 'Анкета сохранена на устройстве.'}</Text> : null}
     {saveError ? <Text variant="footnote" role="alert">{saveError}</Text> : null}
-    <Button disabled={saving} onClick={() => { void submit(); }}>
-      {saving ? 'Сохранение…' : 'Сохранить анкету'}
+    <Button disabled={saving || (purpose === 'contact' && changedFields.current.size === 0)} onClick={() => { void submit(); }}>
+      {saving ? 'Сохранение…' : purpose === 'contact' ? 'Сохранить переопределения' : 'Сохранить анкету'}
     </Button>
+    {onCancel ? <Button variant="secondary" disabled={saving} onClick={onCancel}>Отменить</Button> : null}
     {initialProfile ? <Text variant="caption" tone="muted">Изменено: {new Date(initialProfile.updatedAt).toLocaleString('ru-RU')}</Text> : null}
     <DatePicker opened={pickerOpen} value={selectDate}
       minYear={1900} maxYear={new Date().getFullYear()} surface="panel"
