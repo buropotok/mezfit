@@ -3,12 +3,8 @@ import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { UserProfileRepository, ageFromBirthDate, type ContactUserProfile, type UserProfile, type UserProfileDraft, type UserProfileField } from '../data/cloud/user-profile';
 import { Button, GlassSurface, Text } from '../ui';
+import { UserAvatarEditor } from './UserAvatarEditor';
 import { UserProfileForm } from './UserProfileForm';
-
-const fieldLabels: Record<UserProfileField, string> = {
-  firstName: 'Имя', lastName: 'Фамилия', email: 'E-mail', phone: 'Телефон',
-  birthDate: 'Дата рождения', sex: 'Пол', weightKg: 'Вес, кг',
-};
 
 /** Reads only the existing relationship realm; private peer data is never queried. */
 export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
@@ -17,6 +13,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
     [cloud?.db, cloud?.actorUserId]);
   const [snapshot, setSnapshot] = useState<{ repository: UserProfileRepository; key: string; data: ContactUserProfile | null; error: boolean } | null>(null);
   const [retry, setRetry] = useState(0);
+  const [avatarEditing, setAvatarEditing] = useState(false);
   const key = cloud?.actorUserId + ':' + contact.relationshipId + ':' + contact.userId;
   const [editor, setEditor] = useState<{ repository: UserProfileRepository; key: string; profile: UserProfile } | null>(null);
   const [pending, setPending] = useState<{ repository: UserProfileRepository; key: string } | null>(null);
@@ -30,6 +27,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
     // or notice when the user returns to the same relationship.
     setSnapshot(null);
     setEditor(null);
+    setAvatarEditing(false);
     setPending(null);
     setMessage(null);
     return () => { active.current = { repository: null, key: '' }; };
@@ -62,6 +60,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
         setSnapshot({ repository, key, data: saved, error: false });
         setMessage({ repository, key, text: 'Сброс сохранён на устройстве. Используются данные клиента.', error: false });
       }
+      return saved.profile ?? undefined;
     } catch {
       if (isCurrent(owner)) setMessage({ repository, key, text: 'Не удалось сбросить переопределение. Повторите действие.', error: true });
     } finally {
@@ -70,7 +69,9 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   };
   if (editing && repository && editor) return <section className="stack">
     {current?.error || data?.incomplete || !profile ? <Text variant="body" role="alert">Не удалось обновить анкету. Черновик сохранён в форме.</Text> : null}
-    <UserProfileForm key={key} purpose="contact" initialProfile={profile ?? editor.profile}
+    <UserAvatarEditor contact={contact} editable={data?.canEdit === true} />
+    {notice ? <Text variant="footnote" role={notice.error ? 'alert' : 'status'}>{notice.text}</Text> : null}
+    <UserProfileForm key={key} overridden={data?.overridden} onReset={reset} purpose="contact" initialProfile={profile ?? editor.profile}
       defaults={{ firstName: '', lastName: '' }} telegramUserId={contact.telegramUserId} telegramUsername={null}
       onCancel={() => setEditor(null)}
       onSave={async (draft, changedFields) => {
@@ -97,6 +98,9 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   return <GlassSurface component="section" preset="modalTuned" optics={false} shape="auto"
     contentClassName="stack client-workspace-surface">
     <Text variant="title">Анкета пользователя</Text>
+    <UserAvatarEditor contact={contact} editable={avatarEditing && data?.canEdit === true} />
+    {data?.canEdit && !data.incomplete && !current?.error && (!profile || avatarEditing) ? <Button variant="secondary"
+      onClick={() => setAvatarEditing(value => !value)}>{avatarEditing ? 'Готово' : 'Изменить аватар'}</Button> : null}
     {!repository ? <Text variant="body">Анкета пока недоступна.</Text>
       : !current ? <Text variant="body">Загрузка анкеты…</Text> : current.error
       ? <><Text variant="body" role="alert">Анкета недоступна по этой связи.</Text>
@@ -105,13 +109,8 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
       : !profile ? <><Text variant="body">{contact.displayName}</Text>
         <Text variant="headline">Telegram ID</Text><Text variant="body">{contact.telegramUserId}</Text>
         <Text variant="body">Анкета клиента ещё не опубликована.</Text></>
-      : <>{fields.map(([label, value, field]) => <div className="stack" key={label}>
+      : <>{fields.map(([label, value]) => <div className="stack" key={label}>
         <Text variant="headline">{label}</Text><Text variant="body">{value}</Text>
-        {field && data?.overridden.includes(field) ? <>
-          <Text variant="caption" tone="muted">Переопределено в этой связи</Text>
-          {data.canEdit ? <Button variant="secondary" size="compact" disabled={resetting}
-            onClick={() => { void reset(field); }}>Сбросить: {fieldLabels[field]}</Button> : null}
-        </> : null}
       </div>)}
         {data?.canEdit && repository ? <Button disabled={resetting}
           onClick={() => { setMessage(null); setEditor({ repository, key, profile }); }}>Изменить анкету</Button> : null}
