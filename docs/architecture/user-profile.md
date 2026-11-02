@@ -128,8 +128,11 @@ Each shared definition and value retains the existing shared owner sentinel
 only the exact existing Worker-provisioned realm and two accepted role memberships.
 Repository writes to this target require entityId=actorUserId; reads permit either
 member through that same authorized relationship. The original approved-pair
-validator is extracted unchanged into relationship-access.ts and re-exported by
-assigned-programs.ts, avoiding a program/database initialization dependency in Flex.
+validator lives in relationship-access.ts and is re-exported by assigned-programs.ts,
+avoiding a program/database initialization dependency in Flex. Its structural checks
+are preserved. Relationship reads remain in the Dexie transaction; only the pure
+WebCrypto validation uses Dexie.waitFor. No waitFor scope wraps database operations
+or another waitFor, which would create an interdependent transaction wait.
 
 Publication commits all eligible copies atomically in local Dexie, independently
 of the prior successful private Save. Failure leaves that private profile intact
@@ -148,7 +151,9 @@ authorized relationship set and complete published copies. This is ephemeral
 presentation confirmation, not persisted parallel business data or a custom
 sync transport. Edits during an awaited push remain pending. Save never waits
 for that barrier. Account switches discard stale callbacks and acknowledgements;
-retries do not create a render or transport retry loop.
+retries do not create a render or transport retry loop. Observation failure invalidates
+the current status snapshot until a fresh subscription succeeds; contact snapshots
+are scoped to the repository instance as well as actor, realm and subject.
 
 Telegram ID and username stay outside the editable/published draft; identity is
 read only from existing authenticated/membership sources. Telegram ID, Telegram,
