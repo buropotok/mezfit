@@ -296,8 +296,9 @@ export class UserProfileRepository {
     for (const field of Object.keys(patch)) {
       if (!isProfileField(field)) throw new Error('INVALID_PROFILE_OVERRIDE_FIELD');
       const normalized = normalizedOverride(field, patch[field]);
-      entries.push({ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string',
-        value: JSON.stringify(normalized[field]) });
+      const encoded = JSON.stringify(normalized[field]);
+      if (encoded === undefined) throw new Error('INVALID_PROFILE_OVERRIDE');
+      entries.push({ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string', value: encoded });
     }
     return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
       this.db.adHocSessions, this.db.realms, this.db.members], async () => {
