@@ -61,11 +61,14 @@ describe('workout calendar day status projection', () => {
     expect(derive([scheduled()], end + 60_000, [execution()]).dayStatuses).toEqual([
       { date: localDay, status: 'scheduled' },
     ]);
+    // When records temporarily disagree, the linked session is authoritative.
+    expect(derive([scheduled({ status: 'completed' })], end + 60_000, [execution()])
+      .dayStatuses).toEqual([{ date: localDay, status: 'scheduled' }]);
   });
 
   it('uses the original booked day for a late-completed linked session', () => {
     const startedNextDay = execution({
-      status: 'completed', startedAt: '2026-10-21T04:00:00.000Z',
+      status: 'completed', startedAt: '2026-10-28T04:00:00.000Z',
     });
     expect(derive([scheduled()], end + 60_000, [startedNextDay]).dayStatuses).toEqual([
       { date: localDay, status: 'completed' },
