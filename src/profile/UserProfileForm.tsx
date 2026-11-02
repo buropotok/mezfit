@@ -1,8 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import { List, ListInput, ListItem, Radio } from 'konsta/react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { List, ListInput } from 'konsta/react';
 import type { UserProfile, UserProfileDefaults, UserProfileDraft, UserProfileSex } from '../data/cloud/user-profile';
 import { ageFromBirthDate, initialUserProfile, validateUserProfile } from '../data/cloud/user-profile';
-import { Button, DatePicker, GlassSurface, Text } from '../ui';
+import { Button, DatePicker, GlassSurface, LiquidPopover, Text } from '../ui';
 import { getTodayLocalDate, parseLocalDate } from '../ui/date-picker/datePickerDate';
 import './user-profile.css';
 
@@ -23,7 +23,8 @@ function readableDate(value: string): string {
     .format(new Date(parts.year, parts.month - 1, parts.day)) : '';
 }
 
-export function UserProfileForm({ defaults, initialProfile, telegramUserId, telegramUsername, onSave }: {
+export function UserProfileForm({ defaults, initialProfile, telegramUserId, telegramUsername, onSave, syncStatus }: {
+  syncStatus?: ReactNode;
   defaults: UserProfileDefaults;
   initialProfile: UserProfile | null;
   telegramUserId: string;
@@ -33,6 +34,8 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
   const id = useId();
   const [draft, setDraft] = useState<UserProfileDraft>(() => initialProfile ? initialUserProfileDraft(initialProfile) : initialUserProfile(defaults));
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [sexOpen, setSexOpen] = useState(false);
+  const sexTrigger = useRef<HTMLSpanElement>(null);
   const [saving, setSaving] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -74,9 +77,9 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
     }
   };
   return <section className="user-profile__form" aria-label="Анкета пользователя">
-    <Text variant="title">Анкета пользователя</Text>
+    <div className="user-profile__heading"><Text variant="title">Анкета пользователя</Text>{syncStatus}</div>
     <Text variant="body" tone="muted">Все поля необязательны. Имя и фамилию можно изменить независимо от Telegram.</Text>
-    <Text variant="caption" tone="muted">Анкета сохраняется в вашем личном профиле. Публикация для контактов пока недоступна.</Text>
+    <Text variant="caption" tone="muted">Анкета сохраняется в личном профиле и автоматически публикуется для подтверждённых контактов.</Text>
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <List nested strong={false} dividers={false} className="user-profile__inputs">
         <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-first`} label="Имя"
@@ -93,11 +96,12 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
           onChange={event => update('phone', event.target.value)} />
       </List>
     </GlassSurface>
-    <Text variant="footnote">Telegram ID: {telegramUserId}</Text>
-    {telegramUsername ? <Text variant="footnote">Telegram: @{telegramUsername}</Text> : null}
-    {initialProfile ? <Text variant="caption" tone="muted">Изменено: {new Date(initialProfile.updatedAt).toLocaleString('ru-RU')}</Text> : null}
+    <Text variant="headline">Telegram ID</Text>
+    <Text variant="body">{telegramUserId}</Text>
+    <Text variant="headline">Telegram</Text>
+    <Text variant="body">{telegramUsername ? '@' + telegramUsername : 'Не указан'}</Text>
     <div className="user-profile__date">
-      <Text variant="footnote" tone="muted">Дата рождения (для расчёта возраста)</Text>
+      <Text variant="headline">Дата рождения</Text>
       <Button variant="secondary" disabled={saving} onClick={() => setPickerOpen(true)}>
         {readableDate(draft.birthDate) || 'Выбрать дату рождения'}
       </Button>
@@ -105,15 +109,13 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       {age !== null ? <Text variant="body">Возраст: {age}</Text> : null}
     </div>
     <Text variant="headline">Пол</Text>
-    <GlassSurface preset="modalTuned" optics={false} shape="auto">
-      <List nested strong={false} dividers={false}>
-        {sexes.map(option => <ListItem key={option.value} label colors={{ activeBgIos: 'bg-transparent' }}
-          title={option.label} onClick={() => { if (!saving) update('sex', option.value); }}
-          media={<Radio name={`${id}-sex`} value={option.value}
-            checked={draft.sex === option.value} disabled={saving}
-            onChange={() => update('sex', option.value)} />} />)}
-      </List>
-    </GlassSurface>
+    <LiquidPopover isOpen={sexOpen} onOpenChange={setSexOpen} triggerRef={sexTrigger}
+      label="Выберите пол" triggerActivation="controlled"
+      items={sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
+        onSelect: () => { if (!saving) update('sex', option.value); setSexOpen(false); } }))}
+      trigger={<span ref={sexTrigger}><Button variant="secondary" disabled={saving} onClick={() => setSexOpen(true)}>
+        <Text variant="body">Пол: {draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
+      </Button></span>} />
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <List nested strong={false} dividers={false}>
         <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-weight`} type="number"
@@ -128,6 +130,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
     <Button disabled={saving} onClick={() => { void submit(); }}>
       {saving ? 'Сохранение…' : 'Сохранить анкету'}
     </Button>
+    {initialProfile ? <Text variant="caption" tone="muted">Изменено: {new Date(initialProfile.updatedAt).toLocaleString('ru-RU')}</Text> : null}
     <DatePicker opened={pickerOpen} value={selectDate}
       minYear={1900} maxYear={new Date().getFullYear()} surface="panel"
       onChange={date => { if (date <= today) update('birthDate', date); setPickerOpen(false); }}
