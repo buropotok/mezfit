@@ -213,7 +213,8 @@ refuses to overwrite that partial download. Invalid stored overrides produce an
 error rather than silently selecting another user's data. Read/observe stay
 side-effect free.
 
-Contact Basics starts in view mode with per-field override labels and Reset.
+Contact Basics starts in view mode with effective values only. Per-field override
+labels and Reset appear exclusively in the editor.
 Edit reuses UserProfileForm inline in the same ProfileWorkspace tab. The form
 tracks changed field names; background publications do not freeze untouched fields
 as overrides. Failed saves, refresh errors and partial publication preserve the
@@ -233,7 +234,70 @@ Coach workspace assertions remain intact; their source fixtures now supply the
 resolved relationship view. Commands run only in GitHub Actions after PR creation.
 Physical WebView and remote multi-account permission checks remain separate.
 
-PR 4 owns Blob avatar values/upload/override. PR 5 owns contact-card migration and
-retirement of old Worker avatar APIs. Neither is implemented here. Overrides affect
-Basics only; contact-list and navbar identity sources remain unchanged. License
-diagnostics are also outside this PR.
+## User avatars and shared presentation (PR 4)
+
+`UserAvatarRepository` owns `profile_avatar` and `override_avatar` in the existing
+user/publishedUser Flex targets. The add-only definition type is `avatar`. One
+value contains `{version, revision, small, large}`: both bounded JPEG Blobs and an ISO
+version are committed together, preventing mixed variant revisions. A UUID revision
+distinguishes separate device writes with the same millisecond timestamp. A user-selected
+JPEG, PNG or WebP (up to 20 MB) is decoded and compressed in the WebView by the
+existing Canvas encoder: small <=128 px / 50,000 bytes and large <=512 px /
+245,000 bytes. Original files are never persisted. Known Addon BlobRefs are
+validated as pending images, not interpreted as application URLs.
+
+Own saves use the actor's private realm and owner. Publication copies only
+profile_avatar to each structurally verified relationship using owner=realmId;
+it leaves override_avatar intact. It works before questionnaire Save and upon
+new relationship membership. Identical/newer published versions are not rewritten.
+Missing definitions or unhydrated variants stay incomplete and are not overwritten
+or acknowledged. Atomic null variants with a new version remove an own/overridden
+image; Flex null resets the override to the latest user publication. Physical
+deletes are not used. Only the Coach of that exact relationship can mutate a
+Client override through the repository. Existing shared Flex server visibility
+and its known non-authoritative metadata grant limitations remain unchanged.
+
+The existing profile publication provider includes the avatar snapshot in its
+ephemeral version and uses its existing public push confirmation. UI Save never
+waits for it. Blob transfer, retry and offline storage belong to Dexie Cloud Addon
+4.4.15 / Dexie 4.4.6; no custom upload transport, manual blob cache, new database,
+table, schema installer, ACL change or privileged Worker operation is introduced.
+Reference: https://dexie.org/docs/cloud/blob-offloading . This additive value-type
+contract requires consistent deployment of the new client; old clients that reject
+unknown Flex types must be refreshed. No existing definition type is changed.
+
+`useCloudContactAvatarUrl` selects a relationship override, then the user's
+published image, then the existing Telegram source, then Avatar initials. Own
+surfaces use the personal source even without relationships. Downloads invalidate
+the source through the existing blob-progress revision. Subscriptions, snapshots
+and object URLs are scoped to database/account/subject; replacement/unmount revokes
+temporary URLs. The upload editor supports retry, duplicate-action suppression
+and stale compression/write completion guards. Contact controls/override captions
+appear only in editing, including avatar-only editing before a profile is published.
+UI Kit mechanics, styles and primitive geometry are unchanged.
+
+`resolveContactNames` enriches the authorized common contact snapshot through
+UserProfileRepository. Effective first/last names resolve per field from overrides
+over published questionnaire values, with the existing contact name used only
+when no usable publication exists. Explicit empty names use a generic display
+label, never resurrecting a deliberately cleared legacy name. Names never replace
+Telegram IDs, user IDs, membership or authentication. All current CloudContact
+consumers (directory, navigation, program/workout/calendar cards and pickers) receive
+the same reactive projection after Save, Reset and new publications. Avatar/name
+projection failures cannot block the directory or cloud transport.
+Keyed Flex reads select only the requested fields: resolving names/questionnaires
+does not load portrait bytes, and avatar readers do not fetch unrelated user data.
+
+Per-field Reset updates only that field in the mounted form draft and removes it
+from the changed-field patch; other unsaved edits remain. View mode contains no
+override labels or Reset controls. Legacy tests expecting those view controls are
+updated to enter Edit first; their failure, reset and stale-visit checks remain.
+New tests cover storage/atomic rollback, publication without questionnaire, new
+relationships, authorization/isolation, pending BlobRefs/definitions, name updates,
+upload retry, duplicates, stale completions and temporary URL disposal. Test source
+was reviewed; tests/typecheck/build run only in GitHub Actions after PR creation.
+Real two-account cloud permission/blob transfer and iOS/Android WebView image picker,
+Canvas memory, 320px layout and offline reopen still need device verification.
+
+PR 5 may retire the remaining Worker Telegram avatar/bootstrap APIs. They remain
+the current fallback in PR 4. License diagnostics remain outside this PR.
