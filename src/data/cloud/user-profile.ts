@@ -1,4 +1,5 @@
 import { liveQuery } from 'dexie';
+import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
 import {
   FlexAttributesRepository, type FlexAttributeInput, type FlexResolvedValue,
@@ -134,6 +135,52 @@ export class UserProfileRepository {
 
   private ownTarget() {
     return { entityType: 'user' as const, entityId: this.actorUserId, realmId: this.actorUserId };
+  }
+
+  /** Derived presentation version; no parallel persistent sync metadata. */
+  async publicationVersion(): Promise<string | null> {
+    return this.db.transaction('r', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const profile = await this.readOwn();
+      if (!profile) return null;
+      const pairs = await profileRelationships(this.db, this.actorUserId);
+      return JSON.stringify([profile, pairs.map(pair => pair.realmId)]);
+    });
+  }
+
+  observePublicationVersion(next: (version: string | null) => void, error: (reason: unknown) => void) {
+    return liveQuery(() => this.publicationVersion()).subscribe({ next, error });
+  }
+
+  /** Application publication only. Addon still owns replication and retries. */
+  async publishOwn(): Promise<string | null> {
+    return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members], async () => {
+      const profile = await this.readOwn();
+      if (!profile) return null;
+      const pairs = await profileRelationships(this.db, this.actorUserId);
+      for (const pair of pairs) {
+        const target = { entityType: 'publishedUser' as const, entityId: this.actorUserId, realmId: pair.realmId };
+        const previous = deserialize(await this.flexible.getValues(target), USER_PROFILE_KEYS);
+        // A newer snapshot from another device must not be replaced by a stale personal read.
+        if (previous && Date.parse(previous.updatedAt) > Date.parse(profile.updatedAt)) continue;
+        await this.flexible.setValues(target, serialize(profile));
+      }
+      return JSON.stringify([profile, pairs.map(pair => pair.realmId)]);
+    });
+  }
+
+  /** Public Addon push barrier confirms only the version captured by the caller. */
+  async confirmOwnSync(version: string): Promise<boolean> {
+    await this.db.cloud.sync({ purpose: 'push', wait: true });
+    return await this.publicationVersion() === version;
+  }
+
+  observePublished(userId: string, realmId: string,
+    next: (profile: UserProfile | null) => void, error: (reason: unknown) => void) {
+    return liveQuery(async () => deserialize(await this.flexible.getValues({
+      entityType: 'publishedUser', entityId: userId, realmId,
+    }), USER_PROFILE_KEYS)).subscribe({ next, error });
   }
 
   async readOwn(): Promise<UserProfile | null> {
