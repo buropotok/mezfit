@@ -20,7 +20,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: gif-visual-delta-report
-          run-id: ${{ 41322174596 }}
+          run-id: 41322174596
           github-token: ${{ github.token }}
           path: audit-artifact
       - name: Check generator contracts
