@@ -38,6 +38,11 @@ vi.mock('./NavigationShell', () => ({
   NavigationShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('./exercises/PublicCategoryArtworkProvider', () => ({
+  PublicCategoryArtworkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  usePublicCategoryArtwork: () => null,
+}));
+
 vi.mock('./schedule/TodayPage', () => ({
   TodayPage: () => <div>Client Today</div>,
 }));
@@ -92,6 +97,11 @@ vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
 }));
 
 beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   window.localStorage.clear();
   cloudRefresh.mockClear();
   window.localStorage.setItem('mezfit.selectedCloudCoachUserId.100', String(oldCoach.userId));
@@ -143,6 +153,8 @@ afterEach(() => {
   cleanup();
   window.history.replaceState({}, '', '/');
   delete window.Telegram;
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('client invite launch', () => {
