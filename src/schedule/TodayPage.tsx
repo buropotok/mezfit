@@ -27,6 +27,7 @@ import { CalendarSessionSheet } from './CalendarSessionSheet';
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { sessionTiming } from '../workout/session-timing';
 import { useSessionClock } from '../workout/useSessionClock';
+import { deriveWorkoutDayStatuses } from './workout-day-statuses';
 import './today-page.css';
 
 type TimelineItem = DayScheduleEvent & { date: string } & (
@@ -141,6 +142,35 @@ export function TodayPage({
   const activeRepository = useRef<WorkoutOccurrenceDraftRepository | null>(null);
   const editorGeneration = useRef(0);
   const [timingOverrides, setTimingOverrides] = useState<Record<string, { startsAtUtc: string; durationMinutes: number }>>({});
+  const [markerNow, setMarkerNow] = useState(Date.now);
+  const markerAthletes = useMemo(() => role === 'client'
+    ? cloud ? [cloud.actorUserId] : []
+    : clientUserIds.filter(id => clients.some(client => client.userId === id)),
+  [role, cloud?.actorUserId, clientUserIds, clients]);
+  const { dayStatuses, nextChangeAt } = useMemo(() => {
+    const timedOccurrences = occurrences.map(row => ({
+      ...row, ...(timingOverrides['occurrence:' + row.id] ?? {}),
+    }));
+    const timedDrafts = drafts.map(row => ({
+      ...row, ...(timingOverrides['draft:' + row.id] ?? {}),
+    }));
+    return deriveWorkoutDayStatuses(timedOccurrences, timedDrafts, sessions, markerAthletes, markerNow);
+  }, [occurrences, drafts, sessions, markerAthletes, markerNow, timingOverrides]);
+  useEffect(() => {
+    if (!markerAthletes.length) return;
+    const refresh = () => setMarkerNow(Date.now());
+    const timer = nextChangeAt === null ? null : window.setTimeout(
+      refresh, Math.max(1, Math.min(nextChangeAt - Date.now() + 1, 2_147_483_647)),
+    );
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [markerAthletes.length, nextChangeAt]);
+
   const draftRepository = useMemo(() => cloud
     ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
@@ -262,12 +292,12 @@ export function TodayPage({
       onNavigationContextChange({
         level: 1, title: showCancelled ? 'Отменённые тренировки' : view.title,
         identity: { title: view.title, icon: 'calendar-event' },
-        calendar: { value: date, onChange: setDate },
+        calendar: { value: date, onChange: setDate, dayStatuses },
         contentMode: 'viewport',
       });
     }
     return () => onNavigationContextChange(null);
-  }, [date, showCancelled, plannedStart?.conflictActive, plannedStart?.dismissConflict, selected?.id, sessionId, closeSession, personalEventId, filterOpened, creation, editorNavigation, closePersonalEvent, onNavigationContextChange]);
+  }, [date, showCancelled, dayStatuses, plannedStart?.conflictActive, plannedStart?.dismissConflict, selected?.id, sessionId, closeSession, personalEventId, filterOpened, creation, editorNavigation, closePersonalEvent, onNavigationContextChange]);
 
   useEffect(() => {
     if (plannedStart?.conflictActive && plannedStart.conflictOccurrence) {
