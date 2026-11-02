@@ -35,6 +35,38 @@ vi.mock('../ui', () => ({
 
 afterEach(() => cleanup());
 
+it('resets one override while preserving other unsaved field changes', async () => {
+  const profile = { firstName: 'Имя тренера', lastName: 'Иванова', email: '', phone: '',
+    birthDate: '', sex: 'undisclosed' as const, weightKg: null, updatedAt: '2026-11-03T00:00:00Z' };
+  const onSave = vi.fn(async () => undefined);
+  const onReset = vi.fn(async () => ({ ...profile, firstName: 'Анна' }));
+  render(<UserProfileForm purpose="contact" defaults={{ firstName: '', lastName: '' }}
+    initialProfile={profile} telegramUserId="202" telegramUsername={null}
+    overridden={['firstName']} onReset={onReset} onSave={onSave} />);
+  fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Черновик имени' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'draft@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Сбросить: Имя' }));
+  await waitFor(() => expect(screen.getByLabelText('Имя')).toHaveProperty('value', 'Анна'));
+  expect(screen.getByLabelText('E-mail')).toHaveProperty('value', 'draft@example.com');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить переопределения' }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ firstName: 'Анна', email: 'draft@example.com' }), ['email']));
+});
+
+it('preserves a field draft after reset failure and permits retry', async () => {
+  const profile = { firstName: 'Имя тренера', lastName: '', email: '', phone: '',
+    birthDate: '', sex: 'undisclosed' as const, weightKg: null, updatedAt: '2026-11-03T00:00:00Z' };
+  const onReset = vi.fn().mockRejectedValueOnce(new Error('quota')).mockResolvedValueOnce({ ...profile, firstName: 'Анна' });
+  render(<UserProfileForm purpose="contact" defaults={{ firstName: '', lastName: '' }}
+    initialProfile={profile} telegramUserId="202" telegramUsername={null}
+    overridden={['firstName']} onReset={onReset} onSave={async () => undefined} />);
+  fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Черновик' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Сбросить: Имя' }));
+  await screen.findByText('Не удалось сбросить переопределение. Повторите действие.');
+  expect(screen.getByLabelText('Имя')).toHaveProperty('value', 'Черновик');
+  fireEvent.click(screen.getByRole('button', { name: 'Сбросить: Имя' }));
+  await waitFor(() => expect(screen.getByLabelText('Имя')).toHaveProperty('value', 'Анна'));
+});
+
 describe('user profile form', () => {
   const defaults = { firstName: 'Анна', lastName: 'Иванова' };
   const identity = { initialProfile: null, telegramUserId: '202', telegramUsername: 'anna_fit' };
