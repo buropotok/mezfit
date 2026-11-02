@@ -75,13 +75,12 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
   };
   return <section className="user-profile__form" aria-label="Анкета пользователя">
     <Text variant="title">Анкета пользователя</Text>
-    <Text variant="body" tone="muted">Имя и фамилию можно изменить независимо от Telegram.</Text>
+    <Text variant="body" tone="muted">Все поля необязательны. Имя и фамилию можно изменить независимо от Telegram.</Text>
     <Text variant="caption" tone="muted">Анкета сохраняется в вашем личном профиле. Публикация для контактов пока недоступна.</Text>
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <List nested strong={false} dividers={false} className="user-profile__inputs">
-        <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-first`} label="Имя" required
+        <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-first`} label="Имя"
           value={draft.firstName} maxLength={100} disabled={saving}
-          error={attempted && !draft.firstName.trim() ? 'Обязательное поле' : undefined}
           onChange={event => update('firstName', event.target.value)} />
         <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-last`} label="Фамилия"
           value={draft.lastName} maxLength={100} disabled={saving}
@@ -102,6 +101,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       <Button variant="secondary" disabled={saving} onClick={() => setPickerOpen(true)}>
         {readableDate(draft.birthDate) || 'Выбрать дату рождения'}
       </Button>
+      {draft.birthDate ? <Button variant="secondary" disabled={saving} onClick={() => update('birthDate', '')}>Убрать дату рождения</Button> : null}
       {age !== null ? <Text variant="body">Возраст: {age}</Text> : null}
     </div>
     <Text variant="headline">Пол</Text>

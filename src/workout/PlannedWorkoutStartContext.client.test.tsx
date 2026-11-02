@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { PlannedWorkoutStartProvider, usePlannedWorkoutStart } from './PlannedWorkoutStartContext';
@@ -57,5 +58,29 @@ it('never falls back to Coach operations when Client storage is unavailable', ()
   state.enabled = false;
   render(<PlannedWorkoutStartProvider role="client" onStarted={vi.fn()}><Trigger done={vi.fn()} failed={vi.fn()} /></PlannedWorkoutStartProvider>);
   expect((screen.getByText('Start') as HTMLButtonElement).disabled).toBe(true);
+  expect(state.coachConstructed).not.toHaveBeenCalled();
+});
+
+it('keeps child state mounted while Start capability is disabled and re-enabled', () => {
+  function StatefulScreen() {
+    const [draftName, setDraftName] = useState('');
+    return <><input aria-label="Черновик" value={draftName} onChange={event => setDraftName(event.target.value)} />
+      <Trigger done={vi.fn()} failed={vi.fn()} /></>;
+  }
+  const onStarted = vi.fn();
+  const ui = (enabled: boolean) => <PlannedWorkoutStartProvider role="client" enabled={enabled} onStarted={onStarted}>
+    <StatefulScreen />
+  </PlannedWorkoutStartProvider>;
+  const view = render(ui(false));
+  fireEvent.change(screen.getByLabelText('Черновик'), { target: { value: 'Сохранённый ввод' } });
+  expect((screen.getByText('Start') as HTMLButtonElement).disabled).toBe(true);
+  view.rerender(ui(true));
+  expect((screen.getByLabelText('Черновик') as HTMLInputElement).value).toBe('Сохранённый ввод');
+  expect((screen.getByText('Start') as HTMLButtonElement).disabled).toBe(false);
+  view.rerender(ui(false));
+  expect((screen.getByLabelText('Черновик') as HTMLInputElement).value).toBe('Сохранённый ввод');
+  expect((screen.getByText('Start') as HTMLButtonElement).disabled).toBe(true);
+  expect(state.create).not.toHaveBeenCalled();
+  expect(state.flush).not.toHaveBeenCalled();
   expect(state.coachConstructed).not.toHaveBeenCalled();
 });

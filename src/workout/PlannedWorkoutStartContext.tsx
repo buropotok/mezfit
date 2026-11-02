@@ -30,19 +30,20 @@ export const usePlannedWorkoutStart = () => useContext(Context);
 export function PlannedWorkoutStartProvider(props: {
   role: 'coach' | 'client'; enabled?: boolean; onStarted: (id: string) => void; children: ReactNode;
 }) {
-  return props.enabled !== false ? <LocalWorkoutStartProvider {...props} /> : <>{props.children}</>;
+  // Capability changes must not remount the application shell or interrupt tab gestures.
+  return <LocalWorkoutStartProvider {...props} />;
 }
 
-function LocalWorkoutStartProvider({ role, onStarted, children }: {
-  role: 'coach' | 'client'; onStarted: (id: string) => void; children: ReactNode;
+function LocalWorkoutStartProvider({ role, enabled = true, onStarted, children }: {
+  role: 'coach' | 'client'; enabled?: boolean; onStarted: (id: string) => void; children: ReactNode;
 }) {
   const cloud = useCloudConnections();
   const clientWorkout = useClientWorkout();
-  const repository = useMemo(() => role === 'client' ? clientWorkout?.repository ?? null
+  const repository = useMemo(() => !enabled ? null : role === 'client' ? clientWorkout?.repository ?? null
     : cloud ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
-    [role, clientWorkout?.repository, cloud?.db, cloud?.actorUserId]);
-  const drafts = useMemo(() => cloud ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
-    [cloud?.db, cloud?.actorUserId]);
+    [enabled, role, clientWorkout?.repository, cloud?.db, cloud?.actorUserId]);
+  const drafts = useMemo(() => enabled && cloud ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
+    [enabled, cloud?.db, cloud?.actorUserId]);
   const running = useRef(false);
   const generation = useRef(0);
   const onStartedRef = useRef(onStarted);
@@ -78,7 +79,7 @@ function LocalWorkoutStartProvider({ role, onStarted, children }: {
     coachedDecision.current?.(false); coachedDecision.current = null; setCoachedPrompt(false);
     pendingDecision.current?.('back'); pendingDecision.current = null; setConflictOpened(false); setConflict(null); setConflictActive(false);
     return () => { ++generation.current; coachedDecision.current?.(false); coachedDecision.current = null; pendingDecision.current?.('back'); pendingDecision.current = null; };
-  }, [repository, role]);
+  }, [repository, role, enabled]);
   const runStart = useCallback(async <T,>(create: () => Promise<T>, prepare?: () => Promise<void>,
     isCurrent: () => boolean = () => true): Promise<T> => {
     if (!repository) throw new Error('Запуск тренировки недоступен');
