@@ -7,6 +7,7 @@ import argparse
 import csv
 import heapq
 import hashlib
+import math
 import json
 import re
 import subprocess
@@ -237,7 +238,8 @@ def read_gh():
 
 def number(raw):
     try:
-        return float(raw)
+        parsed = float(raw)
+        return parsed if math.isfinite(parsed) else None
     except (TypeError, ValueError):
         return None
 
