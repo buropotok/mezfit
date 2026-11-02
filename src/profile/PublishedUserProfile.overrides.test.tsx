@@ -138,3 +138,28 @@ it('does not let an earlier visit close a newly opened editor for the same conta
   expect(screen.getByLabelText('Редактор переопределений')).toBeTruthy();
   expect(screen.queryByText('Переопределения сохранены на устройстве.')).toBeNull();
 });
+
+it('does not revive a pending reset or its completion when returning to the same contact', async () => {
+  let finish: ((data: ContactUserProfile) => void) | undefined;
+  source.reset.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const view = render(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Сбросить: Имя' }));
+  expect(screen.getByRole('button', { name: 'Изменить анкету' })).toHaveProperty('disabled', true);
+  view.rerender(<PublishedUserProfile contact={{ ...contact, userId: 'tg:303', relationshipId: 'realm-2' }} />);
+  view.rerender(<PublishedUserProfile contact={contact} />);
+  expect(screen.getByRole('button', { name: 'Изменить анкету' })).toHaveProperty('disabled', false);
+  await act(async () => { finish?.(resetData()); });
+  expect(screen.getByText('Имя тренера')).toBeTruthy();
+  expect(screen.queryByText('Сброс сохранён на устройстве. Используются данные клиента.')).toBeNull();
+});
+
+it('clears an earlier visit success notice when reopening the contact', async () => {
+  const view = render(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать имя' }));
+  await screen.findByText('Переопределения сохранены на устройстве.');
+  view.rerender(<PublishedUserProfile contact={{ ...contact, userId: 'tg:303', relationshipId: 'realm-2' }} />);
+  view.rerender(<PublishedUserProfile contact={contact} />);
+  expect(screen.queryByText('Переопределения сохранены на устройстве.')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Изменить анкету' })).toBeTruthy();
+});
