@@ -49,14 +49,14 @@ export function initialUserProfile(defaults: UserProfileDefaults): UserProfileDr
 }
 
 export function validateUserProfile(value: UserProfileDraft, today = getTodayLocalDate()): string | null {
-  if (!value.firstName.trim() || value.firstName.trim().length > 100
+  if (value.firstName.trim().length > 100
     || value.lastName.trim().length > 100) return 'Проверьте имя и фамилию';
   if (value.email && (!emailPattern.test(value.email) || value.email.length > 254))
     return 'Проверьте адрес E-mail';
   if (value.phone && !phonePattern.test(value.phone)) return 'Проверьте номер телефона';
   const birth = parseLocalDate(value.birthDate);
   const current = parseLocalDate(today);
-  if (!birth || !current || birth.year < 1900 || value.birthDate > today)
+  if (value.birthDate && (!birth || !current || birth.year < 1900 || value.birthDate > today))
     return 'Укажите корректную дату рождения';
   if (!['male', 'female', 'undisclosed'].includes(value.sex)) return 'Проверьте поле «Пол»';
   if (value.weightKg !== null && (!Number.isFinite(value.weightKg) || value.weightKg < 15 || value.weightKg > 500))
