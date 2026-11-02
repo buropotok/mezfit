@@ -5,30 +5,50 @@ Uses the pinned GIF audit report and repository snapshots. Never edits catalogue
 """
 import argparse
 import csv
-import difflib
 import heapq
 import hashlib
 import json
 import re
 import subprocess
-from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MEDIA = ROOT / "assets" / "media"
 DATA = ROOT / "audit" / "visual" / "input"
-STOP = {"of", "the", "a", "an", "on", "with", "and", "in", "to", "for", "v", "male", "female"}
+STOP = {"of", "the", "a", "an", "on", "with", "and", "in", "to", "for",
+        "v", "male", "female", "exercise"}
 ALIASES = {
     "burpees": "burpee", "squats": "squat", "jumps": "jump",
-    "pushups": "pushup", "pushup": "pushup", "push": "push",
-    "pullups": "pullup", "pullup": "pullup",
-    "dumbbells": "dumbbell", "cables": "cable",
-    "raises": "raise", "crunches": "crunch", "rows": "row",
-    "lunges": "lunge", "twists": "twist", "extensions": "extension",
-    "single": "one", "unilateral": "one", "legged": "leg",
-    "biceps": "bicep", "triceps": "tricep",
+    "pushups": "pushup", "pullups": "pullup", "situps": "situp",
+    "dumbbells": "dumbbell", "cables": "cable", "bands": "band",
+    "banded": "band", "raises": "raise", "crunches": "crunch",
+    "rows": "row", "lunges": "lunge", "twists": "twist",
+    "extensions": "extension", "dips": "dip",
+    "single": "single", "unilateral": "single", "one": "single",
+    "legged": "leg", "biceps": "bicep", "triceps": "tricep",
     "kneeling": "kneel", "lying": "lie", "seated": "sit",
+    "forward": "front", "backward": "back", "rearward": "rear",
+    "inclined": "incline", "declined": "decline", "planks": "plank",
+    "running": "run", "skipping": "skip", "calves": "calf",
+    "rollerout": "rollout", "rollouts": "rollout",
+    "pulldowns": "pulldown", "flyes": "fly", "flies": "fly",
+    "presses": "press", "curls": "curl", "shrugs": "shrug",
+    "pullovers": "pullover", "bridges": "bridge",
+    "stretches": "stretch", "frontwards": "front",
 }
+MOVEMENTS = {
+    "squat", "deadlift", "press", "raise", "row", "curl", "lunge",
+    "pushup", "pullup", "dip", "crunch", "rollout", "stretch",
+    "extension", "bridge", "jump", "run", "walk", "skip",
+    "plank", "fly", "pull", "pulldown", "pullover", "swing",
+    "clean", "snatch", "thruster", "twist", "rotate", "kick",
+    "throw", "slam", "shrug", "situp", "carry",
+}
+EQUIPMENT = {"dumbbell", "barbell", "kettlebell", "cable", "band",
+             "smith", "machine", "lever", "ring", "trx", "medicine",
+             "plate", "bosu", "roller", "wheel"}
+EXCLUSIVE_EQUIPMENT = {"dumbbell", "barbell", "kettlebell", "cable",
+                       "band", "smith", "machine", "lever", "ring", "trx"}
 WEIGHTS = {"title": 2.4, "visual": 2.0, "optical_flow": 1.0,
            "pose": 0.8, "joint_motion": 1.0}
 ROUND_SIZE = 5
@@ -36,22 +56,132 @@ ROUND_COUNT = 6
 
 
 def words(name):
-    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", name)
-    text = re.sub(r"[^a-z0-9]+", " ", text.lower())
-    parts = [ALIASES.get(p, p) for p in text.split() if p not in STOP]
-    return parts
+    """Normalize naming, but never treat common variant version numbers as movement words."""
+    name = re.sub(r"([a-z])([A-Z])", r"\1 \2", name or "")
+    name = re.sub(r"\bv\s*\.?\s*\d+\b", " ", name, flags=re.I)
+    name = re.sub(r"\bpush[\s_-]*ups?\b", " pushup ", name, flags=re.I)
+    name = re.sub(r"\bpull[\s_-]*ups?\b", " pullup ", name, flags=re.I)
+    name = re.sub(r"\bsit[\s_-]*ups?\b", " situp ", name, flags=re.I)
+    name = re.sub(r"[^a-z0-9]+", " ", name.lower())
+    return [ALIASES.get(p, p) for p in name.split() if p not in STOP]
 
 
 def title_score(a, b):
+    """Weighted semantic-token similarity; no weak shared word can imply equality."""
     aa, bb = set(a), set(b)
     if not aa or not bb:
         return 0.0
-    common = len(aa & bb)
-    jaccard = common / len(aa | bb)
-    coverage = common / min(len(aa), len(bb))
-    a_sorted, b_sorted = " ".join(sorted(a)), " ".join(sorted(b))
-    basic = difflib.SequenceMatcher(None, a_sorted, b_sorted).ratio()
-    return round(0.48 * jaccard + 0.22 * coverage + 0.30 * basic, 6)
+    def weight(term):
+        return 3.0 if term in MOVEMENTS else (2.0 if term in EQUIPMENT else 1.0)
+    shared = sum(weight(t) for t in aa & bb)
+    total = sum(weight(t) for t in aa | bb)
+    smaller = min(sum(weight(t) for t in aa), sum(weight(t) for t in bb))
+    score = 0.7 * shared / total + 0.3 * shared / smaller
+    am, bm = aa & MOVEMENTS, bb & MOVEMENTS
+    if am and bm and not am.intersection(bm):
+        score *= 0.18  # e.g. squat versus deadlift
+    ae, be = aa & EXCLUSIVE_EQUIPMENT, bb & EXCLUSIVE_EQUIPMENT
+    if ae and be and not ae.intersection(be):
+        score *= 0.58  # different apparatus can mean different variants
+    return round(score, 6)
+
+
+def title_class(a, b):
+    """Distinguish exact, versioned, strongly related, and weak name matches."""
+    if not a or not b:
+        return 0
+    aa, bb = set(a), set(b)
+    if aa == bb:
+        return 3
+    sim = title_score(a, b)
+    if sim >= 0.56 and (aa & MOVEMENTS) == (bb & MOVEMENTS) and (aa & MOVEMENTS):
+        return 2
+    if sim >= 0.50 and (aa & MOVEMENTS) & (bb & MOVEMENTS):
+        return 1
+    return 0
+
+
+def visual_support(ranks):
+    """Independent imagery and body-motion families. No double-counting flow+image."""
+    visual = max((1.0 / (15 + ranks[c]) for c in ("visual", "optical_flow")
+                  if c in ranks), default=0.0)
+    pose = max((1.0 / (15 + ranks[c]) for c in ("pose", "joint_motion")
+                if c in ranks), default=0.0)
+    return visual + 0.6 * pose
+
+
+def order_candidates(pairs, gh_words, r2_words):
+    """Give strong names priority, reserve independent visual retrieval in Top-5.
+
+    A lexical match is a retrieval hypothesis, never an automatic exercise match.
+    Visual fallback is crucial for equivalent exercises with unrelated names.
+    """
+    rankings = {}
+    for channel in WEIGHTS:
+        listed = sorted(((signals[channel], ident) for ident, signals in pairs.items()
+                         if channel in signals and signals[channel] > 0),
+                        key=lambda entry: (-entry[0], entry[1]))
+        rankings[channel] = {ident: pos for pos, (_, ident) in enumerate(listed, 1)}
+
+    all_rows = []
+    for ident, scores in pairs.items():
+        ranks = {ch: ranked[ident] for ch, ranked in rankings.items() if ident in ranked}
+        tokens = r2_words[ident]
+        alignment = title_score(gh_words, tokens)
+        kind = title_class(gh_words, tokens)
+        visual = visual_support(ranks)
+        exact = 1 if set(gh_words) == set(tokens) and tokens else 0
+        # Exact spelling is ahead of 'v.2'; among versions prefer motion agreement.
+        fused = sum(WEIGHTS[ch] / (40 + rank) for ch, rank in ranks.items())
+        all_rows.append({
+            "id": ident, "scores": scores, "ranks": ranks, "semantic": alignment,
+            "kind": kind, "exact": exact, "visual_support": visual,
+            "fusion": fused,
+        })
+
+    # Sufficiently similar motion/terminology is ranked independently of
+    # incidental extra visual-channel evidence (which can be highly correlated).
+    strong = sorted(
+        (x for x in all_rows if x["kind"] >= 1),
+        key=lambda x: (-x["exact"], -x["kind"], -x["semantic"],
+                       -x["visual_support"], x["id"])
+    )
+    # Explore a visually retrieved alternative in first five even when names
+    # differ. Visual-only matches remain human-reviewed; never automatically paired.
+    visual = sorted(
+        (x for x in all_rows if x["visual_support"] > 0),
+        key=lambda x: (-x["visual_support"], -x["semantic"], x["id"])
+    )
+    selected, taken = [], set()
+    def append(item):
+        if item["id"] not in taken:
+            selected.append(item)
+            taken.add(item["id"])
+
+    # Four strongest semantic candidates, including ALL highest-priority exact
+    # ones up to capacity; leave one slot for truly independent visual retrieval.
+    for item in strong[:ROUND_SIZE - 1]:
+        append(item)
+    for item in visual:
+        if len(selected) >= ROUND_SIZE:
+            break
+        append(item)
+    # If no visual data is available, finish the page from names.
+    for item in strong:
+        if len(selected) >= ROUND_SIZE:
+            break
+        append(item)
+    # Rank other candidates for subsequent rounds. Include non-strong
+    # semantic matches and visually retrieved pairs; preserve all evidence.
+    remainder = sorted(
+        (item for item in all_rows if item["id"] not in taken),
+        key=lambda x: (-x["kind"], -x["semantic"], -x["visual_support"],
+                       -x["fusion"], x["id"])
+    )
+    selected.extend(remainder)
+    for index, item in enumerate(selected, 1):
+        item["rank"] = index
+    return selected
 
 
 def read_r2():
@@ -140,8 +270,7 @@ def generate(audit_dir, output_dir, github_ref):
 
     r2_tokens = {key: words(item["name"]) for key, item in r2.items()}
     gh_tokens = {key: words(title) for key, title in gh.items()}
-    # Independent title channel in both directions; do not discard candidates
-    # retrieved from static visual, optical flow, pose or joint motion.
+    # Bidirectional name retrieval using semantic movement/equipment tokens.
     inverse = {key: [] for key in r2}
     for name, tokens in gh_tokens.items():
         scores = []
@@ -163,43 +292,30 @@ def generate(audit_dir, output_dir, github_ref):
     evidence_rows = []
     for name, title in gh.items():
         pairs = bucket[name]
-        # Rank separately per independent channel, with stable tie-breaking.
-        rankings = {}
-        for channel in WEIGHTS:
-            ranked = sorted(((data[channel], ident) for ident, data in pairs.items()
-                             if channel in data and data[channel] > 0),
-                            key=lambda item: (-item[0], item[1]))
-            rankings[channel] = {ident: rank for rank, (_, ident) in
-                                 enumerate(ranked, start=1)}
-        results = []
-        for ident, scores in pairs.items():
-            if not scores:
-                continue
-            ranks = {ch: ranks[ident] for ch, ranks in rankings.items()
-                     if ident in ranks}
-            if not ranks:
-                continue
-            fused = sum(WEIGHTS[ch] / (40 + rank) for ch, rank in ranks.items())
-            # These are retrieval scores, NOT probabilities of identity.
-            results.append((fused, ident, ranks, scores))
-        results.sort(key=lambda item: (-item[0], item[1]))
+        ordered = order_candidates(pairs, gh_tokens[name], r2_tokens)
         candidates = []
-        for rank, (fused, ident, ranks, scores) in enumerate(results, start=1):
-            if rank <= ROUND_SIZE * ROUND_COUNT:
+        for item in ordered:
+            ident = item["id"]
+            ranks, scores = item["ranks"], item["scores"]
+            if item["rank"] <= ROUND_SIZE * ROUND_COUNT:
                 candidates.append({
                     "id": ident, "name": r2[ident]["name"],
-                    "equipment": r2[ident]["equipment"], "rank": rank,
-                    "channels": sorted(ranks), "fusion": round(fused, 7)
+                    "equipment": r2[ident]["equipment"], "rank": item["rank"],
+                    "channels": sorted(ranks), "fusion": round(item["fusion"], 7)
                 })
             evidence_rows.append({
                 "github_gif": name, "github_name_en": title,
                 "r2_id": ident, "r2_name_en": r2[ident]["name"],
-                "rank": rank, "fusion_retrieval_score": round(fused, 7),
+                "rank": item["rank"],
+                "semantic_title_score": item["semantic"],
+                "semantic_class": item["kind"],
+                "visual_support": round(item["visual_support"], 7),
+                "fusion_retrieval_score": round(item["fusion"], 7),
                 **{ch + "_rank": ranks.get(ch, "") for ch in WEIGHTS},
                 **{ch + "_score": scores.get(ch, "") for ch in WEIGHTS},
             })
-        if len(candidates) < 5:
-            raise ValueError("Fewer than five candidates for " + name)
+        if len(candidates) < ROUND_SIZE * ROUND_COUNT:
+            raise ValueError("Fewer than 30 candidates for " + name)
         entries.append({"gif": name, "name": title, "candidates": candidates})
 
     fingerprint = "\n".join(
@@ -222,8 +338,8 @@ def generate(audit_dir, output_dir, github_ref):
             "r2_source_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
             "github_exercises": "assets/exercises/**.json",
             "audit": "gif-visual-delta-report (matches/review/pose-candidates)",
-            "ranker": "independent-channel reciprocal-rank-fusion v1",
-            "note": "Original pinned R2 English names; semantic model review not performed.",
+            "ranker": "semantic-title-first with independent visual exploration v2",
+            "note": "English-title semantic dictionary + visual/motion retrieval; not an LLM verdict.",
         },
         "items": entries,
     }
