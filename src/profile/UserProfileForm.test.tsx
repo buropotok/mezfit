@@ -59,12 +59,25 @@ describe('user profile form', () => {
     })));
   });
 
-  it('does not persist without a birth date', async () => {
+  it('saves an entirely empty questionnaire with system Telegram identity kept outside the draft', async () => {
+    const onSave = vi.fn(async () => undefined);
+    render(<UserProfileForm defaults={{ firstName: '', lastName: '' }} {...identity} onSave={onSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить анкету' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({
+      firstName: '', lastName: '', email: '', phone: '', birthDate: '', sex: 'undisclosed', weightKg: null,
+    }));
+    expect(screen.getByText('Telegram ID: 202')).toBeTruthy();
+  });
+
+  it('allows a previously entered birth date to be cleared', async () => {
     const onSave = vi.fn(async () => undefined);
     render(<UserProfileForm defaults={defaults} {...identity} onSave={onSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Выбрать дату рождения' }));
+    fireEvent.click(screen.getByRole('button', { name: '31 мая 1990' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать дату рождения' }));
+    expect(screen.queryByText(/Возраст:/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить анкету' }));
-    expect(onSave).not.toHaveBeenCalled();
-    expect(screen.getByText('Укажите корректную дату рождения')).toBeTruthy();
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ birthDate: '' })));
   });
   it('uses only auto-shaped modal glass with inherited blur and transparent Konsta lists', () => {
     const view = render(<UserProfileForm defaults={defaults} {...identity} onSave={async () => {}} />);
