@@ -131,8 +131,8 @@
 <script>
 (function () {
   "use strict";
-  var KEY = "mezfit.gif-review.decisions.v1";
-  var GH_BASE = "https://raw.githubusercontent.com/buropotok/mezfit/main/assets/media/";
+  var KEY = "";
+  var GH_BASE = "";
   var R2_BASE = "https://raw.githubusercontent.com/buropotok/mezfit/data/r2-gif-snapshot/audit/gif-sources/r2/";
   var data = null, decisions = {}, round = 1, index = 0, subset = [];
   var byGif = {};
@@ -292,7 +292,7 @@
   }
   function exportCsv() {
     if (!data) return;
-    var fields = ["github_gif", "github_name_en", "round", "status",
+    var fields = ["candidate_revision", "github_gif", "github_name_en", "round", "status",
                   "r2_id", "r2_gif", "r2_name_en", "updated_at"];
     var lines = [fields.map(csvEscape).join(",")];
     data.items.forEach(function (item) {
@@ -301,7 +301,7 @@
         if (!d || !["matched", "none", "skip"].includes(d.status)) continue;
         var candidate = item.candidates.find(function (c) { return c.id === d.r2_id; });
         var row = [
-          item.gif, item.name, r, d.status, d.r2_id || "",
+          data.candidate_revision, item.gif, item.name, r, d.status, d.r2_id || "",
           candidate ? candidate.id + ".gif" : "",
           candidate ? candidate.name : "", d.updated_at || ""
         ];
@@ -345,13 +345,16 @@
       var headings = rows.shift() || [];
       var positions = {};
       headings.forEach(function (x, i) { positions[x] = i; });
-      ["github_gif","round","status","r2_id"].forEach(function (f) {
+      ["candidate_revision","github_gif","round","status","r2_id"].forEach(function (f) {
         if (!(f in positions)) throw new Error("Нет колонки " + f);
       });
       var incoming = {};
       var count = 0;
       rows.forEach(function (row) {
         if (!row.some(Boolean)) return;
+        if (row[positions.candidate_revision] !== data.candidate_revision) {
+          throw new Error("CSV относится к другой версии списка кандидатов. Данные не изменены.");
+        }
         var gif = row[positions.github_gif];
         var n = Number(row[positions.round]);
         var status = row[positions.status];
@@ -418,7 +421,13 @@
         result.items.length !== 1168) {
       throw new Error("Неподдерживаемая версия или неполный список кандидатов.");
     }
+    if (!/^[0-9a-f]{40}$/.test(result.github_ref) ||
+        !/^[0-9a-f]{64}$/.test(result.candidate_revision)) {
+      throw new Error("Нет закреплённой версии GIF или рейтинга.");
+    }
     data = result;
+    KEY = "mezfit.gif-review.decisions.v1." + result.candidate_revision;
+    GH_BASE = "https://raw.githubusercontent.com/buropotok/mezfit/" + result.github_ref + "/assets/media/";
     result.items.forEach(function (item) { byGif[item.gif] = item; });
     for (var r = 1; r <= data.max_rounds; r++) {
       var option = document.createElement("option");
