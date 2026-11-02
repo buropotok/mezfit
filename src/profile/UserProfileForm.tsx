@@ -108,13 +108,12 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       {draft.birthDate ? <Button variant="secondary" disabled={saving} onClick={() => update('birthDate', '')}>Убрать дату рождения</Button> : null}
       {age !== null ? <Text variant="body">Возраст: {age}</Text> : null}
     </div>
-    <Text variant="headline">Пол</Text>
     <LiquidPopover isOpen={sexOpen} onOpenChange={setSexOpen} triggerRef={sexTrigger}
       label="Выберите пол" triggerActivation="controlled"
       items={sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
         onSelect: () => { if (!saving) update('sex', option.value); setSexOpen(false); } }))}
       trigger={<span ref={sexTrigger}><Button variant="secondary" disabled={saving} onClick={() => setSexOpen(true)}>
-        <Text variant="body">Пол: {draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
+        <Text variant="headline">Пол:</Text>{' '}<Text variant="body">{draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
       </Button></span>} />
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <List nested strong={false} dividers={false}>
