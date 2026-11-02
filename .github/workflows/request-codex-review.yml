@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: Request Codex review for the current PR head
         env:
@@ -67,7 +67,7 @@ jobs:
     permissions:
       actions: read
       issues: write
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: Report failed CI for the current PR head
         env:
