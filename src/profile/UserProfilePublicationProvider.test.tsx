@@ -7,6 +7,7 @@ import { UserProfilePublicationProvider, UserProfileSyncStatus } from './UserPro
 const state = vi.hoisted(() => ({
   actor: 'tg:202', db: {}, status: 'offline' as string, version: 'profile-v1' as string | null,
   listeners: new Map<string, (version: string | null) => void>(),
+  errors: new Map<string, (reason: unknown) => void>(),
   publish: vi.fn<() => Promise<string | null>>(),
   confirm: vi.fn<(version: string) => Promise<boolean>>(),
 }));
@@ -15,9 +16,10 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
 }));
 vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
   constructor(_db: unknown, readonly actorUserId: string) {}
-  observePublicationVersion(next: (version: string | null) => void) {
+  observePublicationVersion(next: (version: string | null) => void, error: (reason: unknown) => void) {
+    state.errors.set(this.actorUserId, error);
     state.listeners.set(this.actorUserId, next); next(state.version);
-    return { unsubscribe: () => state.listeners.delete(this.actorUserId) };
+    return { unsubscribe: () => { state.listeners.delete(this.actorUserId); state.errors.delete(this.actorUserId); } };
   }
   publishOwn() { return state.publish(); }
   confirmOwnSync(version: string) { return state.confirm(version); }
@@ -31,7 +33,7 @@ vi.mock('../ui', () => ({
 }));
 const ui = () => <UserProfilePublicationProvider><UserProfileSyncStatus /></UserProfilePublicationProvider>;
 beforeEach(() => {
-  state.actor = 'tg:202'; state.status = 'offline'; state.version = 'profile-v1'; state.listeners.clear();
+  state.actor = 'tg:202'; state.status = 'offline'; state.version = 'profile-v1'; state.listeners.clear(); state.errors.clear();
   state.publish.mockReset().mockImplementation(async () => state.version);
   state.confirm.mockReset().mockResolvedValue(true);
 });
@@ -99,4 +101,16 @@ it('does not spin on failed cloud confirmation and permits an explicit retry', a
   fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
   await screen.findByText('Синхронизирована');
   expect(state.confirm).toHaveBeenCalledTimes(2);
+});
+
+it('invalidates an acknowledged status when observation fails and recovers through a fresh read', async () => {
+  state.status = 'synced';
+  render(ui());
+  await screen.findByText('Синхронизирована');
+  act(() => state.errors.get('tg:202')?.(new Error('IndexedDB unavailable')));
+  expect(screen.getByText('Ошибка')).toBeTruthy();
+  expect(screen.queryByText('Синхронизирована')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+  await screen.findByText('Синхронизирована');
+  expect(state.publish).toHaveBeenCalledTimes(2);
 });
