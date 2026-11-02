@@ -7,7 +7,7 @@ export function useWorkoutPerson(userId: string | null, realmId: string, actor?:
   const cloud = useCloudConnections();
   const self = userId === cloud?.actorUserId;
   const contact = (self ? cloud?.selfAvatars ?? [] : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])])
-    .find(person => person.userId === userId && person.relationshipId === realmId && (!self || Boolean(person.avatarVersion)));
+    .find(person => person.userId === userId && person.relationshipId === realmId && (!self || Boolean(person.avatarVersion || person.userAvatar)));
   const name = self ? actor?.name || 'Вы' : contact?.displayName || 'Атлет';
   const src = self ? actor?.photoUrl ?? undefined : undefined;
   return {

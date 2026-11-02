@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { List as KonstaList, ListInput } from 'konsta/react';
 import { duplicateCoachProgram, getCoachPrograms, reorderCoachPrograms, type ProgramListItem, type ProgramOwnerGroup, type ProgramStatus } from '../api';
 import { useNavigationFloatingAction } from '../NavigationShell';
+import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation';
@@ -291,7 +292,9 @@ export function ProgramsPage({
     }
   };
 
-  const selectedClient = creationDraft?.owner?.type === 'client' ? creationDraft.owner.client : null;
+  const selectedClientRef = creationDraft?.owner?.type === 'client' ? creationDraft.owner.client : null;
+  const selectedClient = selectedClientRef ? clients.find(client => client.userId === selectedClientRef.userId
+    && client.relationshipId === selectedClientRef.relationshipId) ?? selectedClientRef : null;
   const floatingAction = useMemo(() => onOpenCreation ? {
     label: 'Создать программу',
     onClick: () => { setCreationNameError(false); onOpenCreation(); },
@@ -378,7 +381,7 @@ export function ProgramsPage({
                 <ListItem
                   interactive={Boolean(client)}
                   onClick={client ? () => { void selectClient(client.userId); } : undefined}
-                  leading={<Avatar name={client ? clientName(client) : 'Клиент'} />}
+                  leading={client ? <CloudContactAvatar contact={client} /> : <Avatar name="Клиент" />}
                   title={client ? clientName(client) : 'Клиент'}
                 />
               </List>
@@ -433,7 +436,7 @@ export function ProgramsPage({
             <List>
               <ListItem
                 onClick={() => onRequestClientSelection?.()}
-                leading={selectedClient ? <Avatar name={clientName(selectedClient)} /> : undefined}
+                leading={selectedClient ? <CloudContactAvatar contact={selectedClient} /> : undefined}
                 title="Выбрать клиента"
                 subtitle={selectedClient ? clientName(selectedClient) : undefined}
               />

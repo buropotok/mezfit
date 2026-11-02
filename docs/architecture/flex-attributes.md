@@ -31,13 +31,21 @@ The actor is an authenticated `tg:<id>` identity; the repository checks that
 `user` targets are the actor's personal realm and that `adHocSession`
 targets exist, belong to the requested realm, and identify the actor as athlete
 or coach. It validates keys (ASCII identifier, up to 64 characters), declared
-types (`string`, finite `number`, `boolean`), string size (up to 1024),
+types (`string`, finite `number`, `boolean`, bounded `avatar`), string size (up to 1024),
 and explicit `null` clearing. Immutable deterministic IDs and an atomic
 local Dexie transaction avoid duplicated rows and partially applied batches;
 updates modify only `flexValues.value`. The canonical owner for shared
 records is the relationship realm ID sentinel, not the editing user. Personal
 records use the actor as both realm and owner. New entity types may be supported
 by new repository validation without changing either table schema.
+
+PR 4 adds the `avatar` type for profile_avatar/override_avatar: an atomic object
+with ISO version plus small/large JPEG Blobs, bounded to 50,000/245,000 bytes.
+Validated Addon BlobRefs are readable as pending data until hydration. Neither
+type nor identity of existing definitions is changed. UserAvatarRepository owns
+publication, precedence and reset; the Addon owns binary transfer and offline
+storage. A null Flex value resets an override; a version with two null variants
+removes the image. See user-profile.md for deployment and lifecycle boundaries.
 
 The entity type allowlist is `user`, `adHocSession`, and the PR 2 `publishedUser`
 projection. The latter is restricted to exact approved coach-client relationships;

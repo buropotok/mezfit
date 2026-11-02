@@ -111,7 +111,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
     const self = ownerId === cloud?.actorUserId;
     const contact = (self ? cloud?.selfAvatars ?? [] : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])])
       .find(person => person.userId === ownerId && person.relationshipId === plan.realmId
-        && (!self || Boolean(person.avatarVersion)));
+        && (!self || Boolean(person.avatarVersion || person.userAvatar)));
     const name = self ? actor?.name || 'Вы' : contact?.displayName || 'Автор программы';
     return <div className="workout-planning-sheet__owner" aria-label={`Владелец: ${name}`}>
       {contact ? <CloudContactAvatar contact={contact} />

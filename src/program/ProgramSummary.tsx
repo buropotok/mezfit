@@ -27,7 +27,7 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
   const resolve = (id: string | null, fallback: string) => {
     if (id === actorUserId) return { name: actor?.name || 'Вы', self: true,
       contact: cloud?.selfAvatars?.find(person => person.userId === id
-        && person.relationshipId === program.realmId && person.avatarVersion) };
+        && person.relationshipId === program.realmId && (person.avatarVersion || person.userAvatar)) };
     const contact = people.find((person) => person.userId === id && person.relationshipId === program.realmId);
     return { name: contact?.displayName || fallback, self: false, contact };
   };

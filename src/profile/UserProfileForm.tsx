@@ -23,8 +23,10 @@ function readableDate(value: string): string {
     .format(new Date(parts.year, parts.month - 1, parts.day)) : '';
 }
 
-export function UserProfileForm({ defaults, initialProfile, telegramUserId, telegramUsername, onSave, syncStatus, purpose = 'self', onCancel }: {
+export function UserProfileForm({ defaults, initialProfile, telegramUserId, telegramUsername, onSave, syncStatus, purpose = 'self', onCancel, overridden = [], onReset }: {
   syncStatus?: ReactNode;
+  overridden?: readonly UserProfileField[];
+  onReset?: (field: UserProfileField) => Promise<UserProfile | undefined>;
   purpose?: 'self' | 'contact';
   onCancel?: () => void;
   defaults: UserProfileDefaults;
@@ -58,6 +60,29 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
     setSaveError('');
     setSaved(false);
   };
+  const resetField = async (field: UserProfileField) => {
+    if (!onReset || busy.current) return;
+    busy.current = true; setSaving(true); setSaveError('');
+    try {
+      const profile = await onReset(field);
+      if (alive.current && profile) {
+        changedFields.current.delete(field);
+        dirty.current = changedFields.current.size > 0;
+        setDraft(current => ({ ...current, [field]: profile[field] }));
+        setSaved(false);
+      }
+    } catch {
+      if (alive.current) setSaveError('Не удалось сбросить переопределение. Повторите действие.');
+    } finally {
+      busy.current = false;
+      if (alive.current) setSaving(false);
+    }
+  };
+  const labels: Record<UserProfileField, string> = { firstName: 'Имя', lastName: 'Фамилия', email: 'E-mail', phone: 'Телефон', birthDate: 'Дата рождения', sex: 'Пол', weightKg: 'Вес, кг' };
+  const overrideControl = (field: UserProfileField) => purpose === 'contact' && onReset && overridden.includes(field) ? <div className="stack">
+    <Text variant="caption" tone="muted">Переопределено в этой связи</Text>
+    <Button variant="secondary" size="compact" disabled={saving} onClick={() => { void resetField(field); }}>Сбросить: {labels[field]}</Button>
+  </div> : null;
   const validation = validateUserProfile(draft);
   const age = ageFromBirthDate(draft.birthDate);
   const today = getTodayLocalDate();
@@ -106,6 +131,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
           onChange={event => update('phone', event.target.value)} />
       </List>
     </GlassSurface>
+    {(['firstName', 'lastName', 'email', 'phone'] as const).map(field => <div key={field}>{overrideControl(field)}</div>)}
     <Text variant="headline">Telegram ID</Text>
     <Text variant="body">{telegramUserId}</Text>
     {purpose === 'self' ? <><Text variant="headline">Telegram</Text>
@@ -118,6 +144,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       {draft.birthDate ? <Button variant="secondary" disabled={saving} onClick={() => update('birthDate', '')}>Убрать дату рождения</Button> : null}
       {age !== null ? <Text variant="body">Возраст: {age}</Text> : null}
     </div>
+    {overrideControl('birthDate')}
     <LiquidPopover isOpen={sexOpen} onOpenChange={setSexOpen} triggerRef={sexTrigger}
       label="Выберите пол" triggerActivation="controlled"
       items={sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
@@ -125,6 +152,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       trigger={<span ref={sexTrigger}><Button variant="secondary" disabled={saving} onClick={() => setSexOpen(true)}>
         <Text variant="headline">Пол:</Text>{' '}<Text variant="body">{draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
       </Button></span>} />
+    {overrideControl('sex')}
     <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <List nested strong={false} dividers={false}>
         <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-weight`} type="number"
@@ -133,6 +161,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
           onChange={event => update('weightKg', event.target.value === '' ? null : Number(event.target.value))} />
       </List>
     </GlassSurface>
+    {overrideControl('weightKg')}
     {attempted && validation ? <Text variant="footnote" role="alert">{validation}</Text> : null}
     {saved ? <Text variant="footnote" role="status">{purpose === 'contact' ? 'Переопределения сохранены на устройстве.' : 'Анкета сохранена на устройстве.'}</Text> : null}
     {saveError ? <Text variant="footnote" role="alert">{saveError}</Text> : null}
