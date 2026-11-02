@@ -125,3 +125,34 @@ describe('user profile form', () => {
   });
 
 });
+
+it('contact edits submit only deliberate fields while preserving a draft across incoming publication', async () => {
+  const initialProfile = { firstName: 'Анна', lastName: 'Иванова', email: '', phone: '',
+    birthDate: '', sex: 'undisclosed' as const, weightKg: null, updatedAt: '2026-11-02T00:00:00Z' };
+  const onSave = vi.fn(async () => undefined);
+  const view = render(<UserProfileForm purpose="contact" defaults={{ firstName: '', lastName: '' }}
+    initialProfile={initialProfile} telegramUserId="202" telegramUsername={null} onSave={onSave} />);
+  expect(screen.getByRole('button', { name: 'Сохранить переопределения' })).toHaveProperty('disabled', true);
+  fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Моё имя' } });
+  view.rerender(<UserProfileForm purpose="contact" defaults={{ firstName: '', lastName: '' }}
+    initialProfile={{ ...initialProfile, lastName: 'Новая фамилия' }} telegramUserId="202" telegramUsername={null} onSave={onSave} />);
+  expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('Моё имя');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить переопределения' }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+    expect.objectContaining({ firstName: 'Моё имя' }), ['firstName']));
+  expect(screen.queryByText('Telegram')).toBeNull();
+  expect(screen.getByText('202')).toBeTruthy();
+});
+
+it('contact save failure retains edited values and retries the same field patch', async () => {
+  const onSave = vi.fn().mockRejectedValueOnce(new Error('Не удалось записать')).mockResolvedValueOnce(undefined);
+  render(<UserProfileForm purpose="contact" defaults={{ firstName: '', lastName: '' }}
+    initialProfile={null} telegramUserId="202" telegramUsername={null} onSave={onSave} />);
+  fireEvent.change(screen.getByLabelText('Телефон'), { target: { value: '+79991234567' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить переопределения' }));
+  await screen.findByText('Не удалось записать');
+  expect((screen.getByLabelText('Телефон') as HTMLInputElement).value).toBe('+79991234567');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить переопределения' }));
+  await screen.findByText('Переопределения сохранены на устройстве.');
+  expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ phone: '+79991234567' }), ['phone']);
+});
