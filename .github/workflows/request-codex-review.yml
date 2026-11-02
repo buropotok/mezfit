@@ -56,3 +56,68 @@ jobs:
 
           gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
             -f body='@codex review. Комментарии на русском'
+
+  report-failure:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'failure'
+          && github.event.workflow_run.event == 'pull_request'
+          && github.event.workflow_run.head_repository.full_name == github.repository
+          && github.event.workflow_run.pull_requests[0].number != null }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Report failed CI for the current PR head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          set -euo pipefail
+
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
+          if ! jq -e --arg sha "$HEAD_SHA" --arg repo "$GITHUB_REPOSITORY" '
+            .state == "open"
+            and .base.ref == "main"
+            and .head.sha == $sha
+            and .head.repo.full_name == $repo
+          ' <<<"$pr" >/dev/null; then
+            echo "PR is closed, was updated, or does not belong to this repository; skipping."
+            exit 0
+          fi
+
+          # The run ID and attempt make this notification deterministic and idempotent.
+          marker="<!-- mezfit-ci-failure run=$RUN_ID attempt=$RUN_ATTEMPT -->"
+          comments=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments?per_page=100")
+          if jq -e --arg marker "$marker" '
+            any(.[][]; .user.login == "github-actions[bot]"
+              and ((.body // "") | contains($marker)))
+          ' <<<"$comments" >/dev/null; then
+            echo "CI failure was already reported for this run attempt."
+            exit 0
+          fi
+
+          failed_steps="- Не удалось определить упавшие шаги; см. логи CI."
+          if jobs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs?per_page=100"); then
+            detected=$(jq -r '
+              [.jobs[] | select(.conclusion == "failure") |
+                .name as $job |
+                .steps[]? | select(.conclusion == "failure") |
+                "- \($job) / \(.name)"]
+              | unique | .[]
+            ' <<<"$jobs")
+            if [[ -n "$detected" ]]; then
+              failed_steps="$detected"
+            fi
+          fi
+
+          body=$(printf '%s\nCI_RESULT\nSTATUS: FAILURE\nPR: %s\nCOMMIT: %s\nRUN_ID: %s\nRUN_ATTEMPT: %s\nRUN_URL: %s\nFAILED_STEPS:\n%s\n' \
+            "$marker" "$PR_NUMBER" "$HEAD_SHA" "$RUN_ID" "$RUN_ATTEMPT" "$RUN_URL" "$failed_steps")
+
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+            -f body="$body"
