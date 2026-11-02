@@ -315,6 +315,32 @@ describe('published profile defaults', () => {
     await expect(peer.readPublished('tg:202', realm)).rejects.toThrow('FLEX_ENTITY_FORBIDDEN');
   });
 
+  it('waits for a partial shared download without overwriting it or confirming publication', async () => {
+    const { db, repo } = create();
+    const realm = await profileLink(db);
+    await repo.saveOwn(draft);
+    const flexible = new FlexAttributesRepository(db as unknown as MezfitCloudDatabase, 'tg:202');
+    const target = { entityType: 'publishedUser' as const, entityId: 'tg:202', realmId: realm };
+    await flexible.setValues(target, [
+      { key: 'profile_firstName', valueType: 'string', value: 'Поздние данные' },
+      { key: 'profile_updatedAt', valueType: 'string', value: '2099-01-01T00:00:00Z' },
+    ]);
+    const before = await repo.publicationVersion();
+    expect(await repo.publishOwn()).toBeNull();
+    expect((await flexible.getValues(target)).find(row => row.key === 'profile_firstName')?.value).toBe('Поздние данные');
+    await flexible.setValues(target, [
+      { key: 'profile_lastName', valueType: 'string', value: '' },
+      { key: 'profile_email', valueType: 'string', value: '' },
+      { key: 'profile_phone', valueType: 'string', value: '' },
+      { key: 'profile_birthDate', valueType: 'string', value: '' },
+      { key: 'profile_sex', valueType: 'string', value: 'undisclosed' },
+      { key: 'profile_weightKg', valueType: 'number', value: null },
+    ]);
+    expect(await repo.publicationVersion()).not.toBe(before);
+    await repo.publishOwn();
+    expect(await repo.readPublished('tg:202', realm)).toMatchObject({ firstName: 'Поздние данные' });
+  });
+
   it('does not overwrite a newer published snapshot with a stale personal version', async () => {
     const { db, repo } = create();
     const realm = await profileLink(db);
