@@ -1,0 +1,9 @@
+.user-profile__form {
+  display: grid;
+  gap: 16px;
+  padding: 16px 0 calc(28px + env(safe-area-inset-bottom));
+  min-width: 0;
+}
+.user-profile__inputs { min-width: 0; }
+.user-profile__date { display: grid; justify-items: start; gap: 8px; }
+.user-profile__status { padding: 24px 16px; display: grid; gap: 16px; }

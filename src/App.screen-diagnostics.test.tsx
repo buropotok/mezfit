@@ -4,7 +4,22 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMe, getCurrentWorkoutSession } from './api';
 import { App } from './App';
+import type { UserProfile } from './data/cloud/user-profile';
 import { SCREEN_DIAGNOSTICS_DEEP_LINK } from './settings/screenDiagnosticsRoute';
+
+// These scenarios start after mandatory registration; registration itself is tested separately.
+vi.mock('./data/cloud/user-profile', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./data/cloud/user-profile')>();
+  return { ...actual, UserProfileRepository: class {
+    constructor(_db: unknown, readonly actorUserId: string) {}
+    async migrateOwn() {}
+    observeOwn(next: (profile: UserProfile | null) => void) {
+      next({ firstName: 'Клиент', lastName: '', email: '', phone: '', birthDate: '2000-01-01',
+        sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' });
+      return { unsubscribe() {} };
+    }
+  } };
+});
 
 vi.mock('./api', async (importOriginal) => {
   const original = await importOriginal<typeof import('./api')>();
@@ -19,8 +34,9 @@ vi.mock('./NavigationShell', () => ({
     </div>
   ),
 }));
+const profileDb = {};
 vi.mock('./data/cloud/CloudConnectionsProvider', () => ({
-  useCloudConnections: () => null,
+  useCloudConnections: () => ({ db: profileDb, actorUserId: 'tg:100' }),
   CloudConnectionsProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 vi.mock('./data/cloud/AssignedProgramsProvider', () => ({

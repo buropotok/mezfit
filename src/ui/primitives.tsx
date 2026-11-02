@@ -6,6 +6,7 @@ import { isPressScaleActivationKey, startPressScale } from './PressScale';
 import { startSpringScale } from './SpringScale';
 import { LiquidGlassIconButtonFilter, LiquidGlassOpticalFilter, useLiquidGlassFilterId, type LiquidGlassGeometry } from './liquidGlass';
 import './ui.css';
+import './avatar.css';
 import './typography.css';
 
 type TextVariant = 'body' | 'caption' | 'footnote' | 'headline' | 'title' | 'large-title';

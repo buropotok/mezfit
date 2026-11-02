@@ -1,8 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
 import type { MeResponse, Role } from './api';
+import { useCloudConnections } from './data/cloud/CloudConnectionsProvider';
+import { useCloudContactAvatarUrl } from './contacts/CloudContactAvatar';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import {
+  Avatar,
   DatePicker,
   FloatingActionButton,
   FloatingActionButtonGlassProvider,
@@ -32,7 +35,8 @@ export type AppDestination =
   | 'history'
   | 'progress'
   | 'settings'
-  | 'about';
+  | 'about'
+  | 'profile';
 
 export type NavigationLevel = 1 | 2;
 
@@ -105,10 +109,11 @@ const clientPrimaryItems: NavigationItem[] = [
   { id: 'training', label: 'Тренировка', icon: 'barbell' },
   { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
   { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
-  { id: 'settings', label: 'Настройки', icon: 'settings', showFab: false },
+  { id: 'profile', label: 'Мой профиль', icon: 'user', showFab: false },
 ];
 
 const coachSecondaryItems: NavigationItem[] = [
+  { id: 'profile', label: 'Мой профиль', icon: 'user', section: 'secondary', showFab: false },
   { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'calendar', label: 'Календарь', icon: 'calendar', section: 'secondary', showFab: false },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
@@ -116,6 +121,7 @@ const coachSecondaryItems: NavigationItem[] = [
 ];
 
 const clientSecondaryItems: NavigationItem[] = [
+  { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'history', label: 'История', icon: 'clock', section: 'secondary', showFab: false },
   { id: 'progress', label: 'Прогресс', icon: 'chart-dots-2', section: 'secondary', showFab: false },
@@ -208,6 +214,7 @@ interface Props {
   glassOptics?: boolean;
   previewWidth?: 320 | null;
   children: ReactNode;
+  registrationRequired?: boolean;
 }
 
 // LiquidPopover motion values are seconds; FAB compression is fixed at 120 ms.
@@ -263,7 +270,17 @@ export function NavigationShell({
   glassOptics = false,
   previewWidth = null,
   children,
+  registrationRequired = false,
 }: Props) {
+  const cloud = useCloudConnections();
+  const ownAvatarContact = activeRole === 'client'
+    ? cloud?.selfAvatars?.find(contact => contact.userId === `tg:${me.user.telegramUserId}` && contact.avatarVersion) ?? null
+    : null;
+  const ownAvatarSrc = useCloudContactAvatarUrl(ownAvatarContact);
+  const ownAvatar = <span style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
+    <Avatar size="small" name={[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}
+      src={ownAvatarSrc ?? me.user.photoUrl ?? undefined} />
+  </span>;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPresented, setMenuPresented] = useState(false);
   const menuOriginRef = useRef<HTMLElement>(null);
@@ -289,7 +306,7 @@ export function NavigationShell({
   const level: NavigationLevel = nestedContext ? 2 : 1;
   const destinationFloatingAction = registeredFloatingAction?.destination === destination ? registeredFloatingAction.action : null;
   const surfaceFloatingAction = registeredFloatingAction?.destination === null ? registeredFloatingAction.action : null;
-  const resolvedPrimaryFloatingAction = level === 1
+  const resolvedPrimaryFloatingAction = level === 1 && !registrationRequired
     ? surfaceFloatingAction ?? destinationFloatingAction ?? (currentItem.showFab === false ? null : floatingAction ?? null)
     : null;
   const resolvedSurfaceFloatingAction = level === 2 ? surfaceFloatingAction : null;
@@ -344,7 +361,7 @@ export function NavigationShell({
   useEffect(() => {
     setMenuOpen(false);
     setCoachSelectorOpen(false);
-  }, [activeRole]);
+  }, [activeRole, registrationRequired]);
 
   useEffect(() => {
     contextRef.current = nestedContext;
@@ -436,6 +453,7 @@ export function NavigationShell({
   }, []);
 
   const chooseDestination = (next: AppDestination) => {
+    if (registrationRequired) return;
     setCalendarOpen(false);
     onDestinationChange(next);
     setMenuOpen(false);
@@ -449,11 +467,19 @@ export function NavigationShell({
 
   const contextualMenuActions = context?.menuActions ?? [];
   const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
-  const menuItems: LiquidPopoverItem[] = contextualMenuActions.map(action => ({
+  const menuItems: LiquidPopoverItem[] = activeRole === 'coach' ? [{
+    id: 'destination-profile', label: 'Мой профиль', active: destination === 'profile',
+    'aria-current': destination === 'profile' ? 'page' : undefined,
+    onSelect: () => chooseDestination('profile'),
+  }] : [];
+  menuItems.push(...contextualMenuActions.map((action, index) => ({
     id: `context-${action.id}`, label: action.label, disabled: action.disabled, onSelect: action.onSelect,
-  }));
+    dividerBefore: activeRole === 'coach' && index === 0,
+  })));
+  let systemItemsAdded = false;
   const addSystemItem = (item: LiquidPopoverItem) => {
-    if (menuItems.length === contextualMenuActions.length && contextualMenuActions.length > 0 && hasSystemMenu) item.dividerBefore = true;
+    if (!systemItemsAdded && contextualMenuActions.length > 0 && hasSystemMenu) item.dividerBefore = true;
+    systemItemsAdded = true;
     menuItems.push(item);
   };
   if (me.roles.length > 1) me.roles.forEach(role => addSystemItem({
@@ -464,7 +490,7 @@ export function NavigationShell({
     id: 'coach-selector', label: 'Тренер', dividerBefore: me.roles.length > 1,
     onSelect: () => { setMenuOpen(false); setCoachSelectorOpen(true); },
   });
-  secondaryItems.forEach((item, index) => addSystemItem({
+  secondaryItems.filter(item => item.id !== 'profile').forEach((item, index) => addSystemItem({
     id: `destination-${item.id}`, label: item.label, active: destination === item.id,
     'aria-current': destination === item.id ? 'page' : undefined,
     dividerBefore: index === 0 && (activeRole === 'client' || me.roles.length > 1),
@@ -523,14 +549,14 @@ export function NavigationShell({
             identity={identity}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
-            onCalendar={() => setCalendarOpen((open) => !open)}
+            onCalendar={() => { if (!registrationRequired) setCalendarOpen((open) => !open); }}
             calendarOpen={calendarOpen}
             renderMenuControl={renderMenuControl}
             rightControlRef={menuOriginRef}
             rightControlHidden={menuOpen || menuPresented}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
-            menuDisabled={menuOpen || menuPresented}
+            menuDisabled={registrationRequired || menuOpen || menuPresented}
           />
         </div>
 
@@ -560,7 +586,7 @@ export function NavigationShell({
             tabs={primaryItems.map((item) => ({
               value: item.id,
               label: item.label,
-              icon: item.icon,
+              icon: item.id === 'profile' ? { outline: ownAvatar, filled: ownAvatar } : item.icon,
             }))}
             value={primaryDestination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}

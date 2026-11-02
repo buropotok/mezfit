@@ -1,8 +1,18 @@
 /** @vitest-environment jsdom */
+import { Avatar } from './primitives';
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LiquidGlassFloatingActionSlot, LiquidGlassIconOnly, type LiquidGlassIconOnlyTab } from './LiquidGlassIconOnly';
+
+// Vitest skips CSS processing (including raw CSS); read the real stylesheet in Node.
+vi.mock('./avatar.css?inline', async () => {
+  // @ts-expect-error Test-only Node import; production tsconfig intentionally omits Node types.
+  const { readFile } = await import('node:fs/promises');
+  // @ts-expect-error Test-only Node import; production tsconfig intentionally omits Node types.
+  const { resolve } = await import('node:path');
+  return { default: await readFile(resolve(process.cwd(), 'src/ui/avatar.css'), 'utf8') };
+});
 
 const tabs:LiquidGlassIconOnlyTab[]=['Сегодня','Клиенты','Программы','Аналитика','Настройки'].map((label,i)=>({value:String(i),label,icon:{outline:<svg data-art={`${i}-outline`}/>,filled:<svg data-art={`${i}-filled`}/>}}));
 const namedTabs:LiquidGlassIconOnlyTab[]=[
@@ -54,6 +64,22 @@ beforeEach(()=>{
 afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()});
 
 describe('direct prototype adapter',()=>{
+  it('renders the shared Avatar photo and initials inside both normal and startup slots', () => {
+    const avatar = <span style={{ display: 'grid', placeItems: 'center' }}><Avatar size="small" name="Анна Иванова" src="/photo.jpg" /></span>;
+    const list: LiquidGlassIconOnlyTab[] = [{ value: 'profile', label: 'Мой профиль', icon: { outline: avatar, filled: avatar } }];
+    const view = render(ui(false, 'profile', list));
+    const root = getScene(view.container);
+    expect(root.querySelector('.tab-icon-outline img')?.getAttribute('src')).toBe('/photo.jpg');
+    expect(root.querySelector('.startup-icon img')?.getAttribute('src')).toBe('/photo.jpg');
+    const photo = root.querySelector('.tab-icon-outline img');
+    if (!photo) throw new Error('Missing Avatar photo');
+    fireEvent.error(photo);
+    expect(root.querySelector('.tab-icon-outline [role="img"]')?.textContent).toBe('АИ');
+    expect([...root.querySelectorAll('style')].some(style => style.textContent?.includes('.ui-avatar--fallback'))).toBe(true);
+    fireEvent.click(button(root, 0));
+    expect(changed).not.toHaveBeenCalled();
+  });
+
   it('reports active-tab reselection separately without changing selection behavior', () => {
     const reselected = vi.fn();
     const view = render(<LiquidGlassIconOnly tabs={tabs} value="0" hidden={false}

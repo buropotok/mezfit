@@ -9,6 +9,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { UserProfileNavigationShell } from './profile/UserProfileNavigationShell';
 import { applyBackgroundSettings, loadBrowserBackgroundSettings, saveBrowserBackgroundSettings } from './backgroundSettings';
 import { AssignedProgramsProvider } from './data/cloud/AssignedProgramsProvider';
 import { CloudConnectionsProvider } from './data/cloud/CloudConnectionsProvider';
@@ -32,7 +33,7 @@ import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypo
 import { HomeScreenInstallToast } from './homeScreen/HomeScreenInstallToast';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
-import { ClientWorkoutProvider, ClientWorkoutNavigationShell } from './workout/ClientWorkoutContext';
+import { ClientWorkoutProvider } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
 import { WorkoutCompletionProvider } from './workout/WorkoutCompletionContext';
 import { CoachAdHocWorkoutsScreen } from './workout/CoachAdHocWorkoutsScreen';
@@ -193,6 +194,8 @@ export function App() {
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [initialScreenDiagnosticsOpen, setInitialScreenDiagnosticsOpen] = useState(false);
   const [previewWidth, setPreviewWidth] = useState<320 | null>(null);
+  const [clientSettingsReturnDestination, setClientSettingsReturnDestination] = useState<AppDestination>('today');
+  const [coachProfileReturnDestination, setCoachProfileReturnDestination] = useState<AppDestination>('today');
   const [coachSettingsReturnDestination, setCoachSettingsReturnDestination] = useState<AppDestination>('today');
   const [navigationContext, setNavigationContext] = useState<NavigationContext | null>(null);
   const [completionNavigation, setCompletionNavigation] = useState<NavigationContext | null>(null);
@@ -206,16 +209,21 @@ export function App() {
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
   }, []);
-  const coachSettingsRootContext = useMemo<NavigationContext>(() => ({
+  const settingsRootContext = useMemo<NavigationContext>(() => ({
     level: 2,
     title: 'Настройки',
     scrollKey: 'settings:root',
     identity: { title: 'Настройки', icon: 'settings' },
     onBack: () => {
       setNavigationContext(null);
-      setCoachDestination(coachSettingsReturnDestination);
+      if (state.status === 'ready' && state.activeRole === 'coach') setCoachDestination(coachSettingsReturnDestination);
+      else setClientDestination(clientSettingsReturnDestination);
     },
-  }), [coachSettingsReturnDestination]);
+  }), [state.status, state.status === 'ready' ? state.activeRole : null, coachSettingsReturnDestination, clientSettingsReturnDestination]);
+  const coachProfileRootContext = useMemo<NavigationContext>(() => ({
+    level: 2, title: 'Мой профиль', scrollKey: 'profile:self',
+    onBack: () => { setNavigationContext(null); setCoachDestination(coachProfileReturnDestination); },
+  }), [coachProfileReturnDestination]);
 
   useEffect(() => {
     saveBrowserGlassSettings(glassSettings);
@@ -331,11 +339,19 @@ export function App() {
     setCompletionNavigation(null);
     setNavigationContext(null);
     if (state.activeRole === 'coach') {
-      if (next === 'settings' && coachDestination !== 'settings') {
+      // Reopening a parent must retain its original return target rather than
+      // create mutual Profile <-> Settings links.
+      if (next === 'settings' && coachDestination !== 'settings'
+        && !(coachDestination === 'profile' && coachProfileReturnDestination === 'settings')) {
         setCoachSettingsReturnDestination(coachDestination);
+      }
+      if (next === 'profile' && coachDestination !== 'profile'
+        && !(coachDestination === 'settings' && coachSettingsReturnDestination === 'profile')) {
+        setCoachProfileReturnDestination(coachDestination);
       }
       setCoachDestination(next);
     } else {
+      if (next === 'settings' && clientDestination !== 'settings') setClientSettingsReturnDestination(clientDestination);
       setClientDestination(next);
     }
   };
@@ -345,9 +361,10 @@ export function App() {
     setRequestedScheduleDraftId(null);
     dispatch({ type: 'switch-role', role });
   };
-  const shellContext = state.activeRole === 'coach' && destination === 'settings'
-    ? navigationContext ?? coachSettingsRootContext
-    : navigationContext;
+  const shellContext = destination === 'settings'
+    ? navigationContext ?? settingsRootContext
+    : state.activeRole === 'coach' && destination === 'profile'
+      ? coachProfileRootContext : navigationContext;
 
   return (
     <GlassSurfaceProvider blur={glassSettings.blur} optics={glassSettings.optics}>
@@ -381,7 +398,7 @@ export function App() {
         <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
         <WorkoutCompletionProvider enabled={state.activeRole === 'coach' && (destination === 'today' || destination === 'training')}
           scope={state.activeRole + ':' + destination} onNavigationContextChange={setCompletionNavigation}>
-        <ClientWorkoutNavigationShell
+        <UserProfileNavigationShell
           me={state.me}
           activeRole={state.activeRole}
           destination={destination}
@@ -431,7 +448,7 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
           )}
-        </ClientWorkoutNavigationShell>
+        </UserProfileNavigationShell>
         </WorkoutCompletionProvider>
         </PlannedWorkoutStartProvider>
         </SchedulePlanningContext.Provider>

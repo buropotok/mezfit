@@ -1,0 +1,14 @@
+.client-workspace {
+  min-width: 0;
+  gap: var(--ui-space-4);
+}
+.client-workspace-tabs {
+  min-width: 0;
+  width: 100%;
+}
+.client-workspace-surface {
+  display: grid;
+  min-width: 0;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-4);
+}
