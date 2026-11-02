@@ -61,7 +61,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
       if (isCurrent()) { busy.current = false; setPending(null); }
     }
   };
-  if (editing && repository) return <section className="stack">
+  if (editing && repository && editor) return <section className="stack">
     {current?.error || data?.incomplete || !profile ? <Text variant="body" role="alert">Не удалось обновить анкету. Черновик сохранён в форме.</Text> : null}
     <UserProfileForm key={key} purpose="contact" initialProfile={profile ?? editor.profile}
       defaults={{ firstName: '', lastName: '' }} telegramUserId={contact.telegramUserId} telegramUsername={null}
