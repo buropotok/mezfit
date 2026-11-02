@@ -620,7 +620,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   return <>
     {container ? createPortal(content, container) : inlineCard
       ? <GlassSurface preset="modalTuned" optics={glass.optics}>{content}</GlassSurface> : content}
-    {error || saveNotice || copyNotice ? <Toast opened position="center" role={error ? 'alert' : 'status'}><Text variant="body">{error || saveNotice || copyNotice}</Text></Toast> : null}
+    {error || saveNotice || copyNotice ? <Toast opened position="center" role={error || saveNotice ? 'alert' : 'status'}><Text variant="body">{error || saveNotice || copyNotice}</Text></Toast> : null}
     {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
       <Text variant="body">{lockedPlanMessage}</Text>
     </Toast> : null}
