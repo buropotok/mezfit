@@ -47,9 +47,10 @@ describe('session copy menu', () => {
     expect(screen.queryByRole('dialog', { name: 'Выбор даты' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть меню' }));
     fireEvent.click(screen.getByRole('button', { name: '9 ноября' }));
-    await waitFor(() => expect(onCopy).toHaveBeenCalledExactlyOnceWith('2026-11-09'));
+    await waitFor(() => expect(onCopy).toHaveBeenCalledOnce());
+    expect(onCopy).toHaveBeenCalledWith('2026-11-09');
     expect(screen.queryByRole('dialog', { name: 'Выбор даты' })).toBeNull();
-    expect(await screen.findByRole('status')).toHaveTextContent('Копия тренировки добавлена');
+    expect((await screen.findByRole('status')).textContent).toContain('Копия тренировки добавлена');
   });
 
   it('does not offer duplication when the owner has no copy capability', () => {
