@@ -333,6 +333,7 @@ def generate(audit_dir, output_dir, github_ref):
         "candidate_revision": revision, "github_ref": github_ref,
         "r2_count": len(r2), "github_count": len(gh),
         "round_size": ROUND_SIZE, "max_rounds": ROUND_COUNT,
+        "r2_index": {ident: item["name"] for ident, item in r2.items()},
         "sources": {
             "r2_catalogue": "audit/visual/input/catalogue_stage_{NN}.jsonl",
             "r2_source_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
