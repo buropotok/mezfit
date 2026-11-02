@@ -7,9 +7,8 @@ import { LiquidGlassFloatingActionSlot, LiquidGlassIconOnly, type LiquidGlassIco
 
 // Vitest skips CSS processing; load the real stylesheet for the Shadow DOM contract.
 vi.mock('./avatar.css?inline', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const { resolve } = await import('node:path');
-  return { default: await readFile(resolve(process.cwd(), 'src/ui/avatar.css'), 'utf8') };
+  const { default: css } = await import('./avatar.css?raw');
+  return { default: css };
 });
 
 const tabs:LiquidGlassIconOnlyTab[]=['Сегодня','Клиенты','Программы','Аналитика','Настройки'].map((label,i)=>({value:String(i),label,icon:{outline:<svg data-art={`${i}-outline`}/>,filled:<svg data-art={`${i}-filled`}/>}}));
