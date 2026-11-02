@@ -7,8 +7,29 @@ import type { MezfitCloudDatabase } from './database';
  * an attribute definition hidden in an athlete's personal realm.
  */
 export type FlexEntityType = 'user' | 'adHocSession' | 'publishedUser';
-export type FlexValueType = 'string' | 'number' | 'boolean';
-export type FlexPrimitive = string | number | boolean | null;
+export type FlexValueType = 'string' | 'number' | 'boolean' | 'avatar';
+export interface FlexBlobReference { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' }
+export interface FlexAvatarValue { version: string; revision: string; small: Blob | FlexBlobReference | null; large: Blob | FlexBlobReference | null }
+export type FlexPrimitive = string | number | boolean | FlexAvatarValue | null;
+
+export function isFlexAvatarValue(value: unknown): value is FlexAvatarValue {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const avatar = value as Record<string, unknown>;
+  const valid = (image: unknown, limit: number) => image instanceof Blob
+    ? image.type === 'image/jpeg' && image.size >= 16 && image.size <= limit
+    : isFlexBlobReference(image) && image.size <= limit;
+  return typeof avatar.version === 'string' && Number.isFinite(Date.parse(avatar.version))
+    && typeof avatar.revision === 'string' && /^[a-f0-9-]{36}$/.test(avatar.revision)
+    && ((avatar.small === null && avatar.large === null)
+      || (valid(avatar.small, 50_000) && valid(avatar.large, 245_000)));
+}
+
+export function isFlexBlobReference(value: unknown): value is FlexBlobReference {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const ref = value as Record<string, unknown>;
+  return ref._bt === 'Blob' && typeof ref.ref === 'string' && /^[0-9]+:[a-zA-Z0-9_-]{6,}$/.test(ref.ref)
+    && typeof ref.size === 'number' && ref.size >= 16 && ref.size <= 245_000 && ref.ct === 'image/jpeg';
+}
 
 export interface FlexAttributeRow {
   id: string;
@@ -66,12 +87,13 @@ export function isFlexAttributeRow(value: unknown): value is FlexAttributeRow {
   return typeof row.realmId === 'string' && row.realmId.length > 0
     && typeof row.owner === 'string' && row.owner.length > 0
     && typeof row.key === 'string' && attributeKeyPattern.test(row.key)
-    && (row.valueType === 'string' || row.valueType === 'number' || row.valueType === 'boolean')
+    && ['string', 'number', 'boolean', 'avatar'].includes(String(row.valueType))
     && row.id === flexAttributeId(row.realmId, row.key);
 }
 
 export function isValidFlexValue(valueType: FlexValueType, value: unknown): value is FlexPrimitive {
   if (value === null) return true;
+  if (valueType === 'avatar') return isFlexAvatarValue(value);
   if (valueType === 'string') return typeof value === 'string' && value.length <= 1024;
   if (valueType === 'number') return typeof value === 'number' && Number.isFinite(value);
   return typeof value === 'boolean';
@@ -79,7 +101,7 @@ export function isValidFlexValue(valueType: FlexValueType, value: unknown): valu
 
 function assertInput(entry: FlexAttributeInput): void {
   if (!attributeKeyPattern.test(entry.key)
-    || !['string', 'number', 'boolean'].includes(entry.valueType)
+    || !['string', 'number', 'boolean', 'avatar'].includes(entry.valueType)
     || !isValidFlexValue(entry.valueType, entry.value)) {
     throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
   }
@@ -136,11 +158,14 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     }
   }
 
-  async getValues(target: FlexEntityTarget): Promise<FlexResolvedValue[]> {
+  async getValues(target: FlexEntityTarget, keys?: readonly string[]): Promise<FlexResolvedValue[]> {
     return this.db.transaction('r',
       this.targetTables(target), async () => {
         await this.assertTarget(target);
-        const values = await this.db.flexValues
+        const values = keys
+          ? (await this.db.flexValues.bulkGet(keys.map(key => flexValueId(target, flexAttributeId(target.realmId, key)))))
+            .filter((row): row is FlexValueRow => row !== undefined)
+          : await this.db.flexValues
           .where('[realmId+entityType+entityId]')
           .equals([target.realmId, target.entityType, target.entityId])
           .toArray();
@@ -149,8 +174,10 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
         for (const entry of values) {
           const attribute = await this.db.flexAttributes.get(entry.attributeId);
           // Shared values may download before their add-only definitions. Keep observing.
-          if (!attribute && target.entityType === 'publishedUser') continue;
-          if (!isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
+          if (!attribute && (target.entityType === 'publishedUser'
+            || entry.attributeId === flexAttributeId(target.realmId, 'profile_avatar'))) continue;
+          if (entry.realmId !== target.realmId || entry.entityType !== target.entityType || entry.entityId !== target.entityId
+            || !isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
             || attribute.owner !== expectedOwner || entry.owner !== expectedOwner
             || entry.id !== flexValueId(target, attribute.id)
             || !isValidFlexValue(attribute.valueType, entry.value)) {
