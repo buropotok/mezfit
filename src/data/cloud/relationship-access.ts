@@ -20,7 +20,7 @@ interface RelationshipMember {
   permissions?: unknown;
 }
 
-function telegramId(userId: string): string | null {
+export function telegramId(userId: string): string | null {
   if (!userId.startsWith('tg:')) return null;
   const id = userId.slice(3);
   return /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id))
