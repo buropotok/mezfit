@@ -5,7 +5,7 @@
 A profile belongs to the authenticated actor, independently of Coach/Client roles.
 `UserProfileRepository` exposes `readOwn`, `observeOwn`, `createOwn`, `updateOwn`
 and the form's idempotent-row `saveOwn` operation. There is no foreign-user read
-argument. Every target is `user / actorUserId / actorUserId` and Flex assigns the
+argument. Every private target is `user / actorUserId / actorUserId` and Flex assigns the
 actor as owner. React uses this repository, which composes the existing
 `FlexAttributesRepository`. IndexedDB transactions include all changed values
 and add-only definitions; failures roll back the entire save. Addon owns cloud
