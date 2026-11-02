@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -6,8 +6,7 @@ import {
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Text } from '../ui';
-import { GlassSurface } from '../ui/GlassSurface';
-import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
+import { ProfileWorkspace, type ProfileTab } from '../profile/ProfileWorkspace';
 import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
 import { CloudContactsList } from '../contacts/CloudContactsList';
 import { ClientPerformedExercisesPage } from './ClientPerformedExercisesPage';
@@ -25,24 +24,6 @@ import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
 
-type ClientTab = 'overview' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
-
-const tabs: ReadonlyArray<{ value: ClientTab; label: string }> = [
-  { value: 'overview', label: 'Обзор' },
-  { value: 'program', label: 'Программа' },
-  { value: 'exercises', label: 'Упражнения' },
-  { value: 'calendar', label: 'Календарь' },
-  { value: 'progress', label: 'Прогресс' },
-  { value: 'history', label: 'История' },
-];
-
-const clientPlaceholderCopy: Record<Exclude<ClientTab, 'program' | 'exercises'>, { title: string; text: string }> = {
-  overview: { title: 'Обзор', text: 'Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера.' },
-  calendar: { title: 'Календарь', text: 'Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence.' },
-  progress: { title: 'Прогресс', text: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.' },
-  history: { title: 'История', text: 'Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом.' },
-};
-
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
   calendar: { title: 'Календарь', text: 'Здесь появится сводный календарь тренировок всех клиентов.' },
@@ -54,50 +35,12 @@ function displayName(client: CloudContact): string {
   return client.displayName;
 }
 
-function Placeholder({ title, text }: { title: string; text: string }) {
-  return (
-    <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}
-      shape={{ radius: 16 }} wrapContent={false} className="client-workspace-surface">
-      <Text variant="caption" tone="muted">Клиент</Text>
-      <Text variant="title">{title}</Text>
-      <Text variant="body" tone="muted">{text}</Text>
-    </GlassSurface>
-  );
-}
-
 function GlobalPlaceholder({ title, text }: { title: string; text: string }) {
   return (
     <section className="global-placeholder">
       <h2>{title}</h2>
       <p>{text}</p>
     </section>
-  );
-}
-
-function ClientWorkspace({ client, tab, onTabChange, programContent, exercisesContent, hideTabs = false }: {
-  client: CloudContact;
-  tab: ClientTab;
-  onTabChange: (tab: ClientTab) => void;
-  programContent?: ReactNode;
-  exercisesContent?: ReactNode;
-  hideTabs?: boolean;
-}) {
-  const name = displayName(client);
-  const content = tab === 'program' || tab === 'exercises' ? null : clientPlaceholderCopy[tab];
-
-  return (
-    <div className="stack client-workspace">
-      {!hideTabs ? <div className="client-workspace-tabs" role="group" aria-label={`Разделы клиента ${name}`}>
-        <LiquidGlassTextOnly tabs={tabs} value={tab} hidden={false} fullWidth
-          onValueChange={(value) => {
-            if (tabs.some((item) => item.value === value)) onTabChange(value as ClientTab);
-          }} />
-      </div> : null}
-
-      {tab === 'program' ? programContent
-        : tab === 'exercises' ? exercisesContent
-          : content ? <Placeholder title={content.title} text={content.text} /> : null}
-    </div>
   );
 }
 
@@ -174,7 +117,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
-  const [clientTab, setClientTab] = useState<ClientTab>('overview');
+  const [clientTab, setClientTab] = useState<ProfileTab>('basics');
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
   const [clientExerciseNavigation, setClientExerciseNavigation] = useState<NavigationContext | null>(null);
@@ -310,7 +253,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
-    return <ClientWorkspace client={selectedClient} tab={clientTab}
+    return <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
       hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
@@ -383,7 +326,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
       const client = clients?.find((item) => item.userId === userId);
       if (!client) throw new Error('Клиент больше не связан с тренером');
       setSelectedClientId(client.userId);
-      setClientTab('overview');
+      setClientTab('basics');
       setClientSelectedProgram(null);
       setClientProgramDetailNavigation(null);
     };
@@ -481,7 +424,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
         onRetry={() => { void loadClients(); }}
         onSelect={(client) => {
           setSelectedClientId(client.userId);
-          setClientTab('overview');
+          setClientTab('basics');
           setClientSelectedProgram(null);
           setClientProgramDetailNavigation(null);
         }}
