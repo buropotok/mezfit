@@ -113,3 +113,18 @@ selection. No current workout/session row is rewritten by editing personal
 settings. Snapshotting a palette into an `adHocSession` relationship realm at
 workout Start remains a separate future implementation; it must preserve
 immutable historical meaning and include explicit Coach/Client ACL tests.
+
+
+## Own user profile
+
+`UserProfileRepository` owns the private keys `profile_firstName`,
+`profile_lastName`, `profile_email`, `profile_phone`, `profile_birthDate`,
+`profile_sex`, `profile_weightKg`, and `profile_updatedAt`. Both product roles
+use the same actor target and the existing `FlexAttributesRepository` boundary.
+Definitions remain add-only. The explicit upgrade preserves `ClientIntake_*`
+records and timestamps and will not copy an older legacy snapshot over a newer
+canonical profile or an incomplete incoming download (even without its marker). Read/observe are
+side-effect free and recognize newer legacy records arriving from another
+old-version device. `override_*` remains reserved and unused. No publication,
+Blob values, schema or permission changes are part of this feature.
+See [user-profile.md](user-profile.md) for compatibility and UI ownership.
