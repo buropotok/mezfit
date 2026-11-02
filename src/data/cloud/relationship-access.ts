@@ -43,7 +43,7 @@ function approvedMember(member: RelationshipMember, id: string, userId: string, 
 }
 
 /** Fail closed on extra/unaccepted/owned members or any non-Worker realm. */
-export async function isApprovedAssignedPair(
+export function isApprovedAssignedPair(
   realm: RelationshipRealm | undefined,
   members: readonly RelationshipMember[],
   coachUserId: string,
@@ -51,7 +51,7 @@ export async function isApprovedAssignedPair(
 ): Promise<boolean> {
   const coach = telegramId(coachUserId);
   const client = telegramId(clientUserId);
-  if (!coach || !client || coach === client || !realm) return false;
+  if (!coach || !client || coach === client || !realm) return Dexie.Promise.resolve(false);
   // Keep the entire external computation in one waitFor scope, including early
   // rejection. Separate waits leave native-promise continuations between them
   // where IndexedDB can auto-commit (notably for revoked memberships).
