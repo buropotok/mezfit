@@ -6,15 +6,17 @@ import { getCurrentInvite, getCurrentWorkoutSession, getMe } from './api';
 import { App } from './App';
 import type { UserProfile } from './data/cloud/user-profile';
 
-// These scenarios start after mandatory registration; registration itself is tested separately.
+const profileState = vi.hoisted(() => ({ exists: true }));
+
+// Existing-profile scenarios and the optional first-entry flow share the real navigation shell.
 vi.mock('./data/cloud/user-profile', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./data/cloud/user-profile')>();
   return { ...actual, UserProfileRepository: class {
     constructor(_db: unknown, readonly actorUserId: string) {}
     async migrateOwn() {}
     observeOwn(next: (profile: UserProfile | null) => void) {
-      next({ firstName: 'Клиент', lastName: '', email: '', phone: '', birthDate: '2000-01-01',
-        sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' });
+      next(profileState.exists ? { firstName: 'Клиент', lastName: '', email: '', phone: '', birthDate: '2000-01-01',
+        sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' } : null);
       return { unsubscribe() {} };
     }
   } };
@@ -79,6 +81,7 @@ const getCurrentWorkoutSessionMock = vi.mocked(getCurrentWorkoutSession);
 const getMeMock = vi.mocked(getMe);
 
 beforeEach(() => {
+  profileState.exists = true;
   local.rows = []; local.fail = false; local.next = null;
   vi.stubGlobal('ResizeObserver', class {
     observe() {}
@@ -236,6 +239,36 @@ describe('App workout navigation', () => {
 
 
 describe('App own profile navigation', () => {
+  it('accepts client tab and menu navigation before the optional questionnaire is saved', async () => {
+    profileState.exists = false;
+    window.history.replaceState({}, '', '/');
+    getMeMock.mockResolvedValue({ user: { id: 10, telegramUserId: '100', username: 'client',
+      firstName: 'Client', lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false }, roles: ['client'] });
+    const view = render(<App />);
+    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    const root = getPrimaryTabsRoot(view.container);
+    const training = root.querySelector('[role="tab"][aria-label="Тренировка"]');
+    const profile = root.querySelector('[role="tab"][aria-label="Мой профиль"]');
+    if (!training || !profile) throw new Error('Missing client primary tabs');
+    fireEvent.click(training);
+    await screen.findByText('Workout session');
+    expect(training.getAttribute('aria-selected')).toBe('true');
+    expect(profile.getAttribute('aria-selected')).toBe('false');
+    fireEvent.click(profile);
+    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    expect(profile.getAttribute('aria-selected')).toBe('true');
+    const menu = screen.getByRole('button', { name: 'Меню страницы' });
+    expect(menu.hasAttribute('disabled')).toBe(false);
+    fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menu);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Настройки' }));
+    expect(screen.queryByRole('region', { name: 'Анкета пользователя' })).toBeNull();
+    const back = screen.getByRole('button', { name: 'Назад' });
+    fireEvent.click(back);
+    fireEvent.animationEnd(back);
+    await screen.findByRole('region', { name: 'Анкета пользователя' });
+  });
+
   it.each([
     ['Мой профиль', 'Настройки', 'Мой профиль'],
     ['Настройки', 'Мой профиль', 'Настройки'],
