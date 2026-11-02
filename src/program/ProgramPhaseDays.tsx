@@ -53,7 +53,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const self = authorId === repository.actorUserId;
   const contact = (self ? cloud?.selfAvatars ?? [] : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])])
     .find(person => person.userId === authorId && person.relationshipId === program.realmId
-      && (!self || Boolean(person.avatarVersion)));
+      && (!self || Boolean(person.avatarVersion || person.userAvatar)));
   const creatorName = self ? actor?.name || 'Вы' : contact?.displayName || 'Автор программы';
   const creatorAvatar = contact ? <CloudContactAvatar contact={contact} />
     : <Avatar name={creatorName} src={self ? actor?.photoUrl ?? undefined : undefined} />;
