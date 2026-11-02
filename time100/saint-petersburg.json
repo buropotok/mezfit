@@ -3,9 +3,10 @@
   "city": "Санкт-Петербург",
   "timezone": "Europe/Moscow",
   "date": "2026-11-02",
-  "site_displayed_time": "07:38:35",
   "threshold": "07:41",
-  "reached_threshold_in_captured_snapshot": false,
-  "capture_status": "cached_web_snapshot",
-  "notes": "The site reader returned the same 07:38:35 value on repeated requests. This is not a live-site reading and cannot confirm when the time passes 07:41."
+  "raw_page_text_time": "07:38:35",
+  "javascript_clock_time": null,
+  "threshold_confirmed_from_live_site": null,
+  "extraction_method": "static page text without executing its live clock JavaScript",
+  "notes": "The extracted 07:38:35 is from static page text, not from the clock after browser synchronization. It does not establish that the website's clock is stale, nor whether the live clock has passed 07:41."
 }
