@@ -36,8 +36,8 @@ function isProfileField(key: string): key is UserProfileField {
   return Object.hasOwn(USER_PROFILE_OVERRIDE_KEYS, key);
 }
 
-/** One scalar is JSON-encoded in a Flex string. Flex null resets the override;
- * the string "null" explicitly clears nullable weight without resetting it. */
+/** Text and sex remain Flex strings. Weight alone uses a JSON scalar string:
+ * Flex null resets it; the string "null" explicitly clears the nullable weight. */
 function normalizedOverride(field: UserProfileField, value: unknown): UserProfileDraft {
   const draft = initialUserProfile({ firstName: '', lastName: '' });
   if (field === 'weightKg') {
@@ -66,8 +66,10 @@ function resolveContactProfile(published: UserProfile | null, values: readonly F
     if (!entry || entry.value === null) continue;
     if (entry.valueType !== 'string' || typeof entry.value !== 'string')
       throw new Error('INVALID_STORED_PROFILE_OVERRIDE');
-    let decoded: unknown;
-    try { decoded = JSON.parse(entry.value); } catch { throw new Error('INVALID_STORED_PROFILE_OVERRIDE'); }
+    let decoded: unknown = entry.value;
+    if (key === 'weightKg') {
+      try { decoded = JSON.parse(entry.value); } catch { throw new Error('INVALID_STORED_PROFILE_OVERRIDE'); }
+    }
     const normalized = normalizedOverride(key, decoded);
     overridden.push(key);
     if (profile) Object.assign(profile, { [key]: normalized[key] });
@@ -296,8 +298,8 @@ export class UserProfileRepository {
     for (const field of Object.keys(patch)) {
       if (!isProfileField(field)) throw new Error('INVALID_PROFILE_OVERRIDE_FIELD');
       const normalized = normalizedOverride(field, patch[field]);
-      const encoded = JSON.stringify(normalized[field]);
-      if (encoded === undefined) throw new Error('INVALID_PROFILE_OVERRIDE');
+      const encoded = field === 'weightKg' ? JSON.stringify(normalized[field]) : normalized[field];
+      if (typeof encoded !== 'string') throw new Error('INVALID_PROFILE_OVERRIDE');
       entries.push({ key: USER_PROFILE_OVERRIDE_KEYS[field], valueType: 'string', value: encoded });
     }
     return this.db.transaction('rw', [this.db.flexAttributes, this.db.flexValues,
