@@ -24,11 +24,13 @@ vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
   saveOwn(draft: UserProfileDraft) { return state.save(draft); }
 } }));
 vi.mock('../workout/ClientWorkoutContext', () => ({
-  ClientWorkoutNavigationShell: ({ children, destination, registrationRequired, onDestinationChange, context }: {
-    children: ReactNode; destination: string; registrationRequired?: boolean;
+  ClientWorkoutNavigationShell: ({ children, destination, onDestinationChange, context }: {
+    children: ReactNode; destination: string;
     onDestinationChange: (next: AppDestination) => void; context?: NavigationContext | null;
-  }) => <><span data-testid="destination">{destination}</span><span data-testid="locked">{String(registrationRequired)}</span>
+  }) => <><span data-testid="destination">{destination}</span>
     <button onClick={() => onDestinationChange('training')}>Таб тренировки</button>
+    <button onClick={() => onDestinationChange('profile')}>Мой профиль</button>
+    <button onClick={() => onDestinationChange('settings')}>Настройки</button>
     <button onClick={() => context?.onBack?.()}>Назад</button>{children}</>,
 }));
 vi.mock('../ui/LiquidGlassTextOnly', () => ({
@@ -65,27 +67,44 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('profile registration navigation', () => {
-  it('opens Basics inside My profile and prevents tab/back bypass until local save', async () => {
+  it('offers Basics once and allows profile tabs, settings and primary navigation without saving', async () => {
     render(<Harness />);
     await screen.findByLabelText('Имя');
     expect(screen.getByTestId('destination').textContent).toBe('profile');
-    fireEvent.click(screen.getByText('Таб тренировки'));
-    fireEvent.click(screen.getByText('Назад'));
-    fireEvent.click(screen.getByRole('tab', { name: 'История' }));
-    expect(screen.queryByText('Обычный экран')).toBeNull();
     expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
-    fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Анна' } });
-    fireEvent.click(screen.getByText('Сохранить'));
-    await waitFor(() => expect(screen.getByTestId('locked').textContent).toBe('false'));
-    expect(screen.getByTestId('destination').textContent).toBe('profile');
+    fireEvent.click(screen.getByRole('tab', { name: 'История' }));
+    expect(screen.getByRole('tab', { name: 'История' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByText('Настройки'));
+    expect(screen.getByTestId('destination').textContent).toBe('settings');
     fireEvent.click(screen.getByText('Таб тренировки'));
+    expect(screen.getByTestId('destination').textContent).toBe('training');
     expect(screen.getByText('Обычный экран')).toBeTruthy();
+    act(() => state.listeners.get('tg:202')?.next(null));
+    expect(screen.getByTestId('destination').textContent).toBe('training');
+    expect(state.save).not.toHaveBeenCalled();
+  });
+
+  it('keeps an existing client profile from redirecting the initial destination', async () => {
+    state.profile = saved;
+    render(<Harness />);
+    await waitFor(() => expect(state.listeners.has('tg:202')).toBe(true));
+    expect(screen.getByTestId('destination').textContent).toBe('today');
+  });
+
+  it('does not navigate back to profile when a pending save finishes after leaving', async () => {
+    let finish: ((value: UserProfile) => void) | undefined;
+    state.save.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    render(<Harness />);
+    fireEvent.change(await screen.findByLabelText('Имя'), { target: { value: 'Анна' } });
+    fireEvent.click(screen.getByText('Сохранить'));
+    fireEvent.click(screen.getByText('Таб тренировки'));
+    await act(async () => { finish?.(saved); });
+    expect(screen.getByTestId('destination').textContent).toBe('training');
   });
 
   it('does not introduce mandatory registration for a coach', () => {
     render(<Harness role="coach" />);
     expect(screen.getByText('Обычный экран')).toBeTruthy();
-    expect(screen.getByTestId('locked').textContent).toBe('false');
   });
 
   it('keeps the entered registration draft through a read failure and retry', async () => {
@@ -94,7 +113,7 @@ describe('profile registration navigation', () => {
     act(() => state.listeners.get('tg:202')?.error());
     fireEvent.click(screen.getByText('Повторить'));
     await waitFor(() => expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('Черновик'));
-    expect(screen.getByTestId('locked').textContent).toBe('true');
+    expect(screen.getByTestId('destination').textContent).toBe('profile');
   });
 
   it('has a retryable initial read failure instead of a navigation loop', async () => {
