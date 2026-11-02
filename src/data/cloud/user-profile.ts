@@ -2,7 +2,7 @@ import { liveQuery } from 'dexie';
 import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
 import {
-  FlexAttributesRepository, type FlexAttributeInput, type FlexResolvedValue,
+  FlexAttributesRepository, flexAttributeId, flexValueId, type FlexAttributeInput, type FlexResolvedValue,
 } from './flex-attributes';
 import { parseLocalDate, getTodayLocalDate } from '../../ui/date-picker/datePickerDate';
 
@@ -175,11 +175,13 @@ export class UserProfileRepository {
         const target = { entityType: 'publishedUser' as const, entityId: this.actorUserId, realmId: pair.realmId };
         const values = await this.flexible.getValues(target);
         const previous = deserialize(values, USER_PROFILE_KEYS);
-        const count = await this.db.flexValues.where('[realmId+entityType+entityId]')
-          .equals([pair.realmId, 'publishedUser', this.actorUserId]).count();
-        const hasCanonical = values.some(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key));
+        const canonicalValues = values.filter(row => Object.values(USER_PROFILE_KEYS).some(key => key === row.key));
+        const expectedRows = await this.db.flexValues.bulkGet(fields.map(({ key }) =>
+          flexValueId(target, flexAttributeId(pair.realmId, USER_PROFILE_KEYS[key]))));
+        const count = expectedRows.filter(row => row !== undefined).length;
+        const hasCanonical = canonicalValues.length > 0;
         // A partial incoming download is not permission to rewrite newer fields.
-        if (count > values.length || (hasCanonical && !previous)) { incomplete = true; continue; }
+        if (count > canonicalValues.length || (hasCanonical && !previous)) { incomplete = true; continue; }
         if (previous && Date.parse(previous.updatedAt) > Date.parse(profile.updatedAt)) continue;
         await this.flexible.setValues(target, serialize(profile));
       }
