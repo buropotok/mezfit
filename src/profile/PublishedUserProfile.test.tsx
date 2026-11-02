@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
-import type { UserProfile } from '../data/cloud/user-profile';
+import type { ContactUserProfile, UserProfile } from '../data/cloud/user-profile';
 import { PublishedUserProfile } from './PublishedUserProfile';
 
 const source = vi.hoisted(() => ({
@@ -17,9 +17,11 @@ vi.mock('../data/cloud/user-profile', async importOriginal => {
   const original = await importOriginal<typeof import('../data/cloud/user-profile')>();
   return { ...original, UserProfileRepository: class {
     constructor(_db: unknown, actorUserId: string) { source.constructed(actorUserId); }
-    observePublished(userId: string, realmId: string, next: (profile: UserProfile | null) => void) {
-      source.requested(userId, realmId); source.next = next;
-      if (source.emitInitial) next(null);
+    observeContact(userId: string, realmId: string, next: (profile: ContactUserProfile) => void) {
+      const emit = (profile: UserProfile | null) => next({ published: profile, profile,
+        overridden: [], canEdit: false, incomplete: false });
+      source.requested(userId, realmId); source.next = emit;
+      if (source.emitInitial) emit(null);
       return { unsubscribe() {} };
     }
   } };
