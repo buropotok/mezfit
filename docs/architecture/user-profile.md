@@ -12,7 +12,9 @@ and add-only definitions; failures roll back the entire save. Addon owns cloud
 replication. No new table, REST endpoint, ACL or schema is introduced.
 
 Eight canonical keys are declared in `USER_PROFILE_KEYS`, all prefixed `profile_`.
-Age is derived from birth date. Empty text and null weight remain explicit clears.
+All editable fields are optional. Non-empty values retain their format/range validation.
+Age is derived only from a supplied birth date; empty birth date is a valid explicit clear.
+Empty text, undisclosed sex and null weight remain explicit clears.
 Telegram identity is outside the editable draft. Telegram ID and username are
 rendered from authenticated `MeResponse`, never from editable legacy Telegram
 text. First/last name defaults can be edited without changing Telegram identity.
@@ -54,10 +56,14 @@ Own unsupported sections use explicit placeholders.
 `UserProfileNavigationShell` observes the actor-scoped repository, retaining only
 a query snapshot and an explicit form draft. It composes the existing
 `ClientWorkoutNavigationShell`/`NavigationShell`, with no second router or history.
-Unregistered Clients render My profile / Basics within that shell. Tab selection,
-calendar/menu entry and FAB navigation cannot bypass registration. Successful
-local Save keeps My profile open and unlocks normal navigation. Coaches retain
-their normal interface without mandatory registration. Read failures expose Retry;
+On the initial local read, Clients without a saved profile are offered My profile /
+Basics once per account in the mounted shell, only while still at Today. This is
+an ordinary navigation request, never a route override or registration lock.
+Profile tabs, primary navigation, menu, role switching and FAB remain available
+before Save, during loading and after read failures. Later observations/retries
+never redirect the user back. Save does not navigate, including when it finishes
+after the user leaves. Coaches retain their normal initial destination.
+Read failures expose Retry inside the profile;
 a failed refresh/retry preserves a mounted draft. Account changes invalidate the
 old query/form and stale async completions cannot navigate the next account.
 
@@ -90,7 +96,7 @@ own product copy. No second glass wrapper encloses the own Basics form.
 Repository tests cover actors/role-independent identity, validation, atomic failure,
 reactive reads, reopen, repeated migration, newer/cleared values, late legacy sync
 and partial canonical download protection. Form and navigation tests cover
-read-only Telegram identity, retryable Save, glass props, onboarding lock, account
+read-only Telegram identity, retryable Save, glass props, optional onboarding/navigation, account
 change and draft preservation. Existing client-program/exercise tests are retained.
 CI runs typecheck, tests and build after PR creation; no local npm commands are run.
 Physical 320px iOS/Android WebView keyboard, focus, safe areas, avatar rendering and
