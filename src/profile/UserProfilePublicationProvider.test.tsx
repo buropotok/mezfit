@@ -23,7 +23,10 @@ vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
   confirmOwnSync(version: string) { return state.confirm(version); }
 } }));
 vi.mock('../ui', () => ({
-  Badge: ({ children, color }: { children: ReactNode; color: string }) => <span data-color={color}>{children}</span>,
+  BadgeChoice: ({ children, color, onClick }: { children: ReactNode; color: string; onClick: () => void }) =>
+    <button data-color={color} onClick={onClick}>{children}</button>,
+  LiquidPopover: ({ trigger, isOpen, text }: { trigger: ReactNode; isOpen: boolean; text: string }) =>
+    <>{trigger}{isOpen ? <div role="dialog">{text}</div> : null}</>,
   Button: ({ children, onClick }: { children: ReactNode; onClick: () => void }) => <button onClick={onClick}>{children}</button>,
 }));
 const ui = () => <UserProfilePublicationProvider><UserProfileSyncStatus /></UserProfilePublicationProvider>;
