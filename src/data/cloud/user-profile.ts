@@ -178,9 +178,13 @@ export class UserProfileRepository {
 
   observePublished(userId: string, realmId: string,
     next: (profile: UserProfile | null) => void, error: (reason: unknown) => void) {
-    return liveQuery(async () => deserialize(await this.flexible.getValues({
+    return liveQuery(() => this.readPublished(userId, realmId)).subscribe({ next, error });
+  }
+
+  async readPublished(userId: string, realmId: string): Promise<UserProfile | null> {
+    return deserialize(await this.flexible.getValues({
       entityType: 'publishedUser', entityId: userId, realmId,
-    }), USER_PROFILE_KEYS)).subscribe({ next, error });
+    }), USER_PROFILE_KEYS);
   }
 
   async readOwn(): Promise<UserProfile | null> {
