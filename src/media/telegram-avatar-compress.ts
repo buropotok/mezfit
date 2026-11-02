@@ -73,3 +73,11 @@ export async function compressTelegramAvatar(source: Blob): Promise<{ small: Blo
     large: await compressVariant(image, 'large'),
   };
 }
+
+/** User-selected images share the established bounded JPEG encoder. */
+export async function compressUserAvatar(source: Blob): Promise<{ small: Blob; large: Blob }> {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(source.type)
+    || source.size < 16 || source.size > 20_000_000) throw new Error('Выберите JPEG, PNG или WebP размером до 20 МБ.');
+  const image = await openImage(source);
+  return { small: await compressVariant(image, 'small'), large: await compressVariant(image, 'large') };
+}
