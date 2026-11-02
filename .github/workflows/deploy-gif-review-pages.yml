@@ -1,0 +1,72 @@
+name: Publish GIF manual review (GitHub Pages)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gif_audit_run_id:
+        description: "Successful Audit GIF libraries run with gif-visual-delta-report artifact"
+        required: true
+        type: string
+        default: "41322174596"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-gif-review-pages.yml"
+      - "tools/gif-review-pages/**"
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: gif-review-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # This is an independent read-only operator site, NOT the Cloudflare app.
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout current approved sources
+        uses: actions/checkout@v4
+      - name: Download pinned completed visual audit
+        uses: actions/download-artifact@v4
+        with:
+          name: gif-visual-delta-report
+          run-id: ${{ inputs.gif_audit_run_id || '41322174596' }}
+          github-token: ${{ github.token }}
+          path: audit-artifact
+      - name: Create static review site and CSV evidence
+        shell: bash
+        run: |
+          mkdir -p gif-review-site
+          cp tools/gif-review-pages/site/index.html gif-review-site/index.html
+          python3 tools/gif-review-pages/build_data.py \
+            --audit-dir audit-artifact \
+            --out gif-review-site \
+            --github-ref "$GITHUB_SHA"
+          test -s gif-review-site/index.html
+          test -s gif-review-site/candidates.json
+          test -s gif-review-site/evidence.csv
+      - name: Save reproducible candidate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gif-review-candidates
+          path: |
+            gif-review-site/candidates.json
+            gif-review-site/evidence.csv
+          retention-days: 30
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gif-review-site
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,47 @@
+name: Verify GIF review Pages candidates
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-gif-review-pages.yml"
+      - ".github/workflows/verify-gif-review-pages.yml"
+      - "tools/gif-review-pages/**"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download fixed source report
+        uses: actions/download-artifact@v4
+        with:
+          name: gif-visual-delta-report
+          run-id: 41322174596
+          github-token: ${{ github.token }}
+          path: audit-artifact
+      - name: Check generator contracts
+        run: python3 -m unittest discover -s tools/gif-review-pages -p 'test_*.py'
+      - name: Generate candidates from real sources
+        run: |
+          python3 tools/gif-review-pages/build_data.py \
+            --audit-dir audit-artifact \
+            --out gif-review-preview \
+            --github-ref "$GITHUB_SHA"
+      - name: Check generated review inventory
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("gif-review-preview/candidates.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          assert len(d["candidate_revision"]) == 64
+          assert d["github_count"] == 1168
+          assert d["r2_count"] == 1324
+          assert len(d["items"]) == 1168
+          assert all(len(x["candidates"]) == 30 for x in d["items"])
+          assert Path("gif-review-preview/evidence.csv").stat().st_size > 1000
+          PY
