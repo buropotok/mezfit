@@ -35,6 +35,24 @@ afterEach(async () => {
 });
 
 describe('own user profile domain', () => {
+  it('persists and reopens all optional fields empty while retaining the authenticated actor target', async () => {
+    const { db, repo } = create();
+    const empty = initialUserProfile({ firstName: '', lastName: '' });
+    expect(validateUserProfile(empty)).toBeNull();
+    expect(ageFromBirthDate('')).toBeNull();
+    await repo.saveOwn(empty);
+    db.close();
+    await db.open();
+    expect(await repo.readOwn()).toMatchObject(empty);
+    expect(await db.flexValues.count()).toBe(8);
+    expect((await db.flexValues.toArray()).every(row => row.entityId === 'tg:202'
+      && row.realmId === 'tg:202' && row.owner === 'tg:202')).toBe(true);
+    await repo.updateOwn({ ...empty, birthDate: '2000-01-01' });
+    await repo.updateOwn(empty);
+    expect(await repo.readOwn()).toMatchObject(empty);
+    expect(await db.flexValues.count()).toBe(8);
+  });
+
   it('prefills verified Telegram fields without inventing birth date or contacts', () => {
     expect(initialUserProfile({ firstName: 'Ольга', lastName: 'Петрова' }))
       .toMatchObject({ firstName: 'Ольга', lastName: 'Петрова',
