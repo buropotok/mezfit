@@ -165,6 +165,13 @@ def order_candidates(pairs, gh_words, r2_words):
     for item in visual:
         if len(selected) >= ROUND_SIZE:
             break
+        if item["kind"] == 0:
+            append(item)
+    # When all visual retrievals also share the movement name, take the
+    # strongest remaining visually supported name instead of a random pair.
+    for item in visual:
+        if len(selected) >= ROUND_SIZE:
+            break
         append(item)
     # If no visual data is available, finish the page from names.
     for item in strong:
