@@ -103,36 +103,36 @@ def number(raw):
         return None
 
 
-def add_evidence(bucket, gh, ident, field, score):
-    if gh not in bucket or ident not in bucket[gh] or score is None:
+def add_evidence(bucket, r2_ids, gh, ident, field, score):
+    if gh not in bucket or ident not in r2_ids or score is None:
         return
     if score < 0:
         return
-    pair = bucket[gh][ident]
+    pair = bucket[gh].setdefault(ident, {})
     pair[field] = max(pair.get(field, float("-inf")), score)
 
 
-def load_audit(audit_dir, bucket):
+def load_audit(audit_dir, bucket, r2_ids):
     for filename in ("matches.csv", "review.csv"):
         path = audit_dir / filename
         with path.open(newline="", encoding="utf-8-sig") as f:
             for d in csv.DictReader(f):
                 gh, ident = d["github_gif"], d["r2_gif"].removesuffix(".gif")
-                add_evidence(bucket, gh, ident, "visual", number(d["appearance_score"]))
-                add_evidence(bucket, gh, ident, "optical_flow", number(d["motion_score"]))
+                add_evidence(bucket, r2_ids, gh, ident, "visual", number(d["appearance_score"]))
+                add_evidence(bucket, r2_ids, gh, ident, "optical_flow", number(d["motion_score"]))
     path = audit_dir / "pose-candidates.csv"
     with path.open(newline="", encoding="utf-8-sig") as f:
         for d in csv.DictReader(f):
             gh, ident = d["github_gif"], d["r2_gif"].removesuffix(".gif")
-            add_evidence(bucket, gh, ident, "pose", number(d["pose_score"]))
-            add_evidence(bucket, gh, ident, "joint_motion", number(d["joint_motion_score"]))
+            add_evidence(bucket, r2_ids, gh, ident, "pose", number(d["pose_score"]))
+            add_evidence(bucket, r2_ids, gh, ident, "joint_motion", number(d["joint_motion_score"]))
 
 
 def generate(audit_dir, output_dir):
     r2, gh = read_r2(), read_gh()
-    # One pair object per possible source/target, populated only with evidence.
-    bucket = {name: {ident: {} for ident in r2} for name in gh}
-    load_audit(audit_dir, bucket)
+    # Sparse per-GIF pair registry: only retain retrieved evidence.
+    bucket = {name: {} for name in gh}
+    load_audit(audit_dir, bucket, set(r2))
 
     r2_tokens = {key: words(item["name"]) for key, item in r2.items()}
     gh_tokens = {key: words(title) for key, title in gh.items()}
@@ -149,11 +149,11 @@ def generate(audit_dir, output_dir):
                 heapq.heappop(inverse[ident])
         scores.sort(key=lambda item: (-item[0], item[1]))
         for value, ident in scores[:50]:
-            bucket[name][ident]["title"] = value
+            bucket[name].setdefault(ident, {})["title"] = value
 
     for ident, ranked in inverse.items():
         for value, name in ranked:
-            bucket[name][ident]["title"] = value
+            bucket[name].setdefault(ident, {})["title"] = value
 
     entries = []
     evidence_rows = []
