@@ -171,7 +171,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
       keys.add(entry.key);
     }
     await this.db.transaction('rw',
-      this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions, async () => {
+      this.targetTables(target), async () => {
         await this.assertTarget(target, true);
         const owner = ownerFor(target, this.actorUserId);
         for (const entry of entries) {
