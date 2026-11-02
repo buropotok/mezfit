@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
@@ -34,7 +34,10 @@ const session: ActiveWorkoutSession = {
   completedAt: '2026-11-02T09:00:00.000Z',
   program: null, phase: null, day: null, exercises: [],
 };
-afterEach(cleanup);
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+});
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('session copy menu', () => {
   it('opens the existing side date picker only after the menu closes and delegates selected date', async () => {
