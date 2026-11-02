@@ -167,7 +167,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     await this.writeValues(target, entries);
   }
 
-  /** Coach-owned defaults for this relationship only; never write peer profile_* values. */
+  /** Coach-authored overrides for this relationship only; never write peer profile_* values. */
   async setProfileOverrides(target: FlexEntityTarget, entries: readonly FlexAttributeInput[]): Promise<void> {
     if (target.entityType !== 'publishedUser' || entries.some(entry => !entry.key.startsWith('override_')))
       throw new Error('FLEX_ENTITY_FORBIDDEN');
