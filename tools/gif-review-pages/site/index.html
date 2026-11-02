@@ -420,18 +420,21 @@
       var previous = {};
       var count = 0, oldCount = 0, obsoleteDecisions = 0;
       var foreignRevision = null;
+      var sawCurrentRevision = false;
       rows.forEach(function (row) {
         if (!row.some(Boolean)) return;
         var rowRevision = row[positions.candidate_revision];
         var legacy = rowRevision !== data.candidate_revision;
         if (legacy) {
+          if (sawCurrentRevision) throw new Error("В CSV смешаны версии кандидатов.");
           if (!/^[0-9a-f]{64}$/.test(rowRevision)) throw new Error("Неверная версия CSV.");
           if (foreignRevision && foreignRevision !== rowRevision) {
             throw new Error("В CSV смешаны разные версии кандидатов.");
           }
           foreignRevision = rowRevision;
-        } else if (foreignRevision) {
-          throw new Error("В CSV смешаны текущие и старые решения.");
+        } else {
+          if (foreignRevision) throw new Error("В CSV смешаны текущие и старые решения.");
+          sawCurrentRevision = true;
         }
         var gif = row[positions.github_gif];
         var n = Number(row[positions.round]);
