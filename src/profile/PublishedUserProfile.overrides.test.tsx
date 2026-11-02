@@ -123,3 +123,18 @@ it('retains the open editor while the published source is temporarily incomplete
   expect(screen.getByLabelText('Редактор переопределений')).toBeTruthy();
   expect(screen.getByText('Не удалось обновить анкету. Черновик сохранён в форме.')).toBeTruthy();
 });
+
+it('does not let an earlier visit close a newly opened editor for the same contact', async () => {
+  let finish: ((data: ContactUserProfile) => void) | undefined;
+  source.save.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const view = render(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать имя' }));
+  view.rerender(<PublishedUserProfile contact={{ ...contact, userId: 'tg:303', relationshipId: 'realm-2' }} />);
+  view.rerender(<PublishedUserProfile contact={contact} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Изменить анкету' }));
+  expect(screen.getByLabelText('Редактор переопределений')).toBeTruthy();
+  await act(async () => { finish?.(initial()); });
+  expect(screen.getByLabelText('Редактор переопределений')).toBeTruthy();
+  expect(screen.queryByText('Переопределения сохранены на устройстве.')).toBeNull();
+});
