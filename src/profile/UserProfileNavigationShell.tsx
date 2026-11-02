@@ -5,6 +5,7 @@ import { ClientWorkoutNavigationShell } from '../workout/ClientWorkoutContext';
 import { Button, Text } from '../ui';
 import { ProfileWorkspace, type ProfileTab } from './ProfileWorkspace';
 import { UserProfileSyncStatus } from './UserProfilePublicationProvider';
+import { UserAvatarEditor } from './UserAvatarEditor';
 import { UserProfileForm } from './UserProfileForm';
 
 /** First entry and later edits use the same optional profile surface. */
@@ -71,6 +72,7 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
       <Text variant="footnote" role="alert">Не удалось обновить анкету. Введённые данные сохранены в форме.</Text>
       <Button onClick={() => setRetry(value => value + 1)}>Повторить</Button>
     </section> : null}
+    <UserAvatarEditor fallbackSrc={props.me.user.photoUrl} />
     <UserProfileForm key={repository.actorUserId} syncStatus={<UserProfileSyncStatus />}
       defaults={{ firstName: props.me.user.firstName, lastName: props.me.user.lastName ?? '' }}
       initialProfile={profile} telegramUserId={props.me.user.telegramUserId}
