@@ -13,9 +13,6 @@ on:
     paths:
       - ".github/workflows/deploy-gif-review-pages.yml"
       - "tools/gif-review-pages/**"
-      - "assets/exercises/**"
-      - "assets/media/**"
-      - "audit/visual/input/catalogue_stage_*.jsonl"
 
 permissions:
   contents: read
@@ -51,7 +48,8 @@ jobs:
           cp tools/gif-review-pages/site/index.html gif-review-site/index.html
           python3 tools/gif-review-pages/build_data.py \
             --audit-dir audit-artifact \
-            --out gif-review-site
+            --out gif-review-site \
+            --github-ref "$GITHUB_SHA"
           test -s gif-review-site/index.html
           test -s gif-review-site/candidates.json
           test -s gif-review-site/evidence.csv
