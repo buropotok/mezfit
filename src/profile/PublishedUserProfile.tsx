@@ -7,7 +7,7 @@ import { Button, GlassSurface, Text } from '../ui';
 /** Reads only the existing relationship realm; private peer data is never queried. */
 export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud ? new UserProfileRepository(cloud.db, cloud.actorUserId) : null,
+  const repository = useMemo(() => cloud?.db && cloud.actorUserId ? new UserProfileRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const [snapshot, setSnapshot] = useState<{ key: string; profile: UserProfile | null; error: boolean } | null>(null);
   const [retry, setRetry] = useState(0);
@@ -36,7 +36,8 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
   return <GlassSurface component="section" preset="modalTuned" optics={false} shape="auto"
     contentClassName="stack client-workspace-surface">
     <Text variant="title">Анкета пользователя</Text>
-    {!current ? <Text variant="body">Загрузка анкеты…</Text> : current.error
+    {!repository ? <Text variant="body">Анкета пока недоступна.</Text>
+      : !current ? <Text variant="body">Загрузка анкеты…</Text> : current.error
       ? <><Text variant="body" role="alert">Анкета недоступна по этой связи.</Text>
         <Button variant="secondary" onClick={() => setRetry(value => value + 1)}>Повторить</Button></>
       : !profile ? <><Text variant="body">{contact.displayName}</Text>
