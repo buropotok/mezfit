@@ -17,6 +17,8 @@ export interface TelegramHapticFeedback {
   notificationOccurred?(type: TelegramHapticNotificationType): void;
 }
 
+export type TelegramHomeScreenStatus = 'unsupported' | 'unknown' | 'added' | 'missed';
+
 export interface TelegramWebApp {
   initData: string;
   initDataUnsafe?: {
@@ -28,12 +30,74 @@ export interface TelegramWebApp {
   ready(): void;
   expand(): void;
   disableVerticalSwipes?(): void;
+  addToHomeScreen?(): void;
+  checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
+  onEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
+  offEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
   BackButton?: TelegramBackButton;
   HapticFeedback?: TelegramHapticFeedback;
 }
 
 export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
+}
+
+/** Keep native Telegram shortcut events outside React presentation components. */
+export function subscribeTelegramHomeScreenStatus(
+  onStatus: (status: TelegramHomeScreenStatus) => void,
+  onAdded: () => void,
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+): () => void {
+  if (!webApp?.initData || !webApp.checkHomeScreenStatus || !webApp.addToHomeScreen) {
+    return () => {};
+  }
+
+  let active = true;
+  let added = false;
+  let listening = false;
+  const handleAdded = () => {
+    if (!active) return;
+    added = true;
+    onAdded();
+  };
+
+  try {
+    if (webApp.onEvent) {
+      webApp.onEvent('homeScreenAdded', handleAdded);
+      listening = true;
+    }
+  } catch {
+    // A missing event subscription must not block the status check.
+  }
+
+  try {
+    webApp.checkHomeScreenStatus((status) => {
+      if (active && !added) onStatus(status);
+    });
+  } catch {
+    // A failed native check must not show a speculative reminder.
+  }
+
+  return () => {
+    active = false;
+    if (listening) {
+      try {
+        webApp.offEvent?.('homeScreenAdded', handleAdded);
+      } catch {
+        // Cleanup is best-effort on clients with incomplete event support.
+      }
+    }
+  };
+}
+
+export function requestTelegramHomeScreenShortcut(
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+): void {
+  try {
+    webApp?.addToHomeScreen?.();
+  } catch {
+    // A future launch can offer the shortcut again if Telegram reports 'missed'.
+  }
 }
 
 export function getTelegramLaunchStartParam(

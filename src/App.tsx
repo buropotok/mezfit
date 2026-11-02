@@ -29,6 +29,7 @@ import { isScreenDiagnosticsStartParam } from './settings/screenDiagnosticsRoute
 import { TodayPage } from './schedule/TodayPage';
 import { SchedulePlanningContext } from './schedule/SchedulePlanningContext';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
+import { HomeScreenInstallToast } from './homeScreen/HomeScreenInstallToast';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { Button, GlassSurfaceProvider } from './ui';
 import { ClientWorkoutProvider, ClientWorkoutNavigationShell } from './workout/ClientWorkoutContext';
@@ -350,6 +351,7 @@ export function App() {
 
   return (
     <GlassSurfaceProvider blur={glassSettings.blur} optics={glassSettings.optics}>
+      <HomeScreenInstallToast />
       <CloudConnectionsProvider
         key={state.me.user.telegramUserId}
         telegramUserId={state.me.user.telegramUserId}
