@@ -130,8 +130,9 @@ describe('copy an executed session as PLAN only', () => {
     expect(result?.plan).toMatchObject({ name: 'Силовая',
       exercises: [{ sets: [{ plannedWeightKg: 75, plannedReps: 8 }] }] });
     expect(result?.plan.exercises).toHaveLength(1);
-    expect(result).toMatchObject({ durationMinutes: 75, saved: true,
-      executionStatus: undefined, workoutSessionId: undefined });
+    expect(result).toMatchObject({ durationMinutes: 75, saved: true });
+    expect(result?.executionStatus).toBeUndefined();
+    expect(result?.workoutSessionId).toBeUndefined();
     expect(await db.table('adHocSessions').count()).toBe(1);
   });
 

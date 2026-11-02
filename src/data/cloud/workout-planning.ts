@@ -151,8 +151,10 @@ export class WorkoutPlanningRepository {
       coachUserId: session.coachUserId, clientUserId: session.clientUserId,
       format: occurrence?.format ?? (session.coachUserId ? 'coached' : 'independent'),
       durationMinutes: occurrence?.durationMinutes ?? 60, plan,
-      ...(session.programId && session.dayId
-        ? { trainingPlanId: session.programId, programDayId: session.dayId } : {}),
+      ...((occurrence?.trainingPlanId && occurrence.programDayId)
+        ? { trainingPlanId: occurrence.trainingPlanId, programDayId: occurrence.programDayId }
+        : session.programId && session.dayId
+          ? { trainingPlanId: session.programId, programDayId: session.dayId } : {}),
     }, date);
   }
 
