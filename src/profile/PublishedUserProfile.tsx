@@ -39,7 +39,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
       ? <Text variant="body" role="alert">Анкета недоступна по этой связи.</Text>
       : !profile ? <><Text variant="body">{contact.displayName}</Text>
         <Text variant="headline">Telegram ID</Text><Text variant="body">{contact.telegramUserId}</Text>
-        <Text variant="body">Анкета ещё не опубликована.</Text></>
+        <Text variant="body">Анкета клиента ещё не опубликована.</Text></>
       : <>{fields.map(([label, value]) => <div className="stack" key={label}>
         <Text variant="headline">{label}</Text><Text variant="body">{value}</Text>
       </div>)}
