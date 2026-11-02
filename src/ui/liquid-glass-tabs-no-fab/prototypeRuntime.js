@@ -20,6 +20,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
   const events = new EventTarget();
   const timers = new Set(), frames = new Set(), observers = new Set(), animations = new Set(), disposers = [];
   let disposed = false, pointerId = null, selectIndex = () => {}, clearSelection = () => {};
+  let isHoldActive = () => false;
   const document = {
     getElementById: id => root.getElementById(id),
     createElement: tag => owner.createElement(tag),
@@ -103,6 +104,9 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         holdActivated: false,
         glass: {}
       };
+
+      // Both the original highlight and the tap spring use this gesture owner.
+      isHoldActive = () => data.holdActivated;
 
       function isTextMode() {
         return pane.closest('.optical-tabs-playground')?.dataset.tabMode === 'text';
@@ -1173,7 +1177,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         const lensTrack = document.getElementById('lens-track');
         const lens = document.getElementById('lens');
         const selector = document.getElementById('selector');
-        const holdDelayInput = { value: 140 };
         const links = [...tabStrip.querySelectorAll(':scope > .tab-link')];
 
         const playground = pane.closest('.optical-tabs-playground');
@@ -1201,7 +1204,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
         const state = { ...DEFAULTS };
 
         let pointerId = null;
-        let pointerDownAt = 0;
         let pointerStartX = 0;
         let pointerStartY = 0;
         let startScrollLeft = 0;
@@ -1721,9 +1723,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
             pointerId =
               event.pointerId;
 
-            pointerDownAt =
-              performance.now();
-
             pointerStartX =
               event.clientX;
 
@@ -1751,16 +1750,6 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
             return;
           }
 
-          const elapsed =
-            performance.now() -
-            pointerDownAt;
-
-          const holdDelay =
-            Number(
-              holdDelayInput?.value ||
-              140
-            );
-
           const dx =
             Math.abs(
               event.clientX -
@@ -1782,7 +1771,7 @@ export function mountPrototype(root, initialIndex, onSelect, playEntrance) {
           pointerId = null;
 
           const isQuickTap =
-            elapsed < holdDelay &&
+            !isHoldActive() &&
             dx <= 6 &&
             dy <= 10 &&
             scrollDistance <= 4;
