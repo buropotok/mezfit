@@ -260,6 +260,35 @@ async function profileLink(db: ProfileDb, coach = '101', client = '202') {
 }
 
 describe('published profile defaults', () => {
+  it('publishes the same own profile when the actor is coach in one link and client in another', async () => {
+    const { db, repo } = create();
+    const asClient = await profileLink(db, '101', '202');
+    const asCoach = await profileLink(db, '202', '303');
+    // A structurally invalid link must not prevent the valid links from publishing.
+    const invalid = await profileLink(db, '404', '202');
+    await db.table('members').where('realmId').equals(invalid).modify({ accepted: false });
+    await repo.saveOwn(draft);
+    await repo.publishOwn();
+    expect(await repo.readPublished('tg:202', asClient)).toMatchObject(draft);
+    expect(await repo.readPublished('tg:202', asCoach)).toMatchObject(draft);
+    expect(await db.flexValues.where('realmId').equals(invalid).count()).toBe(0);
+    expect(await db.flexValues.where('realmId').equals('tg:202').count()).toBe(8);
+  });
+
+  it('aborts a failed identity computation without blocking later publication', async () => {
+    const { db, repo } = create();
+    const realm = await profileLink(db);
+    await repo.saveOwn(draft);
+    const digest = vi.spyOn(crypto.subtle, 'digest').mockRejectedValueOnce(new Error('Crypto unavailable'));
+    try {
+      await expect(repo.publishOwn()).rejects.toThrow('Crypto unavailable');
+    } finally { digest.mockRestore(); }
+    expect(await repo.readOwn()).toMatchObject(draft);
+    expect(await db.flexValues.where('realmId').equals(realm).count()).toBe(0);
+    await repo.publishOwn();
+    expect(await repo.readPublished('tg:202', realm)).toMatchObject(draft);
+  });
+
   it('publishes every confirmed link idempotently and updates clears without touching overrides', async () => {
     const { db, repo } = create();
     const first = await profileLink(db);
