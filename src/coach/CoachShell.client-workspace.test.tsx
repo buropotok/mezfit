@@ -4,9 +4,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CoachShell } from './CoachShell';
 
+const profileDb = vi.hoisted(() => ({}));
+
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    db: {}, actorUserId: 'tg:202',
+    db: profileDb, actorUserId: 'tg:202',
     status: 'ready',
     error: '',
     clients: [{ relationshipId: 'realm-1', userId: 'tg:101', telegramUserId: '101', displayName: 'Анна Иванова' }],
