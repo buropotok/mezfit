@@ -6,7 +6,7 @@ import { Button, Text } from '../ui';
 import { ProfileWorkspace, type ProfileTab } from './ProfileWorkspace';
 import { UserProfileForm } from './UserProfileForm';
 
-/** Registration uses the same profile surface and navigation owner as later edits. */
+/** First entry and later edits use the same optional profile surface. */
 export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWorkoutNavigationShell>) {
   const cloud = useCloudConnections();
   const enabled = props.activeRole === 'client' || props.destination === 'profile';
@@ -23,6 +23,9 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
   }, [repository]);
   const [retry, setRetry] = useState(0);
   const [tab, setTab] = useState<ProfileTab>('basics');
+  const initialProfileVisit = useRef<string | null>(null);
+  const destinationChange = useRef(props.onDestinationChange);
+  useLayoutEffect(() => { destinationChange.current = props.onDestinationChange; });
   useEffect(() => {
     if (!repository) return;
     let active = true;
@@ -44,8 +47,17 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
   }, [repository, retry]);
   useEffect(() => { setTab('basics'); }, [props.activeRole, cloud?.actorUserId]);
   const current = snapshot?.repository === repository ? snapshot : null;
-  const required = props.activeRole === 'client' && (!current || !current.profile);
-  const showingProfile = required || props.destination === 'profile';
+  useEffect(() => {
+    if (props.activeRole !== 'client' || !repository || !current?.loaded || current.error
+      || initialProfileVisit.current === repository.actorUserId) return;
+    initialProfileVisit.current = repository.actorUserId;
+    // Offer the empty profile once; subsequent reads and retries never trap navigation.
+    if (!current.profile && props.destination === 'today') {
+      setTab('basics');
+      destinationChange.current('profile');
+    }
+  }, [props.activeRole, props.destination, repository, current]);
+  const showingProfile = props.destination === 'profile';
   const profile = current?.profile ?? null;
   const name = [props.me.user.firstName, props.me.user.lastName].filter(Boolean).join(' ');
   const basics = !current || !repository ? <section className="user-profile__status">
@@ -58,7 +70,6 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
       <Text variant="footnote" role="alert">Не удалось обновить анкету. Введённые данные сохранены в форме.</Text>
       <Button onClick={() => setRetry(value => value + 1)}>Повторить</Button>
     </section> : null}
-    {required ? <Text variant="body">Заполните анкету, чтобы продолжить.</Text> : null}
     <UserProfileForm key={repository.actorUserId}
       defaults={{ firstName: props.me.user.firstName, lastName: props.me.user.lastName ?? '' }}
       initialProfile={profile} telegramUserId={props.me.user.telegramUserId}
@@ -69,15 +80,10 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
         // A stale account's completion cannot navigate or publish into the next account.
         setSnapshot(previous => previous?.repository === repository
           ? { repository, profile: saved, error: false, loaded: true } : previous);
-        if (required) props.onDestinationChange('profile');
       }} />
   </>;
-  return <ClientWorkoutNavigationShell {...props}
-    destination={required ? 'profile' : props.destination}
-    context={required ? { level: 1, title: 'Мой профиль', scrollKey: 'profile:registration' } : props.context}
-    registrationRequired={required}
-    onDestinationChange={next => { if (!required) props.onDestinationChange(next); }}>
-    {showingProfile ? <ProfileWorkspace view={{ kind: 'self', name }} tab={required ? 'basics' : tab}
-      onTabChange={next => { if (!required) setTab(next); }} basicsContent={basics} /> : props.children}
+  return <ClientWorkoutNavigationShell {...props}>
+    {showingProfile ? <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
+      onTabChange={setTab} basicsContent={basics} /> : props.children}
   </ClientWorkoutNavigationShell>;
 }
