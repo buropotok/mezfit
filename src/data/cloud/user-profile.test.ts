@@ -3,9 +3,9 @@ import Dexie, { type Table } from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import type { MezfitCloudDatabase } from './database';
-import { FlexAttributesRepository, flexAttributeId, type FlexAttributeRow, type FlexValueRow } from './flex-attributes';
+import { FlexAttributesRepository, flexAttributeId, flexValueId, type FlexAttributeRow, type FlexValueRow } from './flex-attributes';
 import {
-  UserProfileRepository, ageFromBirthDate, initialUserProfile, validateUserProfile,
+  UserProfileRepository, USER_PROFILE_KEYS, ageFromBirthDate, initialUserProfile, validateUserProfile,
 } from './user-profile';
 
 class ProfileDb extends Dexie {
@@ -339,6 +339,34 @@ describe('published profile defaults', () => {
     expect(await repo.publicationVersion()).not.toBe(before);
     await repo.publishOwn();
     expect(await repo.readPublished('tg:202', realm)).toMatchObject({ firstName: 'Поздние данные' });
+  });
+
+  it('keeps observing shared values that download before their definitions', async () => {
+    const { db, repo } = create();
+    const realm = await profileLink(db);
+    await repo.saveOwn(draft);
+    const target = { entityType: 'publishedUser' as const, entityId: 'tg:202', realmId: realm };
+    const incoming = { ...draft, firstName: 'Другое устройство', updatedAt: '2099-01-01T00:00:00Z' };
+    const entries = Object.entries(USER_PROFILE_KEYS);
+    await db.flexValues.bulkAdd(entries.map(([key, attributeKey]) => {
+      const attributeId = flexAttributeId(realm, attributeKey);
+      return { ...target, id: flexValueId(target, attributeId), owner: realm, attributeId,
+        value: incoming[key as keyof typeof incoming] };
+    }));
+    const observed: Array<string | null> = [];
+    const sub = repo.observePublished('tg:202', realm, profile => observed.push(profile?.firstName ?? null),
+      reason => { throw reason; });
+    try {
+      await vi.waitFor(() => expect(observed).toContain(null));
+      expect(await repo.publishOwn()).toBeNull();
+      await db.flexAttributes.bulkAdd(entries.map(([key, attributeKey]) => ({
+        id: flexAttributeId(realm, attributeKey), realmId: realm, owner: realm, key: attributeKey,
+        valueType: key === 'weightKg' ? 'number' as const : 'string' as const,
+      })));
+      await vi.waitFor(() => expect(observed).toContain('Другое устройство'));
+      await repo.publishOwn();
+      expect(await repo.readPublished('tg:202', realm)).toMatchObject({ firstName: 'Другое устройство' });
+    } finally { sub.unsubscribe(); }
   });
 
   it('does not overwrite a newer published snapshot with a stale personal version', async () => {
