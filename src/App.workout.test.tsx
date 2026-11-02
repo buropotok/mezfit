@@ -252,6 +252,9 @@ describe('App own profile navigation', () => {
     if (!training || !profile) throw new Error('Missing client primary tabs');
     fireEvent.click(training);
     await screen.findByText('Workout session');
+    expect(getPrimaryTabsRoot(view.container)).toBe(root);
+    expect(training.isConnected).toBe(true);
+    expect(profile.isConnected).toBe(true);
     expect(training.getAttribute('aria-selected')).toBe('true');
     expect(profile.getAttribute('aria-selected')).toBe('false');
     fireEvent.click(profile);
