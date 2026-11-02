@@ -73,6 +73,7 @@
     <div class="toolbar">
       <button id="export" class="button button-primary" type="button">Выгрузить CSV</button>
       <button id="import" class="button" type="button">Импорт CSV</button>
+      <button id="migrate" class="button hidden" type="button">Перенести прошлые совпадения</button>
       <input id="csvfile" class="hidden" type="file" accept=".csv,text/csv">
       <a class="button" href="./evidence.csv" download>Оценки кандидатов</a>
     </div>
@@ -115,6 +116,7 @@
             <button id="clear" class="button" type="button">Сбросить решение</button>
           </div>
           <p id="decision" class="muted" aria-live="polite"></p>
+          <div id="previous-match" class="hidden"></div>
         </div>
       </div>
       <nav class="nav" aria-label="Навигация между упражнениями">
@@ -131,6 +133,7 @@
 (function () {
   "use strict";
   var KEY = "";
+  var KEY_PREFIX = "mezfit.gif-review.decisions.v1.";
   var GH_BASE = "";
   var R2_BASE = "https://raw.githubusercontent.com/buropotok/mezfit/data/r2-gif-snapshot/audit/gif-sources/r2/";
   var data = null, decisions = {}, round = 1, index = 0, subset = [];
@@ -255,6 +258,23 @@
     });
     $("none").classList.toggle("active", !!decision && decision.status === "none");
     $("skip").classList.toggle("active", !!decision && decision.status === "skip");
+    var previous = $("previous-match");
+    previous.textContent = "";
+    previous.classList.add("hidden");
+    var onscreen = item.candidates.slice(start, start + data.round_size);
+    if (decision && decision.status === "matched" &&
+        !onscreen.some(function (c) { return c.id === decision.r2_id; }) &&
+        data.r2_index[decision.r2_id]) {
+      previous.classList.remove("hidden");
+      previous.appendChild(textNode("span", "name", "Ранее подтверждённая GIF: " +
+        data.r2_index[decision.r2_id] + " (" + decision.r2_id + ".gif)"));
+      var priorGif = document.createElement("img");
+      priorGif.src = R2_BASE + encodeURIComponent(decision.r2_id + ".gif");
+      priorGif.alt = "Ранее подтверждённый выбор";
+      priorGif.className = "gif";
+      priorGif.style.width = "160px";
+      previous.appendChild(priorGif);
+    }
     $("decision").textContent = !decision ? "Решение ещё не выбрано." :
       decision.status === "matched" ? "Выбрано: " + decision.r2_id + ".gif. Можно изменить нажатием на другую GIF." :
       decision.status === "none" ? "Не найдено среди пяти. Упражнение попадёт в следующий раунд." :
@@ -283,10 +303,59 @@
     persist();
     rebuild(current);
   }
+
+  function historicalMatches() {
+    var matches = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var storedKey = localStorage.key(i);
+        if (!storedKey || !storedKey.startsWith(KEY_PREFIX) || storedKey === KEY) continue;
+        var older = JSON.parse(localStorage.getItem(storedKey) || "{}");
+        if (!older || Array.isArray(older) || typeof older !== "object") continue;
+        Object.keys(older).forEach(function (k) {
+          var split = k.lastIndexOf("::"), gif = k.slice(0, split);
+          var d = older[k];
+          if (split < 0 || !byGif[gif] || !d || d.status !== "matched" ||
+              !data.r2_index[d.r2_id]) return;
+          if (!matches[gif] || (d.updated_at || "") > (matches[gif].updated_at || "")) {
+            matches[gif] = d;
+          }
+        });
+      }
+    } catch (err) {
+      displayWarning("Невозможно прочитать архив локальных решений: " + err.message);
+    }
+    return matches;
+  }
+  function mergeHistoricalMatches(matches, source) {
+    var entries = Object.keys(matches).filter(function (gif) {
+      return byGif[gif] && data.r2_index[matches[gif].r2_id] &&
+             !getDecision(gif, 1);
+    });
+    if (!entries.length) {
+      displayWarning("Новых подтверждённых совпадений для переноса нет.");
+      return;
+    }
+    if (!window.confirm("Перенести " + entries.length + " подтверждённых совпадений из " +
+        source + "? Старые отказы «Нет среди пяти» не переносятся: кандидаты изменились. " +
+        "Уже принятые решения текущей версии сохранятся.")) return;
+    entries.forEach(function (gif) {
+      var old = matches[gif];
+      decisions[keyFor(gif, 1)] = {
+        status: "matched", r2_id: old.r2_id,
+        updated_at: old.updated_at || new Date().toISOString()
+      };
+    });
+    persist();
+    rebuild();
+    $("migrate").classList.add("hidden");
+    displayWarning("Перенесено подтверждённых совпадений: " + entries.length +
+      ". Старые данные оставлены без изменений. Выгрузи новый CSV.");
+  }
   function csvEscape(value) {
     var text = String(value == null ? "" : value);
     // Do not let names from metadata become spreadsheet formulas.
-    if (/^[\s]*[=+@]/.test(text)) text = "'" + text;
+    if (/^[\s]*[=+@-]/.test(text)) text = "'" + text;
     return '"' + text.replace(/"/g, '""') + '"';
   }
   function exportCsv() {
@@ -301,8 +370,8 @@
         var candidate = item.candidates.find(function (c) { return c.id === d.r2_id; });
         var row = [
           data.candidate_revision, item.gif, item.name, r, d.status, d.r2_id || "",
-          candidate ? candidate.id + ".gif" : "",
-          candidate ? candidate.name : "", d.updated_at || ""
+          data.r2_index[d.r2_id] ? d.r2_id + ".gif" : "",
+          candidate ? candidate.name : (data.r2_index[d.r2_id] || ""), d.updated_at || ""
         ];
         lines.push(row.map(csvEscape).join(","));
       }
@@ -348,11 +417,24 @@
         if (!(f in positions)) throw new Error("Нет колонки " + f);
       });
       var incoming = {};
-      var count = 0;
+      var previous = {};
+      var count = 0, oldCount = 0, obsoleteDecisions = 0;
+      var foreignRevision = null;
+      var sawCurrentRevision = false;
       rows.forEach(function (row) {
         if (!row.some(Boolean)) return;
-        if (row[positions.candidate_revision] !== data.candidate_revision) {
-          throw new Error("CSV относится к другой версии списка кандидатов. Данные не изменены.");
+        var rowRevision = row[positions.candidate_revision];
+        var legacy = rowRevision !== data.candidate_revision;
+        if (legacy) {
+          if (sawCurrentRevision) throw new Error("В CSV смешаны версии кандидатов.");
+          if (!/^[0-9a-f]{64}$/.test(rowRevision)) throw new Error("Неверная версия CSV.");
+          if (foreignRevision && foreignRevision !== rowRevision) {
+            throw new Error("В CSV смешаны разные версии кандидатов.");
+          }
+          foreignRevision = rowRevision;
+        } else {
+          if (foreignRevision) throw new Error("В CSV смешаны текущие и старые решения.");
+          sawCurrentRevision = true;
         }
         var gif = row[positions.github_gif];
         var n = Number(row[positions.round]);
@@ -362,9 +444,20 @@
             !["matched", "none", "skip"].includes(status)) {
           throw new Error("Некорректная строка для GIF " + gif);
         }
+        if (legacy) {
+          if (status !== "matched") { obsoleteDecisions++; return; }
+          if (!data.r2_index[ident]) throw new Error("Неизвестный R2 ID " + ident);
+          var old = previous[gif];
+          var updated = row[positions.updated_at] || "";
+          if (!old || updated > (old.updated_at || "")) {
+            previous[gif] = { status: "matched", r2_id: ident, updated_at: updated };
+          }
+          oldCount++;
+          return;
+        }
         var correctCandidate = byGif[gif].candidates.slice(
           (n-1)*data.round_size, n*data.round_size).some(function (c) { return c.id === ident; });
-        if ((status === "matched" && !correctCandidate) ||
+        if ((status === "matched" && !correctCandidate && !data.r2_index[ident]) ||
             (status !== "matched" && ident !== "")) {
           throw new Error("Некорректный выбор в строке " + gif);
         }
@@ -376,7 +469,12 @@
         };
         count++;
       });
-      // A following-round decision only makes sense after each previous "none".
+      if (foreignRevision) {
+        mergeHistoricalMatches(previous, "CSV (совпадений: " + oldCount +
+          ", требуют повторной проверки: " + obsoleteDecisions + ")");
+        return;
+      }
+      // Current revision: a following-round decision requires all previous "none".
       Object.keys(incoming).forEach(function (k) {
         var split = k.lastIndexOf("::");
         var gif = k.slice(0,split), n = Number(k.slice(split + 2));
@@ -399,6 +497,9 @@
     }
   }
   $("export").addEventListener("click", exportCsv);
+  $("migrate").addEventListener("click", function () {
+    mergeHistoricalMatches(historicalMatches(), "прошлой версии сайта");
+  });
   $("import").addEventListener("click", function () { $("csvfile").click(); });
   $("csvfile").addEventListener("change", function () { importCsv(this.files[0]); });
   $("round").addEventListener("change", function () {
@@ -428,6 +529,9 @@
     KEY = "mezfit.gif-review.decisions.v1." + result.candidate_revision;
     GH_BASE = "https://raw.githubusercontent.com/buropotok/mezfit/" + result.github_ref + "/assets/media/";
     result.items.forEach(function (item) { byGif[item.gif] = item; });
+    if (!result.r2_index || Object.keys(result.r2_index).length !== result.r2_count) {
+      throw new Error("Не найден справочник идентификаторов первого каталога.");
+    }
     for (var r = 1; r <= data.max_rounds; r++) {
       var option = document.createElement("option");
       option.value = String(r);
@@ -437,6 +541,9 @@
     }
     $("round").disabled = false;
     loadSaved();
+    if (Object.keys(historicalMatches()).some(function (gif) {
+      return !getDecision(gif, 1);
+    })) $("migrate").classList.remove("hidden");
     rebuild();
   }).catch(function (err) {
     $("loading").textContent = "Не удалось загрузить кандидатов: " + err.message;

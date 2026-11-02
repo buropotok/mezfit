@@ -39,9 +39,25 @@ jobs:
           p = Path("gif-review-preview/candidates.json")
           d = json.loads(p.read_text(encoding="utf-8"))
           assert len(d["candidate_revision"]) == 64
+          assert len(d["r2_index"]) == 1324
           assert d["github_count"] == 1168
           assert d["r2_count"] == 1324
           assert len(d["items"]) == 1168
           assert all(len(x["candidates"]) == 30 for x in d["items"])
+          assert all(len({c["id"] for c in x["candidates"]}) == 30 for x in d["items"])
+          # A title-identical R2 exercise must be visible in the first five,
+          # even if a visual channel ranks unrelated equipment more highly.
+          import sys
+          sys.path.insert(0, "tools/gif-review-pages")
+          from build_data import words
+          count = 0
+          for item in d["items"]:
+              expected = {ident for ident, label in d["r2_index"].items()
+                          if set(words(item["name"])) == set(words(label))
+                          and words(item["name"])}
+              if expected:
+                  count += 1
+                  assert expected.intersection(c["id"] for c in item["candidates"][:5]), item["gif"]
+          print("Exact-name source exercises in Top-5:", count)
           assert Path("gif-review-preview/evidence.csv").stat().st_size > 1000
           PY

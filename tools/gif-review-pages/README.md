@@ -40,10 +40,19 @@ occupies that address without explicitly deciding to replace that site.
   ee0f313fa15dd8a35a7e6cc558ccd6012810128948e8c8a9e6b5381bf6449c66).
   This does not verify that every other field agrees with 2.1.0; the full
   2.1.0 JSON is not included in this repository.
-- Candidate evidence uses independent title-similarity retrieval in both
-  directions and the pinned GIF audit's matches.csv, review.csv,
-  pose-candidates.csv. Independent channels are combined using rank fusion.
-  Retrieval scores are NOT probabilities or proof of equivalence.
+- Candidate evidence uses English exercise names normalized for common
+  morphology, variants, synonyms and movement terms, plus the pinned GIF
+  audit's matches.csv, review.csv and pose-candidates.csv.
+- Ranking v2 prioritizes exact/near English-name matches, explicitly
+  downgrades dissimilar movements or apparatus, and always reserves room
+  among the first five for a separately retrieved visual/motion candidate.
+  Correlated appearance/optical flow and pose/joint-motion signals each
+  contribute through their strongest channel rather than stacking votes.
+  This improves candidate discovery but **does not prove that GIFs match**.
+- evidence.csv exposes semantic-title scores, category and independent
+  visual support. Scores are NOT calibrated match probabilities.
+- Full natural-language LLM inference over the complete description fields
+  has not been run; this is a deterministic domain-aware ranking.
 - The original 15 human reference pairs are not tuning input and do not
   authorize an automatic match. Prior audit label proposals, e.g. renaming
   Wheel Run, are never applied. Actual matching decisions are human.
@@ -51,9 +60,10 @@ occupies that address without explicitly deciding to replace that site.
   six rounds of five candidates without regenerating the site. evidence.csv
   records channel ranks, original scores and fusion ordering. Workflow also
   publishes a downloadable gif-review-candidates artifact.
-- No claim of completed semantic LLM verification: the ranking uses lexical
-  titles plus precomputed visual/optical-flow/pose/joint-motion signals.
-  A future separately reviewed candidate source may improve the ranking.
+- The published ranking includes the 1,324-item R2 identifier lookup
+  exclusively for validating and displaying owner-verified historical matches.
+  An owner choice can remain confirmed even if a later ranking no longer
+  includes that GIF among its first 30 suggestions.
 
 ## Operator use
 
@@ -76,10 +86,16 @@ occupies that address without explicitly deciding to replace that site.
 
 CSV schema:
 candidate_revision,github_gif,github_name_en,round,status,r2_id,r2_gif,r2_name_en,updated_at.
-CSV import requires the same candidate_revision as the published page. Each
-revision has a separate localStorage key so refreshing a newer ranking cannot
-silently reinterpret previous round choices. Export old revisions before
-intentionally republishing the candidate source.
+CSV import of the current candidate_revision restores the full set of
+matching/none/skip decisions. On a different candidate_revision, the site
+offers **explicit selective migration of confirmed matches only** from the CSV.
+The same explicit option is offered for valid, locally saved matches from
+earlier versions. Existing current decisions are not overwritten; old browser
+keys and CSV remain unchanged. A migrated match absent from the current five
+is displayed separately with its R2 GIF. No-match and skip decisions are
+never migrated because the displayed five are different and require review.
+Each ranking has its own localStorage key. Export CSV regularly; browser data
+is not a durable backup.
 status is one of matched, none, skip. Multiple GH GIFs may select the same R2 GIF;
 the tool does not enforce 1:1 matching. Unreviewed GH GIFs have no CSV row and
 are not silently treated as nonmatches.
