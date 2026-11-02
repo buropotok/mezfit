@@ -1,3 +1,5 @@
+import { UserAvatarRepository } from './user-avatar';
+import { resolveContactNames } from './contact-presentation';
 import { ContactAvatarUrls } from './contact-avatar-urls';
 import { observeWorkoutSyncConfirmation } from './workout-sync';
 import { confirmProgramSync, observeProgramSyncConfirmation } from './program-sync';
@@ -19,6 +21,7 @@ export interface CloudContact {
   displayName: string;
   avatarVersion?: string | null;
   avatarMode?: string;
+  userAvatar?: boolean;
 }
 
 export type CloudSyncStatus = 'pending' | 'synced' | 'offline' | 'error';
@@ -190,10 +193,27 @@ async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string)
     // Missing/older profile projection must not hide an otherwise valid membership.
     db.contactProfiles?.toArray() ?? Promise.resolve([]),
   ]);
-  const contacts = await deriveCloudContacts(actorUserId, realms, members, profiles);
+  const original = await deriveCloudContacts(actorUserId, realms, members, profiles);
+  const contacts = db.flexValues && db.flexAttributes ? {
+    clients: await resolveContactNames(db, actorUserId, original.clients),
+    coaches: await resolveContactNames(db, actorUserId, original.coaches),
+  } : original;
+  const selfAvatars = await deriveCloudSelfAvatars(actorUserId, [...contacts.clients, ...contacts.coaches], profiles);
+  if (db.flexValues && db.flexAttributes) {
+    try {
+      const own = await new UserAvatarRepository(db, actorUserId).read();
+      if (own.value?.small || own.incomplete) {
+        for (const realmId of new Set([actorUserId, ...contacts.clients.map(item => item.relationshipId), ...contacts.coaches.map(item => item.relationshipId)])) {
+          const existing = selfAvatars.find(item => item.relationshipId === realmId);
+          if (existing) existing.userAvatar = true;
+          else selfAvatars.push({ relationshipId: realmId, userId: actorUserId, telegramUserId: actorUserId.slice(3), displayName: 'Вы', userAvatar: true });
+        }
+      }
+    } catch { /* Avatar failure must not disable contacts or cloud transport. */ }
+  }
   return {
     contacts,
-    selfAvatars: await deriveCloudSelfAvatars(actorUserId, [...contacts.clients, ...contacts.coaches], profiles),
+    selfAvatars,
     hasRelationshipMembership: members.some((member) => member.userId === actorUserId
       && (member.roles?.includes('coach') || member.roles?.includes('client'))),
   };
@@ -247,11 +267,12 @@ export function CloudConnectionsProvider({
       const hasContacts = directory.clients.length > 0 || directory.coaches.length > 0;
       locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
+      // Personal portraits remain usable offline even before relationships hydrate.
+      setSelfAvatars(own);
       if (!initialPullSucceededRef.current && !hasContacts) return;
       reconcileAvatarPermissions(directory, own);
       setClients(directory.clients);
       setCoaches(directory.coaches);
-      setSelfAvatars(own);
       setError('');
       setStatus('ready');
     };
