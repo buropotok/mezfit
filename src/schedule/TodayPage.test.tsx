@@ -259,7 +259,7 @@ describe('local-first calendar experience', () => {
     fireEvent.click(screen.getAllByText('Черновик')[1]);
     expect(await screen.findByRole('button', { name: 'Сохранить' })).toBeTruthy();
   });
-}
+
   it('shows scheduled workout markers to the client and removes them after cancellation', async () => {
     const id = await repo().create({ ...draft, id: 'draft:client-marker' });
     const occurrenceId = await repo().save(id);
