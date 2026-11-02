@@ -338,10 +338,16 @@ export function App() {
     setCompletionNavigation(null);
     setNavigationContext(null);
     if (state.activeRole === 'coach') {
-      if (next === 'settings' && coachDestination !== 'settings') {
+      // Reopening a parent must retain its original return target rather than
+      // create mutual Profile <-> Settings links.
+      if (next === 'settings' && coachDestination !== 'settings'
+        && !(coachDestination === 'profile' && coachProfileReturnDestination === 'settings')) {
         setCoachSettingsReturnDestination(coachDestination);
       }
-      if (next === 'profile' && coachDestination !== 'profile') setCoachProfileReturnDestination(coachDestination);
+      if (next === 'profile' && coachDestination !== 'profile'
+        && !(coachDestination === 'settings' && coachSettingsReturnDestination === 'profile')) {
+        setCoachProfileReturnDestination(coachDestination);
+      }
       setCoachDestination(next);
     } else {
       if (next === 'settings' && clientDestination !== 'settings') setClientSettingsReturnDestination(clientDestination);
