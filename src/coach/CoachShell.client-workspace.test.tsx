@@ -30,15 +30,16 @@ vi.mock('../ui/GlassSurface', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui/GlassSurface')>();
   return {
     ...actual,
-    GlassSurface: ({ component: Component = 'div', preset, optics, blur, className, children }: {
+    GlassSurface: ({ component: Component = 'div', preset, optics, blur, shape, className, children }: {
       component?: ElementType;
       preset?: string;
       optics?: boolean;
       blur?: number;
+      shape?: string;
       className?: string;
       children: ReactNode;
     }) => <Component className={className} data-glass-preset={preset}
-      data-glass-optics={String(optics)} data-glass-blur={blur}>{children}</Component>,
+      data-glass-optics={String(optics)} data-glass-blur={blur} data-glass-shape={shape}>{children}</Component>,
   };
 });
 
@@ -55,13 +56,13 @@ describe('Coach client workspace presentation', () => {
     expect(tablist.getAttribute('data-full-width')).toBe('true');
     expect(screen.getByRole('group', { name: 'Разделы клиента Анна Иванова' }).contains(tablist)).toBe(true);
     expect(screen.getAllByRole('tab')).toHaveLength(6);
-    expect(screen.getByRole('tab', { name: 'Обзор' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
 
-    const surface = screen.getByText('Здесь появятся последняя тренировка, следующая тренировка и быстрые действия тренера.').closest('section');
-    expect(surface?.classList.contains('client-workspace-surface')).toBe(true);
+    const surface = screen.getByText('Анкета клиента ещё не опубликована.').closest('section');
     expect(surface?.getAttribute('data-glass-preset')).toBe('modalTuned');
     expect(surface?.getAttribute('data-glass-optics')).toBe('false');
-    expect(surface?.getAttribute('data-glass-blur')).toBe('2');
+    expect(surface?.getAttribute('data-glass-blur')).toBeNull();
+    expect(surface?.getAttribute('data-glass-shape')).toBe('auto');
 
     fireEvent.click(screen.getByRole('tab', { name: 'История' }));
     expect(screen.getByRole('tab', { name: 'История' }).getAttribute('aria-selected')).toBe('true');
