@@ -10,12 +10,17 @@ import {
 import { App } from './App';
 import type { UserProfile } from './data/cloud/user-profile';
 
-// These scenarios start after mandatory registration; registration itself is tested separately.
+// These navigation scenarios start with an existing own profile.
 vi.mock('./data/cloud/user-profile', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./data/cloud/user-profile')>();
   return { ...actual, UserProfileRepository: class {
     constructor(_db: unknown, readonly actorUserId: string) {}
     async migrateOwn() {}
+    observePublicationVersion(next: (version: string | null) => void) {
+      next(null); return { unsubscribe() {} };
+    }
+    async publishOwn() { return null; }
+    async confirmOwnSync() { return false; }
     observeOwn(next: (profile: UserProfile | null) => void) {
       next({ firstName: 'Клиент', lastName: '', email: '', phone: '', birthDate: '2000-01-01',
         sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' });
