@@ -1,6 +1,9 @@
 # Flex Attributes foundation — realm-scoped EAV
 
-Status: infrastructure PR; cloud activation and ordinary-account authorization have **not** run.
+Status: the protected schema/ACL apply and full configuration readback succeeded on
+2026-10-30 ([run 40980110480](https://github.com/buropotok/mezfit/actions/runs/40980110480)).
+PR 2 verified that workflow evidence, not current live ordinary-account behavior;
+ordinary Coach/Client and two-device authorization checks still require verification.
 
 ## Scope
 
