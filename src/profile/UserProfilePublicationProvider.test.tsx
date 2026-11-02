@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { UserProfilePublicationProvider, UserProfileSyncStatus } from './UserProfilePublicationProvider';
 
 const state = vi.hoisted(() => ({
-  actor: 'tg:202', db: {}, status: 'offline' as string, version: 'profile-v1',
+  actor: 'tg:202', db: {}, status: 'offline' as string, version: 'profile-v1' as string | null,
   listeners: new Map<string, (version: string | null) => void>(),
   publish: vi.fn<() => Promise<string | null>>(),
   confirm: vi.fn<(version: string) => Promise<boolean>>(),
@@ -78,4 +78,22 @@ it('does not acknowledge the next account with a previous account push completio
   await screen.findByText('Нет соединения');
   await act(async () => { finish?.(true); });
   expect(screen.queryByText('Синхронизирована')).toBeNull();
+});
+
+it('does not mark an unsaved questionnaire as synchronized', async () => {
+  state.version = null; state.status = 'synced';
+  render(ui());
+  expect((await screen.findByText('Не сохранена')).getAttribute('data-color')).toBe('gray');
+  expect(state.confirm).not.toHaveBeenCalled();
+});
+
+it('does not spin on failed cloud confirmation and permits an explicit retry', async () => {
+  state.status = 'synced';
+  state.confirm.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(true);
+  render(ui());
+  await screen.findByText('Ошибка');
+  expect(state.confirm).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+  await screen.findByText('Синхронизирована');
+  expect(state.confirm).toHaveBeenCalledTimes(2);
 });
