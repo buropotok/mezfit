@@ -36,9 +36,11 @@ export function HomeScreenInstallToast() {
     if (!webApp?.initData || !webApp.checkHomeScreenStatus || !webApp.addToHomeScreen) return;
 
     let active = true;
+    let added = false;
     let listening = false;
     const handleAdded = () => {
       if (!active) return;
+      added = true;
       rememberUnknownPromptDismissal();
       setStatus('added');
       setOpened(false);
@@ -55,7 +57,7 @@ export function HomeScreenInstallToast() {
 
     try {
       webApp.checkHomeScreenStatus((nextStatus) => {
-        if (!active) return;
+        if (!active || added) return;
         setStatus(nextStatus);
         setOpened(
           nextStatus === 'missed'
