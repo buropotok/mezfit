@@ -8,6 +8,21 @@ import {
   getMe,
 } from './api';
 import { App } from './App';
+import type { UserProfile } from './data/cloud/user-profile';
+
+// These scenarios start after mandatory registration; registration itself is tested separately.
+vi.mock('./data/cloud/user-profile', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./data/cloud/user-profile')>();
+  return { ...actual, UserProfileRepository: class {
+    constructor(_db: unknown, readonly actorUserId: string) {}
+    async migrateOwn() {}
+    observeOwn(next: (profile: UserProfile | null) => void) {
+      next({ firstName: 'Клиент', lastName: '', email: '', phone: '', birthDate: '2000-01-01',
+        sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' });
+      return { unsubscribe() {} };
+    }
+  } };
+});
 
 vi.mock('./api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./api')>();
@@ -47,7 +62,9 @@ const newCoach = {
 
 const cloudRefresh = vi.fn();
 
+const TestCloudDatabase = {};
 const TestCloudContext = createContext({
+  db: {},
   actorUserId: 'tg:100',
   clients: [] as typeof oldCoach[],
   coaches: [] as typeof oldCoach[],
@@ -63,7 +80,7 @@ function TestCloudProvider({ children }: { children: ReactNode }) {
     setCoaches([oldCoach, newCoach]);
   }, []);
   return (
-    <TestCloudContext.Provider value={{ actorUserId: 'tg:100', clients: [], coaches, status: 'ready', error: '', refresh }}>
+    <TestCloudContext.Provider value={{ db: TestCloudDatabase, actorUserId: 'tg:100', clients: [], coaches, status: 'ready', error: '', refresh }}>
       {children}
     </TestCloudContext.Provider>
   );
