@@ -26,6 +26,7 @@ import {
   type AppDestination,
   type NavigationContext,
 } from './NavigationShell';
+import { avatarProfileDestination } from './navigation/AvatarProfileNavigation';
 import { SettingsPage } from './settings/SettingsPage';
 import { isScreenDiagnosticsStartParam } from './settings/screenDiagnosticsRoute';
 import { TodayPage } from './schedule/TodayPage';
@@ -359,7 +360,7 @@ export function App() {
     }
   };
   const openAvatarProfile = (userId: string) => {
-    if (state.activeRole === 'client' || userId === `tg:${state.me.user.telegramUserId}`) {
+    if (avatarProfileDestination(state.activeRole, `tg:${state.me.user.telegramUserId}`, userId) === 'profile') {
       changeDestination('profile');
       return;
     }
