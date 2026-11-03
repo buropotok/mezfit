@@ -1,3 +1,4 @@
+import { UserAvatarSources } from './user-avatar-sources';
 import { UserAvatarRepository } from './user-avatar';
 import { resolveContactNames } from './contact-presentation';
 import { ContactAvatarUrls } from './contact-avatar-urls';
@@ -61,6 +62,7 @@ interface CloudConnectionsValue {
   retrySync: () => Promise<void>;
   loadAvatar: (contact: CloudContact, variant?: 'small' | 'large') => Promise<Blob | null>;
   avatarUrls?: ContactAvatarUrls;
+  userAvatarSources?: UserAvatarSources;
   /** Incremented when Dexie Cloud finishes downloading pending avatar blobs. */
   avatarLoadRevision?: number;
 }
@@ -234,6 +236,8 @@ export function CloudConnectionsProvider({
   useEffect(() => () => avatarUrls.dispose(), [avatarUrls]);
   const notificationBudget = useMemo(() => createSyncNotificationBudget(), []);
   const actorUserId = `tg:${telegramUserId}`;
+  const userAvatarSources = useMemo(() => new UserAvatarSources(new UserAvatarRepository(db, actorUserId), actorUserId), [db, actorUserId]);
+  useEffect(() => () => userAvatarSources.dispose(), [userAvatarSources]);
   const syncHistory = useMemo(() => new SessionSyncHistory(actorUserId), [actorUserId]);
   const [clients, setClients] = useState<CloudContact[]>([]);
   const [coaches, setCoaches] = useState<CloudContact[]>([]);
@@ -243,6 +247,7 @@ export function CloudConnectionsProvider({
   const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('pending');
   const [syncError, setSyncError] = useState('');
   const [avatarLoadRevision, setAvatarLoadRevision] = useState(0);
+  useEffect(() => { userAvatarSources.refresh(); }, [userAvatarSources, avatarLoadRevision]);
   const alive = useRef(false);
   const initialPullSucceededRef = useRef(false);
   const reconcileAvatarPermissions = useCallback((
@@ -252,7 +257,8 @@ export function CloudConnectionsProvider({
     // Revoked or replaced portraits lose their in-memory blob URL immediately.
     // The only persistent image cache is the realm-authorized Dexie Cloud subset.
     avatarUrls.retain([...next.clients, ...next.coaches, ...own]);
-  }, [avatarUrls]);
+    userAvatarSources.retain([...next.clients, ...next.coaches, ...own]);
+  }, [avatarUrls, userAvatarSources]);
 
   useEffect(() => {
     alive.current = true;
@@ -445,6 +451,7 @@ export function CloudConnectionsProvider({
       if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
       initialPullSucceededRef.current = true;
       reconcileAvatarPermissions(snapshot.contacts, snapshot.selfAvatars);
+      userAvatarSources.refresh();
       setClients(snapshot.contacts.clients);
       setCoaches(snapshot.contacts.coaches);
       setSelfAvatars(snapshot.selfAvatars);
@@ -457,7 +464,7 @@ export function CloudConnectionsProvider({
       }
       throw reason;
     }
-  }, [db, actorUserId, initData, reconcileAvatarPermissions]);
+  }, [db, actorUserId, initData, reconcileAvatarPermissions, userAvatarSources]);
 
   const retrySync = useCallback(async () => {
     setSyncStatus('pending');
@@ -477,9 +484,9 @@ export function CloudConnectionsProvider({
 
   const value = useMemo<CloudConnectionsValue>(() => ({
     db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError, syncHistory,
-    refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision,
+    refresh, retrySync, loadAvatar, avatarUrls, userAvatarSources, avatarLoadRevision,
   }), [db, actorUserId, clients, coaches, selfAvatars, status, error, syncStatus, syncError, syncHistory,
-    refresh, retrySync, loadAvatar, avatarUrls, avatarLoadRevision]);
+    refresh, retrySync, loadAvatar, avatarUrls, userAvatarSources, avatarLoadRevision]);
 
   return <Context.Provider value={value}>
     <SyncNotificationBudgetContext.Provider value={notificationBudget}>{children}</SyncNotificationBudgetContext.Provider>
