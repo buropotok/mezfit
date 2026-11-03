@@ -301,3 +301,31 @@ Canvas memory, 320px layout and offline reopen still need device verification.
 
 PR 5 may retire the remaining Worker Telegram avatar/bootstrap APIs. They remain
 the current fallback in PR 4. License diagnostics remain outside this PR.
+
+## Avatar source continuity across navigation
+
+CloudConnectionsProvider owns UserAvatarSources for the current database/account.
+This is an in-memory render cache of repository snapshots and temporary Blob URLs;
+Dexie/Addon remain the only persistent image store and transport. One lazy observer
+per visited authorized subject stays alive across screen unmounts, so the next
+screen receives the ready source synchronously through useSyncExternalStore. Small
+and large URLs are created only when requested. Replacement, reset and publication
+continue to invalidate the source even with no visible avatar consumers.
+
+An unresolved/incomplete source must not be treated as absence of an override.
+During a cold read the hook supplies a neutral transparent image through Avatar's
+existing src prop; this also prevents callers' Telegram photo fallbacks from
+flashing. A confirmed absence/reset permits the normal Telegram/initials fallback.
+No primitive geometry, styling or mechanics are modified. Isolated consumers
+without an account provider use the same source owner locally and dispose it on
+unmount. There is no global or persistent shadow cache.
+
+Relationship reconciliation retains only authorized source keys plus the actor's
+personal source. Revocation, account disposal and source replacement revoke URLs;
+observer generations reject stale callbacks after refresh/revocation/disposal.
+The existing Addon blob hydration revision and explicit contacts refresh retry
+pending/error reads. Regression tests cover the first render with a preloaded
+Telegram image, remount continuity, replacement/reset while hidden, variants,
+permission removal, stale callbacks and account isolation. Existing tests are
+retained; CI runs verification after PR creation, with physical WebView validation
+still required.
