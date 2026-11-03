@@ -49,7 +49,7 @@ interface AssignedPairCheck {
   clientUserId: string;
 }
 
-/** Pure validation promise. Callers hold one waitFor around the entire WebCrypto operation. */
+/** Validation promise without its own keepalive; the caller owns the waitFor scope. */
 async function checkApprovedPair({ realm, members, coachUserId, clientUserId }: AssignedPairCheck): Promise<boolean> {
   const coach = telegramId(coachUserId);
   const client = telegramId(clientUserId);
@@ -75,8 +75,8 @@ export function isApprovedAssignedPair(
   coachUserId: string,
   clientUserId: string,
 ): Promise<boolean> {
-  if (!telegramId(coachUserId) || !telegramId(clientUserId) || !realm)
-    return Dexie.Promise.resolve(false);
+  const coach = telegramId(coachUserId), client = telegramId(clientUserId);
+  if (!coach || !client || coach === client || !realm) return Dexie.Promise.resolve(false);
   return Dexie.waitFor(checkApprovedPair({ realm, members, coachUserId, clientUserId }));
 }
 
