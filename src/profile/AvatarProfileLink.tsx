@@ -16,6 +16,7 @@ export function AvatarProfileLink({ userId, name, children }: {
   };
   return <button type="button" aria-label={`Открыть профиль: ${name}`}
     onClick={openProfile}
+    onPointerDown={event => event.stopPropagation()}
     style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       padding: 0, border: 0, borderRadius: '50%', background: 'transparent',
       cursor: 'pointer', touchAction: 'manipulation' }}>
