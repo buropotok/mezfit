@@ -7,6 +7,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { planAuthorUserId } from '../data/cloud/program-ownership';
 import { athleteOf } from '../data/cloud/program-management';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { AvatarProfileLink } from '../profile/AvatarProfileLink';
 import { Avatar, GlassSurface, Text } from '../ui';
 
 export interface ProgramActor { name: string; photoUrl?: string | null }
@@ -44,7 +45,9 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
             <Text variant={showName ? "body" : "headline"}>{showName ? program.name : 'Описание программы'}</Text>
             <Text variant="body">Владелец: {owner.name}</Text>
           </div>
-          <div aria-label={`Аватар владельца: ${owner.name}`}>{avatar(owner)}</div>
+          <div aria-label={`Аватар владельца: ${owner.name}`}>
+            <AvatarProfileLink userId={planAuthorUserId(program)} name={owner.name}>{avatar(owner)}</AvatarProfileLink>
+          </div>
         </div>
         <div className="cloud-plan-person-row">
           <Text variant="body">Атлет: {athlete.name}</Text>
