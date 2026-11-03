@@ -4,6 +4,7 @@ import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
 import type { SetType } from '../../../shared/set-type';
 import type { CloudSharedRow } from './database';
 import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
+import type { WorkoutRepeatRule } from './workout-recurrence';
 
 import type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
 export type { CloudProgramExerciseSnapshot } from '../../../shared/program-exercise-snapshot';
@@ -125,6 +126,9 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   publishedPlan?: WorkoutOccurrencePlan | null;
   /** Absent on legacy bookings: only an explicit personal_event is not a workout. */
   entryKind?: 'workout' | 'personal_event';
+  /** A materialized child links to its source; existing sources need no ACL-restricted update. */
+  repeatSourceId?: string;
+  repeatRule?: WorkoutRepeatRule;
   /** Every PLAN edit, including a draft, is synchronized by Addon. */
   plan: WorkoutOccurrencePlan;
   /** Source provenance, independent of current cloud program availability. */
