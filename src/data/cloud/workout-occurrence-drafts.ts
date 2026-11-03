@@ -7,9 +7,10 @@ import type { LocalWorkoutOccurrenceDraft, WorkoutOccurrencePlan } from './worko
 import { draftFromOccurrence, isLocalWorkoutOccurrenceDraft, isWorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { occurrencePlanChanged } from './workout-occurrence-edit';
 import { validateScheduleTiming } from './workout-scheduling-time';
-import { assertLocalWorkoutSlot, WorkoutSlotConflict } from './workout-slot-validation';
+import { assertLocalWorkoutSlot, bookingsOverlap, bookingsShareParticipant, WorkoutSlotConflict } from './workout-slot-validation';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
+import { duplicateWorkoutPlan, isWorkoutRepeatRule, repeatWorkoutStarts, type WorkoutRepeatRule } from './workout-recurrence';
 import { markWorkoutChanged } from './workout-sync';
 
 class WorkoutEditRejected extends Error {}
@@ -112,6 +113,66 @@ export class WorkoutOccurrenceDraftRepository {
       });
       await markWorkoutChanged(this.db, id);
       return 'draft:' + id;
+    });
+  }
+
+  /** Return a saved series rule from its children without updating the ACL-protected source. */
+  async repeatRuleFor(occurrenceId: string): Promise<WorkoutRepeatRule | null> {
+    const source = await this.get('draft:' + occurrenceId);
+    if (!source) return null;
+    const current = await this.db.workoutOccurrences.get(occurrenceId);
+    if (current?.repeatSourceId) return isWorkoutRepeatRule(current.repeatRule) ? current.repeatRule : null;
+    const child = await this.db.workoutOccurrences.where('realmId').equals(source.realmId)
+      .filter(row => row.repeatSourceId === occurrenceId && isWorkoutRepeatRule(row.repeatRule)).first();
+    return child?.repeatRule ?? null;
+  }
+
+  /** Create every occurrence atomically; reject any overlap instead of silently moving dates. */
+  async createRepeats(occurrenceId: string, rule: WorkoutRepeatRule): Promise<number> {
+    if (!isWorkoutRepeatRule(rule)) throw new Error('Некорректные параметры повторения');
+    return this.transaction(async () => {
+      const row = await this.db.workoutOccurrences.get(occurrenceId);
+      const source = await this.get('draft:' + occurrenceId);
+      if (!row || !source || !source.saved || row.status !== 'scheduled' || row.workoutSessionId
+        || row.repeatSourceId || row.cancelledAt || row.inactive)
+        throw new Error('Для серии нужна сохранённая запланированная тренировка');
+      const existingChildren = await this.db.workoutOccurrences.where('realmId').equals(source.realmId)
+        .filter(child => child.repeatSourceId === occurrenceId).count();
+      if (existingChildren) throw new Error('Для этой тренировки уже создана серия');
+      const starts = repeatWorkoutStarts(source.startsAtUtc, rule);
+      const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
+      // Calendar reads and membership checks remain serialized within the local transaction.
+      const athlete = await scheduling.listCalendar(source.athleteUserId, true);
+      const coach = source.format === 'coached' && source.coachUserId
+        ? await scheduling.listCalendar(source.coachUserId, true) : [];
+      const bookings: Array<Pick<LocalWorkoutOccurrenceDraft,
+        'athleteUserId' | 'coachUserId' | 'format' | 'startsAtUtc' | 'durationMinutes'>> =
+        [...athlete, ...coach].filter(item => bookingsShareParticipant(source, item));
+      for (const startsAtUtc of starts) {
+        const candidate = { ...source, startsAtUtc };
+        if (bookings.some(booking => bookingsOverlap(candidate, booking)))
+          throw new WorkoutSlotConflict('Одна из дат серии занята другой записью. Измените дни или время');
+        bookings.push(candidate);
+      }
+      const now = new Date().toISOString();
+      for (const startsAtUtc of starts) {
+        const plan = duplicateWorkoutPlan(source.plan);
+        const id = await this.db.workoutOccurrences.add({
+          realmId: source.realmId, owner: source.realmId,
+          ...(source.trainingPlanId && source.programDayId
+            ? { trainingPlanId: source.trainingPlanId, programDayId: source.programDayId } : {}),
+          repeatSourceId: occurrenceId, repeatRule: structuredClone(rule),
+          athleteUserId: source.athleteUserId, coachUserId: source.coachUserId,
+          clientUserId: source.clientUserId, format: source.format,
+          startsAtUtc, durationMinutes: source.durationMinutes,
+          status: 'scheduled', workoutSessionId: null, publicationStatus: 'published',
+          draftAuthorUserId: this.actorUserId,
+          plan, originalPlan: structuredClone(plan), publishedPlan: null,
+          createdByUserId: this.actorUserId, createdAt: now, updatedAt: now,
+        });
+        await markWorkoutChanged(this.db, id);
+      }
+      return starts.length;
     });
   }
 
