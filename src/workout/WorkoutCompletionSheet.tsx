@@ -21,7 +21,7 @@ function ReviewCard({ row, expanded, busy, onToggle, onCancel, onMove, onKeep }:
       className="workout-completion-sheet__card" aria-disabled={busy}
       aria-label={`Действия: ${athlete.name}, ${row.plan.name}`} aria-expanded={expanded} onClick={() => { if (!busy) onToggle(); }}>
       <WorkoutPlanCardHeader name={row.plan.name} programName={athlete.name} creatorName={athlete.name}
-        athleteName={athlete.name} athleteAvatar={athlete.avatar} collapsed
+        athleteName={athlete.name} athleteAvatar={athlete.passiveAvatar} collapsed
         scheduledTiming={{ date: start.toLocaleDateString('ru-RU'), time: `${calendarTime(start)} – ${calendarTime(end)}` }}>
         <span className={`workout-plan-card__chevron${expanded ? ' workout-plan-card__chevron--expanded' : ''}`}>
           <Icon name="chevron-right" />
