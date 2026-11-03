@@ -6,6 +6,7 @@ import { isExpectedPhaseOwner, isExpectedPlanOwner } from './program-ownership';
 import { isUtcInstant, validateScheduleTiming } from './workout-scheduling-time';
 import { isWorkoutOccurrencePlan } from './workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
+import { isWorkoutRepeatRule } from './workout-recurrence';
 
 function personal(plan: CloudTrainingPlanRow, actor: string): boolean {
   return plan.realmId === actor && plan.athleteUserId === actor
@@ -30,6 +31,8 @@ function validOccurrence(value: unknown): value is CloudWorkoutOccurrenceRow {
     || (row.autoCreatedProgram !== undefined && typeof row.autoCreatedProgram !== 'boolean')
     || (row.autoCreatedProgram === true && !row.programDayId)
     || !isWorkoutOccurrencePlan(row.plan)
+    || (row.repeatSourceId !== undefined && (typeof row.repeatSourceId !== 'string' || !row.repeatSourceId))
+    || (row.repeatRule !== undefined && (!row.repeatSourceId || !isWorkoutRepeatRule(row.repeatRule)))
     || (row.entryKind !== undefined && row.entryKind !== 'workout' && row.entryKind !== 'personal_event')
     || (row.entryKind === 'personal_event' && (
       row.realmId !== row.athleteUserId || row.coachUserId !== null || row.clientUserId !== null
