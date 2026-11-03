@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { BadgeChoice } from './Badge';
 import { MezfitDialog, MezfitDialogButton } from './konsta-mezfit/Dialog';
 import { Text } from './primitives';
@@ -40,7 +41,7 @@ export function WorkoutRepeatControl({ value, onChange, startsAtUtc, disabled = 
       onClick={() => setOpened(true)}>
       {repeatRuleLabel(value)}
     </BadgeChoice>
-    {opened ? <MezfitDialog opened title={<Text variant="headline">Повторять тренировку</Text>}
+    {opened && typeof document !== 'undefined' ? createPortal(<MezfitDialog opened title={<Text variant="headline">Повторять тренировку</Text>}
       onBackdropClick={close}
       buttons={locked ? <MezfitDialogButton onClick={close}><Text variant="body">Закрыть</Text></MezfitDialogButton>
         : <>
@@ -76,6 +77,6 @@ export function WorkoutRepeatControl({ value, onChange, startsAtUtc, disabled = 
           </Text>
         </>}
       </div>
-    </MezfitDialog> : null}
+    </MezfitDialog>, document.body) : null}
   </>;
 }
