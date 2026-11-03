@@ -11,6 +11,7 @@ import {
   type BadgeColor, type LiquidPopoverItem,
 } from '../ui';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { AvatarProfileLink } from '../profile/AvatarProfileLink';
 import { ProgramClientPicker } from './ProgramClientPicker';
 import { ProgramToolbar, type ProgramControls } from './ProgramToolbar';
 import { PlanSyncNotice } from './PlanSyncNotice';
@@ -319,7 +320,9 @@ export function CloudProgramsPage({
         {groups.map((group) => (
           <section key={group.realmId} className="cloud-plan-group" aria-label={group.personName}>
             {!clientScope ? <div className="cloud-plan-person-row">
-              {group.contact ? <CloudContactAvatar contact={group.contact} /> : null}
+              {group.contact ? <AvatarProfileLink userId={group.contact.userId} name={group.personName}>
+                <CloudContactAvatar contact={group.contact} />
+              </AvatarProfileLink> : null}
               <Text variant="headline" role="heading" aria-level={3}>{group.personName}</Text>
             </div> : null}
             <GlassSurface preset="modalTuned" optics={false} blur={clientScope ? 2 : undefined} className="cloud-plan-group-surface">
