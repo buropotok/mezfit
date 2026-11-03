@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { UserAvatarRepository, type UserAvatarSnapshot } from '../data/cloud/user-avatar';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { UserAvatarRepository } from '../data/cloud/user-avatar';
+import { UserAvatarSources } from '../data/cloud/user-avatar-sources';
 import { Avatar, type AvatarSize } from '../ui';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
+
+// Neutral image preserves the Avatar primitive's geometry while the higher-priority source is unknown.
+export const AVATAR_LOADING_SRC = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/%3E';
 
 /** Shared cloud avatar source for contacts rows and navigation identities. */
 export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 'small' | 'large' = 'small'): string | undefined {
@@ -9,28 +13,19 @@ export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 
   const loadAvatar = connections?.loadAvatar;
   const cache = connections?.avatarUrls;
   const avatarLoadRevision = connections?.avatarLoadRevision ?? 0;
-  const repository = useMemo(() => connections?.db && connections.actorUserId
-    ? new UserAvatarRepository(connections.db, connections.actorUserId) : null, [connections?.db, connections?.actorUserId]);
-  const [custom, setCustom] = useState<{ repository: UserAvatarRepository; key: string; value: UserAvatarSnapshot } | null>(null);
-  const customRealm = contact?.userId === connections?.actorUserId ? connections?.actorUserId : contact?.relationshipId;
-  const customKey = contact?.userId + ':' + customRealm;
-  useEffect(() => {
-    if (!repository || !contact || !customRealm) return;
-    let alive = true;
-    const subscription = repository.observe(contact.userId, customRealm,
-      value => { if (alive) setCustom({ repository, key: customKey, value }); },
-      () => { if (alive) setCustom(null); });
-    return () => { alive = false; subscription.unsubscribe(); };
-  }, [repository, customKey, avatarLoadRevision]);
-  const selected = custom?.repository === repository && custom?.key === customKey ? custom.value : null;
-  const blob = selected && !selected.incomplete ? selected.value?.[variant] : null;
-  const [customImage, setCustomImage] = useState<{ blob: Blob; url: string } | null>(null);
-  useEffect(() => {
-    if (!(blob instanceof Blob)) { setCustomImage(null); return; }
-    const url = URL.createObjectURL(blob);
-    setCustomImage({ blob, url });
-    return () => URL.revokeObjectURL(url);
-  }, [blob]);
+  const localSources = useMemo(() => !connections?.userAvatarSources && connections?.db && connections.actorUserId
+    ? new UserAvatarSources(new UserAvatarRepository(connections.db, connections.actorUserId), connections.actorUserId)
+    : null, [connections?.userAvatarSources, connections?.db, connections?.actorUserId]);
+  const sources = connections?.userAvatarSources ?? localSources;
+  useEffect(() => () => localSources?.dispose(), [localSources]);
+  useEffect(() => { localSources?.refresh(); }, [localSources, avatarLoadRevision]);
+  const userId = contact?.userId;
+  const realmId = userId === connections?.actorUserId ? connections?.actorUserId : contact?.relationshipId;
+  const subscribe = useCallback((listener: () => void) => sources && userId && realmId
+    ? sources.subscribe(userId, realmId, listener, variant) : () => {}, [sources, userId, realmId, variant]);
+  const getSnapshot = useCallback(() => sources && userId && realmId ? sources.get(userId, realmId) : null,
+    [sources, userId, realmId]);
+  const selected = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const identity = contact ? [contact.relationshipId, contact.userId, contact.avatarVersion ?? '', contact.avatarMode ?? 'legacy', variant].join(':') : '';
   const [image, setImage] = useState<{ identity: string; src?: string }>();
   const src = contact && cache ? cache.get(contact, variant) : image?.identity === identity ? image.src : undefined;
@@ -56,9 +51,9 @@ export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 
     };
   }, [identity, cache, loadAvatar, variant, avatarLoadRevision]);
 
-  return selected?.incomplete || selected?.value?.small
-    ? blob instanceof Blob && customImage?.blob === blob ? customImage.url : undefined
-    : src;
+  if (selected && selected.status !== 'ready') return connections?.userAvatarSources ? AVATAR_LOADING_SRC : undefined;
+  if (selected?.custom) return selected[variant] ?? (connections?.userAvatarSources ? AVATAR_LOADING_SRC : undefined);
+  return src;
 }
 
 /** Presentation adapter only: the UIkit Avatar retains all existing mechanics and styling. */
