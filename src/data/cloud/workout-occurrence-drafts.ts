@@ -109,6 +109,7 @@ export class WorkoutOccurrenceDraftRepository {
         format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
         status: 'scheduled', workoutSessionId: null, publicationStatus: options.published ? 'published' : 'draft', draftAuthorUserId: this.actorUserId,
         plan: structuredClone(draft.plan), originalPlan: structuredClone(draft.originalPlan), publishedPlan: null,
+        ...(draft.pendingRepeatRule ? { pendingRepeatRule: structuredClone(draft.pendingRepeatRule) } : {}),
         createdByUserId: this.actorUserId, createdAt: draft.createdAt, updatedAt: draft.updatedAt,
       });
       await markWorkoutChanged(this.db, id);
@@ -116,28 +117,35 @@ export class WorkoutOccurrenceDraftRepository {
     });
   }
 
-  /** Read series metadata independently of the editor's pending get/Start/Edit intents. */
-  async repeatRuleFor(occurrenceId: string): Promise<WorkoutRepeatRule | null> {
+  /** Read pending and materialized series state without consuming editor get/Start/Edit intents. */
+  async repeatStateFor(occurrenceId: string): Promise<{ rule: WorkoutRepeatRule | null; applied: boolean }> {
+    const empty = { rule: null, applied: false };
     const current = await this.db.workoutOccurrences.get(occurrenceId);
     if (!current || current.inactive || current.entryKind === 'personal_event'
-      || current.status === 'cancelled' || current.cancelledAt) return null;
+      || current.status === 'cancelled' || current.cancelledAt) return empty;
     if (current.publicationStatus === 'draft' && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId
-      && (current.draftAuthorUserId ?? current.createdByUserId) !== this.actorUserId) return null;
+      && (current.draftAuthorUserId ?? current.createdByUserId) !== this.actorUserId) return empty;
     try { await this.authorize(current); }
-    catch (reason) { if (reason instanceof WorkoutEditRejected) return null; throw reason; }
-    if (current.repeatSourceId) return isWorkoutRepeatRule(current.repeatRule) ? current.repeatRule : null;
+    catch (reason) { if (reason instanceof WorkoutEditRejected) return empty; throw reason; }
+    if (current.repeatSourceId) return {
+      rule: isWorkoutRepeatRule(current.repeatRule) ? current.repeatRule : null, applied: true,
+    };
     const child = await this.db.workoutOccurrences.where('realmId').equals(current.realmId)
-      .filter(row => row.repeatSourceId === occurrenceId && isWorkoutRepeatRule(row.repeatRule)).first();
-    return child?.repeatRule ?? null;
+      .filter(row => row.repeatSourceId === occurrenceId).first();
+    if (child) return { rule: isWorkoutRepeatRule(child.repeatRule) ? child.repeatRule : null, applied: true };
+    return { rule: isWorkoutRepeatRule(current.pendingRepeatRule) ? current.pendingRepeatRule : null, applied: false };
   }
 
-  /** Create every occurrence atomically; reject any overlap instead of silently moving dates. */
-  async createRepeats(occurrenceId: string, rule: WorkoutRepeatRule): Promise<number> {
+  async repeatRuleFor(occurrenceId: string): Promise<WorkoutRepeatRule | null> {
+    return (await this.repeatStateFor(occurrenceId)).rule;
+  }
+
+  /** Caller owns one transaction, including publication and every materialized repeat. */
+  private async materializeRepeats(occurrenceId: string, rule: WorkoutRepeatRule, allowUnpublished = false): Promise<number> {
     if (!isWorkoutRepeatRule(rule)) throw new Error('Некорректные параметры повторения');
-    return this.transaction(async () => {
       const row = await this.db.workoutOccurrences.get(occurrenceId);
       const source = await this.get('draft:' + occurrenceId);
-      if (!row || !source || !source.saved || row.status !== 'scheduled' || row.workoutSessionId
+      if (!row || !source || (!source.saved && !allowUnpublished) || row.status !== 'scheduled' || row.workoutSessionId
         || row.repeatSourceId || row.cancelledAt || row.inactive)
         throw new Error('Для серии нужна сохранённая запланированная тренировка');
       const existingChildren = await this.db.workoutOccurrences.where('realmId').equals(source.realmId)
@@ -177,7 +185,11 @@ export class WorkoutOccurrenceDraftRepository {
         await markWorkoutChanged(this.db, id);
       }
       return starts.length;
-    });
+  }
+
+  /** Explicit creation remains limited to an already published source. */
+  async createRepeats(occurrenceId: string, rule: WorkoutRepeatRule): Promise<number> {
+    return this.transaction(() => this.materializeRepeats(occurrenceId, rule));
   }
 
   /** Reads and publication filters never change synchronization. */
@@ -281,18 +293,29 @@ export class WorkoutOccurrenceDraftRepository {
         || changed.athleteUserId !== current.athleteUserId || changed.format !== current.format
         || !isWorkoutOccurrencePlan(changed.plan)) throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
       const contentChanged = occurrencePlanChanged(changed.plan, current.plan);
-      if (contentChanged) this.assertPlanEditable(current);
+      const repeatChanged = JSON.stringify(changed.pendingRepeatRule ?? null) !== JSON.stringify(current.pendingRepeatRule ?? null);
+      if (contentChanged || repeatChanged) this.assertPlanEditable(current);
+      if (repeatChanged && changed.pendingRepeatRule != null && !isWorkoutRepeatRule(changed.pendingRepeatRule))
+        throw new WorkoutEditRejected('INVALID_REPEAT_RULE');
       if (contentChanged && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId)
         throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
       try { validateScheduleTiming(changed); }
       catch (reason) { throw new WorkoutEditRejected(reason instanceof Error ? reason.message : 'INVALID_SCHEDULE_TIMING'); }
       const timingChanged = changed.startsAtUtc !== current.startsAtUtc || changed.durationMinutes !== current.durationMinutes;
       if (timingChanged) await assertLocalWorkoutSlot(this.db, changed);
-      if (timingChanged || contentChanged) {
+      if (timingChanged || contentChanged || repeatChanged) {
         const row = await this.db.workoutOccurrences.get(id.slice(6));
         if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
+        if (repeatChanged && row.repeatSourceId) throw new WorkoutEditRejected('SERIES_OCCURRENCE_CANNOT_REPEAT');
+        if (repeatChanged && changed.pendingRepeatRule) {
+          const hasChildren = await this.db.workoutOccurrences.where('realmId').equals(row.realmId)
+            .filter(child => child.repeatSourceId === row.id).count();
+          if (hasChildren) throw new WorkoutEditRejected('SERIES_ALREADY_CREATED');
+        }
         await this.db.workoutOccurrences.update(row.id, {
           ...(timingChanged ? { startsAtUtc: changed.startsAtUtc, durationMinutes: changed.durationMinutes } : {}),
+          ...(repeatChanged ? { pendingRepeatRule: changed.pendingRepeatRule
+            ? structuredClone(changed.pendingRepeatRule) : null } : {}),
           ...(contentChanged ? { plan: structuredClone(changed.plan), publicationStatus: 'draft' as const, draftAuthorUserId: this.actorUserId,
             publishedPlan: current.saved ? structuredClone(current.plan) : row.publishedPlan ?? null } : {}),
           updatedAt: new Date().toISOString(),
@@ -316,8 +339,12 @@ export class WorkoutOccurrenceDraftRepository {
       this.assertPlanEditable(draft);
       await assertLocalWorkoutSlot(this.db, draft);
       const occurrenceId = id.slice(6);
+      // Materialize before publication in the same local transaction; any conflict
+      // rolls back both the publication and every new occurrence.
+      if (draft.pendingRepeatRule) await this.materializeRepeats(occurrenceId, draft.pendingRepeatRule, true);
       await this.db.workoutOccurrences.update(occurrenceId, {
         publicationStatus: 'published', updatedAt: new Date().toISOString(),
+        ...(draft.pendingRepeatRule ? { pendingRepeatRule: null } : {}),
         ...(draft.autoCreatedProgram && !draft.previouslyPublished ? { publishedPlan: structuredClone(draft.plan) } : {}),
       });
       await markWorkoutChanged(this.db, occurrenceId);
