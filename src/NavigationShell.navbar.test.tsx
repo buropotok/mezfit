@@ -665,7 +665,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
   it('delegates a coach client-avatar activation to its owning profile context', () => {
     const onIdentityClick = vi.fn();
     const onDestinationChange = vi.fn();
-    const view = render(<NavigationShell me={{ ...me, roles: ['coach'] }} activeRole="coach"
+    const view = render(<NavigationShell me={{ ...me, roles: ['coach' as const] }} activeRole="coach"
       destination="clients" context={{ title: 'Клиент', identity: {
         title: 'Клиент', avatar: { name: 'Клиент' },
       }, onBack: vi.fn(), onIdentityClick }}
