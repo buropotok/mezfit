@@ -129,6 +129,8 @@ export interface CloudWorkoutOccurrenceRow extends Omit<CloudSharedRow, 'owner'>
   /** A materialized child links to its source; existing sources need no ACL-restricted update. */
   repeatSourceId?: string;
   repeatRule?: WorkoutRepeatRule;
+  /** Awaiting materialization; synchronized with the private draft before publication. */
+  pendingRepeatRule?: WorkoutRepeatRule | null;
   /** Every PLAN edit, including a draft, is synchronized by Addon. */
   plan: WorkoutOccurrencePlan;
   /** Source provenance, independent of current cloud program availability. */
