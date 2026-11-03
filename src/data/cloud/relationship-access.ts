@@ -42,6 +42,32 @@ function approvedMember(member: RelationshipMember, id: string, userId: string, 
         && Object.keys(member.permissions).length === 0));
 }
 
+interface AssignedPairCheck {
+  realm: RelationshipRealm | undefined;
+  members: readonly RelationshipMember[];
+  coachUserId: string;
+  clientUserId: string;
+}
+
+/** Pure validation promise. Callers hold one waitFor around the entire WebCrypto operation. */
+async function checkApprovedPair({ realm, members, coachUserId, clientUserId }: AssignedPairCheck): Promise<boolean> {
+  const coach = telegramId(coachUserId);
+  const client = telegramId(clientUserId);
+  if (!coach || !client || coach === client || !realm) return false;
+  const expectedRealmId = await relationshipRealmId(coach, client);
+  if (realm.realmId !== expectedRealmId || realm.owner !== null
+    || realm.name !== 'Mezfit coach-client pilot') return false;
+
+  const pairMembers = members.filter((member) => member.realmId === expectedRealmId);
+  if (pairMembers.length !== 2) return false;
+  const [coachMemberId, clientMemberId] = await Promise.all([
+    stableCloudRelationshipId('mmb', expectedRealmId + ':coach'),
+    stableCloudRelationshipId('mmb', expectedRealmId + ':client'),
+  ]);
+  return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
+    && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
+}
+
 /** Fail closed on extra/unaccepted/owned members or any non-Worker realm. */
 export function isApprovedAssignedPair(
   realm: RelationshipRealm | undefined,
@@ -49,25 +75,15 @@ export function isApprovedAssignedPair(
   coachUserId: string,
   clientUserId: string,
 ): Promise<boolean> {
-  const coach = telegramId(coachUserId);
-  const client = telegramId(clientUserId);
-  if (!coach || !client || coach === client || !realm) return Dexie.Promise.resolve(false);
-  // Keep the entire external computation in one waitFor scope, including early
-  // rejection. Separate waits leave native-promise continuations between them
-  // where IndexedDB can auto-commit (notably for revoked memberships).
-  return Dexie.waitFor((async () => {
-    const expectedRealmId = await relationshipRealmId(coach, client);
-    if (realm.realmId !== expectedRealmId || realm.owner !== null
-      || realm.name !== 'Mezfit coach-client pilot') return false;
+  if (!telegramId(coachUserId) || !telegramId(clientUserId) || !realm)
+    return Dexie.Promise.resolve(false);
+  return Dexie.waitFor(checkApprovedPair({ realm, members, coachUserId, clientUserId }));
+}
 
-    const pairMembers = members.filter((member) => member.realmId === expectedRealmId);
-    if (pairMembers.length !== 2) return false;
-    const [coachMemberId, clientMemberId] = await Promise.all([
-      stableCloudRelationshipId('mmb', expectedRealmId + ':coach'),
-      stableCloudRelationshipId('mmb', expectedRealmId + ':client'),
-    ]);
-    return pairMembers.some((member) => approvedMember(member, coachMemberId, coachUserId, 'coach'))
-      && pairMembers.some((member) => approvedMember(member, clientMemberId, clientUserId, 'client'));
-  })());
+/** Validate multiple relationships with one waitFor, not overlapping keepalive loops.
+ * Within a Dexie transaction, parallel waitFor calls can starve IndexedDB progress. */
+export function approvedAssignedPairs(checks: readonly AssignedPairCheck[]): Promise<boolean[]> {
+  if (!checks.length) return Dexie.Promise.resolve([]);
+  return Dexie.waitFor(Promise.all(checks.map(checkApprovedPair)));
 }
 
