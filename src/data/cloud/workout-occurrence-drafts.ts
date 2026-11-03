@@ -116,13 +116,17 @@ export class WorkoutOccurrenceDraftRepository {
     });
   }
 
-  /** Return a saved series rule from its children without updating the ACL-protected source. */
+  /** Read series metadata independently of the editor's pending get/Start/Edit intents. */
   async repeatRuleFor(occurrenceId: string): Promise<WorkoutRepeatRule | null> {
-    const source = await this.get('draft:' + occurrenceId);
-    if (!source) return null;
     const current = await this.db.workoutOccurrences.get(occurrenceId);
-    if (current?.repeatSourceId) return isWorkoutRepeatRule(current.repeatRule) ? current.repeatRule : null;
-    const child = await this.db.workoutOccurrences.where('realmId').equals(source.realmId)
+    if (!current || current.inactive || current.entryKind === 'personal_event'
+      || current.status === 'cancelled' || current.cancelledAt) return null;
+    if (current.publicationStatus === 'draft' && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId
+      && (current.draftAuthorUserId ?? current.createdByUserId) !== this.actorUserId) return null;
+    try { await this.authorize(current); }
+    catch (reason) { if (reason instanceof WorkoutEditRejected) return null; throw reason; }
+    if (current.repeatSourceId) return isWorkoutRepeatRule(current.repeatRule) ? current.repeatRule : null;
+    const child = await this.db.workoutOccurrences.where('realmId').equals(current.realmId)
       .filter(row => row.repeatSourceId === occurrenceId && isWorkoutRepeatRule(row.repeatRule)).first();
     return child?.repeatRule ?? null;
   }
