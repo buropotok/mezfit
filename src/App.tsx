@@ -203,6 +203,7 @@ export function App() {
   const [scheduleViewResetKey, setScheduleViewResetKey] = useState(0);
   const [requestedScheduleClientId, setRequestedScheduleClientId] = useState<string | null>(null);
   const [requestedScheduleDraftId, setRequestedScheduleDraftId] = useState<string | null>(null);
+  const [requestedAvatarClient, setRequestedAvatarClient] = useState<{ userId: string; requestId: number } | null>(null);
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [backgroundSettings, setBackgroundSettings] = useState(loadBrowserBackgroundSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
@@ -337,6 +338,7 @@ export function App() {
 
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
   const changeDestination = (next: AppDestination) => {
+    if (next !== 'clients') setRequestedAvatarClient(null);
     setCompletionNavigation(null);
     setNavigationContext(null);
     if (state.activeRole === 'coach') {
@@ -356,7 +358,16 @@ export function App() {
       setClientDestination(next);
     }
   };
+  const openAvatarProfile = (userId: string) => {
+    if (state.activeRole === 'client' || userId === `tg:${state.me.user.telegramUserId}`) {
+      changeDestination('profile');
+      return;
+    }
+    setRequestedAvatarClient(current => ({ userId, requestId: (current?.requestId ?? 0) + 1 }));
+    changeDestination('clients');
+  };
   const switchRole = (role: Role) => {
+    setRequestedAvatarClient(null);
     setCompletionNavigation(null);
     setNavigationContext(null);
     setRequestedScheduleDraftId(null);
@@ -407,6 +418,7 @@ export function App() {
           context={completionNavigation ?? shellContext}
           onDestinationChange={next => { if (next === 'today') setScheduleViewResetKey(value => value + 1); changeDestination(next); }}
           onRoleSwitch={switchRole}
+          onAvatarProfileNavigate={openAvatarProfile}
           glassPreset={glassSettings.preset}
           glassOptics={glassSettings.optics}
           previewWidth={previewWidth}
@@ -438,6 +450,7 @@ export function App() {
             actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
             initData={state.initData}
             destination={coachDestination}
+            requestedAvatarClient={requestedAvatarClient}
             onNavigationContextChange={handleNavigationContextChange}
           />
         ) : (
