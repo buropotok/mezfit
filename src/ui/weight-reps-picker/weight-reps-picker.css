@@ -119,6 +119,19 @@
 
 .ui-weight-reps-picker__footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   padding: var(--ui-space-2) var(--ui-space-3);
+}
+
+/* Numeric fields leave the lower-left wheel area empty. Place the mode action
+   there instead of reserving a separate row below the fractional wheel. */
+.ui-weight-reps-picker--numbers {
+  position: relative;
+}
+
+.ui-weight-reps-picker--numbers .ui-weight-reps-picker__footer {
+  position: absolute;
+  inset-inline-start: var(--ui-space-6);
+  bottom: var(--ui-space-3);
+  padding: 0;
 }
