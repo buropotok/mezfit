@@ -118,7 +118,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     : null, [cloudConnections?.db, cloudConnections?.actorUserId]);
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const appliedAvatarRequest = useRef(requestedAvatarClient);
+  const appliedAvatarRequest = useRef<typeof requestedAvatarClient>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [clientTab, setClientTab] = useState<ProfileTab>('basics');
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
