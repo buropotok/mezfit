@@ -12,15 +12,7 @@ import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 import { draftFromProgramDay, type LocalWorkoutOccurrenceDraft, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
 import { nextAvailableSlot } from '../../schedule/available-slot';
-
-/** Copies retain immutable prescription, but never reuse child occurrence identities. */
-function freshPlan(plan: WorkoutOccurrencePlan): WorkoutOccurrencePlan {
-  return { ...structuredClone(plan), exercises: plan.exercises.map(exercise => ({
-    ...structuredClone(exercise), id: crypto.randomUUID(),
-    sets: exercise.sets.map(set => ({ ...structuredClone(set), id: crypto.randomUUID() })),
-  })) };
-}
-
+import { duplicateWorkoutPlan } from './workout-recurrence';
 
 const AUTHORING_TABLES = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'workoutOccurrences', 'localProgramSync', 'localWorkoutSync', 'realms', 'members', 'roles'];
@@ -88,7 +80,7 @@ export class WorkoutPlanningRepository {
       || slot.getDate() !== selected.day)
       throw new Error('На выбранную дату нет свободного слота для этой тренировки');
     const timestamp = new Date().toISOString();
-    const plan = freshPlan(source.plan);
+    const plan = duplicateWorkoutPlan(source.plan);
     const draft: LocalWorkoutOccurrenceDraft = {
       id: 'draft:' + crypto.randomUUID(), actorUserId: this.actorUserId,
       realmId: source.realmId, athleteUserId: source.athleteUserId,
