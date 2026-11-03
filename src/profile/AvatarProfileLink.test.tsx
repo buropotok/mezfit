@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AvatarProfileLink } from './AvatarProfileLink';
 
 const state = vi.hoisted(() => ({ enabled: true, navigate: vi.fn() }));
-vi.mock('../NavigationShell', () => ({
+vi.mock('../navigation/AvatarProfileNavigation', () => ({
   useAvatarProfileNavigation: () => state.enabled ? state.navigate : null,
 }));
 
