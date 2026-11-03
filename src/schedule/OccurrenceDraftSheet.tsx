@@ -216,12 +216,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   useEffect(() => {
     if (!draft || !planner) return;
     let active = true;
-    void planner.drafts.repeatRuleFor(draft.targetOccurrenceId ?? draft.id.slice(6)).then(rule => {
+    void drafts.repeatRuleFor(draft.targetOccurrenceId ?? draft.id.slice(6)).then(rule => {
       if (!active) return;
       setRepeatRule(rule); setRepeatApplied(Boolean(rule));
     }).catch(() => undefined);
     return () => { active = false; };
-  }, [draft?.id, planner]);
+  }, [draft?.id, drafts, planner]);
   const actionsRef = useRef<HTMLButtonElement>(null);
   const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
   const glass = loadBrowserGlassSettings();
@@ -584,15 +584,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               : <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
           </div>
           <div className="occurrence-draft-sheet__timing">
-            <div className="occurrence-draft-sheet__date-row">
-              <Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
-                <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
-              </Button>
-              <WorkoutRepeatControl value={repeatRule} onChange={chooseRepeat} startsAtUtc={draft.startsAtUtc}
-                disabled={!planner || busy || repeatBusy || readOnly || planLocked || cancelled
-                  || Boolean(draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled'))}
-                locked={repeatApplied} />
-            </div>
+            <Button className="occurrence-draft-sheet__date-button" variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
+              <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
+            </Button>
             <div className="occurrence-draft-sheet__time-row">
               <span ref={startRef}><Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => openTimePicker('start')}>
                 <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Начало: {localTime(start)}</span>
@@ -600,6 +594,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               <span ref={endRef}><Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => openTimePicker('end')}>
                 <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {endLabel}</span>
               </Button></span>
+            </div>
+            <div className="occurrence-draft-sheet__repeat-control">
+              <WorkoutRepeatControl value={repeatRule} onChange={chooseRepeat} startsAtUtc={draft.startsAtUtc}
+                disabled={!planner || busy || repeatBusy || readOnly || planLocked || cancelled
+                  || Boolean(draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled'))}
+                locked={repeatApplied} />
             </div>
           </div>
           {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
