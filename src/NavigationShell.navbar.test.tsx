@@ -647,4 +647,36 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(view.container.querySelector('[data-liquid-glass-floating-action-slot]')).toBeNull();
     expect(view.getByRole('button', { name: 'Назад' })).not.toBeNull();
   });
+  it('navigates a client to My profile from a contextual header avatar', () => {
+    const onDestinationChange = vi.fn();
+    const view = render(<NavigationShell me={me} activeRole="client" destination="today"
+      context={{ title: 'Мой аватар', identity: {
+        title: 'Мой аватар', avatar: { name: 'Мой аватар' },
+      }, onBack: vi.fn() }}
+      onDestinationChange={onDestinationChange} onRoleSwitch={vi.fn()}>
+      <div>Тренировка</div>
+    </NavigationShell>);
+    const action = view.getByRole('button', { name: 'Мой аватар' });
+    fireEvent.click(action);
+    fireEvent.animationEnd(action);
+    expect(onDestinationChange).toHaveBeenCalledWith('profile');
+  });
+
+  it('delegates a coach client-avatar activation to its owning profile context', () => {
+    const onIdentityClick = vi.fn();
+    const onDestinationChange = vi.fn();
+    const view = render(<NavigationShell me={{ ...me, roles: ['coach' as const] }} activeRole="coach"
+      destination="clients" context={{ title: 'Клиент', identity: {
+        title: 'Клиент', avatar: { name: 'Клиент' },
+      }, onBack: vi.fn(), onIdentityClick }}
+      onDestinationChange={onDestinationChange} onRoleSwitch={vi.fn()}>
+      <div>Профиль клиента</div>
+    </NavigationShell>);
+    const action = view.getByRole('button', { name: 'Клиент' });
+    fireEvent.click(action);
+    fireEvent.animationEnd(action);
+    expect(onIdentityClick).toHaveBeenCalledOnce();
+    expect(onDestinationChange).not.toHaveBeenCalled();
+  });
+
 });

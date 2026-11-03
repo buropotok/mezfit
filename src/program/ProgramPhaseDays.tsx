@@ -7,6 +7,7 @@ import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { planAuthorUserId } from '../data/cloud/program-ownership';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
+import { AvatarProfileLink } from '../profile/AvatarProfileLink';
 import { Avatar, Text } from '../ui';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
@@ -55,8 +56,10 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     .find(person => person.userId === authorId && person.relationshipId === program.realmId
       && (!self || Boolean(person.avatarVersion || person.userAvatar)));
   const creatorName = self ? actor?.name || 'Вы' : contact?.displayName || 'Автор программы';
-  const creatorAvatar = contact ? <CloudContactAvatar contact={contact} />
-    : <Avatar name={creatorName} src={self ? actor?.photoUrl ?? undefined : undefined} />;
+  const creatorAvatar = <AvatarProfileLink userId={authorId} name={creatorName}>
+    {contact ? <CloudContactAvatar contact={contact} />
+      : <Avatar name={creatorName} src={self ? actor?.photoUrl ?? undefined : undefined} />}
+  </AvatarProfileLink>;
   const [dialog, setDialog] = useState<{ kind: 'edit' | 'comment' | 'delete'; item: CloudProgramDayOutline } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

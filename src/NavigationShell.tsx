@@ -3,6 +3,7 @@ import type { MeResponse, Role } from './api';
 import { useCloudConnections } from './data/cloud/CloudConnectionsProvider';
 import { useCloudContactAvatarUrl } from './contacts/CloudContactAvatar';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
+import { AvatarProfileNavigationContext } from './navigation/AvatarProfileNavigation';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import {
   Avatar,
@@ -74,6 +75,7 @@ export interface NavigationContext {
   scrollKey?: string;
   onBack?: () => void;
   identity?: MezfitNavbarIdentity;
+  onIdentityClick?: () => void;
   menuActions?: readonly NavigationMenuAction[];
   calendar?: {
     value: LocalDate;
@@ -208,6 +210,7 @@ interface Props {
   destination: AppDestination;
   context: NavigationContext | null;
   onDestinationChange: (destination: AppDestination) => void;
+  onAvatarProfileNavigate?: (userId: string) => void;
   onRoleSwitch: (role: Role) => void;
   floatingAction?: NavigationFloatingAction | null;
   glassPreset?: GlassPresetName;
@@ -263,6 +266,7 @@ export function NavigationShell({
   destination,
   context,
   onDestinationChange,
+  onAvatarProfileNavigate,
   onRoleSwitch,
   floatingAction,
   glassPreset = MEZFIT_NAVBAR_GLASS_PRESET,
@@ -534,6 +538,7 @@ export function NavigationShell({
     <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
+      <AvatarProfileNavigationContext.Provider value={onAvatarProfileNavigate ?? null}>
         <main
           ref={shellRef}
           className={previewWidth === 320
@@ -546,6 +551,7 @@ export function NavigationShell({
           <MezfitNavbar
             level={level}
             identity={identity}
+            onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && identity.avatar ? () => chooseDestination('profile') : undefined)}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => setCalendarOpen((open) => !open)}
@@ -615,6 +621,7 @@ export function NavigationShell({
           dayStatuses={calendarDayStatuses}
         />
         </main>
+      </AvatarProfileNavigationContext.Provider>
       </NavigationLevelContext.Provider>
     </NavigationFloatingActionContext.Provider>
     </NavigationBackTransitionContext.Provider>

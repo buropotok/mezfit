@@ -1,4 +1,5 @@
 import { Avatar } from '../ui';
+import { AvatarProfileLink } from '../profile/AvatarProfileLink';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import type { ProgramActor } from '../program/ProgramSummary';
@@ -10,10 +11,16 @@ export function useWorkoutPerson(userId: string | null, realmId: string, actor?:
     .find(person => person.userId === userId && person.relationshipId === realmId && (!self || Boolean(person.avatarVersion || person.userAvatar)));
   const name = self ? actor?.name || 'Вы' : contact?.displayName || 'Атлет';
   const src = self ? actor?.photoUrl ?? undefined : undefined;
+  const passiveAvatar = contact ? <CloudContactAvatar contact={contact} /> : <Avatar name={name} src={src} />;
   return {
     name,
-    avatar: contact ? <CloudContactAvatar contact={contact} /> : <Avatar name={name} src={src} />,
-    compactAvatar: contact ? <CloudContactAvatar contact={contact} size="small" />
-      : <Avatar name={name} src={src} size="small" />,
+    passiveAvatar,
+    avatar: <AvatarProfileLink userId={userId} name={name}>
+      {contact ? <CloudContactAvatar contact={contact} /> : <Avatar name={name} src={src} />}
+    </AvatarProfileLink>,
+    compactAvatar: <AvatarProfileLink userId={userId} name={name}>
+      {contact ? <CloudContactAvatar contact={contact} size="small" />
+        : <Avatar name={name} src={src} size="small" />}
+    </AvatarProfileLink>,
   };
 }

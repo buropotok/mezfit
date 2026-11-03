@@ -82,7 +82,7 @@ function BookingCard({ event, state, actor, onClick }: {
   const name = event.type === 'session' ? event.session.name : event.type === 'draft' ? event.draft.plan.name : event.occurrence.plan.name;
   const comment = event.type === 'occurrence' ? event.occurrence.plan.comment : null;
   return <DayScheduleEventCard title={personalEvent ? name : person.name}
-    detail={personalEvent ? comment : name} media={personalEvent ? undefined : person.avatar}
+    detail={personalEvent ? comment : name} media={personalEvent ? undefined : person.passiveAvatar}
     cancelled={cancelled} variant={personalEvent ? 'event' : 'workout'}
     corner={<Icon name={personalEvent ? 'calendar-event' : row.format === 'coached' ? 'users' : 'user'} />}
     cornerSize={32}

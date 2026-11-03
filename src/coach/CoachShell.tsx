@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -105,10 +105,11 @@ interface CoachShellProps {
   actor?: ProgramActor;
   initData: string;
   destination: AppDestination;
+  requestedAvatarClient?: { userId: string; requestId: number } | null;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
 
-export function CoachShell({ initData, actor, destination, onNavigationContextChange }: CoachShellProps) {
+export function CoachShell({ initData, actor, destination, requestedAvatarClient, onNavigationContextChange }: CoachShellProps) {
   const requestBackTransition = useNavigationBackTransition();
   const cloudPrograms = useAssignedPrograms();
   const cloudConnections = useCloudConnections();
@@ -117,6 +118,7 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
     : null, [cloudConnections?.db, cloudConnections?.actorUserId]);
   const clients = cloudConnections?.status === 'loading' ? null : cloudConnections?.clients ?? null;
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const appliedAvatarRequest = useRef<typeof requestedAvatarClient>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [clientTab, setClientTab] = useState<ProfileTab>('basics');
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
@@ -139,6 +141,17 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
   const [programCreateBusy, setProgramCreateBusy] = useState(false);
   const [programCreateError, setProgramCreateError] = useState('');
   const [programRefreshKey, setProgramRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (destination !== 'clients' || !requestedAvatarClient || appliedAvatarRequest.current === requestedAvatarClient) return;
+    if (!clients?.some(client => client.userId === requestedAvatarClient.userId)) return;
+    appliedAvatarRequest.current = requestedAvatarClient;
+    setSelectedClientId(requestedAvatarClient.userId);
+    setClientTab('basics');
+    setClientSelectedProgram(null);
+    setClientProgramDetailNavigation(null);
+    setClientExerciseNavigation(null);
+  }, [destination, requestedAvatarClient, clients]);
 
   const loadClients = useCallback(() => {
     void cloudConnections?.refresh().catch(() => undefined);
@@ -222,6 +235,12 @@ export function CoachShell({ initData, actor, destination, onNavigationContextCh
           name: selectedClientName,
           src: selectedClientAvatarUrl,
         },
+      },
+      onIdentityClick: () => {
+        setClientTab('basics');
+        setClientSelectedProgram(null);
+        setClientProgramDetailNavigation(null);
+        setClientExerciseNavigation(null);
       },
       onBack: () => setSelectedClientId(null),
     });
