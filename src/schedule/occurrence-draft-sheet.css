@@ -5,6 +5,7 @@
 .occurrence-draft-sheet__body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; gap: 16px; padding: 0 16px 24px; overscroll-behavior: contain; }
 /* Compact UIkit Buttons have a 10px leading inset; offset their container, not the primitive. */
 .occurrence-draft-sheet__timing { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin-inline-start: -10px; }
+.occurrence-draft-sheet__date-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; max-width: 100%; }
 .occurrence-draft-sheet__time-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; max-width: 100%; }
 .occurrence-draft-sheet__footer { padding-inline: 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 
