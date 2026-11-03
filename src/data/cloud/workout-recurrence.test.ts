@@ -92,4 +92,73 @@ describe('materialized workout series', () => {
       .rejects.toThrow('сохранённая');
     expect(await db.table('workoutOccurrences').count()).toBe(1);
   });
+
+  it('persists an unpublished choice across repositories and materializes on ordinary Save', async () => {
+    const { db, repo, source } = fixture();
+    const draftId = await repo.create(source);
+    const occurrenceId = draftId.slice(6);
+    const rule = { weekdays: [1, 3], weeks: 2 as const };
+    await repo.enqueueEdit(draftId, current => ({ ...current, pendingRepeatRule: rule }));
+
+    const reopened = new WorkoutOccurrenceDraftRepository(db as unknown as MezfitCloudDatabase, 'tg:101');
+    expect((await reopened.get(draftId))?.pendingRepeatRule).toEqual(rule);
+    expect(await reopened.repeatStateFor(occurrenceId)).toEqual({ rule, applied: false });
+    expect(await db.table('workoutOccurrences').count()).toBe(1);
+
+    expect(await reopened.save(draftId)).toBe(occurrenceId);
+    const rows = await db.table('workoutOccurrences').toArray();
+    expect(rows).toHaveLength(4);
+    expect(rows.find(row => row.id === occurrenceId)).toMatchObject({
+      publicationStatus: 'published', pendingRepeatRule: null,
+    });
+    expect(rows.filter(row => row.repeatSourceId === occurrenceId)).toHaveLength(3);
+    expect(await reopened.repeatStateFor(occurrenceId)).toEqual({ rule, applied: true });
+    // Repeated Save must never create the same series twice.
+    await reopened.save(draftId);
+    expect(await db.table('workoutOccurrences').count()).toBe(4);
+  });
+
+  it('uses the same publication path for a previously published PLAN revision', async () => {
+    const { db, repo, source } = fixture();
+    const draftId = await repo.create(source, { published: true });
+    await repo.replacePlan(draftId, { ...source.plan, name: 'Изменённый план' });
+    const rule = { weekdays: [1], weeks: 2 as const };
+    await repo.enqueueEdit(draftId, current => ({ ...current, pendingRepeatRule: rule }));
+    expect((await repo.get(draftId))?.saved).toBe(false);
+
+    await repo.save(draftId);
+    const rows = await db.table('workoutOccurrences').toArray();
+    expect(rows).toHaveLength(2);
+    expect(rows.every(row => row.publicationStatus === 'published')).toBe(true);
+    expect(rows.every(row => row.plan.name === 'Изменённый план')).toBe(true);
+    expect(rows.find(row => row.id === draftId.slice(6))?.pendingRepeatRule).toBeNull();
+  });
+
+  it('keeps the pending rule and unpublished status if any repeated slot is occupied', async () => {
+    const { db, repo, source } = fixture();
+    const draftId = await repo.create(source);
+    await repo.create({ ...source, id: 'draft:' + crypto.randomUUID(),
+      startsAtUtc: new Date(2026, 10, 4, 8).toISOString() }, { published: true });
+    const rule = { weekdays: [1, 3], weeks: 2 as const };
+    await repo.enqueueEdit(draftId, current => ({ ...current, pendingRepeatRule: rule }));
+    await expect(repo.save(draftId)).rejects.toThrow('занята');
+    const rows = await db.table('workoutOccurrences').toArray();
+    expect(rows).toHaveLength(2);
+    expect(rows.find(row => row.id === draftId.slice(6))).toMatchObject({
+      publicationStatus: 'draft', pendingRepeatRule: rule,
+    });
+    expect(await repo.repeatStateFor(draftId.slice(6))).toEqual({ rule, applied: false });
+  });
+
+  it('can clear a pending choice without publishing or creating any occurrences', async () => {
+    const { db, repo, source } = fixture();
+    const draftId = await repo.create(source);
+    await repo.enqueueEdit(draftId, current => ({ ...current,
+      pendingRepeatRule: { weekdays: [1], weeks: 2 } }));
+    await repo.enqueueEdit(draftId, current => ({ ...current, pendingRepeatRule: null }));
+    expect(await repo.repeatStateFor(draftId.slice(6))).toEqual({ rule: null, applied: false });
+    expect((await db.table('workoutOccurrences').get(draftId.slice(6)))?.publicationStatus).toBe('draft');
+    await repo.save(draftId);
+    expect(await db.table('workoutOccurrences').count()).toBe(1);
+  });
 });
