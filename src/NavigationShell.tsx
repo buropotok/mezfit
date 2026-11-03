@@ -3,6 +3,7 @@ import type { MeResponse, Role } from './api';
 import { useCloudConnections } from './data/cloud/CloudConnectionsProvider';
 import { useCloudContactAvatarUrl } from './contacts/CloudContactAvatar';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
+import { AvatarProfileNavigationContext } from './navigation/AvatarProfileNavigation';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import {
   Avatar,
@@ -93,7 +94,6 @@ interface NavigationItem {
 }
 
 const NavigationLevelContext = createContext<NavigationLevel>(1);
-const AvatarProfileNavigationContext = createContext<((userId: string) => void) | null>(null);
 const NavigationBackTransitionContext = createContext<((transition: () => void) => void) | null>(null);
 const NavigationFloatingActionContext = createContext<Dispatch<SetStateAction<RegisteredFloatingAction | null>> | null>(null);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
@@ -132,10 +132,6 @@ const clientSecondaryItems: NavigationItem[] = [
 
 const coachItems: NavigationItem[] = [...coachPrimaryItems, ...coachSecondaryItems];
 const clientItems: NavigationItem[] = [...clientPrimaryItems, ...clientSecondaryItems];
-
-export function useAvatarProfileNavigation(): ((userId: string) => void) | null {
-  return useContext(AvatarProfileNavigationContext);
-}
 
 export function useNavigationLevel(): NavigationLevel {
   return useContext(NavigationLevelContext);
