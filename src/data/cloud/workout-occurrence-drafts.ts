@@ -189,7 +189,12 @@ export class WorkoutOccurrenceDraftRepository {
 
   /** Explicit creation remains limited to an already published source. */
   async createRepeats(occurrenceId: string, rule: WorkoutRepeatRule): Promise<number> {
-    return this.transaction(() => this.materializeRepeats(occurrenceId, rule));
+    // Await the materializer in the transaction's own async scope. Returning a
+    // nested native async promise directly can let IndexedDB commit before
+    // Dexie observes the scope's completion (PrematureCommitError).
+    return this.transaction(async () => {
+      return await this.materializeRepeats(occurrenceId, rule);
+    });
   }
 
   /** Reads and publication filters never change synchronization. */
