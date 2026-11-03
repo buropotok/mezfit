@@ -216,9 +216,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   useEffect(() => {
     if (!draft || !planner) return;
     let active = true;
-    void drafts.repeatRuleFor(draft.targetOccurrenceId ?? draft.id.slice(6)).then(rule => {
+    void drafts.repeatStateFor(draft.targetOccurrenceId ?? draft.id.slice(6)).then(state => {
       if (!active) return;
-      setRepeatRule(rule); setRepeatApplied(Boolean(rule));
+      setRepeatRule(state.rule); setRepeatApplied(state.applied);
     }).catch(() => undefined);
     return () => { active = false; };
   }, [draft?.id, drafts, planner]);
@@ -343,16 +343,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     return next;
   };
   const saveAndRepeat = async (latest: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
+    // The repository applies any synced pending rule atomically with publication,
+    // including saves triggered by the shared close confirmation.
     await onSave(latest, updateProgram);
-    if (!repeatRule || repeatApplied || !planner) return;
-    try {
-      const count = await planner.drafts.createRepeats(latest.targetOccurrenceId ?? latest.id.slice(6), repeatRule);
-      setRepeatApplied(true);
-      setCopyNotice(`Серия создана: добавлено ${count} тренировок`);
-    } catch (reason) {
-      setRepeatRule(null);
-      const message = reason instanceof Error ? reason.message : 'Не удалось создать повторения';
-      throw new Error('Тренировка сохранена, но серия не создана: ' + message);
+    if (latest.pendingRepeatRule && startAlive.current) {
+      setRepeatRule(latest.pendingRepeatRule); setRepeatApplied(true);
+      setCopyNotice('Тренировка и серия сохранены');
     }
   };
   const save = async (updateProgram: boolean) => {
@@ -510,14 +506,22 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     time: `${localTime(start)} – ${endLabel}` };
   const chooseRepeat = (rule: WorkoutRepeatRule | null) => {
     if (!draft || !planner || busy || repeatBusy || readOnly || planLocked || repeatApplied) return;
-    if (!draft.saved || !rule) { setRepeatRule(rule); return; }
     setRepeatBusy(true); setError(''); setCopyNotice('');
-    void flushEdits().then(() => planner.drafts.createRepeats(draft.targetOccurrenceId ?? draft.id.slice(6), rule))
-      .then(count => {
-        if (!startAlive.current) return;
-        setRepeatRule(rule); setRepeatApplied(true);
-        setCopyNotice(`Серия создана: добавлено ${count} тренировок`);
-      }).catch(reason => reportPlanError(reason, 'Не удалось создать серию'))
+    const wasPublished = Boolean(draft.saved);
+    void (async () => {
+      // One edit queue for PLAN, timing, and repetition intent: close confirmation
+      // flushes the same durable data before choosing whether to publish.
+      const write = edit(current => ({ ...current, pendingRepeatRule: rule }));
+      if (!write) return;
+      await write;
+      if (wasPublished && rule) await drafts.save(draft.id);
+      if (!startAlive.current) return;
+      setRepeatRule(rule);
+      if (wasPublished && rule) {
+        setRepeatApplied(true);
+        setCopyNotice('Серия создана');
+      }
+    })().catch(reason => reportPlanError(reason, 'Не удалось сохранить повторение'))
       .finally(() => { if (startAlive.current) setRepeatBusy(false); });
   };
   const copyOnDate = async (date: LocalDate) => {
