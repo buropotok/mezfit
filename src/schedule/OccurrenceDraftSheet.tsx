@@ -514,9 +514,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       const write = edit(current => ({ ...current, pendingRepeatRule: rule }));
       if (!write) return;
       await write;
+      // The selected rule is already durable even if materialization hits a conflict.
+      if (startAlive.current) setRepeatRule(rule);
+      // Continue publication after unmount: the persisted choice must not be lost
+      // just because the user closed the sheet while the write was finishing.
       if (wasPublished && rule) await drafts.save(draft.id);
       if (!startAlive.current) return;
-      setRepeatRule(rule);
       if (wasPublished && rule) {
         setRepeatApplied(true);
         setCopyNotice('Серия создана');
