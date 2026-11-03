@@ -312,7 +312,7 @@ function WeightRepsPickerSession({
         )}
         ariaLabel="Повторения и вес"
         popoverClassName="ui-weight-reps-picker__popover"
-        pickerClassName="ui-weight-reps-picker"
+        pickerClassName={`ui-weight-reps-picker ui-weight-reps-picker--${mode}`}
         columnsClassName="ui-weight-reps-picker__columns"
         header={(
           <div className="ui-weight-reps-picker__labels">
