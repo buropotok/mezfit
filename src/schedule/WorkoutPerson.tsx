@@ -11,8 +11,10 @@ export function useWorkoutPerson(userId: string | null, realmId: string, actor?:
     .find(person => person.userId === userId && person.relationshipId === realmId && (!self || Boolean(person.avatarVersion || person.userAvatar)));
   const name = self ? actor?.name || 'Вы' : contact?.displayName || 'Атлет';
   const src = self ? actor?.photoUrl ?? undefined : undefined;
+  const passiveAvatar = contact ? <CloudContactAvatar contact={contact} /> : <Avatar name={name} src={src} />;
   return {
     name,
+    passiveAvatar,
     avatar: <AvatarProfileLink userId={userId} name={name}>
       {contact ? <CloudContactAvatar contact={contact} /> : <Avatar name={name} src={src} />}
     </AvatarProfileLink>,
