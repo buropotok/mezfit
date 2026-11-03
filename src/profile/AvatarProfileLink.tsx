@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react';
-import { useAvatarProfileNavigation } from '../NavigationShell';
+import { useAvatarProfileNavigation } from '../navigation/AvatarProfileNavigation';
 
 /** App-owned navigation around a UI Kit avatar; the avatar primitive stays presentational. */
 export function AvatarProfileLink({ userId, name, children }: {
