@@ -15,16 +15,18 @@ const WEEKDAYS = [
 
 export function repeatRuleLabel(rule: WorkoutRepeatRule | null): string {
   if (!rule) return 'Повторять';
-  const days = rule.weekdays.length === 7 ? 'Каждый день'
-    : WEEKDAYS.filter(item => rule.weekdays.includes(item.day)).map(item => item.label).join(', ');
-  return `${days} · ${rule.weeks} нед.`;
+  const days = rule.weekdays.length === 7 ? 'Ежедневно'
+    : rule.weekdays.length > 3 ? `${rule.weekdays.length} дн/нед`
+      : WEEKDAYS.filter(item => rule.weekdays.includes(item.day)).map(item => item.label).join('/');
+  return `${days} · ${rule.weeks}н`;
 }
 
 /** Reusable Mezfit UIkit control: no recurrence persistence or scheduling inside the UI. */
-export function WorkoutRepeatControl({ value, onChange, startsAtUtc, disabled = false, locked = false }: {
+export function WorkoutRepeatControl({ value, onChange, startsAtUtc, kind = 'workout', disabled = false, locked = false }: {
   value: WorkoutRepeatRule | null;
   onChange: (value: WorkoutRepeatRule | null) => void;
   startsAtUtc: string;
+  kind?: 'workout' | 'event';
   disabled?: boolean;
   /** Already materialized series are read-only until explicit series-edit support exists. */
   locked?: boolean;
@@ -41,7 +43,7 @@ export function WorkoutRepeatControl({ value, onChange, startsAtUtc, disabled = 
       onClick={() => setOpened(true)}>
       {repeatRuleLabel(value)}
     </BadgeChoice>
-    {opened && typeof document !== 'undefined' ? createPortal(<MezfitDialog opened title={<Text variant="headline">Повторять тренировку</Text>}
+    {opened && typeof document !== 'undefined' ? createPortal(<MezfitDialog opened title={<Text variant="headline">Повторять {kind === 'event' ? 'событие' : 'тренировку'}</Text>}
       onBackdropClick={close}
       buttons={locked ? <MezfitDialogButton onClick={close}><Text variant="body">Закрыть</Text></MezfitDialogButton>
         : <>
@@ -72,7 +74,7 @@ export function WorkoutRepeatControl({ value, onChange, startsAtUtc, disabled = 
               onClick={() => setDraft(current => ({ ...current, weeks }))}>{weeks} нед.</BadgeChoice>)}
           </div>
           <Text variant="footnote" tone="muted">
-            Исходная тренировка сохранится на своей дате. Повторения создадутся в то же местное время.
+            Исходная {kind === 'event' ? 'запись' : 'тренировка'} сохранится на своей дате. Повторения создадутся в то же местное время.
             Если хотя бы один слот занят, серия не создастся.
           </Text>
         </>}
