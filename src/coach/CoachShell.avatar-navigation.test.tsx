@@ -48,7 +48,7 @@ describe('coach avatar profile navigation', () => {
     expect(screen.getByTestId('active-client-tab').textContent).toBe('program');
 
     const context = onContext.mock.calls.map(([value]) => value)
-      .findLast(value => value?.identity && 'avatar' in value.identity);
+      .slice().reverse().find(value => value?.identity && 'avatar' in value.identity);
     expect(context?.identity).toEqual({
       title: client.displayName, avatar: { name: client.displayName, src: undefined },
     });
