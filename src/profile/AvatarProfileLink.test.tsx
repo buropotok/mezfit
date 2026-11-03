@@ -23,7 +23,8 @@ describe('avatar profile action', () => {
       </AvatarProfileLink>
     </div>);
     fireEvent.click(screen.getByRole('button', { name: 'Открыть профиль: Клиент' }));
-    expect(state.navigate).toHaveBeenCalledExactlyOnceWith('tg:202');
+    expect(state.navigate).toHaveBeenCalledOnce();
+    expect(state.navigate).toHaveBeenCalledWith('tg:202');
     expect(openCard).not.toHaveBeenCalled();
   });
 
