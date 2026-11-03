@@ -1,0 +1,16 @@
+.workout-repeat-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.workout-repeat-control__days,
+.workout-repeat-control__presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.workout-repeat-control__days {
+  justify-content: space-between;
+}
