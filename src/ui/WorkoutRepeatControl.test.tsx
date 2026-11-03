@@ -42,7 +42,7 @@ it('renders the active schedule as a green badge and prevents editing a material
   const onChange = vi.fn();
   render(<WorkoutRepeatControl value={{ weekdays: [1, 3, 5], weeks: 4 }}
     startsAtUtc={start} onChange={onChange} locked />);
-  const badge = screen.getByRole('button', { name: 'Пн, Ср, Пт · 4 нед.' });
+  const badge = screen.getByRole('button', { name: 'Пн/Ср/Пт · 4н' });
   expect(badge.getAttribute('data-color')).toBe('green');
   fireEvent.click(badge);
   expect(screen.getByText(/Серия уже создана/)).toBeTruthy();
@@ -55,7 +55,7 @@ it('can clear a selected but not yet published repeat rule', () => {
   const onChange = vi.fn();
   render(<WorkoutRepeatControl value={{ weekdays: [1], weeks: 2 }}
     startsAtUtc={start} onChange={onChange} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Пн · 2 нед.' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Пн · 2н' }));
   fireEvent.click(screen.getByRole('button', { name: 'Без повторения' }));
   expect(onChange).toHaveBeenCalledWith(null);
 });
