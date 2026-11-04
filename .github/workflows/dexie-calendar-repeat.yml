@@ -59,6 +59,7 @@ jobs:
         id: plan
         run: node tools/dexie-roles/calendar-repeat.mjs plan
       - name: Re-export and recheck complete configuration immediately before import
+        if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
