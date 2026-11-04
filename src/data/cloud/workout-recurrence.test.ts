@@ -161,4 +161,32 @@ describe('materialized workout series', () => {
     await repo.save(draftId);
     expect(await db.table('workoutOccurrences').count()).toBe(1);
   });
+
+  it('discards the pending repeat when reverting a published PLAN revision', async () => {
+    const { db, repo, source } = fixture();
+    const draftId = await repo.create(source, { published: true });
+    const occurrenceId = draftId.slice(6);
+    await repo.replacePlan(draftId, { ...source.plan, name: 'Редактируемый вариант' });
+    const rule = { weekdays: [1], weeks: 2 as const };
+    await repo.enqueueEdit(draftId, current => ({ ...current, pendingRepeatRule: rule }));
+    expect((await repo.get(draftId))?.saved).toBe(false);
+    expect(await repo.repeatStateFor(occurrenceId)).toEqual({ rule, applied: false });
+
+    // The discard action restores the published PLAN and must also remove
+    // unsaved recurrence intent, not leave it for a later publication.
+    await repo.delete(draftId);
+    const restored = await db.table('workoutOccurrences').get(occurrenceId);
+    expect(restored).toMatchObject({
+      publicationStatus: 'published', plan: source.plan, pendingRepeatRule: null,
+    });
+    expect(await repo.repeatStateFor(occurrenceId)).toEqual({ rule: null, applied: false });
+
+    await repo.replacePlan(draftId, { ...source.plan, name: 'Новая редакция' });
+    await repo.save(draftId);
+    const rows = await db.table('workoutOccurrences').toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      publicationStatus: 'published', plan: { name: 'Новая редакция' }, pendingRepeatRule: null,
+    });
+  });
 });
