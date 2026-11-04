@@ -123,13 +123,14 @@ async function cloudList(path: string, token: string, fetchImpl: typeof fetch): 
 
 function restoredMember(value: unknown): RelationshipMemberView | null {
   if (!record(value) || typeof value.id !== 'string' || typeof value.realmId !== 'string'
-    || typeof value.userId !== 'string' || !Array.isArray(value.roles)) return null;
+    || typeof value.userId !== 'string' || !Array.isArray(value.roles)
+    || !value.roles.every(role => typeof role === 'string')) return null;
   const accepted = value.accepted === true ? true
     : record(value.accepted) && value.accepted.$t === 'Date' && typeof value.accepted.v === 'string'
       ? new Date(value.accepted.v) : undefined;
   return {
     id: value.id, realmId: value.realmId, userId: value.userId, owner: value.owner,
-    roles: value.roles.filter((role): role is string => typeof role === 'string'),
+    roles: value.roles as string[],
     accepted, invite: value.invite === true, permissions: value.permissions,
   };
 }
@@ -285,6 +286,12 @@ export async function sendWorkoutReminders(
     const role = isPersonal(raw) ? await personalRole(raw.athleteUserId, env.DB_BINDING) : undefined;
     for (const recipient of reminderRecipients(raw, role)) {
       if (!await enabledByPreference(recipient.userId, recipient.preference, token, fetchImpl)) continue;
+      // A cancellation or reschedule synchronized during this tick must suppress the old reminder.
+      const current = await cloudRead('/all/workoutOccurrences/' + encodeURIComponent(raw.id), token, fetchImpl, true);
+      if (!validOccurrence(current) || current.id !== raw.id
+        || current.startsAtUtc !== raw.startsAtUtc || current.realmId !== raw.realmId
+        || current.format !== raw.format || current.athleteUserId !== raw.athleteUserId
+        || current.coachUserId !== raw.coachUserId || current.clientUserId !== raw.clientUserId) continue;
       await deliver(env, raw, recipient, at, fetchImpl);
     }
   }
