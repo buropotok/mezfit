@@ -7,9 +7,10 @@ import type { LocalWorkoutOccurrenceDraft, WorkoutOccurrencePlan } from './worko
 import { draftFromOccurrence, isLocalWorkoutOccurrenceDraft, isWorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { occurrencePlanChanged } from './workout-occurrence-edit';
 import { validateScheduleTiming } from './workout-scheduling-time';
-import { assertLocalWorkoutSlot, WorkoutSlotConflict } from './workout-slot-validation';
+import { assertLocalWorkoutSlot, bookingsOverlap, bookingsShareParticipant, WorkoutSlotConflict } from './workout-slot-validation';
 import { isApprovedAssignedPair } from './assigned-programs';
 import { WorkoutSchedulingRepository } from './workout-scheduling';
+import { duplicateWorkoutPlan, isWorkoutRepeatRule, repeatWorkoutStarts, type WorkoutRepeatRule } from './workout-recurrence';
 import { markWorkoutChanged } from './workout-sync';
 
 class WorkoutEditRejected extends Error {}
@@ -108,10 +109,91 @@ export class WorkoutOccurrenceDraftRepository {
         format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
         status: 'scheduled', workoutSessionId: null, publicationStatus: options.published ? 'published' : 'draft', draftAuthorUserId: this.actorUserId,
         plan: structuredClone(draft.plan), originalPlan: structuredClone(draft.originalPlan), publishedPlan: null,
+        ...(draft.pendingRepeatRule ? { pendingRepeatRule: structuredClone(draft.pendingRepeatRule) } : {}),
         createdByUserId: this.actorUserId, createdAt: draft.createdAt, updatedAt: draft.updatedAt,
       });
       await markWorkoutChanged(this.db, id);
       return 'draft:' + id;
+    });
+  }
+
+  /** Read pending and materialized series state without consuming editor get/Start/Edit intents. */
+  async repeatStateFor(occurrenceId: string): Promise<{ rule: WorkoutRepeatRule | null; applied: boolean }> {
+    const empty = { rule: null, applied: false };
+    const current = await this.db.workoutOccurrences.get(occurrenceId);
+    if (!current || current.inactive || current.entryKind === 'personal_event'
+      || current.status === 'cancelled' || current.cancelledAt) return empty;
+    if (current.publicationStatus === 'draft' && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId
+      && (current.draftAuthorUserId ?? current.createdByUserId) !== this.actorUserId) return empty;
+    try { await this.authorize(current); }
+    catch (reason) { if (reason instanceof WorkoutEditRejected) return empty; throw reason; }
+    if (current.repeatSourceId) return {
+      rule: isWorkoutRepeatRule(current.repeatRule) ? current.repeatRule : null, applied: true,
+    };
+    const child = await this.db.workoutOccurrences.where('realmId').equals(current.realmId)
+      .filter(row => row.repeatSourceId === occurrenceId).first();
+    if (child) return { rule: isWorkoutRepeatRule(child.repeatRule) ? child.repeatRule : null, applied: true };
+    return { rule: isWorkoutRepeatRule(current.pendingRepeatRule) ? current.pendingRepeatRule : null, applied: false };
+  }
+
+  async repeatRuleFor(occurrenceId: string): Promise<WorkoutRepeatRule | null> {
+    return (await this.repeatStateFor(occurrenceId)).rule;
+  }
+
+  /** Caller owns one transaction, including publication and every materialized repeat. */
+  private async materializeRepeats(occurrenceId: string, rule: WorkoutRepeatRule, allowUnpublished = false): Promise<number> {
+    if (!isWorkoutRepeatRule(rule)) throw new Error('Некорректные параметры повторения');
+    const row = await this.db.workoutOccurrences.get(occurrenceId);
+    const source = await this.get('draft:' + occurrenceId);
+    if (!row || !source || (!source.saved && !allowUnpublished) || row.status !== 'scheduled' || row.workoutSessionId
+      || row.repeatSourceId || row.cancelledAt || row.inactive)
+      throw new Error('Для серии нужна сохранённая запланированная тренировка');
+    const existingChildren = await this.db.workoutOccurrences.where('realmId').equals(source.realmId)
+      .filter(child => child.repeatSourceId === occurrenceId).count();
+    if (existingChildren) throw new Error('Для этой тренировки уже создана серия');
+    const starts = repeatWorkoutStarts(source.startsAtUtc, rule);
+    const scheduling = new WorkoutSchedulingRepository(this.db, this.actorUserId);
+    // Calendar reads and membership checks remain serialized within the local transaction.
+    const athlete = await scheduling.listCalendar(source.athleteUserId, true);
+    const coach = source.format === 'coached' && source.coachUserId
+      ? await scheduling.listCalendar(source.coachUserId, true) : [];
+    const bookings: Array<Pick<LocalWorkoutOccurrenceDraft,
+      'athleteUserId' | 'coachUserId' | 'format' | 'startsAtUtc' | 'durationMinutes'>> =
+      [...athlete, ...coach].filter(item => bookingsShareParticipant(source, item));
+    for (const startsAtUtc of starts) {
+      const candidate = { ...source, startsAtUtc };
+      if (bookings.some(booking => bookingsOverlap(candidate, booking)))
+        throw new WorkoutSlotConflict('Одна из дат серии занята другой записью. Измените дни или время');
+      bookings.push(candidate);
+    }
+    const now = new Date().toISOString();
+    for (const startsAtUtc of starts) {
+      const plan = duplicateWorkoutPlan(source.plan);
+      const id = await this.db.workoutOccurrences.add({
+        realmId: source.realmId, owner: source.realmId,
+        ...(source.trainingPlanId && source.programDayId
+          ? { trainingPlanId: source.trainingPlanId, programDayId: source.programDayId } : {}),
+        repeatSourceId: occurrenceId, repeatRule: structuredClone(rule),
+        athleteUserId: source.athleteUserId, coachUserId: source.coachUserId,
+        clientUserId: source.clientUserId, format: source.format,
+        startsAtUtc, durationMinutes: source.durationMinutes,
+        status: 'scheduled', workoutSessionId: null, publicationStatus: 'published',
+        draftAuthorUserId: this.actorUserId,
+        plan, originalPlan: structuredClone(plan), publishedPlan: null,
+        createdByUserId: this.actorUserId, createdAt: now, updatedAt: now,
+      });
+      await markWorkoutChanged(this.db, id);
+    }
+    return starts.length;
+  }
+
+  /** Explicit creation remains limited to an already published source. */
+  async createRepeats(occurrenceId: string, rule: WorkoutRepeatRule): Promise<number> {
+    // Await the materializer in the transaction's own async scope. Returning a
+    // nested native async promise directly can let IndexedDB commit before
+    // Dexie observes the scope's completion (PrematureCommitError).
+    return this.transaction(async () => {
+      return await this.materializeRepeats(occurrenceId, rule);
     });
   }
 
@@ -216,18 +298,29 @@ export class WorkoutOccurrenceDraftRepository {
         || changed.athleteUserId !== current.athleteUserId || changed.format !== current.format
         || !isWorkoutOccurrencePlan(changed.plan)) throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
       const contentChanged = occurrencePlanChanged(changed.plan, current.plan);
-      if (contentChanged) this.assertPlanEditable(current);
+      const repeatChanged = JSON.stringify(changed.pendingRepeatRule ?? null) !== JSON.stringify(current.pendingRepeatRule ?? null);
+      if (contentChanged || repeatChanged) this.assertPlanEditable(current);
+      if (repeatChanged && changed.pendingRepeatRule != null && !isWorkoutRepeatRule(changed.pendingRepeatRule))
+        throw new WorkoutEditRejected('INVALID_REPEAT_RULE');
       if (contentChanged && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId)
         throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
       try { validateScheduleTiming(changed); }
       catch (reason) { throw new WorkoutEditRejected(reason instanceof Error ? reason.message : 'INVALID_SCHEDULE_TIMING'); }
       const timingChanged = changed.startsAtUtc !== current.startsAtUtc || changed.durationMinutes !== current.durationMinutes;
       if (timingChanged) await assertLocalWorkoutSlot(this.db, changed);
-      if (timingChanged || contentChanged) {
+      if (timingChanged || contentChanged || repeatChanged) {
         const row = await this.db.workoutOccurrences.get(id.slice(6));
         if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
+        if (repeatChanged && row.repeatSourceId) throw new WorkoutEditRejected('SERIES_OCCURRENCE_CANNOT_REPEAT');
+        if (repeatChanged && changed.pendingRepeatRule) {
+          const hasChildren = await this.db.workoutOccurrences.where('realmId').equals(row.realmId)
+            .filter(child => child.repeatSourceId === row.id).count();
+          if (hasChildren) throw new WorkoutEditRejected('SERIES_ALREADY_CREATED');
+        }
         await this.db.workoutOccurrences.update(row.id, {
           ...(timingChanged ? { startsAtUtc: changed.startsAtUtc, durationMinutes: changed.durationMinutes } : {}),
+          ...(repeatChanged ? { pendingRepeatRule: changed.pendingRepeatRule
+            ? structuredClone(changed.pendingRepeatRule) : null } : {}),
           ...(contentChanged ? { plan: structuredClone(changed.plan), publicationStatus: 'draft' as const, draftAuthorUserId: this.actorUserId,
             publishedPlan: current.saved ? structuredClone(current.plan) : row.publishedPlan ?? null } : {}),
           updatedAt: new Date().toISOString(),
@@ -251,8 +344,12 @@ export class WorkoutOccurrenceDraftRepository {
       this.assertPlanEditable(draft);
       await assertLocalWorkoutSlot(this.db, draft);
       const occurrenceId = id.slice(6);
+      // Materialize before publication in the same local transaction; any conflict
+      // rolls back both the publication and every new occurrence.
+      if (draft.pendingRepeatRule) await this.materializeRepeats(occurrenceId, draft.pendingRepeatRule, true);
       await this.db.workoutOccurrences.update(occurrenceId, {
         publicationStatus: 'published', updatedAt: new Date().toISOString(),
+        ...(draft.pendingRepeatRule ? { pendingRepeatRule: null } : {}),
         ...(draft.autoCreatedProgram && !draft.previouslyPublished ? { publishedPlan: structuredClone(draft.plan) } : {}),
       });
       await markWorkoutChanged(this.db, occurrenceId);
@@ -308,7 +405,8 @@ export class WorkoutOccurrenceDraftRepository {
       if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       const author = (row.coachUserId ?? row.athleteUserId) === this.actorUserId;
       if (row.publishedPlan && author) {
-        await this.db.workoutOccurrences.update(row.id, { plan: row.publishedPlan, publicationStatus: 'published', updatedAt: new Date().toISOString() });
+        await this.db.workoutOccurrences.update(row.id, { plan: row.publishedPlan, publicationStatus: 'published', pendingRepeatRule: null,
+          updatedAt: new Date().toISOString() });
       } else {
         await this.db.workoutOccurrences.update(row.id, { inactive: true, updatedAt: new Date().toISOString() });
       }

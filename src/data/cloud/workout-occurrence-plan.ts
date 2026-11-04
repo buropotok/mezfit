@@ -1,6 +1,7 @@
 import type { CloudProgramDayOutline, CloudProgramPhaseRow, CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 import type { CloudTrainingPlanRow } from './database';
 import { validateScheduleTiming } from './workout-scheduling-time';
+import { isWorkoutRepeatRule, type WorkoutRepeatRule } from './workout-recurrence';
 
 import type { WorkoutOccurrencePlan } from '../../../shared/workout-occurrence-plan';
 import { isWorkoutOccurrencePlan } from '../../../shared/workout-occurrence-plan';
@@ -23,6 +24,8 @@ export interface LocalWorkoutOccurrenceDraft {
   durationMinutes: number;
   plan: WorkoutOccurrencePlan;
   originalPlan: WorkoutOccurrencePlan;
+  /** Synced repetition intent; it is not yet an applied series. */
+  pendingRepeatRule?: WorkoutRepeatRule | null;
   /** View of a saved occurrence. Only content edits change publication status to draft. */
   saved?: boolean;
   executionStatus?: CloudWorkoutOccurrenceRow['status'];
@@ -108,7 +111,9 @@ export function isLocalWorkoutOccurrenceDraft(value: unknown): value is LocalWor
     || typeof value.createdAt !== 'string' || typeof value.updatedAt !== 'string'
     || (value.format !== 'independent' && value.format !== 'coached')
     || !bounded(value.durationMinutes, 1440)
-    || !isWorkoutOccurrencePlan(value.plan) || !isWorkoutOccurrencePlan(value.originalPlan)) return false;
+    || !isWorkoutOccurrencePlan(value.plan) || !isWorkoutOccurrencePlan(value.originalPlan)
+    || (value.pendingRepeatRule !== undefined && value.pendingRepeatRule !== null
+      && !isWorkoutRepeatRule(value.pendingRepeatRule))) return false;
   try {
     validateScheduleTiming({ startsAtUtc: String(value.startsAtUtc),
       durationMinutes: value.durationMinutes });
@@ -125,6 +130,7 @@ export function draftFromOccurrence(actorUserId: string, row: CloudWorkoutOccurr
     previouslyPublished: row.publicationStatus !== 'draft' || !!row.publishedPlan,
     targetOccurrenceId: row.id, trainingPlanId: row.trainingPlanId, programDayId: row.programDayId,
     autoCreatedProgram: row.autoCreatedProgram,
+    ...(isWorkoutRepeatRule(row.pendingRepeatRule) ? { pendingRepeatRule: structuredClone(row.pendingRepeatRule) } : {}),
     athleteUserId: row.athleteUserId, coachUserId: row.coachUserId, clientUserId: row.clientUserId,
     format: row.format, startsAtUtc: row.startsAtUtc, durationMinutes: row.durationMinutes,
     plan: structuredClone(row.plan), originalPlan: structuredClone(row.originalPlan ?? row.plan), createdAt: now, updatedAt: now };

@@ -3,6 +3,7 @@ export type { UiComponentTheme } from './componentTheme';
 export { Icon, type IconProps, type UiIconName, type UiIconVariant } from './Icon';
 export type { UiIconPair, UiIconSource } from './iconPair';
 export { Badge, BadgeChoice, type BadgeColor, type BadgeProps, type BadgeChoiceProps } from './Badge';
+export { WorkoutRepeatControl, repeatRuleLabel } from './WorkoutRepeatControl';
 export { DatePicker, type DatePickerDayStatus, type DatePickerDayStatusEntry, type DatePickerProps, type DatePickerSurface, type LocalDate } from './date-picker/DatePicker';
 export { TimePicker, type TimePickerLensMode, type TimePickerProps, type LocalTime } from './time-picker/TimePicker';
 export { RangePicker, type RangePickerProps, type ResistanceRange } from './range-picker/RangePicker';

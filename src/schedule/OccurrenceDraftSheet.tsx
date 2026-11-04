@@ -23,6 +23,8 @@ import { useSessionClock } from '../workout/useSessionClock';
 import { useWorkoutPerson } from './WorkoutPerson';
 import type { NavigationContext } from '../NavigationShell';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
+import type { WorkoutRepeatRule } from '../data/cloud/workout-recurrence';
+import { WorkoutRepeatControl } from '../ui/WorkoutRepeatControl';
 import { WorkoutProgramSheet } from './WorkoutProgramSheet';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import type { ProgramActor } from '../program/ProgramSummary';
@@ -203,11 +205,23 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [copyBusy, setCopyBusy] = useState(false);
   const copyRunning = useRef(false);
   const [copyNotice, setCopyNotice] = useState('');
+  const [repeatRule, setRepeatRule] = useState<WorkoutRepeatRule | null>(null);
+  const [repeatApplied, setRepeatApplied] = useState(false);
+  const [repeatBusy, setRepeatBusy] = useState(false);
   useEffect(() => {
     if (!copyNotice) return;
     const timeout = window.setTimeout(() => setCopyNotice(''), 4000);
     return () => window.clearTimeout(timeout);
   }, [copyNotice]);
+  useEffect(() => {
+    if (!draft || !planner) return;
+    let active = true;
+    void drafts.repeatStateFor(draft.targetOccurrenceId ?? draft.id.slice(6)).then(state => {
+      if (!active) return;
+      setRepeatRule(state.rule); setRepeatApplied(state.applied);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [draft?.id, drafts, planner]);
   const actionsRef = useRef<HTMLButtonElement>(null);
   const closeProgramSheet = useCallback(() => setProgramSheetOpen(false), []);
   const glass = loadBrowserGlassSettings();
@@ -328,6 +342,15 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     });
     return next;
   };
+  const saveAndRepeat = async (latest: LocalWorkoutOccurrenceDraft, updateProgram: boolean) => {
+    // The repository applies any synced pending rule atomically with publication,
+    // including saves triggered by the shared close confirmation.
+    await onSave(latest, updateProgram);
+    if (latest.pendingRepeatRule && startAlive.current) {
+      setRepeatRule(latest.pendingRepeatRule); setRepeatApplied(true);
+      setCopyNotice('Тренировка и серия сохранены');
+    }
+  };
   const save = async (updateProgram: boolean) => {
     if (mutationBlocked() || !draft || busy || starting.current) return;
     setBusy(true);
@@ -337,7 +360,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       const latest = await drafts.get(draft.id);
       if (!latest) throw new Error('Черновик не найден');
       if (mutationBlocked()) return;
-      await onSave(latest, updateProgram);
+      await saveAndRepeat(latest, updateProgram);
       setProgramUpdateOpen(false);
     } catch (reason) {
       reportPlanError(reason, 'Не удалось сохранить тренировку');
@@ -357,7 +380,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         && !latest.previouslyPublished && owner && occurrenceTemplateChanged(latest.plan, latest.originalPlan)) {
         setProgramUpdateOpen(true);
       } else {
-        await onSave(latest, false);
+        await saveAndRepeat(latest, false);
       }
     } catch (reason) {
       reportPlanError(reason, 'Не удалось сохранить тренировку');
@@ -481,6 +504,29 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const endLabel = draft?.executionTiming && !draft.executionTiming.completedAt ? '…' : localTime(end);
   const scheduledTiming = { date: localDate(start).split('-').reverse().join('.'),
     time: `${localTime(start)} – ${endLabel}` };
+  const chooseRepeat = (rule: WorkoutRepeatRule | null) => {
+    if (!draft || !planner || busy || repeatBusy || readOnly || planLocked || repeatApplied) return;
+    setRepeatBusy(true); setError(''); setCopyNotice('');
+    const wasPublished = Boolean(draft.saved);
+    void (async () => {
+      // One edit queue for PLAN, timing, and repetition intent: close confirmation
+      // flushes the same durable data before choosing whether to publish.
+      const write = edit(current => ({ ...current, pendingRepeatRule: rule }));
+      if (!write) return;
+      await write;
+      // The selected rule is already durable even if materialization hits a conflict.
+      if (startAlive.current) setRepeatRule(rule);
+      // Continue publication after unmount: the persisted choice must not be lost
+      // just because the user closed the sheet while the write was finishing.
+      if (wasPublished && rule) await drafts.save(draft.id);
+      if (!startAlive.current) return;
+      if (wasPublished && rule) {
+        setRepeatApplied(true);
+        setCopyNotice('Серия создана');
+      }
+    })().catch(reason => reportPlanError(reason, 'Не удалось сохранить повторение'))
+      .finally(() => { if (startAlive.current) setRepeatBusy(false); });
+  };
   const copyOnDate = async (date: LocalDate) => {
     if (!planner || !draft || copyRunning.current) return;
     copyRunning.current = true; setCopyBusy(true); setError(''); setCopyNotice('');
@@ -545,7 +591,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               : <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
           </div>
           <div className="occurrence-draft-sheet__timing">
-            <Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
+            <Button className="occurrence-draft-sheet__date-button" variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
               <span className="occurrence-draft-sheet__timing-label"><Icon name="calendar" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Дата: {localDate(start)}</span>
             </Button>
             <div className="occurrence-draft-sheet__time-row">
@@ -555,6 +601,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               <span ref={endRef}><Button variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => openTimePicker('end')}>
                 <span className="occurrence-draft-sheet__timing-label"><Icon name="clock" style={{ width: 18, height: 18, flex: "0 0 18px" }} />Конец: {endLabel}</span>
               </Button></span>
+            </div>
+            <div className="occurrence-draft-sheet__repeat-control">
+              <WorkoutRepeatControl value={repeatRule} onChange={chooseRepeat} startsAtUtc={draft.startsAtUtc}
+                disabled={!planner || busy || repeatBusy || readOnly || planLocked || cancelled
+                  || Boolean(draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled'))}
+                locked={repeatApplied} />
             </div>
           </div>
           {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
