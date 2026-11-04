@@ -6,7 +6,7 @@ export const telegramId = validatedTelegramId;
 /** Local Dexie transactions require a keepalive while verifying relationship hashes. */
 export function isApprovedAssignedPair(
   realm: AssignedPairCheck['realm'],
-  members: readonly AssignedPairCheck['members'][number][],
+  members: AssignedPairCheck['members'],
   coachUserId: string,
   clientUserId: string,
 ): Promise<boolean> {
