@@ -405,7 +405,8 @@ export class WorkoutOccurrenceDraftRepository {
       if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       const author = (row.coachUserId ?? row.athleteUserId) === this.actorUserId;
       if (row.publishedPlan && author) {
-        await this.db.workoutOccurrences.update(row.id, { plan: row.publishedPlan, publicationStatus: 'published', updatedAt: new Date().toISOString() });
+        await this.db.workoutOccurrences.update(row.id, { plan: row.publishedPlan, publicationStatus: 'published', pendingRepeatRule: null,
+          updatedAt: new Date().toISOString() });
       } else {
         await this.db.workoutOccurrences.update(row.id, { inactive: true, updatedAt: new Date().toISOString() });
       }
