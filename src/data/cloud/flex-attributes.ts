@@ -1,4 +1,6 @@
 import type Dexie from 'dexie';
+import { flexAttributeId, flexValueId } from '../../../shared/flex-identifiers';
+export { flexAttributeId, flexValueId } from '../../../shared/flex-identifiers';
 import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
 
@@ -69,18 +71,6 @@ export interface FlexResolvedValue {
 
 const userIdPattern = /^tg:[1-9]\d*$/;
 const attributeKeyPattern = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
-const encodeParts = (...parts: string[]): string =>
-  parts.map(part => String(part.length) + ':' + part).join(':');
-
-/** Deterministic IDs also provide uniqueness under repeat writes on separate devices. */
-export function flexAttributeId(realmId: string, key: string): string {
-  return 'flex-attribute:' + encodeParts(realmId, key);
-}
-
-export function flexValueId(target: FlexEntityTarget, attributeId: string): string {
-  return 'flex-value:' + encodeParts(target.realmId, target.entityType, target.entityId, attributeId);
-}
-
 export function isFlexAttributeRow(value: unknown): value is FlexAttributeRow {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const row = value as Record<string, unknown>;
