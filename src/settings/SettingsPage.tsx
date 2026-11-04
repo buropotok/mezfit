@@ -38,6 +38,7 @@ import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import { ScreenDiagnostics } from './ScreenDiagnostics';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
+import { WorkoutReminderSettings } from './WorkoutReminderSettings';
 import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
@@ -162,6 +163,7 @@ const planPreviewExercise: SessionExerciseData = {
 };
 
 interface SettingsPageProps {
+  activeRole?: 'coach' | 'client';
   backgroundSettings?: Readonly<BackgroundSettings>;
   onBackgroundSettingsChange?: (settings: BackgroundSettings) => void;
   glassSettings?: Readonly<GlassSettings>;
@@ -258,6 +260,7 @@ function TypographyNumberField({
 }
 
 export function SettingsPage({
+  activeRole = 'client',
   backgroundSettings = DEFAULT_BACKGROUND_SETTINGS,
   onBackgroundSettingsChange = () => {},
   glassSettings = DEFAULT_GLASS_SETTINGS,
@@ -370,6 +373,8 @@ export function SettingsPage({
             <Button onClick={() => setScreenDiagnosticsOpen(true)}>Открыть диагностику</Button>
           </span>
         </GlassSurface>
+
+        <WorkoutReminderSettings role={activeRole} glassBlur={effectiveGlassBlur} />
 
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Интерфейс</Text>
