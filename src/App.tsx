@@ -434,6 +434,7 @@ export function App() {
               onNavigationContextChange={handleNavigationContextChange} />
           ) : destination === 'settings' ? (
           <SettingsPage
+            activeRole={state.activeRole}
             backgroundSettings={backgroundSettings}
             onBackgroundSettingsChange={setBackgroundSettings}
             glassSettings={glassSettings}
