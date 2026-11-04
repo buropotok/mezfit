@@ -1,0 +1,15 @@
+.workout-reminder-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  padding-block: var(--ui-space-2);
+}
+
+.workout-reminder-settings__copy {
+  display: grid;
+  gap: var(--ui-space-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
