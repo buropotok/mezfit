@@ -1,6 +1,6 @@
 import cloudConfig from '../../dexie-cloud.json';
 import { checkApprovedAssignedPair, validatedTelegramId, type RelationshipMemberView } from '../../shared/approved-relationship';
-import { flexAttributeId, flexValueId } from '../../src/data/cloud/flex-attributes';
+import { flexAttributeId, flexValueId } from '../../shared/flex-identifiers';
 
 type Preference = 'client' | 'coached' | 'own';
 
