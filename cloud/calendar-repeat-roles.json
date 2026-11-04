@@ -1,0 +1,18 @@
+{
+  "roles": {
+    "coach": {
+      "permissions": {
+        "update": {
+          "workoutOccurrences": ["pendingRepeatRule"]
+        }
+      }
+    },
+    "client": {
+      "permissions": {
+        "update": {
+          "workoutOccurrences": ["pendingRepeatRule"]
+        }
+      }
+    }
+  }
+}
