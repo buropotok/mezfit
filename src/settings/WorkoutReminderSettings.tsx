@@ -31,6 +31,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
   [cloud?.db, cloud?.actorUserId]);
   const [values, setValues] = useState<WorkoutReminderPreferences>({ ...DEFAULT_WORKOUT_REMINDER_PREFERENCES });
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const savingRef = useRef(false);
@@ -43,6 +44,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
     mountedRef.current = true;
     savingRef.current = false;
     setLoading(true);
+    setLoaded(false);
     setError('');
     if (!repo) {
       setLoading(false);
@@ -53,11 +55,13 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
       next => {
         if (!active) return;
         if (!savingRef.current) setValues(next);
+        setLoaded(true);
         setLoading(false);
       },
       () => {
         if (!active) return;
         setLoading(false);
+        setLoaded(false);
         setError('Не удалось загрузить настройки уведомлений.');
       },
     );
@@ -70,7 +74,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
   }, [repo]);
 
   const change = async (key: WorkoutReminderPreference) => {
-    if (!repo || savingRef.current || loading) return;
+    if (!repo || savingRef.current || loading || !loaded) return;
     savingRef.current = true;
     setSaving(true);
     setError('');
@@ -78,15 +82,19 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
     const previous = values;
     const enabled = !previous[key];
     setValues({ ...previous, [key]: enabled });
+    let persisted = false;
     try {
       await repo.set(key, enabled);
+      persisted = true;
       // A subscription update may have been suppressed while this local write was pending.
       const latest = await repo.read();
       if (mountedRef.current && revision === generationRef.current) setValues(latest);
     } catch {
       if (mountedRef.current && revision === generationRef.current) {
-        setValues(previous);
-        setError('Не удалось сохранить настройку. Повторите попытку.');
+        if (!persisted) setValues(previous);
+        setError(persisted
+          ? 'Настройка сохранена, но не удалось повторно прочитать её. Откройте настройки заново.'
+          : 'Не удалось сохранить настройку. Повторите попытку.');
       }
     } finally {
       if (revision === generationRef.current) {
@@ -108,7 +116,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
             <Text variant="body">{field.title}</Text>
             <Text variant="footnote" tone="muted">{field.description}</Text>
           </span>
-          <Toggle component="span" checked={values[field.key]} disabled={!repo || loading || saving}
+          <Toggle component="span" checked={values[field.key]} disabled={!repo || !loaded || loading || saving}
             onChange={() => { void change(field.key); }} />
         </label>
       ))}
