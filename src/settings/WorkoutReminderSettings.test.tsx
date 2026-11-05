@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutReminderSettings } from './WorkoutReminderSettings';
+import { SettingsPage } from './SettingsPage';
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class {
@@ -23,6 +24,13 @@ describe('role-specific reminder controls', () => {
     expect(screen.getByText('Напоминания о тренировках')).toBeTruthy();
     expect(screen.queryByText('Тренировки с клиентами')).toBeNull();
     expect(screen.queryByText('Мои самостоятельные тренировки')).toBeNull();
+  });
+
+  it('integrates the correct reminder section into the Coach settings root', () => {
+    render(<SettingsPage activeRole="coach" onNavigationContextChange={vi.fn()} />);
+    expect(screen.getByText('Тренировки с клиентами')).toBeTruthy();
+    expect(screen.getByText('Мои самостоятельные тренировки')).toBeTruthy();
+    expect(screen.queryByText('Напоминания о тренировках')).toBeNull();
   });
 
   it('exposes two independent controls in Coach mode', () => {
