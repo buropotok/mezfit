@@ -49,10 +49,13 @@ function validOccurrence(value: unknown): value is Occurrence {
     && typeof value.athleteUserId === 'string' && validatedTelegramId(value.athleteUserId) !== null
     && (value.coachUserId === null || (typeof value.coachUserId === 'string' && validatedTelegramId(value.coachUserId) !== null))
     && (value.clientUserId === null || (typeof value.clientUserId === 'string' && validatedTelegramId(value.clientUserId) !== null))
-    && typeof value.startsAtUtc === 'string' && Number.isFinite(Date.parse(value.startsAtUtc))
+    && typeof value.startsAtUtc === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value.startsAtUtc)
+    && Number.isFinite(Date.parse(value.startsAtUtc))
     && value.status === 'scheduled' && value.workoutSessionId === null
-    && value.publicationStatus === 'published' && value.entryKind !== 'personal_event'
-    && value.inactive !== true && !value.cancelledAt
+    && value.publicationStatus === 'published'
+    && (value.entryKind === undefined || value.entryKind === 'workout')
+    && (value.inactive === undefined || value.inactive === false)
+    && (value.cancelledAt === undefined || value.cancelledAt === null)
     && (value.format === 'independent' || value.format === 'coached');
 }
 
@@ -279,21 +282,38 @@ export async function sendWorkoutReminders(
   const token = await cloudToken(env, fetchImpl);
   const rows = await cloudList('/all/workoutOccurrences?status=scheduled&publicationStatus=published', token, fetchImpl);
   if (rows.length > 25_000) throw new Error('REMINDERS_SCAN_LIMIT_EXCEEDED');
+  let failedRecipients = 0;
   for (const raw of rows) {
     if (!validOccurrence(raw)) continue;
     const due = Date.parse(raw.startsAtUtc) - REMINDER_LEAD_MS;
     if (due > at || due <= at - REMINDER_GRACE_MS) continue;
-    if (!isPersonal(raw) && (!isAssigned(raw) || !await verifiedRelationship(raw, token, fetchImpl))) continue;
-    const role = isPersonal(raw) ? await personalRole(raw.athleteUserId, env.DB_BINDING) : undefined;
-    for (const recipient of reminderRecipients(raw, role)) {
-      if (!await enabledByPreference(recipient.userId, recipient.preference, token, fetchImpl)) continue;
-      // A cancellation or reschedule synchronized during this tick must suppress the old reminder.
-      const current = await cloudRead('/all/workoutOccurrences/' + encodeURIComponent(raw.id), token, fetchImpl, true);
-      if (!validOccurrence(current) || current.id !== raw.id
-        || current.startsAtUtc !== raw.startsAtUtc || current.realmId !== raw.realmId
-        || current.format !== raw.format || current.athleteUserId !== raw.athleteUserId
-        || current.coachUserId !== raw.coachUserId || current.clientUserId !== raw.clientUserId) continue;
-      await deliver(env, raw, recipient, at, fetchImpl);
+    let recipients: Recipient[];
+    try {
+      if (!isPersonal(raw) && (!isAssigned(raw) || !await verifiedRelationship(raw, token, fetchImpl))) continue;
+      const role = isPersonal(raw) ? await personalRole(raw.athleteUserId, env.DB_BINDING) : undefined;
+      recipients = reminderRecipients(raw, role);
+    } catch {
+      failedRecipients += 1;
+      continue;
     }
+    for (const recipient of recipients) {
+      try {
+        if (!await enabledByPreference(recipient.userId, recipient.preference, token, fetchImpl)) continue;
+        // A cancellation or reschedule synchronized during this tick must suppress the old reminder.
+        const current = await cloudRead('/all/workoutOccurrences/' + encodeURIComponent(raw.id), token, fetchImpl, true);
+        if (!validOccurrence(current) || current.id !== raw.id
+          || current.startsAtUtc !== raw.startsAtUtc || current.realmId !== raw.realmId
+          || current.format !== raw.format || current.athleteUserId !== raw.athleteUserId
+          || current.coachUserId !== raw.coachUserId || current.clientUserId !== raw.clientUserId) continue;
+        await deliver(env, raw, recipient, at, fetchImpl);
+      } catch {
+        // One user's transport or storage failure must not suppress other athletes.
+        failedRecipients += 1;
+      }
+    }
+  }
+  if (failedRecipients > 0) {
+    console.error('REMINDERS_PARTIAL_FAILURE', { count: failedRecipients });
+    throw new Error('REMINDERS_PARTIAL_FAILURE');
   }
 }
