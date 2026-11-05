@@ -664,9 +664,10 @@ export default {
       return json({ error: { code: 'INTERNAL_ERROR', message: 'Unexpected server error' } }, { status: 500 });
     }
   },
-  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
     try {
-      await sendWorkoutReminders(env, controller.scheduledTime);
+      // Real delivery time, not the nominal Cron timestamp, prevents stale reminders after delays.
+      await sendWorkoutReminders(env, Date.now());
     } catch {
       // No tokens, personal data, cloud payloads or raw upstream errors in cron logs.
       console.error('WORKOUT_REMINDERS_TICK_FAILED');
