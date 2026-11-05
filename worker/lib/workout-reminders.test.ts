@@ -214,7 +214,10 @@ describe('shared-workout delivery integration', () => {
     return { prepare } as unknown as D1Database;
   }
 
-  async function setup(format: 'independent' | 'coached', disabledCoach = false, failAthlete = false) {
+  async function setup(
+    format: 'independent' | 'coached', disabledCoach = false, failAthlete = false,
+    coachValueOverride?: null | 'malformed',
+  ) {
     const { realm, members } = await relationshipMembership(coach.slice(3), athlete.slice(3));
     const occurrence = {
       id: 'shared-workout-1', realmId: realm.realmId, owner: realm.realmId,
@@ -233,10 +236,11 @@ describe('shared-workout delivery integration', () => {
         const id = decodeURIComponent(url.split('/').at(-1) ?? '');
         const coachAttribute = flexAttributeId(coach, 'notify_coach_client_workouts');
         const coachValue = flexValueId({ entityType: 'user', entityId: coach, realmId: coach }, coachAttribute);
-        if (disabledCoach && id === coachValue) {
+        if ((disabledCoach || coachValueOverride !== undefined) && id === coachValue) {
           return Response.json({
             id, realmId: coach, owner: coach, attributeId: coachAttribute,
-            entityType: 'user', entityId: coach, value: false,
+            entityType: 'user', entityId: coach,
+            value: coachValueOverride === null ? null : coachValueOverride === 'malformed' ? 'yes' : false,
           });
         }
         if (failAthlete && id !== coachValue) return new Response(null, { status: 503 });
@@ -272,6 +276,18 @@ describe('shared-workout delivery integration', () => {
 
   it('respects the coach opt-out without suppressing the athlete reminder', async () => {
     const setupCase = await setup('coached', true);
+    await sendWorkoutReminders(setupCase.env, now, setupCase.fetched);
+    expect(setupCase.sentChats).toEqual([athlete.slice(3)]);
+  });
+
+  it('treats a cleared coach preference as enabled while preserving independent delivery', async () => {
+    const setupCase = await setup('coached', false, false, null);
+    await sendWorkoutReminders(setupCase.env, now, setupCase.fetched);
+    expect(setupCase.sentChats).toEqual([athlete.slice(3), coach.slice(3)]);
+  });
+
+  it('fails closed for a malformed stored coach preference', async () => {
+    const setupCase = await setup('coached', false, false, 'malformed');
     await sendWorkoutReminders(setupCase.env, now, setupCase.fetched);
     expect(setupCase.sentChats).toEqual([athlete.slice(3)]);
   });
