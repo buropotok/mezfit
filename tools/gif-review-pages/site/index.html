@@ -39,6 +39,10 @@
     .candidate img { width:100%; aspect-ratio:1; object-fit:contain; display:block; }
     .candidate:hover { border-color:#7c9de7; }
     .candidate.selected { background:#ecf3ff; border-color:#245bcc; }
+    .candidate.visual-primary { border-color:#245bcc; background:#f2f7ff; }
+    .candidate.visual-primary.selected { background:#e2eeff; }
+    .candidate .candidate-source { color:#2259cf; font-size:12px; font-weight:650; }
+    .candidate .metadata-warning { color:#965400; font-size:12px; margin-top:7px; }
     .candidate .name { font-size:12px; min-height:34px; }
     .candidate .rank { color:#637184; font-size:12px; display:flex; justify-content:space-between; padding-bottom:6px; }
     .candidate .channels { font-size:10px; color:#708097; margin-top:auto; padding-top:8px; }
@@ -68,7 +72,7 @@
   <header class="top">
     <div>
       <h1>Ручная сверка упражнений</h1>
-      <p class="sub">Одна GIF FitnessProgramer → пять GIF GymVisual. Выбор сохраняется в этом браузере.</p>
+      <p class="sub">Сначала 419 результатов визуального сравнения GIF. Первый кандидат найден без названий; рядом — до четырёх вариантов по характеристикам. Выбор сохраняется в браузере.</p>
     </div>
     <div class="toolbar">
       <button id="export" class="button button-primary" type="button">Выгрузить CSV</button>
@@ -81,6 +85,12 @@
 
   <section class="panel">
     <div class="toolbar">
+      <label for="queue">Очередь</label>
+      <select id="queue">
+        <option value="visual">419 визуальных пар</option>
+        <option value="other">Остальные упражнения</option>
+        <option value="all">Все упражнения</option>
+      </select>
       <label for="round">Раунд</label><select id="round" disabled></select>
       <label for="filter">Показать</label>
       <select id="filter">
@@ -111,7 +121,7 @@
           <h2 class="section-title">Первый каталог — выбери совпадение</h2>
           <div id="candidates" class="candidates"></div>
           <div class="actions">
-            <button id="none" class="button" type="button">Нет совпадения среди пяти</button>
+            <button id="none" class="button" type="button">Нет совпадения среди показанных</button>
             <button id="skip" class="button" type="button">Пропустить</button>
             <button id="clear" class="button" type="button">Сбросить решение</button>
           </div>
@@ -166,24 +176,43 @@
       displayWarning("Сохранённые решения не удалось прочитать. Можно восстановить их через импорт CSV.");
     }
   }
+  function inQueue(item) {
+    var queue = $("queue").value;
+    if (queue === "visual") return Array.isArray(item.visual_candidates);
+    if (queue === "other") return !Array.isArray(item.visual_candidates);
+    return true;
+  }
+  function roundCandidates(item, n) {
+    if (Array.isArray(item.visual_candidates)) {
+      if (n === 1) return item.visual_candidates;
+      var selected = new Set(item.visual_candidates.map(function (c) { return c.id; }));
+      var followUps = item.candidates.filter(function (c) { return !selected.has(c.id); });
+      return followUps.slice((n - 2) * data.round_size, (n - 1) * data.round_size);
+    }
+    return item.candidates.slice((n - 1) * data.round_size, n * data.round_size);
+  }
   function eligible(item) {
-    if (round === 1) return true;
     for (var r = 1; r < round; r++) {
       var prior = getDecision(item.gif, r);
       if (!prior || prior.status !== "none") return false;
     }
-    return item.candidates.length >= round * data.round_size;
+    return roundCandidates(item, round).length > 0;
   }
   function filtered() {
     var q = $("search").value.trim().toLowerCase();
     var f = $("filter").value;
     return data.items.filter(function (item) {
-      if (!eligible(item)) return false;
+      if (!inQueue(item) || !eligible(item)) return false;
       if (q && (item.name + " " + item.gif).toLowerCase().indexOf(q) === -1) return false;
       var d = getDecision(item.gif, round);
       if (f === "pending") return !d;
       if (f !== "all") return d && d.status === f;
       return true;
+    }).sort(function (a, b) {
+      // Show the strongest visual-audit hypotheses first in this review queue.
+      if ($("queue").value !== "visual") return 0;
+      return b.visual_candidates[0].audit_score - a.visual_candidates[0].audit_score ||
+        a.gif.localeCompare(b.gif);
     });
   }
   function rebuild(keepGif) {
@@ -199,7 +228,7 @@
     return el;
   }
   function render() {
-    var available = data.items.filter(eligible);
+    var available = data.items.filter(function (item) { return inQueue(item) && eligible(item); });
     var answered = available.filter(function (item) {
       var d = getDecision(item.gif, round);
       return d && (d.status === "matched" || d.status === "none");
@@ -234,14 +263,21 @@
     $("next").disabled = index === subset.length - 1;
     var candidates = $("candidates");
     candidates.textContent = "";
-    var start = (round - 1) * data.round_size;
-    item.candidates.slice(start, start + data.round_size).forEach(function (candidate) {
+    var onscreen = roundCandidates(item, round);
+    onscreen.forEach(function (candidate) {
       var active = decision && decision.status === "matched" && decision.r2_id === candidate.id;
       var button = document.createElement("button");
       button.type = "button";
-      button.className = "candidate" + (active ? " selected" : "");
+      var isVisual = candidate.source === "visual_audit";
+      button.className = "candidate" + (isVisual ? " visual-primary" : "") + (active ? " selected" : "");
       button.setAttribute("aria-pressed", active ? "true" : "false");
       button.appendChild(textNode("span", "rank", "#" + candidate.rank + (active ? " ✓" : "")));
+      if (isVisual) {
+        button.appendChild(textNode("span", "candidate-source", "Визуальный анализ · " +
+          candidate.audit_score.toFixed(3) + " (оценка, не вероятность)"));
+      } else if (candidate.source === "semantic") {
+        button.appendChild(textNode("span", "candidate-source", "Альтернатива по характеристикам"));
+      }
       var img = document.createElement("img");
       img.src = R2_BASE + encodeURIComponent(candidate.id + ".gif");
       img.alt = "GymVisual " + candidate.id + ": " + candidate.name;
@@ -250,7 +286,13 @@
       button.appendChild(img);
       button.appendChild(textNode("span", "name", candidate.name));
       button.appendChild(textNode("span", "small", candidate.id + ".gif"));
+      if (candidate.equipment) {
+        button.appendChild(textNode("span", "small", "Оборудование: " + candidate.equipment));
+      }
       button.appendChild(textNode("span", "channels", candidate.channels.join(" · ")));
+      (candidate.metadata_warnings || []).forEach(function (message) {
+        button.appendChild(textNode("span", "metadata-warning", message));
+      });
       button.addEventListener("click", function () {
         decide("matched", candidate.id);
       });
@@ -261,7 +303,6 @@
     var previous = $("previous-match");
     previous.textContent = "";
     previous.classList.add("hidden");
-    var onscreen = item.candidates.slice(start, start + data.round_size);
     if (decision && decision.status === "matched" &&
         !onscreen.some(function (c) { return c.id === decision.r2_id; }) &&
         data.r2_index[decision.r2_id]) {
@@ -277,7 +318,7 @@
     }
     $("decision").textContent = !decision ? "Решение ещё не выбрано." :
       decision.status === "matched" ? "Выбрано: " + decision.r2_id + ".gif. Можно изменить нажатием на другую GIF." :
-      decision.status === "none" ? "Не найдено среди пяти. Упражнение попадёт в следующий раунд." :
+      decision.status === "none" ? "Не найдено среди показанных. Упражнение попадёт в следующий раунд." :
       "Пропущено. Для следующего раунда нужно выбрать «Нет совпадения среди пяти».";
   }
   function decide(status, r2id) {
@@ -502,6 +543,12 @@
   });
   $("import").addEventListener("click", function () { $("csvfile").click(); });
   $("csvfile").addEventListener("change", function () { importCsv(this.files[0]); });
+  $("queue").addEventListener("change", function () {
+    round = 1;
+    $("round").value = "1";
+    index = 0;
+    rebuild();
+  });
   $("round").addEventListener("change", function () {
     round = Number(this.value); index = 0; rebuild();
   });
@@ -518,7 +565,8 @@
   }).then(function (result) {
     if (result.schema_version !== 1 || result.direction !== "github_gif_to_r2_gif" ||
         result.github_count !== 1168 || !Array.isArray(result.items) ||
-        result.items.length !== 1168) {
+        result.items.length !== 1168 || result.visual_queue_count !== 419 ||
+        result.items.filter(function (item) { return Array.isArray(item.visual_candidates); }).length !== 419) {
       throw new Error("Неподдерживаемая версия или неполный список кандидатов.");
     }
     if (!/^[0-9a-f]{40}$/.test(result.github_ref) ||
