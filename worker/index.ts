@@ -27,6 +27,7 @@ import { handleCloudSchedulingConfirm } from './lib/cloud-scheduling-api';
 export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coordinator';
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
+import { sendWorkoutReminders } from './lib/workout-reminders';
 
 type Role = 'coach' | 'client';
 
@@ -661,6 +662,16 @@ export default {
 
       console.error('Unhandled API error', error);
       return json({ error: { code: 'INTERNAL_ERROR', message: 'Unexpected server error' } }, { status: 500 });
+    }
+  },
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    try {
+      // Real delivery time, not the nominal Cron timestamp, prevents stale reminders after delays.
+      await sendWorkoutReminders(env, Date.now());
+    } catch {
+      // No tokens, personal data, cloud payloads or raw upstream errors in cron logs.
+      console.error('WORKOUT_REMINDERS_TICK_FAILED');
+      throw new Error('WORKOUT_REMINDERS_TICK_FAILED');
     }
   },
 } satisfies ExportedHandler<Env>;
