@@ -62,21 +62,66 @@ jobs:
               assert all(c["source"] == "semantic" for c in candidates[1:])
               assert len({c["id"] for c in candidates}) == len(candidates)
               assert all(1 <= c["rank"] <= 5 for c in candidates)
-          # Legacy first-round title parity is still required for the 749 other
-          # exercises; the 419 visual-first screens have their own checks above.
-          import sys
-          sys.path.insert(0, "tools/gif-review-pages")
-          from build_data import words
-          count = 0
-          for item in d["items"]:
-              if "visual_candidates" in item:
-                  continue
-              expected = {ident for ident, label in d["r2_index"].items()
-                          if set(words(item["name"])) == set(words(label))
-                          and words(item["name"])}
-              if expected:
-                  count += 1
-                  assert expected.intersection(c["id"] for c in item["candidates"][:5]), item["gif"]
-          print("Exact-name source exercises in Top-5:", count)
+          # The remaining 749 use the pinned independent visual report, not the
+          # legacy semantic-first ranking (which is still retained for later rounds).
+          from collections import Counter
+          remaining = [item for item in d["items"] if "remaining_candidates" in item]
+          assert d["remaining_queue_count"] == len(remaining) == 749
+          assert {item["gif"] for item in queue}.isdisjoint(
+              {item["gif"] for item in remaining}
+          )
+          tiers = Counter(item["remaining_priority"]["tier"] for item in remaining)
+          assert tiers == {0: 530, 1: 213, 2: 6}, tiers
+          assert all(0 <= len(item["remaining_candidates"]) <= 5 for item in remaining)
+          assert all(len({c["id"] for c in item["remaining_candidates"]}) ==
+                     len(item["remaining_candidates"]) for item in remaining)
+          with Path("audit-artifact/review.csv").open(newline="", encoding="utf-8-sig") as source:
+              reviews = {}
+              for row in csv.DictReader(source):
+                  gif = row["github_gif"]
+                  if gif in visual:
+                      continue
+                  candidate = (float(row["score"]), row["r2_gif"].removesuffix(".gif"))
+                  old = reviews.get(gif)
+                  if old is None or (-candidate[0], candidate[1]) < (-old[0], old[1]):
+                      reviews[gif] = candidate
+          with Path("audit-artifact/pose-candidates.csv").open(newline="", encoding="utf-8-sig") as source:
+              poses = {}
+              for row in csv.DictReader(source):
+                  gif = row["github_gif"]
+                  if gif in visual or gif in reviews or not row["pose_score"]:
+                      continue
+                  candidate = (float(row["pose_score"]), row["r2_gif"].removesuffix(".gif"))
+                  old = poses.get(gif)
+                  if old is None or (-candidate[0], candidate[1]) < (-old[0], old[1]):
+                      poses[gif] = candidate
+          for item in remaining:
+              candidates = item["remaining_candidates"]
+              priority = item["remaining_priority"]
+              gif = item["gif"]
+              if gif in reviews:
+                  score, ident = reviews[gif]
+                  assert priority["tier"] == 0
+                  assert candidates[0]["source"] == "visual_review"
+                  assert candidates[0]["id"] == ident
+                  assert abs(priority["score"] - score) < 0.00001
+              elif gif in poses:
+                  score, ident = poses[gif]
+                  assert priority["tier"] == 1
+                  assert candidates[0]["source"] == "pose_position"
+                  assert candidates[0]["id"] == ident
+                  assert abs(priority["score"] - score) < 0.00001
+              else:
+                  assert priority == {"tier": 2, "score": None, "channel": "none"}
+                  assert not candidates or candidates[0]["source"] == "semantic"
+              assert all(c["source"] == "semantic" for c in candidates[1:])
+          # Sort keys used by the UI: score desc inside each distinct evidence tier.
+          ordered = sorted(remaining, key=lambda item: (
+              item["remaining_priority"]["tier"],
+              -(item["remaining_priority"]["score"] or 0),
+              item["gif"]
+          ))
+          assert len(ordered) == 749
+          print("Remaining queue tiers:", dict(tiers))
           assert Path("gif-review-preview/evidence.csv").stat().st_size > 1000
           PY
