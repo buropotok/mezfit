@@ -1,12 +1,13 @@
 # GIF Manual Matching — operator-only GitHub Pages tool
 
-Goal: first manually review the frozen 419 visual-only provisional pairs from
-the pinned GIF audit. For each FitnessProgramer GIF, display its independent
-visual-audit partner first, then up to four different GymVisual/R2 candidates
-retrieved by English title, instructions, equipment and muscles. No match is
-automatically confirmed. The other 749 GIFs remain accessible via the queue
-selector; the original 1,168/1,324 inventories are unchanged.
-This never changes exercise definitions, R2, the app, or Dexie Cloud.
+Goal: support a human-confirmed review of the **749 remaining FitnessProgramer GIFs**
+after the owner confirmed all 419 original visually selected pairs. The default
+queue now sorts these 749 by available visual evidence, strongest first.
+For every source GIF it presents the highest-scored visual hypothesis followed
+by up to four independently retrieved metadata alternatives. The 419-pair
+queue remains accessible separately. No decisions are written automatically.
+The original 1,168/1,324 inventories are unchanged, as are exercise data,
+R2, the app, and Dexie Cloud.
 
 ## Hosting and deployment
 
@@ -59,10 +60,23 @@ occupies that address without explicitly deciding to replace that site.
   muscles. Alternatives with explicit apparatus/movement contradictions are not
   promoted. The list may contain fewer than five total cards if the evidence is
   weak; we do not fill slots with unrelated exercises.
-- The existing v2 ranker remains available for the other 749 exercises and for
-  later rounds, but its candidates cannot displace the first-round visual primary
-  or the four metadata alternatives in the dedicated review queue. Later rounds
-  omit already displayed first-round choices. All suggestions remain human-only.
+- **Remaining visual queue v4:** exclude the original 419 from the default
+  review queue. The other 749 are shown in deterministic evidence tiers:
+  **530** have a fused appearance/motion score from `review.csv` (score descending);
+  **213** have no reported fused score but have independent static-pose evidence
+  from `pose-candidates.csv` (pose score descending, separately labelled);
+  **6** have neither measure, and are placed last without an invented score.
+  This is *not* one numerically comparable probability scale. The last six may
+  still have semantically retrieved candidates, which are never presented as
+  visual matches.
+- In each remaining GIF, the highest-scoring candidate in its evidence channel
+  is **card #1** even if metadata contradicts the image (the conflict is shown
+  to the reviewer). Up to four alternatives follow from the existing semantic
+  ranker. Where no visual candidate exists, up to five independent metadata
+  alternatives can appear; some GIFs may have no plausible options at all.
+- The legacy v2 top-30 remains available for follow-up rounds and the historic
+  evidence export; candidates already shown in round one are omitted from later
+  rounds. No human verification is inferred from a visual score.
 - evidence.csv exposes semantic-title scores, category and independent
   visual support. Scores are NOT calibrated match probabilities.
 - The v3 alternatives use deterministic text token overlap and typed metadata;
@@ -74,13 +88,14 @@ occupies that address without explicitly deciding to replace that site.
   authorize an automatic match. Prior audit label proposals, e.g. renaming
   Wheel Run, are never applied. Actual matching decisions are human.
 - Generated candidates.json retains all 1,168 GH exercises and the legacy
-  top 30 per GIF for backward compatibility. The 419 visual items additionally
-  have `visual_candidates` (1 visual primary + 0–4 metadata alternatives);
-  this replaces **only** their first-round display. The remaining rounds use
-  their legacy ranked candidates, omitting first-round choices. evidence.csv
-  retains the original v2 scoring evidence. Workflow also publishes the
-  downloadable gif-review-candidates artifact. A new fingerprint identifies the
-  review ordering; old local decisions remain in their earlier revision.
+  top 30 per GIF for backward compatibility. The 419 original visual items
+  still have `visual_candidates`, and the other 749 now have
+  `remaining_candidates` and `remaining_priority` with evidence type, score
+  or explicit null. Only the **first-round** display changes. Later rounds
+  use previously generated candidates, excluding first-round cards.
+  `evidence.csv` remains unchanged in meaning. A new fingerprint identifies
+  the revised order; old local decisions remain in their own revision.
+  Confirmed older decisions may be imported or explicitly migrated.
 - The published ranking includes the 1,324-item R2 identifier lookup
   exclusively for validating and displaying owner-verified historical matches.
   An owner choice can remain confirmed even if a later ranking no longer
@@ -88,11 +103,12 @@ occupies that address without explicitly deciding to replace that site.
 
 ## Operator use
 
-1. The default queue is **419 визуальных пар**. For every source GIF the first
-   candidate comes from the visual-only audit. Up to four candidates on its
-   right come from name/instruction/equipment/muscle retrieval. Confirm a GIF
-   only after looking at the animations; the choice saves locally and advances.
-   The separate queue selector can show the other 749 or all 1,168 exercises.
+1. The default queue is **749 оставшихся · по сходству**. Sources with
+   comparable fused GIF scores appear first, sorted by score descending,
+   followed by pose-only sources and those without visual evidence. For a
+   source with visual evidence its best visual candidate is first, followed
+   by up to four metadata alternatives. The queue selector still exposes the
+   original 419 and all 1,168 exercises. No match is silently accepted.
 2. If no shown GIF matches, click "Нет совпадения среди показанных". Such
    items are eligible for round 2; a skipped item does not advance to the next
    round. A visual-audit metadata conflict is a warning, not an automatic
@@ -125,6 +141,24 @@ is not a durable backup.
 status is one of matched, none, skip. Multiple GH GIFs may select the same R2 GIF;
 the tool does not enforce 1:1 matching. Unreviewed GH GIFs have no CSV row and
 are not silently treated as nonmatches.
+
+
+## Data integrity and score interpretation
+
+The two evidence tiers must not be mixed into a fictitious common probability.
+The source report did not retain fused appearance/motion scores below the 0.62
+review threshold for 219 GitHub GIFs. Computing an exact fused-score rank for
+all 749 therefore requires a **new** audit run that explicitly exports the
+below-threshold best candidate scores. The current site transparently places
+that group after the 530 originally scored items, using pose only as a fallback.
+The original 419 remain available, regardless of whether their manual decisions
+were imported into the local browser. Owner confirmation in chat does not
+silently populate `localStorage` or mutate exercise catalogue records.
+
+The GitHub Actions input artifact (run 41322174596) has retention; if it
+expires, publishing must use a new explicitly reviewed source artifact rather
+than fabricate or silently change scores. Review and export existing decisions
+before any source revision.
 
 ## Security, scope and review
 
