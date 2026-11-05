@@ -72,7 +72,7 @@
   <header class="top">
     <div>
       <h1>Ручная сверка упражнений</h1>
-      <p class="sub">Сначала 419 результатов визуального сравнения GIF. Первый кандидат найден без названий; рядом — до четырёх вариантов по характеристикам. Выбор сохраняется в браузере.</p>
+      <p class="sub">Сначала 749 оставшихся GIF, отсортированных по визуальным свидетельствам. Первым показывается лучший доступный визуальный кандидат, рядом — до четырёх альтернатив по характеристикам. Оценки разных визуальных каналов не являются вероятностями.</p>
     </div>
     <div class="toolbar">
       <button id="export" class="button button-primary" type="button">Выгрузить CSV</button>
@@ -87,8 +87,8 @@
     <div class="toolbar">
       <label for="queue">Очередь</label>
       <select id="queue">
-        <option value="visual">419 визуальных пар</option>
-        <option value="other">Остальные упражнения</option>
+        <option value="remaining">749 оставшихся · по сходству</option>
+        <option value="visual">419 первоначальных пар</option>
         <option value="all">Все упражнения</option>
       </select>
       <label for="round">Раунд</label><select id="round" disabled></select>
@@ -180,13 +180,14 @@
   function inQueue(item) {
     var queue = $("queue").value;
     if (queue === "visual") return Array.isArray(item.visual_candidates);
-    if (queue === "other") return !Array.isArray(item.visual_candidates);
+    if (queue === "remaining") return Array.isArray(item.remaining_candidates);
     return true;
   }
   function roundCandidates(item, n) {
-    if (Array.isArray(item.visual_candidates)) {
-      if (n === 1) return item.visual_candidates;
-      var selected = new Set(item.visual_candidates.map(function (c) { return c.id; }));
+    var firstRound = item.visual_candidates || item.remaining_candidates;
+    if (Array.isArray(firstRound)) {
+      if (n === 1) return firstRound;
+      var selected = new Set(firstRound.map(function (c) { return c.id; }));
       var followUps = item.candidates.filter(function (c) { return !selected.has(c.id); });
       return followUps.slice((n - 2) * data.round_size, (n - 1) * data.round_size);
     }
@@ -197,7 +198,8 @@
       var prior = getDecision(item.gif, r);
       if (!prior || prior.status !== "none") return false;
     }
-    return roundCandidates(item, round).length > 0;
+    // Even a source with no visual/semantic candidates must remain reviewable in round 1.
+    return round === 1 || roundCandidates(item, round).length > 0;
   }
   function filtered() {
     var q = $("search").value.trim().toLowerCase();
@@ -210,10 +212,24 @@
       if (f !== "all") return d && d.status === f;
       return true;
     }).sort(function (a, b) {
-      // Show the strongest visual-audit hypotheses first in this review queue.
-      if ($("queue").value !== "visual") return 0;
-      return b.visual_candidates[0].audit_score - a.visual_candidates[0].audit_score ||
-        a.gif.localeCompare(b.gif);
+      var queue = $("queue").value;
+      if (queue === "visual") {
+        return b.visual_candidates[0].audit_score - a.visual_candidates[0].audit_score ||
+          a.gif.localeCompare(b.gif);
+      }
+      // Never compare fused GIF scores with MediaPipe pose scores as if calibrated.
+      if (queue === "remaining" || queue === "all") {
+        var aRemaining = !!a.remaining_priority, bRemaining = !!b.remaining_priority;
+        if (aRemaining !== bRemaining) return aRemaining ? -1 : 1;
+        if (aRemaining && bRemaining) {
+          return a.remaining_priority.tier - b.remaining_priority.tier ||
+            (b.remaining_priority.score || 0) - (a.remaining_priority.score || 0) ||
+            a.gif.localeCompare(b.gif);
+        }
+        return b.visual_candidates[0].audit_score - a.visual_candidates[0].audit_score ||
+          a.gif.localeCompare(b.gif);
+      }
+      return a.gif.localeCompare(b.gif);
     });
   }
   function rebuild(keepGif) {
@@ -259,27 +275,46 @@
     $("gh-image").alt = "Исходная GIF: " + item.name;
     $("gh-name").textContent = item.name;
     $("gh-file").textContent = item.gif;
-    $("gh-equipment").textContent = item.visual_candidates ?
-      "Оборудование источника: " + (item.visual_candidates[0].source_equipment || "не определено") : "";
+    var firstRound = roundCandidates(item, 1);
+    $("gh-equipment").textContent = firstRound[0] && firstRound[0].source_equipment ?
+      "Оборудование источника: " + firstRound[0].source_equipment : "";
+    if (item.remaining_priority) {
+      var p = item.remaining_priority;
+      $("gh-equipment").textContent +=
+        (firstRound[0] && firstRound[0].source_equipment ? " · " : "") +
+        (p.tier === 0 ? "Оценка по GIF: " + p.score.toFixed(3) :
+         p.tier === 1 ? "Оценка по позе: " + p.score.toFixed(3) + " (другая шкала)" :
+         "Визуальная оценка недоступна");
+    }
     $("position").textContent = (index + 1) + " / " + subset.length + " · раунд " + round;
     $("prev").disabled = index === 0;
     $("next").disabled = index === subset.length - 1;
     var candidates = $("candidates");
     candidates.textContent = "";
     var onscreen = roundCandidates(item, round);
+    if (!onscreen.length) {
+      candidates.appendChild(textNode("p", "muted",
+        "Надёжных кандидатов в этом раунде нет. Можно отметить отсутствие совпадения или пропустить."));
+    }
     onscreen.forEach(function (candidate, displayIndex) {
       var active = decision && decision.status === "matched" && decision.r2_id === candidate.id;
       var button = document.createElement("button");
       button.type = "button";
-      var isVisual = candidate.source === "visual_audit";
+      var isVisual = ["visual_audit", "visual_review", "pose_position"].includes(candidate.source);
       button.className = "candidate" + (isVisual ? " visual-primary" : "") + (active ? " selected" : "");
       button.setAttribute("aria-pressed", active ? "true" : "false");
-      var displayedRank = item.visual_candidates ?
+      var displayedRank = (item.visual_candidates || item.remaining_candidates) ?
         (round - 1) * data.round_size + displayIndex + 1 : candidate.rank;
       button.appendChild(textNode("span", "rank", "#" + displayedRank + (active ? " ✓" : "")));
-      if (isVisual) {
-        button.appendChild(textNode("span", "candidate-source", "Визуальный анализ · " +
+      if (candidate.source === "visual_audit") {
+        button.appendChild(textNode("span", "candidate-source", "419 первоначальных пар · " +
           candidate.audit_score.toFixed(3) + " (оценка, не вероятность)"));
+      } else if (candidate.source === "visual_review") {
+        button.appendChild(textNode("span", "candidate-source", "Лучший GIF-кандидат · " +
+          candidate.similarity_score.toFixed(3) + " (оценка, не вероятность)"));
+      } else if (candidate.source === "pose_position") {
+        button.appendChild(textNode("span", "candidate-source", "Лучший кандидат по позе · " +
+          candidate.similarity_score.toFixed(3) + " (отдельная шкала)"));
       } else if (candidate.source === "semantic") {
         button.appendChild(textNode("span", "candidate-source", "Альтернатива по характеристикам"));
       }
@@ -571,7 +606,9 @@
     if (result.schema_version !== 1 || result.direction !== "github_gif_to_r2_gif" ||
         result.github_count !== 1168 || !Array.isArray(result.items) ||
         result.items.length !== 1168 || result.visual_queue_count !== 419 ||
-        result.items.filter(function (item) { return Array.isArray(item.visual_candidates); }).length !== 419) {
+        result.remaining_queue_count !== 749 ||
+        result.items.filter(function (item) { return Array.isArray(item.visual_candidates); }).length !== 419 ||
+        result.items.filter(function (item) { return Array.isArray(item.remaining_candidates); }).length !== 749) {
       throw new Error("Неподдерживаемая версия или неполный список кандидатов.");
     }
     if (!/^[0-9a-f]{40}$/.test(result.github_ref) ||
