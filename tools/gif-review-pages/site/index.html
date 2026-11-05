@@ -267,14 +267,16 @@
     var candidates = $("candidates");
     candidates.textContent = "";
     var onscreen = roundCandidates(item, round);
-    onscreen.forEach(function (candidate) {
+    onscreen.forEach(function (candidate, displayIndex) {
       var active = decision && decision.status === "matched" && decision.r2_id === candidate.id;
       var button = document.createElement("button");
       button.type = "button";
       var isVisual = candidate.source === "visual_audit";
       button.className = "candidate" + (isVisual ? " visual-primary" : "") + (active ? " selected" : "");
       button.setAttribute("aria-pressed", active ? "true" : "false");
-      button.appendChild(textNode("span", "rank", "#" + candidate.rank + (active ? " ✓" : "")));
+      var displayedRank = item.visual_candidates ?
+        (round - 1) * data.round_size + displayIndex + 1 : candidate.rank;
+      button.appendChild(textNode("span", "rank", "#" + displayedRank + (active ? " ✓" : "")));
       if (isVisual) {
         button.appendChild(textNode("span", "candidate-source", "Визуальный анализ · " +
           candidate.audit_score.toFixed(3) + " (оценка, не вероятность)"));
