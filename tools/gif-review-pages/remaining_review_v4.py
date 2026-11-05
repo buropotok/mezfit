@@ -8,9 +8,11 @@ missing; metadata may still propose alternatives but never invents a score.
 import csv
 import math
 from pathlib import Path
+from collections import Counter
 
 from visual_review_v3 import (
     _compatibility,
+    _terms,
     equipment_tags,
     load_gh_metadata,
     semantic_alternatives,
@@ -68,6 +70,9 @@ def build_remaining_review(audit_dir, gh_names, r2, exercise_root,
     pose = _best_visual_rows(audit / "pose-candidates.csv", remaining - set(visual),
                              r2, "pose_score")
     gh_metadata = load_gh_metadata(exercise_root, remaining)
+    document_frequency = Counter()
+    for row in r2.values():
+        document_frequency.update(_terms(row.get("instructions_en", "")))
     result = {}
     for gif in sorted(remaining):
         source = gh_metadata.get(gif, {"name": gh_names[gif]})
@@ -105,6 +110,7 @@ def build_remaining_review(audit_dir, gh_names, r2, exercise_root,
             excluded_ids={ident} if ident is not None else set(),
             limit=4 if ident is not None else 5,
             start_rank=2 if ident is not None else 1,
+            document_frequency=document_frequency,
         ))
         result[gif] = {
             "candidates": candidates,
