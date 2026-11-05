@@ -172,6 +172,8 @@ def build_visual_review(audit_dir, gh_names, r2, exercise_root, words, title_sco
                 "equipment": primary.get("equipment", ""), "rank": 1,
                 "source": "visual_audit", "channels": ["Визуальный аудит"],
                 "audit_score": round(float(row["score"]), 5),
+                "source_equipment": ", ".join(sorted(
+                    equipment_tags(source.get("equipment"), source.get("name", "")))),
                 "metadata_warnings": warnings
             }]
             alternatives = []
