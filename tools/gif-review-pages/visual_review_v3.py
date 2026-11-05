@@ -140,6 +140,64 @@ def load_gh_metadata(exercise_root, available_gifs):
     return result
 
 
+def semantic_alternatives(source, source_name, r2, words, title_score,
+                          excluded_ids=(), limit=4, start_rank=2,
+                          document_frequency=None):
+    """Independently retrieve compatible metadata candidates for a source GIF.
+
+    No semantically incompatible candidate is added just to fill a card slot.
+    """
+    if document_frequency is None:
+        document_frequency = Counter()
+        for row in r2.values():
+            document_frequency.update(_terms(row.get("instructions_en", "")))
+    src_tokens = words(source_name)
+    src_description = source.get("how_to") or ""
+    src_muscles = _primary_muscles(source)
+    ignored = set(excluded_ids)
+    alternatives = []
+    for alt_id, candidate in r2.items():
+        if alt_id in ignored:
+            continue
+        warnings, same_equipment = _compatibility(source, candidate, words)
+        if warnings:
+            continue
+        name_sim = title_score(src_tokens, words(candidate["name"]))
+        technique = _technique_score(src_description,
+                                     candidate.get("instructions_en", ""),
+                                     document_frequency, len(r2))
+        target_muscles = _primary_muscles(candidate)
+        muscle = (len(src_muscles & target_muscles) /
+                  len(src_muscles | target_muscles)) if (src_muscles and target_muscles) else 0.0
+        if name_sim < 0.34 and not (technique >= 0.22 and muscle >= 0.15):
+            continue
+        rating = (0.60 * name_sim + 0.24 * technique +
+                  0.10 * muscle + 0.06 * int(same_equipment))
+        signals = []
+        if name_sim >= 0.34:
+            signals.append("Название")
+        if technique >= 0.14:
+            signals.append("Техника")
+        if same_equipment:
+            signals.append("Оборудование")
+        if muscle >= 0.15:
+            signals.append("Мышцы")
+        alternatives.append((rating, alt_id, candidate, signals))
+    alternatives.sort(key=lambda x: (-x[0], x[1]))
+    return [
+        {
+            "id": alt_id, "name": candidate["name"],
+            "equipment": candidate.get("equipment", ""),
+            "rank": index, "source": "semantic",
+            "channels": signals,
+            "semantic_score": round(rating, 6),
+            "metadata_warnings": []
+        }
+        for index, (rating, alt_id, candidate, signals) in
+        enumerate(alternatives[:limit], start_rank)
+    ]
+
+
 def build_visual_review(audit_dir, gh_names, r2, exercise_root, words, title_score):
     """Return per-GH visual candidate lists with the audited pair always first."""
     gh_metadata = load_gh_metadata(exercise_root, set(gh_names))
@@ -176,48 +234,10 @@ def build_visual_review(audit_dir, gh_names, r2, exercise_root, words, title_sco
                     equipment_tags(source.get("equipment"), source.get("name", "")))),
                 "metadata_warnings": warnings
             }]
-            alternatives = []
-            src_tokens = words(gh_names[gif])
-            src_description = source.get("how_to") or ""
-            src_muscles = _primary_muscles(source)
-            for alt_id, candidate in r2.items():
-                if alt_id == ident:
-                    continue
-                warnings, same_equipment = _compatibility(source, candidate, words)
-                if warnings:
-                    continue
-                name_sim = title_score(src_tokens, words(candidate["name"]))
-                technique = _technique_score(src_description,
-                                             candidate.get("instructions_en", ""),
-                                             document_frequency, source_count)
-                target_muscles = _primary_muscles(candidate)
-                muscle = (len(src_muscles & target_muscles) /
-                          len(src_muscles | target_muscles)) if (src_muscles and target_muscles) else 0.0
-                # A modest generic description overlap alone never fills a card.
-                if name_sim < 0.34 and not (technique >= 0.22 and muscle >= 0.15):
-                    continue
-                rating = (0.60 * name_sim + 0.24 * technique +
-                          0.10 * muscle + 0.06 * int(same_equipment))
-                signals = []
-                if name_sim >= 0.34:
-                    signals.append("Название")
-                if technique >= 0.14:
-                    signals.append("Техника")
-                if same_equipment:
-                    signals.append("Оборудование")
-                if muscle >= 0.15:
-                    signals.append("Мышцы")
-                alternatives.append((rating, alt_id, candidate, signals))
-            alternatives.sort(key=lambda x: (-x[0], x[1]))
-            for index, (rating, alt_id, candidate, signals) in enumerate(alternatives[:4], 2):
-                candidates.append({
-                    "id": alt_id, "name": candidate["name"],
-                    "equipment": candidate.get("equipment", ""),
-                    "rank": index, "source": "semantic",
-                    "channels": signals,
-                    "semantic_score": round(rating, 6),
-                    "metadata_warnings": []
-                })
+            candidates.extend(semantic_alternatives(
+                source, gh_names[gif], r2, words, title_score,
+                excluded_ids={ident}, document_frequency=document_frequency
+            ))
             result[gif] = candidates
     if len(result) != EXPECTED_VISUAL_PAIRS:
         raise ValueError("Expected %d fixed visual pairs, received %d" %
