@@ -34,16 +34,18 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const savingRef = useRef(false);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
+    mountedRef.current = true;
     savingRef.current = false;
     setLoading(true);
     setError('');
     if (!repo) {
       setLoading(false);
       setError('Не удалось подключиться к личным настройкам.');
-      return () => { active = false; };
+      return () => { active = false; mountedRef.current = false; };
     }
     const subscription = repo.observe(
       next => {
@@ -57,7 +59,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
         setError('Не удалось загрузить настройки уведомлений.');
       },
     );
-    return () => { active = false; subscription.unsubscribe(); };
+    return () => { active = false; mountedRef.current = false; subscription.unsubscribe(); };
   }, [repo]);
 
   const change = async (key: WorkoutReminderPreference) => {
@@ -71,11 +73,13 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
     try {
       await repo.set(key, enabled);
     } catch {
-      setValues(previous);
-      setError('Не удалось сохранить настройку. Повторите попытку.');
+      if (mountedRef.current) {
+        setValues(previous);
+        setError('Не удалось сохранить настройку. Повторите попытку.');
+      }
     } finally {
       savingRef.current = false;
-      setSaving(false);
+      if (mountedRef.current) setSaving(false);
     }
   };
 
