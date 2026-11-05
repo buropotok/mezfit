@@ -7,8 +7,8 @@ missing; metadata may still propose alternatives but never invents a score.
 """
 import csv
 import math
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
 
 from visual_review_v3 import (
     _compatibility,
@@ -76,7 +76,6 @@ def build_remaining_review(audit_dir, gh_names, r2, exercise_root,
     result = {}
     for gif in sorted(remaining):
         source = gh_metadata.get(gif, {"name": gh_names[gif]})
-        primary = None
         if gif in visual:
             similarity, ident = visual[gif]
             tier, channel, kind = 0, "appearance_motion", "visual_review"
