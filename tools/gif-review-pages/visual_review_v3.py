@@ -4,6 +4,7 @@ Semantic alternatives are independently retrieved from full exercise metadata.
 No output of this module changes catalogue records or accepts a match.
 """
 import csv
+import json
 import math
 import re
 from collections import Counter
@@ -84,8 +85,9 @@ def _primary_muscles(record):
     raw = record.get("muscles")
     parts = []
     if isinstance(raw, dict):
-        parts.extend(raw.get("target") or [])
-        parts.extend(raw.get("primary") or [])
+        for field in ("target", "primary"):
+            value = raw.get(field)
+            parts.extend(value if isinstance(value, list) else [value or ""])
     parts.append(record.get("target") or "")
     parts.extend(record.get("muscle_group") if isinstance(record.get("muscle_group"), list)
                  else [record.get("muscle_group") or ""])
@@ -131,7 +133,6 @@ def load_gh_metadata(exercise_root, available_gifs):
     for path in sorted(Path(exercise_root).glob("*/*.json")):
         if path.name == "_manifest.json":
             continue
-        import json
         source = json.loads(path.read_text(encoding="utf-8"))
         gif = source.get("image_id")
         if gif in available_gifs and gif not in result:
