@@ -204,7 +204,6 @@ def build_visual_review(audit_dir, gh_names, r2, exercise_root, words, title_sco
     document_frequency = Counter()
     for row in r2.values():
         document_frequency.update(_terms(row.get("instructions_en", "")))
-    source_count = len(r2)
     seen_ids, seen_gifs = set(), set()
     result = {}
     with (Path(audit_dir) / "matches.csv").open(newline="", encoding="utf-8-sig") as file:
