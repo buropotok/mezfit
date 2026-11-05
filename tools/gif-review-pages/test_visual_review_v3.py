@@ -69,6 +69,7 @@ class VisualQueueTests(unittest.TestCase):
             self.assertEqual(first[0]["id"], "0001")
             self.assertEqual(first[0]["source"], "visual_audit")
             self.assertTrue(first[0]["metadata_warnings"])
+            self.assertEqual(first[0]["source_equipment"], "bodyweight")
             self.assertEqual(len(first), 5)
             self.assertEqual({c["id"] for c in first[1:]},
                              {"0500", "0501", "0502", "0503"})
