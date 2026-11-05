@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { reminderRecipients, sendWorkoutReminders } from './workout-reminders';
 import type { WorkoutReminderEnv } from './workout-reminders';
-import { flexAttributeId } from '../../shared/flex-identifiers';
+import { flexAttributeId, flexValueId } from '../../shared/flex-identifiers';
+import { relationshipMembership } from './dexie-cloud-membership';
 
 const athlete = 'tg:123';
 const coach = 'tg:456';
@@ -72,6 +73,9 @@ describe('scheduled delivery security', () => {
           { ...candidate, cancelledAt: startsAtUtc },
           { ...candidate, inactive: true },
           { ...candidate, entryKind: 'personal_event' },
+          { ...candidate, entryKind: 'invalid_type' },
+          { ...candidate, inactive: 'true' },
+          { ...candidate, startsAtUtc: '2026-11-05T11:00:00' },
           { ...candidate, workoutSessionId: 'session-1' },
         ]);
       }
@@ -179,5 +183,103 @@ describe('personal Cron reminder delivery', () => {
     };
     await sendWorkoutReminders(env, now, fetchUpstream);
     expect(fetchUpstream.mock.calls.every(([url]) => !String(url).includes('/sendMessage'))).toBe(true);
+  });
+});
+
+describe('shared-workout delivery integration', () => {
+  const now = Date.parse('2026-11-05T10:00:00.000Z');
+  const startsAtUtc = '2026-11-05T11:00:00.000Z';
+
+  function fakeDeliveryDb() {
+    const sent = new Set<string>();
+    const prepare = (sql: string) => ({
+      bind: (...args: unknown[]) => ({
+        run: async () => {
+          if (sql.includes('INSERT OR IGNORE INTO workout_reminder_delivery')) {
+            return { meta: { changes: 1 } };
+          }
+          if (sql.includes("SET status = 'sending'")) {
+            const id = String(args[1]);
+            if (sent.has(id)) return { meta: { changes: 0 } };
+            sent.add(id);
+            return { meta: { changes: 1 } };
+          }
+          if (sql.includes('SET status = ?, telegram_message_id = ?')) {
+            return { meta: { changes: 1 } };
+          }
+          throw new Error('Unexpected D1 statement');
+        },
+      }),
+    });
+    return { prepare } as unknown as D1Database;
+  }
+
+  async function setup(format: 'independent' | 'coached', disabledCoach = false, failAthlete = false) {
+    const { realm, members } = await relationshipMembership(coach.slice(3), athlete.slice(3));
+    const occurrence = {
+      id: 'shared-workout-1', realmId: realm.realmId, owner: realm.realmId,
+      athleteUserId: athlete, coachUserId: coach, clientUserId: athlete,
+      startsAtUtc, format, status: 'scheduled', publicationStatus: 'published',
+      workoutSessionId: null,
+    };
+    const sentChats: string[] = [];
+    const fetched = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
+      if (url.endsWith('/token')) return Response.json({ type: 'tokens', accessToken: 'read-only-token' });
+      if (url.includes('/all/workoutOccurrences?')) return Response.json([occurrence]);
+      if (url.includes('/all/realms/')) return Response.json(realm);
+      if (url.includes('/all/members?')) return Response.json(members);
+      if (url.includes('/all/flexValues/')) {
+        const id = decodeURIComponent(url.split('/').at(-1) ?? '');
+        const coachAttribute = flexAttributeId(coach, 'notify_coach_client_workouts');
+        const coachValue = flexValueId({ entityType: 'user', entityId: coach, realmId: coach }, coachAttribute);
+        if (disabledCoach && id === coachValue) {
+          return Response.json({
+            id, realmId: coach, owner: coach, attributeId: coachAttribute,
+            entityType: 'user', entityId: coach, value: false,
+          });
+        }
+        if (failAthlete && id !== coachValue) return new Response(null, { status: 503 });
+        return new Response(null, { status: 404 });
+      }
+      if (url.includes('/all/workoutOccurrences/shared-workout-1')) return Response.json(occurrence);
+      if (url.includes('/sendMessage')) {
+        const payload: unknown = JSON.parse(String(init?.body));
+        if (!payload || typeof payload !== 'object' || !('chat_id' in payload)) throw Error('INVALID_BOT_REQUEST');
+        sentChats.push(String(payload.chat_id));
+        return Response.json({ ok: true, result: { message_id: sentChats.length } });
+      }
+      throw new Error('Unexpected upstream request ' + url.replace(/bot[^/]+/, 'botREDACTED'));
+    });
+    const env: WorkoutReminderEnv = {
+      DB_BINDING: fakeDeliveryDb(), TELEGRAM_BOT_TOKEN: 'secret', TELEGRAM_BOT_USERNAME: 'mezfit_bot',
+      DEXIE_CLOUD_REMINDER_CLIENT_ID: 'readonly', DEXIE_CLOUD_REMINDER_CLIENT_SECRET: 'secret',
+    };
+    return { fetched, env, sentChats };
+  }
+
+  it('notifies only the athlete for an independent assigned workout', async () => {
+    const setupCase = await setup('independent');
+    await sendWorkoutReminders(setupCase.env, now, setupCase.fetched);
+    expect(setupCase.sentChats).toEqual([athlete.slice(3)]);
+  });
+
+  it('notifies both athletes and participating coaches for coached workouts', async () => {
+    const setupCase = await setup('coached');
+    await sendWorkoutReminders(setupCase.env, now, setupCase.fetched);
+    expect(setupCase.sentChats).toEqual([athlete.slice(3), coach.slice(3)]);
+  });
+
+  it('respects the coach opt-out without suppressing the athlete reminder', async () => {
+    const setupCase = await setup('coached', true);
+    await sendWorkoutReminders(setupCase.env, now, setupCase.fetched);
+    expect(setupCase.sentChats).toEqual([athlete.slice(3)]);
+  });
+
+  it('continues with the coach if the athlete preference lookup fails, and reports partial failure', async () => {
+    const setupCase = await setup('coached', false, true);
+    await expect(sendWorkoutReminders(setupCase.env, now, setupCase.fetched))
+      .rejects.toThrow('REMINDERS_PARTIAL_FAILURE');
+    expect(setupCase.sentChats).toEqual([coach.slice(3)]);
   });
 });
