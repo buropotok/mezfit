@@ -76,7 +76,7 @@ class VisualQueueTests(unittest.TestCase):
             self.assertTrue(all(c["source"] == "semantic" for c in first[1:]))
             self.assertTrue(all(c["equipment"] == "body weight" for c in first[1:]))
 
-    def test_does_not_fill_slots_with_unrelated_exercises(self):
+    def test_full_gym_is_not_compatible_apparatus(self):
         self.assertFalse(equipment_tags("Full Gym"))
         self.assertNotEqual(equipment_tags("smith machine"), equipment_tags("no equipment"))
 
