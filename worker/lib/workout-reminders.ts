@@ -181,8 +181,9 @@ async function enabledByPreference(
   if (!record(value) || value.id !== id || value.realmId !== userId || value.owner !== userId
     || value.entityType !== 'user' || value.entityId !== userId
     || value.attributeId !== flexAttributeId(userId, key)
-    || typeof value.value !== 'boolean') return false;
-  return value.value;
+    || (value.value !== null && typeof value.value !== 'boolean')) return false;
+  // A cleared Flex Value is stored as null, matching the client's enabled-by-default rule.
+  return value.value === null ? true : value.value;
 }
 
 async function deliveryKey(occurrence: Occurrence, recipient: Recipient): Promise<string> {
