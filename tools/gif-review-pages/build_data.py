@@ -386,7 +386,6 @@ def generate(audit_dir, output_dir, github_ref):
             "visual_queue": "419 original confirmed-by-owner visual pairs from matches.csv",
             "remaining_queue": "530 fused-score candidates, then pose-position fallback and unevaluated tail",
             "note": "Different score channels are not numerically comparable or match probabilities.",
-
         },
         "items": entries,
     }
