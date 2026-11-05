@@ -14,6 +14,7 @@ import subprocess
 from pathlib import Path
 
 from visual_review_v3 import build_visual_review
+from remaining_review_v4 import build_remaining_review
 
 ROOT = Path(__file__).resolve().parents[2]
 MEDIA = ROOT / "assets" / "media"
@@ -288,6 +289,10 @@ def generate(audit_dir, output_dir, github_ref):
     visual_reviews = build_visual_review(
         audit_dir, gh, r2, ROOT / "assets" / "exercises", words, title_score
     )
+    remaining_reviews = build_remaining_review(
+        audit_dir, gh, r2, ROOT / "assets" / "exercises", words, title_score,
+        confirmed_gifs=set(visual_reviews)
+    )
     # Sparse per-GIF pair registry: only retain retrieved evidence.
     bucket = {name: {} for name in gh}
     load_audit(audit_dir, bucket, set(r2))
@@ -343,12 +348,19 @@ def generate(audit_dir, output_dir, github_ref):
         entry = {"gif": name, "name": title, "candidates": candidates}
         if name in visual_reviews:
             entry["visual_candidates"] = visual_reviews[name]
+        else:
+            remaining = remaining_reviews[name]
+            entry["remaining_candidates"] = remaining["candidates"]
+            entry["remaining_priority"] = remaining["priority"]
         entries.append(entry)
 
     fingerprint = "\n".join(
         item["gif"] + ":" + ",".join(c["id"] for c in item["candidates"]) +
         ":v3=" + ",".join(c["id"] + ":" + c["source"]
-                          for c in item.get("visual_candidates", []))
+                          for c in item.get("visual_candidates", [])) +
+        ":v4=" + ",".join(c["id"] + ":" + c["source"]
+                          for c in item.get("remaining_candidates", [])) +
+        ":priority=" + json.dumps(item.get("remaining_priority"), sort_keys=True)
         for item in entries
     )
     # Identical candidate order alone is insufficient if underlying GH GIFs
@@ -364,14 +376,17 @@ def generate(audit_dir, output_dir, github_ref):
         "round_size": ROUND_SIZE, "max_rounds": ROUND_COUNT,
         "r2_index": {ident: item["name"] for ident, item in r2.items()},
         "visual_queue_count": len(visual_reviews),
+        "remaining_queue_count": len(remaining_reviews),
         "sources": {
             "r2_catalogue": "audit/visual/input/catalogue_stage_{NN}.jsonl",
             "r2_source_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
             "github_exercises": "assets/exercises/**.json",
             "audit": "gif-visual-delta-report (matches/review/pose-candidates)",
-            "ranker": "visual-419 first, independent metadata alternatives v3; legacy rounds retained",
-            "visual_queue": "419 unique provisional pairs from pinned matches.csv; human review only",
-            "note": "Visual audit scores are not match probabilities; metadata cannot silently override the primary.",
+            "ranker": "419 frozen visual pairs plus 749 remaining ranked by evidence v4",
+            "visual_queue": "419 original confirmed-by-owner visual pairs from matches.csv",
+            "remaining_queue": "530 fused-score candidates, then pose-position fallback and unevaluated tail",
+            "note": "Different score channels are not numerically comparable or match probabilities.",
+
         },
         "items": entries,
     }
@@ -382,8 +397,8 @@ def generate(audit_dir, output_dir, github_ref):
         writer = csv.DictWriter(file, fieldnames=list(evidence_rows[0]))
         writer.writeheader()
         writer.writerows(evidence_rows)
-    print("Generated %d GH items and %d evidence pairs; %d candidates per round" %
-          (len(entries), len(evidence_rows), ROUND_SIZE))
+    print("Generated %d GH items, %d visual-first and %d remaining; %d evidence pairs" %
+          (len(entries), len(visual_reviews), len(remaining_reviews), len(evidence_rows)))
 
 
 def main():
