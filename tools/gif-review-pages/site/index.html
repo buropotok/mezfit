@@ -116,6 +116,7 @@
           <img id="gh-image" class="gif" alt="" referrerpolicy="no-referrer">
           <span id="gh-name" class="name"></span>
           <div id="gh-file" class="small"></div>
+          <div id="gh-equipment" class="small"></div>
         </div>
         <div>
           <h2 class="section-title">Первый каталог — выбери совпадение</h2>
@@ -258,6 +259,8 @@
     $("gh-image").alt = "Исходная GIF: " + item.name;
     $("gh-name").textContent = item.name;
     $("gh-file").textContent = item.gif;
+    $("gh-equipment").textContent = item.visual_candidates ?
+      "Оборудование источника: " + (item.visual_candidates[0].source_equipment || "не определено") : "";
     $("position").textContent = (index + 1) + " / " + subset.length + " · раунд " + round;
     $("prev").disabled = index === 0;
     $("next").disabled = index === subset.length - 1;
