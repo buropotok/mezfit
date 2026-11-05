@@ -35,9 +35,11 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
   const [error, setError] = useState('');
   const savingRef = useRef(false);
   const mountedRef = useRef(false);
+  const generationRef = useRef(0);
 
   useEffect(() => {
     let active = true;
+    generationRef.current += 1;
     mountedRef.current = true;
     savingRef.current = false;
     setLoading(true);
@@ -45,7 +47,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
     if (!repo) {
       setLoading(false);
       setError('Не удалось подключиться к личным настройкам.');
-      return () => { active = false; mountedRef.current = false; };
+      return () => { active = false; generationRef.current += 1; mountedRef.current = false; };
     }
     const subscription = repo.observe(
       next => {
@@ -59,7 +61,12 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
         setError('Не удалось загрузить настройки уведомлений.');
       },
     );
-    return () => { active = false; mountedRef.current = false; subscription.unsubscribe(); };
+    return () => {
+      active = false;
+      generationRef.current += 1;
+      mountedRef.current = false;
+      subscription.unsubscribe();
+    };
   }, [repo]);
 
   const change = async (key: WorkoutReminderPreference) => {
@@ -67,19 +74,25 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
     savingRef.current = true;
     setSaving(true);
     setError('');
+    const revision = generationRef.current;
     const previous = values;
     const enabled = !previous[key];
     setValues({ ...previous, [key]: enabled });
     try {
       await repo.set(key, enabled);
+      // A subscription update may have been suppressed while this local write was pending.
+      const latest = await repo.read();
+      if (mountedRef.current && revision === generationRef.current) setValues(latest);
     } catch {
-      if (mountedRef.current) {
+      if (mountedRef.current && revision === generationRef.current) {
         setValues(previous);
         setError('Не удалось сохранить настройку. Повторите попытку.');
       }
     } finally {
-      savingRef.current = false;
-      if (mountedRef.current) setSaving(false);
+      if (revision === generationRef.current) {
+        savingRef.current = false;
+        if (mountedRef.current) setSaving(false);
+      }
     }
   };
 
@@ -100,8 +113,8 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
         </label>
       ))}
       <Text variant="footnote" tone="muted">
-        Для доставки сообщений откройте чат @mezfit_bot и нажмите Start. Настройки сохраняются
-        на устройстве и синхронизируются с Dexie Cloud.
+        Чтобы получать сообщения, <a href="https://t.me/mezfit_bot?start=workout_reminders" target="_blank" rel="noopener noreferrer">откройте бота</a>
+        {' '}и нажмите Start. Настройки сохраняются на устройстве и синхронизируются с Dexie Cloud.
       </Text>
       {cloud?.syncStatus === 'offline' || cloud?.syncStatus === 'error'
         ? <Text variant="footnote" tone="muted">Облачная синхронизация не подтверждена. Изменения вступят в силу после синхронизации.</Text>
