@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { reminderRecipients, sendWorkoutReminders } from './workout-reminders';
 import type { WorkoutReminderEnv } from './workout-reminders';
+import { flexAttributeId } from '../../shared/flex-identifiers';
 
 const athlete = 'tg:123';
 const coach = 'tg:456';
@@ -82,5 +83,101 @@ describe('scheduled delivery security', () => {
     };
     await sendWorkoutReminders(env, Date.now(), fetchUpstream);
     expect(fetchUpstream).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('personal Cron reminder delivery', () => {
+  function fakeDb() {
+    const ledger = new Map<string, { status: string; attempts: number }>();
+    const prepare = (sql: string) => ({
+      bind: (...args: unknown[]) => ({
+        all: async () => ({ results: [{ role: 'coach' }] }),
+        run: async () => {
+          if (sql.includes('INSERT OR IGNORE INTO workout_reminder_delivery')) {
+            const key = String(args[0]);
+            if (!ledger.has(key)) ledger.set(key, { status: 'pending', attempts: 0 });
+            return { meta: { changes: 1 } };
+          }
+          if (sql.includes("SET status = 'sending'")) {
+            const key = String(args[1]);
+            const row = ledger.get(key);
+            if (!row || (row.status !== 'pending' && row.status !== 'retry') || row.attempts >= 3)
+              return { meta: { changes: 0 } };
+            row.status = 'sending';
+            row.attempts += 1;
+            return { meta: { changes: 1 } };
+          }
+          if (sql.includes('SET status = ?, telegram_message_id = ?')) {
+            const row = ledger.get(String(args[5]));
+            if (row) row.status = String(args[0]);
+            return { meta: { changes: row ? 1 : 0 } };
+          }
+          throw new Error('Unexpected D1 mutation');
+        },
+      }),
+    });
+    return { db: { prepare } as unknown as D1Database, ledger };
+  }
+
+  it('delivers to a Coach athlete once and does not replay it at a second Cron tick', async () => {
+    const now = Date.parse('2026-11-05T10:00:00.000Z');
+    const row = {
+      id: 'personal-workout', owner: athlete, ...personal,
+      startsAtUtc: '2026-11-05T11:00:00.000Z',
+      status: 'scheduled', workoutSessionId: null, publicationStatus: 'published',
+    };
+    const telegramCalls: string[] = [];
+    const fetchUpstream = vi.fn<typeof fetch>(async input => {
+      const url = String(input);
+      if (url.endsWith('/token')) return Response.json({ type: 'tokens', accessToken: 'read-only-token' });
+      if (url.includes('/all/workoutOccurrences?')) return Response.json([row]);
+      if (url.includes('/all/workoutOccurrences/personal-workout')) return Response.json(row);
+      if (url.includes('/all/flexValues/')) return new Response(null, { status: 404 });
+      if (url.includes('/sendMessage')) {
+        telegramCalls.push(url);
+        return Response.json({ ok: true, result: { message_id: 22 } });
+      }
+      throw new Error('Unexpected upstream request');
+    });
+    const fake = fakeDb();
+    const env: WorkoutReminderEnv = {
+      DB_BINDING: fake.db, TELEGRAM_BOT_TOKEN: 'secret', TELEGRAM_BOT_USERNAME: 'mezfit_bot',
+      DEXIE_CLOUD_REMINDER_CLIENT_ID: 'readonly', DEXIE_CLOUD_REMINDER_CLIENT_SECRET: 'secret',
+    };
+
+    await sendWorkoutReminders(env, now, fetchUpstream);
+    await sendWorkoutReminders(env, now + 5 * 60 * 1000, fetchUpstream);
+
+    expect(telegramCalls).toHaveLength(1);
+    expect([...fake.ledger.values()]).toEqual([{ status: 'sent', attempts: 1 }]);
+  });
+
+  it('suppresses reminders when the personal preference is off', async () => {
+    const now = Date.parse('2026-11-05T10:00:00.000Z');
+    const row = {
+      id: 'personal-workout', owner: athlete, ...personal,
+      startsAtUtc: '2026-11-05T11:00:00.000Z',
+      status: 'scheduled', workoutSessionId: null, publicationStatus: 'published',
+    };
+    const fetchUpstream = vi.fn<typeof fetch>(async input => {
+      const url = String(input);
+      if (url.endsWith('/token')) return Response.json({ type: 'tokens', accessToken: 'read-only-token' });
+      if (url.includes('/all/workoutOccurrences?')) return Response.json([row]);
+      if (url.includes('/all/flexValues/')) {
+        const id = decodeURIComponent(url.split('/').at(-1) ?? '');
+        return Response.json({
+          id, realmId: athlete, owner: athlete, entityType: 'user', entityId: athlete,
+          attributeId: flexAttributeId(athlete, 'notify_coach_own_workouts'),
+          value: false,
+        });
+      }
+      throw new Error('Disabled reminder must not read the occurrence again or call Telegram');
+    });
+    const env: WorkoutReminderEnv = {
+      DB_BINDING: fakeDb().db, TELEGRAM_BOT_TOKEN: 'secret', TELEGRAM_BOT_USERNAME: 'mezfit_bot',
+      DEXIE_CLOUD_REMINDER_CLIENT_ID: 'readonly', DEXIE_CLOUD_REMINDER_CLIENT_SECRET: 'secret',
+    };
+    await sendWorkoutReminders(env, now, fetchUpstream);
+    expect(fetchUpstream.mock.calls.every(([url]) => !String(url).includes('/sendMessage'))).toBe(true);
   });
 });
