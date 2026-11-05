@@ -148,7 +148,8 @@ async function verifiedRelationship(
   const members = rawMembers.map(restoredMember);
   if (members.some(member => member === null)) return false;
   return checkApprovedAssignedPair({
-    realm: { realmId: String(realm.realmId), owner: realm.owner, name: realm.name },
+    realm: { realmId: typeof realm.realmId === 'string' ? realm.realmId : '',
+      owner: realm.owner, name: typeof realm.name === 'string' ? realm.name : undefined },
     members: members.filter((member): member is RelationshipMemberView => member !== null),
     coachUserId: row.coachUserId,
     clientUserId: row.clientUserId,
