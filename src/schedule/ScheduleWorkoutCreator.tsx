@@ -180,7 +180,7 @@ export function ScheduleWorkoutCreator({ intent, role, actor, onClose, onCreated
       </SpotlightSurface>
     </MezfitBottomSheet>
     <KonstaToast opened={!suspended && step === 'details' && editToastVersion > 0} position="center" role="status" aria-live="polite">
-      <Text variant="body">Нажмите {mode === 'start' ? 'Начать тренировку' : 'Запланировать'}, чтобы начать изменение плана тренировки</Text>
+      <Text variant="body">{mode === 'start' ? 'Нажмите Начать тренировку, чтобы перейти к вводу факта' : 'Нажмите Запланировать, чтобы начать изменение плана тренировки'}</Text>
     </KonstaToast>
   </>;
 }
