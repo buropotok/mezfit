@@ -45,13 +45,32 @@ jobs:
           assert len(d["items"]) == 1168
           assert all(len(x["candidates"]) == 30 for x in d["items"])
           assert all(len({c["id"] for c in x["candidates"]}) == 30 for x in d["items"])
-          # A title-identical R2 exercise must be visible in the first five,
-          # even if a visual channel ranks unrelated equipment more highly.
+          # The 419 frozen visual matches are always the first visible card.
+          import csv
+          with Path("audit-artifact/matches.csv").open(newline="", encoding="utf-8-sig") as source:
+              visual = {row["github_gif"]: row["r2_gif"].removesuffix(".gif")
+                        for row in csv.DictReader(source)}
+          assert len(visual) == 419
+          queue = [item for item in d["items"] if "visual_candidates" in item]
+          assert d["visual_queue_count"] == len(queue) == 419
+          assert {item["gif"] for item in queue} == set(visual)
+          for item in queue:
+              candidates = item["visual_candidates"]
+              assert 1 <= len(candidates) <= 5, item["gif"]
+              assert candidates[0]["id"] == visual[item["gif"]], item["gif"]
+              assert candidates[0]["source"] == "visual_audit", item["gif"]
+              assert all(c["source"] == "semantic" for c in candidates[1:])
+              assert len({c["id"] for c in candidates}) == len(candidates)
+              assert all(1 <= c["rank"] <= 5 for c in candidates)
+          # Legacy first-round title parity is still required for the 749 other
+          # exercises; the 419 visual-first screens have their own checks above.
           import sys
           sys.path.insert(0, "tools/gif-review-pages")
           from build_data import words
           count = 0
           for item in d["items"]:
+              if "visual_candidates" in item:
+                  continue
               expected = {ident for ident, label in d["r2_index"].items()
                           if set(words(item["name"])) == set(words(label))
                           and words(item["name"])}

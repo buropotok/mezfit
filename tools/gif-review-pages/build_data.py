@@ -13,6 +13,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from visual_review_v3 import build_visual_review
+
 ROOT = Path(__file__).resolve().parents[2]
 MEDIA = ROOT / "assets" / "media"
 DATA = ROOT / "audit" / "visual" / "input"
@@ -212,6 +214,10 @@ def read_r2():
                 entries[ident] = {
                     "id": ident, "name": d["name_en"],
                     "equipment": d.get("equipment") or "",
+                    "instructions_en": (d.get("instructions") or {}).get("en") or "",
+                    "muscles": d.get("muscles") or {},
+                    "target": d.get("target") or "",
+                    "muscle_group": d.get("muscle_group") or "",
                     "gif": ident + ".gif",
                 }
     if len(entries) != 1324:
@@ -278,6 +284,10 @@ def generate(audit_dir, output_dir, github_ref):
     if not re.fullmatch(r"[a-f0-9]{40}", github_ref):
         raise ValueError("GitHub source must be pinned by a 40-char commit SHA")
     r2, gh = read_r2(), read_gh()
+    # The frozen visual-audit shortlist is preserved independently of the v2 ranking.
+    visual_reviews = build_visual_review(
+        audit_dir, gh, r2, ROOT / "assets" / "exercises", words, title_score
+    )
     # Sparse per-GIF pair registry: only retain retrieved evidence.
     bucket = {name: {} for name in gh}
     load_audit(audit_dir, bucket, set(r2))
@@ -330,10 +340,15 @@ def generate(audit_dir, output_dir, github_ref):
             })
         if len(candidates) < ROUND_SIZE * ROUND_COUNT:
             raise ValueError("Fewer than 30 candidates for " + name)
-        entries.append({"gif": name, "name": title, "candidates": candidates})
+        entry = {"gif": name, "name": title, "candidates": candidates}
+        if name in visual_reviews:
+            entry["visual_candidates"] = visual_reviews[name]
+        entries.append(entry)
 
     fingerprint = "\n".join(
-        item["gif"] + ":" + ",".join(c["id"] for c in item["candidates"])
+        item["gif"] + ":" + ",".join(c["id"] for c in item["candidates"]) +
+        ":v3=" + ",".join(c["id"] + ":" + c["source"]
+                          for c in item.get("visual_candidates", []))
         for item in entries
     )
     # Identical candidate order alone is insufficient if underlying GH GIFs
@@ -348,13 +363,15 @@ def generate(audit_dir, output_dir, github_ref):
         "r2_count": len(r2), "github_count": len(gh),
         "round_size": ROUND_SIZE, "max_rounds": ROUND_COUNT,
         "r2_index": {ident: item["name"] for ident, item in r2.items()},
+        "visual_queue_count": len(visual_reviews),
         "sources": {
             "r2_catalogue": "audit/visual/input/catalogue_stage_{NN}.jsonl",
             "r2_source_sha256": "5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c",
             "github_exercises": "assets/exercises/**.json",
             "audit": "gif-visual-delta-report (matches/review/pose-candidates)",
-            "ranker": "semantic-title-first with independent visual exploration v2",
-            "note": "English-title semantic dictionary + visual/motion retrieval; not an LLM verdict.",
+            "ranker": "visual-419 first, independent metadata alternatives v3; legacy rounds retained",
+            "visual_queue": "419 unique provisional pairs from pinned matches.csv; human review only",
+            "note": "Visual audit scores are not match probabilities; metadata cannot silently override the primary.",
         },
         "items": entries,
     }
