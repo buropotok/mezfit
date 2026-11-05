@@ -38,5 +38,11 @@ describe('role-specific reminder controls', () => {
     expect(screen.getByText('Тренировки с клиентами')).toBeTruthy();
     expect(screen.getByText('Мои самостоятельные тренировки')).toBeTruthy();
     expect(screen.queryByText('Напоминания о тренировках')).toBeNull();
+    const toggles = screen.getAllByRole('checkbox');
+    expect(toggles).toHaveLength(2);
+    // Inaccessible personal storage must not allow a speculative settings edit.
+    expect(toggles.every(toggle => (toggle as HTMLInputElement).disabled)).toBe(true);
+    expect(screen.getByRole('link', { name: 'откройте бота' }).getAttribute('href'))
+      .toBe('https://t.me/mezfit_bot?start=workout_reminders');
   });
 });
