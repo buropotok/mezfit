@@ -116,8 +116,10 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
             <Text variant="body">{field.title}</Text>
             <Text variant="footnote" tone="muted">{field.description}</Text>
           </span>
-          <Toggle component="span" checked={values[field.key]} disabled={!repo || !loaded || loading || saving}
-            onChange={() => { void change(field.key); }} />
+          <span className="workout-reminder-settings__toggle-slot">
+            <Toggle component="span" checked={values[field.key]} disabled={!repo || !loaded || loading || saving}
+              onChange={() => { void change(field.key); }} />
+          </span>
         </label>
       ))}
       <Text variant="footnote" tone="muted">
