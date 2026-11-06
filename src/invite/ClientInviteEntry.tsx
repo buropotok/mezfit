@@ -62,7 +62,7 @@ export function ClientInviteEntry({
 
   return (
     <main className="center">
-      <section className="card">
+      <section className="card stack">
         <Text variant="footnote">Приглашение</Text>
         <Text variant="title" role="heading" aria-level={1}>
           {invite ? `${coachName} приглашает вас в Mezfit`
