@@ -141,7 +141,7 @@ describe('start mode reuses the complete calendar source flow', () => {
     const card = await openDetails();
     const phaseMenu = screen.getByRole('menu', { name: 'Действия с фазой Первая фаза' });
     fireEvent.click(within(phaseMenu).getByRole('button', { name: 'Переименовать' }));
-    expect(screen.getByText('Нажмите Начать тренировку, чтобы начать изменение плана тренировки')).toBeTruthy();
+    expect(screen.getByText('Нажмите Начать тренировку, чтобы перейти к вводу факта')).toBeTruthy();
     const dayMenu = within(card).getByRole('menu', { name: 'Меню дня День А' });
     fireEvent.click(within(dayMenu).getByRole('button', { name: 'Переименовать' }));
     fireEvent.click(within(dayMenu).getByRole('button', { name: 'Закрыть меню' }));
