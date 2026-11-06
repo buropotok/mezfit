@@ -716,22 +716,53 @@ export function createClientInvite(
   });
 }
 
-export function getCurrentInvite(
+function decodeClientInvitePreview(value: unknown): ClientInvitePreview | null {
+  if (value === null) return null;
+  if (!isRecord(value) || !isRecord(value.coach)
+    || (value.label !== null && typeof value.label !== 'string')
+    || typeof value.expiresAt !== 'string'
+    || typeof value.coach.firstName !== 'string'
+    || (value.coach.lastName !== null && typeof value.coach.lastName !== 'string')
+    || (value.coach.username !== null && typeof value.coach.username !== 'string')) {
+    throw new ApiError(502, 'Некорректный ответ приглашения', 'INVALID_API_RESPONSE');
+  }
+  return {
+    label: value.label,
+    expiresAt: value.expiresAt,
+    coach: {
+      firstName: value.coach.firstName,
+      lastName: value.coach.lastName,
+      username: value.coach.username,
+    },
+  };
+}
+
+export async function getCurrentInvite(
   initData: string,
   startParam?: string | null,
 ): Promise<{ invite: ClientInvitePreview | null }> {
   const headers = new Headers();
   if (startParam) headers.set(INVITE_START_PARAM_HEADER, startParam);
-  return apiRequest(initData, '/api/invite/current', { headers });
+  const response = await apiRequest<unknown>(initData, '/api/invite/current', { headers });
+  if (!isRecord(response) || !Object.hasOwn(response, 'invite')) {
+    throw new ApiError(502, 'Некорректный ответ приглашения', 'INVALID_API_RESPONSE');
+  }
+  return { invite: decodeClientInvitePreview(response.invite) };
 }
 
-export function acceptCurrentInvite(
+export async function acceptCurrentInvite(
   initData: string,
   startParam?: string | null,
 ): Promise<{ ok: true; roles: Role[] }> {
   const headers = new Headers();
   if (startParam) headers.set(INVITE_START_PARAM_HEADER, startParam);
-  return apiRequest(initData, '/api/invite/current/accept', { method: 'POST', headers });
+  const response = await apiRequest<unknown>(initData, '/api/invite/current/accept', { method: 'POST', headers });
+  if (!isRecord(response) || response.ok !== true || !Array.isArray(response.roles)
+    || !response.roles.includes('client')
+    || !response.roles.every((role: unknown) => role === 'coach' || role === 'client')) {
+    throw new ApiError(502, 'Некорректный ответ подключения', 'INVALID_API_RESPONSE');
+  }
+  return { ok: true, roles: response.roles };
 }
 
 export async function getClientExercises(

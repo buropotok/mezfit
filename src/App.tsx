@@ -34,7 +34,9 @@ import { SchedulePlanningContext } from './schedule/SchedulePlanningContext';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { HomeScreenInstallToast } from './homeScreen/HomeScreenInstallToast';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
-import { Button, GlassSurfaceProvider } from './ui';
+import { ClientInviteEntry, isClientInviteStartParam } from './invite/ClientInviteEntry';
+import { Button as KonstaButton } from 'konsta/react';
+import { Button, GlassSurfaceProvider, Text } from './ui';
 import { ClientWorkoutProvider } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
 import { WorkoutCompletionProvider } from './workout/WorkoutCompletionContext';
@@ -121,9 +123,12 @@ function ClientShell({
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [inviteRetryKey, setInviteRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setInvite(undefined);
+    setMessage('');
     getCurrentInvite(initData, startParam)
       .then((result) => {
         if (!cancelled) setInvite(result.invite);
@@ -132,7 +137,7 @@ function ClientShell({
         if (!cancelled) setMessage(error instanceof Error ? error.message : 'Не удалось проверить приглашение');
       });
     return () => { cancelled = true; };
-  }, [initData, startParam]);
+  }, [initData, startParam, inviteRetryKey]);
 
   const accept = async () => {
     setBusy(true);
@@ -147,6 +152,16 @@ function ClientShell({
       setBusy(false);
     }
   };
+
+  if (invite === undefined && message && isClientInviteStartParam(startParam)) {
+    return (
+      <section className="card stack">
+        <Text variant="headline">Не удалось проверить приглашение</Text>
+        <Text variant="body" role="alert">{message}</Text>
+        <KonstaButton rounded onClick={() => setInviteRetryKey((value) => value + 1)}>Повторить</KonstaButton>
+      </section>
+    );
+  }
 
   if (invite) {
     const coachName = [invite.coach.firstName, invite.coach.lastName].filter(Boolean).join(' ');
@@ -192,6 +207,7 @@ function ClientShell({
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
+  const [dismissedInviteParam, setDismissedInviteParam] = useState<string | null>(null);
   const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [initialScreenDiagnosticsOpen, setInitialScreenDiagnosticsOpen] = useState(false);
@@ -302,6 +318,31 @@ export function App() {
           <Button onClick={() => window.location.reload()}>Обновить</Button>
         </section>
       </main>
+    );
+  }
+
+  // A fresh invitation is a launch intent, not a consequence of the stored
+  // Coach/Client navigation role. Show the consent action for either role or
+  // for an account that has not selected a role yet.
+  const inviteStartParam = (state.status === 'needs-role' || state.status === 'ready')
+    && isClientInviteStartParam(state.startParam) ? state.startParam : null;
+  if (inviteStartParam && inviteStartParam !== dismissedInviteParam
+    && (state.status === 'needs-role' || state.activeRole !== 'client')) {
+    const { initData, me } = state;
+    return (
+      <ClientInviteEntry
+        initData={initData}
+        startParam={inviteStartParam}
+        onAccepted={(roles) => {
+          window.localStorage.setItem(ROLE_STORAGE_KEY, 'client');
+          setDismissedInviteParam(inviteStartParam);
+          dispatch({
+            type: 'loaded', initData, startParam: null,
+            me: { ...me, roles }, preferredRole: 'client',
+          });
+        }}
+        onDismiss={() => setDismissedInviteParam(inviteStartParam)}
+      />
     );
   }
 

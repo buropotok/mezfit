@@ -187,4 +187,100 @@ describe('client invite launch', () => {
     expect(window.localStorage.getItem('mezfit.selectedCloudCoachUserId.100'))
       .toBe(String(oldCoach.userId));
   });
+  it('shows the invitation when the invited user currently has only the Coach role', async () => {
+    getMeMock.mockResolvedValue({
+      user: { id: 10, telegramUserId: '100', username: 'client', firstName: 'Клиент',
+        lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false },
+      roles: ['coach'],
+    });
+    acceptCurrentInviteMock.mockResolvedValue({ ok: true, roles: ['coach', 'client'] });
+    getCurrentInviteMock.mockImplementation(async (_initData, startParam) => ({
+      invite: startParam ? {
+        label: null, expiresAt: '2026-11-22T00:00:00Z',
+        coach: { firstName: 'Новый', lastName: 'Тренер', username: null },
+      } : null,
+    }));
+
+    render(<App />);
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    expect(getCurrentInviteMock).toHaveBeenCalledWith('telegram-init', `invite_${'b'.repeat(36)}`);
+    fireEvent.click(screen.getByRole('button', { name: 'Подключиться к тренеру' }));
+
+    await waitFor(() => {
+      expect(acceptCurrentInviteMock).toHaveBeenCalledWith('telegram-init', `invite_${'b'.repeat(36)}`);
+      expect(window.localStorage.getItem('mezfit.activeRole')).toBe('client');
+    });
+  });
+
+  it('allows a user without an existing role to accept the invitation before onboarding', async () => {
+    getMeMock.mockResolvedValue({
+      user: { id: 10, telegramUserId: '100', username: 'client', firstName: 'Клиент',
+        lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false },
+      roles: [],
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    expect(screen.queryByText('Как вы будете использовать Mezfit?')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Подключиться к тренеру' }));
+
+    await waitFor(() => {
+      expect(acceptCurrentInviteMock).toHaveBeenCalledTimes(1);
+      expect(window.localStorage.getItem('mezfit.activeRole')).toBe('client');
+    });
+  });
+
+  it('keeps the invitation available when cloud membership provisioning fails', async () => {
+    getMeMock.mockResolvedValue({
+      user: { id: 10, telegramUserId: '100', username: 'client', firstName: 'Клиент',
+        lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false },
+      roles: ['coach'],
+    });
+    acceptCurrentInviteMock.mockRejectedValueOnce(new Error('Сервис подключения недоступен'));
+
+    render(<App />);
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Подключиться к тренеру' }));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Сервис подключения недоступен');
+    expect(screen.getByRole('button', { name: 'Подключиться к тренеру' })).toBeTruthy();
+    expect(window.localStorage.getItem('mezfit.activeRole')).toBeNull();
+  });
+
+  it('overrides the stored Coach view for a dual-role user opening an invitation', async () => {
+    window.localStorage.setItem('mezfit.activeRole', 'coach');
+    getMeMock.mockResolvedValue({
+      user: { id: 10, telegramUserId: '100', username: 'client', firstName: 'Клиент',
+        lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false },
+      roles: ['coach', 'client'],
+    });
+    acceptCurrentInviteMock.mockResolvedValue({ ok: true, roles: ['coach', 'client'] });
+
+    render(<App />);
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    expect(screen.queryByText('Как вы будете использовать Mezfit?')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Подключиться к тренеру' }));
+
+    await waitFor(() => {
+      expect(acceptCurrentInviteMock).toHaveBeenCalledTimes(1);
+      expect(window.localStorage.getItem('mezfit.activeRole')).toBe('client');
+    });
+  });
+
+  it('offers a retry when a client with an existing role cannot load the invitation', async () => {
+    getCurrentInviteMock.mockRejectedValueOnce(new Error('Нет соединения'));
+
+    render(<App />);
+
+    expect(await screen.findByText('Не удалось проверить приглашение')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toBe('Нет соединения');
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    expect(getCurrentInviteMock).toHaveBeenCalledTimes(2);
+  });
+
 });

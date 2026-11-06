@@ -457,7 +457,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       <MezfitDialog
         opened={Boolean(inviteUrl)}
         title="Пригласить клиента"
-        content={<Text variant="body">Отправьте персональную ссылку клиенту в Telegram. Ссылка одноразовая и действует 30 дней.</Text>}
+        content={<Text variant="body">Отправьте ссылку клиенту в Telegram. Ею могут воспользоваться несколько клиентов в течение 30 дней.</Text>}
         buttons={<MezfitDialogButton strong onClick={() => void copyInvite()}>Копировать ссылку</MezfitDialogButton>}
         onBackdropClick={closeInvite}
         role="alertdialog"
