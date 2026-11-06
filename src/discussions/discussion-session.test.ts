@@ -53,7 +53,8 @@ describe('discussion page session uses the existing repository', () => {
   it('waits for the exact live target despite incoming messages shifting the older pages', async () => {
     const rows = Array.from({ length: 85 }, (_, i) => message('m' + i, 'Текст ' + i, 'tg:2', i));
     const incoming = Array.from({ length: 40 }, (_, i) => message('new' + i, 'Новое ' + i, 'tg:2', i + 85));
-    const f = fixture(rows), observe = f.port.observePage;
+    const f = fixture(rows), observe = vi.mocked(f.port.observePage).getMockImplementation();
+    if (!observe) throw Error('Missing fixture page observer implementation');
     let inject = true;
     vi.spyOn(f.port, 'observePage').mockImplementation((id, next, error, before, limit) =>
       observe(id, page => {
@@ -95,7 +96,8 @@ describe('discussion page session uses the existing repository', () => {
   });
   it('cancels a jump waiting for a live page without waiting for that page to arrive', async () => {
     const rows = Array.from({ length: 85 }, (_, i) => message('m' + i, 'Текст ' + i, 'tg:2', i));
-    const f = fixture(rows), observe = f.port.observePage;
+    const f = fixture(rows), observe = vi.mocked(f.port.observePage).getMockImplementation();
+    if (!observe) throw Error('Missing fixture page observer implementation');
     let delayed: (() => void) | undefined;
     vi.spyOn(f.port, 'observePage').mockImplementation((id, next, error, before, limit) =>
       observe(id, page => { if (before) delayed = () => next(page); else next(page); }, error, before, limit));
