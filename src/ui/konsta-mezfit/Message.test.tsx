@@ -12,7 +12,7 @@ function normalizedMarkup(element: Element): string {
   // Class order is immaterial; retain every token, attribute, child and text node.
   for (const node of [copy, ...copy.querySelectorAll('[class]')]) {
     const classes = node.getAttribute('class');
-    if (classes !== null) node.setAttribute('class', classes.split(/\\s+/).sort().join(' '));
+    if (classes !== null) node.setAttribute('class', [...node.classList].sort().join(' '));
   }
   return copy.outerHTML;
 }
