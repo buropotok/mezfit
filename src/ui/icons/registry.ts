@@ -6,6 +6,7 @@ import chevronRightUrl from './chevron-right-outline.svg';
 import arrowDownUrl from './arrow-down.svg';
 import arrowUpUrl from './arrow-up.svg';
 import arrowLeftUrl from './arrow-left.svg';
+import arrowBackUpUrl from './arrow-back-up.svg';
 import barbellFilledUrl from './liquid-glass-barbell-filled.svg';
 import barbellOutlineUrl from './liquid-glass-barbell-outline.svg';
 import calendarFilledUrl from './calendar-filled.svg';
@@ -80,6 +81,7 @@ const uiIconRegistry = {
   'arrow-down': { outline: arrowDownUrl, filled: arrowDownUrl },
   'arrow-up': { outline: arrowUpUrl, filled: arrowUpUrl },
   'arrow-left': { outline: arrowLeftUrl, filled: arrowLeftUrl },
+  'arrow-back-up': { outline: arrowBackUpUrl, filled: arrowBackUpUrl },
   barbell: { outline: barbellOutlineUrl, filled: barbellFilledUrl },
   calendar: { outline: calendarOutlineUrl, filled: calendarFilledUrl },
   'calendar-event': { outline: calendarEventOutlineUrl, filled: calendarEventFilledUrl },
