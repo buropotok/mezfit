@@ -249,4 +249,25 @@ describe('client invite launch', () => {
     expect(window.localStorage.getItem('mezfit.activeRole')).toBeNull();
   });
 
+  it('overrides the stored Coach view for a dual-role user opening an invitation', async () => {
+    window.localStorage.setItem('mezfit.activeRole', 'coach');
+    getMeMock.mockResolvedValue({
+      user: { id: 10, telegramUserId: '100', username: 'client', firstName: 'Клиент',
+        lastName: null, languageCode: 'ru', photoUrl: null, isPremium: false },
+      roles: ['coach', 'client'],
+    });
+    acceptCurrentInviteMock.mockResolvedValue({ ok: true, roles: ['coach', 'client'] });
+
+    render(<App />);
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    expect(screen.queryByText('Как вы будете использовать Mezfit?')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Подключиться к тренеру' }));
+
+    await waitFor(() => {
+      expect(acceptCurrentInviteMock).toHaveBeenCalledTimes(1);
+      expect(window.localStorage.getItem('mezfit.activeRole')).toBe('client');
+    });
+  });
+
 });
