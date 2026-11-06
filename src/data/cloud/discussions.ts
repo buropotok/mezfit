@@ -8,7 +8,10 @@ import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
 import type { MezfitCloudDatabase } from './database';
 export type DiscussionDatabase = Pick<MezfitCloudDatabase,
-  'discussionThreads' | 'discussionMessages' | 'discussionReadStates' | 'realms' | 'members' | 'transaction' | 'cloud'>;
+  'discussionThreads' | 'discussionMessages' | 'discussionReadStates' | 'realms' | 'members' | 'cloud'> & {
+  /** Only the callback-based transaction capability is needed, not every app table on its context. */
+  transaction<T>(mode: 'r' | 'rw', tables: readonly string[], task: () => Promise<T>): Promise<T>;
+};
 export interface CreateDiscussionThread { id: string; anchor: DiscussionAnchor; entityName: string; date: string; createdAt: string }
 export interface DiscussionMessageInput { id: string; threadId: string; text: string; createdAt: string; replyToMessageId?: string }
 export interface DiscussionPage { messages: DiscussionMessageView[]; before: DiscussionCursor | null }
