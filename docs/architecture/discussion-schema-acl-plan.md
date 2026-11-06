@@ -1,9 +1,10 @@
-# COMM-03: DiscussionAnchor, схема и минимальные ACL
+# COMM-03: DiscussionAnchor, схема и полный ACL MVP
 
-Дата: 2026-11-06. Основа main: `30f2d4ef`.
+Дата: 2026-11-06. Корректировка после merge PR #653, основа main: `f7688ba4`.
 Задача: [#638](https://github.com/buropotok/mezfit/issues/638).
 **Статус:** владелец отдельно одобрил подготовку узкого protected operator и
-обычную owner-модель MVP. Это не разрешение live Apply. Таблицы/роли в cloud не менялись.
+обычную owner-модель MVP и её расширение на вложения. Это не разрешение live Apply.
+В рамках подготовки cloud не менялся; состояние production подтверждается отдельным Preview.
 
 ## Решения и границы
 
@@ -16,7 +17,7 @@ Telegram identity `tg:...` и существующий realm пары сохра
 Владелец принял простой вариант: native Dexie owner защищает чужие строки при отсутствии
 общих update/manage grants. Собственный автор/thread/realm сохраняются доменным
 репозиторием при штатных операциях; строгой серверной неизменяемости этих полей у
-владельца строки нет. Это явное исключение для discussion message/read-state в AGENTS,
+владельца строки нет. Это явное исключение для discussion message/read-state/attachment в AGENTS,
 а не изменение защиты PLAN/FACT или привилегий других таблиц.
 
 Официальный [Dexie access control](https://dexie.org/docs/cloud/access-control):
@@ -74,8 +75,10 @@ Read-state owner=userId; детерминированный ID realm/thread/user
 Это контракт будущего repository, не уже реализованная синхронизация read cursor.
 
 Нет open/resolved/requiresReply, реакций, пересылок, специальных чат-ролей.
-Attachment пока только тип метаданных photo/video/voice и таблица. Широкие shared-realm
-write grants для него не выдаются. Срок хранения реализует COMM-13.
+Attachment содержит owner=authorUserId и messageId в том же realm. Для photo/video/voice
+подготовлены только метаданные и write guards, не загрузчик. Обе роли могут добавлять
+собственные вложения; общих update/manage для чужих вложений нет. Срок хранения
+реализует COMM-13; удаление автором оставляет deletedAt, физические файлы удаляет шлюз.
 
 Подготовлена append-only `CLOUD_DATABASE_STORES_V15`, не меняющая v14. Важная граница:
 [sealed cloud schema](https://dexie.org/docs/cloud/cli) требует server import до того,
@@ -93,19 +96,20 @@ write grants для него не выдаются. Срок хранения р
 
 ```json
 {
-  "add": ["discussionThreads", "discussionMessages", "discussionReadStates"],
+  "add": ["discussionThreads", "discussionMessages", "discussionReadStates", "messageAttachments"],
   "update": { "discussionThreads": ["lastActivityAt"] }
 }
 ```
 
-Чтение — по прежней membership пары. Нет общих update/manage для messages/read-state:
+Чтение — по прежней membership пары. Нет общих update/manage для messages/read-state/attachments:
 чужую строку такой участник не редактирует, собственную — редактирует как owner.
 Ни знание anchor ID, ни membership другой пары не дают доступ к этой истории.
 Row ownership может менять сам owner; это одобренное MVP ограничение, не новая гарантия.
 Правила доступа к Yandex объекту не выводятся из storageKey и вне scope этого PR.
 
 Worker membership preflight принимает прежние profiles и точную новую надстройку на
-Flex baseline. `discussionRolesBaseline` снимает только проверенный полный overlay,
+Flex baseline, полный текстовый профиль PR #653 и полный профиль MVP с вложениями.
+`discussionRolesBaseline` снимает только проверенный полный overlay,
 после чего неизменённый базовый verifier проверяет остальные grants. Половинные,
 дублирующиеся и расширенные policies отклоняются; новых actor/member IDs не появляется.
 Без этой совместимости новые глобальные grants сломали бы приём приглашений.
@@ -117,10 +121,11 @@ Flex baseline. `discussionRolesBaseline` снимает только прове�
 
 - Только additive `cloud/schema-discussions.json`: четыре таблицы с ключом id.
 - Только точный overlay coach/client на **полном EXPECTED_FLEX_ROLES baseline** либо
-  его точном уже применённом discussion target. Незнакомую/частичную policy не чинить
+  полном текстовом профиле PR #653 либо точном полном MVP target. Профили Coach/Client
+  нельзя смешивать. Незнакомую/частичную policy не чинить
   автоматически; Preview откажет, потребуется отдельное ревью фактической конфигурации.
 - Другие роли, все чужие schema entries, owner/realm, PLAN/FACT, membership и бизнес-данные
-  сохраняются. Нет новых credentials/чат-ролей, обычных attachment write grants или DELETE grants.
+  сохраняются. Нет новых credentials/чат-ролей, общих attachment update/manage или DELETE grants.
 - Owner/main/manual workflow_dispatch, environment dexie-production с reviewers,
   существующий DEXIE_CLOUD_WRITE_KEY и общий privileged writer concurrency.
 - Preview не импортирует. Apply требует отдельного решения владельца, отметки
@@ -135,6 +140,97 @@ Flex baseline. `discussionRolesBaseline` снимает только прове�
 COMM-02 → protected Preview/Apply и full readback → обычные аккаунты/live ACL →
 явное включение v15 в integration PR. Нельзя выдавать static readback за live permission test.
 Реальные cloud writes в рамках подготовки/PR не выполнялись.
+
+## Вложения: контракт всего MVP (корректировка после #653)
+
+`shared/discussion-attachment.ts` — общий тип для будущего gateway и приложения;
+`discussion-contracts.ts` переэкспортирует его. Новых индексов/таблиц нет, schema v15
+и её opt-in не меняются; поля метаданных не требуют новой версии IndexedDB/ACL.
+Проверены требования COMM-09 #644, COMM-10 #645 и COMM-11 #646. Их расширенные
+загрузчики/инфраструктура не входят в корректировку.
+
+| Операция | Право/контракт |
+| --- | --- |
+| Создать photo/video/voice | обе роли add messageAttachments; owner=authorUserId=actor |
+| Обновить собственный ход загрузки/метаданные | native owner; без shared update/manage |
+| Читать сообщение/вложение | существующая membership соответствующего realm, в том числе бывшая пара |
+| Удалить собственное вложение | native owner; штатный repository использует deletedAt, шлюз удаляет файл отдельно |
+| Изменить чужое вложение | ни одного нового общего grant |
+| PLAN/FACT, роли/чужая пара, новые credentials | ни одного изменения/разрешения |
+
+Состояния: `pending` → `uploading` → `ready`; ошибка → `failed` → повтор на том же ID.
+Отмена/удаление — tombstone `deletedAt`, отменённый объект не подтверждается вновь.
+Один attachmentId обозначает один файл: mediaType/MIME/size/duration/message/realm/author
+не заменяются при retry; storageKey после назначения стабилен. Выбор другого файла
+создаёт новое вложение явным действием. Фото duration=null; видео >0 и ≤180 секунд;
+голос >0; MIME соответствует выбранному типу, универсальный codec не навязывается.
+Фактическую проверку содержимого и формата делает COMM-09, не эти shape guards.
+
+Простой confirm без второй БД/очереди/новых grants:
+
+1. Будущий шлюз связывает upload intent с attachmentId/messageId/realm/author и стабильным
+   storageKey. Он самостоятельно проверяет Telegram identity, membership и доступ
+   к сообщению, не превращает supplied IDs в разрешение и не требует раннего sync
+   метаданных как бизнес-барьера; протокол доказательства realm — задача COMM-09.
+2. После PUT клиент запрашивает confirm. Шлюз проверяет объект (HEAD/реальный размер,
+   MIME/контент/длительность, соответствие intent; ETag/identity по API storage).
+   При отсутствии/несоответствии объекта успех не возвращается.
+3. Ответ `AttachmentUploadConfirmation`: attachmentId, messageId, realmId, authorUserId,
+   mediaType, storageKey, mimeType, sizeBytes, durationSeconds, confirmedAt (ISO).
+   Это ответ аутентифицированного endpoint, не статический bearer URL и не новый grant.
+   `applyAttachmentUploadConfirmation` декодирует unknown и сверяет все идентичности
+   и file metadata; normal repository применяет результат к прежней строке и синхронизирует
+   через Addon. Повтор confirm сохраняет первый confirmedAt, сообщение/вложение не копируются.
+4. `ready`/confirmedAt в пользовательской Dexie-строке **не доказательство для сервера**:
+   owner может изменить все её поля. Шлюз проверяет доступ/наличие/идентичность файла
+   независимо при confirm/read/remove, а не доверяет флагу или знанию storageKey.
+   Уведомление/доставка не должны объявлять файл готовым лишь по клиентскому флагу.
+
+Сохранённые данные со старой формой MessageAttachment без uploadState/author/confirmedAt
+нельзя объявлять ready автоматически. Производственного attachment writer в #653 нет;
+если Preview/инвентаризация обнаружат такие строки, COMM-09 валидирует их через gateway
+до использования и сохраняет исходные ID. Массового удаления/перезаписи данных здесь нет.
+Native owner не обеспечивает серверные foreign keys, immutable provenance или
+полевое ограничение владельца; guards — нормальный доменный контракт, не ACL эмулятор.
+
+## Проверка установленного профиля и совместимый rollout
+
+При подготовке 2026-11-06 GitHub Actions API для `dexie-discussions.yml` вернул
+`total_count: 0`. Запусков не обнаружено, но ручной импорт вне GitHub не исключён.
+Серверный schema/roles export не выполнялся: protected credentials не извлекались,
+Preview/Apply не запускались. Не утверждать, что production пустой или уже готов.
+
+Один Apply принимает только полные точные состояния обеих ролей:
+
+| Экспорт до Apply | План |
+| --- | --- |
+| Полный Flex, таблиц ещё нет | добавить четыре таблицы и полный MVP overlay |
+| Четыре таблицы id уже есть, точный текстовый профиль PR #653 | не менять schema, добавить только attachment add обеим ролям |
+| Полный MVP профиль и четыре таблицы | no-op с полным readback |
+| Неожиданные grants/ключи или смешанные/частичные роли | отказ; показать drift владельцу, без автоматического исправления |
+
+Preview обязан экспортировать фактическую schema/roles и показать sourceProfile, затем
+отдельное одобрение live Apply. Перед импортом — повторный полный export/recheck; после
+любой попытки и no-op — readback всей конфигурации, включая посторонние роли и таблицы.
+Не откатывать установленные таблицы, не переписывать старые Dexie версии или business rows.
+
+Дополнительные тесты проверяют точные manifests/profiles, узкую дельту с PR #653,
+отказ mixed/duplicate/widened grants, shape/parent/own write guards и idempotent confirm.
+Fake IndexedDB с настоящим pinned Addon проверяет одну строку при retry/confirm/reopen
+и realm/message index. Ни эти тесты, ни readback **не являются live ACL проверкой**.
+
+Перед включением функции требуется реальная матрица обычных аккаунтов (пока не выполнена):
+
+| Сценарий | Ожидаемый серверный результат |
+| --- | --- |
+| Coach и Client создают свои photo/video/voice metadata | sync принят в их realm |
+| Каждый обновляет/удаляет свою строку | разрешено native owner |
+| Каждый меняет/удаляет чужую строку | отказ, общих update/manage нет |
+| Второй тренер запрашивает attachment/message другой пары | запись не синхронизируется/чтение запрещено |
+| Owner меняет собственный author/parent | не заявлять запрет сервера; штатный repository отклоняет |
+| Два устройства retry/confirm, бывшая пара | тот же ID, без дублей; история своей пары остаётся доступной |
+| Text/Reply/Edit/Delete/read-state | прежние возможности и ограничения сохранены |
+
 
 ## Завершение отношений и бывшие участники
 
@@ -166,6 +262,14 @@ edit/delete/read-state, другая пара, два устройства, бы
 подмена owner/realm проверяется в пределах согласованной native owner модели.
 
 По workflow проекта локальные npm/typecheck/tests/build не запускаются; CI — после PR.
-После коммита выполнено системное ревью по issue/AGENTS/архитектуре и исходникам новых и связанных прежних тестов. Старые тесты не менялись. Исправлены оставшиеся формулировки документации о реестре, уточнено название workflow шага для обеих ролей и добавлен отрицательный случай третьего участника в том же realm; повторное ревью обязательно перед публикацией. Фактор audit
-A-010 (непроверенные runtime HTTP данные) релевантен membership response validation:
-новый decoder узко проверяет overlay и сохраняет строгую проверку baseline.
+После коммита выполнено системное ревью схемы/ACL, shared guards, membership preflight,
+protected workflow и исходников связанных тестов. Старые проверки Text/Reply/Edit/Delete/
+read-state и v14→v15 оставлены; изменена только устаревшая schema-only проверка grants.
+Проверены синтаксис JSON/YAML/.mjs, локальные ссылки документации и git diff --check.
+Это не запуск npm/typecheck/tests/build; они выполняются CI после PR.
+
+Релевантен audit **A-010** (runtime API данные без достаточного декодирования):
+изменяемый decoder ролей сохраняет строгий baseline; будущий ответ gateway принимается
+как unknown с проверкой shape и привязки, не приводится к доверенному типу через cast.
+Фактор сообщён владельцу до разрешения корректировки. Production права и live проверки
+отдельны от этого source review и не объявляются выполненными.
