@@ -6,6 +6,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MezfitMessage } from './Message';
 
 afterEach(cleanup);
+function normalizedMarkup(element: Element): string {
+  const copy = element.cloneNode(true);
+  if (!(copy instanceof Element)) throw Error('Missing message clone');
+  // Class order is immaterial; retain every token, attribute, child and text node.
+  for (const node of [copy, ...copy.querySelectorAll('[class]')]) {
+    const classes = node.getAttribute('class');
+    if (classes !== null) node.setAttribute('class', classes.split(/\\s+/).sort().join(' '));
+  }
+  return copy.outerHTML;
+}
 describe('approved Konsta 5.4 Message bubble boundary adapter', () => {
   it.each(['sent', 'received'])('preserves the upstream %s renderer and exposes only the bubble ref/source/tap', type => {
     const bubble = createRef<HTMLDivElement>(), tapped = vi.fn();
@@ -22,6 +32,6 @@ describe('approved Konsta 5.4 Message bubble boundary adapter', () => {
     const adapted = roots[1].cloneNode(true);
     if (!(adapted instanceof HTMLElement)) throw Error('Missing adapted message');
     adapted.querySelector('[data-testid="source"]')?.remove();
-    expect(adapted.outerHTML).toBe(roots[0].outerHTML);
+    expect(normalizedMarkup(adapted)).toBe(normalizedMarkup(roots[0]));
   });
 });
