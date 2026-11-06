@@ -34,6 +34,7 @@ import { SchedulePlanningContext } from './schedule/SchedulePlanningContext';
 import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypographySettings } from './typographySettings';
 import { HomeScreenInstallToast } from './homeScreen/HomeScreenInstallToast';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
+import { ClientInviteEntry, isClientInviteStartParam } from './invite/ClientInviteEntry';
 import { Button, GlassSurfaceProvider } from './ui';
 import { ClientWorkoutProvider } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
@@ -192,6 +193,7 @@ function ClientShell({
 
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
+  const [dismissedInviteParam, setDismissedInviteParam] = useState<string | null>(null);
   const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [initialScreenDiagnosticsOpen, setInitialScreenDiagnosticsOpen] = useState(false);
@@ -302,6 +304,31 @@ export function App() {
           <Button onClick={() => window.location.reload()}>Обновить</Button>
         </section>
       </main>
+    );
+  }
+
+  // A fresh invitation is a launch intent, not a consequence of the stored
+  // Coach/Client navigation role. Show the consent action for either role or
+  // for an account that has not selected a role yet.
+  const inviteStartParam = (state.status === 'needs-role' || state.status === 'ready')
+    && isClientInviteStartParam(state.startParam) ? state.startParam : null;
+  if (inviteStartParam && inviteStartParam !== dismissedInviteParam
+    && (state.status === 'needs-role' || state.activeRole !== 'client')) {
+    const { initData, me } = state;
+    return (
+      <ClientInviteEntry
+        initData={initData}
+        startParam={inviteStartParam}
+        onAccepted={(roles) => {
+          window.localStorage.setItem(ROLE_STORAGE_KEY, 'client');
+          setDismissedInviteParam(inviteStartParam);
+          dispatch({
+            type: 'loaded', initData, startParam: null,
+            me: { ...me, roles }, preferredRole: 'client',
+          });
+        }}
+        onDismiss={() => setDismissedInviteParam(inviteStartParam)}
+      />
     );
   }
 
