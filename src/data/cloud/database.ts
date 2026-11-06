@@ -226,7 +226,10 @@ export const CLOUD_DATABASE_STORES_V15 = { ...CLOUD_DATABASE_STORES_V14, ...DISC
 /** Local indexes only; cloud primary keys and ACL stay as installed by COMM-03. */
 export const CLOUD_DATABASE_STORES_V16 = {
   ...CLOUD_DATABASE_STORES_V15,
-  discussionMessages: CLOUD_DATABASE_STORES_V15.discussionMessages + ', [realmId+threadId+createdAt+id]',
+  discussionThreads: CLOUD_DATABASE_STORES_V15.discussionThreads + ', [id+lastActivityAt]',
+  discussionMessages: CLOUD_DATABASE_STORES_V15.discussionMessages
+    + ', [realmId+threadId+createdAt+id], [id+realmId+owner+draftForRealmId]'
+    + ', [id+realmId+threadId+owner+authorUserId+deletedAt], [id+realmId+owner]',
   discussionReadStates: CLOUD_DATABASE_STORES_V15.discussionReadStates + ', [id+readThrough]',
 } as const;
 

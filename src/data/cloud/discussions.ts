@@ -1,4 +1,4 @@
-import Dexie, { liveQuery } from 'dexie';
+import { liveQuery } from 'dexie';
 import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, discussionReadStateId,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
@@ -90,7 +90,8 @@ export class DiscussionRepository {
     // Activity hints can lag concurrent sends; derive the displayed timestamp from local messages.
     const projected = await Promise.all(valid.map(async row => {
       const latest = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-        .between([row.realmId, row.id, Dexie.minKey, Dexie.minKey], [row.realmId, row.id, Dexie.maxKey, Dexie.maxKey])
+        // All timestamps/IDs are strings. One array upper bound sorts after every timestamp.
+        .between([row.realmId, row.id, '', ''], [row.realmId, row.id, []], true, false)
         .reverse().filter(message => this.visible(message, row.id)).first();
       return latest && latest.createdAt > row.lastActivityAt ? { ...row, lastActivityAt: latest.createdAt } : row;
     }));
@@ -205,8 +206,9 @@ export class DiscussionRepository {
     return this.read(async () => {
       await this.thread(threadId);
       const rows = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-        .between([this.scope.realmId, threadId, Dexie.minKey, Dexie.minKey],
-          [this.scope.realmId, threadId, before?.createdAt ?? Dexie.maxKey, before?.id ?? Dexie.maxKey], true, !before)
+        .between([this.scope.realmId, threadId, '', ''],
+          before ? [this.scope.realmId, threadId, before.createdAt, before.id]
+            : [this.scope.realmId, threadId, []], true, false)
         .reverse().filter(row => this.visible(row, threadId)).limit(limit + 1).toArray();
       const more = rows.length > limit; rows.splice(limit);
       const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
@@ -242,8 +244,8 @@ export class DiscussionRepository {
       && state.realmId === this.scope.realmId && state.threadId === threadId && cursor && cursor.id === state.lastReadMessageId
       ? discussionCursorKey(cursor) : '';
     return this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-      .between([this.scope.realmId, threadId, through ? through.slice(0, 24) : Dexie.minKey, through ? through.slice(25) : Dexie.minKey],
-        [this.scope.realmId, threadId, Dexie.maxKey, Dexie.maxKey], !through, true)
+      .between([this.scope.realmId, threadId, cursor && through ? cursor.createdAt : '', cursor && through ? cursor.id : ''],
+        [this.scope.realmId, threadId, []], !through, false)
       .filter(row => this.visible(row, threadId) && row.authorUserId !== this.actorUserId && !row.deletedAt).count();
   }
   async unread(threadId: string): Promise<number> {

@@ -49,6 +49,22 @@ async function fixture() {
 }
 
 describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tests', () => {
+  it('queries empty threads and string cursor bounds without including a neighbouring thread', async () => {
+    const { coach, client, thread, anchor } = await fixture();
+    expect(await client.page(thread.id)).toEqual({ messages: [], before: null });
+    expect(await client.unread(thread.id)).toBe(0);
+    expect(await client.unreadForAnchor(anchor)).toBe(0);
+    const neighbour = await coach.createThread(prepareDiscussionThread(anchor, 'Другая ветка', '2026-11-06'));
+    await coach.send(prepareDiscussionMessage(neighbour.id, 'Другая ветка'));
+    const input = { id: '\uffff\uffff', threadId: thread.id, text: 'Последний строковый ID', createdAt: '2026-11-06T12:00:00.000Z' };
+    await coach.send(input);
+    expect((await client.page(thread.id)).messages.map(row => row.id)).toEqual([input.id]);
+    expect((await client.page(thread.id, input)).messages).toEqual([]);
+    expect(await client.unread(thread.id)).toBe(1);
+    await client.markRead(thread.id, input.id);
+    expect(await client.unread(thread.id)).toBe(0);
+    expect(await client.unreadForAnchor(anchor)).toBe(1);
+  });
   it('creates multiple titled threads, deduplicates retry and accepts offline writes without push', async () => {
     const { db, coach, client, command, thread, anchor, fetch } = await fixture();
     expect((await coach.createThread(command)).id).toBe(thread.id);

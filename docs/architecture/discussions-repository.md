@@ -70,6 +70,12 @@ offline устройств: матрица ниже обязательна, ос
 
 Исторические v14/v15 не переписаны. Только opt-in добавляет v16: локальные индексы
 discussionMessages.[realmId+threadId+createdAt+id] и discussionReadStates.[id+readThrough].
+Условные modify/delete также имеют точные compound indexes: thread id/activity,
+message id/realm/owner/draft marker, id/realm/thread/owner/author/deletedAt и
+id/realm/owner. Это сохраняет declarative predicates в поддерживаемом Addon пути.
+Для строковых timestamps/IDs диапазоны используют пустые строки снизу и единственный
+array sentinel сверху. Один и тот же array-valued Dexie.maxKey нельзя дважды помещать
+в составной ключ: IndexedDB key conversion отклоняет повторную ссылку как DataError.
 Cloud primary keys/tables/ACL не меняются, повторный Apply не требуется.
 Default factory/provider остаются на v14. Repository отказывает без новых индексов.
 Новой БД, скрытой unsynced chat table или массовой активации нет.
@@ -95,9 +101,10 @@ push account database, не индивидуальная доставка и н�
 и personal history, динамического quote после edit/delete/missing original, unread,
 pagination ties, двух локальных соединений, malformed cached rows, v15→v16, default v14,
 liveQuery и captured revision/stale sync failure. Старые тесты не изменялись.
-Локальные npm/typecheck/build/tests не запускались. Исполнительная среда завершилась
-ошибкой запуска; финальное сохранение и source review выполняются через GitHub.
-Не заявляется, что CI или проверки устройств пройдены.
+Локальные npm/typecheck/build/tests не запускались. Первый CI PR #658 выявил
+отсутствующие compound indexes и DataError в границах выборки; исправлены индексы
+и запросы, добавлена регрессия пустой ветки/строкового cursor/изоляции соседней ветки.
+Результат повторного CI и проверки устройств не заявляются пройденными.
 
 Невыполненные проверки обычными авторизованными аккаунтами, только после отдельного разрешения:
 
