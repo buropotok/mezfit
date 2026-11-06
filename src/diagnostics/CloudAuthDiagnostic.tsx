@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Button } from 'konsta/react';
 import { ApiError } from '../api';
 import { getTelegramWebApp, prepareTelegramWebApp } from '../telegram';
@@ -6,6 +6,9 @@ import { Text } from '../ui';
 import { runCloudAuthProbe } from './cloudAuthProbe';
 import { CloudSyncDiagnostic } from './CloudSyncDiagnostic';
 import { CloudAvatarDiagnostic } from './CloudAvatarDiagnostic';
+
+const CommunicationsNetworkDiagnostic = lazy(() => import('./communications/CommunicationsNetworkDiagnostic')
+  .then(module => ({ default: module.CommunicationsNetworkDiagnostic })));
 
 type ProbeStatus = 'idle' | 'pending' | 'success' | 'failed';
 
@@ -19,6 +22,7 @@ function safeErrorCode(error: unknown): string {
 export function CloudAuthDiagnostic() {
   const webApp = getTelegramWebApp();
   const [status, setStatus] = useState<ProbeStatus>('idle');
+  const [showNetwork, setShowNetwork] = useState(false);
   const [showSync, setShowSync] = useState(false);
   const [showAvatars, setShowAvatars] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
@@ -54,7 +58,7 @@ export function CloudAuthDiagnostic() {
       <section className="card">
         <h1><Text variant="large-title">Проверка Dexie Cloud</Text></h1>
         <p><Text variant="body">Проверим авторизацию Telegram через Worker. Данные тренировок не затрагиваются.</Text></p>
-        <Button onClick={check} disabled={!webApp?.initData || status === 'pending'}>
+        <Button rounded onClick={check} disabled={!webApp?.initData || status === 'pending'}>
           {status === 'pending' ? 'Проверяем…' : 'Проверить авторизацию'}
         </Button>
         <p role="status" aria-live="polite"><Text variant="body">
@@ -69,14 +73,20 @@ export function CloudAuthDiagnostic() {
                   : 'Нажмите кнопку, чтобы начать проверку.'}
         </Text></p>
         <p><Text variant="footnote" tone="muted">Токены, ключи и Telegram initData не отображаются и не сохраняются.</Text></p>
-        <Button onClick={() => { setShowSync((value) => !value); setShowAvatars(false); }} disabled={!webApp?.initData}>
+        <Button rounded onClick={() => { setShowNetwork(false); setShowSync((value) => !value); setShowAvatars(false); }} disabled={!webApp?.initData}>
           {showSync ? 'Скрыть диагностику синхронизации' : 'Проверить синхронизацию'}
         </Button>
         {showSync && webApp?.initData ? <CloudSyncDiagnostic initData={webApp.initData} /> : null}
-        <Button onClick={() => { setShowAvatars((value) => !value); setShowSync(false); }} disabled={!webApp?.initData}>
+        <Button rounded onClick={() => { setShowNetwork(false); setShowAvatars((value) => !value); setShowSync(false); }} disabled={!webApp?.initData}>
           {showAvatars ? 'Скрыть диагностику аватаров' : 'Проверить аватары'}
         </Button>
         {showAvatars && webApp?.initData ? <CloudAvatarDiagnostic initData={webApp.initData} /> : null}
+        <Button rounded disabled={!webApp?.initData} onClick={() => {
+          setShowNetwork(value => !value); setShowSync(false); setShowAvatars(false);
+        }}>{showNetwork ? 'Скрыть проверку сети без VPN' : 'Проверить сеть без VPN'}</Button>
+        {showNetwork ? <Suspense fallback={<Text variant="body">Загрузка диагностики…</Text>}>
+          <CommunicationsNetworkDiagnostic />
+        </Suspense> : null}
       </section>
     </main>
   );
