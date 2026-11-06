@@ -456,6 +456,7 @@ export function App() {
         <UserProfileNavigationShell
           me={state.me}
           activeRole={state.activeRole}
+          suppressInitialProfileOpen={state.activeRole === 'client' && isClientInviteStartParam(state.startParam)}
           destination={destination}
           context={completionNavigation ?? shellContext}
           onDestinationChange={next => { if (next === 'today') setScheduleViewResetKey(value => value + 1); changeDestination(next); }}
