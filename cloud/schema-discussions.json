@@ -1,0 +1,8 @@
+{
+  "schema": {
+    "discussionThreads": "id",
+    "discussionMessages": "id",
+    "discussionReadStates": "id",
+    "messageAttachments": "id"
+  }
+}

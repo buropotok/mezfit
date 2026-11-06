@@ -1,0 +1,12 @@
+{
+  "roles": {
+    "coach": { "permissions": {
+      "add": ["discussionThreads", "discussionMessages", "discussionReadStates"],
+      "update": { "discussionThreads": ["lastActivityAt"] }
+    } },
+    "client": { "permissions": {
+      "add": ["discussionThreads", "discussionMessages", "discussionReadStates"],
+      "update": { "discussionThreads": ["lastActivityAt"] }
+    } }
+  }
+}

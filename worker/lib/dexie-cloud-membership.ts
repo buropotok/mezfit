@@ -1,3 +1,4 @@
+import { discussionRolesBaseline } from '../../shared/discussion-role-profile';
 import cloudConfig from '../../dexie-cloud.json';
 import roleConfig from '../../cloud/roles.json';
 import adHocRoleConfig from '../../cloud/adhoc-session-roles.json';
@@ -230,6 +231,9 @@ function sameStrings(value: unknown, expected: string[]): boolean {
 
 export function assertRemoteRoles(value: unknown): void {
   if (!Array.isArray(value)) failUnavailable();
+  const baseline = discussionRolesBaseline(value);
+  if (baseline === null) failUnavailable();
+  if (baseline !== value) { assertRemoteRoles(baseline); return; }
   const expected = roleConfig.roles;
   const expectedFacts = expected.client.permissions.update.sessionSetFacts;
   const cancellationProfile = ['coach', 'client'].map(name => {
