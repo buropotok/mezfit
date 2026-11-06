@@ -35,7 +35,8 @@ import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypo
 import { HomeScreenInstallToast } from './homeScreen/HomeScreenInstallToast';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { ClientInviteEntry, isClientInviteStartParam } from './invite/ClientInviteEntry';
-import { Button, GlassSurfaceProvider } from './ui';
+import { Button as KonstaButton } from 'konsta/react';
+import { Button, GlassSurfaceProvider, Text } from './ui';
 import { ClientWorkoutProvider } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
 import { WorkoutCompletionProvider } from './workout/WorkoutCompletionContext';
@@ -122,9 +123,12 @@ function ClientShell({
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [inviteRetryKey, setInviteRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setInvite(undefined);
+    setMessage('');
     getCurrentInvite(initData, startParam)
       .then((result) => {
         if (!cancelled) setInvite(result.invite);
@@ -133,7 +137,7 @@ function ClientShell({
         if (!cancelled) setMessage(error instanceof Error ? error.message : 'Не удалось проверить приглашение');
       });
     return () => { cancelled = true; };
-  }, [initData, startParam]);
+  }, [initData, startParam, inviteRetryKey]);
 
   const accept = async () => {
     setBusy(true);
@@ -148,6 +152,16 @@ function ClientShell({
       setBusy(false);
     }
   };
+
+  if (invite === undefined && message && isClientInviteStartParam(startParam)) {
+    return (
+      <section className="card stack">
+        <Text variant="headline">Не удалось проверить приглашение</Text>
+        <Text variant="body" role="alert">{message}</Text>
+        <KonstaButton rounded onClick={() => setInviteRetryKey((value) => value + 1)}>Повторить</KonstaButton>
+      </section>
+    );
+  }
 
   if (invite) {
     const coachName = [invite.coach.firstName, invite.coach.lastName].filter(Boolean).join(' ');
