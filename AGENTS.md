@@ -409,8 +409,14 @@ No new chat roles, per-anchor ACL, keys, PLAN/FACT or membership changes.
 As a narrow additional §21 exception, `tools/dexie-roles/discussions.mjs` and
 `.github/workflows/dexie-discussions.yml` may prepare/apply only this exact
 schema/overlay on the complete reviewed Flex role baseline, the exact complete
-text-only profile from PR #653, or the exact complete MVP target. Mixed, partial
-or otherwise altered role profiles must be rejected. Reuse the existing
+text-only profile from PR #653, or the exact complete MVP target. Each may also
+retain the exact existing `workoutOccurrences.pendingRepeatRule` permission on
+both roles from the reviewed calendar-repeat operator (Apply run 41836076736).
+The discussion operator must never install that grant on a baseline without it,
+remove it, or replace validated live roles with older snapshots. Permission-set
+array order is immaterial; duplicates, mixed, partial or otherwise altered role
+profiles must be rejected. Unknown differences require safe permission-only
+diagnostics, never raw role metadata, credentials or membership exports. Reuse the existing
 protected environment secret, owner/main manual Preview/Apply, literal
 `APPLY_DISCUSSIONS_SCHEMA_AND_ACL`, required environment reviewers, the shared
 privileged writer lock, immediate full recheck and exact full readback even

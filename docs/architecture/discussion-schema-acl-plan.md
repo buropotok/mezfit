@@ -122,7 +122,9 @@ Flex baseline, полный текстовый профиль PR #653 и пол�
 - Только additive `cloud/schema-discussions.json`: четыре таблицы с ключом id.
 - Только точный overlay coach/client на **полном EXPECTED_FLEX_ROLES baseline** либо
   полном текстовом профиле PR #653 либо точном полном MVP target. Профили Coach/Client
-  нельзя смешивать. Незнакомую/частичную policy не чинить
+  нельзя смешивать. Для каждого профиля также допускается точный полный
+  `pendingRepeatRule` overlay обеих ролей, уже установленный календарным оператором.
+  Незнакомую/частичную policy не чинить
   автоматически; Preview откажет, потребуется отдельное ревью фактической конфигурации.
 - Другие роли, все чужие schema entries, owner/realm, PLAN/FACT, membership и бизнес-данные
   сохраняются. Нет новых credentials/чат-ролей, общих attachment update/manage или DELETE grants.
@@ -273,3 +275,63 @@ read-state и v14→v15 оставлены; изменена только уст
 как unknown с проверкой shape и привязки, не приводится к доверенному типу через cast.
 Фактор сообщён владельцу до разрешения корректировки. Production права и live проверки
 отдельны от этого source review и не объявляются выполненными.
+
+## Коррекция Discussions Preview: сохранение установленного ACL повторений
+
+Исследован [упавший Preview 42247353001](https://github.com/buropotok/mezfit/actions/runs/42247353001):
+экспорт schema/roles прошёл, затем `UNEXPECTED_DISCUSSION_ROLE_BASELINE`; импорт не
+запускался. После cleanup exports удалены, API artifacts вернул пустой список.
+Точный полный export **этого** запуска недоступен; отсутствие других отличий от
+baseline не заявляется. Следующий защищённый Preview должен подтвердить профиль
+или показать остальные расхождения, прежде чем владелец разрешит Apply.
+
+История защищённых операций подтверждает законное изменение после Flex:
+
+| Запуск | Подтверждение в логах |
+| --- | --- |
+| [40980110480, 2026-10-30](https://github.com/buropotok/mezfit/actions/runs/40980110480) | Flex Apply, расширены Coach/Client, import complete, полный readback verified |
+| [41836076736, 2026-11-04](https://github.com/buropotok/mezfit/actions/runs/41836076736) | Calendar repetition Apply: изменены обе роли, import complete, полный readback verified |
+
+`calendar-repeat.mjs` и `cloud/calendar-repeat-roles.json` на commit `44cfb9ec`
+устанавливают только `permissions.update.workoutOccurrences += pendingRepeatRule`.
+Эти файлы, Flex/coached-start operator и cloud/roles.json между тем commit и основой
+корректировки `d3398253` не изменились. Старые три discussion profiles не включали
+это подтверждённое permission. Ошибка оператора не означает ошибочные production роли.
+Известное расхождение не заменяет проверку свежего серверного экспорта.
+
+Поддержаны прежние три полных профиля и те же три с точным полным repeat overlay.
+Оба участника должны иметь одинаковый профиль; половинные/mixed policies не принимаются.
+Оператор **не добавляет** pendingRepeatRule при его отсутствии. После валидации
+копируется живая строка роли и дописываются только отсутствующие discussion grants;
+сохраняются прежние PLAN/FACT/calendar grants, role metadata и порядок массивов.
+Manifest обсуждений и четыре таблицы не изменены. Runtime membership verifier и
+прочие ACL операторы этим исправлением не меняются; это не исправление отдельного
+предсуществующего ограничения приглашений при новых календарных permissions.
+
+Порядок несемантичен только у permission sets `add`, `manage` и массивов полей `update`.
+Они сравниваются как уникальные string sets; повторяющиеся элементы и неверные типы
+отклоняются. Прочие поля/массивы не нормализуются. Recheck и full readback сохраняют
+эту семантику для Coach/Client, но проверяют все прежние роли, schema и metadata;
+неожиданные дополнительные права/потеря repeat или изменение сторонней роли — отказ.
+
+При отказе выводится JSON diagnostic только для Coach/Client: сравнение с Flex,
+распознанные профили, пути permissions, installedOnly/missing/duplicates. Существующее
+pendingRepeatRule отмечается `approved-existing:calendar-repeat`; grants обсуждений —
+`approved-discussion`; остальные расширения — `unknown-or-unapproved`. Метка approved
+не разрешает смешанный профиль. Известные имена таблиц/полей берутся из кода разрешённых
+профилей; reserved owner/realm/author ID поля можно назвать как опасные additions.
+Произвольные неизвестные идентификаторы редактируются, метаданные ролей/значения,
+секреты и membership/user/message records вообще не сериализуются в отчёт.
+Если metadata роли отличается, она не принимается молча: перечисляются только известные
+имена изменённых metadata keys (например displayName), их значения не печатаются.
+
+Добавлены регрессионные тесты полного Flex+repeat, сохранности всех прежних grants,
+semantic order/duplicates, unknown/mixed policies, diagnostics и full readback.
+CLI fixture вызывает только локальный operator plan в CI на несекретных искусственных
+exports: проверяет отказ, диагностический stderr, неизменность before files и отсутствие
+import payload на ошибке. Никаких production вызовов/credentials в тестах нет.
+Старые тесты сохранены. Локальные npm/typecheck/build/tests не запускались.
+
+Audit **A-010** релевантен проверке недоверенного cloud role export: сохранены точные
+профили и отказ на неизвестных данных, добавлен безопасный diagnostic. Перед открытием
+корректирующего PR требуется решение владельца согласно процессу задачи.
