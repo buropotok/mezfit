@@ -87,7 +87,7 @@ export function CommunicationsNetworkDiagnostic() {
     <Text variant="headline" role="heading" aria-level={2}>Проверка сети без VPN</Text>
     <p><Text variant="footnote">Версия диагностики: {HARNESS_VERSION}</Text></p>
     <p><Text variant="body">Сначала откройте приложение, затем выключите VPN. Холодный старт и обновление токенов проверяются отдельно по инструкции.</Text></p>
-    <Button rounded strong disabled={busy} onClick={() => void run(signal => probeHosting(location.origin, signal))}>Проверить HTML и JS по сети</Button>
+    <Button rounded disabled={busy} onClick={() => void run(signal => probeHosting(location.origin, signal))}>Проверить HTML и JS по сети</Button>
     <input hidden type="file" accept="application/json,.json" ref={ticketInput} onChange={event => {
       void loadTicket(event.currentTarget.files?.[0]); event.currentTarget.value = '';
     }} />
@@ -96,8 +96,8 @@ export function CommunicationsNetworkDiagnostic() {
       setFile(event.currentTarget.files?.[0] ?? null); event.currentTarget.value = '';
     }} />
     <Button rounded disabled={busy} onClick={() => mediaInput.current?.click()}>Выбрать тестовое MP4</Button>
-    <Button rounded strong disabled={busy || !ticket} onClick={() => void storage(false)}>Проверить маленький файл</Button>
-    <Button rounded strong disabled={busy || !ticket || !file} onClick={() => void storage(true)}>Загрузить и проверить MP4</Button>
+    <Button rounded disabled={busy || !ticket} onClick={() => void storage(false)}>Проверить маленький файл</Button>
+    <Button rounded disabled={busy || !ticket || !file} onClick={() => void storage(true)}>Загрузить и проверить MP4</Button>
     <Button rounded disabled={!busy} onClick={() => active.current?.abort()}>Остановить проверку</Button>
     <p role="status"><Text variant="body">{busy ? 'Идёт проверка. При опыте с MP4 сверните Telegram и вернитесь.' : note}</Text></p>
     {results.map((result, index) => <p key={index}><Text variant="footnote">{result.step}: {result.code}; HTTP {result.status ?? '—'}; {result.elapsedMs} мс</Text></p>)}
