@@ -19,11 +19,16 @@ export interface DiscussionThread extends DiscussionScope {
 }
 export interface DiscussionMessage {
   id: string; realmId: string; owner: string; threadId: string; authorUserId: string;
+  /** Present only on private unsent drafts. */
+  draftForRealmId?: string;
+  /** Active repository messages use deletedAt: '' for a consistent edit predicate. */
   text: string; replyToMessageId?: string; createdAt: string; editedAt?: string; deletedAt?: string;
 }
 export interface DiscussionReadState {
   id: string; realmId: string; owner: string; threadId: string; userId: string;
   lastReadMessageId: string | null; lastReadAt: string;
+  /** createdAt/id watermark, advanced by an indexed conditional modify. */
+  readThrough?: string;
 }
 export { assertMessageAttachmentWrite, applyAttachmentUploadConfirmation, isAttachmentUploadConfirmation,
   type MessageAttachment, type AttachmentUploadConfirmation } from '../../../shared/discussion-attachment';
@@ -53,14 +58,14 @@ export function assertDiscussionMessageWrite(
     || message.threadId !== thread.id || message.owner !== actor || message.authorUserId !== actor
     || typeof message.text !== 'string' || message.text.length > 20000 || !instant(message.createdAt)
     || (message.editedAt !== undefined && !instant(message.editedAt))
-    || (message.deletedAt !== undefined && (!instant(message.deletedAt) || message.text !== ''))) invalid();
+    || (message.deletedAt !== undefined && message.deletedAt !== '' && (!instant(message.deletedAt) || message.text !== ''))) invalid();
   if (previous && (previous.owner !== actor || previous.authorUserId !== actor
     || previous.id !== message.id || previous.realmId !== message.realmId || previous.threadId !== message.threadId
     || previous.createdAt !== message.createdAt || previous.replyToMessageId !== message.replyToMessageId
-    || (previous.deletedAt !== undefined && previous.deletedAt !== message.deletedAt))) invalid();
+    || (Boolean(previous.deletedAt) && previous.deletedAt !== message.deletedAt))) invalid();
   if (message.replyToMessageId !== undefined && (!discussionId(message.replyToMessageId)
-    || message.replyToMessageId === message.id || !reply || reply.id !== message.replyToMessageId
-    || reply.threadId !== thread.id || reply.realmId !== thread.realmId)) invalid();
+    || message.replyToMessageId === message.id
+    || (reply ? reply.id !== message.replyToMessageId || reply.threadId !== thread.id || reply.realmId !== thread.realmId : !previous))) invalid();
 }
 export function assertDiscussionReadStateWrite(
   actor: string, thread: DiscussionThread, state: DiscussionReadState, lastRead?: DiscussionMessage,

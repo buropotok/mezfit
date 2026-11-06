@@ -59,7 +59,7 @@ export function assertMessageAttachmentWrite(
     || !media({ ...attachment }) || (attachment.storageKey !== null && !storageKey(attachment.storageKey))
     || !['pending', 'uploading', 'failed', 'ready'].includes(attachment.uploadState)
     || (attachment.deletedAt !== undefined && !instant(attachment.deletedAt))
-    || (message.deletedAt !== undefined && attachment.deletedAt === undefined)) invalid();
+    || (Boolean(message.deletedAt) && attachment.deletedAt === undefined)) invalid();
   if (attachment.uploadState === 'ready') {
     if (!storageKey(attachment.storageKey) || !instant(attachment.confirmedAt)) invalid();
   } else if (attachment.confirmedAt !== null) invalid();
