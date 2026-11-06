@@ -86,8 +86,15 @@ export class DiscussionRepository {
   private async threads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
     const rows = await this.db.discussionThreads.where('[realmId+anchorKey]')
       .equals([this.scope.realmId, discussionAnchorKey(this.scope, anchor)]).toArray();
-    return rows.filter(row => { try { assertDiscussionThread(row); return row.coachClientId === this.scope.coachClientId; } catch { return false; } })
-      .sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt) || a.id.localeCompare(b.id));
+    const valid = rows.filter(row => { try { assertDiscussionThread(row); return row.coachClientId === this.scope.coachClientId; } catch { return false; } });
+    // Activity hints can lag concurrent sends; derive the displayed timestamp from local messages.
+    const projected = await Promise.all(valid.map(async row => {
+      const latest = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+        .between([row.realmId, row.id, Dexie.minKey, Dexie.minKey], [row.realmId, row.id, Dexie.maxKey, Dexie.maxKey])
+        .reverse().filter(message => this.visible(message, row.id)).first();
+      return latest && latest.createdAt > row.lastActivityAt ? { ...row, lastActivityAt: latest.createdAt } : row;
+    }));
+    return projected.sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt) || a.id.localeCompare(b.id));
   }
   async listThreads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
     return this.read(() => this.threads(anchor));

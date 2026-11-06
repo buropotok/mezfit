@@ -137,6 +137,14 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     expect(await client.unreadForAnchor(anchor)).toBe(1);
     expect(await db.discussionReadStates.count()).toBe(1);
   });
+  it('shows the latest activity even when a cached thread hint lags a concurrent send', async () => {
+    const { db, coach, thread, anchor } = await fixture();
+    const createdAt = '2099-11-06T12:00:00.000Z';
+    await coach.send({ ...prepareDiscussionMessage(thread.id, 'Latest'), createdAt });
+    await db.discussionThreads.update(thread.id, { lastActivityAt: thread.createdAt });
+    expect((await coach.listThreads(anchor))[0].lastActivityAt).toBe(createdAt);
+    expect((await db.discussionThreads.get(thread.id))?.lastActivityAt).toBe(thread.createdAt);
+  });
   it('validates malformed cached data and retains the attachment contract for active messages', async () => {
     const { db, coach, client, thread } = await fixture();
     const row = await coach.send(prepareDiscussionMessage(thread.id, 'Active'));
@@ -193,7 +201,7 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     const { coach, client, thread } = await fixture();
     const source = await coach.send({ ...prepareDiscussionMessage(thread.id, 'Оригинал'), createdAt: '2026-11-06T00:00:00.001Z' });
     await client.send({ ...prepareDiscussionMessage(thread.id, 'Ответ', source.id), createdAt: '2026-11-06T00:00:00.002Z' });
-    const next = vi.fn(), error = vi.fn(); const sub = client.observePage(thread.id, next, error);
+    const next = vi.fn(), error = vi.fn(); const sub = client.observePage(thread.id, next, error, undefined, 1);
     await vi.waitFor(() => expect(next).toHaveBeenCalled());
     await coach.remove(thread.id, source.id);
     await vi.waitFor(() => expect(next.mock.lastCall?.[0].messages.at(-1)?.reply?.text).toBe(''));
