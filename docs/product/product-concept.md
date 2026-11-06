@@ -10,10 +10,10 @@ The core product loop is:
 
 One Mini App exposes role-based interfaces:
 
-- **Client mode** — view the assigned program, execute workouts, record actual results, inspect exercise history and progress, and communicate through Telegram.
+- **Client mode** — view the assigned program, execute workouts, record actual results, inspect exercise history and progress, and communicate through contextual discussions in Mezfit.
 - **Coach mode** — manage clients, analyze a selected client, build and edit future prescriptions, record workout results during in-person sessions, inspect plan versus fact, and review progress.
 
-Telegram is the communication layer. Text, voice, video, video notes, and photos should use native Telegram interaction where practical instead of rebuilding a parallel messenger inside the Mini App.
+The approved communications target (2026-11-06, [issue #636](https://github.com/buropotok/mezfit/issues/636)) is contextual discussion inside Mezfit, opened from entity menus. Dexie Cloud owns text/metadata; private Yandex Object Storage is the target for media. Telegram Bot only notifies and opens the exact entity/message; it is not a reply channel. See [the normative communications contract](../architecture/communications.md) for the four allowed levels, UI, retention, risks and 13-PR rollout. This is planned functionality, not a claim about the deployed runtime; the former Telegram-centric direction is superseded.
 
 ## Product principles
 
@@ -49,12 +49,12 @@ Exercise                   ExerciseDefinition + PlannedExercise + ExerciseResult
 Set                        PlannedSet + SetResult
 Previous / History         client-specific exercise/workout history
 Stats / Measures           client Progress
-Comment                    coach instruction / client note / Telegram feedback reference
+Comment                    instruction/private note (classify first) / contextual discussion
 ```
 
 ## Technical baseline
 
-Validated implementation baseline:
+Historical implementation baseline (not the target communications stack; see the local-first and communications architecture contracts):
 
 - Telegram Mini App frontend: React + TypeScript + Vite.
 - Telegram Bot: `@mezfit_bot`.
