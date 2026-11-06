@@ -1,0 +1,82 @@
+name: Deploy Yandex media gateway
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY_YANDEX_MEDIA to publish a new private function version'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: yandex-media-gateway-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirm == 'DEPLOY_YANDEX_MEDIA'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required configuration
+        env:
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_RUNTIME_SA_ID: ${{ vars.YC_RUNTIME_SA_ID }}
+          YC_FUNCTION_ID: ${{ vars.YC_FUNCTION_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          for key in YC_DEPLOY_SA_ID YC_RUNTIME_SA_ID YC_FUNCTION_ID YC_FOLDER_ID; do
+            if [[ -z "${!key}" ]]; then
+              echo "Missing required repository variable: $key" >&2
+              exit 1
+            fi
+          done
+
+      - name: Get short-lived Yandex IAM token
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+
+      - name: Verify existing function identity before deployment
+        env:
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          YC_FUNCTION_ID: ${{ vars.YC_FUNCTION_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error --max-time 30 \
+            --header "Authorization: Bearer ${YC_IAM_TOKEN}" \
+            "https://serverless-functions.api.cloud.yandex.net/functions/v1/functions/${YC_FUNCTION_ID}")"
+          if ! jq -e \
+            --arg id "$YC_FUNCTION_ID" \
+            --arg folder "$YC_FOLDER_ID" \
+            '.id == $id and .folderId == $folder and .name == "mezfit-media-gateway" and .status == "ACTIVE"' \
+            <<<"$response" >/dev/null; then
+            echo 'Target Yandex function missing, renamed or outside the expected folder; refusing deployment' >&2
+            exit 1
+          fi
+
+      - name: Publish private function version
+        uses: yc-actions/yc-sls-function@v3.1.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+          folder-id: ${{ vars.YC_FOLDER_ID }}
+          function-name: mezfit-media-gateway
+          runtime: nodejs22
+          entrypoint: index.handler
+          memory: 128Mb
+          execution-timeout: '5'
+          service-account: ${{ vars.YC_RUNTIME_SA_ID }}
+          source-root: infra/yandex-media-gateway
+          include: |
+            index.js
+            package.json
