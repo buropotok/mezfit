@@ -16,22 +16,33 @@ function deepFreeze(value) {
   return Object.freeze(value);
 }
 export const DISCUSSION_SCHEMA = deepFreeze({ schema: { discussionThreads: 'id', discussionMessages: 'id', discussionReadStates: 'id', messageAttachments: 'id' } });
-export const DISCUSSION_ROLE_OVERLAY = deepFreeze({
+export const LEGACY_DISCUSSION_ROLE_OVERLAY = deepFreeze({
   roles: {
     coach: { permissions: { add: ['discussionThreads', 'discussionMessages', 'discussionReadStates'], update: { discussionThreads: ['lastActivityAt'] } } },
     client: { permissions: { add: ['discussionThreads', 'discussionMessages', 'discussionReadStates'], update: { discussionThreads: ['lastActivityAt'] } } },
   },
 });
 
-export function buildExpectedDiscussionRoles(baseline = PREVIOUS_DISCUSSION_ROLES) {
-  equal(baseline, PREVIOUS_DISCUSSION_ROLES, 'UNEXPECTED_DISCUSSION_BASELINE');
-  const roles = structuredClone(baseline);
+// Frozen PR #653 profile: accept only its complete exact policy when upgrading.
+export const DISCUSSION_ROLE_OVERLAY = deepFreeze({
+  roles: {
+    coach: { permissions: { add: ['discussionThreads', 'discussionMessages', 'discussionReadStates', 'messageAttachments'], update: { discussionThreads: ['lastActivityAt'] } } },
+    client: { permissions: { add: ['discussionThreads', 'discussionMessages', 'discussionReadStates', 'messageAttachments'], update: { discussionThreads: ['lastActivityAt'] } } },
+  },
+});
+function extendDiscussionRoles(overlay) {
+  const roles = structuredClone(PREVIOUS_DISCUSSION_ROLES);
   for (const name of ['coach', 'client']) {
-    const permissions = DISCUSSION_ROLE_OVERLAY.roles[name].permissions;
+    const permissions = overlay.roles[name].permissions;
     roles[name].permissions.add.push(...permissions.add);
     Object.assign(roles[name].permissions.update, structuredClone(permissions.update));
   }
   return roles;
+}
+export const LEGACY_DISCUSSION_ROLES = deepFreeze(extendDiscussionRoles(LEGACY_DISCUSSION_ROLE_OVERLAY));
+export function buildExpectedDiscussionRoles(baseline = PREVIOUS_DISCUSSION_ROLES) {
+  equal(baseline, PREVIOUS_DISCUSSION_ROLES, 'UNEXPECTED_DISCUSSION_BASELINE');
+  return extendDiscussionRoles(DISCUSSION_ROLE_OVERLAY);
 }
 export const EXPECTED_DISCUSSION_ROLES = deepFreeze(buildExpectedDiscussionRoles());
 
@@ -54,12 +65,14 @@ export function planDiscussions(overlay, schemaManifest, beforeSchema, beforeRol
     else equal(beforeSchema.schema[name], key, 'INCOMPATIBLE_DISCUSSION_TABLE');
   }
   const allPrevious = ['coach', 'client'].every(role => isDeepStrictEqual(beforeRoles.roles[role], PREVIOUS_DISCUSSION_ROLES[role]));
+  const allLegacy = ['coach', 'client'].every(role => isDeepStrictEqual(beforeRoles.roles[role], LEGACY_DISCUSSION_ROLES[role]));
   const allTarget = ['coach', 'client'].every(role => isDeepStrictEqual(beforeRoles.roles[role], EXPECTED_DISCUSSION_ROLES[role]));
-  if (!allPrevious && !allTarget) fail('UNEXPECTED_DISCUSSION_ROLE_BASELINE');
+  if (!allPrevious && !allLegacy && !allTarget) fail('UNEXPECTED_DISCUSSION_ROLE_BASELINE');
   const roles = {};
   for (const role of ['coach', 'client']) {
     const current = beforeRoles.roles[role];
     if (!isDeepStrictEqual(current, PREVIOUS_DISCUSSION_ROLES[role])
+      && !isDeepStrictEqual(current, LEGACY_DISCUSSION_ROLES[role])
       && !isDeepStrictEqual(current, EXPECTED_DISCUSSION_ROLES[role])) {
       fail('UNEXPECTED_DISCUSSION_ROLE_BASELINE');
     }
@@ -70,7 +83,7 @@ export function planDiscussions(overlay, schemaManifest, beforeSchema, beforeRol
   const importPayload = {};
   if (Object.keys(schema).length) importPayload.schema = schema;
   if (Object.keys(roles).length) importPayload.roles = roles;
-  return { importPayload, addedTables: Object.keys(schema),
+  return { importPayload, sourceProfile: allPrevious ? 'flex' : allLegacy ? 'discussion-text' : 'discussion-mvp', addedTables: Object.keys(schema),
     changedRoles: Object.keys(roles), changeCount: Object.keys(schema).length + Object.keys(roles).length };
 }
 
@@ -127,6 +140,7 @@ async function main() {
     if (!env.GITHUB_OUTPUT) fail('GITHUB_OUTPUT_REQUIRED');
     await writeFile(join(dir, 'discussions-import.json'), JSON.stringify(plan.importPayload), { flag: 'wx', mode: 0o600 });
     await appendFile(env.GITHUB_OUTPUT, 'change_count=' + plan.changeCount + '\n');
+    console.log('Verified source profile: ' + plan.sourceProfile);
     console.log('Approved new Discussion tables: ' + (plan.addedTables.join(', ') || 'none'));
     console.log('Approved role extensions: ' + (plan.changedRoles.join(', ') || 'none'));
     return;

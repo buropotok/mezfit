@@ -25,12 +25,8 @@ export interface DiscussionReadState {
   id: string; realmId: string; owner: string; threadId: string; userId: string;
   lastReadMessageId: string | null; lastReadAt: string;
 }
-/** Metadata only; no ordinary shared-realm attachment writes in this slice. */
-export interface MessageAttachment {
-  id: string; realmId: string; owner: string; messageId: string;
-  mediaType: 'photo' | 'video' | 'voice'; storageKey: string | null;
-  mimeType: string; sizeBytes: number; durationSeconds: number | null;
-}
+export { assertMessageAttachmentWrite, applyAttachmentUploadConfirmation, isAttachmentUploadConfirmation,
+  type MessageAttachment, type AttachmentUploadConfirmation } from '../../../shared/discussion-attachment';
 const instant = (value: string) => Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 const actorId = (value: string) => /^tg:[1-9]\d*$/.test(value);
 const invalid = (): never => { throw new Error('INVALID_DISCUSSION_WRITE'); };

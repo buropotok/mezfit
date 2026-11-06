@@ -6,7 +6,7 @@ on:
     inputs:
       operation:
         type: choice
-        description: 'Preview or install only reviewed four discussion tables and exact Coach/Client grants'
+        description: 'Preview or install four discussion tables and complete text/photo/video/voice MVP grants'
         required: true
         default: preview
         options: [preview, apply]
@@ -61,7 +61,7 @@ jobs:
           cd "$RUNNER_TEMP/dexie-schema-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --schema before-schema.json
           npx --yes --package=dexie-cloud@3.0.7 -- dexie-cloud export --roles before-roles.json
-      - name: Plan exact additive schema and Coach/Client role delta
+      - name: Plan exact schema and full MVP grants from Flex, text-only or current profile
         id: plan
         run: node tools/dexie-roles/discussions.mjs plan
       - name: Re-export live configuration immediately before apply
@@ -78,7 +78,7 @@ jobs:
         id: import_attempt
         if: inputs.operation == 'apply' && steps.plan.outputs.change_count != '0'
         run: echo "attempted=true" >> "$GITHUB_OUTPUT"
-      - name: Import only reviewed Discussion tables and exact Coach/Client role extensions
+      - name: Import only reviewed Discussion tables and complete MVP Coach/Client grants
         if: inputs.operation == 'apply' && steps.import_attempt.outputs.attempted == 'true'
         run: |
           set -euo pipefail

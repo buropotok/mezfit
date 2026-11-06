@@ -14,6 +14,14 @@ export function discussionRolesBaseline(roles: unknown[]): unknown[] | null {
   });
   if (!candidates.some(Boolean)) return roles;
   if (!candidates.every(Boolean)) return null;
+  // Both roles must be on one complete reviewed profile, never a mixed rollout.
+  const attachmentGrants = names.map(name => {
+    const role = roles.find(item => discussionRecord(item) && item.realmId === 'rlm-public' && item.name === name);
+    return discussionRecord(role) && discussionRecord(role.permissions)
+      && Array.isArray(role.permissions.add) && role.permissions.add.includes('messageAttachments');
+  });
+  if (attachmentGrants.some(Boolean) && !attachmentGrants.every(Boolean)) return null;
+  const includeAttachments = attachmentGrants.every(Boolean);
   const result: unknown[] = [];
   for (const role of roles) {
     if (!discussionRecord(role) || role.realmId !== 'rlm-public' || (role.name !== 'coach' && role.name !== 'client')) {
@@ -23,13 +31,14 @@ export function discussionRolesBaseline(roles: unknown[]): unknown[] | null {
     if (!discussionRecord(permissions) || !Array.isArray(permissions.add) || !discussionRecord(permissions.update)) return null;
     const additions = permissions.add;
     const grant = overlay.roles[role.name].permissions;
-    if (grant.add.some(table => additions.filter((item: unknown) => item === table).length !== 1)
+    const expectedAdd = grant.add.filter(table => includeAttachments || table !== 'messageAttachments');
+    if (expectedAdd.some(table => additions.filter((item: unknown) => item === table).length !== 1)
       || !Array.isArray(permissions.update.discussionThreads)
       || permissions.update.discussionThreads.length !== 1 || permissions.update.discussionThreads[0] !== 'lastActivityAt'
       || !additions.includes('flexValues') || !Object.hasOwn(permissions.update, 'flexValues')) return null;
     const update = { ...permissions.update }; delete update.discussionThreads;
     result.push({ ...role, permissions: { ...permissions, update,
-      add: additions.filter((table: unknown) => typeof table !== 'string' || !grant.add.includes(table)) } });
+      add: additions.filter((table: unknown) => typeof table !== 'string' || !expectedAdd.includes(table)) } });
   }
   return result;
 }

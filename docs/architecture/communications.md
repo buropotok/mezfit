@@ -99,7 +99,7 @@ Anchor/context принадлежат области thread с `realmId` и `coa
 | DiscussionAnchor (внутри thread) | Каноническая identity, parent path и ключ по реальным source ID, без отдельной таблицы |
 | DiscussionThread | id, realm/отношение, anchorId, автоматический title snapshot, createdAt, lastActivityAt; без бизнес-статуса |
 | DiscussionMessage | id, realm, threadId, authorUserId, text, replyToMessageId, createdAt, editedAt/deletedAt |
-| MessageAttachment | id, realm, messageId, mediaType, storageKey, проверенные mime/размер/длительность, жизненный цикл файла |
+| MessageAttachment | id, realm, messageId, owner=authorUserId, mediaType, storageKey, mime/размер/длительность, uploadState, confirmedAt, deletedAt? |
 | DiscussionReadState | threadId, userId, cursor прочтения в собственной области записи участника |
 
 Путь: **React → типизированные application/domain repositories → локальная Dexie-транзакция → Dexie Cloud Addon → Dexie Cloud**. IndexedDB содержит разрешённый рабочий subset; Dexie Cloud — единственная бизнес-БД. Нормальные сообщения и правки принимаются локально без ожидания HTTP/cloud push. Addon владеет репликацией и повторами; отдельного чат-backend CRUD, второго SyncEngine, change-feed или теневой БД в Yandex нет. Серверная проверка структурного доступа не должна заново проверять динамическое состояние PLAN против отставшей облачной копии.
@@ -108,11 +108,17 @@ Shared realm относится к конкретной паре тренер–
 
 Устойчивые ID обеспечивают идемпотентность отправки/повтора; повтор загрузки не создаёт второе сообщение. Локальная запись, облачная синхронизация, готовность файла и прочтение — разные состояния. Async-владелец отвечает за отмену/устаревший результат, повтор, object URL и cleanup; ошибка медиа не блокирует shell или текстовую историю. Комментарий никогда не изменяет PLAN/FACT и не сохраняет второй mutable-снимок тренировки.
 
-**Одобрено владельцем при COMM-03:** сообщения/read-state используют обычный `owner`.
+**Одобрено владельцем при COMM-03:** сообщения/read-state/вложения используют обычный `owner`.
 Участник без соответствующих общих update/manage grants не может править чужие строки.
 Владелец строки имеет полные права на неё; сохранение автора/thread/realm в обычных
 операциях обеспечивает доменный репозиторий, не отдельная строгая серверная гарантия.
 Новые сервисы, realm на каждое сообщение/автора и grant-деревья не вводятся.
+Для фото, видео и голосовых обе роли получают `add: messageAttachments`; собственные
+метаданные автор обновляет/удаляет как owner, общих update/manage для вложений нет.
+`uploadState` отражает ход загрузки, а `confirmedAt` — результат штатного confirm.
+Они не являются серверным доказательством существования объекта: будущий шлюз
+независимо проверяет identity/realm/message, фактический объект и его метаданные.
+Повтор использует прежние messageId/attachmentId и storageKey, без второй реплики.
 Подробный scope protected operator и безопасное включение v15 —
 [discussion-schema-acl-plan.md](discussion-schema-acl-plan.md).
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { EXPECTED_FLEX_ROLES } from './flex-attributes.mjs';
-import { DISCUSSION_SCHEMA, DISCUSSION_ROLE_OVERLAY, EXPECTED_DISCUSSION_ROLES, CONFIRMATION,
+import { DISCUSSION_SCHEMA, DISCUSSION_ROLE_OVERLAY, EXPECTED_DISCUSSION_ROLES, LEGACY_DISCUSSION_ROLES, CONFIRMATION,
   planDiscussions, verifyDiscussions, assertDiscussionUnchanged, validateDiscussionDispatch } from './discussions.mjs';
 const schema = { schema: { existing: 'id' }, sealed: true };
 const roles = { roles: { ...structuredClone(EXPECTED_FLEX_ROLES), unrelated: { permissions: {} } } };
@@ -20,6 +20,29 @@ describe('exact protected discussion schema/ACL operator', () => {
     const afterRoles = { roles: { ...roles.roles, ...EXPECTED_DISCUSSION_ROLES } };
     expect(() => verifyDiscussions(DISCUSSION_ROLE_OVERLAY, DISCUSSION_SCHEMA, schema, roles, afterSchema, afterRoles)).not.toThrow();
     expect(plan(afterSchema, afterRoles).changeCount).toBe(0);
+  });
+  it('upgrades the exact installed PR #653 profile without rewriting tables or changing other grants', () => {
+    const installedSchema = { ...schema, schema: { ...schema.schema, ...DISCUSSION_SCHEMA.schema } };
+    const installedRoles = { roles: { ...roles.roles, ...LEGACY_DISCUSSION_ROLES } };
+    const result = plan(installedSchema, installedRoles);
+    expect(result.sourceProfile).toBe('discussion-text');
+    expect(result.addedTables).toEqual([]);
+    expect(result.importPayload).not.toHaveProperty('schema');
+    for (const name of ['coach', 'client']) {
+      const before = installedRoles.roles[name].permissions;
+      const after = result.importPayload.roles[name].permissions;
+      expect(after).toEqual({ ...before, add: [...before.add, 'messageAttachments'] });
+      expect(after.update).not.toHaveProperty('messageAttachments');
+    }
+    const targetRoles = { roles: { ...installedRoles.roles, ...EXPECTED_DISCUSSION_ROLES } };
+    expect(() => verifyDiscussions(DISCUSSION_ROLE_OVERLAY, DISCUSSION_SCHEMA,
+      installedSchema, installedRoles, installedSchema, targetRoles)).not.toThrow();
+    expect(plan(installedSchema, targetRoles).sourceProfile).toBe('discussion-mvp');
+    expect(plan(installedSchema, targetRoles).changeCount).toBe(0);
+    const mixed = { roles: { ...installedRoles.roles, coach: EXPECTED_DISCUSSION_ROLES.coach } };
+    expect(() => plan(installedSchema, mixed)).toThrow('UNEXPECTED_DISCUSSION_ROLE_BASELINE');
+    expect(() => verifyDiscussions(DISCUSSION_ROLE_OVERLAY, DISCUSSION_SCHEMA,
+      installedSchema, installedRoles, installedSchema, mixed)).toThrow('UNEXPECTED_DISCUSSION_ROLES_READBACK');
   });
   it('rejects widened manifests, conflicting table keys, partial roles and altered baseline grants', () => {
     const overlay = structuredClone(DISCUSSION_ROLE_OVERLAY); overlay.roles.coach.permissions.update.discussionMessages = ['text'];
