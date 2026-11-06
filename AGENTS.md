@@ -395,6 +395,36 @@ operators or add secrets. Live ordinary-account ACL checks are required
 before dependent features are activated. See
 `docs/architecture/flex-attributes.md` for the scope, risks and checklist.
 
+### Approved discussion foundation (COMM-03, 2026-11-06)
+
+The owner explicitly approved preparing the four additive tables in
+`cloud/schema-discussions.json` and the exact `cloud/discussion-roles.json`
+overlay: Coach and Client may add only `discussionThreads`, `discussionMessages`
+and `discussionReadStates`, and update only `discussionThreads.lastActivityAt`.
+`messageAttachments` has schema only, without new shared-realm write grants.
+No new chat roles, per-anchor ACL, keys, PLAN/FACT or membership changes.
+
+As a narrow additional §21 exception, `tools/dexie-roles/discussions.mjs` and
+`.github/workflows/dexie-discussions.yml` may prepare/apply only this exact
+schema/overlay on the complete reviewed Flex role baseline. Reuse the existing
+protected environment secret, owner/main manual Preview/Apply, literal
+`APPLY_DISCUSSIONS_SCHEMA_AND_ACL`, required environment reviewers, the shared
+privileged writer lock, immediate full recheck and exact full readback even
+following failed/no-op imports. Apply requires owner attestation of COMM-02
+validation and a separate explicit live-operation approval. Preparation/PR
+creation is not that approval; never execute on PR/push or widen old operators.
+
+For discussion messages/read-state only, the approved MVP uses native Dexie
+`owner` permissions for editing/deleting one's own records and realm membership
+for pair isolation. Native ownership grants the owner full control of their row;
+immutable author/thread/realm provenance in normal application operations is
+maintained by typed domain repositories, not a stronger server-side invariant.
+Do not claim otherwise or add backend CRUD/extra realms to emulate it. All
+unrelated domain identity/PLAN/FACT invariants remain unchanged. Former pair
+participants retain read visibility of their historical shared discussions;
+ending cooperation alone must not remove their membership or grant the history
+to a different trainer. See `docs/architecture/discussion-schema-acl-plan.md`.
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.

@@ -1,119 +1,171 @@
-# COMM-03: план схемы и границы одобрения
+# COMM-03: DiscussionAnchor, схема и минимальные ACL
 
-Дата: 2026-11-06. Основа: main `30f2d4ef`.
+Дата: 2026-11-06. Основа main: `30f2d4ef`.
 Задача: [#638](https://github.com/buropotok/mezfit/issues/638).
-Статус: **предварительная проверка выполнена; реализация остановлена до решений ниже**.
-Это не установленная схема, не оператор применения и не доказательство server permissions.
+**Статус:** владелец отдельно одобрил подготовку узкого protected operator и
+обычную owner-модель MVP. Это не разрешение live Apply. Таблицы/роли в cloud не менялись.
 
-## Принятые простые решения
+## Решения и границы
 
-- Telegram identity `tg:...` и существующий realm конкретной пары сохраняются.
-  В действующей модели `coachClientId` — identity того же канонического relationship realm.
-- Четыре уровня anchor: trainingPlan целиком, конкретная workout, exercise и set
-  внутри workout. Нет anchors у элементов шаблона и нет отдельных ACL для anchors.
-- Для planned/execution корень — occurrence ID. Session `occurrenceId`, exercise
-  `occurrenceExerciseId` и set `occurrenceSetId` связывают экземпляры по фактическим
-  immutable provenance полям; position и exerciseDefinitionId не используются как ID.
-- Для ad-hoc без occurrence корень — session ID. Новые FACT-экземпляры без occurrence
-  provenance нельзя угадывать по позиции: нужна собственная namespace execution ID.
-- Историю бывшие участники продолжают читать; новая пара её не наследует. Срок медиа
-  — 6 календарных месяцев после окончания отношений, текст без автоматического удаления.
+Telegram identity `tg:...` и существующий realm пары сохраняются.
+`coachClientId` — identity канонического relationship realm, отдельного справочника нет.
+Ни новый backend сообщений, ни SyncEngine, ни ACL-дерево на каждую сущность не создаются.
+Этот PR не реализует UI, CRUD сообщений, media gateway/URLs, кеш/загрузки и retention.
+Последующие репозитории используют подготовленные типы и обычный Addon.
 
-## Конкретный объём предлагаемого protected operator
+Владелец принял простой вариант: native Dexie owner защищает чужие строки при отсутствии
+общих update/manage grants. Собственный автор/thread/realm сохраняются доменным
+репозиторием при штатных операциях; строгой серверной неизменяемости этих полей у
+владельца строки нет. Это явное исключение для discussion message/read-state в AGENTS,
+а не изменение защиты PLAN/FACT или привилегий других таблиц.
 
-Подготовку нового потребителя защищённой учётной записи нужно отдельно разрешить:
-действующий AGENTS §21 содержит закрытый список целей; обсуждения туда не входят.
-Предлагаемые пути после согласия:
+Официальный [Dexie access control](https://dexie.org/docs/cloud/access-control):
+owner имеет полные права на свою запись, независимо от полевого allowlist роли.
+[DBPermissionSet](https://dexie.org/docs/cloud/DBPermissionSet) не выражает predicate
+`authorUserId == currentUser` для ownerless сообщений. Поэтому для MVP не добавлены
+backend CRUD, per-author/per-message realms или дополнительные серверные механизмы.
 
-- `cloud/schema-discussions.json` — только additive schema четырёх таблиц ниже.
-- `cloud/discussion-roles.json` — точный additive overlay существующих coach/client,
-  без новых чат-ролей и без grant-дерева для exercise/set.
-- `tools/dexie-roles/discussions.mjs` и `.github/workflows/dexie-discussions.yml` —
-  отдельные Preview/Apply, ручной owner/main dispatch, environment `dexie-production`
-  с required reviewers, существующий общий writer concurrency, literal confirmation,
-  полный recheck перед импортом и exact readback после success/failure/no-op.
-- Точное узкое исключение AGENTS §21 под перечисленные файлы/таблицы/grants.
-- Совместимость `assertRemoteRoles` в `worker/lib/dexie-cloud-membership.ts` только
-  с точным одобренным communications profile. Сейчас он сравнивает ключи/таблицы
-  permissions с allowlist; молчаливое расширение ролей сломает новые приглашения.
+## Идентичности и реальные источники
 
-| Таблица | Cloud primary key | Предлагаемые локальные индексы |
+`shared/discussion-anchor.ts` — discriminated union из четырёх уровней, canonical key,
+parent path, runtime shape guard и автоназвание «имя сущности · дата».
+`src/data/cloud/discussion-anchors.ts` — чистые адаптеры реальных строк:
+
+| Уровень / источник | Каноническая идентичность |
+| --- | --- |
+| Программа целиком | trainingPlanId; фазы/дни/элементы шаблона запрещены |
+| Запланированная workout и её execution | occurrence ID; session.occurrenceId ведёт к тому же корню |
+| Exercise/set occurrence и execution | occurrenceExerciseId / occurrenceSetId при доказанном наличии во frozen occurrencePlan |
+| Новый FACT внутри planned execution | execution ID конкретного элемента под тем же occurrence root, без угадывания по position |
+| Ad-hoc без occurrence | session ID + execution instance ID |
+| Legacy session PLAN/FACT | отдельный legacy-session root; legacy и legacy-fact instance namespaces различаются |
+
+Ключ — сериализованный фиксированный массив realm/отношения/namespace/ID; порядок полей
+объекта, названия, position и catalogue exerciseDefinitionId его не меняют. Поэтому
+две session-проекции и два устройства не создают другой контекст для одной occurrence.
+Две разные пары/личная область не сливаются при одинаковом source ID.
+
+Отдельной таблицы реестра/alias для MVP нет: существующие provenance fields уже дают
+соответствие, anchor и contextPath хранятся внутри thread. Несколько независимых веток
+у одного ключа разрешены. Если origin ID не доказан реальными parent/snapshot связями,
+адаптер отклоняет запрос. Для удалённого источника сохранённый anchor/snapshot остаётся
+пригоден для истории; отсутствие объекта не повод направлять к соседнему подходу.
+Legacy не перепривязывается к occurrence через program ID или номер подхода.
+
+## Таблицы, локальная схема и безопасное включение
+
+`discussion-contracts.ts` содержит типы и доменные write guards, без persistent CRUD.
+
+| Таблица | Cloud primary key | Локальные индексы |
 | --- | --- | --- |
 | discussionThreads | id | realmId, [realmId+coachClientId], [realmId+anchorKey], [realmId+lastActivityAt] |
 | discussionMessages | id | realmId, [realmId+threadId], [realmId+threadId+createdAt], [realmId+authorUserId] |
 | discussionReadStates | id | realmId, [realmId+threadId+userId] |
 | messageAttachments | id | realmId, [realmId+messageId] |
 
-Предложение минимальных общих grants: добавить обеим существующим ролям только
-`add: [discussionThreads, discussionMessages, discussionReadStates]` и
-`update: { discussionThreads: [lastActivityAt] }`. Метаданные вложений пока только
-в schema; обычные shared-realm writes для них не включать до media-этапа.
-Широкие update/manage на messages/read-state не нужны: они дали бы правку чужих записей.
-Политику `owner` окончательно выбрать до утверждения overlay (§ ниже).
+Thread содержит anchor/contextPath/anchorKey, derivedTitleSnapshot и timestamps,
+`owner: realmId` (не пользователь); общая правка — только lastActivityAt.
+Message содержит owner=authorUserId, thread, text, replyToMessageId и timestamps
+edit/delete. Reply только в том же thread/realm; удалённый оригинал допускает placeholder.
+Normal edit не меняет автора/контекст; normal delete оставляет пустой текст с deletedAt,
+не сохраняет историю редакций и не восстанавливает удалённое сообщение случайной правкой.
+Read-state owner=userId; детерминированный ID realm/thread/user один на устройствах
+участника. Guard проверяет принадлежность последнего прочитанного сообщения этой ветке.
+Это контракт будущего repository, не уже реализованная синхронизация read cursor.
 
-Никаких изменений остальных таблиц/полей, PLAN/FACT, membership, owner/realm transfer,
-новых ключей или новых ролей. Не расширять действующие операторы. Не выполнять
-protected действия в PR/push. Разрешение **подготовить** этот оператор не означает
-разрешение **запустить Apply**. COMM-02 и live проверки обычными аккаунтами остаются
-условием применения/активации; локальные permission unit tests не заменят сервер.
+Нет open/resolved/requiresReply, реакций, пересылок, специальных чат-ролей.
+Attachment пока только тип метаданных photo/video/voice и таблица. Широкие shared-realm
+write grants для него не выдаются. Срок хранения реализует COMM-13.
 
-## Подтверждённое ограничение ACL, требующее решения
+Подготовлена append-only `CLOUD_DATABASE_STORES_V15`, не меняющая v14. Важная граница:
+[sealed cloud schema](https://dexie.org/docs/cloud/cli) требует server import до того,
+как клиент объявит новые sync-таблицы. Поэтому существующий production factory по
+умолчанию остаётся v14. Только явный `{ discussions: true }` в constructor/factory
+регистрирует v15 в **том же account-scoped IndexedDB**, не в отдельной БД.
+После одобренного cloud Apply и live проверки следующий integration PR включает это
+для всего lifecycle аккаунта. После использования v15 не возвращаться к клиенту v14:
+это schema downgrade, а не способ выключить UI. Никаких unsynced chat tables или
+устройственного shadow-хранилища до активации нет. В этом PR опция нигде не включается.
 
-Официальный контракт [Dexie access control](https://dexie.org/docs/cloud/access-control)
-и [DBPermissionSet](https://dexie.org/docs/cloud/DBPermissionSet) задаёт следующее:
+## Минимальные серверные grants и совместимость
 
-1. При `owner = author` автор может изменить/удалить свою запись; другой участник
-   с одним add-grant не может изменить её. Но владелец может менять **любые** поля
-   своей записи, включая owner/realm и provenance, независимо от field allowlist роли.
-2. При ownerless/realm-sentinel rows полевой allowlist защищает provenance, но update
-   разрешение применяется к участникам роли/realm: оно не выражает условие
-   `authorUserId == currentUser`. Выдавать его обоим — разрешить менять чужой текст.
-3. Ссылки threadId/replyToMessageId не являются server-enforced foreign keys.
-   Проверка same-thread/domain association в репозитории сама по себе не доказывает
-   такую же проверку сервером Dexie. Новых ACL на каждый anchor не предлагается.
+`cloud/discussion-roles.json` добавляет обеим существующим ролям только:
 
-Поэтому одновременно обещать «обычный owner», «строго неизменяемый сервером автор/
-thread/realm» и «никаких дополнительных серверных механизмов» нельзя на основании
-проверенного DBPermissionSet. Это конкретное ограничение модели, а не сценарий,
-ради которого нужно автоматически усложнять MVP.
+```json
+{
+  "add": ["discussionThreads", "discussionMessages", "discussionReadStates"],
+  "update": { "discussionThreads": ["lastActivityAt"] }
+}
+```
 
-Предлагаемый простой вариант для решения владельца: штатная owner-модель
-защищает чужие сообщения/read-state на сервере; собственность и принадлежность
-проверяются в типизированном репозитории при нормальных действиях, неизменяемость
-provenance **не объявляется отдельной server-enforced гарантией**. Это явное
-уточнение строгого требования #638/AGENTS, а не уже принятое решение.
+Чтение — по прежней membership пары. Нет общих update/manage для messages/read-state:
+чужую строку такой участник не редактирует, собственную — редактирует как owner.
+Ни знание anchor ID, ни membership другой пары не дают доступ к этой истории.
+Row ownership может менять сам owner; это одобренное MVP ограничение, не новая гарантия.
+Правила доступа к Yandex объекту не выводятся из storageKey и вне scope этого PR.
 
-Если строгая серверная неизменяемость остаётся обязательной, сначала согласовать
-поддерживаемую техническую возможность/модель с Dexie. Не добавлять автоматически
-backend CRUD, per-author/per-message realms, доверенный журнал, специальную
-криптографию или новые membership/grant-слои. До решения не активировать схему/ACL.
+Worker membership preflight принимает прежние profiles и точную новую надстройку на
+Flex baseline. `discussionRolesBaseline` снимает только проверенный полный overlay,
+после чего неизменённый базовый verifier проверяет остальные grants. Половинные,
+дублирующиеся и расширенные policies отклоняются; новых actor/member IDs не появляется.
+Без этой совместимости новые глобальные grants сломали бы приём приглашений.
 
-## Завершение отношений: что найдено в текущем коде
+## Отдельный protected operator
+
+Подготовлены `tools/dexie-roles/discussions.mjs` и `.github/workflows/dexie-discussions.yml`.
+Действующий Flex/operator и другие установщики не расширены.
+
+- Только additive `cloud/schema-discussions.json`: четыре таблицы с ключом id.
+- Только точный overlay coach/client на **полном EXPECTED_FLEX_ROLES baseline** либо
+  его точном уже применённом discussion target. Незнакомую/частичную policy не чинить
+  автоматически; Preview откажет, потребуется отдельное ревью фактической конфигурации.
+- Другие роли, все чужие schema entries, owner/realm, PLAN/FACT, membership и бизнес-данные
+  сохраняются. Нет новых credentials/чат-ролей, обычных attachment write grants или DELETE grants.
+- Owner/main/manual workflow_dispatch, environment dexie-production с reviewers,
+  существующий DEXIE_CLOUD_WRITE_KEY и общий privileged writer concurrency.
+- Preview не импортирует. Apply требует отдельного решения владельца, отметки
+  `comm02_validated=true` и literal `APPLY_DISCUSSIONS_SCHEMA_AND_ACL`.
+  Эта отметка — свидетельство владельца, не автоматическая проверка телефонов.
+- Полный schema/roles export до операции, точный recheck непосредственно перед импортом,
+  readback после попытки импорта (в том числе CLI error) и при no-op; cleanup в always.
+  Ошибка/частичный результат не считается успехом. Старые операторы могут отказать
+  на расширенном baseline — не ослаблять их allowlists ради отката.
+
+Порядок: review/CI/merge не включает опцию v15 → отдельное согласие live Apply после
+COMM-02 → protected Preview/Apply и full readback → обычные аккаунты/live ACL →
+явное включение v15 в integration PR. Нельзя выдавать static readback за live permission test.
+Реальные cloud writes в рамках подготовки/PR не выполнялись.
+
+## Завершение отношений и бывшие участники
 
 `relationshipMembership` создаёт ownerless realm и две ownerless accepted membership
-с существующими ролями coach/client. `checkApprovedAssignedPair` проверяет именно
-этот канонический realm, ровно двух участников и роли. Нет отдельной синхронизируемой
-модели endedAt; legacy D1 relationship status не является источником cloud membership.
-В просмотренных production путях `src`, `worker`, `tools` не обнаружена операция
-завершения сотрудничества, удаляющая эти membership. Это source review, не live audit.
+с существующими ролями. `checkApprovedAssignedPair` требует этот канонический realm,
+ровно двух участников своей пары и точные роли. Нет отдельной cloud-модели endedAt;
+legacy D1 status не является источником membership. В просмотренных runtime-путях
+не обнаружена операция завершения сотрудничества, удаляющая membership. Это source
+review, не live audit и не свидетельство уже реализованного lifecycle окончания.
 
-Не создавать такой endpoint или перезаписывать membership ради задачи. В будущем
-бизнес-состояние «сотрудничество закончено» само по себе не должно удалять доступ
-к прежним shared rows. Если будет выбран перевод бывших участников на read-only,
-это отдельное изменение: текущий `checkApprovedAssignedPair` требует точные роли и
-пустые explicit permissions, а глобальные роли дают права и другим доменам.
-Сначала согласовать минимальное изменение, не объявлять retention механизмом ACL.
+Уточнение владельца: бывшие участники читают прежнюю общую историю, пока она хранится;
+медиа — 6 календарных месяцев после окончания, текст без автоудаления. Подключение
+нового тренера этого не меняет. Нельзя удалять membership только из-за окончания
+сопровождения. Новый endpoint или перевод бывших участников на read-only сейчас не
+добавляется: он затронул бы точные roles других доменов и требует отдельного решения.
 
-## Выполненная проверка и оставшаяся работа
+## Проверки и приёмка
 
-Изучены root AGENTS, local-first/communications, реальные occurrence/execution types,
-approved relationship, provisioner/assertRemoteRoles, cloud roles, protected Flex
-operator/workflow и audit. Runtime, DB version, tests и live configuration не менялись.
-Обновлён communications §10 и связанные формулировки согласно уже принятому #638.
-Локальные npm/typecheck/tests/build не запускались.
+Добавлены contract/unit тесты canonical IDs/parents, occurrence→execution, legacy FACT,
+изменения порядка/логического удаления, двух тренеров и личной истории; normal own
+edit/delete, reply same-thread и read-state двух устройств. Fake IndexedDB upgrade
+сохраняет v14 данные; compound realm indexes не смешивают записи разных пар.
+Operator tests проверяют manifest/baseline, drift/no-op/failed readback и dispatch.
+Membership preflight tests проверяют прежний/новый profile и частичные/escalated grants.
 
-После решения по owner и точному оператору: typed anchor/contracts + append-only
-local/cloud schema, узкий profile/operator и unit/contract tests. Не называть
-клиентскую проверку server permission test; ordinary-account live tests отдельно.
-Нужны случаи двух тренеров/одного клиента, устройств, same-thread reply, namespace,
-перестановок/удалённого исходного объекта, новых FACT экземпляров и исторического доступа.
+Эти тесты не являются запросами к реальному Dexie Cloud и не доказывают серверные ACL
+обычных аккаунтов. Перед live activation: два тренера + один клиент, своё/чужое
+edit/delete/read-state, другая пара, два устройства, бывшие участники, удалённый источник;
+подмена owner/realm проверяется в пределах согласованной native owner модели.
+
+По workflow проекта локальные npm/typecheck/tests/build не запускаются; CI — после PR.
+После коммита выполнено системное ревью по issue/AGENTS/архитектуре и исходникам новых и связанных прежних тестов. Старые тесты не менялись. Исправлены оставшиеся формулировки документации о реестре, уточнено название workflow шага для обеих ролей и добавлен отрицательный случай третьего участника в том же realm; повторное ревью обязательно перед публикацией. Фактор audit
+A-010 (непроверенные runtime HTTP данные) релевантен membership response validation:
+новый decoder узко проверяет overlay и сохраняет строгую проверку baseline.

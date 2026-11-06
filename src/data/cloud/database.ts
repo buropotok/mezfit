@@ -1,3 +1,4 @@
+import { DISCUSSION_STORES, type DiscussionThread, type DiscussionMessage, type DiscussionReadState, type MessageAttachment } from './discussion-contracts';
 import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 import type { FlexAttributeRow, FlexValueRow } from './flex-attributes';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
@@ -20,6 +21,8 @@ import type {
  * repositories have replaced the corresponding D1 domain endpoints.
  */
 export const CLOUD_DATABASE_VERSION = 14;
+/** Explicit opt-in only after the separately approved cloud import; protects sealed deployments. */
+export const CLOUD_DISCUSSION_DATABASE_VERSION = 15;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -217,6 +220,9 @@ export const CLOUD_DATABASE_STORES_V14 = {
   publicExerciseCategoryArtworks: 'id, realmId, category',
 } as const;
 
+/** Additive contract; the default production factory remains on v14 until activation. */
+export const CLOUD_DATABASE_STORES_V15 = { ...CLOUD_DATABASE_STORES_V14, ...DISCUSSION_STORES } as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -237,6 +243,10 @@ export function cloudDatabaseName(telegramUserId: string): string {
 }
 
 export class MezfitCloudDatabase extends Dexie {
+  discussionThreads!: Table<DiscussionThread, string>;
+  discussionMessages!: Table<DiscussionMessage, string>;
+  discussionReadStates!: Table<DiscussionReadState, string>;
+  messageAttachments!: Table<MessageAttachment, string>;
   flexAttributes!: Table<FlexAttributeRow, string>;
   flexValues!: Table<FlexValueRow, string>;
   adHocSessions!: Table<AdHocSessionRow, string, Omit<AdHocSessionRow, 'id'>>;
@@ -266,7 +276,7 @@ export class MezfitCloudDatabase extends Dexie {
   coachExerciseDefinitions!: Table<CoachExerciseDefinitionRow, string>;
   coachExerciseFavourites!: Table<CoachExerciseFavouriteRow, string>;
 
-  constructor(telegramUserId: string, initData: string) {
+  constructor(telegramUserId: string, initData: string, options: { discussions?: boolean } = {}) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
     this.version(1).stores(CLOUD_DATABASE_STORES_V1);
     this.version(2).stores(CLOUD_DATABASE_STORES_V2);
@@ -282,6 +292,9 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(12).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.version(13).stores({ ...CLOUD_DATABASE_STORES_V13, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V14, localProgramSync: 'id', localWorkoutSync: 'id' });
+    if (options.discussions) this.version(CLOUD_DISCUSSION_DATABASE_VERSION).stores({
+      ...CLOUD_DATABASE_STORES_V15, localProgramSync: 'id', localWorkoutSync: 'id',
+    });
     this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
@@ -294,7 +307,7 @@ export class MezfitCloudDatabase extends Dexie {
 }
 
 /** No singleton: the app lifecycle must own and close the instance on logout/account switch. */
-export function createCloudDatabase(telegramUserId: string, initData: string): MezfitCloudDatabase {
+export function createCloudDatabase(telegramUserId: string, initData: string, options: { discussions?: boolean } = {}): MezfitCloudDatabase {
   if (!initData) throw new Error('TELEGRAM_AUTH_REQUIRED');
-  return new MezfitCloudDatabase(telegramUserId, initData);
+  return new MezfitCloudDatabase(telegramUserId, initData, options);
 }
