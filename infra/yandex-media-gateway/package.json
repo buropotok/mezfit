@@ -1,0 +1,8 @@
+{
+  "name": "mezfit-yandex-media-gateway",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "main": "index.js",
+  "description": "Fail-closed bootstrap for a future authenticated media authorization gateway"
+}
