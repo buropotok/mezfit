@@ -32,6 +32,13 @@ Cloudflare may still host the application and store exercise GIF media in R2. Th
 
 **Communications target (2026-11-06):** [communications.md](communications.md), based on [issue #636](https://github.com/buropotok/mezfit/issues/636), governs planned contextual discussions. Text, anchors, messages and media metadata use typed local repositories and Dexie Cloud Addon in the appropriate personal/relationship realm. Private discussion media targets Yandex Object Storage through an accessible server authorization gateway; client requests to R2/Cloudflare Worker are forbidden for this media path. This does not change the existing exercise GIF/category/avatar contracts above or authorize new schema, ACL, resources or credentials. Cold Mini App resource bootstrap and Telegram/Dexie authentication refresh without VPN remain unverified gates, independent of warm-session Dexie connectivity.
 
+**COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
+defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.
+Default account factory remains v14; explicit discussion opt-in appends v15 and local
+v16 indexes. Production Apply 42261608617 verifies configuration only. Ordinary-account
+authorization and multi-device checks remain gates before mass activation.
+No second schema/ACL Apply or UI integration is introduced.
+
 **Rollout boundary:** The repository currently contains D1-backed code and custom sync design. This document specifies the target; documentation alone does not migrate the running application. Replace obsolete runtime paths in focused implementation PRs, rather than silently maintaining two active authorities.
 
 ## 2. Repository boundary

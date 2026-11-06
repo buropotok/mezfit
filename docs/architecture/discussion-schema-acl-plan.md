@@ -6,6 +6,12 @@
 обычную owner-модель MVP и её расширение на вложения. Это не разрешение live Apply.
 В рамках подготовки cloud не менялся; состояние production подтверждается отдельным Preview.
 
+Уточнение COMM-04: [репозиторий сообщений](discussions-repository.md) добавляет ordinary
+local-first операции и append-only локальные индексы v16; default остаётся v14.
+[Apply 42261608617](https://github.com/buropotok/mezfit/actions/runs/42261608617)
+прошёл readback; реальные права обычных аккаунтов этим не проверены.
+Исторические разделы ниже описывают подготовку COMM-03, не повторную активацию/Apply.
+
 ## Решения и границы
 
 Telegram identity `tg:...` и существующий realm пары сохраняются.

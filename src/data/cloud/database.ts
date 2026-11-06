@@ -22,7 +22,7 @@ import type {
  */
 export const CLOUD_DATABASE_VERSION = 14;
 /** Explicit opt-in only after the separately approved cloud import; protects sealed deployments. */
-export const CLOUD_DISCUSSION_DATABASE_VERSION = 15;
+export const CLOUD_DISCUSSION_DATABASE_VERSION = 16;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -223,6 +223,13 @@ export const CLOUD_DATABASE_STORES_V14 = {
 /** Additive contract; the default production factory remains on v14 until activation. */
 export const CLOUD_DATABASE_STORES_V15 = { ...CLOUD_DATABASE_STORES_V14, ...DISCUSSION_STORES } as const;
 
+/** Local indexes only; cloud primary keys and ACL stay as installed by COMM-03. */
+export const CLOUD_DATABASE_STORES_V16 = {
+  ...CLOUD_DATABASE_STORES_V15,
+  discussionMessages: CLOUD_DATABASE_STORES_V15.discussionMessages + ', [realmId+threadId+createdAt+id]',
+  discussionReadStates: CLOUD_DATABASE_STORES_V15.discussionReadStates + ', [id+readThrough]',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -292,9 +299,12 @@ export class MezfitCloudDatabase extends Dexie {
     this.version(12).stores({ ...CLOUD_DATABASE_STORES_V12, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.version(13).stores({ ...CLOUD_DATABASE_STORES_V13, localProgramSync: 'id', localWorkoutSync: 'id' });
     this.version(CLOUD_DATABASE_VERSION).stores({ ...CLOUD_DATABASE_STORES_V14, localProgramSync: 'id', localWorkoutSync: 'id' });
-    if (options.discussions) this.version(CLOUD_DISCUSSION_DATABASE_VERSION).stores({
-      ...CLOUD_DATABASE_STORES_V15, localProgramSync: 'id', localWorkoutSync: 'id',
-    });
+    if (options.discussions) {
+      this.version(15).stores({ ...CLOUD_DATABASE_STORES_V15, localProgramSync: 'id', localWorkoutSync: 'id' });
+      this.version(CLOUD_DISCUSSION_DATABASE_VERSION).stores({
+        ...CLOUD_DATABASE_STORES_V16, localProgramSync: 'id', localWorkoutSync: 'id',
+      });
+    }
     this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
