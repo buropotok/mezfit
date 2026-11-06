@@ -50,4 +50,62 @@ describe('discussion page session uses the existing repository', () => {
     const missing = new DiscussionSession(f.port, { threadId: 'foreign', anchor }); missing.start();
     await vi.waitFor(() => expect(missing.snapshot().error).toBe('Ветка недоступна')); missing.stop();
   });
+  it('waits for the exact live target despite incoming messages shifting the older pages', async () => {
+    const rows = Array.from({ length: 85 }, (_, i) => message('m' + i, 'Текст ' + i, 'tg:2', i));
+    const incoming = Array.from({ length: 40 }, (_, i) => message('new' + i, 'Новое ' + i, 'tg:2', i + 85));
+    const f = fixture(rows), observe = f.port.observePage;
+    let inject = true;
+    vi.spyOn(f.port, 'observePage').mockImplementation((id, next, error, before, limit) =>
+      observe(id, page => {
+        if (before && inject) { inject = false; f.replace([...rows, ...incoming]); }
+        next(page);
+      }, error, before, limit));
+    const session = new DiscussionSession(f.port, { threadId: 'thread', anchor });
+    session.start(); await vi.waitFor(() => expect(session.snapshot().messages).toHaveLength(40));
+    expect(await session.locate('m0')).toBe(true);
+    expect(session.snapshot().messages.some(row => row.id === 'm0')).toBe(true);
+    expect(session.snapshot().messages).toHaveLength(125);
+    session.stop();
+  });
+  it('retains visible history while live cursors settle and retains a failed page error until retry', async () => {
+    const rows = Array.from({ length: 85 }, (_, i) => message('m' + i, 'Текст ' + i, 'tg:2', i));
+    const f = fixture(rows), session = new DiscussionSession(f.port, { threadId: 'thread', anchor });
+    session.start(); await vi.waitFor(() => expect(session.snapshot().loading).toBe(false));
+    await session.locate('m0');
+    const sizes: number[] = [];
+    const unsubscribe = session.subscribe(() => sizes.push(session.snapshot().messages.length));
+    f.replace([...rows, message('new', 'Новое', 'tg:2', 86)]);
+    await vi.waitFor(() => expect(session.snapshot().messages).toHaveLength(86));
+    expect(sizes.every(size => size >= 85)).toBe(true);
+    const older = [...f.observers].find(observer => observer.before);
+    if (!older) throw Error('Missing older page');
+    older.error(Error('Failed older page'));
+    const latest = [...f.observers].find(observer => !observer.before);
+    if (!latest) throw Error('Missing latest page');
+    const top = await f.port.page('thread');
+    latest.next(top);
+    expect(session.snapshot().error).toBe('Не удалось загрузить сообщения');
+    session.retry();
+    await vi.waitFor(() => {
+      expect(session.snapshot().loading).toBe(false);
+      expect(session.snapshot().error).toBeNull();
+      expect(session.snapshot().messages).toHaveLength(86);
+    });
+    unsubscribe(); session.stop();
+  });
+  it('cancels a jump waiting for a live page without waiting for that page to arrive', async () => {
+    const rows = Array.from({ length: 85 }, (_, i) => message('m' + i, 'Текст ' + i, 'tg:2', i));
+    const f = fixture(rows), observe = f.port.observePage;
+    let delayed: (() => void) | undefined;
+    vi.spyOn(f.port, 'observePage').mockImplementation((id, next, error, before, limit) =>
+      observe(id, page => { if (before) delayed = () => next(page); else next(page); }, error, before, limit));
+    const session = new DiscussionSession(f.port, { threadId: 'thread', anchor });
+    session.start(); await vi.waitFor(() => expect(session.snapshot().loading).toBe(false));
+    const locating = session.locate('m0');
+    await vi.waitFor(() => expect(delayed).toBeDefined());
+    session.cancelLocate();
+    expect(await locating).toBe(false);
+    session.stop(); delayed?.(); expect(f.observers.size).toBe(0);
+  });
+
 });

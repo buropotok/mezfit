@@ -19,9 +19,8 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
 export function MezfitMessage(props: MezfitMessageProps) {
   const { component = 'div', className, colors: colorsProp, ref, id, text, name,
     type = 'sent', header, footer, textHeader, textFooter, avatar,
-    ios, material, children, bubbleRef, onBubbleClick, bubbleSource, ...rest } = props;
-  const inheritedTheme = useTheme();
-  const theme = ios ? 'ios' : material ? 'material' : inheritedTheme;
+    children, bubbleRef, onBubbleClick, bubbleSource, ...rest } = props;
+  const theme = useTheme();
   const c = MessageClasses({ ...props, type }, MessageColors(colorsProp, (classes: string) => classes), className);
   const classes = (part: { common?: string; ios?: string; material?: string }) => cls(part.common, part[theme]);
   const Component = component as ElementType;

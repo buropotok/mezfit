@@ -6,7 +6,7 @@ import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message } from './discussion-fixture.test-support';
 import type { LiquidPopoverProps } from '../ui/LiquidPopover';
 import type { NavigationContext } from '../NavigationShell';
-const popoverCalls = vi.hoisted(() => [] as Array<{ onOpenChange: (open: boolean) => void }>);
+const popoverCalls = vi.hoisted(() => [] as Array<Pick<LiquidPopoverProps, 'onOpenChange' | 'items'>>);
 
 // Keep Konsta Message/Messagebar/Sheet/Dialog real. Canvas animation has its own UIkit tests.
 vi.mock('../ui/LiquidPopover', () => ({ LiquidPopover: (props: LiquidPopoverProps) => {
@@ -94,13 +94,16 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     const f = mount({ focusMessageId: 'm0' }, fixture(rows));
     const old = await screen.findByText('История 0');
     await waitFor(() => expect(old.closest('[data-message-id]')?.getAttribute('data-highlighted')).toBe('true'));
-    expect(f.port.getMessage).toHaveBeenCalledWith('thread', 'm0'); expect(f.port.page).toHaveBeenCalled();
+    expect(f.port.getMessage).toHaveBeenCalledWith('thread', 'm0'); expect(vi.mocked(f.port.observePage).mock.calls.length).toBeGreaterThan(1);
     expect(f.port.send).not.toHaveBeenCalled(); expect(f.port.markRead).not.toHaveBeenCalled();
   });
   it('uses the existing Back callback for menu/composer/sheet and restores the entity on unmount', async () => {
     const f = mount();
     await open('Мой текст');
+    const closedMenu = popoverCalls.at(-1);
     act(() => f.navigation.mock.lastCall?.[0]?.onBack?.());
+    act(() => closedMenu?.items?.find(item => item.id === 'edit')?.onSelect?.());
+    expect(screen.queryByPlaceholderText('Редактировать сообщение')).toBeNull();
     expect(screen.queryByRole('menu')).toBeNull(); expect(f.onClose).not.toHaveBeenCalled();
     await open('Чужой текст'); fireEvent.click(screen.getByRole('menuitem', { name: 'Ответить' }));
     act(() => f.navigation.mock.lastCall?.[0]?.onBack?.());
@@ -167,4 +170,50 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     expect((screen.getByPlaceholderText('Сообщение') as HTMLTextAreaElement).value).toBe('Новый черновик');
     expect(f.observers.size).toBe(0);
   });
+  it('clears an edit when switching to reply, and preserves reply text when Back cancels its context', async () => {
+    const f = mount();
+    await open('Мой текст'); fireEvent.click(screen.getByRole('menuitem', { name: 'Редактировать' }));
+    fireEvent.change(screen.getByPlaceholderText('Редактировать сообщение'), { target: { value: 'Правка исходного' } });
+    await open('Чужой текст'); fireEvent.click(screen.getByRole('menuitem', { name: 'Ответить' }));
+    const input = screen.getByPlaceholderText('Сообщение');
+    expect((input as HTMLTextAreaElement).value).toBe('');
+    fireEvent.change(input, { target: { value: 'Не терять черновик' } });
+    act(() => f.navigation.mock.lastCall?.[0]?.onBack?.());
+    expect((input as HTMLTextAreaElement).value).toBe('Не терять черновик');
+    expect(screen.queryByRole('button', { name: 'Отменить ответ или редактирование' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+    await waitFor(() => expect(f.port.send).toHaveBeenCalled());
+    expect(vi.mocked(f.port.send).mock.calls[0][0]).toMatchObject({ text: 'Не терять черновик', replyToMessageId: undefined });
+    expect(f.port.edit).not.toHaveBeenCalled();
+  });
+  it('marks visible messages read on returning from the background without another incoming message', async () => {
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const f = mount(); await screen.findByText('Мой текст');
+    expect(f.port.markRead).not.toHaveBeenCalled();
+    visibility.mockReturnValue('visible');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    await waitFor(() => expect(f.port.markRead).toHaveBeenCalledWith('thread', 'other'));
+  });
+  it('does not scroll or highlight a cached focus before the repository validates it', async () => {
+    const f = fixture();
+    let reject: (reason: Error) => void = () => {};
+    vi.spyOn(f.port, 'getMessage').mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
+    const view = mount({ focusMessageId: 'own' }, f);
+    await screen.findByText('Мой текст');
+    await waitFor(() => expect(f.port.getMessage).toHaveBeenCalledWith('thread', 'own'));
+    expect(view.container.querySelector('[data-highlighted]')).toBeNull();
+    await act(async () => { reject(Error('Access no longer available')); await Promise.resolve(); });
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(view.container.querySelector('[data-highlighted]')).toBeNull();
+    expect(f.port.markRead).not.toHaveBeenCalled();
+  });
+  it('groups dates using the same local calendar as the displayed date', async () => {
+    vi.spyOn(Date.prototype, 'toLocaleDateString').mockReturnValue('07.11.2026');
+    const rows = [{ ...message('late', 'До полуночи UTC'), createdAt: '2026-11-06T23:10:00.000Z' },
+      { ...message('early', 'После полуночи UTC'), createdAt: '2026-11-07T00:10:00.000Z' }];
+    mount({}, fixture(rows));
+    await screen.findByText('После полуночи UTC');
+    expect(screen.getAllByText('07.11.2026')).toHaveLength(1);
+  });
+
 });

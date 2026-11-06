@@ -45,6 +45,20 @@ declare module 'konsta/shared/utils' {
 declare module 'konsta/shared/colors' {
   type DarkClassResolver = (classNames: string) => string;
 
+  /** Exact MessageColors result in pinned Konsta 5.4.0. */
+  export type KonstaMessageColors = {
+    messageSent: string;
+    messageReceived: string;
+    messageNameIos: string;
+    messageNameMd: string;
+    bubbleSentIos: string;
+    bubbleSentMd: string;
+    bubbleReceivedIos: string;
+    bubbleReceivedMd: string;
+  };
+
+  export function MessageColors(colorsProp: unknown, dark: DarkClassResolver): KonstaMessageColors;
+
   export type KonstaDialogColors = {
     bgIos: string;
     bgMaterial: string;
@@ -96,6 +110,7 @@ declare module 'konsta/shared/colors' {
 
 declare module 'konsta/shared/classes' {
   import type {
+    KonstaMessageColors,
     KonstaDialogColors,
     KonstaPanelColors,
     KonstaPopoverColors,
@@ -107,6 +122,15 @@ declare module 'konsta/shared/classes' {
     ios?: string;
     material?: string;
   };
+
+  export type KonstaMessageClassMap = Record<
+    'message' | 'messageSent' | 'messageReceived' | 'messageAvatar' | 'messageContent'
+    | 'messageName' | 'messageHeader' | 'messageFooter' | 'messageBubble'
+    | 'messageTextHeader' | 'messageTextFooter' | 'messageText',
+    { common?: string; ios?: string; material?: string }
+  >;
+
+  export function MessageClasses(props: object, colors: KonstaMessageColors, baseClassName?: string): KonstaMessageClassMap;
 
   type StatefulThemedClass = ThemedClass & {
     opened: ThemedClass;
