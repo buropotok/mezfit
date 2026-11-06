@@ -270,4 +270,17 @@ describe('client invite launch', () => {
     });
   });
 
+  it('offers a retry when a client with an existing role cannot load the invitation', async () => {
+    getCurrentInviteMock.mockRejectedValueOnce(new Error('Нет соединения'));
+
+    render(<App />);
+
+    expect(await screen.findByText('Не удалось проверить приглашение')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toBe('Нет соединения');
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+
+    expect(await screen.findByText('Новый Тренер приглашает вас в Mezfit')).toBeTruthy();
+    expect(getCurrentInviteMock).toHaveBeenCalledTimes(2);
+  });
+
 });
