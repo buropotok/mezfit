@@ -5,7 +5,8 @@ import {
   type ClientInvitePreview,
   type Role,
 } from '../api';
-import { Button, Text } from '../ui';
+import { Button as KonstaButton } from 'konsta/react';
+import { Text } from '../ui';
 
 /** A Telegram invite must be handled before a stored Coach role can hide it. */
 export function isClientInviteStartParam(value: string | null): value is string {
@@ -73,18 +74,18 @@ export function ClientInviteEntry({
             <Text variant="body">
               {invite.label || 'После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.'}
             </Text>
-            <Button disabled={busy} onClick={() => void accept()}>
+            <KonstaButton rounded disabled={busy} onClick={() => void accept()}>
               {busy ? 'Подключаем…' : 'Подключиться к тренеру'}
-            </Button>
+            </KonstaButton>
           </>
         ) : invite === null ? (
           <Text variant="body">Возможно, вы уже подключены, ссылка отозвана или срок её действия истёк.</Text>
         ) : null}
         {error ? <Text variant="body" role="alert">{error}</Text> : null}
         {invite === undefined && error
-          ? <Button onClick={() => setRetryKey(value => value + 1)}>Повторить</Button> : null}
+          ? <KonstaButton rounded onClick={() => setRetryKey(value => value + 1)}>Повторить</KonstaButton> : null}
         {invite === null || (invite === undefined && error)
-          ? <Button variant="secondary" onClick={onDismiss}>Открыть Mezfit</Button> : null}
+          ? <KonstaButton rounded tonal onClick={onDismiss}>Открыть Mezfit</KonstaButton> : null}
       </section>
     </main>
   );
