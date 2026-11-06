@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
 
+# Prevent an older, slower main build from overwriting a newer production deploy.
+concurrency:
+  group: mezfit-production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
