@@ -79,6 +79,14 @@ describe('getTelegramLaunchStartParam', () => {
     expect(getTelegramLaunchStartParam(webApp, '', '')).toBe(`invite_${'a'.repeat(36)}`);
   });
 
+  it('recovers the signed launch parameter when Telegram omits initDataUnsafe.start_param', () => {
+    const webApp = createWebApp();
+    const startParam = `invite_${'e'.repeat(36)}`;
+    webApp.initData = `query_id=123&start_param=${startParam}&hash=placeholder`;
+
+    expect(getTelegramLaunchStartParam(webApp, '', '')).toBe(startParam);
+  });
+
   it('reads the launch parameter from the Telegram URL fragment', () => {
     const webApp = createWebApp();
 

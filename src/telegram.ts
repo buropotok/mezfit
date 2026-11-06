@@ -117,7 +117,10 @@ export function getTelegramLaunchStartParam(
   if (hashStartParam) return hashStartParam;
 
   const initDataStartParam = webApp.initDataUnsafe?.start_param?.trim();
-  return initDataStartParam || null;
+  // Telegram also includes start_param in the signed initData query string.
+  // It is only launch context here; the Worker independently verifies its signature.
+  const signedInitDataStartParam = new URLSearchParams(webApp.initData).get('start_param')?.trim();
+  return initDataStartParam || signedInitDataStartParam || null;
 }
 
 export function prepareTelegramWebApp(webApp: TelegramWebApp): void {

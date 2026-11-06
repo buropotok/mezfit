@@ -9,7 +9,14 @@ import { UserAvatarEditor } from './UserAvatarEditor';
 import { UserProfileForm } from './UserProfileForm';
 
 /** First entry and later edits use the same optional profile surface. */
-export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWorkoutNavigationShell>) {
+type UserProfileNavigationShellProps = ComponentProps<typeof ClientWorkoutNavigationShell> & {
+  /** A Telegram invitation takes precedence over optional first-visit profile onboarding. */
+  suppressInitialProfileOpen?: boolean;
+};
+
+export function UserProfileNavigationShell({
+  suppressInitialProfileOpen = false, ...props
+}: UserProfileNavigationShellProps) {
   const cloud = useCloudConnections();
   const enabled = props.activeRole === 'client' || props.destination === 'profile';
   const repository = useMemo(() => enabled && cloud?.db && cloud.actorUserId === `tg:${props.me.user.telegramUserId}`
@@ -50,7 +57,7 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
   useEffect(() => { setTab('basics'); }, [props.activeRole, cloud?.actorUserId]);
   const current = snapshot?.repository === repository ? snapshot : null;
   useEffect(() => {
-    if (props.activeRole !== 'client' || !repository || !current
+    if (suppressInitialProfileOpen || props.activeRole !== 'client' || !repository || !current
       || initialProfileVisit.current === repository.actorUserId) return;
     initialProfileVisit.current = repository.actorUserId;
     // Offer the empty profile once; subsequent reads and retries never trap navigation.
@@ -58,7 +65,7 @@ export function UserProfileNavigationShell(props: ComponentProps<typeof ClientWo
       setTab('basics');
       destinationChange.current('profile');
     }
-  }, [props.activeRole, props.destination, repository, current]);
+  }, [props.activeRole, props.destination, repository, current, suppressInitialProfileOpen]);
   const showingProfile = props.destination === 'profile';
   const profile = current?.profile ?? null;
   const name = [props.me.user.firstName, props.me.user.lastName].filter(Boolean).join(' ');

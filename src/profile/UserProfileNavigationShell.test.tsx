@@ -55,10 +55,12 @@ const me: MeResponse = { user: { id: 202, telegramUserId: '202', firstName: 'А�
   username: 'anna_fit', photoUrl: null, languageCode: 'ru', isPremium: false }, roles: ['client', 'coach'] };
 const saved: UserProfile = { firstName: 'Анна', lastName: '', email: '', phone: '',
   birthDate: '2000-01-01', sex: 'undisclosed', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' };
-function Harness({ role = 'client', user = me }: { role?: Role; user?: MeResponse }) {
+function Harness({ role = 'client', user = me, suppressInitialProfileOpen = false }: {
+  role?: Role; user?: MeResponse; suppressInitialProfileOpen?: boolean;
+}) {
   const [destination, setDestination] = useState<AppDestination>('today');
   return <UserProfileNavigationShell me={user} activeRole={role} destination={destination}
-    context={null} onDestinationChange={setDestination} onRoleSwitch={() => {}}><span>Обычный экран</span></UserProfileNavigationShell>;
+    suppressInitialProfileOpen={suppressInitialProfileOpen} context={null} onDestinationChange={setDestination} onRoleSwitch={() => {}}><span>Обычный экран</span></UserProfileNavigationShell>;
 }
 beforeEach(() => {
   state.profile = null; state.actor = 'tg:202'; state.migrationFails = false;
@@ -82,6 +84,18 @@ describe('profile registration navigation', () => {
     act(() => state.listeners.get('tg:202')?.next(null));
     expect(screen.getByTestId('destination').textContent).toBe('training');
     expect(state.save).not.toHaveBeenCalled();
+  });
+
+  it('does not let optional profile onboarding preempt a pending Telegram invitation', async () => {
+    render(<Harness suppressInitialProfileOpen />);
+    await waitFor(() => expect(state.listeners.has('tg:202')).toBe(true));
+    expect(screen.getByTestId('destination').textContent).toBe('today');
+    expect(screen.getByText('Обычный экран')).toBeTruthy();
+
+    // Deferring automatic onboarding never blocks an explicit visit.
+    fireEvent.click(screen.getByText('Мой профиль'));
+    expect(await screen.findByLabelText('Имя')).toBeTruthy();
+    expect(screen.getByTestId('destination').textContent).toBe('profile');
   });
 
   it('keeps an existing client profile from redirecting the initial destination', async () => {
