@@ -13,7 +13,7 @@ export async function resetLegacyTestRelationship(
     WITH pair(coach, client) AS (VALUES (?, ?)),
       plans AS (
         SELECT id FROM training_plan
-        WHERE owner_coach_user_id = (SELECT coach FROM pair)
+        WHERE COALESCE(owner_coach_user_id, created_by_user_id) = (SELECT coach FROM pair)
           AND user_id = (SELECT client FROM pair)
       ),
       phases AS (SELECT id FROM program_phase WHERE training_plan_id IN (SELECT id FROM plans)),
