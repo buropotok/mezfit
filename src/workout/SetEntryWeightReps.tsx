@@ -112,6 +112,9 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   // X and navigation Back use the same explicit save/discard decision.
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
+    // The dialog is above the editor; Back dismisses the innermost surface.
+    if (deleteConfirm) { setDeleteConfirm(false); return; }
+    if (discardConfirm) { setDiscardConfirm(false); return; }
     const newFactConfirmed = !isPlan && !hasSetMeasurements(props.data.fact?.metrics) && metricsConfirmed.current;
     if (readOnly || (!newFactConfirmed && sameSetEntryDraft(initialDraft.current, draftRef.current))) {
       setPickerOpened(false); props.onClose();
@@ -235,7 +238,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
       </div>
     </MezfitBottomSheet>, portalHost)}
     {error ? createPortal(<Toast opened position="center" role="alert"><Text variant="body">{error}</Text></Toast>, portalHost) : null}
-    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} role="alertdialog" aria-label="Удалить подход?"
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton disabled={saving} onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>

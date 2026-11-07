@@ -306,6 +306,58 @@ describe('weight and repetitions SetEntry', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it.each(['weight_reps', 'time'] as const)(
+    '%s sends Back to the deletion confirmation before the FACT editor', trackingType => {
+      const onDeleteSet = vi.fn(async () => undefined);
+      const onClose = vi.fn();
+      const onSave = vi.fn(async () => undefined);
+      let back: (() => void) | undefined;
+      const onNavigationContextChange = (context: { onBack?: () => void } | null) => {
+        back = context?.onBack;
+      };
+      render(<KonstaProvider theme="ios" dark>
+        <SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }}
+          onSave={onSave} onDeleteSet={onDeleteSet} onClose={onClose}
+          onNavigationContextChange={onNavigationContextChange} />
+      </KonstaProvider>);
+      expect(back).toBeTypeOf('function');
+      fireEvent.click(screen.getByRole('button', { name: 'Удалить подход' }));
+      expect(screen.getByRole('alertdialog', { name: 'Удалить подход?' })).toBeTruthy();
+      act(() => { back?.(); });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(onDeleteSet).not.toHaveBeenCalled();
+      // After dismissing the confirmation, the next Back reaches the editor.
+      act(() => { back?.(); });
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(onSave).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['weight_reps', 'time'] as const)(
+    '%s dismisses the save/discard confirmation on Back before closing FACT', trackingType => {
+      const onClose = vi.fn();
+      const onSave = vi.fn(async () => undefined);
+      let back: (() => void) | undefined;
+      render(<KonstaProvider theme="ios" dark>
+        <SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }}
+          onClose={onClose} onSave={onSave}
+          onNavigationContextChange={context => { back = context?.onBack; }} />
+      </KonstaProvider>);
+      fireEvent.click(screen.getByRole('button', { name: 'Кластер' }));
+      act(() => { back?.(); });
+      const confirmation = screen.getByRole('alertdialog', { name: 'Сохранить изменения?' });
+      expect(confirmation.classList.contains('invisible')).toBe(false);
+      act(() => { back?.(); });
+      expect(confirmation.classList.contains('invisible')).toBe(true);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(onSave).not.toHaveBeenCalled();
+      // Explicitly exiting after the next Back still requires a save/discard choice.
+      act(() => { back?.(); });
+      expect(confirmation.classList.contains('invisible')).toBe(false);
+      expect(onClose).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(['weight_reps', 'time'] as const)('keeps %s FACT editor open on Yes failure and permits retry', async trackingType => {
     const onSave = vi.fn().mockRejectedValueOnce(new Error('Сервер недоступен'))
       .mockResolvedValueOnce(undefined);

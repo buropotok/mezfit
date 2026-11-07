@@ -157,6 +157,9 @@ export function SetEntryOccurrenceMetrics(props: Props) {
 
   const discardEntry = () => {
     if (saveInFlightRef.current) return;
+    // The dialog is above the editor; Back dismisses the innermost surface.
+    if (deleteConfirm) { setDeleteConfirm(false); return; }
+    if (discardConfirm) { setDiscardConfirm(false); return; }
     if (readOnly || sameSetEntryDraft(initialDraft.current, draftRef.current)) {
       setPicker(null); props.onClose();
     }
@@ -278,7 +281,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         </div>
       </div>
     </MezfitBottomSheet>, host)}
-    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} role="alertdialog" aria-label="Удалить подход?"
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton disabled={saving} onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>
