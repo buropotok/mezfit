@@ -106,4 +106,62 @@ describe('discussion composer persistence and reading position', () => {
     act(() => f.replace([message('own', 'Changed height'), message('other', 'Чужой текст', 'tg:2', 1)]));
     await screen.findByText('Changed height'); expect(list.scrollTop).toBe(250);
   });
+  it('preserves the separate saved draft when switching from edit to reply and reopening', async () => {
+    const f = setup(); await ready();
+    fireEvent.change(input(), { target: { value: 'Separate unsent text' } });
+    fireEvent.click(screen.getByText('Мой текст'));
+    fireEvent.click(screen.getByRole('button', { name: 'Редактировать' }));
+    fireEvent.change(screen.getByPlaceholderText('Редактировать сообщение'), { target: { value: 'Temporary edit' } });
+    fireEvent.click(screen.getByText('Чужой текст'));
+    fireEvent.click(screen.getByRole('button', { name: 'Ответить' }));
+    expect(input().value).toBe('Separate unsent text');
+    await waitFor(() => expect(f.repository.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({
+      text: 'Separate unsent text', replyToMessageId: 'other',
+    })));
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} opened={false} /></KonstaProvider>);
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} /></KonstaProvider>);
+    await ready(); expect(input().value).toBe('Separate unsent text');
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+    await waitFor(() => expect(f.repository.send).toHaveBeenCalledWith(expect.objectContaining({
+      text: 'Separate unsent text', replyToMessageId: 'other', requireUnsentDraft: true,
+    })));
+  });
+  it('forks only once from a published recovered ID and preserves later typing despite stale save failures', async () => {
+    const f = setup(); await ready();
+    const shared = { id: 'shared-draft', threadId: 'thread', text: 'Old synchronized text', createdAt: '2026-11-07T00:00:00.000Z' };
+    f.repository.getDraft.mockResolvedValueOnce(shared);
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} opened={false} /></KonstaProvider>);
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} /></KonstaProvider>);
+    await ready();
+    let rejectOld: (reason: Error) => void = () => {};
+    f.repository.saveDraft.mockImplementationOnce(() => new Promise<void>((_resolve, reject) => { rejectOld = reject; }))
+      .mockRejectedValueOnce(Error('DISCUSSION_ID_REUSED'));
+    fireEvent.change(input(), { target: { value: 'First new edit' } });
+    fireEvent.change(input(), { target: { value: 'Latest new edit' } });
+    await waitFor(() => expect(f.repository.saveDraft).toHaveBeenCalledTimes(3));
+    const replacement = f.repository.saveDraft.mock.calls[2][0];
+    expect(replacement.id).not.toBe(shared.id); expect(replacement.text).toBe('Latest new edit');
+    await act(async () => rejectOld(Error('DISCUSSION_ID_REUSED')));
+    expect(f.repository.saveDraft).toHaveBeenCalledTimes(3); expect(input().value).toBe('Latest new edit');
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+    await waitFor(() => expect(f.repository.send).toHaveBeenCalledWith(expect.objectContaining({
+      id: replacement.id, text: 'Latest new edit', requireUnsentDraft: true,
+    })));
+  });
+  it('keeps text when another device publishes after the last save but before Send, then sends it with a new ID', async () => {
+    const f = setup(); await ready();
+    fireEvent.change(input(), { target: { value: 'Keep this new intent' } });
+    const oldId = f.repository.saveDraft.mock.calls.at(-1)?.[0].id;
+    f.repository.send.mockRejectedValueOnce(Error('DISCUSSION_DRAFT_ALREADY_PUBLISHED'));
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+    await screen.findByText('Не удалось выполнить действие. Повторите попытку');
+    expect(input().value).toBe('Keep this new intent');
+    const replacement = f.repository.saveDraft.mock.calls.at(-1)?.[0];
+    expect(replacement?.id).not.toBe(oldId); expect(replacement?.text).toBe('Keep this new intent');
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+    await waitFor(() => expect(f.repository.send).toHaveBeenCalledTimes(2));
+    expect(f.repository.send.mock.calls[1][0].id).toBe(replacement?.id);
+    await waitFor(() => expect(input().value).toBe(''));
+  });
+
 });
