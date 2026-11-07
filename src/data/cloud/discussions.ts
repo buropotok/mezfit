@@ -142,7 +142,7 @@ export class DiscussionRepository {
     if (!isDiscussionMessage(reply) || reply.draftForRealmId || reply.realmId !== this.scope.realmId) return discussionMessageView(row);
     // Same-thread provenance is already established by the message read. Do not
     // add a second thread-header dependency to ordinary quote hydration.
-    if (this.visible(reply, row.threadId)) return discussionMessageView(row, reply);
+    if (reply.threadId === row.threadId) return discussionMessageView(row, reply);
     // A reply may cross historical storage threads of this exact entity/pair.
     const root = await this.thread(row.threadId);
     const sourceThread = await this.db.discussionThreads.get(reply.threadId);
