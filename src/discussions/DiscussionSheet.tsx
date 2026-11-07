@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
 import { Button, Messagebar, Messages, MessagesTitle } from 'konsta/react';
-import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
+import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionMessageView, DiscussionQuote } from '../data/cloud/discussion-views';
 import type { DiscussionSyncState } from '../data/cloud/discussion-sync';
 import type { NavigationContext } from '../NavigationShell';
@@ -12,6 +12,7 @@ import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
 import { loadBrowserGlassSettings, type GlassSettings } from '../glassSettings';
 import { DiscussionSession, type DiscussionPort, type DiscussionTarget } from './discussion-session';
 import { useDiscussionViewport } from './useDiscussionViewport';
+import { useDiscussionDraft } from './useDiscussionDraft';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -55,9 +56,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const targetKey = JSON.stringify([threadId, anchor]);
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
-  const [text, setText] = useState('');
-  const [replyId, setReplyId] = useState<string | null>(null);
+  const draft = useDiscussionDraft(repository, threadId);
+  const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
+  const replyId = editId ? null : draft.replyId;
+  const text = editId ? editText : draft.text;
+  const setText = (value: string) => { if (editId) setEditText(value); else draft.update(value, replyId); };
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: string; open: boolean } | null>(null);
   const menuRef = useRef(menu);
@@ -78,6 +82,19 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const alive = useRef(false), pending = useRef(false), actionVersion = useRef(0);
   const prepared = useRef<DiscussionMessageInput | null>(null);
   const preserveScroll = useRef<{ height: number; top: number } | null>(null);
+  const readingPosition = useRef<{ id: string; offset: number } | null>(null);
+  const rememberPosition = () => {
+    const list = scroller.current;
+    if (!list) return;
+    const bounds = list.getBoundingClientRect();
+    for (const [id, row] of rows.current) {
+      const box = row.getBoundingClientRect();
+      if (box.height > 0 && box.bottom > bounds.top && box.top < bounds.bottom) {
+        readingPosition.current = { id, offset: box.top - bounds.top }; return;
+      }
+    }
+    readingPosition.current = null;
+  };
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastRead = useRef<string | null>(null), focusVersion = useRef(0);
   const back = useRef<() => void>(() => {});
@@ -94,7 +111,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     menuRef.current = { ...menuRef.current, open: false };
     setMenu(menuRef.current);
   };
-  const cancelMode = () => { setReplyId(null); setEditId(null); if (editId) setText(''); };
+  const cancelMode = () => { if (!editId) draft.update(draft.text, null); setEditId(null); setEditText(''); };
   back.current = () => {
     if (deletingId) { setDeletingId(null); return; }
     if (menu?.open) { closeMenu(); return; }
@@ -125,7 +142,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (composer.current) observer.observe(composer.current);
     if (context.current) observer.observe(context.current);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  }, [replyId, editId, error, syncState?.status, syncState?.offline]);
+  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline]);
 
   const jump = async (id: string) => {
     const version = ++focusVersion.current;
@@ -165,10 +182,15 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       clearTimeout(highlightTimer.current);
       highlightTimer.current = setTimeout(() => { if (alive.current) setHighlight(null); }, 1200);
       preserveScroll.current = null;
+    } else if (!atEnd && readingPosition.current && rows.current.has(readingPosition.current.id)) {
+      const row = rows.current.get(readingPosition.current.id);
+      if (row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top - readingPosition.current.offset;
+      preserveScroll.current = null;
     } else if (preserveScroll.current) {
       list.scrollTop = preserveScroll.current.top + list.scrollHeight - preserveScroll.current.height;
       preserveScroll.current = null;
     } else if (atEnd) list.scrollTop = list.scrollHeight;
+    rememberPosition();
   }, [state.messages, requestedFocus, atEnd, composerHeight, contextHeight]);
   useEffect(() => {
     if (!atEnd || !visible || focusing.current || state.loading || state.error || requestedFocus) return;
@@ -183,7 +205,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   useEffect(() => {
     if (menu && !state.messages.some(row => row.id === menu.id && !row.deleted)) setMenu(null);
     if (editId && state.messages.some(row => row.id === editId && row.deleted)) {
-      setEditId(null); setText(''); setError('Сообщение уже удалено');
+      setEditId(null); setEditText(''); setError('Сообщение уже удалено');
     }
   }, [state.messages, menu?.id, editId]);
   const run = async (operation: () => Promise<void>) => {
@@ -199,10 +221,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (editId) await repository.edit(threadId, editId, text);
     else {
       if (!prepared.current || prepared.current.text !== text || prepared.current.replyToMessageId !== (replyId ?? undefined))
-        prepared.current = prepareDiscussionMessage(threadId, text, replyId ?? undefined);
+        prepared.current = draft.command();
       await repository.send(prepared.current);
     }
-    if (alive.current) { prepared.current = null; setText(''); setEditId(null); setReplyId(null); }
+    if (alive.current) { prepared.current = null; if (!editId) draft.sent(); setEditText(''); setEditId(null); }
   });
   const selected = menu ? state.messages.find(row => row.id === menu.id && !row.deleted) : undefined;
   const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
@@ -210,8 +232,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
-    if (action === 'reply') { if (editId) setText(''); setEditId(null); setReplyId(id); }
-    if (action === 'edit' && row.authorUserId === repository.actorUserId) { setReplyId(null); setEditId(id); setText(row.text); }
+    if (action === 'reply') { draft.update(editId ? '' : draft.text, id); setEditId(null); setEditText(''); }
+    if (action === 'edit' && row.authorUserId === repository.actorUserId) { setEditId(id); setEditText(row.text); }
     if (action === 'delete' && row.authorUserId === repository.actorUserId) setDeletingId(id);
     if (action === 'copy') void run(async () => {
       const current = await repository.getMessage(threadId, id);
@@ -238,7 +260,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>
     <div className="discussion-thread__scroll" ref={scroller} style={{ paddingBottom: composerHeight + contextHeight + 16 }}
-      onScroll={event => { const el = event.currentTarget; setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 48); closeMenu(); }}>
+      onScroll={event => { const el = event.currentTarget; setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 48); rememberPosition(); closeMenu(); }}>
       {state.error && <div role="alert"><Text>{state.error}</Text><Button rounded onClick={() => { setError(null); deepFocus.current = null; session.retry(); }}>Повторить</Button></div>}
       {state.more && <Button rounded disabled={state.loading || Boolean(state.error)} onClick={() => {
         const el = scroller.current;
@@ -278,6 +300,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     </div>
     <div className="discussion-composer-context" ref={context} style={{ bottom: composerHeight }}>
       {error && <Text variant="footnote" role="alert">{error}</Text>}
+      {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
+        <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
       {syncState && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
         : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
@@ -288,8 +312,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </div>}
     </div>
     <Messagebar ref={composer} textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'} value={text}
-      disabled={busy || !state.title || Boolean(state.error)} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
-      right={<Button rounded tonal={false} disabled={busy || !text.trim() || !state.title || Boolean(state.error)} onClick={submit}>{editId ? 'Сохранить' : 'Отправить'}</Button>} />
+      disabled={busy || !draft.ready || !state.title || Boolean(state.error)} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
+      right={<Button rounded tonal={false} disabled={busy || !draft.ready || !text.trim() || !state.title || Boolean(state.error)} onClick={submit}>{editId ? 'Сохранить' : 'Отправить'}</Button>} />
     <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
       title={<Text variant="headline">Удалить сообщение?</Text>}
       content={<Text>Текст сообщения будет удалён.</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}
@@ -300,3 +324,4 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         }}><Text>Удалить</Text></MezfitDialogButton></>} />
   </div>;
 }
+
