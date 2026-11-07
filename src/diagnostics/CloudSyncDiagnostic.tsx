@@ -6,6 +6,8 @@ import { deriveCloudContacts } from '../data/cloud/CloudConnectionsProvider';
 import { Text } from '../ui';
 import { cloudSyncErrorCode } from './cloudSyncErrorCode';
 import { globalCoachPhasePermission } from './cloudPhasePermissions';
+import { readDiscussionDiagnostics, type DiscussionReadDiagnosticReport } from '../data/cloud/discussion-read-diagnostics';
+import { DiscussionReadDiagnostic } from './DiscussionReadDiagnostic';
 
 interface Snapshot {
   phase: string;
@@ -24,6 +26,8 @@ interface Snapshot {
   readError: boolean;
   setupError: boolean;
   coachPhasePermission: boolean | null;
+  discussionReads: DiscussionReadDiagnosticReport | null;
+  discussionReadError: boolean;
 }
 
 const initial: Snapshot = {
@@ -43,6 +47,8 @@ const initial: Snapshot = {
   readError: false,
   setupError: false,
   coachPhasePermission: null,
+  discussionReads: null,
+  discussionReadError: false,
 };
 
 function textCount(count: number | null): string {
@@ -100,6 +106,13 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
           let clients: number | null = null;
           let coaches: number | null = null;
           let readError = false;
+          let discussionReads: DiscussionReadDiagnosticReport | null = null;
+          let discussionReadError = false;
+          try {
+            discussionReads = await readDiscussionDiagnostics(cloudDb, actorUserId);
+          } catch {
+            discussionReadError = true;
+          }
           try {
             const contacts = await deriveCloudContacts(actorUserId, realms, members);
             clients = contacts.clients.length;
@@ -115,10 +128,12 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
             coaches,
             readError,
             coachPhasePermission: globalCoachPhasePermission(roles),
+            discussionReads,
+            discussionReadError,
           };
         }).subscribe({
           next: (counts) => update(counts),
-          error: () => update({ readError: true }),
+          error: () => update({ readError: true, discussionReadError: true }),
         });
         subscriptions.push(localSubscription);
 
@@ -153,6 +168,9 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
       <p><Text variant="body">Общая роль тренера разрешает programPhases: {snapshot.coachPhasePermission === null
         ? 'ещё не прочитано' : snapshot.coachPhasePermission ? 'да' : 'нет'}</Text></p>
       <p><Text variant="body">Подтверждённые связи: тренеры {textCount(snapshot.coaches)}, клиенты {textCount(snapshot.clients)}</Text></p>
+      {snapshot.stage === 'observing'
+        ? <DiscussionReadDiagnostic report={snapshot.discussionReads} failed={snapshot.discussionReadError} />
+        : null}
       {snapshot.setupError || snapshot.readError
         ? <p role="alert"><Text variant="body">Диагностика обнаружила ошибку открытия или чтения локальной базы.</Text></p>
         : null}
