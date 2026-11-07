@@ -183,6 +183,50 @@ describe('COMM-07 completed execution entries', () => {
     await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
   });
 
+  it('uses Back to dismiss set-deletion confirmation without leaving the workout', async () => {
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    const onDeleteSet = vi.fn(async () => {});
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?'));
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    await waitFor(() => expect(screen.queryByRole('alertdialog', { name: 'Удалить подход?' })).toBeNull());
+    await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
+    expect(dialog.isConnected).toBe(false);
+    expect(onDeleteSet).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+  });
+
+  it('keeps deletion confirmation as the Back owner during pending work and releases it after an error', async () => {
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    let failDeletion: (reason: Error) => void = () => {};
+    const onDeleteSet = vi.fn(() => new Promise<void>((_resolve, reject) => { failDeletion = reject; }));
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?'));
+    const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }));
+    expect(onDeleteSet).toHaveBeenCalledOnce();
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    expect(screen.getByRole('alertdialog', { name: 'Удалить подход?' })).toBeTruthy();
+    expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?');
+    await act(async () => failDeletion(new Error('Ошибка сохранения')));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Ошибка сохранения');
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    await waitFor(() => expect(screen.queryByRole('alertdialog', { name: 'Удалить подход?' })).toBeNull());
+    await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+  });
+
   it('deletes only the selected active set through its menu after confirmation and supports retries', async () => {
     probe.actor = 'tg:11';
     const value = { ...session(), status: 'active' as const, completedAt: null };

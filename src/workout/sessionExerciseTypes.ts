@@ -70,6 +70,8 @@ interface SessionExerciseSharedProps<Id extends string | number = number> {
   onOpenHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
+  /** Dedicated Back owner for the FACT set-row delete confirmation. */
+  onSetDeletionNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 export type WorkoutSessionExerciseProps<Id extends string | number = number> =

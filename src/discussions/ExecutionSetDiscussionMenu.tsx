@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { NavigationContext } from '../NavigationShell';
 import { IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type LiquidPopoverItem } from '../ui';
@@ -7,11 +7,13 @@ import type { EntityDiscussionTarget } from './entity-discussion-target';
 import { useEntityDiscussions } from './useEntityDiscussions';
 
 /** The workout owns the open discussion; set-row controls never become the conversation owner. */
-export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationContextChange, onOpenTarget, onDeleteSet }: {
+export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationContextChange, onDeleteNavigationContextChange, onOpenTarget, onDeleteSet }: {
   target: EntityDiscussionTarget | null;
   setNumber: number;
   onOpenTarget?: (target: EntityDiscussionTarget) => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
+  /** Separate navigation owner for this confirmation, above any FACT editor. */
+  onDeleteNavigationContextChange?: (context: NavigationContext | null) => void;
   onDeleteSet?: () => Promise<void>;
 }) {
   const discussions = useEntityDiscussions(target, onNavigationContextChange, Boolean(target), { onOpenTarget });
@@ -22,6 +24,15 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  useEffect(() => {
+    if (!deleteConfirm || !onDeleteNavigationContextChange) return;
+    const report = onDeleteNavigationContextChange;
+    report({
+      title: 'Удалить подход?',
+      onBack: () => { if (!deletingRef.current) setDeleteConfirm(false); },
+    });
+    return () => report(null);
+  }, [deleteConfirm, onDeleteNavigationContextChange]);
   const items: LiquidPopoverItem[] = target ? [discussions.menuItem] : [];
   if (onDeleteSet) items.push({
     id: 'delete-set',

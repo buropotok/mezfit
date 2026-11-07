@@ -361,6 +361,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             trailingAction={!planMode && (discussionTarget || deleteSet) ? <ExecutionSetDiscussionMenu
               target={discussionTarget}
               setNumber={setNumber} onNavigationContextChange={exercise.onNavigationContextChange}
+              onDeleteNavigationContextChange={exercise.onSetDeletionNavigationContextChange}
               onOpenTarget={exercise.onOpenDiscussion} onDeleteSet={deleteSet} /> : undefined}
             aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
             onClick={canOpenSet ? () => onSelectSet(set.sessionSetId) : undefined}

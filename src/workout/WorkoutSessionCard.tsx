@@ -163,10 +163,12 @@ function WorkoutFactCard<Id extends string | number = number>({
   // editor's existing save/discard handler instead of clearing navigation.
   const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
   const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
+  const [setDeletionNavigation, setSetDeletionNavigation] = useState<NavigationContext | null>(null);
   useEffect(() => {
-    onNavigationContextChange?.(discussionNavigation ?? editorNavigation);
+    // Set deletion confirmation is topmost; Back cannot fall through to the workout.
+    onNavigationContextChange?.(setDeletionNavigation ?? discussionNavigation ?? editorNavigation);
     return () => onNavigationContextChange?.(null);
-  }, [discussionNavigation, editorNavigation, onNavigationContextChange]);
+  }, [setDeletionNavigation, discussionNavigation, editorNavigation, onNavigationContextChange]);
   const discussions = useEntityDiscussions(session.discussion
     ? { ...session.discussion, name: title ?? workoutTitle(session) } : null,
     onNavigationContextChange ? setDiscussionNavigation : undefined, true, {
@@ -250,6 +252,7 @@ function WorkoutFactCard<Id extends string | number = number>({
         onOpenHistory={onOpenExerciseHistory}
         onOpenChat={onOpenChat}
         onNavigationContextChange={onNavigationContextChange ? setEditorNavigation : undefined}
+        onSetDeletionNavigationContextChange={onNavigationContextChange ? setSetDeletionNavigation : undefined}
       />
     ),
   }));
