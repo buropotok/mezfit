@@ -15,7 +15,9 @@ import './entity-discussions.css';
 
 /** The source remains mounted; the existing shell owns Back throughout opening and reading. */
 export function useEntityDiscussions(target: EntityDiscussionTarget | null,
-  onNavigationContextChange?: (value: NavigationContext | null) => void, enabled = true) {
+  onNavigationContextChange?: (value: NavigationContext | null) => void, enabled = true,
+  options?: { onOpenTarget?: (target: EntityDiscussionTarget) => void;
+    isTargetAvailable?: (target: EntityDiscussionTarget) => boolean }) {
   const cloud = useCloudConnections();
   const sourceNavigation = useNavigationSurfaceContext();
   const account = useMemo(() => ({}), [cloud?.db, cloud?.actorUserId]);
@@ -75,15 +77,20 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     return () => onNavigationContextChange?.(null);
   }, [current, navigation, onNavigationContextChange]);
   const canOpen = Boolean(enabled && cloud && target && onNavigationContextChange);
-  const open = () => {
-    if (canOpen && target) setOpened({ target, parent: sourceNavigation, account });
+  const openTarget = (nextTarget: EntityDiscussionTarget) => {
+    if (enabled && cloud && onNavigationContextChange)
+      setOpened({ target: nextTarget, parent: sourceNavigation, account });
   };
+  const open = () => { if (canOpen && target) openTarget(target); };
   const menuItem: LiquidPopoverItem = { id: 'discussions', label: 'Обсуждения', icon: 'message-circle',
     unreadCount: unread, disabled: !canOpen,
     onSelect: () => { if (canOpen && target) pending.current = { target, parent: sourceNavigation, account }; } };
   const onMenuPresentationChange = (presented: boolean) => {
     if (presented || !pending.current) return;
-    if (pending.current.account === account) setOpened(pending.current);
+    if (pending.current.account === account) {
+      if (options?.onOpenTarget) options.onOpenTarget(pending.current.target);
+      else setOpened(pending.current);
+    }
     pending.current = null;
   };
   const resolveAuthor = (id: string) => ({ name: id === cloud?.actorUserId ? 'Вы'
@@ -93,7 +100,8 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   const content = current && onNavigationContextChange ? repository
     ? <DiscussionSheet opened repository={repository} threadId={threadId ?? ''} anchor={current.target.anchor}
       opening={threadId ? undefined : { error, retry: () => setRetry(value => value + 1) }}
-      onClose={close} onBack={close} resolveAuthor={resolveAuthor} contextLabel={current.target.name}
+      onClose={close} onBack={close} resolveAuthor={resolveAuthor}
+      contextLabel={current.target.name} contextUnavailable={options?.isTargetAvailable?.(current.target) === false}
       onNavigationContextChange={threadNavigationChange} parentNavigation={navigation} />
     : <MezfitBottomSheet opened label="Обсуждение" lazyMount><div className="entity-discussions">
       <header className="entity-discussions__header"><Text variant="headline">{current.target.name}</Text>
@@ -104,5 +112,5 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   // GlassSurface owns a clipping/containing block. Mount the feature overlay
   // outside every program row while retaining React context and shell Back ownership.
   return { menuItem, unread, content: content && typeof document !== 'undefined'
-    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{content}</div>, document.body) : content, onMenuPresentationChange, open, canOpen };
+    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{content}</div>, document.body) : content, onMenuPresentationChange, open, openTarget, canOpen };
 }

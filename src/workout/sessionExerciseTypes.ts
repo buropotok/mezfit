@@ -1,3 +1,5 @@
+import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
+import type { DiscussionAnchor, DiscussionScope } from '../../shared/discussion-anchor';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import type { ExerciseDefinition } from '../api';
@@ -17,6 +19,8 @@ export interface SessionExerciseContext<Id extends string | number = number> {
 }
 
 export interface SessionExerciseSetData<Id extends string | number = number> {
+  /** Repository-validated canonical identity; never a source program ID. */
+  discussionAnchor?: DiscussionAnchor;
   sessionSetId: Id;
   sourceProgramSetId: Id | null;
   position: number;
@@ -28,6 +32,7 @@ export interface SessionExerciseSetData<Id extends string | number = number> {
 }
 
 export interface SessionExerciseData<Id extends string | number = number> {
+  discussionAnchor?: DiscussionAnchor;
   sessionExerciseId: Id;
   workoutSessionId: Id;
   sourceProgramExerciseId: Id | null;
@@ -48,6 +53,8 @@ export interface SaveSessionSetInput<Id extends string | number = number> {
 }
 
 interface SessionExerciseSharedProps<Id extends string | number = number> {
+  discussionScope?: DiscussionScope;
+  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
   context: SessionExerciseContext<Id>;
   data: SessionExerciseData<Id>;
   collapsed?: boolean;

@@ -30,6 +30,8 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   onNavigationContextChange: (context: NavigationContext | null) => void;
   parentNavigation: NavigationContext | null;
   contextLabel?: string;
+  /** Retain history when the exact source execution has been logically removed. */
+  contextUnavailable?: boolean;
   /** Keep one sheet mounted while the entity repository resolves its canonical thread. */
   opening?: { error: string; retry: () => void };
   glassSettings?: GlassSettings;
@@ -60,6 +62,7 @@ export function DiscussionSheet(props: DiscussionSheetProps) {
     {props.opened && (props.opening ? <div className="discussion-thread">
       <header className="discussion-thread__header"><Text variant="headline">{props.contextLabel || 'Обсуждение'}</Text>
         <IconButton icon="x" label="Закрыть обсуждение" onClick={props.onClose} /></header>
+      {props.contextUnavailable && <Text variant="footnote" role="status">Объект недоступен. История обсуждения сохранена.</Text>}
       {props.opening.error ? <div role="alert"><Text>{props.opening.error}</Text>
         <Button rounded onClick={props.opening.retry}>Повторить</Button></div>
         : <Text variant="footnote" role="status">Открываем переписку…</Text>}
@@ -68,7 +71,7 @@ export function DiscussionSheet(props: DiscussionSheetProps) {
 }
 
 function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose, onBack, resolveAuthor,
-  onNavigationContextChange, parentNavigation, contextLabel, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
+  onNavigationContextChange, parentNavigation, contextLabel, contextUnavailable, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
   const targetKey = JSON.stringify([threadId, anchor]);
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
@@ -377,6 +380,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           <Text variant="headline" className="discussion-thread__title">{contextLabel || state.title || 'Обсуждение'}</Text>
           {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted" className="discussion-thread__demo">Демо</Text>}
         </div>
+        {contextUnavailable && <Text variant="footnote" role="status">Объект недоступен. История обсуждения сохранена.</Text>}
         {syncState && repository.sourceKind !== 'demo' && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
           : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
       </div>

@@ -66,7 +66,6 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const availableSession = useRef<ActiveWorkoutSession<string> | null>(null);
   const clearEditingSurfaces = useCallback(() => {
     setSelection(false); setFinishConfirm(false); setDeleteExerciseId(null); setInformationExerciseId(null);
-    setNestedNavigation(null);
   }, []);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
@@ -111,6 +110,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const closeOverlay = useCallback(() => {
     if (pending.current) return;
     clearEditingSurfaces();
+    setNestedNavigation(null);
   }, [clearEditingSurfaces]);
   useEffect(() => {
     onNavigationContextChange(nestedNavigation ?? (selection || finishConfirm || deleteExerciseId || informationExerciseId

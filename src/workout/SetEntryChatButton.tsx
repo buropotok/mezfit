@@ -5,6 +5,8 @@ export function SetEntryChatButton({ onOpenChat, saving = false }: {
   onOpenChat?: () => void;
   saving?: boolean;
 }) {
+  // The execution menu owns contextual discussions; do not render a dead Telegram shortcut.
+  if (!onOpenChat) return null;
   return <KonstaButton rounded large className="set-entry-weight-reps__chat"
     disabled={saving || !onOpenChat} onClick={onOpenChat}>
     <span className="set-entry-weight-reps__chat-label">

@@ -1,0 +1,98 @@
+import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
+import { afterEach, describe, expect, it } from 'vitest';
+import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
+import { CLOUD_DATABASE_STORES_V17, type MezfitCloudDatabase } from './database';
+import { ClientWorkoutRepository } from './client-workouts';
+import { AdHocWorkoutRepository } from './adhoc-workouts';
+import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
+import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
+import { occurrenceDiscussionAnchor } from './discussion-anchors';
+import { entityDiscussionId } from './discussions';
+
+const databases: Dexie[] = [];
+afterEach(async () => { for (const db of databases.splice(0)) await db.delete(); });
+const time = '2026-11-07T10:00:00.000Z';
+async function fixture(scheduled: boolean) {
+  // Real local reads/transactions; projection needs no Addon or network mock.
+  const db = new Dexie('execution-discussions-' + crypto.randomUUID(), { addons: [] });
+  databases.push(db);
+  db.version(17).stores(Object.fromEntries(Object.entries(CLOUD_DATABASE_STORES_V17)
+    .map(([name, schema]) => [name, schema?.replaceAll('@', '') ?? null])));
+  const pair = await relationshipMembership('11', '22');
+  await db.table('realms').put(pair.realm);
+  await db.table('members').bulkPut(pair.members);
+  const snapshot = { exerciseDefinitionId: 'catalogue', scope: 'public' as const, name: 'Жим',
+    nameEn: null, mediaUrl: null, trackingType: 'weight_reps' as const };
+  const plan: WorkoutOccurrencePlan = { name: 'План', comment: 'Инструкция PLAN', exercises: [{
+    id: 'occurrence-exercise', sourceProgramExerciseId: 'program-exercise', position: 0,
+    exercise: snapshot, notes: 'Техника PLAN', sets: [{ id: 'occurrence-set', sourceProgramSetId: 'program-set',
+      position: 0, setType: null, setLabel: null, comment: 'Пауза PLAN', materialLinks: [], chatLinks: ['legacy-link'],
+      plannedReps: 8, plannedWeightKg: 50, plannedDurationSeconds: null, plannedDistanceMeters: null }],
+  }] };
+  const session: AdHocSessionRow = { id: 'execution', realmId: pair.realm.realmId, owner: pair.realm.realmId,
+    athleteUserId: 'tg:22', clientUserId: 'tg:22', coachUserId: 'tg:11', creatorUserId: 'tg:11',
+    name: 'Тренировка', comment: 'Заметка FACT', programName: null, autoCreatedProgram: false,
+    ...(scheduled ? { occurrenceId: 'occurrence', occurrencePlan: plan } : {}),
+    startedAt: time, completedAt: time, status: 'completed', createdAt: time, updatedAt: time };
+  const exercise: AdHocExerciseRow = { id: 'execution-exercise', realmId: session.realmId, owner: session.owner,
+    sessionId: session.id, ...(scheduled ? { occurrenceExerciseId: 'occurrence-exercise' } : {}),
+    position: 0, exercise: snapshot, notes: 'Техника FACT', deletedAt: null };
+  const set: AdHocSetRow = { id: 'execution-set', realmId: session.realmId, owner: session.owner,
+    sessionId: session.id, exerciseId: exercise.id, ...(scheduled ? { occurrenceSetId: 'occurrence-set' } : {}),
+    position: 0, deletedAt: null, setType: null, actualReps: 8, actualWeightKg: 50,
+    actualDurationSeconds: null, actualDistanceMeters: null, setLabel: null, rpe: 8,
+    comment: 'Тяжело FACT', bands: [], setStatus: 'completed' };
+  await db.table('adHocSessions').put(session);
+  await db.table('adHocExercises').put(exercise);
+  await db.table('adHocSets').put(set);
+  const database = db as unknown as MezfitCloudDatabase; // Typed repository port over real IndexedDB fixture.
+  return { db, session, exercise, set, plan, coach: new AdHocWorkoutRepository(database, 'tg:11'),
+    client: new ClientWorkoutRepository(database, 'tg:22') };
+}
+
+describe('COMM-07 authorized execution projections', () => {
+  it.each([false, true])('keeps canonical identities and preserves stored PLAN/FACT (scheduled=%s)', async scheduled => {
+    const { db, coach, client, session, exercise, set, plan } = await fixture(scheduled);
+    const before = await Promise.all(['adHocSessions', 'adHocExercises', 'adHocSets'].map(name => db.table(name).toArray()));
+    const projected = await coach.get(session.id);
+    expect(await client.get(session.id)).toEqual(projected);
+    expect(projected?.exercises[0]).toMatchObject({ sessionExerciseId: exercise.id, notes: 'Техника FACT' });
+    expect(projected?.exercises[0].sets[0]).toMatchObject({ sessionSetId: set.id, fact: { comment: 'Тяжело FACT', rpe: 8 } });
+    const discussion = projected?.discussion;
+    if (!discussion) throw Error('Missing canonical workout context');
+    expect(discussion.anchor).toEqual({ kind: 'workout', workout: { kind: scheduled ? 'occurrence' : 'session',
+      id: scheduled ? 'occurrence' : session.id } });
+    if (scheduled) {
+      const planned = occurrenceDiscussionAnchor(discussion.scope, { id: 'occurrence', realmId: session.realmId, plan, entryKind: 'workout' });
+      expect(await entityDiscussionId(discussion.scope, discussion.anchor)).toBe(await entityDiscussionId(discussion.scope, planned));
+      expect(projected?.exercises[0].sets[0].discussionAnchor).toEqual(occurrenceDiscussionAnchor(discussion.scope,
+        { id: 'occurrence', realmId: session.realmId, plan, entryKind: 'workout' }, 'occurrence-exercise', 'occurrence-set'));
+    } else {
+      expect(projected?.exercises[0].sets[0].discussionAnchor).toEqual({ kind: 'set', workout: { kind: 'session', id: session.id },
+        exercise: { kind: 'execution', id: exercise.id }, set: { kind: 'execution', id: set.id } });
+    }
+    expect(await Promise.all(['adHocSessions', 'adHocExercises', 'adHocSets'].map(name => db.table(name).toArray()))).toEqual(before);
+    expect(await new AdHocWorkoutRepository(db as unknown as MezfitCloudDatabase, 'tg:33').get(session.id)).toBeNull();
+  });
+
+  it('never guesses an execution set from an equal catalogue/PLAN ID or its position', async () => {
+    const { db, coach, session, exercise, set } = await fixture(false);
+    await db.table('adHocSets').put({ ...set, id: 'other-execution-set', position: 1 });
+    const first = await coach.get(session.id);
+    const anchor = first?.exercises[0].sets.find(row => row.sessionSetId === set.id)?.discussionAnchor;
+    await db.table('adHocSets').update(set.id, { position: 4 });
+    await db.table('adHocSets').update('other-execution-set', { position: 0 });
+    const reordered = await coach.get(session.id);
+    expect(reordered?.exercises[0].sets.find(row => row.sessionSetId === set.id)?.discussionAnchor).toEqual(anchor);
+    expect(reordered?.exercises[0].sets[0].discussionAnchor).not.toEqual(anchor);
+    await db.table('adHocSets').update(set.id, { deletedAt: time });
+    expect((await coach.get(session.id))?.exercises[0].sets.map(row => row.sessionSetId)).toEqual(['other-execution-set']);
+    // Corrupt provenance must not attach to a template or prevent reading historical results.
+    await db.table('adHocExercises').update(exercise.id, { occurrenceExerciseId: 'foreign-plan-exercise' });
+    const invalid = await coach.get(session.id);
+    expect(invalid?.exercises[0].discussionAnchor).toBeUndefined();
+    expect(invalid?.exercises[0].sets[0].discussionAnchor).toBeUndefined();
+    expect(invalid?.exercises[0].sets[0].fact?.comment).toBe('Тяжело FACT');
+  });
+});

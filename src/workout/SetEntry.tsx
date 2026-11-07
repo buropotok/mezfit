@@ -236,6 +236,7 @@ function metricValue(metrics: SetMetrics | null, key: keyof SetMetrics): number 
 
 function setEntryIdentityKey(data: SetEntryProps['data']): string {
   return [
+    data.identity.sessionSetId ?? 'new',
     data.identity.programId ?? 'own',
     data.identity.exerciseDefinitionId,
     data.identity.setNumber,
