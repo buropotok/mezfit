@@ -75,6 +75,7 @@ function fixture() {
     isLinked: (id = client.id) => connected.has(id),
     seedLegacyD1Link: () => { connected.add(client.id); },
     switchToOtherClient: () => { actor = { ...client, id: 3, telegram_user_id: '303' }; },
+    switchToInvitingCoach: () => { actor = { ...client, id: 1, telegram_user_id: '101', first_name: 'Coach' }; },
     disableInvite: () => { available = false; },
     failD1Once: () => { failProjection = true; },
     restoreD1: () => { failProjection = false; },
@@ -228,6 +229,25 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(provision).not.toHaveBeenCalled();
     expect(f.batch).not.toHaveBeenCalled();
     expect(f.isLinked()).toBe(true);
+  });
+
+  it('continues to reject the inviting coach without granting Cloud membership', async () => {
+    const f = fixture();
+    f.switchToInvitingCoach();
+    identity.mockResolvedValue({
+      user: { id: 101, first_name: 'Coach' },
+      authDate: new Date('2026-10-12T00:00:00Z'),
+      startParam: launch,
+    });
+
+    const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toEqual({ invite: null });
+
+    const acceptance = await worker.fetch(request(), f.env);
+    expect(acceptance.status).toBe(400);
+    expect(provision).not.toHaveBeenCalled();
+    expect(f.batch).not.toHaveBeenCalled();
   });
 
   it('allows the same invitation to connect different athletes', async () => {
