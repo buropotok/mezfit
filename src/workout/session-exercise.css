@@ -54,6 +54,11 @@
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+.session-exercise__set-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+}
 
 .session-exercise__menu,
 .session-exercise__collapse {

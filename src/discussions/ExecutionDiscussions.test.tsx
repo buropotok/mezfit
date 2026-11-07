@@ -105,6 +105,58 @@ describe('COMM-07 completed execution entries', () => {
     expect(probe.ensure.mock.calls[2][0]).toEqual(probe.ensure.mock.calls[3][0]);
   });
 
+
+  it('opens workout and exact set discussion from new direct icons without using the menus', async () => {
+    probe.actor = 'tg:11';
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения тренировки' }));
+    await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(
+      { kind: 'workout', workout: root }, expect.any(String)));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    const icon = screen.getByRole('button', { name: 'Обсуждения подхода 1' });
+    expect(icon.closest('.ui-list-item__trailing-action')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+    expect(screen.getAllByLabelText('Непрочитанных: 3').length).toBeGreaterThan(0);
+    const actionRow = icon.closest('.ui-list-item-wrap');
+    expect(actionRow?.querySelector('.session-exercise__icon--chevron-right')).toBeNull();
+    fireEvent.click(icon);
+    await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(
+      setAnchor('exercise-a', 'exercise-a-set-0'), 'Жим · Подход 1'));
+    expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('deletes only the selected active set through its menu after confirmation and supports retries', async () => {
+    probe.actor = 'tg:11';
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    const onDeleteSet = vi.fn()
+      .mockRejectedValueOnce(new Error('Повторите удаление'))
+      .mockResolvedValueOnce(undefined);
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    expect(screen.getByText('Удалить подход?')).toBeTruthy();
+    expect(onDeleteSet).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(onDeleteSet).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    const remove = screen.getByRole('button', { name: 'Удалить' });
+    fireEvent.click(remove);
+    fireEvent.click(remove);
+    await waitFor(() => expect(onDeleteSet).toHaveBeenCalledTimes(1));
+    expect(onDeleteSet).toHaveBeenCalledWith('exercise-a-set-0');
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Повторите удаление');
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить' }));
+    await waitFor(() => expect(onDeleteSet).toHaveBeenCalledTimes(2));
+    expect(onDeleteSet).toHaveBeenLastCalledWith('exercise-a-set-0');
+    expect(screen.getByRole('button', { name: 'Меню подхода 2' })).toBeTruthy();
+  });
+
   it('keeps the exact conversation during reorder and marks a deleted set unavailable instead of picking its neighbour', async () => {
     probe.actor = 'tg:11';
     const value = session();

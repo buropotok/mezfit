@@ -331,6 +331,11 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
           exercise.data.exercise.tracking_type,
         );
         const canOpenSet = planMode ? set.sourceProgramSetId === null : editable;
+        const discussionTarget = !planMode && exercise.discussionScope && set.discussionAnchor
+          ? { scope: exercise.discussionScope, anchor: set.discussionAnchor,
+            name: `${exerciseDisplayName(data.exercise)} · Подход ${setNumber}` } : null;
+        const onDeleteSet = editable ? exercise.onDeleteSet : undefined;
+        const deleteSet = !planMode && onDeleteSet ? () => onDeleteSet(set.sessionSetId) : undefined;
         return (
           <ListItem
             key={set.sessionSetId}
@@ -350,14 +355,13 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
               <span className="session-exercise__set-trailing">
                 {!planMode && metrics ? <Text variant="headline" className="session-exercise__set-fact">{metrics}</Text> : null}
                 {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
-                {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
+                {planMode && canOpenSet ? <SharedIcon name="chevron-right" /> : null}
               </span>
             )}
-            trailingAction={!planMode && exercise.discussionScope && set.discussionAnchor ? <ExecutionSetDiscussionMenu
-              target={{ scope: exercise.discussionScope, anchor: set.discussionAnchor,
-                name: `${exerciseDisplayName(data.exercise)} · Подход ${setNumber}` }}
+            trailingAction={!planMode && (discussionTarget || deleteSet) ? <ExecutionSetDiscussionMenu
+              target={discussionTarget}
               setNumber={setNumber} onNavigationContextChange={exercise.onNavigationContextChange}
-              onOpenTarget={exercise.onOpenDiscussion} /> : undefined}
+              onOpenTarget={exercise.onOpenDiscussion} onDeleteSet={deleteSet} /> : undefined}
             aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
             onClick={canOpenSet ? () => onSelectSet(set.sessionSetId) : undefined}
           />
@@ -396,6 +400,9 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
     ? null
     : (props.mode === 'plan' ? [...data.sets, props.createSet] : data.sets)
       .find((set) => set.sessionSetId === selectedSessionSetId) ?? null;
+  const selectedDiscussionTarget = selectedSet && discussionScope && selectedSet.discussionAnchor
+    ? { scope: discussionScope, anchor: selectedSet.discussionAnchor,
+      name: `${exerciseName} · Подход ${selectedSet.position + 1}` } : null;
   const programIdentity: SetEntryProgramIdentity = context.program
     ? { programId: context.program.id, programName: context.program.name }
     : { programId: null, programName: null };
@@ -480,6 +487,7 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
             }}
             onClose={() => setSelectedSessionSetId(null)}
             onNavigationContextChange={onNavigationContextChange}
+            discussionTarget={selectedDiscussionTarget} onOpenDiscussion={onOpenDiscussion}
             onDeleteSet={editable && onDeleteSet ? () => onDeleteSet(selectedSet.sessionSetId) : undefined}
             onSave={(fact) => props.onSaveSet({
               workoutSessionId: context.workoutSessionId,

@@ -1,5 +1,6 @@
 import type { PlannedSet, TrackingType } from '../api';
 import type { NavigationContext } from '../NavigationShell';
+import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
 import type { SetType } from '../../shared/set-type';
 
 import type { SetLabel } from '../../shared/set-label';
@@ -68,6 +69,9 @@ interface SetEntrySharedProps {
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onOpenHistory?: () => void;
   onOpenChat?: () => void;
+  /** Canonical execution-set discussion shared by the row and FACT editor. */
+  discussionTarget?: EntityDiscussionTarget | null;
+  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
   /** Explicit occurrence PLAN or session FACT deletion capability; never a program template. */
   onDeleteSet?: () => Promise<void>;
 }

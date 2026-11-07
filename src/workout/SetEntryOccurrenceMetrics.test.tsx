@@ -282,6 +282,30 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
   });
 });
 
+
+  it.each(['weight_reps', 'time'] as const)(
+    '%s exposes the same canonical set discussion from the result sheet header', trackingType => {
+      const target = {
+        scope: { realmId: 'pair', coachClientId: 'pair' },
+        anchor: { kind: 'set' as const, workout: { kind: 'session' as const, id: 'session-1' },
+          exercise: { kind: 'execution' as const, id: 'exercise-1' },
+          set: { kind: 'execution' as const, id: 'set-2' } },
+        name: 'Упражнение · Подход 2',
+      };
+      const onOpenDiscussion = vi.fn();
+      render(<KonstaProvider theme="ios" dark>
+        <SetEntry mode="workout" isOpen data={{ ...base, trackingType }}
+          discussionTarget={target} onOpenDiscussion={onOpenDiscussion}
+          onClose={vi.fn()} onSave={vi.fn(async () => {})} />
+      </KonstaProvider>);
+      const action = screen.getByRole('button', { name: 'Обсуждения подхода' });
+      expect(action.closest('.set-entry-weight-reps__header-actions')).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Закрыть подход' })).toBeTruthy();
+      fireEvent.click(action);
+      expect(onOpenDiscussion).toHaveBeenCalledExactlyOnceWith(target);
+    },
+  );
+
 describe('assigned PLAN inspection', () => {
   it.each(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight'] as const)(
     '%s lets a client read and close the set without editing the coach PLAN', trackingType => {

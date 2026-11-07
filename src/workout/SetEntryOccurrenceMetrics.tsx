@@ -185,8 +185,13 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
           </div>
-          <IconButton icon="x" label="Закрыть подход" disabled={saving}
-            onClick={() => requestClose.current()} />
+          <div className="set-entry-weight-reps__header-actions">
+            {props.discussionTarget ? <IconButton icon="message-circle" label="Обсуждения подхода"
+              disabled={saving || !props.onOpenDiscussion}
+              onClick={() => { if (props.discussionTarget) props.onOpenDiscussion?.(props.discussionTarget); }} /> : null}
+            <IconButton icon="x" label="Закрыть подход" disabled={saving}
+              onClick={() => requestClose.current()} />
+          </div>
         </header>
         <div className="set-entry-weight-reps__body">
           <div className="set-entry-weight-reps__exercise">
