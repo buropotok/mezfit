@@ -65,7 +65,9 @@ describe('Coach client workspace presentation', () => {
     const tablist = screen.getByRole('tablist');
     expect(tablist.getAttribute('data-full-width')).toBe('true');
     expect(screen.getByRole('group', { name: 'Разделы клиента Анна Иванова' }).contains(tablist)).toBe(true);
-    expect(screen.getAllByRole('tab')).toHaveLength(6);
+    expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
+      'Основные', 'Программа', 'Упражнения', 'Календарь', 'Прогресс', 'История', 'Обсуждения',
+    ]);
     expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
 
     const surface = screen.getByText('Анкета клиента ещё не опубликована.').closest('section');

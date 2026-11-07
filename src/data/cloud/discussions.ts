@@ -1,6 +1,6 @@
 import Dexie, { liveQuery } from 'dexie';
 import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
-import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, discussionReadStateId,
+import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, assertMessageAttachmentWrite, discussionReadStateId,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
 import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, discussionInstant, discussionMessageView, isDiscussionMessage,
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
@@ -19,6 +19,12 @@ export interface DiscussionMessageInput {
   requireUnsentDraft?: true;
 }
 export interface DiscussionPage { messages: DiscussionMessageView[]; before: DiscussionCursor | null }
+export interface DiscussionFeedRow {
+  thread: DiscussionThread;
+  latest: DiscussionMessageView | null;
+  unread: number;
+  hasAttachments: boolean;
+}
 export function prepareDiscussionMessage(threadId: string, text: string, replyToMessageId?: string): DiscussionMessageInput {
   return { id: crypto.randomUUID(), threadId, text, createdAt: new Date().toISOString(), replyToMessageId };
 }
@@ -141,6 +147,53 @@ export class DiscussionRepository {
   }
   async listThreads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
     return this.read(() => this.threads(anchor));
+  }
+  /** Read-only metadata projection. Canonical conversations absorb their legacy headers
+   * exactly as page()/markRead() do; no message or header is copied or created. */
+  async feed(attachments?: Pick<MezfitCloudDatabase, 'messageAttachments'>, includeLatest = true): Promise<DiscussionFeedRow[]> {
+    return this.db.transaction('r', [...tables, ...(attachments ? ['messageAttachments'] : [])], async () => {
+      await this.access();
+      const candidates = await this.db.discussionThreads.where('realmId').equals(this.scope.realmId).toArray();
+      const valid = candidates.filter(row => {
+        try { assertDiscussionThread(row); return row.coachClientId === this.scope.coachClientId; }
+        catch { return false; }
+      });
+      const canonical = new Map<string, DiscussionThread>();
+      for (const row of [...valid].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))) {
+        if (!canonical.has(row.anchorKey) || row.id.startsWith('entity-discussion:')) canonical.set(row.anchorKey, row);
+      }
+      const headers = [...canonical.values()];
+      const attachedThreads = new Set<string>();
+      if (attachments) {
+        const rows = (await attachments.messageAttachments.where('realmId').equals(this.scope.realmId).toArray())
+          // Validate lookup keys before IndexedDB sees them: a malformed synced
+          // attachment must not break every conversation in the inbox.
+          .filter(row => discussionId(row.messageId));
+        const messages = await this.db.discussionMessages.bulkGet(rows.map(row => row.messageId));
+        const ids = new Set(valid.map(row => row.id));
+        rows.forEach((row, index) => {
+          const message = messages[index];
+          if (!isDiscussionMessage(message) || !this.visible(message, message.threadId)
+            || message.deletedAt || !ids.has(message.threadId) || row.deletedAt || row.uploadState !== 'ready') return;
+          try {
+            assertMessageAttachmentWrite(row.authorUserId, { id: message.threadId, realmId: this.scope.realmId }, message, row);
+            attachedThreads.add(message.threadId);
+          } catch { /* Invalid or unavailable metadata never advertises a file. */ }
+        });
+      }
+      return Promise.all(headers.map(async thread => {
+        const sources = valid.filter(row => row.anchorKey === thread.anchorKey);
+        const latest = includeLatest ? (await Promise.all(sources.map(row => this.db.discussionMessages
+          .where('[realmId+threadId+createdAt+id]')
+          .between([this.scope.realmId, row.id, '', ''], [this.scope.realmId, row.id, []], true, false)
+          .reverse().filter(message => this.visible(message, row.id) && !message.deletedAt).first())))
+          .filter((row): row is DiscussionMessage => Boolean(row))
+          .sort((a, b) => discussionCursorKey(b).localeCompare(discussionCursorKey(a)))[0] : undefined;
+        const unread = (await Promise.all(sources.map(row => this.countUnread(row.id)))).reduce((sum, count) => sum + count, 0);
+        return { thread, latest: latest ? discussionMessageView(latest) : null, unread,
+          hasAttachments: sources.some(row => attachedThreads.has(row.id)) };
+      }));
+    });
   }
   private async view(row: DiscussionMessage): Promise<DiscussionMessageView> {
     const reply = row.replyToMessageId ? await this.db.discussionMessages.get(row.replyToMessageId) : undefined;

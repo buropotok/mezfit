@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
+import { useDiscussions } from './discussions/DiscussionsProvider';
+import { Icon, Text } from './ui';
 import type { MeResponse, Role } from './api';
 import { useCloudConnections } from './data/cloud/CloudConnectionsProvider';
 import { useCloudContactAvatarUrl } from './contacts/CloudContactAvatar';
@@ -29,6 +31,7 @@ import { responsiveTypographyScale } from './ui/responsiveTypographyScale';
 export type AppDestination =
   | 'clients'
   | 'programs'
+  | 'discussions'
   | 'exercises'
   | 'calendar'
   | 'today'
@@ -102,7 +105,7 @@ const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 const coachPrimaryItems: NavigationItem[] = [
   { id: 'today', label: 'Сегодня', icon: 'calendar-event' },
   { id: 'clients', label: 'Клиенты', icon: 'users' },
-  { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
+  { id: 'discussions', label: 'Обсуждения', icon: 'message-circle', showFab: false },
   { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
   { id: 'training', label: 'Тренировка', icon: 'barbell', showFab: false },
 ];
@@ -110,12 +113,13 @@ const coachPrimaryItems: NavigationItem[] = [
 const clientPrimaryItems: NavigationItem[] = [
   { id: 'today', label: 'Сегодня', icon: 'calendar-event' },
   { id: 'training', label: 'Тренировка', icon: 'barbell' },
-  { id: 'programs', label: 'Программы', icon: 'clipboard-list' },
+  { id: 'discussions', label: 'Обсуждения', icon: 'message-circle', showFab: false },
   { id: 'analytics', label: 'Аналитика', icon: 'chart-dots-2', showFab: false },
   { id: 'profile', label: 'Мой профиль', icon: 'user', showFab: false },
 ];
 
 const coachSecondaryItems: NavigationItem[] = [
+  { id: 'programs', label: 'Программы', icon: 'clipboard-list', section: 'secondary' },
   { id: 'profile', label: 'Мой профиль', icon: 'user', section: 'secondary', showFab: false },
   { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'calendar', label: 'Календарь', icon: 'calendar', section: 'secondary', showFab: false },
@@ -124,6 +128,7 @@ const coachSecondaryItems: NavigationItem[] = [
 ];
 
 const clientSecondaryItems: NavigationItem[] = [
+  { id: 'programs', label: 'Программы', icon: 'clipboard-list', section: 'secondary' },
   { id: 'settings', label: 'Настройки', icon: 'settings', section: 'secondary', showFab: false },
   { id: 'exercises', label: 'Упражнения', icon: 'barbell', section: 'secondary', showFab: false },
   { id: 'history', label: 'История', icon: 'clock', section: 'secondary', showFab: false },
@@ -474,6 +479,11 @@ export function NavigationShell({
     setMenuOpen(false);
   };
 
+  const { unread: discussionUnread } = useDiscussions();
+  const discussionIcon = <span style={{ position: 'relative', display: 'block', width: '100%', height: '100%' }}>
+    <Icon name="message-circle" />
+    {discussionUnread > 0 ? <Text variant="caption" style={{ position: 'absolute', right: -8, top: -8, color: 'var(--ui-color-primary, #0a84ff)' }}>{discussionUnread}</Text> : null}
+  </span>;
   const contextualMenuActions = context?.menuActions ?? [];
   const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
   const menuItems: LiquidPopoverItem[] = activeRole === 'coach' ? [{
@@ -599,7 +609,8 @@ export function NavigationShell({
             tabs={primaryItems.map((item) => ({
               value: item.id,
               label: item.label,
-              icon: item.id === 'profile' ? { outline: ownAvatar, filled: ownAvatar } : item.icon,
+              icon: item.id === 'profile' ? { outline: ownAvatar, filled: ownAvatar }
+                : item.id === 'discussions' ? { outline: discussionIcon, filled: discussionIcon } : item.icon,
             }))}
             value={primaryDestination}
             onValueChange={(value) => chooseDestination(value as AppDestination)}

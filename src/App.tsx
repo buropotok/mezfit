@@ -1,3 +1,5 @@
+import { DiscussionsProvider } from './discussions/DiscussionsProvider';
+import { DiscussionsPage } from './discussions/DiscussionsPage';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useState } from 'react';
 import {
   acceptCurrentInvite,
@@ -189,6 +191,7 @@ function ClientShell({
     );
   }
 
+  if (destination === 'discussions') return <DiscussionsPage role="client" onNavigationContextChange={onNavigationContextChange} />;
   if (destination === 'programs') return (
     <ClientProgramsPage actor={actor} onNavigationContextChange={onNavigationContextChange} />
   );
@@ -453,6 +456,8 @@ export function App() {
         <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
         <WorkoutCompletionProvider enabled={state.activeRole === 'coach' && (destination === 'today' || destination === 'training')}
           scope={state.activeRole + ':' + destination} onNavigationContextChange={setCompletionNavigation}>
+        <DiscussionsProvider key={state.activeRole + state.me.user.telegramUserId} role={state.activeRole}
+          details={destination === 'discussions' || destination === 'clients'}>
         <UserProfileNavigationShell
           me={state.me}
           activeRole={state.activeRole}
@@ -508,6 +513,7 @@ export function App() {
           />
           )}
         </UserProfileNavigationShell>
+        </DiscussionsProvider>
         </WorkoutCompletionProvider>
         </PlannedWorkoutStartProvider>
         </SchedulePlanningContext.Provider>

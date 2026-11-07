@@ -1,3 +1,4 @@
+import { DiscussionsPage } from '../discussions/DiscussionsPage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createClientInvite,
@@ -130,6 +131,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   selectedClientIdRef.current = selectedClientId;
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
+  const [clientDiscussionNavigation, setClientDiscussionNavigation] = useState<NavigationContext | null>(null);
   const [clientExerciseNavigation, setClientExerciseNavigation] = useState<NavigationContext | null>(null);
   const selectedClientProgram = clientSelectedProgram && selectedClient
     && clientSelectedProgram.clientUserId === selectedClient.userId
@@ -244,6 +246,8 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       return () => onNavigationContextChange(null);
     }
 
+    if (destination === 'discussions') return;
+
     if (!selectedClient) {
       if (destination !== 'exercises' && destination !== 'today') onNavigationContextChange(null);
       return undefined;
@@ -258,6 +262,11 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
           setClientProgramDetailNavigation(null);
         },
       });
+      return () => onNavigationContextChange(null);
+    }
+
+    if (clientTab === 'discussions' && clientDiscussionNavigation && destination === 'clients') {
+      onNavigationContextChange(clientDiscussionNavigation);
       return () => onNavigationContextChange(null);
     }
 
@@ -286,7 +295,9 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [clientDiscussionNavigation, programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+
+  if (destination === 'discussions') return <DiscussionsPage role="coach" onNavigationContextChange={onNavigationContextChange} />;
 
   if (selectedClient) {
     if (selectedClientProgram && destination === 'clients' && programRepository) {
@@ -317,6 +328,8 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     return <><ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
       basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
       hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
+      discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
+        relationshipId={selectedClient.relationshipId} onNavigationContextChange={setClientDiscussionNavigation} /> : null}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
         key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}

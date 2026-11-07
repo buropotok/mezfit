@@ -1,3 +1,4 @@
+import paperclipUrl from './paperclip.svg';
 import trashThinUrl from './trash-outline.svg';
 import copyThinUrl from './copy-outline.svg';
 import treadmillUrl from './treadmill.svg';
@@ -105,6 +106,7 @@ const uiIconRegistry = {
   'info-circle': { outline: infoCircleUrl, filled: infoCircleUrl },
   'menu-2': { outline: menu2Url, filled: menu2Url },
   x: { outline: xUrl, filled: xUrl },
+  paperclip: { outline: paperclipUrl, filled: paperclipUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },
   tilde: { outline: tildeUrl, filled: tildeUrl },
