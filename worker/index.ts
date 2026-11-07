@@ -547,7 +547,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ user: userView(auth.row), roles: await getRoles(env.DB_BINDING, auth.row.id) });
   }
 
-  const testResetMatch = url.pathname.match(/^\\/api\\/coach\\/clients\\/([1-9]\\d*)\\/test-relationship$/);
+  const testResetMatch = url.pathname.match(/^\/api\/coach\/clients\/([1-9]\d*)\/test-relationship$/);
   if (testResetMatch && request.method === 'DELETE') {
     const auth = await requireUser(request, env);
     requireRole(auth, 'coach');
