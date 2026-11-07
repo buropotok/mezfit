@@ -7,9 +7,9 @@ import { SetEntryChatButton } from './SetEntryChatButton';
 afterEach(cleanup);
 
 describe('SetEntry chat action', () => {
-  it('keeps the action visible but unavailable until chat is connected', () => {
+  it('omits the retired disconnected chat shortcut', () => {
     render(<KonstaProvider theme="ios" dark><SetEntryChatButton /></KonstaProvider>);
-    expect(screen.getByRole('button', { name: 'Открыть чат' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Открыть чат' })).toBeNull();
   });
 
   it('delegates an enabled chat action to its owner', () => {

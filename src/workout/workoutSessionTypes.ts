@@ -1,3 +1,4 @@
+import type { DiscussionAnchor, DiscussionScope } from '../../shared/discussion-anchor';
 import type { NavigationContext } from '../NavigationShell';
 import type { SessionExerciseData } from './sessionExerciseTypes';
 
@@ -44,6 +45,8 @@ export interface DraftWorkoutSession {
 }
 
 export interface ActiveWorkoutSession<Id extends string | number = number> {
+  /** Derived by the authorized execution repository, never persisted. */
+  discussion?: { scope: DiscussionScope; anchor: DiscussionAnchor };
   sessionId: Id;
   occurrenceId: Id | null;
   status: 'active' | 'completed';

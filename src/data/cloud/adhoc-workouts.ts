@@ -1,3 +1,5 @@
+import { executionDiscussionAnchor } from './discussion-anchors';
+import type { DiscussionAnchor } from './discussion-contracts';
 import clientExecutionGrants from '../../../cloud/client-session-roles.json';
 import { PlannedWorkoutConflict, currentStartConflicts } from './planned-workout-conflicts';
 import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
@@ -650,10 +652,22 @@ export class AdHocWorkoutRepository {
 
   private async project(session: AdHocSessionRow): Promise<ActiveWorkoutSession<string>> {
     const sets = await this.sets(session);
+    const scope = { realmId: session.realmId, coachClientId: session.realmId === this.actorUserId ? null : session.realmId };
+    // Broken historical provenance disables the communication entry, never FACT reads.
+    const anchor = (exercise?: AdHocExerciseRow, set?: AdHocSetRow): DiscussionAnchor | undefined => {
+      try { return executionDiscussionAnchor(scope, session, exercise, set); }
+      catch (reason) {
+        if (reason instanceof Error && ['DISCUSSION_CONTEXT_MISMATCH', 'INVALID_DISCUSSION_ANCHOR'].includes(reason.message))
+          return undefined;
+        throw reason;
+      }
+    };
+    const workoutAnchor = anchor();
     const planned = session.occurrenceId ? await this.db.workoutOccurrences.get(session.occurrenceId) : null;
     const plannedTiming = planned && planned.realmId === session.realmId && planned.workoutSessionId === session.id
       ? { startsAtUtc: planned.startsAtUtc, durationMinutes: planned.durationMinutes } : undefined;
     return {
+      ...(workoutAnchor ? { discussion: { scope, anchor: workoutAnchor } } : {}),
       ...(plannedTiming ? { plannedTiming } : {}),
       format: planned && planned.realmId === session.realmId && planned.workoutSessionId === session.id
         ? planned.format : session.coachUserId ? 'coached' : 'independent',
@@ -665,7 +679,7 @@ export class AdHocWorkoutRepository {
         if (!isWorkoutExerciseSnapshot(row.exercise)) throw new Error('ADHOC_INVALID_EXERCISE_SNAPSHOT');
         const exerciseSets = sets.filter(set => set.exerciseId === row.id);
         const plannedExercise = session.occurrencePlan?.exercises.find(item => item.id === row.occurrenceExerciseId);
-        return { sessionExerciseId: row.id, workoutSessionId: session.id, sourceProgramExerciseId: null,
+        return { discussionAnchor: anchor(row), sessionExerciseId: row.id, workoutSessionId: session.id, sourceProgramExerciseId: null,
           position: row.position, status: exerciseSets.length > 0 && exerciseSets.every(set => set.setStatus !== 'pending')
             ? 'completed' : 'active', notes: row.notes, mediaUrl: row.exercise.mediaUrl,
           exercise: { id: row.exercise.exerciseDefinitionId, scope: row.exercise.scope === 'public' ? 'global' : row.exercise.scope, name: row.exercise.name,
@@ -674,7 +688,7 @@ export class AdHocWorkoutRepository {
             is_favourite: false, can_edit: false },
           sets: exerciseSets.map((set): SessionExerciseSetData<string> => {
             const prescription = plannedExercise?.sets.find(item => item.id === set.occurrenceSetId);
-            return { sessionSetId: set.id, sourceProgramSetId: prescription?.sourceProgramSetId ?? null, position: set.position,
+            return { discussionAnchor: anchor(row, set), sessionSetId: set.id, sourceProgramSetId: prescription?.sourceProgramSetId ?? null, position: set.position,
               status: set.setStatus, setType: set.setType,
               plan: prescription ? { reps: prescription.plannedReps, weightKg: prescription.plannedWeightKg,
                 durationSeconds: prescription.plannedDurationSeconds, distanceMeters: prescription.plannedDistanceMeters } : null,

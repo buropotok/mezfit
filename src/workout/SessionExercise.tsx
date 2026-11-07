@@ -1,3 +1,4 @@
+import { ExecutionSetDiscussionMenu } from '../discussions/ExecutionSetDiscussionMenu';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
@@ -352,6 +353,11 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
                 {canOpenSet ? <SharedIcon name="chevron-right" /> : null}
               </span>
             )}
+            trailingAction={!planMode && exercise.discussionScope && set.discussionAnchor ? <ExecutionSetDiscussionMenu
+              target={{ scope: exercise.discussionScope, anchor: set.discussionAnchor,
+                name: `${exerciseDisplayName(data.exercise)} · Подход ${setNumber}` }}
+              setNumber={setNumber} onNavigationContextChange={exercise.onNavigationContextChange}
+              onOpenTarget={exercise.onOpenDiscussion} /> : undefined}
             aria-label={canOpenSet ? `Открыть подход ${setNumber}` : undefined}
             onClick={canOpenSet ? () => onSelectSet(set.sessionSetId) : undefined}
           />
@@ -364,6 +370,8 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
 function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewProps<Id>) {
   const {
     context,
+    discussionScope,
+    onOpenDiscussion,
     data,
     collapsed: controlledCollapsed,
     defaultCollapsed = true,
@@ -405,10 +413,13 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
       defaultCollapsed={defaultCollapsed}
       onCollapsedChange={onCollapsedChange}
       onInformation={onInformation}
-      actions={onDeleteExercise || onInformation ? <ExerciseActionsMenu
+      actions={onDeleteExercise || onInformation || (discussionScope && data.discussionAnchor) ? <ExerciseActionsMenu
+        discussionTarget={discussionScope && data.discussionAnchor ? { scope: discussionScope,
+          anchor: data.discussionAnchor, name: exerciseName } : null}
+        onNavigationContextChange={onNavigationContextChange} onOpenDiscussion={onOpenDiscussion}
         onDelete={editable && onDeleteExercise ? () => onDeleteExercise(data.sessionExerciseId) : undefined}
         onInformation={onInformation} /> : undefined}
-      onOpenExerciseMenu={onDeleteExercise || onInformation ? undefined
+      onOpenExerciseMenu={onDeleteExercise || onInformation || (discussionScope && data.discussionAnchor) ? undefined
         : onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}
       onAddSet={props.mode !== 'plan' && editable && onAddSet ? () => onAddSet(data.sessionExerciseId) : undefined}
       summary={(

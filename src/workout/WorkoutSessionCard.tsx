@@ -1,3 +1,6 @@
+import { discussionAnchorKey } from '../../shared/discussion-anchor';
+import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
+import { UnreadCount } from '../ui/UnreadCount';
 import { ListInput } from 'konsta/react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -155,6 +158,15 @@ function WorkoutFactCard<Id extends string | number = number>({
   onOpenChat,
   onNavigationContextChange,
 }: WorkoutFactCardProps<Id>) {
+  const discussions = useEntityDiscussions(session.discussion
+    ? { ...session.discussion, name: title ?? workoutTitle(session) } : null, onNavigationContextChange, true, {
+      isTargetAvailable: target => {
+        const key = discussionAnchorKey(target.scope, target.anchor);
+        const anchors = [session.discussion?.anchor, ...session.exercises.flatMap(exercise =>
+          [exercise.discussionAnchor, ...exercise.sets.map(set => set.discussionAnchor)])];
+        return anchors.some(anchor => anchor && discussionAnchorKey(target.scope, anchor) === key);
+      },
+    });
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const sourceTitle = title ?? workoutTitle(session);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -202,6 +214,8 @@ function WorkoutFactCard<Id extends string | number = number>({
     id: exercise.sessionExerciseId,
     content: (
       <SessionExercise<Id>
+        discussionScope={session.discussion?.scope}
+        onOpenDiscussion={discussions.openTarget}
         context={{
           workoutSessionId: session.sessionId,
           workoutDate: session.workoutDate,
@@ -230,7 +244,7 @@ function WorkoutFactCard<Id extends string | number = number>({
     ),
   }));
 
-  const menuItems: LiquidPopoverItem[] = [];
+  const menuItems: LiquidPopoverItem[] = session.discussion ? [discussions.menuItem] : [];
   if (mode === 'active-own' && onRename) {
     menuItems.push({
       id: 'rename',
@@ -332,6 +346,7 @@ function WorkoutFactCard<Id extends string | number = number>({
 
   return (
     <>
+      {discussions.content}
       <SortableList
         items={items}
         disabled={!active}
@@ -359,10 +374,11 @@ function WorkoutFactCard<Id extends string | number = number>({
               {showStatus ? <Badge color={session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : null}
             </div>
             {menuItems.length > 0 ? (
-              <LiquidPopover
+              <span className="entity-discussion-trigger"><LiquidPopover
                 isOpen={menuOpen}
                 onOpenChange={setMenuOpen}
                 onPresentationChange={(presented) => {
+                  discussions.onMenuPresentationChange(presented);
                   if (presented || pendingDialog === null) return;
                   if (pendingDialog === 'rename') setRenameOpen(true);
                   else if (pendingDialog === 'comment') setCommentOpen(true);
@@ -381,7 +397,7 @@ function WorkoutFactCard<Id extends string | number = number>({
                 )}
                 label="Меню тренировки"
                 items={menuItems}
-              />
+              />{!menuOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}</span>
             ) : (
               <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
             )}
@@ -407,6 +423,7 @@ function WorkoutFactCard<Id extends string | number = number>({
             ) : null}
 
             {session.plannedTiming ? <Text variant="footnote" tone="muted">Запланировано: {workoutDateFormatter.format(new Date(session.plannedTiming.startsAtUtc))}, {workoutTimeFormatter.format(new Date(session.plannedTiming.startsAtUtc))} — {workoutTimeFormatter.format(new Date(Date.parse(session.plannedTiming.startsAtUtc) + session.plannedTiming.durationMinutes * 60_000))}</Text> : null}
+            {comment ? <Text variant="footnote" tone="muted">{comment}</Text> : null}
             <div className="workout-session-card__footer-meta">
               {onCommentChange ? (
                 <GlassSurface

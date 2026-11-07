@@ -53,8 +53,9 @@ parent path, runtime shape guard и автоназвание «имя сущно
 Две разные пары/личная область не сливаются при одинаковом source ID.
 
 Отдельной таблицы реестра/alias для MVP нет: существующие provenance fields уже дают
-соответствие, anchor и contextPath хранятся внутри thread. Несколько независимых веток
-у одного ключа разрешены. Если origin ID не доказан реальными parent/snapshot связями,
+соответствие, anchor и contextPath хранятся внутри thread. Уточнение COMM-06/07:
+одна сущность — один канонический диалог; прежние ветки читаются единой историей
+без переноса сообщений. Новые entity-входы не создают случайные ветки. Если origin ID не доказан реальными parent/snapshot связями,
 адаптер отклоняет запрос. Для удалённого источника сохранённый anchor/snapshot остаётся
 пригоден для истории; отсутствие объекта не повод направлять к соседнему подходу.
 Legacy не перепривязывается к occurrence через program ID или номер подхода.
@@ -86,15 +87,14 @@ Attachment содержит owner=authorUserId и messageId в том же realm
 собственные вложения; общих update/manage для чужих вложений нет. Срок хранения
 реализует COMM-13; удаление автором оставляет deletedAt, физические файлы удаляет шлюз.
 
-Подготовлена append-only `CLOUD_DATABASE_STORES_V15`, не меняющая v14. Важная граница:
-[sealed cloud schema](https://dexie.org/docs/cloud/cli) требует server import до того,
-как клиент объявит новые sync-таблицы. Поэтому существующий production factory по
-умолчанию остаётся v14. Только явный `{ discussions: true }` в constructor/factory
-регистрирует v15 в **том же account-scoped IndexedDB**, не в отдельной БД.
-После одобренного cloud Apply и live проверки следующий integration PR включает это
-для всего lifecycle аккаунта. После использования v15 не возвращаться к клиенту v14:
-это schema downgrade, а не способ выключить UI. Никаких unsynced chat tables или
-устройственного shadow-хранилища до активации нет. В этом PR опция нигде не включается.
+Историческая подготовка COMM-03 добавила append-only `CLOUD_DATABASE_STORES_V15`,
+не меняя v14. Схема и ACL установлены protected Apply 42261608617; readback
+подтверждает конфигурацию, а не live per-user acceptance. COMM-06 регистрирует
+v15/v16/v17 в обычном account-scoped IndexedDB lifecycle по умолчанию. Явные
+options для старых schema fixtures не являются продуктовым включателем.
+COMM-07 использует этот путь без новых flags, таблиц, ACL или повторного Apply.
+После использования новой версии нельзя возвращаться к v14: это schema downgrade.
+Unsynced chat tables, отдельной БД и shadow-хранилища нет.
 
 ## Минимальные серверные grants и совместимость
 
