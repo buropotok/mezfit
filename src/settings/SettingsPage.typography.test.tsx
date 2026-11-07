@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 describe('SettingsPage typography settings', () => {
-  it('opens the fonts screen with all six semantic presets', () => {
+  it('opens the fonts screen with all seven semantic presets', () => {
     const onNavigationContextChange = vi.fn();
 
     render(<SettingsPage onNavigationContextChange={onNavigationContextChange} />);
@@ -27,10 +27,10 @@ describe('SettingsPage typography settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
 
     expect(screen.getByRole('region', { name: 'Шрифты' })).toBeTruthy();
-    for (const label of ['Large title', 'Title', 'Headline', 'Body', 'Footnote', 'Caption']) {
+    for (const label of ['Large title', 'Title', 'Headline', 'Chat', 'Body', 'Footnote', 'Caption']) {
       expect(screen.getByText(label)).toBeTruthy();
     }
-    expect(screen.getAllByLabelText('Размер, px')).toHaveLength(6);
+    expect(screen.getAllByLabelText('Размер, px')).toHaveLength(7);
     expect(onNavigationContextChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ title: 'Шрифты' }),
     );
@@ -102,6 +102,28 @@ describe('SettingsPage typography settings', () => {
         'large-title': expect.objectContaining({ fontStyle: 'italic' }),
       }),
     );
+  });
+
+  it('lets Chat change independently of Headline through the existing fonts controls', () => {
+    const onTypographySettingsChange = vi.fn();
+    const initial = defaultTypographySettings();
+    const view = render(<SettingsPage
+      typographySettings={initial}
+      onTypographySettingsChange={onTypographySettingsChange}
+      onNavigationContextChange={vi.fn()}
+    />);
+    fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
+    const roleCard = screen.getByText('Chat').closest('.settings-page__typography-preset');
+    expect(roleCard).not.toBeNull();
+    const sizeInput = within(roleCard as HTMLElement).getByLabelText('Размер, px');
+    fireEvent.change(sizeInput, { target: { value: '20' } });
+    expect(onTypographySettingsChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        chat: expect.objectContaining({ size: 20, lineHeight: 22 }),
+        headline: expect.objectContaining({ size: 17, lineHeight: 22 }),
+      }),
+    );
+    expect(view.container.querySelector('.ui-text--chat')).not.toBeNull();
   });
 
   it('resets all presets to product defaults', () => {

@@ -529,7 +529,7 @@ export function SettingsPage({
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Шрифты</Text>
           <Text variant="footnote" tone="muted">
-            Настройте шесть общих типографических пресетов. Изменения сразу применяются ко всему интерфейсу и сохраняются после перезагрузки.
+            Настройте семь общих типографических пресетов. Изменения сразу применяются ко всему интерфейсу и сохраняются после перезагрузки.
           </Text>
 
           <div className="settings-page__typography-list">

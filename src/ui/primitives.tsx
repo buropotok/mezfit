@@ -9,7 +9,7 @@ import './ui.css';
 import './avatar.css';
 import './typography.css';
 
-type TextVariant = 'body' | 'caption' | 'footnote' | 'headline' | 'title' | 'large-title';
+type TextVariant = 'body' | 'caption' | 'footnote' | 'headline' | 'chat' | 'title' | 'large-title';
 type TextTone = 'default' | 'muted';
 
 export function Text({ variant = 'body', tone = 'default', className = '', children, ...props }: HTMLAttributes<HTMLSpanElement> & { variant?: TextVariant; tone?: TextTone }) {

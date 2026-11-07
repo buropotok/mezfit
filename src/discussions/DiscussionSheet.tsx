@@ -409,7 +409,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               <MezfitMessage type={isOwn ? 'sent' : 'received'} focusPulse={highlight === message.id}
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
-                text={<Text variant="body" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
+                text={<Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
                 textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => { if (message.reply) void jump(message.reply.messageId); }} />}
                 textFooter={!message.deleted && renderAttachment?.(message)}
                 inlineMeta={<span className="discussion-message-meta"><Text variant="caption">{time}</Text>
