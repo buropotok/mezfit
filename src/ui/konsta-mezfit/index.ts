@@ -1,4 +1,5 @@
 export { MezfitBottomSheet, type MezfitBottomSheetProps } from './BottomSheet';
+export { MezfitMessage, type MezfitMessageProps } from './Message';
 export { MezfitAutosizeTextarea, type MezfitAutosizeTextareaProps } from './AutosizeTextarea';
 export { MezfitContactList, MezfitContactListGroup } from './ContactList';
 export { MezfitDialog, MezfitDialogButton, type MezfitDialogButtonProps, type MezfitDialogProps } from './Dialog';
