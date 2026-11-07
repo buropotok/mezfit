@@ -45,7 +45,7 @@ describe('Coach test link reset confirmation', () => {
     expect(resetTestClientRelationship).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить тестовую связь' }));
-    fireEvent.click(screen.getByText('Сбросить', { selector: 'button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить', exact: true }));
     await waitFor(() => expect(resetTestClientRelationship).toHaveBeenCalledWith('telegram-init', '202'));
     await waitFor(() => expect(cloud.refresh).toHaveBeenCalledTimes(1));
   });
@@ -54,7 +54,7 @@ describe('Coach test link reset confirmation', () => {
     vi.mocked(resetTestClientRelationship).mockRejectedValueOnce(new Error('Сброс временно недоступен'));
     openProfile();
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить тестовую связь' }));
-    fireEvent.click(screen.getByText('Сбросить', { selector: 'button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить', exact: true }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Сброс временно недоступен'));
     expect(cloud.refresh).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Сбросить тестовую связь' })).toBeTruthy();
