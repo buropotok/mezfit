@@ -313,6 +313,22 @@ describe('COMM-06 canonical entity compatibility, local IndexedDB evidence only'
     const foreign = await coach.ensureEntityThread({ kind: 'program', trainingPlanId: 'other' }, 'Другая программа');
     await expect(coach.send(prepareDiscussionMessage(foreign.id, 'Чужой ответ', first.id))).rejects.toThrow('DISCUSSION_MESSAGE_NOT_FOUND');
   });
+  it('observes a canonical single-message page quoting legacy history and propagates query errors', async () => {
+    const { coach, client, thread, anchor } = await fixture();
+    const source = await coach.send({ ...prepareDiscussionMessage(thread.id, 'За пределами страницы'), createdAt: '2026-11-06T00:00:00.001Z' });
+    const canonical = await client.ensureEntityThread(anchor, 'Программа');
+    await client.send({ ...prepareDiscussionMessage(canonical.id, 'Ответ на историю', source.id), createdAt: '2026-11-06T00:00:00.002Z' });
+    const direct = await client.page(canonical.id, undefined, 1);
+    expect(direct.messages[0].reply?.text).toBe('За пределами страницы');
+    let subscription: { unsubscribe(): void } | undefined;
+    try {
+      const first = await new Promise<typeof direct>((resolve, reject) => {
+        subscription = client.observePage(canonical.id, resolve, reject, undefined, 1);
+      });
+      expect(first.messages).toHaveLength(1);
+      expect(first.messages[0].reply?.text).toBe('За пределами страницы');
+    } finally { subscription?.unsubscribe(); }
+  });
   it.each(['coach', 'client'] as const)('observes authored read evidence for %s and upgrades an unindexed legacy cursor without moving backward', async sender => {
     const { db, coach, client, thread, anchor } = await fixture();
     const author = sender === 'coach' ? coach : client, reader = sender === 'coach' ? client : coach;
