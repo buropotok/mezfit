@@ -14,3 +14,22 @@
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
+/* Konsta 5.4.0 toolbar/Glass renderer remains mounted for input behavior.
+   Its decorative layers are suppressed only when a parent GlassSurface is
+   the sole material owner; feature CSS never reaches into Konsta internals. */
+.ui-mezfit-messagebar--bare .k-toolbar {
+  padding: 0;
+}
+.ui-mezfit-messagebar--bare .k-toolbar > :not(:last-child) {
+  display: none;
+}
+.ui-mezfit-messagebar--bare .k-toolbar > :last-child {
+  min-height: 3rem;
+}
+.ui-mezfit-messagebar--bare .k-glass {
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  touch-action: pan-y;
+}
