@@ -236,6 +236,8 @@ const russianApiErrors: Record<string, string> = {
   SCHEDULE_OCCURRENCE_LOCKED: 'Начатую или завершённую тренировку нельзя переносить',
   INVALID_SCHEDULE_DATE: 'Дата тренировки указана неверно',
   SCHEDULE_OCCURRENCE_INVALID: 'Запланированная тренировка больше недоступна',
+  TEST_RESET_FORBIDDEN: 'Сброс доступен только разрешённым тестовым тренерам',
+  INVALID_CLIENT: 'Некорректный идентификатор клиента',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
@@ -704,6 +706,21 @@ export function reorderCoachPrograms(initData: string, programIds: number[]): Pr
     method: 'PUT',
     body: JSON.stringify({ programIds }),
   });
+}
+
+/** Privileged, irreversible test reset; only an allowlisted signed Coach may call it. */
+export async function resetTestClientRelationship(initData: string, clientTelegramId: string): Promise<void> {
+  if (!/^[1-9]\d*$/.test(clientTelegramId)
+    || !Number.isSafeInteger(Number(clientTelegramId))
+    || String(Number(clientTelegramId)) !== clientTelegramId) {
+    throw new ApiError(400, 'Некорректный клиент', 'INVALID_CLIENT');
+  }
+  const result = await apiRequest<unknown>(
+    initData, `/api/coach/clients/${clientTelegramId}/test-relationship`, { method: 'DELETE' },
+  );
+  if (!isRecord(result) || result.ok !== true) {
+    throw new ApiError(502, 'Не удалось подтвердить удаление связи', 'INVALID_API_RESPONSE');
+  }
 }
 
 export function createClientInvite(

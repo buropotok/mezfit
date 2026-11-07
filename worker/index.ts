@@ -28,6 +28,8 @@ export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coord
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 import { sendWorkoutReminders } from './lib/workout-reminders';
+import { resetTestCloudRelationship } from './lib/test-relationship-reset';
+import { resetLegacyTestRelationship } from './lib/test-legacy-relationship-reset';
 
 type Role = 'coach' | 'client';
 
@@ -546,6 +548,38 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ user: userView(auth.row), roles: await getRoles(env.DB_BINDING, auth.row.id) });
   }
 
+  const testResetMatch = url.pathname.match(/^\/api\/coach\/clients\/([1-9]\d*)\/test-relationship$/);
+  if (testResetMatch && request.method === 'DELETE') {
+    const auth = await requireUser(request, env);
+    requireRole(auth, 'coach');
+    const clientTelegramId = testResetMatch[1];
+    if (!Number.isSafeInteger(Number(clientTelegramId))
+      || String(Number(clientTelegramId)) !== clientTelegramId
+      || clientTelegramId === auth.row.telegram_user_id) {
+      throw new HttpError(400, 'INVALID_CLIENT', 'Invalid client identity');
+    }
+    // Destructive test capability is disabled by default. Grant it only to
+    // explicitly listed verified test coaches in Worker secret/vars.
+    const resetConfig = env as Env & { TEST_CONNECTION_RESET_COACH_IDS?: string };
+    if (!resetConfig.TEST_CONNECTION_RESET_COACH_IDS?.split(',')
+      .some(value => value.trim() === auth.row.telegram_user_id)) {
+      throw new HttpError(403, 'TEST_RESET_FORBIDDEN', 'Test relationship reset is not enabled for this coach');
+    }
+    const pair = await env.DB_BINDING.prepare(`
+      SELECT client.id AS id FROM coach_client cc
+      JOIN app_user client ON client.id = cc.client_user_id
+      WHERE cc.coach_user_id = ? AND client.telegram_user_id = ? AND cc.status = 'active'
+    `).bind(auth.row.id, clientTelegramId).first<{ id: number }>();
+    if (!pair) throw new HttpError(404, 'CLIENT_NOT_FOUND', 'Client is not linked to this coach');
+
+    await resetTestCloudRelationship(env, auth.row.telegram_user_id, clientTelegramId, fetch);
+    // D1 legacy history is deliberately test-only disposable. Delete only
+    // this pair's old graph and deactivate the link atomically after Cloud
+    // deletion; a D1 failure leaves the link active for an authorized retry.
+    await resetLegacyTestRelationship(env.DB_BINDING, auth.row.id, pair.id);
+    return json({ ok: true });
+  }
+
   if (url.pathname === '/api/coach/client-invites' && request.method === 'POST') {
     const auth = await requireUser(request, env);
     requireRole(auth, 'coach');
@@ -653,7 +687,9 @@ export default {
         return json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
       }
       if (error instanceof CloudMembershipError) {
-        return json({ error: { code: error.code, message: 'Не удалось подключиться к тренеру. Повторите попытку.' } },
+        return json({ error: { code: error.code, message: url.pathname.includes('/test-relationship')
+          ? 'Не удалось завершить сброс связи. Повторите попытку.'
+          : 'Не удалось подключиться к тренеру. Повторите попытку.' } },
           { status: error.status });
       }
       if (error instanceof HttpError) {

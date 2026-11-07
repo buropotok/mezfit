@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
+  resetTestClientRelationship,
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
@@ -121,6 +122,12 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   const appliedAvatarRequest = useRef<typeof requestedAvatarClient>(null);
   const selectedClient = clients?.find((client) => client.userId === selectedClientId) ?? null;
   const [clientTab, setClientTab] = useState<ProfileTab>('basics');
+  const [resetTarget, setResetTarget] = useState<CloudContact | null>(null);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const resetInFlight = useRef(false);
+  const selectedClientIdRef = useRef(selectedClientId);
+  selectedClientIdRef.current = selectedClientId;
   const [clientSelectedProgram, setClientSelectedProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
   const [clientExerciseNavigation, setClientExerciseNavigation] = useState<NavigationContext | null>(null);
@@ -154,7 +161,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   }, [destination, requestedAvatarClient, clients]);
 
   const loadClients = useCallback(() => {
-    void cloudConnections?.refresh().catch(() => undefined);
+    void cloudConnections?.refresh().then(() => setResetError('')).catch(() => undefined);
   }, [cloudConnections]);
 
   const createInvite = useCallback(async () => {
@@ -171,10 +178,44 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     }
   }, [initData]);
 
+  const confirmTestReset = useCallback(async () => {
+    const target = resetTarget;
+    if (!target || resetInFlight.current) return;
+    resetInFlight.current = true;
+    setResetBusy(true);
+    setResetError('');
+    try {
+      await resetTestClientRelationship(initData, target.telegramUserId);
+      // The server has confirmed removal; never retry the destructive call
+      // only because a subsequent local pull failed.
+      setResetTarget(null);
+      if (selectedClientIdRef.current === target.userId) {
+        setSelectedClientId(null);
+        setClientSelectedProgram(null);
+        setClientProgramDetailNavigation(null);
+        setClientExerciseNavigation(null);
+      }
+      try {
+        await cloudConnections?.refresh();
+      } catch {
+        setResetError('Связь удалена, но список не обновился. Повторите синхронизацию.');
+      }
+    } catch (reason) {
+      setResetError(reason instanceof Error ? reason.message : 'Не удалось сбросить связь. Повторите попытку.');
+    } finally {
+      resetInFlight.current = false;
+      setResetBusy(false);
+    }
+  }, [resetTarget, initData, cloudConnections]);
+
   const openProgramCreation = useCallback(() => {
     setProgramCreateError('');
     setProgramDraft({ name: '', owner: null });
   }, []);
+
+  useEffect(() => {
+    if (destination !== 'clients' && !resetBusy) setResetTarget(null);
+  }, [destination, resetBusy]);
 
   useEffect(() => {
     if (destination !== 'clients' && destination !== 'programs' && selectedClientId) setSelectedClientId(null);
@@ -273,13 +314,33 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
-    return <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
+    return <><ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
       basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
       hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
       onTabChange={setClientTab} programContent={clientTab === 'program' ? programContent : null}
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
         key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
-        onDetailNavigationChange={setClientExerciseNavigation} /> : null} />;
+        onDetailNavigationChange={setClientExerciseNavigation} /> : null} />
+      {destination === 'clients' && clientTab === 'basics' ? <div className="stack">
+        <Button variant="secondary" disabled={resetBusy} onClick={() => {
+          setResetError('');
+          setResetTarget(selectedClient);
+        }}>Сбросить тестовую связь</Button>
+      </div> : null}
+      <MezfitDialog opened={resetTarget?.relationshipId === selectedClient.relationshipId}
+        title="Сбросить связь с клиентом?"
+        content={<>
+          <Text variant="body">Все данные общей связи с «{selectedClient.displayName}», включая программы и тренировки, будут безвозвратно удалены. Клиент сможет заново принять приглашение.</Text>
+          {resetError ? <Text variant="footnote" role="alert">{resetError}</Text> : null}
+        </>}
+        buttons={<>
+          <MezfitDialogButton disabled={resetBusy} onClick={() => setResetTarget(null)}>Отмена</MezfitDialogButton>
+          <MezfitDialogButton strong tone="danger" disabled={resetBusy}
+            onClick={() => { void confirmTestReset(); }}>{resetBusy ? 'Сбрасываем…' : 'Сбросить'}</MezfitDialogButton>
+        </>}
+        onBackdropClick={() => { if (!resetBusy) setResetTarget(null); }}
+        role="alertdialog" aria-modal="true" aria-label="Сброс тестовой связи" />
+    </>;
   }
 
   if (destination === 'today') {
@@ -469,6 +530,10 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       </MezfitDialog>
 
       {inviteError ? <p className="inline-message" role="alert">{inviteError}</p> : null}
+      {resetError ? <div className="stack">
+        <Text variant="footnote" role="alert">{resetError}</Text>
+        <Button variant="secondary" onClick={loadClients}>Обновить связи</Button>
+      </div> : null}
     </section>
   );
 }
