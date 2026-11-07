@@ -1,5 +1,5 @@
 import { discussionId, discussionRecord } from '../../../shared/discussion-anchor';
-import type { DiscussionMessage } from './discussion-contracts';
+import { matchesDiscussionReadStateId, type DiscussionMessage } from './discussion-contracts';
 export interface DiscussionCursor { createdAt: string; id: string }
 export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean }
 /** Evidence captured by the repository, never inferred from its general sync indicator. */
@@ -17,6 +17,14 @@ export const discussionCursorKey = (cursor: DiscussionCursor): string => cursor.
 export function discussionCursorFromKey(value: unknown): DiscussionCursor | null {
   if (typeof value !== 'string' || value[24] !== '/' || !discussionInstant(value.slice(0, 24)) || !discussionId(value.slice(25))) return null;
   return { createdAt: value.slice(0, 24), id: value.slice(25) };
+}
+/** Validate received records, including old keys decoded by the Addon; never relax owner/scope/cursor checks. */
+export function discussionReadCursor(value: unknown, realmId: string, threadId: string, userId: string): DiscussionCursor | null {
+  if (!discussionRecord(value) || value.realmId !== realmId || value.threadId !== threadId
+    || value.userId !== userId || value.owner !== userId
+    || !matchesDiscussionReadStateId(value.id, realmId, threadId, userId)) return null;
+  const cursor = discussionCursorFromKey(value.readThrough);
+  return cursor && cursor.id === value.lastReadMessageId ? cursor : null;
 }
 export function isDiscussionMessage(value: unknown): value is DiscussionMessage {
   return discussionRecord(value) && discussionId(value.id) && discussionId(value.realmId)

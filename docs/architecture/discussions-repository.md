@@ -55,7 +55,23 @@ deletedAt='' + declarative modify; remove устанавливает timestamp �
 реплики даже при остаточном сыром text после merge. Native owner по-прежнему имеет
 полный контроль собственной строки; серверной immutable provenance не заявляется.
 
-markRead имеет один детерминированный ID realm/thread/user. readThrough — createdAt/id
+markRead имеет один детерминированный ID `discussion-read:` + JSON realm/thread/user.
+Префикс обязателен: Addon 4.4.15 `applyServerChanges.keyDecoder` разбирает серверный
+ключ, начинающийся с `[`, как JSON-массив и заменяет им inline `id`. Поэтому старый
+JSON-string ID после pull мог перестать проходить сравнение строки с `id`.
+Reader принимает только точные новые ID, исторические JSON-строки и их точные
+декодированные массивы из четырёх частей. Owner, realm, thread, user и cursor
+по-прежнему проверяются; произвольный массив не является допустимой отметкой.
+
+Старые read-state остаются read-only совместимыми aliases; они не удаляются и
+не переписываются. Новые markRead используют однозначный строковый ключ. Unread
+берёт максимальную валидную границу всех допустимых aliases своего user/thread/realm,
+поэтому частичное чтение на новом устройстве не возвращает уже прочитанное из
+истории в unread. Recipient receipts используют те же проверки и исходный thread.
+Физических read-state на переходный период может быть несколько, но эффективная
+граница одна; сообщения не копируются, роли/схема не изменяются.
+
+readThrough — createdAt/id
 watermark. Indexed range below requested cursor + modify выражает условие продвижения
 для Addon. Собственные сообщения и tombstones не входят в unread. Тот же порядок
 createdAt/id используется страницами, включая одинаковые timestamps. Поздно

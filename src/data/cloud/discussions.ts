@@ -2,7 +2,7 @@ import Dexie, { liveQuery } from 'dexie';
 import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, discussionReadStateId,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
-import { discussionCursorKey, discussionCursorFromKey, discussionInstant, discussionMessageView, isDiscussionMessage,
+import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, discussionInstant, discussionMessageView, isDiscussionMessage,
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
 import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
@@ -352,11 +352,15 @@ export class DiscussionRepository {
     });
   }
   private async countUnread(threadId: string): Promise<number> {
-    const state = await this.db.discussionReadStates.get(discussionReadStateId(this.scope.realmId, threadId, this.actorUserId));
-    const cursor = discussionCursorFromKey(state?.readThrough);
-    const through = state?.owner === this.actorUserId && state.userId === this.actorUserId
-      && state.realmId === this.scope.realmId && state.threadId === threadId && cursor && cursor.id === state.lastReadMessageId
-      ? discussionCursorKey(cursor) : '';
+    // Preserve the highest valid watermark across new IDs and immutable legacy aliases.
+    const states = await this.db.discussionReadStates.where('[realmId+threadId+userId]')
+      .equals([this.scope.realmId, threadId, this.actorUserId]).toArray();
+    let cursor: DiscussionCursor | null = null;
+    for (const state of states) {
+      const candidate = discussionReadCursor(state, this.scope.realmId, threadId, this.actorUserId);
+      if (candidate && (!cursor || discussionCursorKey(candidate) > discussionCursorKey(cursor))) cursor = candidate;
+    }
+    const through = cursor ? discussionCursorKey(cursor) : '';
     return this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
       .between([this.scope.realmId, threadId, cursor && through ? cursor.createdAt : '', cursor && through ? cursor.id : ''],
         [this.scope.realmId, threadId, []], !through, false)
@@ -393,12 +397,9 @@ export class DiscussionRepository {
       return Dexie.Promise.all(threads.map(thread => this.db.discussionReadStates.where('[realmId+threadId+userId]')
         .between([this.scope.realmId, thread.id, ''], [this.scope.realmId, thread.id, []], true, false).toArray())).then(groups =>
         groups.flat().flatMap(state => {
-          const cursor = discussionCursorFromKey(state.readThrough);
+          const cursor = discussionReadCursor(state, this.scope.realmId, state.threadId, state.userId);
           return state.realmId === this.scope.realmId && threadIds.has(state.threadId)
-            && state.userId !== this.actorUserId && state.owner === state.userId
-            && /^tg:[1-9]\d*$/.test(state.userId)
-            && state.id === discussionReadStateId(this.scope.realmId, state.threadId, state.userId)
-            && cursor && cursor.id === state.lastReadMessageId
+            && state.userId !== this.actorUserId && cursor
             ? [threadId.startsWith('entity-discussion:') ? { ...cursor, threadId: state.threadId } : cursor] : [];
         }));
     }))).subscribe({ next: cursors => { recipientReadThrough = cursors; emit(); },
