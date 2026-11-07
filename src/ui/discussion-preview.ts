@@ -128,7 +128,11 @@ export function createDiscussionPreviewPort(): DiscussionPort {
     send: async (input: DiscussionMessageInput) => {
       assertThread(input.threadId);
       const existing = find(input.id);
-      if (existing) return view(existing);
+      if (existing) {
+        if (input.requireUnsentDraft) throw new Error('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+        return view(existing);
+      }
+      if (input.requireUnsentDraft && !drafts.has(input.id)) throw new Error('DISCUSSION_DRAFT_NOT_SAVED');
       if (!input.text.trim() || (input.replyToMessageId && !find(input.replyToMessageId)))
         throw new Error('PREVIEW_INVALID_MESSAGE');
       const row: PreviewRow = {
