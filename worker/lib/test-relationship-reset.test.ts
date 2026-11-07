@@ -19,6 +19,7 @@ async function setup() {
     ['discussionMessages', [{ id: 'message-one', realmId: target.realm.realmId }]],
   ]);
   let failTable = '';
+  let failDelete = '';
   const calls: string[] = [];
   const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
     const u = new URL(String(input)), path = u.pathname, method = init?.method ?? 'GET';
@@ -41,13 +42,17 @@ async function setup() {
         return Response.json((rows.get(table) ?? []).filter(row => row.realmId === u.searchParams.get('realmId')));
       }
       if (method === 'DELETE') {
+        if (failDelete === table) {
+          failDelete = '';
+          return new Response(null, { status: 503 });
+        }
         rows.set(table, (rows.get(table) ?? []).filter(row => row.id !== parts[2]));
         return new Response(null, { status: 204 });
       }
     }
     throw Error('Unexpected request ' + method + ' ' + path);
   });
-  return { target, other, realms, members, rows, calls, fetchImpl, fail: (table: string) => { failTable = table; } };
+  return { target, other, realms, members, rows, calls, fetchImpl, fail: (table: string) => { failTable = table; }, failDeleteOnce: (table: string) => { failDelete = table; } };
 }
 
 describe('test relationship reset in Dexie Cloud', () => {
@@ -76,6 +81,17 @@ describe('test relationship reset in Dexie Cloud', () => {
       .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
     expect(f.calls.some(call => call.startsWith('DELETE'))).toBe(false);
     f.fail('');
+    await resetTestCloudRelationship(env, '101', '202', f.fetchImpl);
+    expect(f.realms.has(f.target.realm.realmId)).toBe(false);
+  });
+
+  it('retries a partially deleted realm without revoking membership prematurely', async () => {
+    const f = await setup();
+    f.failDeleteOnce('trainingPlans');
+    await expect(resetTestCloudRelationship(env, '101', '202', f.fetchImpl))
+      .rejects.toMatchObject({ code: 'CLOUD_MEMBERSHIP_UNAVAILABLE' });
+    expect(f.realms.has(f.target.realm.realmId)).toBe(true);
+    expect(f.members.filter(m => m.realmId === f.target.realm.realmId)).toHaveLength(2);
     await resetTestCloudRelationship(env, '101', '202', f.fetchImpl);
     expect(f.realms.has(f.target.realm.realmId)).toBe(false);
   });
