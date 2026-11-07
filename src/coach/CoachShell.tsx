@@ -214,6 +214,10 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   }, []);
 
   useEffect(() => {
+    if (destination !== 'clients' && !resetBusy) setResetTarget(null);
+  }, [destination, resetBusy]);
+
+  useEffect(() => {
     if (destination !== 'clients' && destination !== 'programs' && selectedClientId) setSelectedClientId(null);
     if (destination !== 'programs') {
       setSelectedProgram(null);
@@ -325,7 +329,10 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       </div> : null}
       <MezfitDialog opened={resetTarget?.relationshipId === selectedClient.relationshipId}
         title="Сбросить связь с клиентом?"
-        content={<Text variant="body">Все данные общей связи с «{selectedClient.displayName}», включая программы и тренировки, будут безвозвратно удалены. Клиент сможет заново принять приглашение.</Text>}
+        content={<>
+          <Text variant="body">Все данные общей связи с «{selectedClient.displayName}», включая программы и тренировки, будут безвозвратно удалены. Клиент сможет заново принять приглашение.</Text>
+          {resetError ? <Text variant="footnote" role="alert">{resetError}</Text> : null}
+        </>}
         buttons={<>
           <MezfitDialogButton disabled={resetBusy} onClick={() => setResetTarget(null)}>Отмена</MezfitDialogButton>
           <MezfitDialogButton strong tone="danger" disabled={resetBusy}
@@ -333,7 +340,6 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         </>}
         onBackdropClick={() => { if (!resetBusy) setResetTarget(null); }}
         role="alertdialog" aria-modal="true" aria-label="Сброс тестовой связи" />
-      {resetError ? <Text variant="footnote" role="alert">{resetError}</Text> : null}
     </>;
   }
 
@@ -524,6 +530,10 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       </MezfitDialog>
 
       {inviteError ? <p className="inline-message" role="alert">{inviteError}</p> : null}
+      {resetError ? <div className="stack">
+        <Text variant="footnote" role="alert">{resetError}</Text>
+        <Button variant="secondary" onClick={loadClients}>Обновить связи</Button>
+      </div> : null}
     </section>
   );
 }
