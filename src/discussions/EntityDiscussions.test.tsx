@@ -58,7 +58,8 @@ function mount(initial: EntityDiscussionTarget | null = target) {
   </KonstaProvider>;
   const view = render(page(initial));
   return { ...view, onNavigation, parent, back: () => act(() => navigation?.onBack?.()),
-    source: (source: EntityDiscussionTarget | null) => view.rerender(page(source)) };
+    source: (source: EntityDiscussionTarget | null) => view.rerender(page(source)),
+    account: () => { probe.db = {}; view.rerender(page(initial)); } };
 }
 
 describe('COMM-06 entity thread overlay', () => {
@@ -93,6 +94,7 @@ describe('COMM-06 entity thread overlay', () => {
     fireEvent.click(screen.getByText('Создать обсуждение'));
     await screen.findByText('Не удалось создать обсуждение');
     const first = createThread.mock.calls[0][0];
+    expect(first).toMatchObject({ anchor: target.anchor, entityName: 'Силовая', date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
     fireEvent.click(screen.getByText('Повторить'));
     await screen.findByText('Создать обсуждение');
     let resolve: ((value: DiscussionThread) => void) | undefined;
@@ -123,5 +125,16 @@ describe('COMM-06 entity thread overlay', () => {
     fireEvent.click(screen.getByText('Повторить'));
     await screen.findByText(thread.derivedTitleSnapshot);
     expect(screen.getByLabelText('Непрочитанные сущности').textContent).toBe('3');
+  });
+  it('dismisses the old account overlay and ignores its late create completion', async () => {
+    const view = mount(); fireEvent.click(screen.getByText('Обсуждения'));
+    let resolve: ((value: DiscussionThread) => void) | undefined;
+    createThread.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    fireEvent.click(screen.getByText('Создать обсуждение'));
+    view.account();
+    expect(screen.queryByText(thread.derivedTitleSnapshot)).toBeNull();
+    await act(async () => { resolve?.(thread); });
+    expect(screen.queryByText('Мой текст')).toBeNull();
+    expect(view.onNavigation).toHaveBeenLastCalledWith(null);
   });
 });

@@ -22,11 +22,16 @@ const EMPTY: Snapshot = { threads: [], unread: 0, unreadByThread: {} };
 export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   onNavigationContextChange?: (value: NavigationContext | null) => void, enabled = true) {
   const cloud = useCloudConnections();
+  const accountKey = useMemo(() => crypto.randomUUID(), [cloud?.db, cloud?.actorUserId]);
+  const currentAccount = useRef(accountKey);
+  currentAccount.current = accountKey;
   const sourceNavigation = useNavigationSurfaceContext();
   const [parentNavigation, setParentNavigation] = useState<NavigationContext | null>(null);
   // Capture source context only when opening: historical titles never retarget to a new entity.
   const [openedTarget, setOpenedTarget] = useState<EntityDiscussionTarget | null>(null);
-  const activeTarget = openedTarget ?? target;
+  const [openedAccount, setOpenedAccount] = useState<string | null>(null);
+  const belongsToAccount = openedAccount === accountKey;
+  const activeTarget = (belongsToAccount ? openedTarget : null) ?? target;
   const key = activeTarget ? discussionAnchorKey(activeTarget.scope, activeTarget.anchor) : '';
   const repository = useMemo(() => enabled && CLOUD_DISCUSSIONS_ENABLED && cloud && activeTarget
     ? new DiscussionRepository(cloud.db, cloud.actorUserId, activeTarget.scope) : null,
@@ -41,7 +46,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   const pendingCreate = useRef<CreateDiscussionThread | null>(null);
   const creating = useRef(false);
   const generation = useRef(0);
-  const pendingOpen = useRef<{ target: EntityDiscussionTarget; navigation: NavigationContext | null } | null>(null);
+  const pendingOpen = useRef<{ target: EntityDiscussionTarget; navigation: NavigationContext | null; account: string } | null>(null);
   useEffect(() => {
     let active = true;
     setObserved(null); setError(''); setLoading(true);
@@ -63,7 +68,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   const listNavigation = useMemo<NavigationContext>(() => ({ ...parentNavigation,
     level: 2, title: parentNavigation?.title ?? 'Обсуждения', onBack: close }), [close, parentNavigation]);
   const overlayOpen = useRef(false);
-  overlayOpen.current = openedTarget !== null;
+  overlayOpen.current = belongsToAccount && openedTarget !== null && enabled;
   const navigationAlive = useRef(true);
   useEffect(() => {
     navigationAlive.current = true;
@@ -73,14 +78,14 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     if (navigationAlive.current) onNavigationContextChange?.(overlayOpen.current ? value : null);
   }, [onNavigationContextChange]);
   useEffect(() => {
-    if (!openedTarget || threadId) return;
+    if (!openedTarget || !belongsToAccount || !enabled || threadId) return;
     onNavigationContextChange?.(listNavigation);
     return () => onNavigationContextChange?.(null);
-  }, [openedTarget, threadId, listNavigation, onNavigationContextChange]);
+  }, [openedTarget, belongsToAccount, enabled, threadId, listNavigation, onNavigationContextChange]);
   // The account and source owner can change while an async create is still finishing.
   useEffect(() => {
     close(); pendingOpen.current = null;
-  }, [cloud?.db, enabled, close]);
+  }, [accountKey, enabled, close]);
   const sourceKey = target ? discussionAnchorKey(target.scope, target.anchor) : '';
   useEffect(() => {
     if (sourceKey && openedTarget && sourceKey !== discussionAnchorKey(openedTarget.scope, openedTarget.anchor)) close();
@@ -102,16 +107,18 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   };
   const menuItem: LiquidPopoverItem = { id: 'discussions', label: 'Обсуждения', icon: 'message-circle',
     unreadCount: snapshot.unread, disabled: !repository || !onNavigationContextChange || !target,
-    onSelect: () => { if (repository && target) pendingOpen.current = { target, navigation: sourceNavigation }; } };
+    onSelect: () => { if (repository && target) pendingOpen.current = { target, navigation: sourceNavigation, account: accountKey }; } };
   const onMenuPresentationChange = (presented: boolean) => {
     if (presented || !pendingOpen.current) return;
+    if (pendingOpen.current.account !== currentAccount.current) { pendingOpen.current = null; return; }
+    setOpenedAccount(pendingOpen.current.account);
     setOpenedTarget(pendingOpen.current.target); setParentNavigation(pendingOpen.current.navigation);
     pendingOpen.current = null; setThreadId(null);
   };
   const resolveAuthor = (id: string) => ({ name: id === cloud?.actorUserId ? 'Вы'
     : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])].find(person => person.userId === id
       && person.relationshipId === activeTarget?.scope.realmId)?.displayName ?? 'Участник обсуждения' });
-  const content = openedTarget && repository ? <>
+  const content = openedTarget && belongsToAccount && enabled && repository ? <>
     {!threadId && <MezfitBottomSheet opened label="Обсуждения" lazyMount>
       <div className="entity-discussions">
         <header className="entity-discussions__header"><Text variant="headline">Обсуждения</Text>
