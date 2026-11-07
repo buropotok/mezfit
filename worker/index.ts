@@ -29,6 +29,7 @@ import { CloudMembershipError, provisionInviteMembership, requireCloudMembership
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 import { sendWorkoutReminders } from './lib/workout-reminders';
 import { resetTestCloudRelationship } from './lib/test-relationship-reset';
+import { resetLegacyTestRelationship } from './lib/test-legacy-relationship-reset';
 
 type Role = 'coach' | 'client';
 
@@ -572,12 +573,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     if (!pair) throw new HttpError(404, 'CLIENT_NOT_FOUND', 'Client is not linked to this coach');
 
     await resetTestCloudRelationship(env, auth.row.telegram_user_id, clientTelegramId, fetch);
-    // Re-invitation reactivates the same pair with the established D1 upsert.
-    // Keep this link active if Cloud deletion fails so the reset can be retried.
-    await env.DB_BINDING.prepare(`
-      UPDATE coach_client SET status = 'inactive', updated_at = CURRENT_TIMESTAMP
-      WHERE coach_user_id = ? AND client_user_id = ? AND status = 'active'
-    `).bind(auth.row.id, pair.id).run();
+    // D1 legacy history is deliberately test-only disposable. Delete only
+    // this pair's old graph and deactivate the link atomically after Cloud
+    // deletion; a D1 failure leaves the link active for an authorized retry.
+    await resetLegacyTestRelationship(env.DB_BINDING, auth.row.id, pair.id);
     return json({ ok: true });
   }
 
