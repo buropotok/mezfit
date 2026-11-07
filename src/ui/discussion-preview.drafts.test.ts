@@ -15,4 +15,15 @@ describe('UI kit discussion draft adapter', () => {
     expect(await first.send(input)).toEqual(sent);
     await expect(first.saveDraft(input)).rejects.toThrow('PREVIEW_DRAFT_ALREADY_SENT');
   });
+  it('models strict draft publication without changing ordinary preview retries', async () => {
+    const port = createDiscussionPreviewPort();
+    const input = { id: 'strict-preview', threadId: previewDiscussionThread.id, text: 'Draft',
+      createdAt: '2026-11-07T00:00:00.000Z' };
+    await expect(port.send({ ...input, requireUnsentDraft: true })).rejects.toThrow('DISCUSSION_DRAFT_NOT_SAVED');
+    await port.saveDraft(input);
+    const sent = await port.send({ ...input, requireUnsentDraft: true });
+    await expect(port.send({ ...input, text: 'New intent', requireUnsentDraft: true })).rejects.toThrow('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+    expect(await port.send(input)).toEqual(sent);
+  });
+
 });
