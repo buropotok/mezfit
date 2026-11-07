@@ -321,7 +321,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
         key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
         onDetailNavigationChange={setClientExerciseNavigation} /> : null} />
-      {clientTab === 'basics' ? <div className="stack">
+      {destination === 'clients' && clientTab === 'basics' ? <div className="stack">
         <Button variant="secondary" disabled={resetBusy} onClick={() => {
           setResetError('');
           setResetTarget(selectedClient);
