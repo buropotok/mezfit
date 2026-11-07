@@ -17,7 +17,6 @@ export function programDiscussionTarget(program: CloudTrainingPlanRow, actorUser
 }
 /** The editor ID is a projection of the persisted occurrence, never a second anchor. */
 export function plannedDiscussionTarget(draft: LocalWorkoutOccurrenceDraft): EntityDiscussionTarget | null {
-  if (draft.workoutSessionId || (draft.executionStatus && draft.executionStatus !== 'scheduled')) return null;
   const scope = scopeFor(draft.realmId, draft.actorUserId);
   return { scope, anchor: occurrenceDiscussionAnchor(scope, { id: draft.targetOccurrenceId ?? draft.id.slice(6),
     realmId: draft.realmId, plan: draft.plan, entryKind: 'workout' }), name: draft.plan.name };

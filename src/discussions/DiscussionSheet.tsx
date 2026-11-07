@@ -23,14 +23,15 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   opened: boolean;
   repository: DiscussionPort;
   onClose: () => void;
-  /** Entity integrations may return Back to their thread list; Close still returns to the entity. */
+  /** Entity integrations return Back directly to the source. */
   onBack?: () => void;
   resolveAuthor: (userId: string) => DiscussionAuthor;
   /** The existing shell remains the single owner of browser/Telegram Back. */
   onNavigationContextChange: (context: NavigationContext | null) => void;
   parentNavigation: NavigationContext | null;
   contextLabel?: string;
-  onOpenContext?: () => void;
+  /** Keep one sheet mounted while the entity repository resolves its canonical thread. */
+  opening?: { error: string; retry: () => void };
   glassSettings?: GlassSettings;
   /** Compact direct conversation by default; retain native author presentation for groups. */
   showAvatars?: boolean;
@@ -56,12 +57,18 @@ export function DiscussionSheet(props: DiscussionSheetProps) {
   const identity = JSON.stringify([repositoryKey, props.threadId, props.anchor, props.repository.actorUserId]);
   return <MezfitBottomSheet opened={props.opened} label="Обсуждение" lazyMount style={viewport}
     contentClassName="discussion-sheet-content">
-    {props.opened && <OpenDiscussion key={identity} {...props} />}
+    {props.opened && (props.opening ? <div className="discussion-thread">
+      <header className="discussion-thread__header"><Text variant="headline">{props.contextLabel || 'Обсуждение'}</Text>
+        <IconButton icon="x" label="Закрыть обсуждение" onClick={props.onClose} /></header>
+      {props.opening.error ? <div role="alert"><Text>{props.opening.error}</Text>
+        <Button rounded onClick={props.opening.retry}>Повторить</Button></div>
+        : <Text variant="footnote" role="status">Открываем переписку…</Text>}
+    </div> : <OpenDiscussion key={identity} {...props} />)}
   </MezfitBottomSheet>;
 }
 
 function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose, onBack, resolveAuthor,
-  onNavigationContextChange, parentNavigation, contextLabel, onOpenContext, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
+  onNavigationContextChange, parentNavigation, contextLabel, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
   const targetKey = JSON.stringify([threadId, anchor]);
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
@@ -83,6 +90,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const material = glassSettings ?? loadBrowserGlassSettings();
   const [requestedFocus, setRequestedFocus] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [readPosition, setReadPosition] = useState(0);
+  const [readError, setReadError] = useState(false);
   const [atEnd, setAtEnd] = useState(!focusMessageId);
   const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden');
   const focusing = useRef(Boolean(focusMessageId));
@@ -268,14 +277,24 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     rememberPosition();
   }, [state.messages, requestedFocus, atEnd, composerHeight, contextHeight]);
   useEffect(() => {
-    if (!atEnd || !visible || focusing.current || state.loading || state.error || requestedFocus) return;
-    const newest = [...state.messages].reverse().find(message => !message.deleted && message.authorUserId !== repository.actorUserId);
+    if (!visible || focusing.current || state.loading || state.error || requestedFocus) return;
+    const list = scroller.current;
+    const bounds = list?.getBoundingClientRect();
+    const newest = [...state.messages].reverse().find(message => {
+      if (message.deleted || message.authorUserId === repository.actorUserId) return false;
+      if (atEnd) return true;
+      const box = rows.current.get(message.id)?.getBoundingClientRect();
+      return bounds && box && box.height > 0 && box.bottom > bounds.top
+        && box.top < bounds.bottom - composerHeight - contextHeight;
+    });
     if (!newest || lastRead.current === newest.id) return;
     lastRead.current = newest.id;
-    void repository.markRead(threadId, newest.id).catch(() => {
-      if (alive.current) { lastRead.current = null; setError('Не удалось отметить сообщения прочитанными'); }
+    void repository.markRead(threadId, newest.id).then(() => {
+      if (alive.current) setReadError(false);
+    }, () => {
+      if (alive.current) { lastRead.current = null; setReadError(true); }
     });
-  }, [atEnd, visible, state.messages, state.loading, state.error, requestedFocus, repository, threadId]);
+  }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, repository, threadId, composerHeight, contextHeight, syncState?.status, syncState?.offline]);
 
   useEffect(() => {
     if (menu && !state.messages.some(row => row.id === menu.id && !row.deleted)) setMenu(null);
@@ -344,14 +363,13 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     data-show-avatars={String(showAvatars)}>
     <header className="discussion-thread__header">
       <div className="discussion-thread__identity">
-        <Text variant="headline" className="discussion-thread__title">{state.title || 'Обсуждение'}</Text>
+        <Text variant="headline" className="discussion-thread__title">{contextLabel || state.title || 'Обсуждение'}</Text>
         {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted" className="discussion-thread__demo">Демо</Text>}
       </div>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>
     <div className="discussion-thread__scroll" ref={scroller} style={{ paddingBottom: composerHeight + contextHeight + 16 }}
-      onScroll={event => { const el = event.currentTarget; setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 48); rememberPosition(); closeMenu(); }}>
-      {onOpenContext && <Button rounded tonal onClick={onOpenContext}><Text>{contextLabel || 'Вернуться к объекту'}</Text></Button>}
+      onScroll={event => { const el = event.currentTarget; setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 48); rememberPosition(); setReadPosition(value => value + 1); closeMenu(); }}>
       {state.error && <div role="alert"><Text>{state.error}</Text><Button rounded onClick={() => { setError(null); deepFocus.current = null; session.retry(); }}>Повторить</Button></div>}
       {state.more && <Button rounded disabled={state.loading || Boolean(state.error)} onClick={() => {
         const el = scroller.current;
@@ -364,7 +382,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           const author = showAvatars ? resolveAuthor(message.authorUserId) : null;
           const isOwn = message.authorUserId === repository.actorUserId;
           const cursorKey = discussionCursorKey({ id: message.id, createdAt: message.createdAt });
-          const isRead = isOwn && receipts.recipientReadThrough.some(cursor => discussionCursorKey(cursor) >= cursorKey);
+          const isRead = isOwn && receipts.recipientReadThrough.some(cursor => (!cursor.threadId || cursor.threadId === message.threadId) && discussionCursorKey(cursor) >= cursorKey);
           const isConfirmed = isOwn && receipts.confirmedIds.includes(message.id);
           const receiptIcon = isRead ? 'message-double-check' : isConfirmed ? 'message-check' : null;
           const time = new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -401,6 +419,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </Messages>
     </div>
     <div className="discussion-composer-context" ref={context} style={{ bottom: composerHeight }}>
+      {readError && <><Text variant="footnote" role="alert">Не удалось отметить сообщения прочитанными</Text>
+        <Button rounded onClick={() => setReadPosition(value => value + 1)}>Повторить отметку прочтения</Button></>}
       {error && <Text variant="footnote" role="alert">{error}</Text>}
       {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}

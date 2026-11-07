@@ -6,6 +6,7 @@ import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message } from './discussion-fixture.test-support';
 import type { LiquidPopoverProps } from '../ui/LiquidPopover';
 import type { NavigationContext } from '../NavigationShell';
+import type { DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 const popoverCalls = vi.hoisted(() => [] as Array<Pick<LiquidPopoverProps, 'onOpenChange' | 'items'>>);
 
 // Keep Konsta Message/Messagebar/Sheet/Dialog real. Canvas animation has its own UIkit tests.
@@ -243,6 +244,37 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(view.container.querySelector('[data-highlighted]')).toBeNull();
     expect(f.port.markRead).not.toHaveBeenCalled();
+  });
+  it('changes one check to two only for the recipient cursor of the message storage thread', async () => {
+    const f = fixture();
+    let emit: (snapshot: DiscussionReceiptSnapshot) => void = () => {};
+    f.port.observeReceipts = (_thread, next) => {
+      emit = next;
+      queueMicrotask(() => next({ confirmedIds: ['own'], recipientReadThrough: [] }));
+      return { unsubscribe: vi.fn() };
+    };
+    mount({}, f);
+    await screen.findByRole('img', { name: 'Отправка подтверждена Dexie Cloud' });
+    act(() => emit({ confirmedIds: ['own'], recipientReadThrough: [
+      { id: 'own', createdAt: threadTime(), threadId: 'other-storage-thread' },
+    ] }));
+    expect(screen.queryByRole('img', { name: 'Прочитано собеседником' })).toBeNull();
+    act(() => emit({ confirmedIds: ['own'], recipientReadThrough: [
+      { id: 'own', createdAt: threadTime(), threadId: 'thread' },
+    ] }));
+    expect(screen.getByRole('img', { name: 'Прочитано собеседником' })).toBeTruthy();
+    expect(screen.queryByRole('img', { name: 'Отправка подтверждена Dexie Cloud' })).toBeNull();
+    function threadTime() { return message('own').createdAt; }
+  });
+  it('retries a failed local read mark without resending or waiting for cloud delivery', async () => {
+    const fixtureData = fixture();
+    vi.mocked(fixtureData.port.markRead).mockRejectedValueOnce(Error('Local write failed'));
+    mount({}, fixtureData);
+    await screen.findByText('Не удалось отметить сообщения прочитанными');
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить отметку прочтения' }));
+    await waitFor(() => expect(screen.queryByText('Не удалось отметить сообщения прочитанными')).toBeNull());
+    expect(fixtureData.port.markRead).toHaveBeenLastCalledWith('thread', 'other');
+    expect(fixtureData.port.send).not.toHaveBeenCalled();
   });
   it('groups dates using the same local calendar as the displayed date', async () => {
     vi.spyOn(Date.prototype, 'toLocaleDateString').mockReturnValue('07.11.2026');

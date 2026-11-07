@@ -25,6 +25,12 @@ export function prepareDiscussionMessage(threadId: string, text: string, replyTo
 export function prepareDiscussionThread(anchor: DiscussionAnchor, entityName: string, date: string): CreateDiscussionThread {
   return { id: crypto.randomUUID(), anchor, entityName, date, createdAt: new Date().toISOString() };
 }
+/** Fixed-size, namespace-separated identity, independent of device, date and entity name. */
+export async function entityDiscussionId(scope: DiscussionScope, anchor: DiscussionAnchor): Promise<string> {
+  const bytes = new TextEncoder().encode(discussionAnchorKey(scope, anchor));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return 'entity-discussion:' + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
 function fail(code: string): never { throw new Error(code); }
 const tables = ['discussionThreads', 'discussionMessages', 'discussionReadStates', 'realms', 'members'];
 
@@ -66,13 +72,35 @@ export class DiscussionRepository {
     if (!row || row.realmId !== this.scope.realmId || row.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
     assertDiscussionThread(row); return row;
   }
+  /** Only the canonical entry aggregates legacy rows; stored provenance never changes. */
+  private async conversationThreads(threadId: string): Promise<DiscussionThread[]> {
+    const thread = await this.thread(threadId);
+    return threadId.startsWith('entity-discussion:') ? this.threads(thread.anchor) : [thread];
+  }
+  async ensureEntityThread(anchor: DiscussionAnchor, entityName: string): Promise<DiscussionThread> {
+    const id = await entityDiscussionId(this.scope, anchor);
+    const createdAt = new Date().toISOString();
+    const row: DiscussionThread = { ...this.scope, id, owner: this.scope.realmId,
+      anchor: structuredClone(anchor), anchorKey: discussionAnchorKey(this.scope, anchor),
+      contextPath: discussionParents(anchor), derivedTitleSnapshot: entityName.trim(), createdAt, lastActivityAt: createdAt };
+    assertDiscussionThread(row);
+    return this.write(async () => {
+      const existing = await this.db.discussionThreads.get(id);
+      if (existing) {
+        if (existing.realmId !== row.realmId || existing.coachClientId !== row.coachClientId
+          || existing.anchorKey !== row.anchorKey) fail('DISCUSSION_ID_REUSED');
+        assertDiscussionThread(existing); return existing;
+      }
+      await this.db.discussionThreads.add(row); return row;
+    });
+  }
   private visible(row: unknown, threadId: string): row is DiscussionMessage {
     return isDiscussionMessage(row) && !row.draftForRealmId && row.realmId === this.scope.realmId && row.threadId === threadId;
   }
   private async message(threadId: string, id: string): Promise<DiscussionMessage> {
     if (!discussionId(id)) fail('INVALID_DISCUSSION_ID');
     const row = await this.db.discussionMessages.get(id);
-    if (!this.visible(row, threadId)) fail('DISCUSSION_MESSAGE_NOT_FOUND');
+    if (!row || !(await this.conversationThreads(threadId)).some(thread => this.visible(row, thread.id))) fail('DISCUSSION_MESSAGE_NOT_FOUND');
     return row;
   }
   async createThread(input: CreateDiscussionThread): Promise<DiscussionThread> {
@@ -111,7 +139,17 @@ export class DiscussionRepository {
   }
   private async view(row: DiscussionMessage): Promise<DiscussionMessageView> {
     const reply = row.replyToMessageId ? await this.db.discussionMessages.get(row.replyToMessageId) : undefined;
-    return discussionMessageView(row, reply);
+    if (!isDiscussionMessage(reply) || reply.draftForRealmId || reply.realmId !== this.scope.realmId) return discussionMessageView(row);
+    // A reply may cross historical storage threads of this exact entity/pair.
+    const root = await this.thread(row.threadId);
+    const sourceThread = await this.db.discussionThreads.get(reply.threadId);
+    let sameConversation = false;
+    if (sourceThread) {
+      try { assertDiscussionThread(sourceThread); sameConversation = sourceThread.realmId === root.realmId
+        && sourceThread.coachClientId === root.coachClientId && sourceThread.anchorKey === root.anchorKey
+        && this.visible(reply, sourceThread.id); } catch { /* An invalid quote stays unavailable. */ }
+    }
+    return discussionMessageView(row, sameConversation ? { ...reply, threadId: row.threadId } : undefined);
   }
   async getMessage(threadId: string, id: string): Promise<DiscussionMessageView> {
     return this.read(async () => { await this.thread(threadId); return this.view(await this.message(threadId, id)); });
@@ -186,7 +224,7 @@ export class DiscussionRepository {
         createdAt: existing ? new Date().toISOString() : input.createdAt,
         replyToMessageId: input.replyToMessageId, realmId: this.scope.realmId,
         owner: this.actorUserId, authorUserId: this.actorUserId, deletedAt: '' };
-      assertDiscussionMessageWrite(this.actorUserId, thread, row, undefined, reply);
+      assertDiscussionMessageWrite(this.actorUserId, thread, row, undefined, reply ? { ...reply, threadId: thread.id } : undefined);
       if (existing) await this.db.discussionMessages.where({ id: row.id, realmId: this.actorUserId,
         owner: this.actorUserId, draftForRealmId: this.scope.realmId }).modify({ realmId: row.realmId, draftForRealmId: undefined,
         text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId });
@@ -199,24 +237,24 @@ export class DiscussionRepository {
   async edit(threadId: string, id: string, text: string): Promise<void> {
     if (typeof text !== 'string' || !text.trim() || text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
     return this.write(async () => {
-      const thread = await this.thread(threadId), row = await this.message(threadId, id);
+      const row = await this.message(threadId, id), thread = await this.thread(row.threadId);
       if (row.deletedAt) fail('DISCUSSION_MESSAGE_DELETED');
       const patch = { text, editedAt: new Date().toISOString() };
       const source = row.replyToMessageId ? await this.db.discussionMessages.get(row.replyToMessageId) : undefined;
-      assertDiscussionMessageWrite(this.actorUserId, thread, { ...row, ...patch }, row, this.visible(source, threadId) ? source : undefined);
-      const changed = await this.db.discussionMessages.where({ id, realmId: row.realmId, threadId,
+      assertDiscussionMessageWrite(this.actorUserId, thread, { ...row, ...patch }, row, this.visible(source, row.threadId) ? source : undefined);
+      const changed = await this.db.discussionMessages.where({ id, realmId: row.realmId, threadId: row.threadId,
         owner: this.actorUserId, authorUserId: this.actorUserId, deletedAt: '' }).modify(patch);
       if (!changed) fail('DISCUSSION_MESSAGE_CHANGED');
     });
   }
   async remove(threadId: string, id: string): Promise<void> {
     return this.write(async () => {
-      const thread = await this.thread(threadId), row = await this.message(threadId, id);
+      const row = await this.message(threadId, id), thread = await this.thread(row.threadId);
       if (row.owner !== this.actorUserId || row.authorUserId !== this.actorUserId) fail('DISCUSSION_ACCESS_DENIED');
       if (row.deletedAt) return;
       const patch = { text: '', deletedAt: new Date().toISOString() };
       const source = row.replyToMessageId ? await this.db.discussionMessages.get(row.replyToMessageId) : undefined;
-      assertDiscussionMessageWrite(this.actorUserId, thread, { ...row, ...patch }, row, this.visible(source, threadId) ? source : undefined);
+      assertDiscussionMessageWrite(this.actorUserId, thread, { ...row, ...patch }, row, this.visible(source, row.threadId) ? source : undefined);
       await this.db.discussionMessages.where({ id, realmId: row.realmId, owner: this.actorUserId }).modify(patch);
     });
   }
@@ -224,12 +262,13 @@ export class DiscussionRepository {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100
       || (before && (!discussionInstant(before.createdAt) || !discussionId(before.id)))) fail('INVALID_DISCUSSION_PAGE');
     return this.read(async () => {
-      await this.thread(threadId);
-      const rows = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-        .between([this.scope.realmId, threadId, '', ''],
-          before ? [this.scope.realmId, threadId, before.createdAt, before.id]
-            : [this.scope.realmId, threadId, []], true, false)
-        .reverse().filter(row => this.visible(row, threadId)).limit(limit + 1).toArray();
+      const threads = await this.conversationThreads(threadId);
+      const pages = await Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+        .between([this.scope.realmId, thread.id, '', ''],
+          before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
+            : [this.scope.realmId, thread.id, []], true, false)
+        .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray()));
+      const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
       const more = rows.length > limit; rows.splice(limit);
       const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
       const messages = await Promise.all(rows.reverse().map(row => this.view(row)));
@@ -238,23 +277,45 @@ export class DiscussionRepository {
   }
   async markRead(threadId: string, messageId: string): Promise<void> {
     return this.write(async () => {
-      const thread = await this.thread(threadId), message = await this.message(threadId, messageId);
-      const id = discussionReadStateId(this.scope.realmId, threadId, this.actorUserId);
-      let state = await this.db.discussionReadStates.get(id);
-      if (!state) {
-        state = { id, realmId: this.scope.realmId, owner: this.actorUserId, threadId, userId: this.actorUserId,
-          lastReadMessageId: null, lastReadAt: new Date(0).toISOString(), readThrough: '' };
-        assertDiscussionReadStateWrite(this.actorUserId, thread, state);
-        await this.db.discussionReadStates.add(state);
+      const message = await this.message(threadId, messageId);
+      const through = discussionCursorKey(message);
+      for (const thread of await this.conversationThreads(threadId)) {
+        const latest = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+          .between([this.scope.realmId, thread.id, '', ''], [this.scope.realmId, thread.id, message.createdAt, message.id], true, true)
+          .reverse().filter(row => this.visible(row, thread.id)).first();
+        if (!latest) continue;
+        const id = discussionReadStateId(this.scope.realmId, thread.id, this.actorUserId);
+        let state = await this.db.discussionReadStates.get(id);
+        if (!state) {
+          // Keep creation separate from advancement: concurrent offline devices
+          // replay the same monotone range predicate rather than competing full watermarks.
+          state = { id, realmId: this.scope.realmId, owner: this.actorUserId, threadId: thread.id,
+            userId: this.actorUserId, lastReadMessageId: null, lastReadAt: new Date(0).toISOString(), readThrough: '' };
+          assertDiscussionReadStateWrite(this.actorUserId, thread, state);
+          await this.db.discussionReadStates.add(state);
+        }
+        if (state && (state.owner !== this.actorUserId || state.userId !== this.actorUserId
+          || state.realmId !== this.scope.realmId || state.threadId !== thread.id)) fail('DISCUSSION_ACCESS_DENIED');
+        if (state?.readThrough !== undefined && state.readThrough !== '' && (!discussionCursorFromKey(state.readThrough)
+          || discussionCursorFromKey(state.readThrough)?.id !== state.lastReadMessageId)) fail('DISCUSSION_READ_STATE_REQUIRES_VALIDATION');
+        const previous = state?.lastReadMessageId ? await this.db.discussionMessages.get(state.lastReadMessageId) : undefined;
+        assertDiscussionReadStateWrite(this.actorUserId, thread, state, this.visible(previous, thread.id) ? previous : undefined);
+        const oldCursor = discussionCursorFromKey(state?.readThrough);
+        const oldThrough = oldCursor && oldCursor.id === state?.lastReadMessageId ? discussionCursorKey(oldCursor)
+          : this.visible(previous, thread.id) ? discussionCursorKey(previous) : '';
+        const readThrough = discussionCursorKey(latest);
+        if (oldThrough > through || (oldThrough >= readThrough && state?.readThrough === oldThrough)) continue;
+        const patch = { lastReadMessageId: latest.id,
+          lastReadAt: new Date(Math.max(Date.now(), Date.parse(state.lastReadAt) + 1)).toISOString(), readThrough };
+        const next = { id, realmId: this.scope.realmId, owner: this.actorUserId, threadId: thread.id,
+          userId: this.actorUserId, ...patch };
+        assertDiscussionReadStateWrite(this.actorUserId, thread, next, latest);
+        if (state.readThrough === undefined) {
+          // Legacy rows were not indexed by readThrough. Upgrade only the observed version.
+          await this.db.discussionReadStates.where('[id+lastReadAt]').equals([id, state.lastReadAt]).modify(patch);
+        } else await this.db.discussionReadStates.where('[id+readThrough]')
+          .between([id, ''], [id, readThrough], true, false).modify(patch);
       }
-      if (state.owner !== this.actorUserId || state.userId !== this.actorUserId
-        || state.realmId !== this.scope.realmId || state.threadId !== threadId) fail('DISCUSSION_ACCESS_DENIED');
-      if (state.readThrough !== '' && (!discussionCursorFromKey(state.readThrough)
-        || discussionCursorFromKey(state.readThrough)?.id !== state.lastReadMessageId)) fail('DISCUSSION_READ_STATE_REQUIRES_VALIDATION');
-      const patch = { lastReadMessageId: message.id, lastReadAt: new Date().toISOString(), readThrough: discussionCursorKey(message) };
-      assertDiscussionReadStateWrite(this.actorUserId, thread, { ...state, ...patch }, message);
-      await this.db.discussionReadStates.where('[id+readThrough]')
-        .between([id, ''], [id, patch.readThrough], true, false).modify(patch);
     });
   }
   private async countUnread(threadId: string): Promise<number> {
@@ -269,7 +330,8 @@ export class DiscussionRepository {
       .filter(row => this.visible(row, threadId) && row.authorUserId !== this.actorUserId && !row.deletedAt).count();
   }
   async unread(threadId: string): Promise<number> {
-    return this.read(async () => { await this.thread(threadId); return this.countUnread(threadId); });
+    return this.read(async () => (await Promise.all((await this.conversationThreads(threadId))
+      .map(thread => this.countUnread(thread.id)))).reduce((sum, count) => sum + count, 0));
   }
   async unreadForAnchor(anchor: DiscussionAnchor): Promise<number> {
     return this.read(async () => {
@@ -287,22 +349,22 @@ export class DiscussionRepository {
    */
   observeReceipts(threadId: string, next: (value: DiscussionReceiptSnapshot) => void,
     error: (reason: unknown) => void): { unsubscribe(): void } {
-    let recipientReadThrough: DiscussionCursor[] = [];
+    let recipientReadThrough: DiscussionReceiptSnapshot['recipientReadThrough'] = [];
     const emit = () => next({ confirmedIds: [...(this.confirmedDelivery.get(threadId) ?? [])], recipientReadThrough });
     const observers = this.receiptObservers.get(threadId) ?? new Set<() => void>();
     observers.add(emit);
     this.receiptObservers.set(threadId, observers);
     const subscription = liveQuery(() => this.read(async () => {
-      await this.thread(threadId);
-      const states = await this.db.discussionReadStates.where('[realmId+threadId+userId]')
-        .between([this.scope.realmId, threadId, ''], [this.scope.realmId, threadId, []], true, false).toArray();
+      const threads = await this.conversationThreads(threadId);
+      const states = (await Promise.all(threads.map(thread => this.db.discussionReadStates.where('[realmId+threadId+userId]')
+        .between([this.scope.realmId, thread.id, ''], [this.scope.realmId, thread.id, []], true, false).toArray()))).flat();
       return states.flatMap(state => {
         const cursor = discussionCursorFromKey(state.readThrough);
-        return state.realmId === this.scope.realmId && state.threadId === threadId
+        return state.realmId === this.scope.realmId && threads.some(thread => thread.id === state.threadId)
           && state.userId !== this.actorUserId && state.owner === state.userId
           && /^tg:[1-9]\d*$/.test(state.userId)
-          && state.id === discussionReadStateId(this.scope.realmId, threadId, state.userId)
-          && cursor && cursor.id === state.lastReadMessageId ? [cursor] : [];
+          && state.id === discussionReadStateId(this.scope.realmId, state.threadId, state.userId)
+          && cursor && cursor.id === state.lastReadMessageId ? [threadId.startsWith('entity-discussion:') ? { ...cursor, threadId: state.threadId } : cursor] : [];
       });
     })).subscribe({ next: cursors => { recipientReadThrough = cursors; emit(); }, error });
     return { unsubscribe: () => {
@@ -325,7 +387,8 @@ export class DiscussionRepository {
     const before = await this.read(async () => {
       await this.thread(threadId);
       const rows = await Promise.all(ids.map(id => this.db.discussionMessages.get(id)));
-      return rows.filter((row): row is DiscussionMessage => this.visible(row, threadId)
+      const threads = await this.conversationThreads(threadId);
+      return rows.filter((row): row is DiscussionMessage => threads.some(thread => this.visible(row, thread.id)) && isDiscussionMessage(row)
         && row.authorUserId === this.actorUserId && !row.deletedAt).map(row => row.id);
     });
     if (!before.length) return;

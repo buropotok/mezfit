@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import { ProgramSyncControls } from './ProgramSyncControls';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
@@ -12,7 +13,8 @@ import { Avatar, GlassSurface, Text } from '../ui';
 
 export interface ProgramActor { name: string; photoUrl?: string | null }
 
-export function ProgramSummary({ program, phaseCount, actorUserId, actor, showName = false, repository, syncStatus, onSync, onNavigationContextChange }: {
+export function ProgramSummary({ program, phaseCount, actorUserId, actor, showName = false, repository, syncStatus, onSync, onNavigationContextChange, discussionAction }: {
+  discussionAction?: ReactNode;
   program: CloudTrainingPlanRow;
   phaseCount: number;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
@@ -45,8 +47,11 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
             <Text variant={showName ? "body" : "headline"}>{showName ? program.name : 'Описание программы'}</Text>
             <Text variant="body">Владелец: {owner.name}</Text>
           </div>
-          <div aria-label={`Аватар владельца: ${owner.name}`}>
-            <AvatarProfileLink userId={planAuthorUserId(program)} name={owner.name}>{avatar(owner)}</AvatarProfileLink>
+          <div className="cloud-plan-summary-actions">
+            <div aria-label={`Аватар владельца: ${owner.name}`}>
+              <AvatarProfileLink userId={planAuthorUserId(program)} name={owner.name}>{avatar(owner)}</AvatarProfileLink>
+            </div>
+            {discussionAction}
           </div>
         </div>
         <div className="cloud-plan-person-row">

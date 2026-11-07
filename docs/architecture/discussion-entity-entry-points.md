@@ -4,37 +4,48 @@ Issue: [#641](https://github.com/buropotok/mezfit/issues/641).
 
 ## Владение и границы
 
-`CloudProgramDetailsPage` обеих ролей предоставляет меню корневой программы →
-«Обсуждения». У фазы, дня, упражнения и подхода шаблона discussion-входов нет.
-`OccurrenceDraftEditor` добавляет этот пункт в существующее меню календарной
-плановой тренировки, включая read-only PLAN клиента и inline planned card.
-После появления execution этот PR не добавляет входы: они относятся к COMM-07.
-Occurrence ID берётся из существующей проекции, а не из source program/day ID.
-`programDiscussionAnchor` и `occurrenceDiscussionAnchor` остаются единственными
-адаптерами; существующий execution alias использует тот же occurrence ID.
-Start, owner, provenance, PLAN/FACT и membership не меняются.
+`CloudProgramDetailsPage` обеих ролей показывает отдельную круглую `message-circle`
+размером с аватар непосредственно под аватаром владельца в `ProgramSummary`.
+У кнопки есть unread. `CloudProgramsPage.ProgramRow` добавляет «Обсуждения» в
+существующее меню, сохраняя прежние действия. У Client assigned PLAN доступен
+только discussion-пункт; личные программы сохраняют обычные действия.
+Оба пути используют `programDiscussionTarget` и один canonical thread.
 
-`useEntityDiscussions` создаёт scoped DiscussionRepository на существующем
-account-owned db. Repository проверяет прежнюю membership пары; UI не выдаёт
-прав и не делает HTTP CRUD. Один observeAnchor даёт список, entity unread и
-unread по каждой ветке. Нет last-message preview, thumbnails или статусов.
-Новый create использует имя сущности и текущую локальную дату, повтор — тот же
-ID. Закрытие/смена аккаунта/источника отменяют UI completion и subscriptions,
-не отменяя уже принятую локальную запись.
+`OccurrenceDraftEditor` использует `plannedDiscussionTarget`: только канонический
+occurrence ID, в том числе после Start/completion. Существующий execution alias
+ссылается на тот же anchor. У фазы/дня/упражнения/подхода шаблона входов нет.
+Start, provenance, PLAN/FACT и membership не меняются.
 
-Список и существующий DiscussionSheet — overlay над смонтированным источником.
-NavigationShell предоставляет read-only snapshot текущего контекста; overlay
-сохраняет его scrollKey и contentMode. Back в чате сначала использует его
-прежние nested действия, затем возвращает к списку; Back списка, Close и ссылка
-на контекст возвращают к исходному экрану. Новых history/Telegram listeners нет.
-Фильтры, выбранная программа/occurrence и состояние редактора не переписываются.
-Title snapshot ветки остаётся историческим. Удаление программы во время чтения
-не перенаправляет к другой программе: открытая история сохраняется, создание
-новых веток отключается, исходный экран честно показывает отсутствие объекта.
+`useEntityDiscussions` владеет overlay над смонтированным источником и создаёт
+scoped `DiscussionRepository` на account-owned db. По нажатию сразу открывается
+sheet; `ensureEntityThread` автоматически получает постоянный ID
+`entity-discussion:` + SHA-256 от `discussionAnchorKey(scope, anchor)`.
+Дата, имя и actor в ID не входят. Локальная транзакция возвращает существующую
+строку либо добавляет её. Два offline устройства получают тот же primary key;
+Addon владеет слиянием и репликацией, cloud CRUD и нового SyncEngine нет.
 
-LiquidPopover получает публичный optional unreadCount, отображаемый Caption
-superscript и в browser-measured canvas handoff. Feature CSS не обращается к
-Konsta DOM или private selectors. Konsta 5.4.0 и адаптеры не меняются.
+Старые threads остаются на месте. Канонический вход читает страницы по всем
+валидным thread IDs точного anchor/пары, сортирует по createdAt/id. Сообщения
+не копируются, attachment keys и reply IDs сохраняются. Новые ответы могут
+ссылаться на старую историю; собственные edit/delete меняют исходные строки.
+Старые низкоуровневые thread APIs остаются для чтения legacy targets и совместимости;
+UI больше не вызывает случайный createThread. Unread суммируется по исходным
+read-state без отдельного persistent счётчика. История соседних realm/anchor исключена.
+
+Back и Close возвращают напрямую к исходному экрану через текущий NavigationShell.
+Промежуточного списка, «Создать обсуждение», дублирующей капсулы и новых
+history/Telegram listeners нет. Сохраняются source scrollKey/contentMode,
+фильтры и состояние редактора. Account/source switch и unmount отменяют
+устаревший UI completion, не принятую локальную запись.
+
+markRead выполняется при видимой переписке у конца либо при просмотре старых
+сообщений. Для объединённой истории продвигается отдельный watermark каждого
+исходного thread до просмотренного cursor. Собственная отметка не подтверждает
+прочтение собеседником. Вторая галочка требует реплицированного recipient
+read-state соответствующего storage thread. Общий sync status её не подменяет.
+Строки без readThrough валидируются по существующему lastReadMessageId и
+продвигаются без сброса истории; повреждённые cursor не считаются подтверждением.
+Ошибка отметки видна и допускает retry. Telegram-подобные inline галочки сохранены.
 
 ## Инвентарь legacy-полей до изменения UX
 
@@ -53,23 +64,28 @@ Konsta DOM или private selectors. Konsta 5.4.0 и адаптеры не ме�
 полей или раскрытия личных заметок. Текст/вложения новой переписки идут только
 через discussion-вход. Неоднозначную историю не переносим в shared realm.
 
-## Активация и проверка
+## Поставка и проверки
 
-Общий build-time gate: `VITE_CLOUD_DISCUSSIONS_ENABLED=true`. Он применяется
-в constructor/factory для всего account lifecycle, а не при открытии одного
-sheet. Без gate сохраняется v14, пункт не выполняет записи. Новых схем, grants,
-operator Apply и инфраструктурных ресурсов здесь нет. После upgrade нельзя
-выключать регистрацию v16 для того же IndexedDB или возвращать старый клиент.
-Gate включать только после одобренного Apply и реальных ordinary-account ACL
-проверок из COMM-03/04. Наличие этого PR не подтверждает их прохождение.
+Обычный merge/deploy включает регистрацию v15/v16 и локального индекса v17 таблиц и индексов
+на всём account lifecycle. Нет новых flags, env, workflows, Apply или ручной
+активации. Cloud schema/grants остаются установленными COMM-03. Возвращать
+обновлённый IndexedDB к v14 нельзя; старые schema fixtures остаются явными тестами.
 
-Добавлены проверки targets, общего overlay, retry/late completion, source deletion,
-изоляции разных тренеров/personal history и repository unread. Старые тесты не
-изменяются. Локальные npm/typecheck/test/build запрещены issue и не запускались;
-их выполняет CI после PR. Физические Telegram Android/iOS, offline двух устройств
-и серверные Coach/Client ACL остаются отдельной приёмкой.
+Код тестов проверяется до PR; npm/typecheck/test/build выполняет GitHub Actions
+после открытия PR. Добавлены сценарии повторного/конкурентного открытия,
+совместимости legacy pagination/replies/edit/delete, обоих направлений read-state,
+изоляции пары, Back, source/account switch и retry. Локальные IndexedDB-тесты
+не являются проверкой двух настоящих offline устройств или production ACL.
 
-Релевантные факторы audit/2026-09-16_application_audit.md: A-003 — единый Back и
-сохранение навигации; A-005 — устаревшие async completion; A-008 — публичные UI API;
-A-009 — retry ошибки. Эти факторы учтены в реализации и новых тестах; по процессу
-issue перед открытием PR необходимо решение владельца.
+Физическая приёмка: Coach → Client и Client → Coach; при видимом sheet одна
+галочка меняется на две на устройстве отправителя; закрытие/повторное открытие;
+два устройства одновременно создают пустой чат; offline send/read и reconnect
+в обоих порядках; старая многоветочная история сохраняется; Back возвращает
+к программе/occurrence с прежним состоянием. Эти live проверки здесь не выполнены.
+
+При ревью учитываются A-003 (единый Back), A-005/A-013 (устаревшие async completion),
+A-008/A-012 (публичные UIkit APIs) и A-010 (валидация cached identity/realm).
+
+Уточнение индексов COMM-06: локальная v17 добавляет только `[id+lastReadAt]`
+для условного обновления legacy read-state. Таблицы/поля/cloud ACL не меняются;
+upgrade выполняется при обычном открытии account DB.

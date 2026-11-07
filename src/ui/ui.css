@@ -80,3 +80,5 @@
   .ui-button,
   .ui-icon-button { transition-duration: 1ms; }
 }
+
+.ui-icon-button.ui-icon-button--avatar { width: 2.5rem; height: 2.5rem; min-height: 2.5rem; }

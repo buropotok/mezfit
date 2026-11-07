@@ -27,12 +27,12 @@ type AnchorValue = { threads: DiscussionThread[]; unread: number; unreadByThread
 let emit: (value: AnchorValue) => void;
 let fail: (reason: unknown) => void;
 let unsubscribe = vi.fn<() => void>();
-let createThread: ReturnType<typeof vi.fn<DiscussionRepository['createThread']>>;
+let ensureThread: ReturnType<typeof vi.fn<DiscussionRepository['ensureEntityThread']>>;
 beforeEach(() => {
   probe.db = {};
   const f = fixture();
-  unsubscribe = vi.fn<() => void>(); createThread = vi.fn<DiscussionRepository['createThread']>(async () => thread);
-  probe.repository = { ...f.port, createThread,
+  unsubscribe = vi.fn<() => void>(); ensureThread = vi.fn<DiscussionRepository['ensureEntityThread']>(async () => thread);
+  probe.repository = { ...f.port, ensureEntityThread: ensureThread,
     observeAnchor: vi.fn<DiscussionRepository['observeAnchor']>((_anchor, next, error) => {
       emit = next; fail = error;
       next({ threads: [thread], unread: 3, unreadByThread: { thread: 3 } });
@@ -44,7 +44,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 function mount(initial: EntityDiscussionTarget | null = target) {
   let navigation: NavigationContext | null = null;
   const onNavigation = vi.fn((value: NavigationContext | null) => { navigation = value; });
-  const parent = { title: 'Программа', scrollKey: 'exact-program', onBack: vi.fn() };
+  const parent = { level: 1 as const, title: 'Программа', scrollKey: 'exact-program', onBack: vi.fn() };
   function Harness({ source }: { source: EntityDiscussionTarget | null }) {
     const [filter, setFilter] = useState('Активные');
     const discussion = useEntityDiscussions(source, onNavigation);
@@ -62,77 +62,60 @@ function mount(initial: EntityDiscussionTarget | null = target) {
     account: () => { probe.db = {}; view.rerender(page(initial)); } };
 }
 
-describe('COMM-06 entity thread overlay', () => {
-  it('lists only thread titles and unread, opens the exact thread and preserves filters and source scroll identity through Back', async () => {
+describe('COMM-06 direct entity conversation', () => {
+  it('opens immediately, preserves filters and source scroll identity, and Back closes directly', async () => {
     const view = mount();
     fireEvent.change(screen.getByLabelText('Фильтр'), { target: { value: 'Ноги' } });
     fireEvent.click(screen.getByText('Обсуждения'));
-    expect(screen.getByText(thread.derivedTitleSnapshot)).toBeTruthy();
-    expect(screen.queryByText('Мой текст')).toBeNull();
-    expect(view.onNavigation).toHaveBeenLastCalledWith(expect.objectContaining({ scrollKey: 'exact-program' }));
-    fireEvent.click(screen.getByText(thread.derivedTitleSnapshot));
     expect(await screen.findByText('Мой текст')).toBeTruthy();
-    expect(probe.repository.listThreads).toHaveBeenCalledWith(target.anchor);
+    expect(ensureThread).toHaveBeenCalledWith(target.anchor, target.name);
+    expect(screen.queryByText('Создать обсуждение')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Силовая' })).toBeNull();
+    expect(view.onNavigation).toHaveBeenLastCalledWith(expect.objectContaining({ level: 2, scrollKey: 'exact-program' }));
     view.back();
-    await waitFor(() => expect(screen.queryByText('Мой текст')).toBeNull());
-    view.back();
-    expect(screen.queryByRole('button', { name: 'Закрыть обсуждения' })).toBeNull();
-    expect((screen.getByLabelText('Фильтр') as HTMLInputElement).value).toBe('Ноги');
-    expect(view.parent.onBack).not.toHaveBeenCalled();
-  });
-  it('returns directly to the source from the chat callback and clears the overlay Back handler', async () => {
-    const view = mount(); fireEvent.click(screen.getByText('Обсуждения'));
-    fireEvent.click(screen.getByText(thread.derivedTitleSnapshot));
-    await screen.findByText('Мой текст');
-    fireEvent.click(screen.getByRole('button', { name: 'Силовая' }));
     await waitFor(() => expect(screen.queryByText('Мой текст')).toBeNull());
     expect(view.onNavigation).toHaveBeenLastCalledWith(null);
+    expect((screen.getByLabelText('Фильтр') as HTMLInputElement).value).toBe('Ноги');
+    expect(view.parent.onBack).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Обсуждения'));
+    await screen.findByText('Мой текст');
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+    await waitFor(() => expect(screen.queryByText('Мой текст')).toBeNull());
   });
-  it('retries the same create command, blocks duplicate taps, and ignores completion after closing', async () => {
+  it('retries automatic opening and ignores completion after closing', async () => {
+    ensureThread.mockRejectedValueOnce(Error('Local failure'));
     const view = mount(); fireEvent.click(screen.getByText('Обсуждения'));
-    createThread.mockRejectedValueOnce(Error('Local failure'));
-    fireEvent.click(screen.getByText('Создать обсуждение'));
-    await screen.findByText('Не удалось создать обсуждение');
-    const first = createThread.mock.calls[0][0];
-    expect(first).toMatchObject({ anchor: target.anchor, entityName: 'Силовая', date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
-    fireEvent.click(screen.getByText('Повторить'));
-    await screen.findByText('Создать обсуждение');
+    await screen.findByText('Не удалось открыть обсуждение');
     let resolve: ((value: DiscussionThread) => void) | undefined;
-    createThread.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
-    fireEvent.click(screen.getByText('Создать обсуждение'));
-    fireEvent.click(screen.getByText('Создаём…'));
-    expect(createThread).toHaveBeenCalledTimes(2);
-    expect(createThread.mock.calls[1][0]).toEqual(first);
+    ensureThread.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    fireEvent.click(screen.getByText('Повторить'));
+    expect(ensureThread).toHaveBeenCalledTimes(2);
     view.back();
     await act(async () => { resolve?.(thread); });
     expect(screen.queryByText('Мой текст')).toBeNull();
   });
-  it('retains historical titles after source deletion, disables new threads and rejects late old-scope observer results', () => {
+  it('retains open history on source deletion and rejects late old-scope results', async () => {
     const view = mount(); fireEvent.click(screen.getByText('Обсуждения'));
+    await screen.findByText('Мой текст');
     view.source(null);
-    expect(screen.getByText(/Исходный объект недоступен/)).toBeTruthy();
-    expect((screen.getByRole('button', { name: 'Создать обсуждение' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText('Мой текст')).toBeTruthy();
     const old = emit;
     view.source({ ...target, scope: { realmId: 'pair-b', coachClientId: 'pair-b' } });
     expect(unsubscribe).toHaveBeenCalled();
     act(() => old({ threads: [], unread: 99, unreadByThread: {} }));
     expect(screen.getByLabelText('Непрочитанные сущности').textContent).toBe('3');
+    expect(screen.queryByText('Мой текст')).toBeNull();
   });
-  it('clears stale unread on observer failure and exposes a working retry without changing the source', async () => {
-    mount(); fireEvent.click(screen.getByText('Обсуждения'));
+  it('clears stale unread on observer failure', () => {
+    mount();
     act(() => fail(Error('Access/query failure')));
     expect(screen.getByLabelText('Непрочитанные сущности').textContent).toBe('0');
-    fireEvent.click(screen.getByText('Повторить'));
-    await screen.findByText(thread.derivedTitleSnapshot);
-    expect(screen.getByLabelText('Непрочитанные сущности').textContent).toBe('3');
   });
-  it('dismisses the old account overlay and ignores its late create completion', async () => {
-    const view = mount(); fireEvent.click(screen.getByText('Обсуждения'));
+  it('dismisses the old account overlay and ignores late automatic creation', async () => {
     let resolve: ((value: DiscussionThread) => void) | undefined;
-    createThread.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
-    fireEvent.click(screen.getByText('Создать обсуждение'));
+    ensureThread.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const view = mount(); fireEvent.click(screen.getByText('Обсуждения'));
     view.account();
-    expect(screen.queryByText(thread.derivedTitleSnapshot)).toBeNull();
     await act(async () => { resolve?.(thread); });
     expect(screen.queryByText('Мой текст')).toBeNull();
     expect(view.onNavigation).toHaveBeenLastCalledWith(null);
