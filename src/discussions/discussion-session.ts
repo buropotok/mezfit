@@ -147,4 +147,3 @@ export class DiscussionSession {
     return false;
   }
 }
-
