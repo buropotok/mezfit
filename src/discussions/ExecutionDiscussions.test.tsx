@@ -174,6 +174,31 @@ describe('COMM-07 completed execution entries', () => {
     expect(screen.getByRole('button', { name: 'Меню подхода 2' })).toBeTruthy();
   });
 
+
+  it('does not offer set deletion for completed/read-only FACT', () => {
+    mount();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    expect(screen.getByRole('menu', { name: 'Меню подхода 1' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Удалить подход' })).toBeNull();
+  });
+
+  it('keeps the delete menu available for active sets with no validated discussion anchor', () => {
+    const value = { ...session(), status: 'active' as const, completedAt: null,
+      exercises: session().exercises.map(exercise => ({
+        ...exercise,
+        sets: exercise.sets.map(set => ({ ...set, discussionAnchor: undefined })),
+      })) };
+    const onDeleteSet = vi.fn(async () => undefined);
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    expect(screen.queryByRole('button', { name: 'Обсуждения подхода 1' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    expect(screen.getByRole('menuitem', { name: 'Удалить подход' })).toBeTruthy();
+  });
+
   it('keeps the exact conversation during reorder and marks a deleted set unavailable instead of picking its neighbour', async () => {
     probe.actor = 'tg:11';
     const value = session();
