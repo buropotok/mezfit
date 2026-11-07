@@ -220,11 +220,22 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (!text.trim()) return;
     if (editId) await repository.edit(threadId, editId, text);
     else {
-      if (!prepared.current || prepared.current.text !== text || prepared.current.replyToMessageId !== (replyId ?? undefined))
-        prepared.current = draft.command();
-      await repository.send(prepared.current);
+      const command = draft.command();
+      if (!prepared.current || prepared.current.id !== command.id || prepared.current.text !== text
+        || prepared.current.replyToMessageId !== (replyId ?? undefined)) prepared.current = command;
+      const submitted = prepared.current;
+      try {
+        await repository.send(submitted);
+        draft.sent(submitted.id);
+      } catch (reason) {
+        if (reason instanceof Error && (reason.message === 'DISCUSSION_DRAFT_ALREADY_PUBLISHED'
+          || reason.message === 'DISCUSSION_ID_REUSED')) {
+          draft.rebase(submitted.id); prepared.current = null;
+        }
+        throw reason;
+      }
     }
-    if (alive.current) { prepared.current = null; if (!editId) draft.sent(); setEditText(''); setEditId(null); }
+    if (alive.current) { prepared.current = null; setEditText(''); setEditId(null); }
   });
   const selected = menu ? state.messages.find(row => row.id === menu.id && !row.deleted) : undefined;
   const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
@@ -232,7 +243,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
-    if (action === 'reply') { draft.update(editId ? '' : draft.text, id); setEditId(null); setEditText(''); }
+    if (action === 'reply') { draft.update(draft.text, id); setEditId(null); setEditText(''); }
     if (action === 'edit' && row.authorUserId === repository.actorUserId) { setEditId(id); setEditText(row.text); }
     if (action === 'delete' && row.authorUserId === repository.actorUserId) setDeletingId(id);
     if (action === 'copy') void run(async () => {
