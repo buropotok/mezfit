@@ -48,4 +48,3 @@ export function fixture(initial: DiscussionMessageView[] = [message('own', 'Мо
     for (const observer of [...observers]) if (observers.has(observer)) observer.next(slice(observer.before, observer.limit));
   }, fail() { for (const observer of [...observers]) observer.error(Error('Unavailable')); } };
 }
-
