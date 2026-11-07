@@ -20,6 +20,10 @@ export const TEST_RELATIONSHIP_TABLES = [
   'workoutScheduleRequests', // Retired table, may still contain older test records.
 ] as const;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 function unavailable(): never {
   throw new CloudMembershipError('CLOUD_MEMBERSHIP_UNAVAILABLE', 502);
 }
@@ -52,9 +56,8 @@ async function realmRows(fetchImpl: typeof fetch, bearer: string, table: string,
   }
   if (!Array.isArray(payload) || payload.length > 1000) return unavailable();
   const ids: string[] = [];
-  for (const row of payload) {
-    if (!row || typeof row !== 'object' || Array.isArray(row)
-      || row.realmId !== realmId || typeof row.id !== 'string' || !row.id) conflict();
+  for (const row of payload as unknown[]) {
+    if (!isRecord(row) || row.realmId !== realmId || typeof row.id !== 'string' || !row.id) conflict();
     ids.push(row.id);
   }
   if (new Set(ids).size !== ids.length) conflict();
