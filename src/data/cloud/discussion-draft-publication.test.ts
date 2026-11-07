@@ -85,4 +85,37 @@ describe('private draft recovery and first publication', () => {
     expect(await reopened.send(recovered)).toMatchObject({ id: input.id, createdAt: sent.createdAt, deleted: true, text: '' });
     expect(await reopened.getDraft(thread.id)).toBeNull();
   });
+  it('never acknowledges another device publication as a strict composer send', async () => {
+    const { db, coach, thread, scope } = await fixture();
+    const original = prepareDiscussionMessage(thread.id, 'Published by device one');
+    await coach.saveDraft(original);
+    const second = new DiscussionRepository(db, coach.actorUserId, scope);
+    const recovered = await second.getDraft(thread.id);
+    if (!recovered) throw Error('Missing synchronized draft');
+    await coach.send(original);
+    const changed = { ...recovered, text: 'New text on device two', requireUnsentDraft: true as const };
+    await expect(second.saveDraft(changed)).rejects.toThrow('DISCUSSION_ID_REUSED');
+    await expect(second.send(changed)).rejects.toThrow('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+    expect((await second.getMessage(thread.id, original.id)).text).toBe(original.text);
+    // A new local draft preserves the second device's intent without editing the publication.
+    const replacement = prepareDiscussionMessage(thread.id, changed.text);
+    await second.saveDraft(replacement);
+    const sent = await second.send({ ...replacement, requireUnsentDraft: true });
+    expect(sent).toMatchObject({ id: replacement.id, text: changed.text });
+    expect((await second.page(thread.id)).messages).toHaveLength(2);
+  });
+  it('guards publication even if the draft was sent between local save and submit, while ordinary retries stay idempotent', async () => {
+    const { coach, thread } = await fixture();
+    const input = prepareDiscussionMessage(thread.id, 'Initial publication');
+    await expect(coach.send({ ...input, requireUnsentDraft: true })).rejects.toThrow('DISCUSSION_DRAFT_NOT_SAVED');
+    await coach.saveDraft(input);
+    const sent = await coach.send({ ...input, requireUnsentDraft: true });
+    await expect(coach.send({ ...input, requireUnsentDraft: true })).rejects.toThrow('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+    await coach.edit(thread.id, input.id, 'Later edit');
+    expect(await coach.send(input)).toMatchObject({ id: input.id, createdAt: sent.createdAt, text: 'Later edit' });
+    await coach.remove(thread.id, input.id);
+    await expect(coach.send({ ...input, requireUnsentDraft: true })).rejects.toThrow('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+    expect(await coach.send(input)).toMatchObject({ deleted: true, text: '' });
+  });
+
 });
