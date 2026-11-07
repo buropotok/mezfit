@@ -160,6 +160,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     // The dialog is above the editor; Back dismisses the innermost surface.
     if (deleteConfirm) { setDeleteConfirm(false); return; }
     if (discardConfirm) { setDiscardConfirm(false); return; }
+    if (picker) { closeMetricPicker(picker); return; }
     if (readOnly || sameSetEntryDraft(initialDraft.current, draftRef.current)) {
       setPicker(null); props.onClose();
     }

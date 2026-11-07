@@ -115,6 +115,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     // The dialog is above the editor; Back dismisses the innermost surface.
     if (deleteConfirm) { setDeleteConfirm(false); return; }
     if (discardConfirm) { setDiscardConfirm(false); return; }
+    if (pickerOpened) { setPickerOpened(false); return; }
     const newFactConfirmed = !isPlan && !hasSetMeasurements(props.data.fact?.metrics) && metricsConfirmed.current;
     if (readOnly || (!newFactConfirmed && sameSetEntryDraft(initialDraft.current, draftRef.current))) {
       setPickerOpened(false); props.onClose();

@@ -306,6 +306,26 @@ describe('weight and repetitions SetEntry', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['weight_reps', 'Изменить вес и повторения'],
+    ['time', 'Изменить продолжительность'],
+  ] as const)('%s dismisses its metric picker before leaving the FACT editor on Back', (trackingType, label) => {
+    const onClose = vi.fn();
+    const onSave = vi.fn(async () => undefined);
+    let back: (() => void) | undefined;
+    render(<KonstaProvider theme="ios" dark>
+      <SetEntry mode="workout" isOpen data={{ ...baseData, trackingType }}
+        onClose={onClose} onSave={onSave}
+        onNavigationContextChange={context => { back = context?.onBack; }} />
+    </KonstaProvider>);
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    expect(back).toBeTypeOf('function');
+    act(() => { back?.(); });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Подход 3' })).toBeTruthy();
+  });
+
   it.each(['weight_reps', 'time'] as const)(
     '%s sends Back to the deletion confirmation before the FACT editor', trackingType => {
       const onDeleteSet = vi.fn(async () => undefined);
