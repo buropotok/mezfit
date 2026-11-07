@@ -70,7 +70,6 @@ interface InviteRow {
   coach_first_name: string;
   coach_last_name: string | null;
   coach_username: string | null;
-  already_linked: number;
 }
 
 class HttpError extends Error {
@@ -194,7 +193,7 @@ function inviteTokenFromStartParam(startParam?: string): string | null {
   return /^[a-f0-9]{36}$/i.test(token) ? token.toLowerCase() : null;
 }
 
-async function findInvite(db: D1Database, token: string, clientUserId: number): Promise<InviteRow | null> {
+async function findInvite(db: D1Database, token: string): Promise<InviteRow | null> {
   const tokenHash = await sha256Hex(token);
   return db
     .prepare(`
@@ -206,20 +205,14 @@ async function findInvite(db: D1Database, token: string, clientUserId: number): 
         i.expires_at,
         coach.first_name AS coach_first_name,
         coach.last_name AS coach_last_name,
-        coach.username AS coach_username,
-        EXISTS (
-          SELECT 1 FROM coach_client cc
-          WHERE cc.coach_user_id = i.coach_user_id
-            AND cc.client_user_id = ?
-            AND cc.status = 'active'
-        ) AS already_linked
+        coach.username AS coach_username
       FROM coach_client_invite i
       JOIN app_user coach ON coach.id = i.coach_user_id
       WHERE i.token_hash = ?
         AND i.revoked_at IS NULL
         AND i.expires_at > CURRENT_TIMESTAMP
     `)
-    .bind(clientUserId, tokenHash)
+    .bind(tokenHash)
     .first<InviteRow>();
 }
 
@@ -615,8 +608,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) return json({ invite: null });
 
-    const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
-    if (!invite || invite.coach_user_id === auth.row.id || invite.already_linked === 1) return json({ invite: null });
+    const invite = await findInvite(env.DB_BINDING, token);
+    // A legacy D1 relationship does not prove Dexie Cloud membership after cutover.
+    // Keep explicit consent available so the accept route can repair a missing realm.
+    if (!invite || invite.coach_user_id === auth.row.id) return json({ invite: null });
 
     return json({
       invite: {
@@ -636,7 +631,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
-    const invite = await findInvite(env.DB_BINDING, token, auth.row.id);
+    const invite = await findInvite(env.DB_BINDING, token);
     if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, revoked, or expired');
     if (invite.coach_user_id === auth.row.id) throw new HttpError(400, 'SELF_LINK', 'Coach cannot accept their own invite');
 
