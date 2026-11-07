@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from 'konsta/react';
+import { createPortal } from 'react-dom';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -100,5 +101,8 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
       <Text role="alert">{connection.error || 'Обсуждение недоступно'}</Text>
       <Button rounded onClick={() => setRetry(value => value + 1)}>Повторить</Button>
     </div></MezfitBottomSheet> : null;
-  return { menuItem, unread, content, onMenuPresentationChange, open, canOpen };
+  // GlassSurface owns a clipping/containing block. Mount the feature overlay
+  // outside every program row while retaining React context and shell Back ownership.
+  return { menuItem, unread, content: content && typeof document !== 'undefined'
+    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{content}</div>, document.body) : content, onMenuPresentationChange, open, canOpen };
 }

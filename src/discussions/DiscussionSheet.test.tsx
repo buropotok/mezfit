@@ -291,6 +291,35 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     expect(fixtureData.port.markRead).toHaveBeenLastCalledWith('thread', 'other');
     expect(fixtureData.port.send).not.toHaveBeenCalled();
   });
+  it('shows receipt query failures, retains confirmed read evidence and ignores a retired observer after retry', async () => {
+    const f = fixture();
+    const retired: Array<(reason: unknown) => void> = [];
+    const unsubscribe = vi.fn();
+    f.port.observeReceipts = vi.fn((_thread: string, next: (snapshot: DiscussionReceiptSnapshot) => void, fail: (reason: unknown) => void) => {
+      retired.push(fail);
+      next({ confirmedIds: ['own'], recipientReadThrough: [{ id: 'own', createdAt: message('own').createdAt, threadId: 'thread' }] });
+      return { unsubscribe };
+    });
+    mount({}, f);
+    await screen.findByRole('img', { name: 'Прочитано собеседником' });
+    act(() => retired[0](Error('Read-state query failed')));
+    expect(screen.getByText('Не удалось обновить статусы прочтения')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Прочитано собеседником' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить обновление статусов' }));
+    await waitFor(() => expect(f.port.observeReceipts).toHaveBeenCalledTimes(2));
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+    act(() => retired[0](Error('Late retired failure')));
+    expect(screen.queryByText('Не удалось обновить статусы прочтения')).toBeNull();
+  });
+  it('persists an explicit read when replying away from the end of the conversation', async () => {
+    const f = mount({ focusMessageId: 'own' });
+    await waitFor(() => expect(f.container.querySelector('[data-message-id="own"]')?.getAttribute('data-highlighted')).toBe('true'));
+    expect(f.port.markRead).not.toHaveBeenCalled();
+    await open('Чужой текст');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Ответить' }));
+    await waitFor(() => expect(f.port.markRead).toHaveBeenCalledWith('thread', 'other'));
+    expect(f.port.send).not.toHaveBeenCalled();
+  });
   it('groups dates using the same local calendar as the displayed date', async () => {
     vi.spyOn(Date.prototype, 'toLocaleDateString').mockReturnValue('07.11.2026');
     const rows = [{ ...message('late', 'До полуночи UTC'), createdAt: '2026-11-06T23:10:00.000Z' },

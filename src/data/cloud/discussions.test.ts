@@ -329,6 +329,32 @@ describe('COMM-06 canonical entity compatibility, local IndexedDB evidence only'
       expect(first.messages[0].reply?.text).toBe('За пределами страницы');
     } finally { subscription?.unsubscribe(); }
   });
+  it.each(['coach', 'client'] as const)('observes %s read-state updates from another connection without a push acknowledgement', async authorRole => {
+    const { db, coach, client, anchor, scope } = await fixture();
+    const author = authorRole === 'coach' ? coach : client;
+    const readerId = authorRole === 'coach' ? client.actorUserId : coach.actorUserId;
+    const canonical = await author.ensureEntityThread(anchor, 'Программа');
+    const sent = await author.send(prepareDiscussionMessage(canonical.id, 'Прочитать на другом устройстве'));
+    const connection = new TestDatabase(db.name); await connection.open();
+    const reader = new DiscussionRepository(connection, readerId, scope);
+    const snapshots: Array<{ confirmedIds: readonly string[]; recipientReadThrough: readonly { id: string; threadId?: string }[] }> = [];
+    const failures: unknown[] = [];
+    let subscription: { unsubscribe(): void } | undefined;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        subscription = author.observeReceipts(canonical.id, value => { snapshots.push(value); resolve(); },
+          reason => { failures.push(reason); reject(reason); });
+      });
+      expect(snapshots.at(-1)?.recipientReadThrough).toEqual([]);
+      await reader.markRead(canonical.id, sent.id);
+      await vi.waitFor(() => expect(snapshots.at(-1)?.recipientReadThrough).toEqual([
+        { id: sent.id, createdAt: sent.createdAt, threadId: canonical.id },
+      ]));
+      expect(snapshots.at(-1)?.confirmedIds).toEqual([]);
+      expect(failures).toEqual([]);
+      expect(await reader.unread(canonical.id)).toBe(0);
+    } finally { subscription?.unsubscribe(); }
+  });
   it.each(['coach', 'client'] as const)('observes authored read evidence for %s and upgrades an unindexed legacy cursor without moving backward', async sender => {
     const { db, coach, client, thread, anchor } = await fixture();
     const author = sender === 'coach' ? coach : client, reader = sender === 'coach' ? client : coach;
