@@ -34,4 +34,15 @@ describe('approved Konsta 5.4 Message bubble boundary adapter', () => {
     adapted.querySelector('[data-testid="source"]')?.remove();
     expect(normalizedMarkup(adapted)).toBe(normalizedMarkup(roots[0]));
   });
+  it('limits the focus pulse to the existing Konsta bubble without changing its wrapper or content', () => {
+    const view = render(<KonstaProvider theme="ios" dark>
+      <MezfitMessage type="received" text="Исходное сообщение" focusPulse />
+    </KonstaProvider>);
+    const root = view.container.querySelector('.k-message');
+    const pulse = root?.querySelector('.ui-mezfit-message__focus-pulse');
+    expect(pulse).not.toBeNull();
+    expect(root?.classList.contains('ui-mezfit-message__focus-pulse')).toBe(false);
+    expect(pulse?.textContent).toBe('Исходное сообщение');
+  });
+
 });

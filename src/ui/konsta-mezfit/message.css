@@ -23,3 +23,19 @@
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* A brief color lift is painted above Konsta's bubble background but behind
+   its text and quote. The original bubble shape and color remain untouched. */
+.ui-mezfit-message__focus-pulse::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgb(255 255 255 / 0.2);
+  animation: ui-mezfit-message-focus-pulse 100ms ease-out both;
+}
+@keyframes ui-mezfit-message-focus-pulse {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
