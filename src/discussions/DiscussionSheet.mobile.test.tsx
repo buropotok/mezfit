@@ -43,7 +43,7 @@ describe('COMM-05 mobile presentation', () => {
     expect(view.container.querySelector('.discussion-composer-surface.ui-glass-surface')).not.toBeNull();
   });
 
-  it('uses the same sheet for author mode and displays the edited-action icon control', async () => {
+  it('uses the same sheet for author mode and preserves multiline drafts', async () => {
     const options = props();
     const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet {...options} showAvatars /></KonstaProvider>);
     await screen.findByText('Доброе утро! Как прошла тренировка по новой программе?');

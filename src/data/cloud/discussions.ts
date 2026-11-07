@@ -31,8 +31,8 @@ const tables = ['discussionThreads', 'discussionMessages', 'discussionReadStates
 /** Account lifecycle owns db. No network, PLAN mutation or push in normal operations. */
 export class DiscussionRepository {
   readonly sync: DiscussionSync;
-  private readonly confirmedDelivery = new Set<string>();
-  private readonly receiptObservers = new Set<() => void>();
+  private readonly confirmedDelivery = new Map<string, Set<string>>();
+  private readonly receiptObservers = new Map<string, Set<() => void>>();
   private readonly scope: DiscussionScope;
   constructor(private readonly db: DiscussionDatabase, readonly actorUserId: string, scope: DiscussionScope) {
     if (!/^tg:[1-9]\d*$/.test(actorUserId)) fail('INVALID_DISCUSSION_ACTOR');
@@ -288,8 +288,10 @@ export class DiscussionRepository {
   observeReceipts(threadId: string, next: (value: DiscussionReceiptSnapshot) => void,
     error: (reason: unknown) => void): { unsubscribe(): void } {
     let recipientReadThrough: DiscussionCursor[] = [];
-    const emit = () => next({ confirmedIds: [...this.confirmedDelivery], recipientReadThrough });
-    this.receiptObservers.add(emit);
+    const emit = () => next({ confirmedIds: [...(this.confirmedDelivery.get(threadId) ?? [])], recipientReadThrough });
+    const observers = this.receiptObservers.get(threadId) ?? new Set<() => void>();
+    observers.add(emit);
+    this.receiptObservers.set(threadId, observers);
     const subscription = liveQuery(() => this.read(async () => {
       await this.thread(threadId);
       const states = await this.db.discussionReadStates.where('[realmId+threadId+userId]')
@@ -298,10 +300,16 @@ export class DiscussionRepository {
         const cursor = discussionCursorFromKey(state.readThrough);
         return state.realmId === this.scope.realmId && state.threadId === threadId
           && state.userId !== this.actorUserId && state.owner === state.userId
+          && /^tg:[1-9]\d*$/.test(state.userId)
+          && state.id === discussionReadStateId(this.scope.realmId, threadId, state.userId)
           && cursor && cursor.id === state.lastReadMessageId ? [cursor] : [];
       });
     })).subscribe({ next: cursors => { recipientReadThrough = cursors; emit(); }, error });
-    return { unsubscribe: () => { this.receiptObservers.delete(emit); subscription.unsubscribe(); } };
+    return { unsubscribe: () => {
+      observers.delete(emit);
+      if (!observers.size) this.receiptObservers.delete(threadId);
+      subscription.unsubscribe();
+    } };
   }
 
   /**
@@ -311,12 +319,14 @@ export class DiscussionRepository {
    * a fictitious server receipt. On a new session the repository can recheck IDs.
    */
   async confirmDelivery(threadId: string, messageIds: readonly string[]): Promise<void> {
-    const ids = [...new Set(messageIds)].filter(id => discussionId(id) && !this.confirmedDelivery.has(id));
+    const alreadyConfirmed = this.confirmedDelivery.get(threadId);
+    const ids = [...new Set(messageIds)].filter(id => discussionId(id) && !alreadyConfirmed?.has(id));
     if (!ids.length) return;
     const before = await this.read(async () => {
       await this.thread(threadId);
-      const rows = await Promise.all(ids.map(id => this.message(threadId, id)));
-      return rows.filter(row => row.authorUserId === this.actorUserId && !row.deletedAt).map(row => row.id);
+      const rows = await Promise.all(ids.map(id => this.db.discussionMessages.get(id)));
+      return rows.filter((row): row is DiscussionMessage => this.visible(row, threadId)
+        && row.authorUserId === this.actorUserId && !row.deletedAt).map(row => row.id);
     });
     if (!before.length) return;
     await this.db.cloud.sync({ purpose: 'push', wait: true });
@@ -330,8 +340,10 @@ export class DiscussionRepository {
       }))).filter((id): id is string => id !== null);
     });
     if (!confirmed.length) return;
-    for (const id of confirmed) this.confirmedDelivery.add(id);
-    for (const notify of this.receiptObservers) notify();
+    const confirmedForThread = this.confirmedDelivery.get(threadId) ?? new Set<string>();
+    for (const id of confirmed) confirmedForThread.add(id);
+    this.confirmedDelivery.set(threadId, confirmedForThread);
+    for (const notify of this.receiptObservers.get(threadId) ?? []) notify();
   }
 
   observeAnchor(anchor: DiscussionAnchor, next: (value: { threads: DiscussionThread[]; unread: number }) => void,

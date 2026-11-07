@@ -365,7 +365,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
-    <GlassSurface className="discussion-composer-surface" {...material}>
+    <GlassSurface className="discussion-composer-surface" {...material}
+      style={{ position: 'absolute', zIndex: 4, insetInline: 0, bottom: 0, width: '100%' }}>
       <MezfitMessagebar ref={composer} textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
         value={text} maxRows={5} disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
         onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}

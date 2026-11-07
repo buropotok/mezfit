@@ -236,4 +236,39 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     expect(production.verno).toBe(14);
     expect(production.tables.some(table => table.name === 'discussionMessages')).toBe(false);
   });
+  it('derives receipt from the recipient watermark, and delivery only from an awaited push for exact IDs', async () => {
+    const { db, coach, client, thread } = await fixture();
+    const first = await coach.send(prepareDiscussionMessage(thread.id, 'Первое'));
+    const second = await coach.send(prepareDiscussionMessage(thread.id, 'Второе'));
+    const fromClient = await client.send(prepareDiscussionMessage(thread.id, 'От клиента'));
+    const next = vi.fn(), error = vi.fn();
+    const sub = coach.observeReceipts(thread.id, next, error);
+    await vi.waitFor(() => expect(next).toHaveBeenCalled());
+    expect(next.mock.lastCall?.[0]).toEqual({ confirmedIds: [], recipientReadThrough: [] });
+
+    // Reading on the sender's device is not evidence that the recipient read.
+    await coach.markRead(thread.id, fromClient.id);
+    await vi.waitFor(() => expect(next.mock.lastCall?.[0].recipientReadThrough).toEqual([]));
+    await client.markRead(thread.id, first.id);
+    await vi.waitFor(() => expect(next.mock.lastCall?.[0].recipientReadThrough).toEqual([
+      { id: first.id, createdAt: first.createdAt },
+    ]));
+
+    let release: () => void = () => {};
+    const push = vi.spyOn(db.cloud, 'sync').mockImplementation(() => new Promise<void>(resolve => { release = resolve; }));
+    const confirming = coach.confirmDelivery(thread.id, [first.id, second.id, 'unknown']);
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith({ purpose: 'push', wait: true }));
+    expect(next.mock.lastCall?.[0].confirmedIds).toEqual([]);
+    release();
+    await confirming;
+    expect(next.mock.lastCall?.[0].confirmedIds).toEqual([first.id, second.id]);
+
+    const state = (await db.discussionReadStates.toArray()).find(row => row.userId === client.actorUserId);
+    if (!state) throw Error('Missing recipient watermark');
+    await db.discussionReadStates.update(state.id, { readThrough: 'corrupt' });
+    await vi.waitFor(() => expect(next.mock.lastCall?.[0].recipientReadThrough).toEqual([]));
+    expect(error).not.toHaveBeenCalled();
+    sub.unsubscribe();
+    push.mockRestore();
+  });
 });
