@@ -79,7 +79,7 @@ describe('COMM-07 completed execution entries', () => {
   it.each(['tg:11', 'tg:22'])('opens workout/exercise/exact set directly for %s without FACT editing', async actor => {
     probe.actor = actor;
     mount();
-    expect(screen.getByText('Заметка о тренировке')).toBeTruthy();
+    expect(screen.getByText('Заметка о тренировке', { selector: 'span' })).toBeTruthy();
     openFromMenu('Меню тренировки');
     await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith({ kind: 'workout', workout: root }, expect.any(String)));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
