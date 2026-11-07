@@ -6,11 +6,11 @@ describe('UI Kit typography admin', () => {
   it('labels every shared typography role and exposes copy/reset controls', () => {
     const values = defaultTypographyValues();
     const html = renderToStaticMarkup(<TypographyRoleAdmin values={values} onChange={() => undefined} />);
-    for (const label of ['Large title', 'Title', 'Headline', 'Body', 'Footnote', 'Caption']) expect(html).toContain(label);
+    for (const label of ['Large title', 'Title', 'Headline', 'Chat', 'Body', 'Footnote', 'Caption']) expect(html).toContain(label);
     expect(html).toContain('Main screen title');
     expect(html).toContain('Modal title / important compact heading');
-    expect(html.match(/Copy CSS/g)?.length).toBe(6);
-    expect(html.match(/Reset/g)?.length).toBe(6);
+    expect(html.match(/Copy CSS/g)?.length).toBe(7);
+    expect(html.match(/Reset/g)?.length).toBe(7);
   });
 
   it('uses the approved heading weights in shared defaults', () => {
@@ -18,6 +18,7 @@ describe('UI Kit typography admin', () => {
     expect(values['large-title'].weight).toBe(500);
     expect(values.title.weight).toBe(500);
     expect(values.headline.weight).toBe(400);
+    expect(values.chat).toEqual(values.headline);
   });
 
   it('offers only shared roles for semantic slots and renders effective copyable CSS', () => {

@@ -23,6 +23,11 @@
   --ui-letter-spacing-headline: 0.5px;
   --ui-font-weight-headline: var(--ui-font-weight-regular);
   --ui-font-style-headline: normal;
+  --ui-font-size-chat: 1.0625rem;
+  --ui-line-height-chat: 1.375rem;
+  --ui-letter-spacing-chat: 0.5px;
+  --ui-font-weight-chat: var(--ui-font-weight-regular);
+  --ui-font-style-chat: normal;
   --ui-font-size-title: 1.25rem;
   --ui-line-height-title: 1.5rem;
   --ui-letter-spacing-title: 0.35px;

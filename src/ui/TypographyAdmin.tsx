@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Button, Text } from './primitives';
 
-export type TypographyRole = 'large-title' | 'title' | 'headline' | 'body' | 'footnote' | 'caption';
+export type TypographyRole = 'large-title' | 'title' | 'headline' | 'chat' | 'body' | 'footnote' | 'caption';
 export type TypographyValue = { size: number; lineHeight: number; weight: number; letterSpacing: number };
 export type TypographyValues = Record<TypographyRole, TypographyValue>;
 export type TypographySlot = { id: string; label: string; defaultRole: TypographyRole; selector: string; weightOverride?: number };
@@ -11,6 +11,7 @@ export const roleDefinitions: ReadonlyArray<TypographyValue & { role: Typography
   { role: 'large-title', label: 'Large title', usage: 'Main screen title', size: 24, lineHeight: 24, weight: 500, letterSpacing: 0 },
   { role: 'title', label: 'Title', usage: 'Large content / section heading', size: 20, lineHeight: 24, weight: 500, letterSpacing: 0.35 },
   { role: 'headline', label: 'Headline', usage: 'Modal title / important compact heading', size: 17, lineHeight: 22, weight: 400, letterSpacing: 0.5 },
+  { role: 'chat', label: 'Chat', usage: 'Discussion message text', size: 17, lineHeight: 22, weight: 400, letterSpacing: 0.5 },
   { role: 'body', label: 'Body', usage: 'Main text / inputs / controls', size: 15, lineHeight: 20, weight: 300, letterSpacing: 0.35 },
   { role: 'footnote', label: 'Footnote', usage: 'Metadata / field labels / secondary text', size: 13, lineHeight: 18, weight: 300, letterSpacing: 0.55 },
   { role: 'caption', label: 'Caption', usage: 'Small service / supporting text', size: 12, lineHeight: 16, weight: 300, letterSpacing: 0.4 },

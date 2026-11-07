@@ -39,7 +39,10 @@ describe('COMM-05 mobile presentation', () => {
     expect(row?.querySelector('.ui-mezfit-message__inline-meta')?.textContent).toMatch(/\d\d:\d\d/);
     expect(row?.querySelector('.ui-mezfit-message__meta-reserve')).not.toBeNull();
     expect(row?.querySelector('.discussion-quote')).not.toBeNull();
-    expect(row?.querySelector('.ui-mezfit-message__inline-meta svg')).toBeNull(); // Icons come from the shared SVG registry masks.
+    expect(row?.querySelector('.ui-mezfit-message__inline-meta svg')).toBeNull();
+    expect(row?.querySelector('.discussion-message-text.ui-text--chat')).not.toBeNull();
+    expect(row?.querySelector('.discussion-message-meta .ui-text--caption')).not.toBeNull();
+    expect(row?.querySelector('.discussion-quote .ui-text--footnote')).not.toBeNull(); // Icons come from the shared SVG registry masks.
     expect(screen.getByRole('button', { name: 'Добавить вложение (пока недоступно)' })).toHaveProperty('disabled', true);
     expect(screen.getByRole('button', { name: 'Отправить' })).toBeTruthy();
     const composer = view.container.querySelector('.discussion-composer');

@@ -19,6 +19,7 @@ font-family: var(--ui-font-family);
 | Large title | `--ui-font-size-large-title` / `--ui-line-height-large-title` | 24 / 24 px | 500 | 0 px | Primary screen title |
 | Title | `--ui-font-size-title` / `--ui-line-height-title` | 20 / 24 px | 500 | 0.35 px | Large content or section heading |
 | Headline | `--ui-font-size-headline` / `--ui-line-height-headline` | 17 / 22 px | 400 | 0.5 px | Important heading, including every modal title |
+| Chat | `--ui-font-size-chat` / `--ui-line-height-chat` | 17 / 22 px | 400 | 0.5 px | Main text of discussion messages; independent from Headline |
 | Body | `--ui-font-size-body` / `--ui-line-height-body` | 15 / 20 px | 300 | 0.35 px | Normal UI text, inputs, selects, textareas |
 | Footnote | `--ui-font-size-footnote` / `--ui-line-height-footnote` | 13 / 18 px | 300 | 0.55 px | Secondary text, metadata, field labels |
 | Caption | `--ui-font-size-caption` / `--ui-line-height-caption` | 12 / 16 px | 300 | 0.4 px | Small service/supporting information |
@@ -37,17 +38,17 @@ Use weight semantically. Do not create a new font size, line-height, weight, or 
 
 ## Semantic preset rule
 
-The six roles above — **Large title, Title, Headline, Body, Footnote, Caption** — are atomic typography presets and the only app-owned typography presets in Mezfit.
+The seven roles above — **Large title, Title, Headline, Chat, Body, Footnote, Caption** — are atomic typography presets and the only app-owned typography presets in Mezfit.
 
 Every app-owned text element must select exactly one of these presets through the shared semantic typography API, normally the `Text` primitive and its `variant`. A component must not reconstruct a preset from individual `font-family`, `font-size`, `line-height`, `font-weight`, or `letter-spacing` tokens, and must not override one of those properties to create a component-local variant while still treating the text as the same semantic role.
 
-If none of the six presets fits a product requirement, stop and request a deliberate typography-system change. Do not solve the mismatch with component-local font rules or weight overrides.
+If none of the seven presets fits a product requirement, stop and request a deliberate typography-system change. Do not solve the mismatch with component-local font rules or weight overrides.
 
 Component CSS may own layout around text and non-typographic presentation, but the typography bundle itself remains owned by the selected semantic preset.
 
 ## Runtime typography settings
 
-The Settings → **Шрифты** screen may change the values of the six semantic presets at runtime. This is the only supported runtime customization path for app-owned typography.
+The Settings → **Шрифты** screen may change the values of the seven semantic presets at runtime. This is the only supported runtime customization path for app-owned typography.
 
 For each preset the runtime settings may override:
 
@@ -63,9 +64,17 @@ Typography settings are persisted in browser/WebView local storage and applied b
 
 The static values in `src/ui/tokens/typography.css` remain the product defaults and fallback when no valid stored settings exist.
 
+The **Chat** preset starts with the same five properties as the product-default
+Headline preset (17/22px, regular 400, normal, 0.5px tracking). It is a separate
+stored preset: changing Headline does not alter Chat, and changing Chat does not
+alter Headline. Older saved settings without Chat receive this default during
+normalization without discarding any existing customizations. Chat applies to
+the main message text in discussion bubbles; quotes, metadata, status, headers
+and the Konsta composer retain their existing semantic roles.
+
 ## Responsive presentation in narrow Mezfit viewports
 
-The six semantic presets remain authoritative and are not rewritten or persisted
+The seven semantic presets remain authoritative and are not rewritten or persisted
 when the application is viewed on a narrower screen. The application shell
 derives `--ui-responsive-type-scale` from its measured content width, including
 the Settings **Окно 320px** preview. It publishes that value both on the shell
@@ -105,6 +114,7 @@ All text-bearing UI must map to the shared type scale. The standard mapping is:
 | Modal title | Headline |
 | Important compact heading / app-bar heading | Headline |
 | Main text | Body |
+| Discussion message text | Chat |
 | Input / textarea / select / search text | Body |
 | Button / interactive text | Body |
 | List item primary text | Body |
@@ -132,7 +142,7 @@ Normal textual content must not use sizes below Caption 12/16. Smaller dimension
 
 ## Mandatory implementation rule
 
-Every newly created app-owned text-bearing element in the application must use one of the six semantic presets as a complete bundle. Prefer the shared `Text` primitive or another shared component API that delegates to those presets. Component-owned CSS must not recreate or partially override a semantic preset with typography declarations.
+Every newly created app-owned text-bearing element in the application must use one of the seven semantic presets as a complete bundle. Prefer the shared `Text` primitive or another shared component API that delegates to those presets. Component-owned CSS must not recreate or partially override a semantic preset with typography declarations.
 
 Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. The product-level font choice is configured through Konsta's supported Tailwind theme API: the iOS token `--font-ios` points to `var(--ui-font-family)` in `src/ui/konsta.css`, using the shared Zen Maru Gothic family. Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
 

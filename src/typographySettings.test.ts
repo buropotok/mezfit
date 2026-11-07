@@ -18,6 +18,8 @@ describe('typography settings', () => {
       letterSpacing: 0,
     });
     expect(settings.headline.weight).toBe(400);
+    expect(settings.chat).toEqual(settings.headline);
+    expect(settings.chat).not.toBe(settings.headline);
     expect(settings.body.size).toBe(15);
   });
 
@@ -35,10 +37,33 @@ describe('typography settings', () => {
       lineHeight: 25,
       letterSpacing: 0.75,
     };
+    settings.chat = {
+      size: 21,
+      weight: 500,
+      fontStyle: 'normal',
+      lineHeight: 29,
+      letterSpacing: 0.8,
+    };
 
     saveTypographySettings(storage, settings);
 
     expect(loadTypographySettings(storage).headline).toEqual(settings.headline);
+    expect(loadTypographySettings(storage).chat).toEqual(settings.chat);
+  });
+
+  it('fills in Chat for preexisting six-role local storage without copying a custom Headline', () => {
+    const storage = {
+      getItem: () => JSON.stringify({
+        headline: { size: 25, weight: 700, fontStyle: 'italic', lineHeight: 31, letterSpacing: 1 },
+        body: { size: 16, weight: 300, fontStyle: 'normal', lineHeight: 23, letterSpacing: 0.35 },
+      }),
+    };
+    const settings = loadTypographySettings(storage);
+    expect(settings.headline.size).toBe(25);
+    expect(settings.body.size).toBe(16);
+    expect(settings.chat).toEqual(defaultTypographySettings().chat);
+    settings.chat.size = 20;
+    expect(settings.headline.size).toBe(25);
   });
 
   it('falls back per field when stored settings contain invalid values', () => {
@@ -81,5 +106,10 @@ describe('typography settings', () => {
     expect(setProperty).toHaveBeenCalledWith('--ui-letter-spacing-headline', '0.75px');
     expect(setProperty).toHaveBeenCalledWith('--ui-font-weight-headline', '600');
     expect(setProperty).toHaveBeenCalledWith('--ui-font-style-headline', 'italic');
+    expect(setProperty).toHaveBeenCalledWith('--ui-font-size-chat', '17px');
+    expect(setProperty).toHaveBeenCalledWith('--ui-line-height-chat', '22px');
+    expect(setProperty).toHaveBeenCalledWith('--ui-letter-spacing-chat', '0.5px');
+    expect(setProperty).toHaveBeenCalledWith('--ui-font-weight-chat', '400');
+    expect(setProperty).toHaveBeenCalledWith('--ui-font-style-chat', 'normal');
   });
 });
