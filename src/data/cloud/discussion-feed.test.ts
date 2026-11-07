@@ -82,6 +82,13 @@ describe('COMM-08 local feed projection', () => {
     await db.messageAttachments.add({ id: 'file', realmId: scope(0).realmId, messageId: 'message', owner: 'tg:11', authorUserId: 'tg:11',
       mediaType: 'photo', storageKey: 'private/file.jpg', mimeType: 'image/jpeg', sizeBytes: 100, durationSeconds: null,
       uploadState: 'ready', confirmedAt: time });
+    // Replication/old data can omit a lookup key. It must be rejected before
+    // bulkGet, rather than taking down the valid file and the whole inbox.
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.backendDB().transaction(['messageAttachments'], 'readwrite');
+      tx.objectStore('messageAttachments').put({ id: 'broken-file', realmId: scope(0).realmId, uploadState: 'ready' });
+      tx.oncomplete = () => resolve(); tx.onabort = () => reject(tx.error);
+    });
     expect((await client.feed(db))[0].hasAttachments).toBe(true);
     await db.messageAttachments.update('file', { deletedAt: time });
     expect((await client.feed(db))[0].hasAttachments).toBe(false);

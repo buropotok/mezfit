@@ -165,7 +165,10 @@ export class DiscussionRepository {
       const headers = [...canonical.values()];
       const attachedThreads = new Set<string>();
       if (attachments) {
-        const rows = await attachments.messageAttachments.where('realmId').equals(this.scope.realmId).toArray();
+        const rows = (await attachments.messageAttachments.where('realmId').equals(this.scope.realmId).toArray())
+          // Validate lookup keys before IndexedDB sees them: a malformed synced
+          // attachment must not break every conversation in the inbox.
+          .filter(row => discussionId(row.messageId));
         const messages = await this.db.discussionMessages.bulkGet(rows.map(row => row.messageId));
         const ids = new Set(valid.map(row => row.id));
         rows.forEach((row, index) => {

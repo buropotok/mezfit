@@ -55,8 +55,9 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
   const [openError, setOpenError] = useState('');
   const request = useRef(0);
   const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity'; parent: NavigationContext | null } | null>(null);
-  const current = opened && inbox.rows.some(row => row.thread.anchorKey === opened.row.thread.anchorKey
-    && row.thread.realmId === opened.row.thread.realmId) ? opened : null;
+  const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
+    && row.thread.realmId === opened.row.thread.realmId) : undefined;
+  const current = activeRow ? opened : null;
   const openRef = useRef(false);
   openRef.current = Boolean(current);
   useEffect(() => () => { openRef.current = false; ++request.current; }, []);
@@ -110,14 +111,14 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
     {role === 'coach' && !relationshipId ? <KonstaList><ListInput type="select" label="Клиент" value={client}
-      onChange={event => { setClient(event.target.value); setLimit(50); }}>
+      onChange={event => { ++request.current; setClient(event.target.value); setLimit(50); }}>
       <option value="">Все клиенты</option>
       {(cloud?.clients ?? []).map(contact => <option key={contact.relationshipId} value={contact.relationshipId}>{contact.displayName}</option>)}
     </ListInput></KonstaList> : null}
     <div className="discussion-inbox__filters">
-      <Button rounded tonal inline onClick={() => setPicker({ side: 'from', parent })}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
-      <Button rounded tonal inline onClick={() => setPicker({ side: 'to', parent })}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
-      {from || to || client ? <Button rounded clear inline onClick={() => { setFrom(null); setTo(null); setClient(''); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
+      <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
+      <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'to', parent }); }}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
+      {from || to || client ? <Button rounded clear inline onClick={() => { ++request.current; setFrom(null); setTo(null); setClient(''); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
     </div>
     {from && to && from > to ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {cloud?.syncStatus === 'offline' ? <Text variant="caption">Нет соединения. Показаны обсуждения на устройстве.</Text>
@@ -141,7 +142,7 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
       <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
         onClose={close} onBack={close} contextLabel={current.row.thread.derivedTitleSnapshot}
         parentNavigation={chatParent} onNavigationContextChange={chatNavigation}
-        resolveAuthor={id => ({ name: id === cloud?.actorUserId ? 'Вы' : current.row.contact?.displayName ?? 'Участник обсуждения' })} />
+        resolveAuthor={id => ({ name: id === cloud?.actorUserId ? 'Вы' : activeRow?.contact?.displayName ?? 'Участник обсуждения' })} />
     </div>, document.body)}
   </section>;
 }

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { liveQuery } from 'dexie';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
-import { DiscussionRepository, type DiscussionFeedRow } from '../data/cloud/discussions';
+import type { DiscussionFeedRow } from '../data/cloud/discussions';
+import { observeDiscussionFeed } from '../data/cloud/discussion-feed';
 import { sortDiscussionFeed } from './feed-presentation';
 
 export interface DiscussionInboxRow extends DiscussionFeedRow { contact: CloudContact | null }
@@ -12,33 +12,23 @@ export function DiscussionsProvider({ role, details = true, children }: { role: 
   const cloud = useCloudConnections();
   const contacts = role === 'coach' ? cloud?.clients : cloud?.coaches;
   const [revision, setRevision] = useState(0);
-  const identity = useMemo(() => ({}), [cloud?.db, cloud?.actorUserId, role, contacts, revision, details]);
-  const [snapshot, setSnapshot] = useState<{ identity: object; rows: DiscussionInboxRow[]; error: string } | null>(null);
+  const realmKey = JSON.stringify([...new Set((contacts ?? []).map(contact => contact.relationshipId))].sort());
+  const realmIds = useMemo<string[]>(() => JSON.parse(realmKey), [realmKey]);
+  const identity = useMemo(() => ({}), [cloud?.db, cloud?.actorUserId, role, realmIds, revision, details]);
+  const [snapshot, setSnapshot] = useState<{ identity: object; rows: DiscussionFeedRow[]; error: string } | null>(null);
   useEffect(() => {
     if (!cloud) return;
     let active = true;
-    const peers = [...new Map((contacts ?? []).map(contact => [contact.relationshipId, contact])).values()];
-    const sub = liveQuery(async () => {
-      const scopes = [{ realmId: cloud.actorUserId, coachClientId: null, contact: null as CloudContact | null },
-        ...peers.map(contact => ({ realmId: contact.relationshipId, coachClientId: contact.relationshipId, contact }))];
-      const rows: DiscussionInboxRow[] = [];
-      // Serialize membership validation; each repository owns its local read transaction.
-      for (const scope of scopes) {
-        const repository = new DiscussionRepository(cloud.db, cloud.actorUserId, scope);
-        try {
-          for (const row of await repository.feed(details ? cloud.db : undefined, details)) rows.push({ ...row, contact: scope.contact });
-        } catch (reason) {
-          // Membership can be revoked before the contact projection updates.
-          if (!(reason instanceof Error) || reason.message !== 'DISCUSSION_ACCESS_DENIED') throw reason;
-        }
-      }
-      return sortDiscussionFeed(rows);
-    }).subscribe({ next: rows => { if (active) setSnapshot({ identity, rows, error: '' }); },
-      error: () => { if (active) setSnapshot({ identity, rows: [], error: 'Не удалось прочитать обсуждения' }); } });
+    const scopes = [{ realmId: cloud.actorUserId, coachClientId: null },
+      ...realmIds.map(realmId => ({ realmId, coachClientId: realmId }))];
+    const sub = observeDiscussionFeed(cloud.db, cloud.actorUserId, scopes, details, rows => {
+      if (active) setSnapshot({ identity, rows: sortDiscussionFeed(rows), error: '' });
+    }, () => { if (active) setSnapshot({ identity, rows: [], error: 'Не удалось прочитать обсуждения' }); });
     return () => { active = false; sub.unsubscribe(); };
   }, [identity]);
   const current = snapshot?.identity === identity ? snapshot : null;
-  const rows = current?.rows ?? [];
+  const rows: DiscussionInboxRow[] = (current?.rows ?? []).map(row => ({ ...row,
+    contact: contacts?.find(contact => contact.relationshipId === row.thread.realmId) ?? null }));
   const value: Inbox = { rows, unread: rows.reduce((sum, row) => sum + row.unread, 0),
     loading: Boolean(cloud) && (!current || cloud?.status === 'loading'), error: !cloud ? 'Обсуждения недоступны' : current?.error ?? '', retry: () => setRevision(value => value + 1) };
   return <Context.Provider value={value}>{children}</Context.Provider>;

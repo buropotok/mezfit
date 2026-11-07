@@ -1,4 +1,5 @@
 import { discussionAnchorKey } from '../../../shared/discussion-anchor';
+import { liveQuery } from 'dexie';
 import type { DiscussionThread } from './discussion-contracts';
 import type { MezfitCloudDatabase } from './database';
 import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
@@ -13,6 +14,12 @@ export type DiscussionDestination = { kind: 'program'; id: string }
   | { kind: 'occurrence'; draft: LocalWorkoutOccurrenceDraft }
   | { kind: 'session'; session: ActiveWorkoutSession<string>; name: string; comment: string | null }
   | { kind: 'unavailable' };
+
+export function observeDiscussionDestination(db: MezfitCloudDatabase, actor: string,
+  role: 'coach' | 'client', thread: DiscussionThread,
+  next: (target: DiscussionDestination) => void, error: (reason: unknown) => void): { unsubscribe(): void } {
+  return liveQuery(() => readDiscussionDestination(db, actor, role, thread)).subscribe({ next, error });
+}
 
 /** Exact identity resolution through the existing authorized readers. Missing child
  * anchors never fall back to a different exercise, PLAN ID, or reusable program. */

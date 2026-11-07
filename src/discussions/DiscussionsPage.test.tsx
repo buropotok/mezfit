@@ -38,6 +38,20 @@ function row(id: string, realmId = 'pair', instant = new Date(2026, 10, 7, 10).t
 afterEach(() => { cleanup(); state.rows = []; state.ensure.mockReset(); vi.restoreAllMocks(); });
 
 describe('COMM-08 shared inbox surfaces', () => {
+  it.each(['period', 'client'] as const)('cancels a pending conversation opening when changing the %s filter', async filter => {
+    state.rows = [row('first')];
+    let resolve: ((value: typeof thread) => void) | undefined;
+    state.ensure.mockImplementation(() => new Promise<typeof thread>(done => { resolve = done; }));
+    render(<DiscussionsPage role="coach" onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Контекст first' }));
+    if (filter === 'period') fireEvent.click(screen.getByText('С даты'));
+    else fireEvent.change(screen.getByRole('combobox'), { target: { value: 'other-pair' } });
+    await act(async () => { resolve?.(state.rows[0].thread); });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    if (filter === 'period') expect(screen.getByText('Выбрать 7 ноября')).toBeTruthy();
+    else expect(screen.queryByText('Контекст first')).toBeNull();
+  });
+
   it('keeps the primary discussion action independent from the entity action and exposes metadata', () => {
     const open = vi.fn(), entity = vi.fn();
     const first = row('first');

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { liveQuery } from 'dexie';
 import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import type { DiscussionThread } from '../data/cloud/discussion-contracts';
-import { readDiscussionDestination, type DiscussionDestination } from '../data/cloud/discussion-destination';
+import { observeDiscussionDestination, type DiscussionDestination } from '../data/cloud/discussion-destination';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -29,9 +28,9 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
     setTarget(null); setError('');
     if (!cloud) return;
     let active = true;
-    const sub = liveQuery(() => readDiscussionDestination(cloud.db, cloud.actorUserId, role, thread))
-      .subscribe({ next: target => { if (active) setTarget(target); },
-        error: () => { if (active) { setTarget(null); setError('Не удалось открыть сущность'); } } });
+    const sub = observeDiscussionDestination(cloud.db, cloud.actorUserId, role, thread,
+      target => { if (active) setTarget(target); },
+      () => { if (active) { setTarget(null); setError('Не удалось открыть сущность'); } });
     return () => { active = false; sub.unsubscribe(); };
   }, [cloud?.db, cloud?.actorUserId, role, thread, retry]);
   useEffect(() => {
