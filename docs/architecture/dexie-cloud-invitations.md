@@ -33,6 +33,15 @@ accept the same invitation until expiry or revocation. No separate manual
 Dexie-accept operation exists. A cloud outage does not create an active
 D1 relationship.
 
+An active pre-cutover D1 `coach_client` row is **not** evidence that the
+corresponding Dexie Cloud realm and memberships exist. The invitation preview
+must not suppress a valid, unexpired, non-self invitation solely because D1
+already contains the pair. Reopening a previously accepted link may therefore
+show the confirmation again; the explicit accept action idempotently provisions
+or verifies the Cloud pair before updating the existing D1 projection. This
+recovers legacy-only relationships without deleting D1 history or bypassing
+Telegram verification. Expired and revoked invitations remain unavailable.
+
 The temporary D1 `coach_client` representation must be removed when its
 consumers are migrated to typed Dexie Cloud repositories. During the
 transition Dexie Cloud membership is the authority for *new* relationships,
