@@ -26,12 +26,12 @@ const target: EntityDiscussionTarget = { scope: { realmId: 'pair', coachClientId
 type AnchorValue = { threads: DiscussionThread[]; unread: number; unreadByThread: Record<string, number> };
 let emit: (value: AnchorValue) => void;
 let fail: (reason: unknown) => void;
-let unsubscribe: ReturnType<typeof vi.fn>;
+let unsubscribe = vi.fn<() => void>();
 let createThread: ReturnType<typeof vi.fn<DiscussionRepository['createThread']>>;
 beforeEach(() => {
   probe.db = {};
   const f = fixture();
-  unsubscribe = vi.fn(); createThread = vi.fn<DiscussionRepository['createThread']>(async () => thread);
+  unsubscribe = vi.fn<() => void>(); createThread = vi.fn<DiscussionRepository['createThread']>(async () => thread);
   probe.repository = { ...f.port, createThread,
     observeAnchor: vi.fn<DiscussionRepository['observeAnchor']>((_anchor, next, error) => {
       emit = next; fail = error;
