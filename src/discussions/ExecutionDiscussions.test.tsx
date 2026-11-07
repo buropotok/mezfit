@@ -144,6 +144,45 @@ describe('COMM-07 completed execution entries', () => {
     expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
   });
 
+  it.each([
+    ['weight_reps', 'Дропсет', 'close button'],
+    ['time', 'Кластер', 'Telegram Back'],
+  ] as const)('restores the dirty %s editor Back handler after discussion %s', async (trackingType, choice, closeMethod) => {
+    probe.actor = 'tg:11';
+    const initial = session();
+    const active: ActiveWorkoutSession<string> = {
+      ...initial, status: 'active', completedAt: null,
+      exercises: initial.exercises.map((exercise, index) => index === 0
+        ? { ...exercise, exercise: { ...exercise.exercise, tracking_type: trackingType } }
+        : exercise),
+    };
+    probe.ensure.mockImplementation(async (anchor: DiscussionAnchor) => ({
+      id: discussionAnchorKey(scope, anchor),
+    }));
+    const onSaveSet = vi.fn(async () => {});
+    render(<WorkoutSessionCard session={active} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={onSaveSet}
+      onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Подход 1'));
+    fireEvent.click(screen.getByRole('button', { name: choice }));
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Жим · Подход 1'));
+    expect(screen.getByRole('dialog', { name: 'Обсуждение' })).toBeTruthy();
+    if (closeMethod === 'Telegram Back') act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    else fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Подход 1'));
+    expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeTruthy();
+    expect(onSaveSet).not.toHaveBeenCalled();
+    fireEvent.click(within(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }))
+      .getByRole('button', { name: 'Нет' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
+    await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
+  });
+
   it('deletes only the selected active set through its menu after confirmation and supports retries', async () => {
     probe.actor = 'tg:11';
     const value = { ...session(), status: 'active' as const, completedAt: null };

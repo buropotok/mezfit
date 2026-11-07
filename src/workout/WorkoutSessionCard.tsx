@@ -158,8 +158,18 @@ function WorkoutFactCard<Id extends string | number = number>({
   onOpenChat,
   onNavigationContextChange,
 }: WorkoutFactCardProps<Id>) {
+  // An open FACT editor and its discussion are separate nested surfaces.
+  // The discussion owns Back while visible; closing it must reveal the
+  // editor's existing save/discard handler instead of clearing navigation.
+  const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
+  const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
+  useEffect(() => {
+    onNavigationContextChange?.(discussionNavigation ?? editorNavigation);
+    return () => onNavigationContextChange?.(null);
+  }, [discussionNavigation, editorNavigation, onNavigationContextChange]);
   const discussions = useEntityDiscussions(session.discussion
-    ? { ...session.discussion, name: title ?? workoutTitle(session) } : null, onNavigationContextChange, true, {
+    ? { ...session.discussion, name: title ?? workoutTitle(session) } : null,
+    onNavigationContextChange ? setDiscussionNavigation : undefined, true, {
       isTargetAvailable: target => {
         const key = discussionAnchorKey(target.scope, target.anchor);
         const anchors = [session.discussion?.anchor, ...session.exercises.flatMap(exercise =>
@@ -239,7 +249,7 @@ function WorkoutFactCard<Id extends string | number = number>({
         onInformation={onExerciseInformation ? () => onExerciseInformation(exercise.sessionExerciseId) : undefined}
         onOpenHistory={onOpenExerciseHistory}
         onOpenChat={onOpenChat}
-        onNavigationContextChange={onNavigationContextChange}
+        onNavigationContextChange={onNavigationContextChange ? setEditorNavigation : undefined}
       />
     ),
   }));
