@@ -6,6 +6,13 @@
   width: 100%;
   min-width: 0;
 }
+.workout-session-card__header--with-discussion {
+  grid-template-columns: 44px minmax(0, 1fr) 44px 44px 44px;
+  gap: 6px;
+}
+.workout-session-card__discussion-action {
+  flex-shrink: 0;
+}
 
 .workout-session-card__icon {
   display: grid;

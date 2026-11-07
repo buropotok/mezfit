@@ -105,6 +105,194 @@ describe('COMM-07 completed execution entries', () => {
     expect(probe.ensure.mock.calls[2][0]).toEqual(probe.ensure.mock.calls[3][0]);
   });
 
+
+  it('opens workout and exact set discussion from new direct icons without using the menus', async () => {
+    probe.actor = 'tg:11';
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения тренировки' }));
+    await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(
+      { kind: 'workout', workout: root }, expect.any(String)));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    const icon = screen.getByRole('button', { name: 'Обсуждения подхода 1' });
+    expect(icon.closest('.ui-list-item__trailing-action')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+    expect(screen.getAllByLabelText('Непрочитанных: 3').length).toBeGreaterThan(0);
+    const actionRow = icon.closest('.ui-list-item-wrap');
+    expect(actionRow?.querySelector('.session-exercise__icon--chevron-right')).toBeNull();
+    fireEvent.click(icon);
+    await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(
+      setAnchor('exercise-a', 'exercise-a-set-0'), 'Жим · Подход 1'));
+    expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+
+  it('opens a set editor discussion under the same execution anchor as its row action', async () => {
+    probe.actor = 'tg:11';
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    probe.ensure.mockImplementation(async (anchor: DiscussionAnchor) => ({ id: discussionAnchorKey(scope, anchor) }));
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода' }));
+    await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(
+      setAnchor('exercise-a', 'exercise-a-set-0'), 'Жим · Подход 1'));
+    expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
+  });
+
+  it.each([
+    ['weight_reps', 'Дропсет', 'close button'],
+    ['time', 'Кластер', 'Telegram Back'],
+  ] as const)('restores the dirty %s editor Back handler after discussion %s', async (trackingType, choice, closeMethod) => {
+    probe.actor = 'tg:11';
+    const initial = session();
+    const active: ActiveWorkoutSession<string> = {
+      ...initial, status: 'active', completedAt: null,
+      exercises: initial.exercises.map((exercise, index) => index === 0
+        ? { ...exercise, exercise: { ...exercise.exercise, tracking_type: trackingType } }
+        : exercise),
+    };
+    probe.ensure.mockImplementation(async (anchor: DiscussionAnchor) => ({
+      id: discussionAnchorKey(scope, anchor),
+    }));
+    const onSaveSet = vi.fn(async () => {});
+    render(<WorkoutSessionCard session={active} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={onSaveSet}
+      onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Подход 1'));
+    fireEvent.click(screen.getByRole('button', { name: choice }));
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Жим · Подход 1'));
+    expect(screen.getByRole('dialog', { name: 'Обсуждение' })).toBeTruthy();
+    if (closeMethod === 'Telegram Back') act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    else fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Подход 1'));
+    expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    expect(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeTruthy();
+    expect(onSaveSet).not.toHaveBeenCalled();
+    fireEvent.click(within(screen.getByRole('alertdialog', { name: 'Сохранить изменения?' }))
+      .getByRole('button', { name: 'Нет' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
+    await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
+  });
+
+  it('uses Back to dismiss set-deletion confirmation without leaving the workout', async () => {
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    const onDeleteSet = vi.fn(async () => {});
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?'));
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    await waitFor(() => expect(screen.queryByRole('alertdialog', { name: 'Удалить подход?' })).toBeNull());
+    await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
+    expect(dialog.isConnected).toBe(false);
+    expect(onDeleteSet).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+  });
+
+  it('keeps deletion confirmation as the Back owner during pending work and releases it after an error', async () => {
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    let failDeletion: (reason: Error) => void = () => {};
+    const onDeleteSet = vi.fn(() => new Promise<void>((_resolve, reject) => { failDeletion = reject; }));
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    await waitFor(() => expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?'));
+    const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }));
+    expect(onDeleteSet).toHaveBeenCalledOnce();
+    // Neither Back nor Cancel may dismiss the modal while its mutation is active.
+    expect(within(dialog).getByRole('button', { name: 'Отмена' })).toHaveProperty('disabled', true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }));
+    expect(screen.getByRole('alertdialog', { name: 'Удалить подход?' })).toBeTruthy();
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    expect(screen.getByRole('alertdialog', { name: 'Удалить подход?' })).toBeTruthy();
+    expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?');
+    await act(async () => failDeletion(new Error('Ошибка сохранения')));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Ошибка сохранения');
+    act(() => { probe.navigations.at(-1)?.onBack?.(); });
+    await waitFor(() => expect(screen.queryByRole('alertdialog', { name: 'Удалить подход?' })).toBeNull());
+    await waitFor(() => expect(probe.navigations.at(-1)).toBeNull());
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+  });
+
+  it('deletes only the selected active set through its menu after confirmation and supports retries', async () => {
+    probe.actor = 'tg:11';
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    const onDeleteSet = vi.fn()
+      .mockRejectedValueOnce(new Error('Повторите удаление'))
+      .mockResolvedValueOnce(undefined);
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    // Document-body portals need the same canonical Konsta theme ancestry
+    // as discussions; React context alone does not transport CSS selectors.
+    const themeRoot = dialog.closest('.navigation-overlay-root.k-ios.dark.safe-areas');
+    expect(themeRoot).not.toBeNull();
+    expect(themeRoot?.parentElement).toBe(document.body);
+    expect(within(dialog).getByText('Удалить подход?')).toBeTruthy();
+    expect(onDeleteSet).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }));
+    expect(onDeleteSet).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    const remove = within(confirmation).getByRole('button', { name: 'Удалить' });
+    fireEvent.click(remove);
+    fireEvent.click(remove);
+    await waitFor(() => expect(onDeleteSet).toHaveBeenCalledTimes(1));
+    expect(onDeleteSet).toHaveBeenCalledWith('exercise-a-set-0');
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Повторите удаление');
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Удалить' }));
+    await waitFor(() => expect(onDeleteSet).toHaveBeenCalledTimes(2));
+    expect(onDeleteSet).toHaveBeenLastCalledWith('exercise-a-set-0');
+    expect(screen.getByRole('button', { name: 'Меню подхода 2' })).toBeTruthy();
+  });
+
+
+  it('does not offer set deletion for completed/read-only FACT', () => {
+    mount();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    expect(screen.getByRole('menu', { name: 'Меню подхода 1' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Удалить подход' })).toBeNull();
+  });
+
+  it('keeps the delete menu available for active sets with no validated discussion anchor', () => {
+    const value = { ...session(), status: 'active' as const, completedAt: null,
+      exercises: session().exercises.map(exercise => ({
+        ...exercise,
+        sets: exercise.sets.map(set => ({ ...set, discussionAnchor: undefined })),
+      })) };
+    const onDeleteSet = vi.fn(async () => undefined);
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onDeleteSet={onDeleteSet} onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    expect(screen.queryByRole('button', { name: 'Обсуждения подхода 1' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
+    expect(screen.getByRole('menuitem', { name: 'Удалить подход' })).toBeTruthy();
+  });
+
   it('keeps the exact conversation during reorder and marks a deleted set unavailable instead of picking its neighbour', async () => {
     probe.actor = 'tg:11';
     const value = session();

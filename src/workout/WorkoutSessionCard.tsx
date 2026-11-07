@@ -161,8 +161,20 @@ function WorkoutFactCard<Id extends string | number = number>({
   onOpenChat,
   onNavigationContextChange,
 }: WorkoutFactCardProps<Id>) {
+  // An open FACT editor and its discussion are separate nested surfaces.
+  // The discussion owns Back while visible; closing it must reveal the
+  // editor's existing save/discard handler instead of clearing navigation.
+  const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
+  const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
+  const [setDeletionNavigation, setSetDeletionNavigation] = useState<NavigationContext | null>(null);
+  useEffect(() => {
+    // Set deletion confirmation is topmost; Back cannot fall through to the workout.
+    onNavigationContextChange?.(setDeletionNavigation ?? discussionNavigation ?? editorNavigation);
+    return () => onNavigationContextChange?.(null);
+  }, [setDeletionNavigation, discussionNavigation, editorNavigation, onNavigationContextChange]);
   const discussions = useEntityDiscussions(session.discussion
-    ? { ...session.discussion, name: title ?? workoutTitle(session) } : null, onNavigationContextChange, true, {
+    ? { ...session.discussion, name: title ?? workoutTitle(session) } : null,
+    onNavigationContextChange ? setDiscussionNavigation : undefined, true, {
       isTargetAvailable: target => {
         const key = discussionAnchorKey(target.scope, target.anchor);
         const anchors = [session.discussion?.anchor, ...session.exercises.flatMap(exercise =>
@@ -242,7 +254,8 @@ function WorkoutFactCard<Id extends string | number = number>({
         onInformation={onExerciseInformation ? () => onExerciseInformation(exercise.sessionExerciseId) : undefined}
         onOpenHistory={onOpenExerciseHistory}
         onOpenChat={onOpenChat}
-        onNavigationContextChange={onNavigationContextChange}
+        onNavigationContextChange={onNavigationContextChange ? setEditorNavigation : undefined}
+        onSetDeletionNavigationContextChange={onNavigationContextChange ? setSetDeletionNavigation : undefined}
       />
     ),
   }));
@@ -365,7 +378,7 @@ function WorkoutFactCard<Id extends string | number = number>({
           onReorderExerciseIds(reorderedIds);
         }}
         header={(
-          <div className="workout-session-card__header">
+          <div className={`workout-session-card__header${session.discussion ? ' workout-session-card__header--with-discussion' : ''}`}>
             <span className="workout-session-card__icon">
               <Icon name="barbell" variant="outline" className="workout-session-card__icon-artwork" />
             </span>
@@ -376,6 +389,11 @@ function WorkoutFactCard<Id extends string | number = number>({
               </Text>
               {showStatus ? <Badge color={session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : null}
             </div>
+            {session.discussion ? <span className="entity-discussion-trigger workout-session-card__discussion-action" data-no-dnd>
+              <IconButton icon="message-circle" label="Обсуждения тренировки"
+                disabled={!discussions.canOpen} onClick={discussions.open} />
+              <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
+            </span> : null}
             {menuItems.length > 0 ? (
               <span className="entity-discussion-trigger"><LiquidPopover
                 isOpen={menuOpen}
@@ -400,7 +418,7 @@ function WorkoutFactCard<Id extends string | number = number>({
                 )}
                 label="Меню тренировки"
                 items={menuItems}
-              />{!menuOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}</span>
+              /></span>
             ) : (
               <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
             )}

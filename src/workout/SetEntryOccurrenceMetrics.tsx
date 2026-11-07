@@ -75,7 +75,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const [picker, setPicker] = useState<EditableMetric | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const targets = useRef<Partial<Record<EditableMetric, HTMLElement | null>>>({});
-  const requestClose = useRef<() => void>(() => undefined);
+  const requestClose = useRef<(fromBack?: boolean) => void>(() => undefined);
   const glass = loadBrowserGlassSettings();
   const keys = FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? [];
   const suggested = (key: EditableMetric) => {
@@ -155,8 +155,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     }
   };
 
-  const discardEntry = () => {
+  const discardEntry = (fromBack = false) => {
     if (saveInFlightRef.current) return;
+    // An explicit X exits the editor; navigation Back dismisses its topmost overlay first.
+    if (deleteConfirm) { setDeleteConfirm(false); return; }
+    if (discardConfirm) { setDiscardConfirm(false); return; }
+    if (fromBack && picker) { closeMetricPicker(picker); return; }
     if (readOnly || sameSetEntryDraft(initialDraft.current, draftRef.current)) {
       setPicker(null); props.onClose();
     }
@@ -169,7 +173,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     register({
       title: `Подход ${props.data.identity.setNumber}`,
       scrollKey: `occurrence-set:${props.data.identity.sourceProgramSetId ?? props.data.identity.setNumber}`,
-      onBack: () => requestClose.current(),
+      onBack: () => requestClose.current(true),
     });
     return () => register(null);
   }, [props.isOpen, props.onNavigationContextChange, props.data.identity.setNumber,
@@ -185,8 +189,13 @@ export function SetEntryOccurrenceMetrics(props: Props) {
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
             <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
           </div>
-          <IconButton icon="x" label="Закрыть подход" disabled={saving}
-            onClick={() => requestClose.current()} />
+          <div className="set-entry-weight-reps__header-actions">
+            {props.discussionTarget ? <IconButton icon="message-circle" label="Обсуждения подхода"
+              disabled={saving || !props.onOpenDiscussion}
+              onClick={() => { if (props.discussionTarget) props.onOpenDiscussion?.(props.discussionTarget); }} /> : null}
+            <IconButton icon="x" label="Закрыть подход" disabled={saving}
+              onClick={() => requestClose.current()} />
+          </div>
         </header>
         <div className="set-entry-weight-reps__body">
           <div className="set-entry-weight-reps__exercise">
@@ -273,7 +282,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         </div>
       </div>
     </MezfitBottomSheet>, host)}
-    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm}
+    {!readOnly && props.onDeleteSet ? createPortal(<MezfitDialog opened={deleteConfirm} role="alertdialog" aria-label="Удалить подход?"
       title={<Text variant="headline">Удалить подход?</Text>}
       buttons={<><MezfitDialogButton disabled={saving} onClick={() => setDeleteConfirm(false)}><Text variant="body">Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong tone="danger" disabled={saving} onClick={() => { void deleteEntry(); }}><Text variant="body" style={{ color: 'inherit' }}>Удалить</Text></MezfitDialogButton></>}>

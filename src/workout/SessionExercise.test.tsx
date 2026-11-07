@@ -508,3 +508,22 @@ describe('planned session with an empty projected FACT object', () => {
     expect(onSaveSet).not.toHaveBeenCalled();
   });
 });
+
+
+it('keeps FACT row openable by tapping the row, with no chevron when a discussion button is present', () => {
+  const withDiscussion = { ...data, sets: data.sets.map((set, index) => ({
+    ...set, discussionAnchor: { kind: 'set' as const,
+      workout: { kind: 'session' as const, id: 'workout-1' },
+      exercise: { kind: 'execution' as const, id: 'exercise-1' },
+      set: { kind: 'execution' as const, id: String(index + 1) } },
+  })) };
+  render(<SessionExercise context={context} data={withDiscussion} defaultCollapsed={false}
+    discussionScope={{ realmId: 'pair', coachClientId: 'pair' }}
+    onOpenDiscussion={vi.fn()} onSaveSet={vi.fn(async () => {})} />);
+  const row = screen.getByRole('button', { name: 'Открыть подход 1' });
+  expect(row.querySelector('.session-exercise__icon--chevron-right')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Обсуждения подхода 1' })).toBeTruthy();
+  fireEvent.click(row);
+  expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
+});
+
