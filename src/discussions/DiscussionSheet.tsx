@@ -246,7 +246,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         list.addEventListener('scrollend', finish, { once: true });
         list.addEventListener('scroll', onScroll);
         focusScrollCleanup.current = cleanup;
-        fallbackTimer = window.setTimeout(finish, 800);
+        fallbackTimer = window.setTimeout(finish, 1600);
         list.scrollTo({ top: target, behavior: 'smooth' });
       }
       setRequestedFocus(null);

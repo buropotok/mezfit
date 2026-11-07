@@ -34,7 +34,7 @@ describe('Mezfit Konsta Messagebar autosizing adapter', () => {
   });
   it('centers the bare single-line input at 48 px while retaining five-row growth and overflow', () => {
     vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLTextAreaElement) {
-      return this.value.split('\\n').length * 16 + 32;
+      return this.value.split('\n').length * 16 + 32;
     });
     function BareExample() {
       const [value, setValue] = useState('');
@@ -47,9 +47,9 @@ describe('Mezfit Konsta Messagebar autosizing adapter', () => {
     const input = screen.getByPlaceholderText('Сообщение') as HTMLTextAreaElement;
     expect(view.container.querySelector('.ui-mezfit-messagebar--bare')).not.toBeNull();
     expect(input.style.height).toBe('48px');
-    fireEvent.change(input, { target: { value: '1\\n2\\n3' } });
+    fireEvent.change(input, { target: { value: '1\n2\n3' } });
     expect(Number.parseFloat(input.style.height)).toBeGreaterThan(48);
-    fireEvent.change(input, { target: { value: '1\\n2\\n3\\n4\\n5\\n6\\n7\\n8' } });
+    fireEvent.change(input, { target: { value: '1\n2\n3\n4\n5\n6\n7\n8' } });
     expect(input.style.overflowY).toBe('auto');
     fireEvent.change(input, { target: { value: 'Одна строка' } });
     expect(input.style.height).toBe('48px');
