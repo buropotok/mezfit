@@ -363,8 +363,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     data-show-avatars={String(showAvatars)}>
     <header className="discussion-thread__header">
       <div className="discussion-thread__identity">
-        <Text variant="headline" className="discussion-thread__title">{contextLabel || state.title || 'Обсуждение'}</Text>
-        {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted" className="discussion-thread__demo">Демо</Text>}
+        <div className="discussion-thread__title-row">
+          <Text variant="headline" className="discussion-thread__title">{contextLabel || state.title || 'Обсуждение'}</Text>
+          {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted" className="discussion-thread__demo">Демо</Text>}
+        </div>
+        {syncState && repository.sourceKind !== 'demo' && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
+          : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
       </div>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>
@@ -424,8 +428,6 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {error && <Text variant="footnote" role="alert">{error}</Text>}
       {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
-      {syncState && repository.sourceKind !== 'demo' && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
-        : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
         {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor} onJump={() => void jump(replyQuote.messageId)} /> : <Text variant="footnote">Редактирование сообщения</Text>}
@@ -437,7 +439,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
         <IconButton icon="plus" label="Добавить вложение (пока недоступно)" disabled />
       </GlassSurface>
-      <GlassSurface className="discussion-composer__field" {...material} shape="capsule" wrapContent={false}>
+      <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
         <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
           value={text} maxRows={5} disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
           onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />

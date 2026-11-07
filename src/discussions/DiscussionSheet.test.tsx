@@ -32,6 +32,21 @@ function mount(overrides: Partial<DiscussionSheetProps> = {}, f = fixture()) {
 async function open(text: string) { fireEvent.click(await screen.findByText(text)); return screen.getByRole('menu'); }
 
 describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
+  it('renders synchronization beneath the sheet title, not above the composer', async () => {
+    const f = fixture();
+    vi.mocked(f.port.sync.observe).mockImplementation(onState => {
+      onState({ status: 'synced', offline: false, error: null });
+      return { unsubscribe: vi.fn() };
+    });
+    const view = mount({}, f);
+    await screen.findByText('Мой текст');
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('Синхронизировано');
+    expect(status.closest('.discussion-thread__identity')).not.toBeNull();
+    expect(status.closest('.discussion-thread__header')).not.toBeNull();
+    expect(view.container.querySelector('.discussion-composer-context')?.querySelector('[role="status"]')).toBeNull();
+  });
+
   it('opens the ordered own/foreign tap menus, reuses Tabler icons and material settings', async () => {
     const f = mount({ glassSettings: { preset: 'frosted', optics: true, blur: 19 } });
     const menu = await open('Мой текст');

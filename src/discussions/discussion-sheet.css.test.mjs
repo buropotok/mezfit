@@ -13,6 +13,16 @@ describe('discussion-owned composition', () => {
     expect(css).not.toContain('.discussion-message-target[data-highlighted]');
     expect(css).not.toContain('outline-offset: -2px');
   });
+  it('reserves 24px corners for the growing glass input and no black sync strip', () => {
+    const sheet = readFileSync(new URL('./DiscussionSheet.tsx', import.meta.url), 'utf8');
+    expect(sheet).toContain('className="discussion-composer__field" {...material} shape={{ radius: 24 }}');
+    expect(sheet).not.toContain('className="discussion-composer__field" {...material} shape="capsule"');
+    const context = css.split('.discussion-composer-context {')[1]?.split('}')[0] ?? '';
+    expect(context).toContain('background: transparent');
+    const identity = css.split('.discussion-thread__identity {')[1]?.split('}')[0] ?? '';
+    expect(identity).toContain('flex-direction: column');
+  });
+
   it('keeps the composer wrapper transparent so only the three children own glass', () => {
     const block = css.match(/\.discussion-composer\s*\{([^}]+)\}/)?.[1] ?? '';
     for (const declaration of ['position: absolute', 'display: flex', 'background: transparent', 'gap: 8px']) expect(block).toContain(declaration);
