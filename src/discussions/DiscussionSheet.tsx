@@ -1,10 +1,13 @@
 import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
-import { Button, Messagebar, Messages, MessagesTitle } from 'konsta/react';
+import { Button, Messages, MessagesTitle } from 'konsta/react';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
-import type { DiscussionMessageView, DiscussionQuote } from '../data/cloud/discussion-views';
+import { discussionCursorKey, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 import type { DiscussionSyncState } from '../data/cloud/discussion-sync';
 import type { NavigationContext } from '../NavigationShell';
 import { Avatar, IconButton, Text } from '../ui/primitives';
+import { Icon } from '../ui/Icon';
+import { GlassSurface } from '../ui/GlassSurface';
+import { MezfitMessagebar } from '../ui/konsta-mezfit/Messagebar';
 import { LiquidPopover, type LiquidPopoverItem } from '../ui/LiquidPopover';
 import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
 import { MezfitMessage } from '../ui/konsta-mezfit/Message';
@@ -25,6 +28,8 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   onNavigationContextChange: (context: NavigationContext | null) => void;
   parentNavigation: NavigationContext | null;
   glassSettings?: GlassSettings;
+  /** Compact direct conversation by default; retain native author presentation for groups. */
+  showAvatars?: boolean;
   renderAttachment?: (message: DiscussionMessageView) => ReactNode;
 }
 
@@ -52,7 +57,7 @@ export function DiscussionSheet(props: DiscussionSheetProps) {
 }
 
 function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose, resolveAuthor,
-  onNavigationContextChange, parentNavigation, glassSettings, renderAttachment }: DiscussionSheetProps) {
+  onNavigationContextChange, parentNavigation, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
   const targetKey = JSON.stringify([threadId, anchor]);
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
@@ -69,6 +74,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
+  const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
+  const confirmationAttempts = useRef(new Set<string>());
+  const material = glassSettings ?? loadBrowserGlassSettings();
   const [requestedFocus, setRequestedFocus] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [atEnd, setAtEnd] = useState(!focusMessageId);
@@ -106,6 +114,29 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     return () => { alive.current = false; ++actionVersion.current; ++focusVersion.current;
       session.stop(); sync.unsubscribe(); clearTimeout(highlightTimer.current); };
   }, [session, repository]);
+  useEffect(() => {
+    if (!repository.observeReceipts) return;
+    const subscription = repository.observeReceipts(threadId, snapshot => {
+      if (alive.current) setReceipts(snapshot);
+    }, () => {
+      if (alive.current) setReceipts({ confirmedIds: [], recipientReadThrough: [] });
+    });
+    return () => subscription.unsubscribe();
+  }, [repository, threadId]);
+  useEffect(() => {
+    // A general Addon in-sync flag never becomes a receipt. Ask the repository
+    // to await a push for exactly the currently visible own message IDs.
+    if (!repository.confirmDelivery || !syncState || syncState.offline || syncState.status === 'error') return;
+    const ids = state.messages.filter(message => message.authorUserId === repository.actorUserId
+      && !message.deleted && !receipts.confirmedIds.includes(message.id)
+      && !confirmationAttempts.current.has(message.id)).map(message => message.id);
+    if (!ids.length) return;
+    for (const id of ids) confirmationAttempts.current.add(id);
+    void repository.confirmDelivery(threadId, ids).catch(() => {
+      for (const id of ids) confirmationAttempts.current.delete(id);
+      // Offline/failure remains unconfirmed until the next observed sync state change.
+    });
+  }, [repository, threadId, state.messages, receipts.confirmedIds, syncState?.offline, syncState?.status]);
   const closeMenu = () => {
     if (!menuRef.current?.open) return;
     menuRef.current = { ...menuRef.current, open: false };
@@ -265,7 +296,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     authorUserId: replying?.authorUserId ?? null, deleted: Boolean(replying?.deleted), unavailable: !replying,
     text: replying && !replying.deleted ? replying.text.split(/\r?\n/, 1)[0] : '' } : null;
 
-  return <div className="discussion-thread" data-thread-id={threadId} data-focus-message-id={focusMessageId}>
+  return <div className="discussion-thread" data-thread-id={threadId} data-focus-message-id={focusMessageId}
+    data-show-avatars={String(showAvatars)}>
     <header className="discussion-thread__header">
       <Text variant="headline">{state.title || 'Обсуждение'}</Text>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
@@ -281,19 +313,30 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {state.loading && <Text variant="caption" role="status">Загрузка сообщений…</Text>}
       <Messages>
         {state.messages.map((message, index) => {
-          const author = resolveAuthor(message.authorUserId);
+          const author = showAvatars ? resolveAuthor(message.authorUserId) : null;
+          const isOwn = message.authorUserId === repository.actorUserId;
+          const cursorKey = discussionCursorKey({ id: message.id, createdAt: message.createdAt });
+          const isRead = isOwn && receipts.recipientReadThrough.some(cursor => discussionCursorKey(cursor) >= cursorKey);
+          const isConfirmed = isOwn && receipts.confirmedIds.includes(message.id);
+          const receiptIcon = isRead ? 'message-double-check' : isConfirmed ? 'message-check' : null;
+          const time = new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
           const day = new Date(message.createdAt).toLocaleDateString('ru-RU');
           return <Fragment key={message.id}>
             {(index === 0 || new Date(state.messages[index - 1].createdAt).toLocaleDateString('ru-RU') !== day) && <MessagesTitle>{day}</MessagesTitle>}
-            <div className="discussion-message-target" data-message-id={message.id} data-highlighted={highlight === message.id || undefined}
+            <div className="discussion-message-target" data-message-id={message.id} data-own={String(isOwn)}
+              data-highlighted={highlight === message.id || undefined}
               ref={el => { if (el) rows.current.set(message.id, el); else rows.current.delete(message.id); }}>
-              <MezfitMessage type={message.authorUserId === repository.actorUserId ? 'sent' : 'received'}
-                name={<Text variant="caption">{author.name}</Text>}
-                avatar={<Avatar name={author.name} src={author.avatarSrc} size="small" />}
+              <MezfitMessage type={isOwn ? 'sent' : 'received'}
+                name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
+                avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
                 text={<Text variant="body" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
                 textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => { if (message.reply) void jump(message.reply.messageId); }} />}
                 textFooter={!message.deleted && renderAttachment?.(message)}
-                footer={<Text variant="caption">{new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}{message.editedAt ? ' · изменено' : ''}</Text>}
+                inlineMeta={<span className="discussion-message-meta"><Text variant="caption">{time}</Text>
+                  {receiptIcon && <span className="discussion-message-meta__check" role="img"
+                    aria-label={isRead ? 'Прочитано собеседником' : 'Отправка подтверждена Dexie Cloud'}>
+                    <Icon name={receiptIcon} /></span>}
+                </span>}
                 onBubbleClick={() => { if (!message.deleted && !pending.current) setMenu({ id: message.id, open: true }); }}
                 bubbleSource={menu?.id === message.id && <span onClick={event => event.stopPropagation()}><LiquidPopover key={message.id} triggerRef={trigger}
                   triggerActivation="controlled" isOpen={menu.open} onOpenChange={open => {
@@ -301,7 +344,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                     menuRef.current = { ...menuRef.current, open }; setMenu(menuRef.current);
                   }}
                   onPresentationChange={presented => { if (!presented) setMenu(current => current?.id === message.id && !current.open ? null : current); }}
-                  layout="menu" label="Действия сообщения" items={items} {...(glassSettings ?? loadBrowserGlassSettings())}
+                  layout="menu" label="Действия сообщения" items={items} {...material}
                   trigger={<button type="button" ref={trigger} aria-hidden="true" tabIndex={-1} className="discussion-menu-source" />} /></span>}
               />
             </div>
@@ -313,7 +356,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {error && <Text variant="footnote" role="alert">{error}</Text>}
       {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
-      {syncState && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
+      {syncState && <Text variant="caption" role="status">{repository.sourceKind === 'demo' ? 'Демо' : syncState.status === 'synced' ? 'Синхронизировано'
         : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
@@ -322,9 +365,15 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
-    <Messagebar ref={composer} textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'} value={text}
-      disabled={busy || !draft.ready || !state.title || Boolean(state.error)} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
-      right={<Button rounded tonal={false} disabled={busy || !draft.ready || !text.trim() || !state.title || Boolean(state.error)} onClick={submit}>{editId ? 'Сохранить' : 'Отправить'}</Button>} />
+    <GlassSurface className="discussion-composer-surface" {...material}>
+      <MezfitMessagebar ref={composer} textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
+        value={text} maxRows={5} disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
+        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
+        left={<IconButton icon="plus" label="Добавить вложение (пока недоступно)" disabled />}
+        right={<IconButton icon={editId ? 'check' : 'arrow-up'} label={editId ? 'Сохранить' : 'Отправить'}
+          disabled={busy || !draft.ready || !text.trim() || !state.title || Boolean(state.error)} onClick={submit} />}
+      />
+    </GlassSurface>
     <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
       title={<Text variant="headline">Удалить сообщение?</Text>}
       content={<Text>Текст сообщения будет удалён.</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}

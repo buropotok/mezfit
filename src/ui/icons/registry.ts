@@ -25,6 +25,8 @@ import copyPlusUrl from './copy-plus.svg';
 import trashUrl from './trash.svg';
 import alertCircleUrl from './alert-circle.svg';
 import checkUrl from './check.svg';
+import messageCheckUrl from './message-check.svg';
+import messageDoubleCheckUrl from './message-double-check.svg';
 import dotsVerticalUrl from './dots-vertical.svg';
 import homeFilledUrl from './home-filled.svg';
 import homeUrl from './home.svg';
@@ -95,6 +97,8 @@ const uiIconRegistry = {
   trash: { outline: trashUrl, filled: trashUrl },
   'alert-circle': { outline: alertCircleUrl, filled: alertCircleUrl },
   check: { outline: checkUrl, filled: checkUrl },
+  'message-check': { outline: messageCheckUrl, filled: messageCheckUrl },
+  'message-double-check': { outline: messageDoubleCheckUrl, filled: messageDoubleCheckUrl },
   'dots-vertical': { outline: dotsVerticalUrl, filled: dotsVerticalUrl },
   home: { outline: homeUrl, filled: homeFilledUrl },
   history: { outline: historyUrl, filled: historyUrl },

@@ -2,6 +2,11 @@ import { discussionId, discussionRecord } from '../../../shared/discussion-ancho
 import type { DiscussionMessage } from './discussion-contracts';
 export interface DiscussionCursor { createdAt: string; id: string }
 export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean }
+/** Evidence captured by the repository, never inferred from its general sync indicator. */
+export interface DiscussionReceiptSnapshot {
+  confirmedIds: readonly string[];
+  recipientReadThrough: readonly DiscussionCursor[];
+}
 export interface DiscussionMessageView {
   id: string; threadId: string; authorUserId: string; createdAt: string;
   text: string; deleted: boolean; editedAt?: string; reply: DiscussionQuote | null;

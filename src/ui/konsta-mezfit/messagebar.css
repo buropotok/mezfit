@@ -1,0 +1,16 @@
+/* Contained override within the version-pinned Konsta adapter boundary.
+   The native iOS toolbar inner has h-12 and the native textarea has h-10.
+   Allow only these two areas to grow while leaving slots and glass intact. */
+.ui-mezfit-messagebar {
+  position: relative;
+  inset: auto;
+  width: 100%;
+}
+.ui-mezfit-messagebar .k-toolbar > :last-child {
+  height: auto;
+  min-height: 3rem;
+}
+.ui-mezfit-messagebar textarea {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}

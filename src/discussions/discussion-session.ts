@@ -4,7 +4,10 @@ import type { DiscussionAnchor } from '../data/cloud/discussion-contracts';
 
 /** Application port: the UI never receives IndexedDB, Addon or a second message store. */
 export type DiscussionPort = Pick<DiscussionRepository, 'actorUserId' | 'listThreads' | 'page' | 'observePage'
-  | 'getMessage' | 'send' | 'edit' | 'remove' | 'markRead' | 'getDraft' | 'saveDraft'> & {
+  | 'getMessage' | 'send' | 'edit' | 'remove' | 'markRead' | 'getDraft' | 'saveDraft'>
+  & Partial<Pick<DiscussionRepository, 'observeReceipts' | 'confirmDelivery'>> & {
+    /** Only the UI Kit in-memory port declares itself as demonstration data. */
+    sourceKind?: 'demo';
     sync: Pick<DiscussionRepository['sync'], 'observe' | 'retry'>;
   };
 export interface DiscussionTarget { threadId: string; anchor: DiscussionAnchor; focusMessageId?: string }

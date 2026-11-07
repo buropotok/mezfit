@@ -1,0 +1,25 @@
+/* Konsta's approved Message adapter owns the only bubble metadata extension.
+   An inline spacer reserves the footer footprint, so a multi-line
+   message, quote or short phrase cannot paint over the timestamp. */
+.ui-mezfit-message__inline {
+  position: relative;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.ui-mezfit-message__meta-reserve {
+  display: inline-block;
+  width: var(--ui-message-meta-reserve, 4.5rem);
+  height: 1px;
+  vertical-align: baseline;
+}
+.ui-mezfit-message__inline-meta {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -1,6 +1,6 @@
 import type { DiscussionAnchor, DiscussionThread } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput, DiscussionPage } from '../data/cloud/discussions';
-import type { DiscussionCursor, DiscussionMessageView } from '../data/cloud/discussion-views';
+import type { DiscussionCursor, DiscussionMessageView, DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 import type { DiscussionPort } from '../discussions/discussion-session';
 
 /** In-memory catalogue data. It never opens IndexedDB or contacts Dexie Cloud. */
@@ -57,6 +57,14 @@ function ordered(a: PreviewRow, b: PreviewRow): number {
 export function createDiscussionPreviewPort(): DiscussionPort {
   const rows = seed.map(row => ({ ...row }));
   const subscribers = new Set<() => void>();
+  const receiptSubscribers = new Set<(snapshot: DiscussionReceiptSnapshot) => void>();
+  // Synthetic delivery/read markers exist only in the UI Kit's in-memory sample.
+  const delivered = new Set(['preview-1', 'preview-3', 'preview-6']);
+  const recipientReadThrough = [{ id: 'preview-3', createdAt: '2026-11-06T09:09:00.000Z' }];
+  const receiptSnapshot = (): DiscussionReceiptSnapshot => ({
+    confirmedIds: [...delivered], recipientReadThrough,
+  });
+  const publishReceipts = () => { for (const subscriber of receiptSubscribers) subscriber(receiptSnapshot()); };
   const drafts = new Map<string, DiscussionMessageInput>();
   const find = (id: string) => rows.find(row => row.id === id);
   const assertThread = (threadId: string) => {
@@ -99,6 +107,7 @@ export function createDiscussionPreviewPort(): DiscussionPort {
 
   return {
     actorUserId: COACH,
+    sourceKind: 'demo',
     getDraft: async (threadId, id) => {
       assertThread(threadId);
       const draft = id === undefined
@@ -155,6 +164,19 @@ export function createDiscussionPreviewPort(): DiscussionPort {
       row.text = ''; row.deleted = true; publish();
     },
     markRead: async (threadId, id) => { get(threadId, id); },
+    observeReceipts: (threadId, next, error) => {
+      try { assertThread(threadId); } catch (reason) {
+        queueMicrotask(() => error(reason)); return { unsubscribe() {} };
+      }
+      receiptSubscribers.add(next);
+      queueMicrotask(() => { if (receiptSubscribers.has(next)) next(receiptSnapshot()); });
+      return { unsubscribe: () => { receiptSubscribers.delete(next); } };
+    },
+    confirmDelivery: async (threadId, ids) => {
+      assertThread(threadId);
+      for (const id of ids) if (find(id)?.authorUserId === COACH) delivered.add(id);
+      publishReceipts();
+    },
     sync: {
       observe: next => {
         next({ status: 'local', offline: true, error: null });

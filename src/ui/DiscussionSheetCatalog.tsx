@@ -15,6 +15,7 @@ const resolvePreviewAuthor = (userId: string) => ({
 export function DiscussionSheetCatalog() {
   const [repository, setRepository] = useState(createDiscussionPreviewPort);
   const [opened, setOpened] = useState(false);
+  const [showAvatars, setShowAvatars] = useState(false);
   const [focusMessageId, setFocusMessageId] = useState<string | undefined>();
 
   const open = (focus?: string) => {
@@ -23,8 +24,17 @@ export function DiscussionSheetCatalog() {
   };
 
   return <>
-    <Text variant="footnote" tone="muted">Тот же DiscussionSheet, что будет использоваться в приложении.
-      Все сообщения тестовые и хранятся только в памяти этой страницы; Dexie Cloud не подключается.</Text>
+    <Text variant="footnote" tone="muted">Настоящий DiscussionSheet с тестовыми сообщениями в памяти страницы.
+      Dexie Cloud не подключается; одиночные и двойные галочки — демонстрационные статусы.</Text>
+    <div className="ui-kit-row">
+      <Button variant={showAvatars ? 'secondary' : 'primary'} aria-pressed={!showAvatars}
+        onClick={() => setShowAvatars(false)}>Без аватаров · основной</Button>
+      <Button variant={showAvatars ? 'primary' : 'secondary'} aria-pressed={showAvatars}
+        onClick={() => setShowAvatars(true)}>С аватарами · групповой</Button>
+    </div>
+    <Text variant="caption" tone="muted">Проверьте длинные и многострочные сообщения, ответы с цитатами,
+      время внутри пузырей, прокрутку под стеклянной панелью, ввод пяти строк и внутреннюю прокрутку,
+      а также открытие системной клавиатуры на Android/iOS. Источник в панели обозначен «Демо».</Text>
     <div className="ui-kit-row">
       <Button onClick={() => open()}>Открыть переписку</Button>
       <Button variant="secondary" onClick={() => open('preview-2')}>Открыть с фокусом на ответе</Button>
@@ -38,6 +48,7 @@ export function DiscussionSheetCatalog() {
       threadId={previewDiscussionThread.id}
       anchor={previewDiscussionAnchor}
       focusMessageId={focusMessageId}
+      showAvatars={showAvatars}
       onClose={() => setOpened(false)}
       resolveAuthor={resolvePreviewAuthor}
       parentNavigation={null}

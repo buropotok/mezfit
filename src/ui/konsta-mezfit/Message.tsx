@@ -1,3 +1,4 @@
+import './message.css';
 // Approved COMM-05 adapter for Konsta 5.4.0. Preserve its renderer/classes;
 // expose the bubble boundary rather than inspecting Konsta DOM from features.
 import type { ComponentProps, ElementType, MouseEventHandler, ReactNode, Ref } from 'react';
@@ -14,12 +15,14 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
   bubbleRef?: Ref<HTMLDivElement>;
   onBubbleClick?: MouseEventHandler<HTMLDivElement>;
   bubbleSource?: ReactNode;
+  /** Semantic time / receipt rendered inside the bubble without depending on Konsta's footer DOM. */
+  inlineMeta?: ReactNode;
 };
 
 export function MezfitMessage(props: MezfitMessageProps) {
   const { component = 'div', className, colors: colorsProp, ref, id, text, name,
     type = 'sent', header, footer, textHeader, textFooter, avatar,
-    children, bubbleRef, onBubbleClick, bubbleSource, ...rest } = props;
+    children, bubbleRef, onBubbleClick, bubbleSource, inlineMeta, ...rest } = props;
   const theme = useTheme();
   const c = MessageClasses({ ...props, type }, MessageColors(colorsProp, (classes: string) => classes), className);
   const classes = (part: { common?: string; ios?: string; material?: string }) => cls(part.common, part[theme]);
@@ -32,7 +35,10 @@ export function MezfitMessage(props: MezfitMessageProps) {
       {header && <div className={classes(c.messageHeader)}>{header}</div>}
       <div className={classes(c.messageBubble)} ref={bubbleRef} onClick={onBubbleClick}>
         {textHeader && <div className={classes(c.messageTextHeader)}>{textHeader}</div>}
-        {text && <div className={classes(c.messageText)}>{text}</div>}
+        {text && <div className={classes(c.messageText)}>{inlineMeta ? <div className="ui-mezfit-message__inline">
+          {text}<span className="ui-mezfit-message__meta-reserve" aria-hidden="true" />
+          <span className="ui-mezfit-message__inline-meta">{inlineMeta}</span>
+        </div> : text}</div>}
         {textFooter && <div className={classes(c.messageTextFooter)}>{textFooter}</div>}
         {bubbleSource}
       </div>
