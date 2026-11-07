@@ -127,6 +127,23 @@ describe('COMM-07 completed execution entries', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
+
+  it('opens a set editor discussion under the same execution anchor as its row action', async () => {
+    probe.actor = 'tg:11';
+    const value = { ...session(), status: 'active' as const, completedAt: null };
+    probe.ensure.mockImplementation(async (anchor: DiscussionAnchor) => ({ id: discussionAnchorKey(scope, anchor) }));
+    render(<WorkoutSessionCard session={value} readOnly={false}
+      onReorderExerciseIds={vi.fn()} onSaveSet={vi.fn(async () => {})}
+      onNavigationContextChange={onNavigation} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода' }));
+    await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(
+      setAnchor('exercise-a', 'exercise-a-set-0'), 'Жим · Подход 1'));
+    expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
+  });
+
   it('deletes only the selected active set through its menu after confirmation and supports retries', async () => {
     probe.actor = 'tg:11';
     const value = { ...session(), status: 'active' as const, completedAt: null };

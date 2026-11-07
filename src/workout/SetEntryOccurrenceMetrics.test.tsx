@@ -302,7 +302,8 @@ describe('scheduled occurrence PLAN for non-weight/reps tracking', () => {
       expect(action.closest('.set-entry-weight-reps__header-actions')).not.toBeNull();
       expect(screen.getByRole('button', { name: 'Закрыть подход' })).toBeTruthy();
       fireEvent.click(action);
-      expect(onOpenDiscussion).toHaveBeenCalledExactlyOnceWith(target);
+      expect(onOpenDiscussion).toHaveBeenCalledOnce();
+      expect(onOpenDiscussion).toHaveBeenCalledWith(target);
     },
   );
 
