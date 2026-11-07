@@ -1,4 +1,4 @@
-import { liveQuery } from 'dexie';
+import Dexie, { liveQuery } from 'dexie';
 import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, discussionReadStateId,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
@@ -264,23 +264,45 @@ export class DiscussionRepository {
   async page(threadId: string, before?: DiscussionCursor, limit = 40): Promise<DiscussionPage> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100
       || (before && (!discussionInstant(before.createdAt) || !discussionId(before.id)))) fail('INVALID_DISCUSSION_PAGE');
-    return this.read(async () => {
-      const threads = await this.conversationThreads(threadId);
-      const pages: DiscussionMessage[][] = [];
-      for (const thread of threads) pages.push(await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-        .between([this.scope.realmId, thread.id, '', ''],
-          before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
-            : [this.scope.realmId, thread.id, []], true, false)
-        .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray());
-      const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
-      const more = rows.length > limit; rows.splice(limit);
-      const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
-      // Keep quote hydration in the same Dexie transaction/observation context.
-      const messages: DiscussionMessageView[] = [];
-      for (const row of rows.reverse()) messages.push(await this.view(row));
-      return { messages, before: cursor };
-    });
+    if (!discussionId(threadId)) fail('INVALID_DISCUSSION_ID');
+    // Keep the complete page/quote read in Dexie's promise zone. Async per-row
+    // projections can outlive the last IndexedDB request under liveQuery.
+    return this.read(() => this.db.discussionThreads.get(threadId).then(root => {
+      if (!root || root.realmId !== this.scope.realmId || root.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
+      assertDiscussionThread(root);
+      const headers = threadId.startsWith('entity-discussion:')
+        ? this.db.discussionThreads.where('[realmId+anchorKey]').equals([this.scope.realmId, root.anchorKey]).toArray()
+        : Dexie.Promise.resolve([root]);
+      return headers.then(candidates => {
+        const threads = candidates.filter(thread => {
+          try { assertDiscussionThread(thread); return thread.realmId === root.realmId
+            && thread.coachClientId === root.coachClientId && thread.anchorKey === root.anchorKey; }
+          catch { return false; }
+        });
+        return Dexie.Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+          .between([this.scope.realmId, thread.id, '', ''],
+            before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
+              : [this.scope.realmId, thread.id, []], true, false)
+          .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray())).then(pages => {
+          const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
+          const more = rows.length > limit; rows.splice(limit);
+          const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
+          const replyIds = [...new Set(rows.flatMap(row => row.replyToMessageId ? [row.replyToMessageId] : []))];
+          return this.db.discussionMessages.bulkGet(replyIds).then(originals => {
+            const threadIds = new Set(threads.map(thread => thread.id));
+            const quotes = new Map(originals.filter((row): row is DiscussionMessage => isDiscussionMessage(row)
+              && this.visible(row, row.threadId) && threadIds.has(row.threadId)).map(row => [row.id, row]));
+            const messages = rows.reverse().map(row => {
+              const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
+              return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
+            });
+            return { messages, before: cursor };
+          });
+        });
+      });
+    }));
   }
+
   async markRead(threadId: string, messageId: string): Promise<void> {
     return this.write(async () => {
       const message = await this.message(threadId, messageId);
