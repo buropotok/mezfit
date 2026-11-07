@@ -161,7 +161,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   }, [destination, requestedAvatarClient, clients]);
 
   const loadClients = useCallback(() => {
-    void cloudConnections?.refresh().catch(() => undefined);
+    void cloudConnections?.refresh().then(() => setResetError('')).catch(() => undefined);
   }, [cloudConnections]);
 
   const createInvite = useCallback(async () => {
