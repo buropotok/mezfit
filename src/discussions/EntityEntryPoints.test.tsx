@@ -29,7 +29,10 @@ vi.mock('../ui', async original => ({ ...await original<typeof import('../ui')>(
 }));
 vi.mock('../program/ProgramSummary', () => ({ ProgramSummary: () => null }));
 vi.mock('../program/PlanSyncNotice', () => ({ PlanSyncNotice: () => null }));
-vi.mock('../ui/SpotlightHint', () => ({ SpotlightHint: ({ children }: { children: ReactNode }) => <>{children}</> }));
+vi.mock('../ui/SpotlightHint', async original => ({
+  ...await original<typeof import('../ui/SpotlightHint')>(),
+  SpotlightHint: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
 vi.mock('../schedule/WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
 vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: 'Участник', avatar: null }) }));
 vi.mock('../ui/WorkoutRepeatControl', () => ({ WorkoutRepeatControl: () => null }));
