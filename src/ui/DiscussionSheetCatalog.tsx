@@ -4,6 +4,9 @@ import { DiscussionSheet } from '../discussions';
 import { Button, Text } from './index';
 import { createDiscussionPreviewPort, previewDiscussionAnchor, previewDiscussionThread } from './discussion-preview';
 
+// The standalone UI Kit route has no NavigationShell; the Sheet owns its close button.
+const previewNavigation = (_context: NavigationContext | null) => {};
+
 const resolvePreviewAuthor = (userId: string) => ({
   name: userId === 'tg:101' ? 'Тренер' : 'Спортсмен',
 });
@@ -13,7 +16,6 @@ export function DiscussionSheetCatalog() {
   const [repository, setRepository] = useState(createDiscussionPreviewPort);
   const [opened, setOpened] = useState(false);
   const [focusMessageId, setFocusMessageId] = useState<string | undefined>();
-  const [, setNavigationContext] = useState<NavigationContext | null>(null);
 
   const open = (focus?: string) => {
     setFocusMessageId(focus);
@@ -39,7 +41,7 @@ export function DiscussionSheetCatalog() {
       onClose={() => setOpened(false)}
       resolveAuthor={resolvePreviewAuthor}
       parentNavigation={null}
-      onNavigationContextChange={setNavigationContext}
+      onNavigationContextChange={previewNavigation}
     />
   </>;
 }
