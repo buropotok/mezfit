@@ -19,14 +19,14 @@ export function MezfitMessagebar({ value, maxRows = 5, bare = false, ref, classN
     const computed = getComputedStyle(area);
     const lineHeight = Number.parseFloat(computed.lineHeight) || 16;
     const padding = (Number.parseFloat(computed.paddingTop) || 0) + (Number.parseFloat(computed.paddingBottom) || 0);
-    const minHeight = Math.max(40, lineHeight + padding);
+    const minHeight = Math.max(bare ? 48 : 40, lineHeight + padding);
     const maxHeight = lineHeight * Math.max(1, Math.min(5, maxRows)) + padding;
     // Reset before reading scrollHeight; shrinking text must shrink the bar.
     area.style.height = 'auto';
     const required = area.scrollHeight;
     area.style.height = `${Math.max(minHeight, Math.min(required, maxHeight))}px`;
     area.style.overflowY = required > maxHeight ? 'auto' : 'hidden';
-  }, [maxRows]);
+  }, [bare, maxRows]);
 
   useLayoutEffect(() => { fit(); }, [fit, value]);
   useEffect(() => {

@@ -33,3 +33,10 @@
   backdrop-filter: none;
   touch-action: pan-y;
 }
+
+/* The hosted input fills the 48 px glass capsule. Equal block padding
+   centers both placeholder and text on the capsule's vertical midline;
+   taller drafts retain Konsta's multiline textarea and internal scrolling. */
+.ui-mezfit-messagebar--bare textarea {
+  padding-block: 1rem;
+}

@@ -23,3 +23,13 @@
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* An inset highlight is painted between the native bubble color and its
+   content: text/quotes stay untouched, and Konsta's silhouette is unchanged. */
+.ui-mezfit-message__focus-pulse {
+  animation: ui-mezfit-message-focus-pulse 100ms ease-out both;
+}
+@keyframes ui-mezfit-message-focus-pulse {
+  from { box-shadow: inset 0 0 0 100vmax rgb(255 255 255 / 0.2); }
+  to { box-shadow: inset 0 0 0 100vmax rgb(255 255 255 / 0); }
+}

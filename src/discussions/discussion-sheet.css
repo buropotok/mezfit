@@ -50,10 +50,6 @@
   padding-inline: 8px;
 }
 .discussion-message-target { display: flex; flex-direction: column; min-width: 0; }
-.discussion-message-target[data-highlighted] {
-  outline: 2px solid var(--ui-color-primary, #0a84ff);
-  outline-offset: -2px;
-}
 .discussion-message-target[data-own="false"] { --ui-message-meta-reserve: 3.5rem; }
 .discussion-message-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .discussion-message-meta {

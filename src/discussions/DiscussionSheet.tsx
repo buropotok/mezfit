@@ -103,7 +103,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     }
     readingPosition.current = null;
   };
-  const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const focusScrollCleanup = useRef<(() => void) | null>(null);
   const lastRead = useRef<string | null>(null), focusVersion = useRef(0);
   const back = useRef<() => void>(() => {});
   const textareaId = useId();
@@ -112,7 +112,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     alive.current = true; session.start();
     const sync = repository.sync.observe(value => { if (alive.current) setSyncState(value); });
     return () => { alive.current = false; ++actionVersion.current; ++focusVersion.current;
-      session.stop(); sync.unsubscribe(); clearTimeout(highlightTimer.current); };
+      session.stop(); sync.unsubscribe(); focusScrollCleanup.current?.(); };
   }, [session, repository]);
   useEffect(() => {
     if (!repository.observeReceipts) return;
@@ -177,8 +177,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
 
   const jump = async (id: string) => {
     const version = ++focusVersion.current;
+    focusScrollCleanup.current?.();
     focusing.current = true;
-    setAtEnd(false); setRequestedFocus(null); closeMenu();
+    setAtEnd(false); setHighlight(null); setRequestedFocus(null); closeMenu();
     try {
       const found = await session.locate(id);
       if (alive.current && version === focusVersion.current) {
@@ -192,7 +193,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const deepFocus = useRef<string | null>(null);
   useEffect(() => {
     ++focusVersion.current; session.cancelLocate(); deepFocus.current = null;
-    focusing.current = Boolean(focusMessageId); setRequestedFocus(null);
+    focusScrollCleanup.current?.();
+    focusing.current = Boolean(focusMessageId); setHighlight(null); setRequestedFocus(null);
     if (focusMessageId) setAtEnd(false);
   }, [focusMessageId, session]);
   useEffect(() => {
@@ -206,13 +208,51 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (requestedFocus) {
       const row = rows.current.get(requestedFocus);
       if (!row) return;
-      const top = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop
-        - (list.clientHeight - row.getBoundingClientRect().height) / 2;
-      list.scrollTo?.({ top: Math.max(0, top), behavior: 'smooth' });
-      setHighlight(requestedFocus); setRequestedFocus(null);
-      clearTimeout(highlightTimer.current);
-      highlightTimer.current = setTimeout(() => { if (alive.current) setHighlight(null); }, 1200);
+      const bounds = row.getBoundingClientRect();
+      const target = Math.max(0, Math.min(list.scrollHeight - list.clientHeight,
+        bounds.top - list.getBoundingClientRect().top + list.scrollTop - (list.clientHeight - bounds.height) / 2));
+      const version = focusVersion.current;
+      const pulse = () => {
+        if (alive.current && focusVersion.current === version) setHighlight(requestedFocus);
+      };
+      // The native scroll belongs to this viewport. Start the 100 ms bubble
+      // pulse only when its motion settles, never while the row is travelling.
+      if (Math.abs(target - list.scrollTop) < 1 || typeof list.scrollTo !== 'function') {
+        list.scrollTop = target;
+        pulse();
+      } else {
+        let idleTimer: number | undefined;
+        let fallbackTimer: number | undefined;
+        let settled = false;
+        const cleanup = () => {
+          list.removeEventListener('scrollend', finish);
+          list.removeEventListener('scroll', onScroll);
+          window.clearTimeout(idleTimer);
+          window.clearTimeout(fallbackTimer);
+          if (focusScrollCleanup.current === cleanup) focusScrollCleanup.current = null;
+        };
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          pulse();
+        };
+        const onScroll = () => {
+          window.clearTimeout(idleTimer);
+          // Older WebViews lack scrollend; their last scroll event defines
+          // the end of the smooth scroll.
+          idleTimer = window.setTimeout(finish, 120);
+        };
+        list.addEventListener('scrollend', finish, { once: true });
+        list.addEventListener('scroll', onScroll);
+        focusScrollCleanup.current = cleanup;
+        fallbackTimer = window.setTimeout(finish, 1600);
+        list.scrollTo({ top: target, behavior: 'smooth' });
+      }
+      setRequestedFocus(null);
       preserveScroll.current = null;
+    } else if (focusScrollCleanup.current) {
+      // Avoid fighting the native smooth scroll with scroll-anchor corrections.
     } else if (!atEnd && readingPosition.current && rows.current.has(readingPosition.current.id)) {
       const row = rows.current.get(readingPosition.current.id);
       if (row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top - readingPosition.current.offset;
@@ -329,7 +369,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             <div className="discussion-message-target" data-message-id={message.id} data-own={String(isOwn)}
               data-highlighted={highlight === message.id || undefined}
               ref={el => { if (el) rows.current.set(message.id, el); else rows.current.delete(message.id); }}>
-              <MezfitMessage type={isOwn ? 'sent' : 'received'}
+              <MezfitMessage type={isOwn ? 'sent' : 'received'} focusPulse={highlight === message.id}
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
                 text={<Text variant="body" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}

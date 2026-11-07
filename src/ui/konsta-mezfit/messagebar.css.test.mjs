@@ -12,4 +12,9 @@ describe('Konsta 5.4.0 Messagebar hosted glass', () => {
     const toolbar = css.split('.ui-mezfit-messagebar--bare .k-toolbar > :not(:last-child) {')[1]?.split('}')[0] ?? '';
     expect(toolbar).toContain('display: none');
   });
+  it('uses equal vertical padding for the bare textarea without modifying other Konsta instances', () => {
+    const bare = css.split('.ui-mezfit-messagebar--bare textarea {')[1]?.split('}')[0] ?? '';
+    expect(bare).toContain('padding-block: 1rem');
+  });
+
 });

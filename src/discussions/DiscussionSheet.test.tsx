@@ -136,6 +136,39 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     await waitFor(() => expect(screen.queryByText(/Исправленный оригинал/)).toBeNull());
     expect(screen.getAllByText('Сообщение удалено').length).toBeGreaterThan(0);
   });
+  it('scrolls the original to center and pulses only its bubble after scrollend, including repeated jumps', async () => {
+    const source = message('source', 'Исходный текст', 'tg:2', 0);
+    const reply = { ...message('reply', 'Ответ', 'tg:1', 1), reply: {
+      messageId: 'source', authorUserId: 'tg:2', text: 'Исходный текст', deleted: false, unavailable: false,
+    } };
+    const f = mount({}, fixture([source, reply]));
+    const quote = await screen.findByRole('button', { name: 'Перейти к исходному сообщению' });
+    const list = f.container.querySelector<HTMLDivElement>('.discussion-thread__scroll');
+    const row = f.container.querySelector<HTMLDivElement>('[data-message-id="source"]');
+    if (!list || !row) throw new Error('Missing scroll owner or target');
+    const rect = (top: number, height: number): DOMRect =>
+      ({ x: 0, y: top, top, bottom: top + height, left: 0, right: 300, width: 300, height, toJSON: () => ({}) });
+    Object.defineProperties(list, {
+      scrollHeight: { configurable: true, value: 1600 },
+      clientHeight: { configurable: true, value: 300 },
+      scrollTo: { configurable: true, value: vi.fn() },
+    });
+    vi.spyOn(list, 'getBoundingClientRect').mockImplementation(() => rect(0, 300));
+    vi.spyOn(row, 'getBoundingClientRect').mockImplementation(() => rect(800, 50));
+    const scrollTo = vi.mocked(list.scrollTo);
+
+    fireEvent.click(quote);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ top: 675, behavior: 'smooth' }));
+    expect(row.querySelector('.ui-mezfit-message__focus-pulse')).toBeNull();
+    act(() => list.dispatchEvent(new Event('scrollend')));
+    await waitFor(() => expect(row.querySelector('.ui-mezfit-message__focus-pulse')).not.toBeNull());
+
+    fireEvent.click(quote);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(2));
+    expect(row.querySelector('.ui-mezfit-message__focus-pulse')).toBeNull();
+    act(() => list.dispatchEvent(new Event('scrollend')));
+    await waitFor(() => expect(row.querySelector('.ui-mezfit-message__focus-pulse')).not.toBeNull());
+  });
   it('keeps a scrolled reader in place and follows new messages only near the end', async () => {
     const f = mount(); await screen.findByText('Мой текст');
     const list = f.container.querySelector('.discussion-thread__scroll');

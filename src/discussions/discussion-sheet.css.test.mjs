@@ -9,6 +9,10 @@ describe('discussion-owned composition', () => {
     for (const declaration of ['white-space: nowrap', 'text-overflow: ellipsis', 'overflow: hidden']) expect(quote).toContain(declaration);
     expect(css).not.toMatch(/\.k-|font-size:|font-weight:|line-height:/);
   });
+  it('never draws a square outline around the target row', () => {
+    expect(css).not.toContain('.discussion-message-target[data-highlighted]');
+    expect(css).not.toContain('outline-offset: -2px');
+  });
   it('keeps the composer wrapper transparent so only the three children own glass', () => {
     const block = css.match(/\.discussion-composer\s*\{([^}]+)\}/)?.[1] ?? '';
     for (const declaration of ['position: absolute', 'display: flex', 'background: transparent', 'gap: 8px']) expect(block).toContain(declaration);
