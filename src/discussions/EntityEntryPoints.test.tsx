@@ -94,7 +94,7 @@ describe('COMM-06 production surface wiring', () => {
     const icon = screen.getByRole('button', { name: 'Обсуждения' });
     expect(icon.closest('.occurrence-draft-sheet__discussion-action')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Меню тренировки' })).toBeTruthy();
-    expect(screen.getByLabelText('Непрочитанных: 4')).toBeTruthy();
+    expect(screen.getAllByLabelText('Непрочитанных: 4')).toHaveLength(2);
     fireEvent.click(icon);
     expect(probe.open).toHaveBeenCalledOnce();
     expect(probe.targets.at(-1)?.anchor).toEqual({ kind: 'workout', workout: { kind: 'occurrence', id: 'occurrence' } });
