@@ -15,7 +15,7 @@ const coach = { id: 1, telegram_user_id: '101', first_name: 'Coach', last_name: 
   username: null, language_code: null, photo_url: null, is_premium: 0 };
 
 function fixture() {
-  let active = true, failD1 = false;
+  let active = true, failD1 = false, role: 'coach' | 'client' = 'coach';
   const prepare = vi.fn((sql: string) => ({
     bind: (..._args: unknown[]) => ({
       first: async () => {
@@ -24,7 +24,7 @@ function fixture() {
         throw Error('Unexpected first query');
       },
       all: async () => {
-        if (sql.includes('SELECT role FROM user_role')) return { results: [{ role: 'coach' }] };
+        if (sql.includes('SELECT role FROM user_role')) return { results: [{ role }] };
         throw Error('Unexpected all query');
       },
       run: async () => {
@@ -43,7 +43,7 @@ function fixture() {
     'https://mezfit.test/api/coach/clients/' + clientId + '/test-relationship',
     { method: 'DELETE', headers: { 'x-telegram-init-data': 'signed' } },
   );
-  return { env, request, prepare, active: () => active, failD1: () => { failD1 = true; } };
+  return { env, request, prepare, active: () => active, failD1: () => { failD1 = true; }, setRole: (next: 'coach' | 'client') => { role = next; } };
 }
 
 beforeEach(() => {
@@ -88,14 +88,7 @@ describe('signed Coach test reset route', () => {
   it('fails closed for a user without the Coach role', async () => {
     const f = fixture();
     telegram.mockResolvedValue({ user: { id: 202, first_name: 'Client' }, authDate: new Date(), startParam: undefined });
-    // The authorization is checked before resetting; a separate Client role
-    // fixture is supplied by stubbing the role lookup.
-    f.prepare.mockImplementation((sql: string) => ({
-      bind: () => ({
-        first: async () => coach,
-        all: async () => ({ results: [{ role: 'client' }] }),
-      }),
-    }) as ReturnType<typeof f.prepare>);
+    f.setRole('client');
     expect((await worker.fetch(f.request(), f.env)).status).toBe(403);
     expect(reset).not.toHaveBeenCalled();
   });
