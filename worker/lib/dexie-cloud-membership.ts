@@ -234,6 +234,29 @@ export function assertRemoteRoles(value: unknown): void {
   const baseline = discussionRolesBaseline(value);
   if (baseline === null) failUnavailable();
   if (baseline !== value) { assertRemoteRoles(baseline); return; }
+  // The protected discussion operator preserves the complete installed repeat
+  // overlay. Strip only that exact pair overlay, then validate every baseline grant.
+  const repeatCandidates = ['coach', 'client'].map(name => {
+    const role = value.find(row => isObject(row) && row.realmId === 'rlm-public' && row.name === name);
+    return isObject(role) && isObject(role.permissions) && isObject(role.permissions.update)
+      && Array.isArray(role.permissions.update.workoutOccurrences)
+      && role.permissions.update.workoutOccurrences.includes('pendingRepeatRule');
+  });
+  if (repeatCandidates.some(Boolean)) {
+    if (!repeatCandidates.every(Boolean)) failUnavailable();
+    const withoutRepeat = value.map(role => {
+      if (!isObject(role) || role.realmId !== 'rlm-public' || !['coach', 'client'].includes(String(role.name))) return role;
+      const permissions = role.permissions;
+      if (!isObject(permissions) || !Array.isArray(permissions.add)
+        || !permissions.add.includes('flexAttributes') || !permissions.add.includes('flexValues')
+        || !isObject(permissions.update)) failUnavailable();
+      const fields = permissions.update.workoutOccurrences;
+      if (!Array.isArray(fields) || fields.filter(field => field === 'pendingRepeatRule').length !== 1) failUnavailable();
+      return { ...role, permissions: { ...permissions, update: { ...permissions.update,
+        workoutOccurrences: fields.filter(field => field !== 'pendingRepeatRule') } } };
+    });
+    assertRemoteRoles(withoutRepeat); return;
+  }
   const expected = roleConfig.roles;
   const expectedFacts = expected.client.permissions.update.sessionSetFacts;
   const cancellationProfile = ['coach', 'client'].map(name => {
@@ -439,3 +462,4 @@ export async function provisionInviteMembership(
   }
   return { realmId: realm.realmId };
 }
+
