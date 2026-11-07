@@ -28,10 +28,22 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     // a later send/reopen. Pending local saves may finish after the sheet closes.
     void repository.saveDraft(input).then(() => {
       if (alive.current && current.current === input) setError(null);
-    }, () => {
+    }, reason => {
+      if (reason instanceof Error && reason.message === 'DISCUSSION_ID_REUSED') {
+        rebase(input.id); return;
+      }
       if (alive.current && current.current === input) setError('Не удалось сохранить черновик');
     });
   };
+  function rebase(publishedId: string) {
+    const latest = current.current;
+    // A stale save/send failure must not replace a newer draft or lose later typing.
+    if (!latest || latest.id !== publishedId) return;
+    const replacement = prepareDiscussionMessage(threadId, latest.text, latest.replyToMessageId);
+    current.current = replacement;
+    if (alive.current) { setText(replacement.text); setReplyId(replacement.replyToMessageId ?? null); }
+    persist(replacement);
+  }
   return {
     text, replyId, ready, error,
     update(nextText: string, nextReply: string | null) {
@@ -42,9 +54,14 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     },
     command(): DiscussionMessageInput {
       if (!current.current) current.current = prepareDiscussionMessage(threadId, text, replyId ?? undefined);
-      return { ...current.current, createdAt: new Date().toISOString() };
+      return { ...current.current, createdAt: new Date().toISOString(), requireUnsentDraft: true };
     },
-    sent() { current.current = null; setText(''); setReplyId(null); setError(null); },
+    rebase,
+    sent(id: string) {
+      if (current.current?.id !== id) return;
+      current.current = null;
+      if (alive.current) { setText(''); setReplyId(null); setError(null); }
+    },
     retry() {
       if (!ready) setReload(value => value + 1);
       else if (current.current) persist(current.current);
