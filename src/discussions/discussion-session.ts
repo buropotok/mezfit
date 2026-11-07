@@ -103,7 +103,7 @@ export class DiscussionSession {
       this.publish({ messages: this.state.messages.map(row => rows.get(row.id) ?? row), loading, error });
     } else {
       // Preserve the revealed boundary, not just a fixed number of sliding pages.
-      if (this.pages.length > 1 && messages[0]) this.historyFloor = {
+      if (messages[0]) this.historyFloor = {
         createdAt: messages[0].createdAt, id: messages[0].id,
       };
       this.publish({ messages, loading, more: Boolean(this.pages.at(-1)?.before), error });
