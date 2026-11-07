@@ -299,7 +299,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   return <div className="discussion-thread" data-thread-id={threadId} data-focus-message-id={focusMessageId}
     data-show-avatars={String(showAvatars)}>
     <header className="discussion-thread__header">
-      <Text variant="headline">{state.title || 'Обсуждение'}</Text>
+      <div className="discussion-thread__identity">
+        <Text variant="headline">{state.title || 'Обсуждение'}</Text>
+        {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted">Демо</Text>}
+      </div>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>
     <div className="discussion-thread__scroll" ref={scroller} style={{ paddingBottom: composerHeight + contextHeight + 16 }}
@@ -356,7 +359,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {error && <Text variant="footnote" role="alert">{error}</Text>}
       {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
-      {syncState && <Text variant="caption" role="status">{repository.sourceKind === 'demo' ? 'Демо' : syncState.status === 'synced' ? 'Синхронизировано'
+      {syncState && repository.sourceKind !== 'demo' && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
         : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
@@ -365,16 +368,20 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
-    <GlassSurface className="discussion-composer-surface" {...material}
-      style={{ position: 'absolute', zIndex: 4, insetInline: 0, bottom: 0, width: '100%' }}>
-      <MezfitMessagebar ref={composer} textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
-        value={text} maxRows={5} disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
-        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
-        left={<IconButton icon="plus" label="Добавить вложение (пока недоступно)" disabled />}
-        right={<IconButton icon={editId ? 'check' : 'arrow-up'} label={editId ? 'Сохранить' : 'Отправить'}
-          disabled={busy || !draft.ready || !text.trim() || !state.title || Boolean(state.error)} onClick={submit} />}
-      />
-    </GlassSurface>
+    <div className="discussion-composer" ref={composer}>
+      <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
+        <IconButton icon="plus" label="Добавить вложение (пока недоступно)" disabled />
+      </GlassSurface>
+      <GlassSurface className="discussion-composer__field" {...material} shape="capsule" wrapContent={false}>
+        <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
+          value={text} maxRows={5} disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
+          onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />
+      </GlassSurface>
+      <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
+        <IconButton icon={editId ? 'check' : 'arrow-up'} label={editId ? 'Сохранить' : 'Отправить'}
+          disabled={busy || !draft.ready || !text.trim() || !state.title || Boolean(state.error)} onClick={submit} />
+      </GlassSurface>
+    </div>
     <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
       title={<Text variant="headline">Удалить сообщение?</Text>}
       content={<Text>Текст сообщения будет удалён.</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}

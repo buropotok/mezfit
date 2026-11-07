@@ -46,7 +46,8 @@ describe('COMM-05 mobile presentation', () => {
     expect(composer?.classList.contains('ui-glass-surface')).toBe(false);
     expect(composer?.querySelectorAll(':scope > .ui-glass-surface')).toHaveLength(3);
     expect(composer?.querySelector('.discussion-composer__field.ui-glass-surface .ui-mezfit-messagebar--bare')).not.toBeNull();
-    expect(composer?.querySelectorAll(':scope > button.ui-identity-action')).toHaveLength(2);
+    expect(composer?.querySelectorAll(':scope > .discussion-composer__button.ui-glass-surface')).toHaveLength(2);
+    expect(composer?.querySelectorAll('.discussion-composer__button > .ui-icon-button')).toHaveLength(2);
   });
 
   it('uses the same sheet for author mode and preserves multiline drafts', async () => {

@@ -24,7 +24,7 @@
   display: none;
 }
 .ui-mezfit-messagebar--bare .k-toolbar > :last-child {
-  min-height: 2.75rem;
+  min-height: 3rem;
 }
 .ui-mezfit-messagebar--bare .k-glass {
   background: transparent;

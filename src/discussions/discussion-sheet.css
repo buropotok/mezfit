@@ -121,11 +121,22 @@
   padding: 8px 12px;
   background: transparent;
 }
+.discussion-composer__button,
+.discussion-composer__field {
+  position: relative;
+}
+.discussion-composer__button {
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+}
 .discussion-composer__field {
   flex: 1 1 auto;
   display: flex;
   min-width: 0;
-  min-height: 2.75rem;
+  min-height: 3rem;
 }
 /* Reserve space below the scroll viewport, not a new composer scroll owner.
    Messages keep moving underneath the three independent glass surfaces. */
