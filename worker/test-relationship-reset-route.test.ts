@@ -2,15 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import worker from './index';
 import { validateTelegramInitData } from './lib/telegram';
 import { resetTestCloudRelationship } from './lib/test-relationship-reset';
+import { resetLegacyTestRelationship } from './lib/test-legacy-relationship-reset';
 
 vi.mock('./lib/telegram', async original => ({
   ...(await original<typeof import('./lib/telegram')>()),
   validateTelegramInitData: vi.fn(),
 }));
 vi.mock('./lib/test-relationship-reset', () => ({ resetTestCloudRelationship: vi.fn() }));
+vi.mock('./lib/test-legacy-relationship-reset', () => ({ resetLegacyTestRelationship: vi.fn() }));
 
 const telegram = vi.mocked(validateTelegramInitData);
 const reset = vi.mocked(resetTestCloudRelationship);
+const resetLegacy = vi.mocked(resetLegacyTestRelationship);
 const coach = { id: 1, telegram_user_id: '101', first_name: 'Coach', last_name: null,
   username: null, language_code: null, photo_url: null, is_premium: 0 };
 
@@ -34,6 +37,10 @@ function fixture() {
       },
     }),
   }));
+  resetLegacy.mockImplementation(async () => {
+    if (failD1) throw Error('D1 unavailable');
+    active = false;
+  });
   const env = {
     TELEGRAM_BOT_TOKEN: 'test', TEST_CONNECTION_RESET_COACH_IDS: '101,999',
     DB_BINDING: { prepare } as unknown as D1Database,
@@ -43,12 +50,13 @@ function fixture() {
     'https://mezfit.test/api/coach/clients/' + clientId + '/test-relationship',
     { method: 'DELETE', headers: { 'x-telegram-init-data': 'signed' } },
   );
-  return { env, request, prepare, active: () => active, failD1: () => { failD1 = true; }, setRole: (next: 'coach' | 'client') => { role = next; } };
+  return { env, request, prepare, active: () => active, failD1: () => { failD1 = true; }, restoreD1: () => { failD1 = false; }, setRole: (next: 'coach' | 'client') => { role = next; } };
 }
 
 beforeEach(() => {
   telegram.mockReset();
   reset.mockReset();
+  resetLegacy.mockReset();
   telegram.mockResolvedValue({ user: { id: 101, first_name: 'Coach' }, authDate: new Date(), startParam: undefined });
   reset.mockResolvedValue({ realmId: 'rlm-test' });
 });
@@ -64,6 +72,7 @@ describe('signed Coach test reset route', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
     expect(reset).toHaveBeenCalledWith(f.env, '101', '202', expect.any(Function));
+    expect(resetLegacy).toHaveBeenCalledWith(f.env.DB_BINDING, 1, 2);
     expect(f.active()).toBe(false);
     expect((await worker.fetch(f.request(), f.env)).status).toBe(404);
   });
@@ -82,6 +91,17 @@ describe('signed Coach test reset route', () => {
     expect((await worker.fetch(f.request(), f.env)).status).toBe(500);
     expect(f.active()).toBe(true);
     expect((await worker.fetch(f.request(), f.env)).status).toBe(200);
+    expect(f.active()).toBe(false);
+  });
+
+  it('can retry after Cloud succeeds but D1 transactional cleanup fails', async () => {
+    const f = fixture();
+    f.failD1();
+    expect((await worker.fetch(f.request(), f.env)).status).toBe(500);
+    expect(f.active()).toBe(true);
+    f.restoreD1();
+    expect((await worker.fetch(f.request(), f.env)).status).toBe(200);
+    expect(reset).toHaveBeenCalledTimes(2);
     expect(f.active()).toBe(false);
   });
 
