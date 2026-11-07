@@ -31,9 +31,9 @@ let createThread: ReturnType<typeof vi.fn<DiscussionRepository['createThread']>>
 beforeEach(() => {
   probe.db = {};
   const f = fixture();
-  unsubscribe = vi.fn(); createThread = vi.fn(async () => thread);
+  unsubscribe = vi.fn(); createThread = vi.fn<DiscussionRepository['createThread']>(async () => thread);
   probe.repository = { ...f.port, createThread,
-    observeAnchor: vi.fn((_anchor, next, error) => {
+    observeAnchor: vi.fn<DiscussionRepository['observeAnchor']>((_anchor, next, error) => {
       emit = next; fail = error;
       next({ threads: [thread], unread: 3, unreadByThread: { thread: 3 } });
       return { unsubscribe };
