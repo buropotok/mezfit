@@ -25,6 +25,13 @@
 }
 .discussion-thread__identity {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.discussion-thread__title-row {
+  display: flex;
   align-items: baseline;
   gap: 8px;
   min-width: 0;
@@ -103,7 +110,7 @@
   position: absolute;
   z-index: 3;
   inset-inline: 0;
-  background: #000;
+  background: transparent;
   padding-inline: 12px;
   display: flex;
   flex-direction: column;

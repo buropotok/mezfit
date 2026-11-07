@@ -81,6 +81,8 @@ describe('glass material', () => {
     expect(resolveGlassRadius(332, 184)).toBeCloseTo(34.7, 1);
     expect(resolveGlassRadius(180, 100, 'capsule')).toBe(50);
     expect(resolveGlassRadius(180, 100, { radius: 24 })).toBe(24);
+    expect(resolveGlassRadius(320, 48, { radius: 24 })).toBe(24);
+    expect(resolveGlassRadius(320, 144, { radius: 24 })).toBe(24);
   });
 
   it('builds the approved edge displacement map with bounded render resolution', () => {
