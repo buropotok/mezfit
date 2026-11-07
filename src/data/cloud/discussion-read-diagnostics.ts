@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 import { discussionId, discussionRecord } from '../../../shared/discussion-anchor';
 import type { MezfitCloudDatabase } from './database';
-import { assertDiscussionThread, discussionReadStateId, type DiscussionThread } from './discussion-contracts';
+import { assertDiscussionThread, matchesDiscussionReadStateId, type DiscussionThread } from './discussion-contracts';
 import { discussionCursorFromKey, discussionCursorKey, isDiscussionMessage } from './discussion-views';
 
 /** Only counts/configuration leave this adapter; never rows, identifiers or text. */
@@ -57,7 +57,7 @@ export function summarizeDiscussionReads(actor: string, threads: readonly Discus
     if (!discussionRecord(state) || !actorId(state.userId) || !discussionId(state.realmId)
       || !discussionId(state.threadId)) { report.rejected.identity++; continue; }
     if (state.userId === actor) report.ownStates++; else report.peerStates++;
-    if (state.id !== discussionReadStateId(state.realmId, state.threadId, state.userId)) {
+    if (!matchesDiscussionReadStateId(state.id, state.realmId, state.threadId, state.userId)) {
       report.rejected.identity++; continue;
     }
     if (state.owner !== state.userId) { report.rejected.owner++; continue; }

@@ -25,6 +25,7 @@ export interface DiscussionMessage {
   text: string; replyToMessageId?: string; createdAt: string; editedAt?: string; deletedAt?: string;
 }
 export interface DiscussionReadState {
+  /** Writer shape. Legacy rows can arrive with an array key; validate them at the read boundary. */
   id: string; realmId: string; owner: string; threadId: string; userId: string;
   lastReadMessageId: string | null; lastReadAt: string;
   /** createdAt/id watermark, advanced by an indexed conditional modify. */
@@ -37,7 +38,16 @@ const actorId = (value: string) => /^tg:[1-9]\d*$/.test(value);
 const invalid = (): never => { throw new Error('INVALID_DISCUSSION_WRITE'); };
 export function discussionReadStateId(realmId: string, threadId: string, userId: string): string {
   if (!discussionId(realmId) || !discussionId(threadId) || !actorId(userId)) invalid();
-  return JSON.stringify(['discussion-read', realmId, threadId, userId]);
+  // Addon 4.4.15 decodes server keys starting with '[' as compound-key arrays.
+  // A non-reserved prefix keeps this string stable across push/pull.
+  return 'discussion-read:' + JSON.stringify([realmId, threadId, userId]);
+}
+/** Exact compatibility for old JSON-string IDs and the Addon's decoded array form. */
+export function matchesDiscussionReadStateId(value: unknown, realmId: string, threadId: string, userId: string): boolean {
+  if (!discussionId(realmId) || !discussionId(threadId) || !actorId(userId)) return false;
+  const legacy = ['discussion-read', realmId, threadId, userId];
+  return value === discussionReadStateId(realmId, threadId, userId) || value === JSON.stringify(legacy)
+    || (Array.isArray(value) && value.length === legacy.length && legacy.every((part, index) => value[index] === part));
 }
 /** Domain contract, not a claim that owner provenance is frozen by the cloud. */
 export function assertDiscussionThread(thread: DiscussionThread): void {
