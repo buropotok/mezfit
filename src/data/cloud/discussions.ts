@@ -129,11 +129,16 @@ export class DiscussionRepository {
       else await this.db.discussionMessages.add(draft);
     });
   }
-  async getDraft(threadId: string, id: string): Promise<DiscussionMessageInput | null> {
-    if (!discussionId(id)) fail('INVALID_DISCUSSION_ID');
+  /** Omit id to recover the newest private draft after closing/restarting the UI. */
+  async getDraft(threadId: string, id?: string): Promise<DiscussionMessageInput | null> {
+    if (id !== undefined && !discussionId(id)) fail('INVALID_DISCUSSION_ID');
     return this.read(async () => {
       await this.thread(threadId);
-      const row = await this.db.discussionMessages.get(id);
+      const row = id !== undefined ? await this.db.discussionMessages.get(id)
+        : (await this.db.discussionMessages.where('[realmId+threadId]').equals([this.actorUserId, threadId])
+          .filter(candidate => isDiscussionMessage(candidate) && candidate.owner === this.actorUserId
+            && !candidate.deletedAt && candidate.draftForRealmId === this.scope.realmId)
+          .sortBy('createdAt')).at(-1);
       return isDiscussionMessage(row) && row.realmId === this.actorUserId && row.owner === this.actorUserId
         && !row.deletedAt && row.threadId === threadId && row.draftForRealmId === this.scope.realmId
         ? { id: row.id, threadId: row.threadId, text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId } : null;
@@ -166,8 +171,11 @@ export class DiscussionRepository {
       if (existing && (!isDiscussionMessage(existing) || existing.owner !== this.actorUserId
         || existing.realmId !== this.actorUserId || existing.threadId !== thread.id || existing.draftForRealmId !== this.scope.realmId)) fail('DISCUSSION_ID_REUSED');
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
+      // Draft creation is private, not publication. Freeze the first local send
+      // time on the row; retries above return that same row without moving it.
       const row: DiscussionMessage = { id: input.id, threadId: input.threadId, text: input.text,
-        createdAt: input.createdAt, replyToMessageId: input.replyToMessageId, realmId: this.scope.realmId,
+        createdAt: existing ? new Date().toISOString() : input.createdAt,
+        replyToMessageId: input.replyToMessageId, realmId: this.scope.realmId,
         owner: this.actorUserId, authorUserId: this.actorUserId, deletedAt: '' };
       assertDiscussionMessageWrite(this.actorUserId, thread, row, undefined, reply);
       if (existing) await this.db.discussionMessages.where({ id: row.id, realmId: this.actorUserId,
@@ -273,3 +281,4 @@ export class DiscussionRepository {
     })).subscribe({ next, error });
   }
 }
+
