@@ -102,7 +102,8 @@ export function createDiscussionPreviewPort(): DiscussionPort {
     getDraft: async (threadId, id) => {
       assertThread(threadId);
       const draft = id === undefined
-        ? [...drafts.values()].filter(row => row.threadId === threadId).sort(ordered).at(-1)
+        ? [...drafts.values()].filter(row => row.threadId === threadId)
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)).at(-1)
         : drafts.get(id);
       return draft?.threadId === threadId ? { ...draft } : null;
     },
