@@ -50,7 +50,11 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
   it('sends reply references, edits through the same composer and copies the full current text', async () => {
     const f = mount();
     await open('Чужой текст'); fireEvent.click(screen.getByRole('menuitem', { name: 'Ответить' }));
-    expect(screen.getAllByText('Клиент').length).toBeGreaterThan(1);
+    // In a direct chat author names are hidden above bubbles by design.
+    // The reply quote still identifies its author; group mode is covered separately.
+    const replyQuote = screen.getByRole('button', { name: 'Перейти к исходному сообщению' });
+    expect(within(replyQuote).getByText('Клиент')).toBeTruthy();
+    expect(screen.getAllByText('Клиент')).toHaveLength(1);
     fireEvent.change(screen.getByPlaceholderText('Сообщение'), { target: { value: 'Ответ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
     await waitFor(() => expect(f.port.send).toHaveBeenCalledWith(expect.objectContaining({ threadId: 'thread', text: 'Ответ', replyToMessageId: 'other' })));

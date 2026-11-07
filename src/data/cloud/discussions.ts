@@ -3,7 +3,7 @@ import { discussionAnchorKey, discussionId, discussionParents, discussionTitle }
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, discussionReadStateId,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
 import { discussionCursorKey, discussionCursorFromKey, discussionInstant, discussionMessageView, isDiscussionMessage,
-  type DiscussionCursor, type DiscussionMessageView } from './discussion-views';
+  type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
 import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
 import type { MezfitCloudDatabase } from './database';
@@ -31,6 +31,8 @@ const tables = ['discussionThreads', 'discussionMessages', 'discussionReadStates
 /** Account lifecycle owns db. No network, PLAN mutation or push in normal operations. */
 export class DiscussionRepository {
   readonly sync: DiscussionSync;
+  private readonly confirmedDelivery = new Map<string, Set<string>>();
+  private readonly receiptObservers = new Map<string, Set<() => void>>();
   private readonly scope: DiscussionScope;
   constructor(private readonly db: DiscussionDatabase, readonly actorUserId: string, scope: DiscussionScope) {
     if (!/^tg:[1-9]\d*$/.test(actorUserId)) fail('INVALID_DISCUSSION_ACTOR');
@@ -279,6 +281,71 @@ export class DiscussionRepository {
     before?: DiscussionCursor, limit = 40): { unsubscribe(): void } {
     return liveQuery(() => this.page(threadId, before, limit)).subscribe({ next, error });
   }
+  /**
+   * A remote participant's readThrough is an authored, replicated read-state row.
+   * The current user's own watermark is never evidence that the recipient read a message.
+   */
+  observeReceipts(threadId: string, next: (value: DiscussionReceiptSnapshot) => void,
+    error: (reason: unknown) => void): { unsubscribe(): void } {
+    let recipientReadThrough: DiscussionCursor[] = [];
+    const emit = () => next({ confirmedIds: [...(this.confirmedDelivery.get(threadId) ?? [])], recipientReadThrough });
+    const observers = this.receiptObservers.get(threadId) ?? new Set<() => void>();
+    observers.add(emit);
+    this.receiptObservers.set(threadId, observers);
+    const subscription = liveQuery(() => this.read(async () => {
+      await this.thread(threadId);
+      const states = await this.db.discussionReadStates.where('[realmId+threadId+userId]')
+        .between([this.scope.realmId, threadId, ''], [this.scope.realmId, threadId, []], true, false).toArray();
+      return states.flatMap(state => {
+        const cursor = discussionCursorFromKey(state.readThrough);
+        return state.realmId === this.scope.realmId && state.threadId === threadId
+          && state.userId !== this.actorUserId && state.owner === state.userId
+          && /^tg:[1-9]\d*$/.test(state.userId)
+          && state.id === discussionReadStateId(this.scope.realmId, threadId, state.userId)
+          && cursor && cursor.id === state.lastReadMessageId ? [cursor] : [];
+      });
+    })).subscribe({ next: cursors => { recipientReadThrough = cursors; emit(); }, error });
+    return { unsubscribe: () => {
+      observers.delete(emit);
+      if (!observers.size) this.receiptObservers.delete(threadId);
+      subscription.unsubscribe();
+    } };
+  }
+
+  /**
+   * A push acknowledgement is attached to these message IDs only after their
+   * committed rows existed before the Addon's awaited push and still exist after it.
+   * It is intentionally not inferred from DiscussionSync.status, nor persisted as
+   * a fictitious server receipt. On a new session the repository can recheck IDs.
+   */
+  async confirmDelivery(threadId: string, messageIds: readonly string[]): Promise<void> {
+    const alreadyConfirmed = this.confirmedDelivery.get(threadId);
+    const ids = [...new Set(messageIds)].filter(id => discussionId(id) && !alreadyConfirmed?.has(id));
+    if (!ids.length) return;
+    const before = await this.read(async () => {
+      await this.thread(threadId);
+      const rows = await Promise.all(ids.map(id => this.db.discussionMessages.get(id)));
+      return rows.filter((row): row is DiscussionMessage => this.visible(row, threadId)
+        && row.authorUserId === this.actorUserId && !row.deletedAt).map(row => row.id);
+    });
+    if (!before.length) return;
+    await this.db.cloud.sync({ purpose: 'push', wait: true });
+    const confirmed = await this.read(async () => {
+      await this.thread(threadId);
+      return (await Promise.all(before.map(async id => {
+        try {
+          const row = await this.message(threadId, id);
+          return row.authorUserId === this.actorUserId && !row.deletedAt ? id : null;
+        } catch { return null; }
+      }))).filter((id): id is string => id !== null);
+    });
+    if (!confirmed.length) return;
+    const confirmedForThread = this.confirmedDelivery.get(threadId) ?? new Set<string>();
+    for (const id of confirmed) confirmedForThread.add(id);
+    this.confirmedDelivery.set(threadId, confirmedForThread);
+    for (const notify of this.receiptObservers.get(threadId) ?? []) notify();
+  }
+
   observeAnchor(anchor: DiscussionAnchor, next: (value: { threads: DiscussionThread[]; unread: number }) => void,
     error: (reason: unknown) => void): { unsubscribe(): void } {
     return liveQuery(() => this.read(async () => {
