@@ -324,4 +324,3 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         }}><Text>Удалить</Text></MezfitDialogButton></>} />
   </div>;
 }
-
