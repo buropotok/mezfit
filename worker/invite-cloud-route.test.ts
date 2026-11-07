@@ -214,6 +214,22 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(f.batch).toHaveBeenCalledTimes(1);
   });
 
+  it('does not revive an expired or revoked invite because of an old D1 link', async () => {
+    const f = fixture();
+    f.seedLegacyD1Link();
+    f.disableInvite();
+
+    const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toEqual({ invite: null });
+
+    const acceptance = await worker.fetch(request(), f.env);
+    expect(acceptance.status).toBe(410);
+    expect(provision).not.toHaveBeenCalled();
+    expect(f.batch).not.toHaveBeenCalled();
+    expect(f.isLinked()).toBe(true);
+  });
+
   it('allows the same invitation to connect different athletes', async () => {
     const f = fixture();
     expect((await worker.fetch(request(), f.env)).status).toBe(200);
