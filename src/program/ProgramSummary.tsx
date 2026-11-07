@@ -45,7 +45,11 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
         <div className="cloud-plan-summary-owner">
           <div className="cloud-plan-summary-text">
             <Text variant={showName ? "body" : "headline"}>{showName ? program.name : 'Описание программы'}</Text>
-            <Text variant="body">Владелец: {owner.name}</Text>
+            <div className="cloud-plan-summary-participants">
+              <Text variant="body">Владелец: {owner.name}</Text>
+              <Text variant="body">Атлет: {athlete.name}</Text>
+            </div>
+            <Text variant="body">Фаз: {phaseCount}</Text>
           </div>
           <div className="cloud-plan-summary-actions">
             <div aria-label={`Аватар владельца: ${owner.name}`}>
@@ -54,10 +58,6 @@ export function ProgramSummary({ program, phaseCount, actorUserId, actor, showNa
             {discussionAction}
           </div>
         </div>
-        <div className="cloud-plan-person-row">
-          <Text variant="body">Атлет: {athlete.name}</Text>
-        </div>
-        <Text variant="body">Фаз: {phaseCount}</Text>
         <ProgramSyncControls key={program.id} repository={repository} planId={program.id}
           syncStatus={syncStatus} onSync={onSync} onNavigationContextChange={onNavigationContextChange} />
       </div>

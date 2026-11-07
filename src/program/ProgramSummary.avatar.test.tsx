@@ -47,6 +47,22 @@ describe('program author portrait', () => {
     expect(screen.queryByText('/stale-telegram-me.jpg')).toBeNull();
   });
 
+  it('keeps owner, athlete and phase in one text column beside avatar and discussion action', () => {
+    const view = render(<ProgramSummary program={program} phaseCount={3}
+      actorUserId="tg:101" actor={{ name: 'Coach' }}
+      discussionAction={<button type="button">Обсуждения</button>}
+      repository={{} as Parameters<typeof ProgramSummary>[0]['repository']}
+      syncStatus="synced" onSync={async () => {}} />);
+    const participants = view.container.querySelector('.cloud-plan-summary-participants');
+    expect(participants?.children).toHaveLength(2);
+    expect(participants?.textContent).toContain('Владелец: Coach');
+    expect(participants?.textContent).toContain('Атлет:');
+    expect(participants?.parentElement?.textContent).toContain('Фаз: 3');
+    const actions = view.container.querySelector('.cloud-plan-summary-actions');
+    expect(actions?.textContent).toContain('Обсуждения');
+    expect(participants?.closest('.cloud-plan-summary-owner')).toBe(actions?.closest('.cloud-plan-summary-owner'));
+  });
+
   it('does not reuse a self profile from a different relationship', () => {
     state.selfAvatars = [{ relationshipId: 'rlm' + 'b'.repeat(28), userId: 'tg:101',
       displayName: 'Coach', avatarVersion: 'a'.repeat(64) }];

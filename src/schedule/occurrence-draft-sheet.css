@@ -15,7 +15,10 @@
 .occurrence-draft-sheet__statuses { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .occurrence-sync-status__badge { display: inline-flex; padding: 0; border: 0; background: transparent; }
 
-.occurrence-draft-sheet__format { display: flex; align-items: center; gap: 8px; }
+.occurrence-draft-sheet__overview { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.occurrence-draft-sheet__overview-details { display: flex; flex-direction: column; flex: 1; gap: 16px; min-width: 0; }
+.occurrence-draft-sheet__discussion-action { flex-shrink: 0; }
+.occurrence-draft-sheet__format { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .occurrence-draft-sheet__coach-avatar { display: inline-flex; align-items: center; flex-shrink: 0; }
 
 .occurrence-draft-sheet--inline { height: auto; gap: 16px; }
