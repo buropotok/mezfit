@@ -44,7 +44,7 @@ function fixture() {
           return actor;
         }
         if (sql.includes('FROM coach_client_invite i')) {
-          return available ? { ...invite, already_linked: connected.has(actor.id) ? 1 : 0 } : null;
+          return available ? invite : null;
         }
         throw Error('Unexpected SQL first: ' + sql);
       },
@@ -73,7 +73,9 @@ function fixture() {
   return {
     env, batch, prepare,
     isLinked: (id = client.id) => connected.has(id),
+    seedLegacyD1Link: () => { connected.add(client.id); },
     switchToOtherClient: () => { actor = { ...client, id: 3, telegram_user_id: '303' }; },
+    switchToInvitingCoach: () => { actor = { ...client, id: 1, telegram_user_id: '101', first_name: 'Coach' }; },
     disableInvite: () => { available = false; },
     failD1Once: () => { failProjection = true; },
     restoreD1: () => { failProjection = false; },
@@ -151,20 +153,38 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(provision).toHaveBeenCalledTimes(2);
   });
 
-  it('hides an accepted invite only for the already-connected client', async () => {
+  it('recovers an old D1-only relationship through the ordinary invite consent', async () => {
     const f = fixture();
+    // The old D1 row is active, but it did not create a Dexie Cloud realm.
+    f.seedLegacyD1Link();
 
-    const initial = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
-    expect(initial.status).toBe(200);
-    await expect(initial.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
+    const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
+    expect(provision).not.toHaveBeenCalled();
+    expect(f.batch).not.toHaveBeenCalled();
 
-    expect((await worker.fetch(request(), f.env)).status).toBe(200);
+    provision.mockImplementationOnce(async () => {
+      // The existing D1 row must not bypass or precede authoritative Cloud membership.
+      expect(f.batch).not.toHaveBeenCalled();
+      return { realmId: 'rlmtest' };
+    });
+    const accepted = await worker.fetch(request(), f.env);
+    expect(accepted.status).toBe(200);
+    await expect(accepted.json()).resolves.toEqual({ ok: true, roles: ['client'] });
+    expect(provision).toHaveBeenCalledWith(f.env, '101', '202', expect.any(Function), {
+      coach: 'Coach', client: 'Client',
+    });
+    expect(f.isLinked()).toBe(true);
+    expect(f.batch).toHaveBeenCalledTimes(1);
+
+    // The D1 projection never claims to know whether future Cloud repair is needed.
     const repeatPreview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
     expect(repeatPreview.status).toBe(200);
-    await expect(repeatPreview.json()).resolves.toEqual({ invite: null });
+    await expect(repeatPreview.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
     expect(provision).toHaveBeenCalledTimes(1);
 
-    // The same reusable token must still show an invite to another client.
+    // Reusable invitations still belong to the coach, not to the original recipient.
     f.switchToOtherClient();
     identity.mockResolvedValue({
       user: { id: 303, first_name: 'Other Client' },
@@ -175,6 +195,59 @@ describe('accept a reusable Telegram invitation into a Dexie relationship', () =
     expect(secondClient.status).toBe(200);
     await expect(secondClient.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
     expect(provision).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves an existing D1 row if Dexie Cloud recovery fails and lets the client retry', async () => {
+    const f = fixture();
+    f.seedLegacyD1Link();
+    provision.mockRejectedValueOnce(new CloudMembershipError('CLOUD_MEMBERSHIP_UNAVAILABLE', 502));
+
+    const failed = await worker.fetch(request(), f.env);
+    expect(failed.status).toBe(502);
+    expect(f.isLinked()).toBe(true);
+    expect(f.batch).not.toHaveBeenCalled();
+
+    const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    await expect(preview.json()).resolves.toMatchObject({ invite: { coach: { firstName: 'Coach' } } });
+    const retry = await worker.fetch(request(), f.env);
+    expect(retry.status).toBe(200);
+    expect(provision).toHaveBeenCalledTimes(2);
+    expect(f.batch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not revive an expired or revoked invite because of an old D1 link', async () => {
+    const f = fixture();
+    f.seedLegacyD1Link();
+    f.disableInvite();
+
+    const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toEqual({ invite: null });
+
+    const acceptance = await worker.fetch(request(), f.env);
+    expect(acceptance.status).toBe(410);
+    expect(provision).not.toHaveBeenCalled();
+    expect(f.batch).not.toHaveBeenCalled();
+    expect(f.isLinked()).toBe(true);
+  });
+
+  it('continues to reject the inviting coach without granting Cloud membership', async () => {
+    const f = fixture();
+    f.switchToInvitingCoach();
+    identity.mockResolvedValue({
+      user: { id: 101, first_name: 'Coach' },
+      authDate: new Date('2026-10-12T00:00:00Z'),
+      startParam: launch,
+    });
+
+    const preview = await worker.fetch(request('/api/invite/current', 'GET'), f.env);
+    expect(preview.status).toBe(200);
+    await expect(preview.json()).resolves.toEqual({ invite: null });
+
+    const acceptance = await worker.fetch(request(), f.env);
+    expect(acceptance.status).toBe(400);
+    expect(provision).not.toHaveBeenCalled();
+    expect(f.batch).not.toHaveBeenCalled();
   });
 
   it('allows the same invitation to connect different athletes', async () => {

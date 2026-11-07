@@ -49,7 +49,7 @@ describe('reinvite after test connection reset', () => {
             return actor === 'coach' ? coach : client;
           }
           if (sql.includes('FROM coach_client_invite i')) {
-            return { ...invite, already_linked: active ? 1 : 0 };
+            return invite;
           }
           if (sql.includes('FROM coach_client cc')) return active ? { id: 2 } : null;
           throw Error('Unexpected first query');
