@@ -79,20 +79,23 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
         items={items} onPresentationChange={onPresentationChange} />
     </span>
     {deleteConfirm && typeof document !== 'undefined' ? createPortal(
-      <MezfitDialog opened role="alertdialog" aria-label="Удалить подход?"
-        title={<Text variant="headline">Удалить подход?</Text>}
-        onBackdropClick={() => { if (!deleting) setDeleteConfirm(false); }}
-        buttons={<>
-          <MezfitDialogButton disabled={deleting} onClick={() => setDeleteConfirm(false)}>
-            <Text variant="body">Отмена</Text>
-          </MezfitDialogButton>
-          <MezfitDialogButton strong tone="danger" disabled={deleting} onClick={() => { void confirmRemoval(); }}>
-            <Text variant="body">Удалить</Text>
-          </MezfitDialogButton>
-        </>}>
-        <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
-        {deleteError ? <Text variant="footnote" role="alert">{deleteError}</Text> : null}
-      </MezfitDialog>, document.body) : null}
+      <div className="navigation-overlay-root k-ios dark safe-areas">
+        <MezfitDialog opened role="alertdialog" aria-label="Удалить подход?"
+          title={<Text variant="headline">Удалить подход?</Text>}
+          onBackdropClick={() => { if (!deletingRef.current) setDeleteConfirm(false); }}
+          buttons={<>
+            <MezfitDialogButton disabled={deleting}
+              onClick={() => { if (!deletingRef.current) setDeleteConfirm(false); }}>
+              <Text variant="body">Отмена</Text>
+            </MezfitDialogButton>
+            <MezfitDialogButton strong tone="danger" disabled={deleting} onClick={() => { void confirmRemoval(); }}>
+              <Text variant="body">Удалить</Text>
+            </MezfitDialogButton>
+          </>}>
+          <Text variant="body">Подход будет удалён только из этой тренировки.</Text>
+          {deleteError ? <Text variant="footnote" role="alert">{deleteError}</Text> : null}
+        </MezfitDialog>
+      </div>, document.body) : null}
     {discussions.content}
   </>;
 }

@@ -216,6 +216,10 @@ describe('COMM-07 completed execution entries', () => {
     const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }));
     expect(onDeleteSet).toHaveBeenCalledOnce();
+    // Neither Back nor Cancel may dismiss the modal while its mutation is active.
+    expect(within(dialog).getByRole('button', { name: 'Отмена' })).toHaveProperty('disabled', true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }));
+    expect(screen.getByRole('alertdialog', { name: 'Удалить подход?' })).toBeTruthy();
     act(() => { probe.navigations.at(-1)?.onBack?.(); });
     expect(screen.getByRole('alertdialog', { name: 'Удалить подход?' })).toBeTruthy();
     expect(probe.navigations.at(-1)?.title).toBe('Удалить подход?');
@@ -240,6 +244,11 @@ describe('COMM-07 completed execution entries', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 1' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить подход' }));
     const dialog = screen.getByRole('alertdialog', { name: 'Удалить подход?' });
+    // Document-body portals need the same canonical Konsta theme ancestry
+    // as discussions; React context alone does not transport CSS selectors.
+    const themeRoot = dialog.closest('.navigation-overlay-root.k-ios.dark.safe-areas');
+    expect(themeRoot).not.toBeNull();
+    expect(themeRoot?.parentElement).toBe(document.body);
     expect(within(dialog).getByText('Удалить подход?')).toBeTruthy();
     expect(onDeleteSet).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }));
