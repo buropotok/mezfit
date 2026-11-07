@@ -13,7 +13,11 @@ export type DiscussionDatabase = Pick<MezfitCloudDatabase,
   transaction<T>(mode: 'r' | 'rw', tables: readonly string[], task: () => Promise<T>): Promise<T>;
 };
 export interface CreateDiscussionThread { id: string; anchor: DiscussionAnchor; entityName: string; date: string; createdAt: string }
-export interface DiscussionMessageInput { id: string; threadId: string; text: string; createdAt: string; replyToMessageId?: string }
+export interface DiscussionMessageInput {
+  id: string; threadId: string; text: string; createdAt: string; replyToMessageId?: string;
+  /** Composer publication must consume a private draft, not acknowledge another device's send. */
+  requireUnsentDraft?: true;
+}
 export interface DiscussionPage { messages: DiscussionMessageView[]; before: DiscussionCursor | null }
 export function prepareDiscussionMessage(threadId: string, text: string, replyToMessageId?: string): DiscussionMessageInput {
   return { id: crypto.randomUUID(), threadId, text, createdAt: new Date().toISOString(), replyToMessageId };
@@ -158,7 +162,8 @@ export class DiscussionRepository {
   }
   async send(input: DiscussionMessageInput): Promise<DiscussionMessageView> {
     input = structuredClone(input);
-    if (!discussionId(input.id) || !discussionInstant(input.createdAt)) fail('INVALID_DISCUSSION_MESSAGE');
+    if (!discussionId(input.id) || !discussionInstant(input.createdAt)
+      || (input.requireUnsentDraft !== undefined && input.requireUnsentDraft !== true)) fail('INVALID_DISCUSSION_MESSAGE');
     if (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
     return this.write(async () => {
       const thread = await this.thread(input.threadId);
@@ -166,8 +171,10 @@ export class DiscussionRepository {
       if (existing && !existing.draftForRealmId) {
         if (!this.visible(existing, thread.id) || existing.authorUserId !== this.actorUserId
           || existing.replyToMessageId !== input.replyToMessageId) fail('DISCUSSION_ID_REUSED');
+        if (input.requireUnsentDraft) fail('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
         return this.view(existing);
       }
+      if (input.requireUnsentDraft && !existing) fail('DISCUSSION_DRAFT_NOT_SAVED');
       if (existing && (!isDiscussionMessage(existing) || existing.owner !== this.actorUserId
         || existing.realmId !== this.actorUserId || existing.threadId !== thread.id || existing.draftForRealmId !== this.scope.realmId)) fail('DISCUSSION_ID_REUSED');
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
