@@ -9,6 +9,9 @@ import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-wor
 import type { WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { occurrenceDiscussionAnchor } from './discussion-anchors';
 import { entityDiscussionId } from './discussions';
+import { readDiscussionDestination } from './discussion-destination';
+import { discussionAnchorKey, discussionParents } from '../../../shared/discussion-anchor';
+import type { DiscussionThread } from './discussion-contracts';
 
 const databases: Dexie[] = [];
 afterEach(async () => { for (const db of databases.splice(0)) await db.delete(); });
@@ -52,6 +55,30 @@ async function fixture(scheduled: boolean) {
 }
 
 describe('COMM-07 authorized execution projections', () => {
+  it.each([false, true])('COMM-08 resolves an exact approach and retains execution without its calendar row (scheduled=%s)', async scheduled => {
+    const { db, coach, session, set } = await fixture(scheduled);
+    const projected = await coach.get(session.id);
+    const anchor = projected?.exercises[0].sets[0].discussionAnchor;
+    if (!anchor) throw Error('Missing execution anchor');
+    const scope = { realmId: session.realmId, coachClientId: session.realmId };
+    const thread: DiscussionThread = { ...scope, id: 'thread', owner: scope.realmId, anchor,
+      anchorKey: discussionAnchorKey(scope, anchor), contextPath: discussionParents(anchor),
+      derivedTitleSnapshot: 'Подход', createdAt: time, lastActivityAt: time };
+    const database = db as unknown as MezfitCloudDatabase;
+    for (const [actor, role] of [['tg:11', 'coach'], ['tg:22', 'client']] as const) {
+      const target = await readDiscussionDestination(database, actor, role, thread);
+      expect(target.kind).toBe('session');
+      if (target.kind !== 'session') throw Error('Expected exact execution');
+      expect(target.session.exercises).toHaveLength(1);
+      expect(target.session.exercises[0].sets.map(row => row.sessionSetId)).toEqual([set.id]);
+      expect(target.comment).toBe('Заметка FACT');
+      expect(target.session.exercises[0].notes).toBe('Техника FACT');
+    }
+    await db.table('adHocSets').update(set.id, { deletedAt: time });
+    expect(await readDiscussionDestination(database, 'tg:11', 'coach', thread)).toEqual({ kind: 'unavailable' });
+    await expect(readDiscussionDestination(database, 'tg:33', 'coach', thread)).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+  });
+
   it.each([false, true])('keeps canonical identities and preserves stored PLAN/FACT (scheduled=%s)', async scheduled => {
     const { db, coach, client, session, exercise, set, plan } = await fixture(scheduled);
     const before = await Promise.all(['adHocSessions', 'adHocExercises', 'adHocSets'].map(name => db.table(name).toArray()));

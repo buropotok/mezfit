@@ -97,6 +97,22 @@ afterEach(() => {
 });
 
 describe('NavigationShell MezfitNavbar integration', () => {
+  it.each(['coach', 'client'] as const)('keeps Programs reachable from the %s Navbar menu after replacing its lower tab', role => {
+    const onDestinationChange = vi.fn();
+    const view = render(<NavigationShell me={{ ...me, roles: [role] }} activeRole={role}
+      destination="discussions" context={null} onDestinationChange={onDestinationChange} onRoleSwitch={vi.fn()}>
+      <div>Inbox</div>
+    </NavigationShell>);
+    const root = getPrimaryTabsRoot(view.container);
+    expect(root.querySelector('[role="tab"][aria-label="Программы"]')).toBeNull();
+    expect(root.querySelector('[role="tab"][aria-label="Обсуждения"]')?.getAttribute('aria-selected')).toBe('true');
+    const menu = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menu);
+    fireEvent.click(view.getByRole('menuitem', { name: 'Программы' }));
+    expect(onDestinationChange).toHaveBeenCalledWith('programs');
+  });
+
   it('derives level-one identity from destination and delegates destination changes to bottom tabs', () => {
     const onDestinationChange = vi.fn();
     const view = render(
@@ -116,7 +132,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(identity?.getAttribute('aria-label')).toBe('Сегодня');
     const tabsRoot = getPrimaryTabsRoot(view.container);
     const todayTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Сегодня"]');
-    const programsTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Программы"]');
+    const programsTab = tabsRoot.querySelector<HTMLButtonElement>('[role="tab"][aria-label="Обсуждения"]');
     expect(todayTab?.getAttribute('aria-selected')).toBe('true');
     expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Тренировка"]')).not.toBeNull();
@@ -124,13 +140,13 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Мой профиль"]')).not.toBeNull();
     expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
     expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
-    expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
+    expectTabIcon(tabsRoot, 'Обсуждения', 'message-circle');
     expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
     expect(tabsRoot.querySelector('[aria-label="Мой профиль"] [role="img"]')).not.toBeNull();
-    if (!programsTab) throw new Error('Missing Programs liquid glass tab');
+    if (!programsTab) throw new Error('Missing Discussions liquid glass tab');
 
     fireEvent.click(programsTab);
-    expect(onDestinationChange).toHaveBeenCalledWith('programs');
+    expect(onDestinationChange).toHaveBeenCalledWith('discussions');
   });
 
   it('forwards the shared glass preset and inherits global blur in navbar and primary tabs', () => {
@@ -240,7 +256,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(tabsRoot.querySelectorAll('[role="tab"]')).toHaveLength(5);
     expectTabIcon(tabsRoot, 'Сегодня', 'calendar-event');
     expectTabIcon(tabsRoot, 'Клиенты', 'users');
-    expectTabIcon(tabsRoot, 'Программы', 'clipboard-list');
+    expectTabIcon(tabsRoot, 'Обсуждения', 'message-circle');
     expectTabIcon(tabsRoot, 'Аналитика', 'chart-dots-2');
     expectTabIcon(tabsRoot, 'Тренировка', 'barbell');
     expect(tabsRoot.querySelector('[role="tab"][aria-label="Настройки"]')).toBeNull();
@@ -249,7 +265,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
     fireEvent.click(menuButton);
     const menuLabels = view.getAllByRole('menuitem').map((item) => item.textContent);
-    expect(menuLabels).toEqual(['Мой профиль', 'Упражнения', 'Календарь', 'Настройки', 'О приложении']);
+    expect(menuLabels).toEqual(['Мой профиль', 'Программы', 'Упражнения', 'Календарь', 'Настройки', 'О приложении']);
   });
 
   it('keeps level-one tabs interactive while rendering the surface action in the shared FAB slot', () => {
@@ -463,8 +479,8 @@ describe('NavigationShell MezfitNavbar integration', () => {
     });
 
     const programsTab = getPrimaryTabsRoot(view.container)
-      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Программы"]');
-    if (!programsTab) throw new Error('Missing Programs liquid glass tab');
+      .querySelector<HTMLButtonElement>('[role="tab"][aria-label="Обсуждения"]');
+    if (!programsTab) throw new Error('Missing Discussions liquid glass tab');
     fireEvent.click(programsTab);
 
     expect(panel?.getAttribute('data-state')).toBe('closed');

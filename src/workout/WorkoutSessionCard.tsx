@@ -96,6 +96,8 @@ function workoutTimeRange<Id extends string | number>(session: ActiveWorkoutSess
 export type WorkoutSessionCardMode = 'planning' | 'active-program' | 'active-own' | 'completed';
 
 export interface WorkoutFactCardProps<Id extends string | number = number> {
+  /** A contextual history destination presents its exact exercise/approach expanded. */
+  initiallyExpanded?: boolean;
   mode?: 'workout';
   /** Viewing a coach-authored FACT must not expose mutation controls to clients. */
   readOnly?: boolean;
@@ -132,6 +134,7 @@ export function WorkoutSessionCard<Id extends string | number = number>(props: W
 }
 
 function WorkoutFactCard<Id extends string | number = number>({
+  initiallyExpanded = false,
   session,
   readOnly = false,
   showStatus = true,
@@ -224,7 +227,7 @@ function WorkoutFactCard<Id extends string | number = number>({
         data={exercise}
         surface="transparent"
         editable={active}
-        collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? true}
+        collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? !initiallyExpanded}
         onCollapsedChange={(collapsed) => {
           setCollapsedByExerciseId((current) => ({
             ...current,

@@ -5,7 +5,7 @@ import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
 import { Text } from '../ui';
 import './profile-workspace.css';
 
-export type ProfileTab = 'basics' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history';
+export type ProfileTab = 'basics' | 'program' | 'exercises' | 'calendar' | 'progress' | 'history' | 'discussions';
 export type ProfileViewContext = { kind: 'self'; name: string } | { kind: 'contact'; contact: CloudContact };
 const tabs: ReadonlyArray<{ value: ProfileTab; label: string }> = [
   { value: 'basics', label: 'Основные' },
@@ -22,25 +22,28 @@ const contactPlaceholders: Partial<Record<ProfileTab, string>> = {
 };
 
 /** Shared screen composition; each viewer supplies only its authorized tab content. */
-export function ProfileWorkspace({ view, tab, onTabChange, basicsContent, programContent, exercisesContent, hideTabs = false }: {
+export function ProfileWorkspace({ view, tab, onTabChange, basicsContent, programContent, exercisesContent, discussionsContent, hideTabs = false }: {
   view: ProfileViewContext;
   tab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
   basicsContent?: ReactNode;
   programContent?: ReactNode;
   exercisesContent?: ReactNode;
+  discussionsContent?: ReactNode;
   hideTabs?: boolean;
 }) {
   const name = view.kind === 'self' ? view.name : view.contact.displayName;
-  const label = tabs.find(item => item.value === tab)?.label;
+  const visibleTabs = view.kind === 'contact' && discussionsContent !== undefined
+    ? [...tabs, { value: 'discussions' as const, label: 'Обсуждения' }] : tabs;
+  const label = visibleTabs.find(item => item.value === tab)?.label;
   const content = tab === 'basics' ? basicsContent : tab === 'program' ? programContent
-    : tab === 'exercises' ? exercisesContent : undefined;
+    : tab === 'exercises' ? exercisesContent : tab === 'discussions' ? discussionsContent : undefined;
   return <div className="stack client-workspace">
     {!hideTabs ? <div className="client-workspace-tabs" role="group"
       aria-label={view.kind === 'contact' ? `Разделы клиента ${name}` : 'Разделы моего профиля'}>
-      <LiquidGlassTextOnly tabs={tabs} value={tab} hidden={false} fullWidth
+      <LiquidGlassTextOnly tabs={visibleTabs} value={tab} hidden={false} fullWidth
         onValueChange={value => {
-          const selected = tabs.find(item => item.value === value);
+          const selected = visibleTabs.find(item => item.value === value);
           if (selected) onTabChange(selected.value);
         }} />
     </div> : null}
