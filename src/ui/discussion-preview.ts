@@ -57,6 +57,7 @@ function ordered(a: PreviewRow, b: PreviewRow): number {
 export function createDiscussionPreviewPort(): DiscussionPort {
   const rows = seed.map(row => ({ ...row }));
   const subscribers = new Set<() => void>();
+  const drafts = new Map<string, DiscussionMessageInput>();
   const find = (id: string) => rows.find(row => row.id === id);
   const assertThread = (threadId: string) => {
     if (threadId !== previewDiscussionThread.id) throw new Error('PREVIEW_THREAD_NOT_FOUND');
@@ -98,6 +99,19 @@ export function createDiscussionPreviewPort(): DiscussionPort {
 
   return {
     actorUserId: COACH,
+    getDraft: async (threadId, id) => {
+      assertThread(threadId);
+      const draft = id === undefined
+        ? [...drafts.values()].filter(row => row.threadId === threadId)
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)).at(-1)
+        : drafts.get(id);
+      return draft?.threadId === threadId ? { ...draft } : null;
+    },
+    saveDraft: async input => {
+      assertThread(input.threadId);
+      if (find(input.id)) throw new Error('PREVIEW_DRAFT_ALREADY_SENT');
+      drafts.set(input.id, { ...input });
+    },
     listThreads: async anchor => JSON.stringify(anchor) === JSON.stringify(previewDiscussionAnchor)
       ? [previewDiscussionThread] : [],
     page: async (threadId, before, limit) => { assertThread(threadId); return slice(before, limit); },
@@ -114,14 +128,18 @@ export function createDiscussionPreviewPort(): DiscussionPort {
     send: async (input: DiscussionMessageInput) => {
       assertThread(input.threadId);
       const existing = find(input.id);
-      if (existing) return view(existing);
+      if (existing) {
+        if (input.requireUnsentDraft) throw new Error('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+        return view(existing);
+      }
+      if (input.requireUnsentDraft && !drafts.has(input.id)) throw new Error('DISCUSSION_DRAFT_NOT_SAVED');
       if (!input.text.trim() || (input.replyToMessageId && !find(input.replyToMessageId)))
         throw new Error('PREVIEW_INVALID_MESSAGE');
       const row: PreviewRow = {
-        id: input.id, authorUserId: COACH, createdAt: input.createdAt, text: input.text,
+        id: input.id, authorUserId: COACH, createdAt: drafts.has(input.id) ? new Date().toISOString() : input.createdAt, text: input.text,
         replyToMessageId: input.replyToMessageId,
       };
-      rows.push(row); publish();
+      drafts.delete(input.id); rows.push(row); publish();
       return view(row);
     },
     edit: async (threadId, id, text) => {

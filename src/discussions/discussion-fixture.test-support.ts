@@ -23,6 +23,8 @@ export function fixture(initial: DiscussionMessageView[] = [message('own', 'Мо
   };
   const port: DiscussionPort = {
     actorUserId: 'tg:1',
+    getDraft: vi.fn(async () => null),
+    saveDraft: vi.fn(async (_input: DiscussionMessageInput) => {}),
     listThreads: vi.fn(async () => [thread]),
     page: vi.fn(async (_thread: string, before?: DiscussionCursor, limit?: number) => slice(before, limit)),
     getMessage: vi.fn(async (_thread: string, id: string) => {

@@ -4,7 +4,7 @@ import type { DiscussionAnchor } from '../data/cloud/discussion-contracts';
 
 /** Application port: the UI never receives IndexedDB, Addon or a second message store. */
 export type DiscussionPort = Pick<DiscussionRepository, 'actorUserId' | 'listThreads' | 'page' | 'observePage'
-  | 'getMessage' | 'send' | 'edit' | 'remove' | 'markRead'> & {
+  | 'getMessage' | 'send' | 'edit' | 'remove' | 'markRead' | 'getDraft' | 'saveDraft'> & {
     sync: Pick<DiscussionRepository['sync'], 'observe' | 'retry'>;
   };
 export interface DiscussionTarget { threadId: string; anchor: DiscussionAnchor; focusMessageId?: string }
@@ -26,6 +26,7 @@ export class DiscussionSession {
   private active = false;
   private generation = 0;
   private wanted = 1;
+  private historyFloor: DiscussionCursor | null = null;
   private jumpGeneration = 0;
   constructor(readonly repository: DiscussionPort, readonly target: DiscussionTarget) {}
   snapshot = () => this.state;
@@ -74,7 +75,10 @@ export class DiscussionSession {
       const hadChildren = this.pageTokens.length > index + 1;
       this.pages[index] = page;
       if (hadChildren && !sameCursor(oldCursor, page.before)) this.dropFrom(index + 1);
-      if (page.before && this.wanted > index + 1 && !this.pageTokens[index + 1]) {
+      const oldest = page.messages[0];
+      const lostHistory = this.historyFloor && oldest && (oldest.createdAt > this.historyFloor.createdAt
+        || (oldest.createdAt === this.historyFloor.createdAt && oldest.id > this.historyFloor.id));
+      if (page.before && (this.wanted > index + 1 || lostHistory) && !this.pageTokens[index + 1]) {
         this.attach(index + 1, page.before);
       }
       this.updateProjection();
@@ -97,7 +101,13 @@ export class DiscussionSession {
       // Preserve the visible history while dependent cursors settle. Apply any
       // refreshed text/tombstone immediately without briefly removing older rows.
       this.publish({ messages: this.state.messages.map(row => rows.get(row.id) ?? row), loading, error });
-    } else this.publish({ messages, loading, more: Boolean(this.pages.at(-1)?.before), error });
+    } else {
+      // Preserve the revealed boundary, not just a fixed number of sliding pages.
+      if (messages[0]) this.historyFloor = {
+        createdAt: messages[0].createdAt, id: messages[0].id,
+      };
+      this.publish({ messages, loading, more: Boolean(this.pages.at(-1)?.before), error });
+    }
   }
   loadMore = () => {
     const last = this.pages.at(-1);
