@@ -81,8 +81,8 @@ export function createDiscussionPreviewPort(): DiscussionPort {
     };
   };
   const slice = (before?: DiscussionCursor, limit = 40): DiscussionPage => {
-    const candidates = rows.filter(row => !before || ordered(row, { id: before.id, createdAt: before.createdAt, authorUserId: '', text: '' }) < 0)
-      .sort(ordered);
+    const candidates = rows.filter(row => !before || row.createdAt < before.createdAt
+      || (row.createdAt === before.createdAt && row.id < before.id)).sort(ordered);
     const selected = candidates.slice(-limit);
     const oldest = selected[0];
     return { messages: selected.map(view),
