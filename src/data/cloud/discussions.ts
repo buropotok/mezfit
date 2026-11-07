@@ -346,12 +346,13 @@ export class DiscussionRepository {
     for (const notify of this.receiptObservers.get(threadId) ?? []) notify();
   }
 
-  observeAnchor(anchor: DiscussionAnchor, next: (value: { threads: DiscussionThread[]; unread: number }) => void,
+  observeAnchor(anchor: DiscussionAnchor, next: (value: { threads: DiscussionThread[]; unread: number; unreadByThread: Record<string, number> }) => void,
     error: (reason: unknown) => void): { unsubscribe(): void } {
     return liveQuery(() => this.read(async () => {
       const threads = await this.threads(anchor);
-      const unread = (await Promise.all(threads.map(thread => this.countUnread(thread.id)))).reduce((a, b) => a + b, 0);
-      return { threads, unread };
+      const counts = await Promise.all(threads.map(thread => this.countUnread(thread.id)));
+      const unreadByThread = Object.fromEntries(threads.map((thread, index) => [thread.id, counts[index]]));
+      return { threads, unread: counts.reduce((a, b) => a + b, 0), unreadByThread };
     })).subscribe({ next, error });
   }
 }

@@ -29,6 +29,9 @@ import { WorkoutProgramSheet } from './WorkoutProgramSheet';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { WorkoutSyncStatus } from './WorkoutSyncStatus';
+import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
+import { plannedDiscussionTarget } from '../discussions/entity-discussion-target';
+import { UnreadCount } from '../ui/UnreadCount';
 import './occurrence-draft-sheet.css';
 
 const ProgramExerciseInformationSheet = lazy(() => import('../program/ProgramExerciseInformationSheet')
@@ -189,11 +192,13 @@ export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabl
 }
 
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
-  actor, readOnly = false, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef,
+  actor, readOnly = false, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef, suspended = false,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
   inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
   const cloud = useCloudConnections();
+  const discussionTarget = draft ? plannedDiscussionTarget(draft) : null;
+  const discussions = useEntityDiscussions(discussionTarget, onNavigationContextChange, auxiliaryReady && !suspended && !collapsed);
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const [programSheetOpen, setProgramSheetOpen] = useState(false);
@@ -542,15 +547,16 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       if (startAlive.current) setCopyBusy(false);
     }
   };
-  const actionsMenu = planner ? <LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
+  const actionsMenu = planner ? <span className="entity-discussion-trigger"><LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
             trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
-            items={[{ id: 'copy', label: 'Скопировать тренировку', icon: 'copy-plus', disabled: busy || copyBusy
+            items={[...(discussionTarget ? [discussions.menuItem] : []), { id: 'copy', label: 'Скопировать тренировку', icon: 'copy-plus', disabled: busy || copyBusy
               || (draft?.format === 'coached' && draft.coachUserId !== draft.actorUserId),
               onSelect: () => { setOpenCopyAfterMenu(true); setActionsOpen(false); } },
               { id: 'program', label: 'Добавить в программу', icon: 'text-plus', disabled: busy || readOnly || planLocked,
               onSelect: () => { if (mutationBlocked()) return; setOpenProgramAfterMenu(true); setActionsOpen(false); } }]}
             onPresentationChange={presented => {
+              discussions.onMenuPresentationChange(presented);
               if (presented) return;
               if (openCopyAfterMenu) {
                 setOpenCopyAfterMenu(false); setCopyDate(localDate(new Date())); setCopyDateOpened(true);
@@ -560,7 +566,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               setOpenProgramAfterMenu(false);
               void flushEdits().then(() => { if (!mutationBlocked()) setProgramSheetOpen(true); })
                 .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
-            }} /> : null;
+            }} />{!actionsOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}</span> : null;
   const content = draft ? <section className={`occurrence-draft-sheet${inlineCard ? ' occurrence-draft-sheet--inline' : ''}`}>
         {inlineCard ? <div className="occurrence-draft-sheet__identity"><WorkoutPlanCardHeader name={draft.plan.name}
           programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
@@ -670,6 +676,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         </> : null}
       </section> : null;
   return <>
+    {discussions.content}
     {container ? createPortal(content, container) : inlineCard
       ? <GlassSurface preset="modalTuned" optics={glass.optics}>{content}</GlassSurface> : content}
     {error || saveNotice || copyNotice ? <Toast opened position="center" role={error || saveNotice ? 'alert' : 'status'}><Text variant="body">{error || saveNotice || copyNotice}</Text></Toast> : null}

@@ -13,6 +13,9 @@ import { ProgramDayDialog } from './ProgramDayDialog';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogState, type PlanDialogOption } from './PlanActionDialog';
 import { SpotlightHint } from '../ui/SpotlightHint';
+import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
+import { programDiscussionTarget } from '../discussions/entity-discussion-target';
+import { UnreadCount } from '../ui/UnreadCount';
 import './cloud-plan-management.css';
 
 const INACTIVE: readonly PlanDialogOption[] = [
@@ -143,6 +146,11 @@ export function CloudProgramDetailsPage({
   const [dayCreatePhaseId, setDayCreatePhaseId] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [fabPresented, setFabPresented] = useState(false);
+  const [programMenuOpen, setProgramMenuOpen] = useState(false);
+  const programMenuRef = useRef<HTMLButtonElement>(null);
+  const discussions = useEntityDiscussions(details ? programDiscussionTarget(details.program, repository.actorUserId) : null,
+    onNavigationContextChange);
+  const menuGlass = loadBrowserGlassSettings();
   const explainSelection = useCallback(() => onSelectionMutationAttempt?.(), [onSelectionMutationAttempt]);
 
   useEffect(() => {
@@ -338,9 +346,10 @@ export function CloudProgramDetailsPage({
     onRetryCloud={onRetryCloud} onRetrySync={onRetrySync} onNavigationContextChange={onNavigationContextChange}
     localError={error} onRetryLocal={() => setRetryKey((n) => n + 1)} />;
 
-  if (loading) return <Text variant="footnote" tone="muted">Загружаем программу…</Text>;
+  if (loading) return <>{discussions.content}<Text variant="footnote" tone="muted">Загружаем программу…</Text></>;
   if (!details) return (
     <section className="cloud-plan-loading">
+      {discussions.content}
       {syncNotice}
       <Text variant="headline">{error || (syncStatus === 'synced' ? 'Программа не найдена' : 'Программа ещё не загружена на устройство')}</Text>
       <KonstaButton rounded onClick={() => setRetryKey((n) => n + 1)}>Повторить</KonstaButton>
@@ -362,9 +371,17 @@ export function CloudProgramDetailsPage({
       text={readOnly ? 'Нажмите «Запланировать» у нужного дня, чтобы выбрать дату и время.'
         : 'Выберите день и нажмите «Запланировать». Затем вы сможете изменить тренировку.'}>
     <section className="cloud-plan-details" aria-label={`Программа ${details.program.name}`}>
+      {discussions.content}
       {syncNotice}
       <div className="cloud-plan-title-row">
         <div className="cloud-plan-main-title"><Text variant="large-title">{details.program.name}</Text></div>
+        <span className="entity-discussion-trigger">
+          <LiquidPopover isOpen={programMenuOpen} onOpenChange={setProgramMenuOpen} triggerRef={programMenuRef}
+            label="Меню программы" preset={menuGlass.preset} optics={menuGlass.optics}
+            trigger={<IconButton ref={programMenuRef} icon="dots-vertical" label="Меню программы" />}
+            items={[discussions.menuItem]} onPresentationChange={discussions.onMenuPresentationChange} />
+          {!programMenuOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}
+        </span>
         <Badge color={details.program.status === 'active' ? 'green' : 'gray'}>
           {details.program.status === 'active' ? 'Активная' :
             details.program.status === 'draft' ? 'Черновик' :

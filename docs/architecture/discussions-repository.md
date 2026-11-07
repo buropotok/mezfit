@@ -80,6 +80,12 @@ Cloud primary keys/tables/ACL не меняются, повторный Apply н
 Default factory/provider остаются на v14. Repository отказывает без новых индексов.
 Новой БД, скрытой unsynced chat table или массовой активации нет.
 
+Уточнение COMM-06: default constructor/factory учитывают общий build-time
+`VITE_CLOUD_DISCUSSIONS_ENABLED`. Без него v14 сохраняется; после одобренной
+активации весь account lifecycle регистрирует v16. Отдельных UI-owned db нет.
+`observeAnchor` дополнительно возвращает derived `unreadByThread` в той же
+локальной read-транзакции; independent unread cache в БД не добавляется.
+
 Контролируемый пилот использует тот же account db через createCloudDatabase с
 третьим аргументом { discussions: true }. Этот opt-in не включён текущим приложением.
 После upgrade нельзя открывать тот же IndexedDB старой v14 схемой. Старые v15 rows

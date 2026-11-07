@@ -36,6 +36,9 @@ jobs:
           VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED: ${{ vars.VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED }}
           # Remains false unless explicitly enabled after phase-role deployment and checks.
           VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED: ${{ vars.VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED }}
+          # Enable only after discussions Apply and real Coach/Client ACL checks.
+          # Keep enabled once account databases have upgraded to v16.
+          VITE_CLOUD_DISCUSSIONS_ENABLED: ${{ vars.VITE_CLOUD_DISCUSSIONS_ENABLED }}
       - name: Resolve D1 database id
         shell: bash
         run: |

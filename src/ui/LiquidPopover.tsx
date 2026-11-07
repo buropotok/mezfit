@@ -13,6 +13,7 @@ import {
   type RefObject,
 } from 'react';
 import { Text } from './primitives';
+import { UnreadCount } from './UnreadCount';
 import { useSpotlightHintPause } from './SpotlightHint';
 import { paintLiquidPopoverText } from './liquidPopoverText';
 import { GlassSurface } from './GlassSurface';
@@ -41,6 +42,8 @@ import {
 export type LiquidPopoverItem = {
   id: string;
   label: string;
+  /** Superscript unread messages for this entity; no preview or business status. */
+  unreadCount?: number;
   icon?: UiIconName;
   /** Optional per-row icon tint; does not alter default menu appearance. */
   iconColor?: string;
@@ -260,6 +263,8 @@ function paintContentTexture(
         context.fillText(character, cursor, baseline);
         cursor += context.measureText(character).width + spacing;
       }
+    const unread = row.querySelector<HTMLElement>('.ui-menu-item__unread .ui-text');
+    if (unread && !paintLiquidPopoverText(context, unread, bounds)) return false;
   }
   context.globalAlpha = 1;
   return true;
@@ -364,6 +369,7 @@ export function LiquidPopover({
     items.map((item) => [
       item.id,
       item.label,
+      item.unreadCount,
       item.icon,
       item.iconColor,
       item.trailingAction?.icon,
@@ -385,6 +391,7 @@ export function LiquidPopover({
     presentation.items.map((item) => [
       item.id,
       item.label,
+      item.unreadCount,
       item.icon,
       item.iconColor,
       item.trailingAction?.icon,
@@ -828,7 +835,7 @@ export function LiquidPopover({
               {item.icon && layout === 'menu' ? (
                 <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
               ) : null}
-              <span className="ui-menu-item__label">{item.label}</span>
+              <span className="ui-menu-item__label">{item.label}<UnreadCount count={item.unreadCount ?? 0} className="ui-menu-item__unread" /></span>
             </div>
           );
           return <Fragment key={item.id}>
@@ -936,7 +943,7 @@ export function LiquidPopover({
                   {item.icon && presentation.layout === 'menu' ? (
                     <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
                   ) : null}
-                  <span className="ui-menu-item__label">{item.label}</span>
+                  <span className="ui-menu-item__label">{item.label}<UnreadCount count={item.unreadCount ?? 0} className="ui-menu-item__unread" /></span>
                 </button>
               );
               return <Fragment key={item.id}>

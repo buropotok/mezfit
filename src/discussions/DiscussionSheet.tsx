@@ -23,10 +23,14 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   opened: boolean;
   repository: DiscussionPort;
   onClose: () => void;
+  /** Entity integrations may return Back to their thread list; Close still returns to the entity. */
+  onBack?: () => void;
   resolveAuthor: (userId: string) => DiscussionAuthor;
   /** The existing shell remains the single owner of browser/Telegram Back. */
   onNavigationContextChange: (context: NavigationContext | null) => void;
   parentNavigation: NavigationContext | null;
+  contextLabel?: string;
+  onOpenContext?: () => void;
   glassSettings?: GlassSettings;
   /** Compact direct conversation by default; retain native author presentation for groups. */
   showAvatars?: boolean;
@@ -56,8 +60,8 @@ export function DiscussionSheet(props: DiscussionSheetProps) {
   </MezfitBottomSheet>;
 }
 
-function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose, resolveAuthor,
-  onNavigationContextChange, parentNavigation, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
+function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose, onBack, resolveAuthor,
+  onNavigationContextChange, parentNavigation, contextLabel, onOpenContext, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
   const targetKey = JSON.stringify([threadId, anchor]);
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
@@ -147,7 +151,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (deletingId) { setDeletingId(null); return; }
     if (menu?.open) { closeMenu(); return; }
     if (replyId || editId) { cancelMode(); return; }
-    onClose();
+    (onBack ?? onClose)();
   };
   useEffect(() => {
     // Preserve the underlying entity and its scroll identity; no independent history/Back listeners.
@@ -304,6 +308,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     </header>
     <div className="discussion-thread__scroll" ref={scroller} style={{ paddingBottom: composerHeight + contextHeight + 16 }}
       onScroll={event => { const el = event.currentTarget; setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 48); rememberPosition(); closeMenu(); }}>
+      {onOpenContext && <Button rounded tonal onClick={onOpenContext}><Text>{contextLabel || 'Вернуться к объекту'}</Text></Button>}
       {state.error && <div role="alert"><Text>{state.error}</Text><Button rounded onClick={() => { setError(null); deepFocus.current = null; session.retry(); }}>Повторить</Button></div>}
       {state.more && <Button rounded disabled={state.loading || Boolean(state.error)} onClick={() => {
         const el = scroller.current;
