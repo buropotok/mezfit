@@ -67,6 +67,30 @@ describe('discussion composer persistence and reading position', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Повторить сохранение черновика' }));
     await ready(); expect(input().value).toBe('Recovered'); expect(repository.saveDraft).not.toHaveBeenCalled();
   });
+  it('keeps a failed local save retryable and recovers it after retry and close', async () => {
+    const f = setup(); await ready();
+    f.repository.saveDraft.mockRejectedValueOnce(Error('Local write failure'));
+    fireEvent.change(input(), { target: { value: 'Retry draft save' } });
+    await screen.findByText('Не удалось сохранить черновик');
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить сохранение черновика' }));
+    await waitFor(() => expect(screen.queryByText('Не удалось сохранить черновик')).toBeNull());
+    expect(input().value).toBe('Retry draft save');
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} opened={false} /></KonstaProvider>);
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} /></KonstaProvider>);
+    await ready(); expect(input().value).toBe('Retry draft save');
+  });
+  it('ignores old account draft hydration after switching repository', async () => {
+    const f = setup(); await ready();
+    let release: (input: DiscussionMessageInput | null) => void = () => {};
+    const old = { ...f.repository, getDraft: vi.fn(() => new Promise<DiscussionMessageInput | null>(resolve => { release = resolve; })) };
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} repository={old} /></KonstaProvider>);
+    const current = { ...f.repository, getDraft: vi.fn(async () => ({ id: 'new-draft', threadId: 'thread', text: 'Current account', createdAt: '2026-11-07T00:00:00.000Z' })) };
+    f.rerender(<KonstaProvider theme="ios" dark><DiscussionSheet {...f.props} repository={current} /></KonstaProvider>);
+    await ready();
+    await act(async () => release({ id: 'old-draft', threadId: 'thread', text: 'Old account', createdAt: '2026-11-07T00:00:00.000Z' }));
+    expect(input().value).toBe('Current account');
+    expect(current.saveDraft).not.toHaveBeenCalled();
+  });
   it('anchors the visible row when live rows above it change height', async () => {
     const f = setup(); await ready();
     const list = f.container.querySelector<HTMLDivElement>('.discussion-thread__scroll');
