@@ -300,8 +300,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     data-show-avatars={String(showAvatars)}>
     <header className="discussion-thread__header">
       <div className="discussion-thread__identity">
-        <Text variant="headline">{state.title || 'Обсуждение'}</Text>
-        {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted">Демо</Text>}
+        <Text variant="headline" className="discussion-thread__title">{state.title || 'Обсуждение'}</Text>
+        {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted" className="discussion-thread__demo">Демо</Text>}
       </div>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>

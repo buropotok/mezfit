@@ -29,6 +29,15 @@
   gap: 8px;
   min-width: 0;
 }
+.discussion-thread__title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.discussion-thread__demo {
+  flex-shrink: 0;
+}
 .discussion-thread__scroll {
   position: relative;
   z-index: 0;

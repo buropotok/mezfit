@@ -27,7 +27,8 @@ describe('COMM-05 mobile presentation', () => {
 
   it('renders a compact thread without author rows, with real bubble metadata and synthetic demo receipts', async () => {
     const options = props();
-    const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet {...options} /></KonstaProvider>);
+    const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet {...options}
+      glassSettings={{ preset: 'frosted', optics: false, blur: 13 }} /></KonstaProvider>);
     await screen.findByText('Доброе утро! Как прошла тренировка по новой программе?');
     expect(view.container.querySelector('.ui-avatar')).toBeNull();
     expect(screen.getByText('Демо').closest('.discussion-thread__header')).not.toBeNull();
@@ -44,7 +45,10 @@ describe('COMM-05 mobile presentation', () => {
     const composer = view.container.querySelector('.discussion-composer');
     expect(composer).not.toBeNull();
     expect(composer?.classList.contains('ui-glass-surface')).toBe(false);
-    expect(composer?.querySelectorAll(':scope > .ui-glass-surface')).toHaveLength(3);
+    const glass = composer?.querySelectorAll(':scope > .ui-glass-surface');
+    expect(glass).toHaveLength(3);
+    expect(Array.from(glass ?? [], element =>
+      (element as HTMLElement).style.getPropertyValue('--ui-glass-surface-blur'))).toEqual(['13px', '13px', '13px']);
     expect(composer?.querySelector('.discussion-composer__field.ui-glass-surface .ui-mezfit-messagebar--bare')).not.toBeNull();
     expect(composer?.querySelectorAll(':scope > .discussion-composer__button.ui-glass-surface')).toHaveLength(2);
     expect(composer?.querySelectorAll('.discussion-composer__button > .ui-icon-button')).toHaveLength(2);
