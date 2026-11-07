@@ -7,9 +7,11 @@ import './messagebar.css';
 export type MezfitMessagebarProps = Omit<ComponentProps<typeof KonstaMessagebar>, 'value'> & {
   value: string;
   maxRows?: number;
+  /** Use when a parent GlassSurface owns the material; retain Konsta textarea and autosizing. */
+  bare?: boolean;
 };
 
-export function MezfitMessagebar({ value, maxRows = 5, ref, className = '', ...props }: MezfitMessagebarProps) {
+export function MezfitMessagebar({ value, maxRows = 5, bare = false, ref, className = '', ...props }: MezfitMessagebarProps) {
   const root = useRef<HTMLElement | null>(null);
   const fit = useCallback(() => {
     const area = root.current?.querySelector('textarea');
@@ -44,7 +46,7 @@ export function MezfitMessagebar({ value, maxRows = 5, ref, className = '', ...p
     };
   }, [fit]);
 
-  return <KonstaMessagebar {...props} value={value} className={`ui-mezfit-messagebar ${className}`.trim()}
+  return <KonstaMessagebar {...props} value={value} className={`ui-mezfit-messagebar${bare ? ' ui-mezfit-messagebar--bare' : ''} ${className}`.trim()}
     ref={node => {
       root.current = node;
       if (typeof ref === 'function') ref(node);

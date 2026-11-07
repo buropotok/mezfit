@@ -85,7 +85,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [composerHeight, setComposerHeight] = useState(64);
   const [contextHeight, setContextHeight] = useState(0);
   const scroller = useRef<HTMLDivElement>(null), context = useRef<HTMLDivElement>(null);
-  const composer = useRef<HTMLElement>(null), trigger = useRef<HTMLButtonElement>(null);
+  const composer = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
   const rows = useRef(new Map<string, HTMLDivElement>());
   const alive = useRef(false), pending = useRef(false), actionVersion = useRef(0);
   const prepared = useRef<DiscussionMessageInput | null>(null);

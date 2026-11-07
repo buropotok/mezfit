@@ -30,7 +30,8 @@ describe('COMM-05 mobile presentation', () => {
     const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet {...options} /></KonstaProvider>);
     await screen.findByText('Доброе утро! Как прошла тренировка по новой программе?');
     expect(view.container.querySelector('.ui-avatar')).toBeNull();
-    expect(screen.getByText('Демо')).toBeTruthy();
+    expect(screen.getByText('Демо').closest('.discussion-thread__header')).not.toBeNull();
+    expect(view.container.querySelector('.discussion-composer-context')?.textContent).not.toContain('Демо');
     expect(screen.getAllByRole('img', { name: 'Прочитано собеседником' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('img', { name: 'Отправка подтверждена Dexie Cloud' }).length).toBeGreaterThan(0);
     const row = view.container.querySelector('[data-message-id="preview-3"]');
@@ -40,7 +41,12 @@ describe('COMM-05 mobile presentation', () => {
     expect(row?.querySelector('.ui-mezfit-message__inline-meta svg')).toBeNull(); // Icons come from the shared SVG registry masks.
     expect(screen.getByRole('button', { name: 'Добавить вложение (пока недоступно)' })).toHaveProperty('disabled', true);
     expect(screen.getByRole('button', { name: 'Отправить' })).toBeTruthy();
-    expect(view.container.querySelector('.discussion-composer-surface.ui-glass-surface')).not.toBeNull();
+    const composer = view.container.querySelector('.discussion-composer');
+    expect(composer).not.toBeNull();
+    expect(composer?.classList.contains('ui-glass-surface')).toBe(false);
+    expect(composer?.querySelectorAll(':scope > .ui-glass-surface')).toHaveLength(3);
+    expect(composer?.querySelector('.discussion-composer__field.ui-glass-surface .ui-mezfit-messagebar--bare')).not.toBeNull();
+    expect(composer?.querySelectorAll(':scope > button.ui-identity-action')).toHaveLength(2);
   });
 
   it('uses the same sheet for author mode and preserves multiline drafts', async () => {
