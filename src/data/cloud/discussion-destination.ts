@@ -2,11 +2,11 @@ import { discussionAnchorKey } from '../../../shared/discussion-anchor';
 import { liveQuery } from 'dexie';
 import type { DiscussionThread } from './discussion-contracts';
 import type { MezfitCloudDatabase } from './database';
-import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
+import { draftFromOccurrence, type LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
 import type { ActiveWorkoutSession } from '../../workout/workoutSessionTypes';
 import { DiscussionRepository } from './discussions';
 import { ProgramManagementRepository } from './program-management';
-import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
+import { WorkoutSchedulingRepository } from './workout-scheduling';
 import { AdHocWorkoutRepository } from './adhoc-workouts';
 import { ClientWorkoutRepository } from './client-workouts';
 
@@ -39,9 +39,13 @@ export async function readDiscussionDestination(db: MezfitCloudDatabase, actor: 
     const execution = await repository.getOccurrenceSession(id);
     if (execution) id = execution.id;
     else {
-      const draft = await new WorkoutOccurrenceDraftRepository(db, actor).get('draft:' + id);
-      if (!draft || draft.realmId !== thread.realmId || draft.workoutSessionId) return { kind: 'unavailable' };
-      return anchor.kind === 'workout' ? { kind: 'occurrence', draft } : { kind: 'unavailable' };
+      // This is a viewer destination, not an editor intent. Reuse the calendar's
+      // membership/publication projection so an athlete can read a coached PLAN.
+      const occurrence = (await new WorkoutSchedulingRepository(db, actor).listWorkspace())
+        .find(row => row.id === id && row.realmId === thread.realmId && row.entryKind !== 'personal_event');
+      if (!occurrence || occurrence.workoutSessionId) return { kind: 'unavailable' };
+      return anchor.kind === 'workout'
+        ? { kind: 'occurrence', draft: draftFromOccurrence(actor, occurrence) } : { kind: 'unavailable' };
     }
   } else if (anchor.workout.kind === 'legacy-session') {
     // Legacy rows have no adopted execution viewer. Never reinterpret their IDs

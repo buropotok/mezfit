@@ -12,6 +12,7 @@ import { entityDiscussionId } from './discussions';
 import { readDiscussionDestination } from './discussion-destination';
 import { discussionAnchorKey, discussionParents } from '../../../shared/discussion-anchor';
 import type { DiscussionThread } from './discussion-contracts';
+import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 
 const databases: Dexie[] = [];
 afterEach(async () => { for (const db of databases.splice(0)) await db.delete(); });
@@ -55,6 +56,38 @@ async function fixture(scheduled: boolean) {
 }
 
 describe('COMM-07 authorized execution projections', () => {
+  it.each(['coached', 'independent'] as const)('COMM-08 lets an athlete read a published %s occurrence without editor rights', async format => {
+    const { db, session, plan } = await fixture(true);
+    await db.table('adHocSessions').clear();
+    const occurrence: CloudWorkoutOccurrenceRow = { id: 'occurrence', realmId: session.realmId, owner: session.realmId,
+      athleteUserId: 'tg:22', coachUserId: 'tg:11', clientUserId: 'tg:22', format,
+      plan, workoutSessionId: null, startsAtUtc: time, durationMinutes: 60, status: 'scheduled',
+      publicationStatus: 'published', createdByUserId: 'tg:11', draftAuthorUserId: 'tg:11' };
+    await db.table('workoutOccurrences').put(occurrence);
+    const scope = { realmId: session.realmId, coachClientId: session.realmId };
+    const anchor = occurrenceDiscussionAnchor(scope, occurrence);
+    const thread: DiscussionThread = { ...scope, id: 'planned-thread', owner: scope.realmId, anchor,
+      anchorKey: discussionAnchorKey(scope, anchor), contextPath: [], derivedTitleSnapshot: 'План',
+      createdAt: time, lastActivityAt: time };
+    const database = db as unknown as MezfitCloudDatabase;
+    for (const [actor, role] of [['tg:11', 'coach'], ['tg:22', 'client']] as const) {
+      const target = await readDiscussionDestination(database, actor, role, thread);
+      expect(target.kind).toBe('occurrence');
+      if (target.kind !== 'occurrence') throw Error('Expected readable calendar PLAN');
+      expect(target.draft.targetOccurrenceId).toBe(occurrence.id);
+      expect(target.draft.plan).toEqual(plan);
+    }
+    expect(await db.table('workoutOccurrences').get(occurrence.id)).toEqual(occurrence);
+    await db.table('workoutOccurrences').update(occurrence.id, { publicationStatus: 'draft' });
+    expect(await readDiscussionDestination(database, 'tg:22', 'client', thread)).toEqual({ kind: 'unavailable' });
+    await db.table('workoutOccurrences').update(occurrence.id, { publicationStatus: 'published', inactive: true });
+    expect(await readDiscussionDestination(database, 'tg:22', 'client', thread)).toEqual({ kind: 'unavailable' });
+    await db.table('workoutOccurrences').put({ ...occurrence, realmId: 'tg:22', owner: 'tg:22',
+      coachUserId: null, clientUserId: null, format: 'independent' });
+    expect(await readDiscussionDestination(database, 'tg:22', 'client', thread)).toEqual({ kind: 'unavailable' });
+    await expect(readDiscussionDestination(database, 'tg:33', 'coach', thread)).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+  });
+
   it.each([false, true])('COMM-08 resolves an exact approach and retains execution without its calendar row (scheduled=%s)', async scheduled => {
     const { db, coach, session, set } = await fixture(scheduled);
     const projected = await coach.get(session.id);
