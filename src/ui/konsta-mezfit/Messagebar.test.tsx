@@ -55,4 +55,32 @@ describe('Mezfit Konsta Messagebar autosizing adapter', () => {
     expect(input.style.height).toBe('48px');
   });
 
+  it('measures a bare textarea from one native row, not the browser two-row default', () => {
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLTextAreaElement) {
+      return Math.max(this.rows, this.value.split('\n').length) * 16 + 32;
+    });
+    function BareExample() {
+      const [value, setValue] = useState('');
+      return <KonstaProvider theme="ios" dark>
+        <MezfitMessagebar bare placeholder="Сообщение" value={value} maxRows={5}
+          onChange={event => setValue(event.target.value)} />
+      </KonstaProvider>;
+    }
+    const view = render(<BareExample />);
+    const area = screen.getByPlaceholderText('Сообщение') as HTMLTextAreaElement;
+    expect(area.rows).toBe(1);
+    expect(area.style.height).toBe('48px');
+    fireEvent.change(area, { target: { value: 'Одна строка' } });
+    expect(area.style.height).toBe('48px');
+    fireEvent.change(area, { target: { value: '1\n2\n3' } });
+    expect(area.style.height).toBe('80px');
+    fireEvent.change(area, { target: { value: '1\n2\n3\n4\n5\n6' } });
+    expect(area.style.overflowY).toBe('auto');
+    fireEvent.change(area, { target: { value: '' } });
+    expect(area.rows).toBe(1);
+    expect(area.style.height).toBe('48px');
+    expect(area.style.overflowY).toBe('hidden');
+    expect(view.container.querySelector('.ui-mezfit-messagebar--bare')).not.toBeNull();
+  });
+
 });

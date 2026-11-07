@@ -16,6 +16,10 @@ export function MezfitMessagebar({ value, maxRows = 5, bare = false, ref, classN
   const fit = useCallback(() => {
     const area = root.current?.querySelector('textarea');
     if (!area) return;
+    // Konsta 5.4.0 omits rows; the browser defaults to two rows, so an
+    // empty textarea reports two lines of scrollHeight and sits too tall
+    // in the glass capsule. Set the hosted input to one row before sizing.
+    if (bare && area.rows !== 1) area.rows = 1;
     const computed = getComputedStyle(area);
     const lineHeight = Number.parseFloat(computed.lineHeight) || 16;
     const padding = (Number.parseFloat(computed.paddingTop) || 0) + (Number.parseFloat(computed.paddingBottom) || 0);
