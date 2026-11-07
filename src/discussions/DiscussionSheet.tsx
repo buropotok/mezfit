@@ -86,6 +86,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [busy, setBusy] = useState(false);
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
   const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
+  const [receiptError, setReceiptError] = useState(false);
+  const [receiptRetry, setReceiptRetry] = useState(0);
   const confirmationAttempts = useRef(new Set<string>());
   const material = glassSettings ?? loadBrowserGlassSettings();
   const [requestedFocus, setRequestedFocus] = useState<string | null>(null);
@@ -129,13 +131,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   }, [session, repository]);
   useEffect(() => {
     if (!repository.observeReceipts) return;
+    let active = true;
     const subscription = repository.observeReceipts(threadId, snapshot => {
-      if (alive.current) setReceipts(snapshot);
+      if (active && alive.current) { setReceipts(snapshot); setReceiptError(false); }
     }, () => {
-      if (alive.current) setReceipts({ confirmedIds: [], recipientReadThrough: [] });
+      if (active && alive.current) setReceiptError(true);
     });
-    return () => subscription.unsubscribe();
-  }, [repository, threadId]);
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [repository, threadId, receiptRetry]);
   useEffect(() => {
     // A general Addon in-sync flag never becomes a receipt. Ask the repository
     // to await a push for exactly the currently visible own message IDs.
@@ -276,6 +279,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     } else if (atEnd) list.scrollTop = list.scrollHeight;
     rememberPosition();
   }, [state.messages, requestedFocus, atEnd, composerHeight, contextHeight]);
+  const markViewed = (id: string) => {
+    lastRead.current = id;
+    void repository.markRead(threadId, id).then(() => {
+      if (alive.current) setReadError(false);
+    }, () => {
+      if (alive.current) { lastRead.current = null; setReadError(true); }
+    });
+  };
   useEffect(() => {
     if (!visible || focusing.current || state.loading || state.error || requestedFocus) return;
     const list = scroller.current;
@@ -288,12 +299,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         && box.top < bounds.bottom - composerHeight - contextHeight;
     });
     if (!newest || lastRead.current === newest.id) return;
-    lastRead.current = newest.id;
-    void repository.markRead(threadId, newest.id).then(() => {
-      if (alive.current) setReadError(false);
-    }, () => {
-      if (alive.current) { lastRead.current = null; setReadError(true); }
-    });
+    markViewed(newest.id);
   }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, repository, threadId, composerHeight, contextHeight, syncState?.status, syncState?.offline]);
 
   useEffect(() => {
@@ -337,7 +343,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
-    if (action === 'reply') { draft.update(draft.text, id); setEditId(null); setEditText(''); }
+    if (action === 'reply') {
+      // Selecting Reply is an explicit viewing action even away from the end.
+      if (row.authorUserId !== repository.actorUserId) markViewed(row.id);
+      draft.update(draft.text, id); setEditId(null); setEditText('');
+    }
     if (action === 'edit' && row.authorUserId === repository.actorUserId) { setEditId(id); setEditText(row.text); }
     if (action === 'delete' && row.authorUserId === repository.actorUserId) setDeletingId(id);
     if (action === 'copy') void run(async () => {
@@ -419,6 +429,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </Messages>
     </div>
     <div className="discussion-composer-context" ref={context} style={{ bottom: composerHeight }}>
+      {receiptError && <><Text variant="footnote" role="alert">Не удалось обновить статусы прочтения</Text>
+        <Button rounded onClick={() => setReceiptRetry(value => value + 1)}>Повторить обновление статусов</Button></>}
       {readError && <><Text variant="footnote" role="alert">Не удалось отметить сообщения прочитанными</Text>
         <Button rounded onClick={() => setReadPosition(value => value + 1)}>Повторить отметку прочтения</Button></>}
       {error && <Text variant="footnote" role="alert">{error}</Text>}

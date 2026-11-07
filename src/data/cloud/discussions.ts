@@ -66,16 +66,23 @@ export class DiscussionRepository {
     const result = await this.db.transaction('rw', tables, async () => { await this.access(); return task(); });
     this.sync.changed(); return result;
   }
-  private async thread(id: string): Promise<DiscussionThread> {
+  private thread(id: string): Promise<DiscussionThread> {
     if (!discussionId(id)) fail('INVALID_DISCUSSION_ID');
-    const row = await this.db.discussionThreads.get(id);
-    if (!row || row.realmId !== this.scope.realmId || row.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
-    assertDiscussionThread(row); return row;
+    return this.db.discussionThreads.get(id).then(row => {
+      if (!row || row.realmId !== this.scope.realmId || row.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
+      assertDiscussionThread(row); return row;
+    });
+  }
+  /** Header-only identity query: receipt reads must not hydrate activity/messages. */
+  private storedThreads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
+    return this.db.discussionThreads.where('[realmId+anchorKey]')
+      .equals([this.scope.realmId, discussionAnchorKey(this.scope, anchor)]).toArray().then(rows =>
+        rows.filter(row => { try { assertDiscussionThread(row); return row.coachClientId === this.scope.coachClientId; } catch { return false; } }));
   }
   /** Only the canonical entry aggregates legacy rows; stored provenance never changes. */
-  private async conversationThreads(threadId: string): Promise<DiscussionThread[]> {
-    const thread = await this.thread(threadId);
-    return threadId.startsWith('entity-discussion:') ? this.threads(thread.anchor) : [thread];
+  private conversationThreads(threadId: string): Promise<DiscussionThread[]> {
+    return this.thread(threadId).then(thread => threadId.startsWith('entity-discussion:')
+      ? this.storedThreads(thread.anchor) : [thread]);
   }
   async ensureEntityThread(anchor: DiscussionAnchor, entityName: string): Promise<DiscussionThread> {
     const id = await entityDiscussionId(this.scope, anchor);
@@ -121,9 +128,7 @@ export class DiscussionRepository {
     });
   }
   private async threads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
-    const rows = await this.db.discussionThreads.where('[realmId+anchorKey]')
-      .equals([this.scope.realmId, discussionAnchorKey(this.scope, anchor)]).toArray();
-    const valid = rows.filter(row => { try { assertDiscussionThread(row); return row.coachClientId === this.scope.coachClientId; } catch { return false; } });
+    const valid = await this.storedThreads(anchor);
     // Activity hints can lag concurrent sends; derive the displayed timestamp from local messages.
     const projected = await Promise.all(valid.map(async row => {
       const latest = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
@@ -378,23 +383,26 @@ export class DiscussionRepository {
   observeReceipts(threadId: string, next: (value: DiscussionReceiptSnapshot) => void,
     error: (reason: unknown) => void): { unsubscribe(): void } {
     let recipientReadThrough: DiscussionReceiptSnapshot['recipientReadThrough'] = [];
-    const emit = () => next({ confirmedIds: [...(this.confirmedDelivery.get(threadId) ?? [])], recipientReadThrough });
+    let observationFailed = false;
+    const emit = () => { if (!observationFailed) next({ confirmedIds: [...(this.confirmedDelivery.get(threadId) ?? [])], recipientReadThrough }); };
     const observers = this.receiptObservers.get(threadId) ?? new Set<() => void>();
     observers.add(emit);
     this.receiptObservers.set(threadId, observers);
-    const subscription = liveQuery(() => this.read(async () => {
-      const threads = await this.conversationThreads(threadId);
-      const states = (await Promise.all(threads.map(thread => this.db.discussionReadStates.where('[realmId+threadId+userId]')
-        .between([this.scope.realmId, thread.id, ''], [this.scope.realmId, thread.id, []], true, false).toArray()))).flat();
-      return states.flatMap(state => {
-        const cursor = discussionCursorFromKey(state.readThrough);
-        return state.realmId === this.scope.realmId && threads.some(thread => thread.id === state.threadId)
-          && state.userId !== this.actorUserId && state.owner === state.userId
-          && /^tg:[1-9]\d*$/.test(state.userId)
-          && state.id === discussionReadStateId(this.scope.realmId, state.threadId, state.userId)
-          && cursor && cursor.id === state.lastReadMessageId ? [threadId.startsWith('entity-discussion:') ? { ...cursor, threadId: state.threadId } : cursor] : [];
-      });
-    })).subscribe({ next: cursors => { recipientReadThrough = cursors; emit(); }, error });
+    const subscription = liveQuery(() => this.read(() => this.conversationThreads(threadId).then(threads => {
+      const threadIds = new Set(threads.map(thread => thread.id));
+      return Dexie.Promise.all(threads.map(thread => this.db.discussionReadStates.where('[realmId+threadId+userId]')
+        .between([this.scope.realmId, thread.id, ''], [this.scope.realmId, thread.id, []], true, false).toArray())).then(groups =>
+        groups.flat().flatMap(state => {
+          const cursor = discussionCursorFromKey(state.readThrough);
+          return state.realmId === this.scope.realmId && threadIds.has(state.threadId)
+            && state.userId !== this.actorUserId && state.owner === state.userId
+            && /^tg:[1-9]\d*$/.test(state.userId)
+            && state.id === discussionReadStateId(this.scope.realmId, state.threadId, state.userId)
+            && cursor && cursor.id === state.lastReadMessageId
+            ? [threadId.startsWith('entity-discussion:') ? { ...cursor, threadId: state.threadId } : cursor] : [];
+        }));
+    }))).subscribe({ next: cursors => { recipientReadThrough = cursors; emit(); },
+      error: reason => { observationFailed = true; error(reason); } });
     return { unsubscribe: () => {
       observers.delete(emit);
       if (!observers.size) this.receiptObservers.delete(threadId);

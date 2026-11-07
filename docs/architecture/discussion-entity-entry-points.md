@@ -89,3 +89,25 @@ A-008/A-012 (публичные UIkit APIs) и A-010 (валидация cached 
 Уточнение индексов COMM-06: локальная v17 добавляет только `[id+lastReadAt]`
 для условного обновления legacy read-state. Таблицы/поля/cloud ACL не меняются;
 upgrade выполняется при обычном открытии account DB.
+
+
+## Коррекция после проверки устройства: overlay и receipts
+
+Entity overlay монтируется React portal в document.body, за пределами GlassSurface
+и её clipping/containing block. Portal сохраняет React context и shell Back;
+публичный navigation-overlay-root публикует тот же отступ Navbar и получает
+k-ios/dark/safe-areas. Строки программы не содержат fixed Sheet в своём DOM.
+Механика и стили BottomSheet/GlassSurface не меняются.
+
+Наблюдение discussionReadStates использует только заголовки threads точного
+anchor/realm и цепочку Dexie.Promise; activity/messages не гидратируются ради
+receipts. Ошибка наблюдения видна, допускает повтор и не стирает уже полученное
+подтверждение прочтения. После unsubscribe старый callback не меняет новый observer.
+Выбор «Ответить» входящему сообщению — явный viewing intent: markRead записывает
+собственный read-state до этого cursor даже при просмотре старой истории.
+Отправка ответа не создаёт синтетическую отметку у собеседника; общий sync status
+по-прежнему не даёт вторую галочку.
+
+Добавлены проверки portal вне клиппирующего контейнера, Back/unmount,
+receipt error/retry/stale observer, явного Reply и реактивного обновления между
+двумя локальными подключениями для обеих ролей. Это не live cloud/device evidence.

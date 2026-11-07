@@ -125,6 +125,21 @@ describe('COMM-06 direct entity conversation', () => {
     await waitFor(() => expect(screen.queryByText('Мой текст')).toBeNull());
     expect((screen.getByLabelText('Фильтр') as HTMLInputElement).value).toBe('Ноги');
   });
+  it('mounts exactly one conversation outside a clipped glass list and removes the portal on Back', async () => {
+    const view = mount();
+    view.container.style.backdropFilter = 'blur(12px)';
+    view.container.style.overflow = 'hidden';
+    fireEvent.click(screen.getByText('Обсуждения'));
+    await screen.findByText('Мой текст');
+    const dialog = screen.getByRole('dialog', { name: 'Обсуждение' });
+    expect(view.container.contains(dialog)).toBe(false);
+    expect(document.body.contains(dialog)).toBe(true);
+    expect(dialog.closest('.dark')?.classList.contains('k-ios')).toBe(true);
+    expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
+    view.back();
+    await waitFor(() => expect(document.body.contains(dialog)).toBe(false));
+    expect(screen.getByLabelText('Фильтр')).toBeTruthy();
+  });
   it('clears stale unread on observer failure', () => {
     mount();
     act(() => fail(Error('Access/query failure')));
