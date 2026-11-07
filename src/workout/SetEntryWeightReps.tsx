@@ -51,7 +51,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const metricsConfirmed = useRef(false);
   const [pickerOpened, setPickerOpened] = useState(false);
   const target = useRef<HTMLElement>(null);
-  const requestCloseRef = useRef<() => void>(() => undefined);
+  const requestCloseRef = useRef<(fromBack?: boolean) => void>(() => undefined);
 
   const change = (mutate: (current: SetEntryFactDraft) => SetEntryFactDraft) => {
     if (saveInFlightRef.current || readOnly) return;
@@ -110,12 +110,12 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   };
 
   // X and navigation Back use the same explicit save/discard decision.
-  const discardEntry = () => {
+  const discardEntry = (fromBack = false) => {
     if (saveInFlightRef.current) return;
-    // The dialog is above the editor; Back dismisses the innermost surface.
+    // An explicit X exits the editor; navigation Back dismisses its topmost overlay first.
     if (deleteConfirm) { setDeleteConfirm(false); return; }
     if (discardConfirm) { setDiscardConfirm(false); return; }
-    if (pickerOpened) { setPickerOpened(false); return; }
+    if (fromBack && pickerOpened) { setPickerOpened(false); return; }
     const newFactConfirmed = !isPlan && !hasSetMeasurements(props.data.fact?.metrics) && metricsConfirmed.current;
     if (readOnly || (!newFactConfirmed && sameSetEntryDraft(initialDraft.current, draftRef.current))) {
       setPickerOpened(false); props.onClose();
@@ -129,7 +129,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
     reportNavigation({
       title: `Подход ${props.data.identity.setNumber}`,
       scrollKey: `set-entry:${props.data.identity.sourceProgramSetId ?? props.data.identity.sessionSetId ?? props.data.identity.setNumber}`,
-      onBack: () => requestCloseRef.current(),
+      onBack: () => requestCloseRef.current(true),
     });
     return () => reportNavigation(null);
   }, [props.isOpen, props.onNavigationContextChange, props.data.identity.setNumber,

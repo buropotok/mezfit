@@ -75,7 +75,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   const [picker, setPicker] = useState<EditableMetric | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const targets = useRef<Partial<Record<EditableMetric, HTMLElement | null>>>({});
-  const requestClose = useRef<() => void>(() => undefined);
+  const requestClose = useRef<(fromBack?: boolean) => void>(() => undefined);
   const glass = loadBrowserGlassSettings();
   const keys = FIELDS[props.data.trackingType as keyof typeof FIELDS] ?? [];
   const suggested = (key: EditableMetric) => {
@@ -155,12 +155,12 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     }
   };
 
-  const discardEntry = () => {
+  const discardEntry = (fromBack = false) => {
     if (saveInFlightRef.current) return;
-    // The dialog is above the editor; Back dismisses the innermost surface.
+    // An explicit X exits the editor; navigation Back dismisses its topmost overlay first.
     if (deleteConfirm) { setDeleteConfirm(false); return; }
     if (discardConfirm) { setDiscardConfirm(false); return; }
-    if (picker) { closeMetricPicker(picker); return; }
+    if (fromBack && picker) { closeMetricPicker(picker); return; }
     if (readOnly || sameSetEntryDraft(initialDraft.current, draftRef.current)) {
       setPicker(null); props.onClose();
     }
@@ -173,7 +173,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
     register({
       title: `Подход ${props.data.identity.setNumber}`,
       scrollKey: `occurrence-set:${props.data.identity.sourceProgramSetId ?? props.data.identity.setNumber}`,
-      onBack: () => requestClose.current(),
+      onBack: () => requestClose.current(true),
     });
     return () => register(null);
   }, [props.isOpen, props.onNavigationContextChange, props.data.identity.setNumber,
