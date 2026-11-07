@@ -33,9 +33,11 @@ scopes. No new administrative client, schema change or ACL expansion is needed.
 5. Worker deletes pair-realm business rows, with readback per table. Only
    afterward does it delete the realm (which cascades memberships). A final
    readback must show the realm absent.
-6. Only when Cloud confirms deletion does Worker deactivate the temporary
-   `coach_client` row in D1. The client is never deleted from `app_user`, and
-   reusable invitation tokens remain valid until their usual expiry/revocation.
+6. Only when Cloud confirms deletion does Worker execute one atomic D1 batch:
+   it deletes the old pair-owned training-plan graph, related workout sessions
+   and calendar occurrences, then marks the temporary `coach_client` link
+   inactive. The client is never deleted from `app_user`; unrelated personal
+   plans, exercise definitions and reusable invitation tokens remain intact.
 7. Frontend pulls fresh Dexie Cloud contact state; the Client provider also
    drops an invalid selected Coach on its next synchronized read.
 
@@ -50,7 +52,8 @@ realms, personal profiles, public catalogue and their data are not touched.
 - The available documented REST API does not provide the CLI `clear-realm`
   cross-shard atomicity guarantee. The implemented scoped row-by-row cleanup
   may be partially complete if networking fails. In that case D1 remains
-  active, and repeating the same action completes missing steps. Do not start
+  active, and repeating the same action completes missing steps. A failed D1
+  transaction also keeps the old relationship active and can be retried. Do not start
   a new invitation acceptance until reset confirms success.
 - Local offline copies can remain on devices until their next successful
   Dexie Cloud pull; test on two online accounts and verify both directories.
