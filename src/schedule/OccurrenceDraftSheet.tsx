@@ -582,12 +582,20 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           {!inlineCard ? <IconButton label="Закрыть" onClick={onClose}>✕</IconButton> : null}
         </header> : null}
         <div className="occurrence-draft-sheet__body">
-          <Text variant="body">Атлет: {athlete.name}</Text>
-          <div className="occurrence-draft-sheet__format">
-            <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
-            <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
-            {draft.format === 'coached' && draft.coachUserId
-              ? <span className="occurrence-draft-sheet__coach-avatar">{owner.compactAvatar}</span> : null}
+          <div className="occurrence-draft-sheet__overview">
+            <div className="occurrence-draft-sheet__overview-details">
+              <Text variant="body">Атлет: {athlete.name}</Text>
+              <div className="occurrence-draft-sheet__format">
+                <Text variant="body">{draft.format === 'coached' ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+                <Icon name={draft.format === 'coached' ? 'users' : 'user'} style={{ width: 22, height: 22 }} />
+                {draft.format === 'coached' && draft.coachUserId
+                  ? <span className="occurrence-draft-sheet__coach-avatar">{owner.compactAvatar}</span> : null}
+              </div>
+            </div>
+            {discussionTarget ? <span className="entity-discussion-trigger occurrence-draft-sheet__discussion-action">
+              <IconButton icon="message-circle" size="avatar" label="Обсуждения" disabled={!discussions.canOpen} onClick={discussions.open} />
+              <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
+            </span> : null}
           </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />

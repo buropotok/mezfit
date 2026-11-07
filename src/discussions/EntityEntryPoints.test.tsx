@@ -85,6 +85,21 @@ describe('COMM-06 production surface wiring', () => {
     expect(probe.targets.at(-1)).toMatchObject({ anchor: { kind: 'program', trainingPlanId: 'program' },
       scope: { realmId: 'pair', coachClientId: 'pair' } });
   });
+  it('opens the same planned-workout discussion from the direct icon without using the menu', () => {
+    const drafts = { repeatStateFor: vi.fn(async () => ({ rule: null, applied: false })), pendingEditError: () => '' };
+    render(<OccurrenceDraftCard draft={draft}
+      drafts={drafts as unknown as WorkoutOccurrenceDraftRepository}
+      readOnly collapsed={false} onCollapsedChange={vi.fn()}
+      onClose={vi.fn()} onSave={async () => {}} onNavigationContextChange={vi.fn()} />);
+    const icon = screen.getByRole('button', { name: 'Обсуждения' });
+    expect(icon.closest('.occurrence-draft-sheet__discussion-action')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Меню тренировки' })).toBeTruthy();
+    expect(screen.getByLabelText('Непрочитанных: 4')).toBeTruthy();
+    fireEvent.click(icon);
+    expect(probe.open).toHaveBeenCalledOnce();
+    expect(probe.targets.at(-1)?.anchor).toEqual({ kind: 'workout', workout: { kind: 'occurrence', id: 'occurrence' } });
+  });
+
   it('retains the canonical planned-workout entry after execution', () => {
     const drafts = { repeatStateFor: vi.fn(async () => ({ rule: null, applied: false })), pendingEditError: () => '' };
     const page = (source: LocalWorkoutOccurrenceDraft) => <OccurrenceDraftCard draft={source}
