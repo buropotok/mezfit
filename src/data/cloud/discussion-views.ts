@@ -5,7 +5,7 @@ export interface DiscussionQuote { messageId: string; authorUserId: string | nul
 /** Evidence captured by the repository, never inferred from its general sync indicator. */
 export interface DiscussionReceiptSnapshot {
   confirmedIds: readonly string[];
-  recipientReadThrough: readonly DiscussionCursor[];
+  recipientReadThrough: readonly (DiscussionCursor & { threadId?: string })[];
 }
 export interface DiscussionMessageView {
   id: string; threadId: string; authorUserId: string; createdAt: string;

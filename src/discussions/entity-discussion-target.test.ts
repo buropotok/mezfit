@@ -34,9 +34,10 @@ describe('COMM-06 targets preserve source identity and PLAN', () => {
       .toEqual({ kind: 'workout', workout: { kind: 'occurrence', id: 'exact-occurrence' } });
     expect(draft).toEqual(before);
   });
-  it('does not add an entry on started or completed workouts', () => {
-    expect(plannedDiscussionTarget({ ...draft, workoutSessionId: 'session' })).toBeNull();
-    expect(plannedDiscussionTarget({ ...draft, executionStatus: 'in_progress' })).toBeNull();
-    expect(plannedDiscussionTarget({ ...draft, executionStatus: 'completed' })).toBeNull();
+  it('keeps the same occurrence entry after Start and completion', () => {
+    const expected = plannedDiscussionTarget(draft);
+    expect(plannedDiscussionTarget({ ...draft, workoutSessionId: 'session' })).toEqual(expected);
+    expect(plannedDiscussionTarget({ ...draft, executionStatus: 'in_progress' })).toEqual(expected);
+    expect(plannedDiscussionTarget({ ...draft, executionStatus: 'completed' })).toEqual(expected);
   });
 });

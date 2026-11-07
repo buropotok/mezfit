@@ -19,8 +19,9 @@ Repository не меняет и не переутверждает PLAN/FACT ил
 источника не перепривязывает историю: сохранены threadId/anchor/title; будущий UI
 честно показывает недоступный источник. Anchor не является новым grant-деревом.
 
-- prepareDiscussionThread создаёт UUID-команду и title по имени сущности и локальной
-  календарной дате. createThread идемпотентен по ID; несколько команд создают несколько веток.
+- ensureEntityThread создаёт/переиспользует детерминированный thread пары/anchor.
+  prepareDiscussionThread/createThread остаются низкоуровневым legacy-контрактом;
+  новые entity-входы их не используют. Несколько старых веток читаются одной историей.
 - prepareDiscussionMessage создаёт стабильную команду. Вызывающий код сохраняет её ID
   для retry, не генерирует новую отправку при каждом повторе.
 - saveDraft/getDraft/discardDraft хранят неотправленный текст в discussionMessages
@@ -68,30 +69,23 @@ offline устройств: матрица ниже обязательна, ос
 
 ## Версии и честные состояния синхронизации
 
-Исторические v14/v15 не переписаны. Только opt-in добавляет v16: локальные индексы
-discussionMessages.[realmId+threadId+createdAt+id] и discussionReadStates.[id+readThrough].
-Условные modify/delete также имеют точные compound indexes: thread id/activity,
-message id/realm/owner/draft marker, id/realm/thread/owner/author/deletedAt и
-id/realm/owner. Это сохраняет declarative predicates в поддерживаемом Addon пути.
-Для строковых timestamps/IDs диапазоны используют пустые строки снизу и единственный
-array sentinel сверху. Один и тот же array-valued Dexie.maxKey нельзя дважды помещать
-в составной ключ: IndexedDB key conversion отклоняет повторную ссылку как DataError.
-Cloud primary keys/tables/ACL не меняются, повторный Apply не требуется.
-Default factory/provider остаются на v14. Repository отказывает без новых индексов.
-Новой БД, скрытой unsynced chat table или массовой активации нет.
+Исторические v14/v15 не переписаны. Обычный constructor/factory регистрирует
+v15/v16/v17 для всего account lifecycle без env/flag/ручной активации (решение
+COMM-06 от 2026-11-07). Cloud primary keys/tables/ACL не меняются, Apply не требуется.
+Локальные индексы включают discussionMessages.[realmId+threadId+createdAt+id]
+и discussionReadStates.[id+readThrough]. Явный options.discussions=false остаётся
+только для исторических schema fixtures. Обновлённый IndexedDB нельзя открывать
+старой v14 схемой.
 
-Уточнение COMM-06: default constructor/factory учитывают общий build-time
-`VITE_CLOUD_DISCUSSIONS_ENABLED`. Без него v14 сохраняется; после одобренной
-активации весь account lifecycle регистрирует v16. Отдельных UI-owned db нет.
-`observeAnchor` дополнительно возвращает derived `unreadByThread` в той же
-локальной read-транзакции; independent unread cache в БД не добавляется.
-
-Контролируемый пилот использует тот же account db через createCloudDatabase с
-третьим аргументом { discussions: true }. Этот opt-in не включён текущим приложением.
-После upgrade нельзя открывать тот же IndexedDB старой v14 схемой. Старые v15 rows
-сохраняются; read-state без валидного readThrough требует валидации, а не сброса.
-COMM-03 не имел штатного writer таких cursor rows. Старое active сообщение без
-sentinel читается; оно не переписывается whole-row ради новой операции.
+Canonical thread агрегирует валидные legacy thread IDs только своего anchor/realm;
+страницы, quote и собственные edit/delete сохраняют storage provenance. Read-state
+остаётся отдельным для каждого storage thread. Recipient receipts включают threadId,
+поэтому cursor одной старой ветки не подтверждает сообщения другой.
+markRead обновляет watermarks до просмотренной границы единой хронологии.
+Legacy read-state без readThrough проверяется по исходному lastReadMessageId,
+продвигается условной записью; malformed cursor продолжает требовать валидации.
+Строковые диапазоны используют пустые строки снизу и array sentinel сверху.
+`observeAnchor` возвращает derived unread/unreadByThread; persistent cache не вводится.
 
 DiscussionSync хранит только session-local acknowledgement, без второй очереди.
 После локального commit — local; Addon владеет фоновой передачей. Наблюдение in-sync
@@ -101,7 +95,7 @@ DiscussionSync хранит только session-local acknowledgement, без �
 replay; после перезапуска прежнее acknowledgement не выдумывается. Synced — подтверждение
 push account database, не индивидуальная доставка и не прочтение адресатом.
 
-## Проверки и пилот перед массовой активацией
+## Исторические проверки COMM-04 и приёмка
 
 Подготовлены CI тесты retry/draft/reopen, пустого text, own/foreign writes, двух тренеров
 и personal history, динамического quote после edit/delete/missing original, unread,
@@ -123,7 +117,8 @@ liveQuery и captured revision/stale sync failure. Старые тесты не 
    Published message не должен измениться/исчезнуть и не должен дублироваться.
 5. Бывшая пара, удалённый source, потеря связи, scope switch, account close/reopen.
 
-До этого массовая активация запрещена. Неисполненные live проверки явно остаются gates.
+Решение COMM-06 от 2026-11-07 разрешает обычную поставку без отдельной активации.
+Неисполненные live проверки остаются непроверенными сценариями приёмки.
 Релевантны A-005 (гонки мутаций/устаревшие завершения) и A-010 (runtime validation).
 Перед PR требуется решение владельца по процессу задачи.
 
@@ -155,3 +150,7 @@ Repository проверяет его в той же локальной тран�
 Обычный send без флага сохраняет прежнюю идемпотентность retry, edit и tombstone.
 Новых полей синхронизированных строк, schema/ACL или серверных блокировок нет;
 проверка не заменяет отдельные испытания двух offline устройств через Dexie Cloud.
+
+Уточнение индексов COMM-06: локальная v17 добавляет только `[id+lastReadAt]`
+для условного обновления legacy read-state. Таблицы/поля/cloud ACL не меняются;
+upgrade выполняется при обычном открытии account DB.

@@ -16,6 +16,9 @@ import { ProgramClientPicker } from './ProgramClientPicker';
 import { ProgramToolbar, type ProgramControls } from './ProgramToolbar';
 import { PlanSyncNotice } from './PlanSyncNotice';
 import { PlanActionDialog, type PlanDialogOption, type PlanDialogState } from './PlanActionDialog';
+import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
+import { programDiscussionTarget } from '../discussions/entity-discussion-target';
+import { UnreadCount } from '../ui/UnreadCount';
 import './cloud-plan-management.css';
 
 const STATES: readonly PlanDialogOption[] = [
@@ -36,14 +39,17 @@ function label(status: CloudProgramStatus): { text: string; color: BadgeColor } 
 }
 
 function ProgramRow({
-  plan, busy, readOnly, onOpen, onAction,
+  plan, busy, readOnly, onOpen, onAction, actorUserId, onNavigationContextChange,
 }: {
+  actorUserId: string;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
   plan: CloudTrainingPlanRow;
   busy: boolean;
   readOnly: boolean;
   onOpen: (plan: CloudTrainingPlanRow) => void;
   onAction: (action: string, plan: CloudTrainingPlanRow) => void;
 }) {
+  const discussions = useEntityDiscussions(programDiscussionTarget(plan, actorUserId), onNavigationContextChange);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const glass = loadBrowserGlassSettings();
@@ -73,14 +79,17 @@ function ProgramRow({
           disabled={busy}
         />
       </div>
-      {!readOnly ? <LiquidPopover isOpen={open} onOpenChange={setOpen}
+      {discussions.content}
+      <span className="entity-discussion-trigger"><LiquidPopover isOpen={open} onOpenChange={setOpen}
         triggerRef={triggerRef}
         trigger={<IconButton ref={triggerRef} icon="dots-vertical"
           label={`Меню программы ${plan.name}`} disabled={busy} />}
         label={`Меню программы ${plan.name}`}
         preset={glass.preset} optics={glass.optics}
-        items={entries}
-      /> : null}
+        items={[...(readOnly ? [] : entries), { ...discussions.menuItem,
+          onSelect: () => { discussions.menuItem.onSelect?.(); setOpen(false); } }]}
+        onPresentationChange={discussions.onMenuPresentationChange}
+      />{!open && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}</span>
     </div>
   );
 }
@@ -307,7 +316,7 @@ export function CloudProgramsPage({
         <Text variant="headline" role="heading" aria-level={2}>Мои программы</Text>
         {personalVisible.length ? <GlassSurface preset="modalTuned" optics={false} className="cloud-plan-group-surface">
           <div className="cloud-plan-group-content"><List>{personalVisible.map((plan) => (
-            <ProgramRow key={plan.id} plan={plan} busy={busy} readOnly={false} onOpen={onOpen} onAction={action} />
+            <ProgramRow key={plan.id} actorUserId={repository.actorUserId} onNavigationContextChange={onNavigationContextChange} plan={plan} busy={busy} readOnly={false} onOpen={onOpen} onAction={action} />
           ))}</List></div>
         </GlassSurface> : !loading && !error && cloudStatus === 'ready' ? <Text variant="body">
           {personal.length ? 'Программ с выбранными параметрами нет' : 'Мы не создали ни одной личной программы'}
@@ -327,7 +336,7 @@ export function CloudProgramsPage({
             </div> : null}
             <GlassSurface preset="modalTuned" optics={false} blur={clientScope ? 2 : undefined} className="cloud-plan-group-surface">
               <div className="cloud-plan-group-content"><List>{group.plans.map((plan) => (
-                <ProgramRow key={plan.id} plan={plan} busy={busy} readOnly={viewerRole === 'client'} onOpen={onOpen} onAction={action} />
+                <ProgramRow key={plan.id} actorUserId={repository.actorUserId} onNavigationContextChange={onNavigationContextChange} plan={plan} busy={busy} readOnly={viewerRole === 'client'} onOpen={onOpen} onAction={action} />
               ))}</List></div>
             </GlassSurface>
           </section>

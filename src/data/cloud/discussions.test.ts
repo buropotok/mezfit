@@ -4,8 +4,8 @@ import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
-import { CLOUD_DATABASE_STORES_V15, CLOUD_DATABASE_STORES_V16, MezfitCloudDatabase } from './database';
-import { DiscussionRepository, prepareDiscussionMessage, prepareDiscussionThread } from './discussions';
+import { CLOUD_DATABASE_STORES_V15, CLOUD_DATABASE_STORES_V16, CLOUD_DATABASE_STORES_V17, MezfitCloudDatabase } from './database';
+import { DiscussionRepository, prepareDiscussionMessage, prepareDiscussionThread, entityDiscussionId } from './discussions';
 import { discussionMessageView } from './discussion-views';
 import { assertMessageAttachmentWrite, type DiscussionMessage, type DiscussionThread, type DiscussionReadState } from './discussion-contracts';
 class TestDatabase extends Dexie {
@@ -15,7 +15,10 @@ class TestDatabase extends Dexie {
   constructor(name = 'discussions-' + crypto.randomUUID(), version = 16) {
     super(name, { addons: [dexieCloud] });
     this.version(15).stores(CLOUD_DATABASE_STORES_V15);
-    if (version === 16) this.version(16).stores(CLOUD_DATABASE_STORES_V16);
+    if (version === 16) {
+      this.version(16).stores(CLOUD_DATABASE_STORES_V16);
+      this.version(17).stores(CLOUD_DATABASE_STORES_V17);
+    }
     this.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true,
       disableWebSocket: true, tryUseServiceWorker: false, unsyncedTables: ['localWorkoutOccurrenceDrafts'] });
     databases.push(this);
@@ -225,16 +228,17 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     const bad = client.observePage('not-found', vi.fn(), error);
     await vi.waitFor(() => expect(error).toHaveBeenCalled()); bad.unsubscribe();
   });
-  it('appends v16 indexes, preserves v15 records and keeps the production default on v14', async () => {
+  it('appends v16 indexes, preserves v15 records and registers the production discussion schema', async () => {
     const old = new TestDatabase(undefined, 15); await old.open();
     await old.discussionMessages.add({ id: 'preserved', realmId: 'tg:11', owner: 'tg:11', authorUserId: 'tg:11',
       threadId: 'thread', text: 'History', createdAt: '2026-11-06T00:00:00.000Z' });
     old.close(); const current = new TestDatabase(old.name); await current.open();
     expect((await current.discussionMessages.get('preserved'))?.text).toBe('History');
     expect(current.discussionReadStates.schema.indexes.map(index => index.name)).toContain('[id+readThrough]');
+    expect(current.discussionReadStates.schema.indexes.map(index => index.name)).toContain('[id+lastReadAt]');
     const production = new MezfitCloudDatabase('99881', 'signed'); databases.push(production);
-    expect(production.verno).toBe(14);
-    expect(production.tables.some(table => table.name === 'discussionMessages')).toBe(false);
+    expect(production.verno).toBe(17);
+    expect(production.tables.some(table => table.name === 'discussionMessages')).toBe(true);
   });
   it('derives receipt from the recipient watermark, and delivery only from an awaited push for exact IDs', async () => {
     const { db, coach, client, thread } = await fixture();
@@ -270,5 +274,81 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     expect(error).not.toHaveBeenCalled();
     sub.unsubscribe();
     push.mockRestore();
+  });
+});
+
+
+describe('COMM-06 canonical entity compatibility, local IndexedDB evidence only', () => {
+  it('uses identical IDs across actors/devices/reopen and isolates another pair and occurrence', async () => {
+    const { db, coach, client, scope, anchor, other } = await fixture();
+    const secondConnection = new TestDatabase(db.name); await secondConnection.open();
+    const device = new DiscussionRepository(secondConnection, client.actorUserId, scope);
+    const [a, b] = await Promise.all([coach.ensureEntityThread(anchor, 'Программа'), device.ensureEntityThread(anchor, 'Другое имя')]);
+    expect(a.id).toBe(b.id);
+    expect(a.id).toBe(await entityDiscussionId(scope, anchor));
+    expect((await client.ensureEntityThread(anchor, 'После переименования')).id).toBe(a.id);
+    expect((await coach.listThreads(anchor)).filter(row => row.id === a.id)).toHaveLength(1);
+    expect(await entityDiscussionId({ realmId: other.realm.realmId, coachClientId: other.realm.realmId }, anchor)).not.toBe(a.id);
+    expect(await entityDiscussionId(scope, { kind: 'workout', workout: { kind: 'occurrence', id: 'program' } })).not.toBe(a.id);
+    expect(await entityDiscussionId(scope, anchor)).toBe(await entityDiscussionId(scope, { trainingPlanId: 'program', kind: 'program' }));
+  });
+  it('merges legacy pages without copying, supports replies/edit/delete and rejects another anchor', async () => {
+    const { db, coach, client, thread, anchor } = await fixture();
+    const second = await coach.createThread(prepareDiscussionThread(anchor, 'Старая тема', '2026-11-06'));
+    const first = await coach.send({ ...prepareDiscussionMessage(thread.id, 'История 1'), createdAt: '2026-11-06T10:00:00.000Z' });
+    const last = await client.send({ ...prepareDiscussionMessage(second.id, 'История 2'), createdAt: '2026-11-06T11:00:00.000Z' });
+    const canonical = await client.ensureEntityThread(anchor, 'Программа');
+    expect((await client.page(canonical.id, undefined, 1)).messages.map(row => row.id)).toEqual([last.id]);
+    const page = await client.page(canonical.id, undefined, 1);
+    expect(page.before).toBeTruthy();
+    expect((await client.page(canonical.id, page.before ?? undefined, 1)).messages.map(row => row.id)).toEqual([first.id]);
+    const reply = await client.send(prepareDiscussionMessage(canonical.id, 'Ответ старому сообщению', first.id));
+    expect(reply.reply).toMatchObject({ messageId: first.id, text: 'История 1' });
+    await coach.edit(canonical.id, first.id, 'Исправленная история');
+    expect((await client.getMessage(canonical.id, reply.id)).reply?.text).toBe('Исправленная история');
+    await coach.remove(canonical.id, first.id);
+    expect((await client.getMessage(canonical.id, reply.id)).reply).toMatchObject({ deleted: true, text: '' });
+    expect((await db.discussionMessages.get(first.id))?.threadId).toBe(thread.id);
+    expect(await db.discussionMessages.count()).toBe(3);
+    const foreign = await coach.ensureEntityThread({ kind: 'program', trainingPlanId: 'other' }, 'Другая программа');
+    await expect(coach.send(prepareDiscussionMessage(foreign.id, 'Чужой ответ', first.id))).rejects.toThrow('DISCUSSION_MESSAGE_NOT_FOUND');
+  });
+  it('observes a canonical single-message page quoting legacy history and propagates query errors', async () => {
+    const { coach, client, thread, anchor } = await fixture();
+    const source = await coach.send({ ...prepareDiscussionMessage(thread.id, 'За пределами страницы'), createdAt: '2026-11-06T00:00:00.001Z' });
+    const canonical = await client.ensureEntityThread(anchor, 'Программа');
+    await client.send({ ...prepareDiscussionMessage(canonical.id, 'Ответ на историю', source.id), createdAt: '2026-11-06T00:00:00.002Z' });
+    const direct = await client.page(canonical.id, undefined, 1);
+    expect(direct.messages[0].reply?.text).toBe('За пределами страницы');
+    let subscription: { unsubscribe(): void } | undefined;
+    try {
+      const first = await new Promise<typeof direct>((resolve, reject) => {
+        subscription = client.observePage(canonical.id, resolve, reject, undefined, 1);
+      });
+      expect(first.messages).toHaveLength(1);
+      expect(first.messages[0].reply?.text).toBe('За пределами страницы');
+    } finally { subscription?.unsubscribe(); }
+  });
+  it.each(['coach', 'client'] as const)('observes authored read evidence for %s and upgrades an unindexed legacy cursor without moving backward', async sender => {
+    const { db, coach, client, thread, anchor } = await fixture();
+    const author = sender === 'coach' ? coach : client, reader = sender === 'coach' ? client : coach;
+    const old = await author.send({ ...prepareDiscussionMessage(thread.id, 'Старое'), createdAt: '2026-11-06T10:00:00.000Z' });
+    await reader.markRead(thread.id, old.id);
+    const state = (await db.discussionReadStates.toArray())[0];
+    await db.discussionReadStates.update(state.id, { readThrough: undefined });
+    const canonical = await reader.ensureEntityThread(anchor, 'Программа');
+    const latest = await author.send({ ...prepareDiscussionMessage(canonical.id, 'Новое'), createdAt: '2026-11-06T11:00:00.000Z' });
+    const receipts = vi.fn(), errors = vi.fn();
+    const sub = author.observeReceipts(canonical.id, receipts, errors);
+    await reader.markRead(canonical.id, latest.id);
+    await vi.waitFor(() => expect(receipts.mock.lastCall?.[0].recipientReadThrough).toEqual(expect.arrayContaining([
+      { id: old.id, createdAt: old.createdAt, threadId: thread.id },
+      { id: latest.id, createdAt: latest.createdAt, threadId: canonical.id },
+    ])));
+    expect(await reader.unreadForAnchor(anchor)).toBe(0);
+    await reader.markRead(canonical.id, old.id);
+    expect(await reader.unread(canonical.id)).toBe(0);
+    expect((await db.discussionReadStates.get(state.id))?.readThrough).toBe(old.createdAt + '/' + old.id);
+    expect(errors).not.toHaveBeenCalled(); sub.unsubscribe();
   });
 });

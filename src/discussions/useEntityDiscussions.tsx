@@ -1,147 +1,104 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, List, ListItem } from 'konsta/react';
+import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { CLOUD_DISCUSSIONS_ENABLED } from '../data/cloud/discussion-activation';
-import { DiscussionRepository, prepareDiscussionThread, type CreateDiscussionThread } from '../data/cloud/discussions';
-import type { DiscussionThread } from '../data/cloud/discussion-contracts';
+import { DiscussionRepository } from '../data/cloud/discussions';
 import { discussionAnchorKey } from '../../shared/discussion-anchor';
-import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
-import { IconButton, Text } from '../ui/primitives';
-import { UnreadCount } from '../ui/UnreadCount';
 import type { LiquidPopoverItem } from '../ui/LiquidPopover';
 import { DiscussionSheet } from './DiscussionSheet';
+import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
+import { IconButton, Text } from '../ui/primitives';
 import type { EntityDiscussionTarget } from './entity-discussion-target';
 import './entity-discussions.css';
 
-type Snapshot = { threads: DiscussionThread[]; unread: number; unreadByThread: Record<string, number> };
-const EMPTY: Snapshot = { threads: [], unread: 0, unreadByThread: {} };
-
-/** Owns only the overlay. The source screen, filters and shell Back stack stay mounted. */
+/** The source remains mounted; the existing shell owns Back throughout opening and reading. */
 export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   onNavigationContextChange?: (value: NavigationContext | null) => void, enabled = true) {
   const cloud = useCloudConnections();
-  const accountKey = useMemo(() => crypto.randomUUID(), [cloud?.db, cloud?.actorUserId]);
-  const currentAccount = useRef(accountKey);
-  currentAccount.current = accountKey;
   const sourceNavigation = useNavigationSurfaceContext();
-  const [parentNavigation, setParentNavigation] = useState<NavigationContext | null>(null);
-  // Capture source context only when opening: historical titles never retarget to a new entity.
-  const [openedTarget, setOpenedTarget] = useState<EntityDiscussionTarget | null>(null);
-  const [openedAccount, setOpenedAccount] = useState<string | null>(null);
-  const belongsToAccount = openedAccount === accountKey;
-  const activeTarget = (belongsToAccount ? openedTarget : null) ?? target;
+  const account = useMemo(() => ({}), [cloud?.db, cloud?.actorUserId]);
+  const [opened, setOpened] = useState<{ target: EntityDiscussionTarget; parent: NavigationContext | null; account: object } | null>(null);
+  const current = opened?.account === account && enabled ? opened : null;
+  const activeTarget = current?.target ?? target;
   const key = activeTarget ? discussionAnchorKey(activeTarget.scope, activeTarget.anchor) : '';
-  const repository = useMemo(() => enabled && CLOUD_DISCUSSIONS_ENABLED && cloud && activeTarget
-    ? new DiscussionRepository(cloud.db, cloud.actorUserId, activeTarget.scope) : null,
-  [enabled, cloud?.db, cloud?.actorUserId, activeTarget?.scope.realmId, activeTarget?.scope.coachClientId]);
-  const [observed, setObserved] = useState<{ repository: DiscussionRepository; key: string; value: Snapshot } | null>(null);
-  const snapshot = observed?.repository === repository && observed?.key === key ? observed.value : EMPTY;
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const pendingCreate = useRef<CreateDiscussionThread | null>(null);
-  const creating = useRef(false);
-  const generation = useRef(0);
-  const pendingOpen = useRef<{ target: EntityDiscussionTarget; navigation: NavigationContext | null; account: string } | null>(null);
-  useEffect(() => {
-    let active = true;
-    setObserved(null); setError(''); setLoading(true);
-    if (!repository || !activeTarget) return;
-    const subscription = repository.observeAnchor(activeTarget.anchor, value => {
-      if (active) { setObserved({ repository, key, value }); setLoading(false); setError(''); }
-    }, () => {
-      if (active) { setObserved(null); setLoading(false); setError('Не удалось открыть обсуждения'); }
-    });
-    return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, key, retry]);
-  useEffect(() => {
-    ++generation.current;
-    creating.current = false; pendingCreate.current = null; setBusy(false);
-    return () => { ++generation.current; };
-  }, [repository, key, openedTarget !== null]);
-  const close = useCallback(() => { setOpenedTarget(null); setThreadId(null); }, []);
-  const backToList = useCallback(() => setThreadId(null), []);
-  const listNavigation = useMemo<NavigationContext>(() => ({ ...parentNavigation,
-    level: 2, title: parentNavigation?.title ?? 'Обсуждения', onBack: close }), [close, parentNavigation]);
-  const overlayOpen = useRef(false);
-  overlayOpen.current = belongsToAccount && openedTarget !== null && enabled;
-  const navigationAlive = useRef(true);
-  useEffect(() => {
-    navigationAlive.current = true;
-    return () => { navigationAlive.current = false; };
-  }, []);
-  const threadNavigationChange = useCallback((value: NavigationContext | null) => {
-    if (navigationAlive.current) onNavigationContextChange?.(overlayOpen.current ? value : null);
-  }, [onNavigationContextChange]);
-  useEffect(() => {
-    if (!openedTarget || !belongsToAccount || !enabled || threadId) return;
-    onNavigationContextChange?.(listNavigation);
-    return () => onNavigationContextChange?.(null);
-  }, [openedTarget, belongsToAccount, enabled, threadId, listNavigation, onNavigationContextChange]);
-  // The account and source owner can change while an async create is still finishing.
-  useEffect(() => {
-    close(); pendingOpen.current = null;
-  }, [accountKey, enabled, close]);
+  // Constructor errors are a feature failure, not a reason to lose the program screen.
+  // Keep identity/schema checks in the repository and present a retryable local error.
+  const connection = useMemo(() => {
+    if (!enabled || !onNavigationContextChange || !cloud || !activeTarget) return { repository: null, error: '' };
+    try { return { repository: new DiscussionRepository(cloud.db, cloud.actorUserId, activeTarget.scope), error: '' }; }
+    catch { return { repository: null, error: 'Не удалось подключить обсуждение' }; }
+  }, [enabled, onNavigationContextChange, cloud?.db, cloud?.actorUserId,
+    activeTarget?.scope.realmId, activeTarget?.scope.coachClientId, retry]);
+  const repository = connection.repository;
+  const [observed, setObserved] = useState<{ repository: DiscussionRepository; key: string; unread: number } | null>(null);
+  const unread = observed?.repository === repository && observed?.key === key ? observed.unread : 0;
+  const [thread, setThread] = useState<{ opened: typeof opened; id: string } | null>(null);
+  const [error, setError] = useState('');
+  const pending = useRef<typeof opened>(null);
+  const close = useCallback(() => { pending.current = null; setOpened(null); setThread(null); }, []);
   const sourceKey = target ? discussionAnchorKey(target.scope, target.anchor) : '';
   useEffect(() => {
-    if (sourceKey && openedTarget && sourceKey !== discussionAnchorKey(openedTarget.scope, openedTarget.anchor)) close();
-    pendingOpen.current = null;
-  }, [sourceKey, close]);
-
-  const create = async () => {
-    if (!repository || !openedTarget || creating.current || error || loading || !target) return;
-    creating.current = true; setBusy(true);
-    const version = generation.current;
-    const date = new Date();
-    const day = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
-    try {
-      pendingCreate.current ??= prepareDiscussionThread(openedTarget.anchor, openedTarget.name.trim().slice(0, 120), day);
-      const thread = await repository.createThread(pendingCreate.current);
-      if (version === generation.current) { pendingCreate.current = null; setThreadId(thread.id); }
-    } catch { if (version === generation.current) setError('Не удалось создать обсуждение'); }
-    finally { if (version === generation.current) { creating.current = false; setBusy(false); } }
+    if (sourceKey && current && sourceKey !== discussionAnchorKey(current.target.scope, current.target.anchor)) close();
+    pending.current = null;
+  }, [sourceKey, account, enabled, close]);
+  useEffect(() => {
+    if (!repository || !activeTarget) return;
+    let active = true;
+    const sub = repository.observeAnchor(activeTarget.anchor, value => {
+      if (active) setObserved({ repository, key, unread: value.unread });
+    }, () => { if (active) setObserved(null); });
+    return () => { active = false; sub.unsubscribe(); };
+  }, [repository, key, retry]);
+  useEffect(() => {
+    setError('');
+    if (!current || !repository) return;
+    let active = true;
+    void repository.ensureEntityThread(current.target.anchor, current.target.name).then(value => {
+      if (active) setThread({ opened: current, id: value.id });
+    }, () => { if (active) setError('Не удалось открыть обсуждение'); });
+    return () => { active = false; };
+  }, [current, repository, retry]);
+  const navigation = useMemo<NavigationContext>(() => ({ ...current?.parent,
+    level: 2, title: current?.target.name ?? 'Обсуждение', onBack: close }), [current, close]);
+  const openRef = useRef(false);
+  openRef.current = Boolean(current);
+  useEffect(() => () => { openRef.current = false; pending.current = null; }, []);
+  const threadNavigationChange = useCallback((value: NavigationContext | null) => {
+    onNavigationContextChange?.(openRef.current ? value : null);
+  }, [onNavigationContextChange]);
+  useEffect(() => {
+    if (!current) return;
+    onNavigationContextChange?.(navigation);
+    return () => onNavigationContextChange?.(null);
+  }, [current, navigation, onNavigationContextChange]);
+  const canOpen = Boolean(enabled && cloud && target && onNavigationContextChange);
+  const open = () => {
+    if (canOpen && target) setOpened({ target, parent: sourceNavigation, account });
   };
   const menuItem: LiquidPopoverItem = { id: 'discussions', label: 'Обсуждения', icon: 'message-circle',
-    unreadCount: snapshot.unread, disabled: !repository || !onNavigationContextChange || !target,
-    onSelect: () => { if (repository && target) pendingOpen.current = { target, navigation: sourceNavigation, account: accountKey }; } };
+    unreadCount: unread, disabled: !canOpen,
+    onSelect: () => { if (canOpen && target) pending.current = { target, parent: sourceNavigation, account }; } };
   const onMenuPresentationChange = (presented: boolean) => {
-    if (presented || !pendingOpen.current) return;
-    if (pendingOpen.current.account !== currentAccount.current) { pendingOpen.current = null; return; }
-    setOpenedAccount(pendingOpen.current.account);
-    setOpenedTarget(pendingOpen.current.target); setParentNavigation(pendingOpen.current.navigation);
-    pendingOpen.current = null; setThreadId(null);
+    if (presented || !pending.current) return;
+    if (pending.current.account === account) setOpened(pending.current);
+    pending.current = null;
   };
   const resolveAuthor = (id: string) => ({ name: id === cloud?.actorUserId ? 'Вы'
     : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])].find(person => person.userId === id
       && person.relationshipId === activeTarget?.scope.realmId)?.displayName ?? 'Участник обсуждения' });
-  const content = openedTarget && belongsToAccount && enabled && repository ? <>
-    {!threadId && <MezfitBottomSheet opened label="Обсуждения" lazyMount>
-      <div className="entity-discussions">
-        <header className="entity-discussions__header"><Text variant="headline">Обсуждения</Text>
-          <IconButton icon="x" label="Закрыть обсуждения" onClick={close} /></header>
-        <Button rounded tonal onClick={close}><Text>{openedTarget.name}</Text></Button>
-        {!target && <Text variant="footnote">Исходный объект недоступен. Сохранена история обсуждений.</Text>}
-        {loading && <Text variant="footnote" role="status">Загружаем обсуждения…</Text>}
-        {error && <div role="alert"><Text>{error}</Text>
-          <Button rounded onClick={() => { setError(''); setRetry(value => value + 1); }}>Повторить</Button></div>}
-        {!loading && !error && <>
-          <List strong inset>{snapshot.threads.map(thread => <ListItem key={thread.id} link
-            title={<Text>{thread.derivedTitleSnapshot}</Text>}
-            after={<UnreadCount count={snapshot.unreadByThread[thread.id] ?? 0} />}
-            onClick={() => setThreadId(thread.id)} />)}</List>
-          {!snapshot.threads.length && <Text variant="body">Обсуждений пока нет</Text>}
-          <Button rounded disabled={busy || !target} onClick={() => void create()}><Text>{busy ? 'Создаём…' : 'Создать обсуждение'}</Text></Button>
-        </>}
-      </div>
-    </MezfitBottomSheet>}
-    {threadId && onNavigationContextChange && <DiscussionSheet opened repository={repository} threadId={threadId}
-      anchor={openedTarget.anchor} onClose={close} onBack={backToList} resolveAuthor={resolveAuthor}
-      onNavigationContextChange={threadNavigationChange} parentNavigation={listNavigation}
-      contextLabel={openedTarget.name} onOpenContext={close} />}
-  </> : null;
-  return { menuItem, unread: snapshot.unread, content, onMenuPresentationChange };
+  const threadId = thread?.opened === current ? thread?.id : null;
+  const content = current && onNavigationContextChange ? repository
+    ? <DiscussionSheet opened repository={repository} threadId={threadId ?? ''} anchor={current.target.anchor}
+      opening={threadId ? undefined : { error, retry: () => setRetry(value => value + 1) }}
+      onClose={close} onBack={close} resolveAuthor={resolveAuthor} contextLabel={current.target.name}
+      onNavigationContextChange={threadNavigationChange} parentNavigation={navigation} />
+    : <MezfitBottomSheet opened label="Обсуждение" lazyMount><div className="entity-discussions">
+      <header className="entity-discussions__header"><Text variant="headline">{current.target.name}</Text>
+        <IconButton icon="x" label="Закрыть обсуждение" onClick={close} /></header>
+      <Text role="alert">{connection.error || 'Обсуждение недоступно'}</Text>
+      <Button rounded onClick={() => setRetry(value => value + 1)}>Повторить</Button>
+    </div></MezfitBottomSheet> : null;
+  return { menuItem, unread, content, onMenuPresentationChange, open, canOpen };
 }

@@ -146,11 +146,8 @@ export function CloudProgramDetailsPage({
   const [dayCreatePhaseId, setDayCreatePhaseId] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [fabPresented, setFabPresented] = useState(false);
-  const [programMenuOpen, setProgramMenuOpen] = useState(false);
-  const programMenuRef = useRef<HTMLButtonElement>(null);
   const discussions = useEntityDiscussions(details ? programDiscussionTarget(details.program, repository.actorUserId) : null,
     onNavigationContextChange);
-  const menuGlass = loadBrowserGlassSettings();
   const explainSelection = useCallback(() => onSelectionMutationAttempt?.(), [onSelectionMutationAttempt]);
 
   useEffect(() => {
@@ -375,13 +372,6 @@ export function CloudProgramDetailsPage({
       {syncNotice}
       <div className="cloud-plan-title-row">
         <div className="cloud-plan-main-title"><Text variant="large-title">{details.program.name}</Text></div>
-        <span className="entity-discussion-trigger">
-          <LiquidPopover isOpen={programMenuOpen} onOpenChange={setProgramMenuOpen} triggerRef={programMenuRef}
-            label="Меню программы" preset={menuGlass.preset} optics={menuGlass.optics}
-            trigger={<IconButton ref={programMenuRef} icon="dots-vertical" label="Меню программы" />}
-            items={[discussions.menuItem]} onPresentationChange={discussions.onMenuPresentationChange} />
-          {!programMenuOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}
-        </span>
         <Badge color={details.program.status === 'active' ? 'green' : 'gray'}>
           {details.program.status === 'active' ? 'Активная' :
             details.program.status === 'draft' ? 'Черновик' :
@@ -389,6 +379,10 @@ export function CloudProgramDetailsPage({
         </Badge>
       </div>
       <ProgramSummary program={details.program} phaseCount={details.phases.length}
+        discussionAction={<span className="entity-discussion-trigger">
+          <IconButton icon="message-circle" size="avatar" label="Обсуждения" disabled={!discussions.canOpen} onClick={discussions.open} />
+          <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
+        </span>}
         actorUserId={repository.actorUserId} actor={actor} repository={repository}
         syncStatus={syncStatus} onSync={onRetrySync} onNavigationContextChange={onNavigationContextChange} />
       {coachGuidance && details.program.clientUserId !== null ? (

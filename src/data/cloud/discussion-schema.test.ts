@@ -49,13 +49,13 @@ describe('additive opt-in discussion schema', () => {
       expect(DISCUSSION_STORES[table as keyof typeof DISCUSSION_STORES].split(',')[0]).toBe(key);
     }
   });
-  it('does not advertise new tables to sealed cloud from the existing default application path', () => {
+  it('registers discussions by default and retains an explicit historical-schema fixture', () => {
     const current = new MezfitCloudDatabase('123456', 'signed'); databases.push(current);
-    const opted = new MezfitCloudDatabase('123457', 'signed', { discussions: true }); databases.push(opted);
-    expect(current.verno).toBe(CLOUD_DATABASE_VERSION);
-    expect(current.tables.some(table => table.name === 'discussionMessages')).toBe(false);
-    expect(opted.verno).toBe(CLOUD_DISCUSSION_DATABASE_VERSION);
-    expect(opted.tables.some(table => table.name === 'discussionMessages')).toBe(true);
+    const opted = new MezfitCloudDatabase('123457', 'signed', { discussions: false }); databases.push(opted);
+    expect(current.verno).toBe(CLOUD_DISCUSSION_DATABASE_VERSION);
+    expect(current.tables.some(table => table.name === 'discussionMessages')).toBe(true);
+    expect(opted.verno).toBe(CLOUD_DATABASE_VERSION);
+    expect(opted.tables.some(table => table.name === 'discussionMessages')).toBe(false);
     for (const [name, spec] of Object.entries(CLOUD_DATABASE_STORES_V14)) expect(CLOUD_DATABASE_STORES_V15[name as keyof typeof CLOUD_DATABASE_STORES_V14]).toBe(spec);
   });
 });

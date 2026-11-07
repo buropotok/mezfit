@@ -34,10 +34,11 @@ Cloudflare may still host the application and store exercise GIF media in R2. Th
 
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
 defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.
-Default account factory remains v14; explicit discussion opt-in appends v15 and local
-v16 indexes. Production Apply 42261608617 verifies configuration only. Ordinary-account
-authorization and multi-device checks remain gates before mass activation.
-No second schema/ACL Apply or UI integration is introduced.
+COMM-06 (2026-11-07) registers v15/v16/v17 on the normal account lifecycle, without a
+build flag or manual activation. One entity/pair opens one canonical conversation;
+legacy threads are projected without moving messages. Production Apply
+42261608617 verifies configuration only; real-account/multi-device acceptance
+remains unverified. No second schema/ACL Apply is introduced.
 
 **Rollout boundary:** The repository currently contains D1-backed code and custom sync design. This document specifies the target; documentation alone does not migrate the running application. Replace obsolete runtime paths in focused implementation PRs, rather than silently maintaining two active authorities.
 
@@ -255,3 +256,7 @@ and future publication stay independent. Reset commits Flex null for one field.
 Neither operation awaits or controls cloud transport. Existing shared-realm ACL
 and visibility remain unchanged. There are no new tables, schema/role grants,
 Worker endpoints or sync metadata. See user-profile.md.
+
+COMM-06 local v17 adds only `[id+lastReadAt]` for conditional legacy read-state
+updates. Cloud tables, fields and ACL stay unchanged; normal account opening
+performs the IndexedDB upgrade.
