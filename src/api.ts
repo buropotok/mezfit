@@ -236,6 +236,8 @@ const russianApiErrors: Record<string, string> = {
   SCHEDULE_OCCURRENCE_LOCKED: 'Начатую или завершённую тренировку нельзя переносить',
   INVALID_SCHEDULE_DATE: 'Дата тренировки указана неверно',
   SCHEDULE_OCCURRENCE_INVALID: 'Запланированная тренировка больше недоступна',
+  TEST_RESET_FORBIDDEN: 'Сброс доступен только разрешённым тестовым тренерам',
+  INVALID_CLIENT: 'Некорректный идентификатор клиента',
   CLIENT_NOT_FOUND: 'Клиент не найден или больше не связан с тренером',
   COACH_NOT_FOUND: 'Тренер не найден или больше не связан с клиентом',
   ROLE_REQUIRED: 'Для этого действия требуется другой режим приложения',
