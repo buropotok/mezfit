@@ -710,7 +710,7 @@ export function reorderCoachPrograms(initData: string, programIds: number[]): Pr
 
 /** Privileged, irreversible test reset; only an allowlisted signed Coach may call it. */
 export async function resetTestClientRelationship(initData: string, clientTelegramId: string): Promise<void> {
-  if (!/^[1-9]\\d*$/.test(clientTelegramId)
+  if (!/^[1-9]\d*$/.test(clientTelegramId)
     || !Number.isSafeInteger(Number(clientTelegramId))
     || String(Number(clientTelegramId)) !== clientTelegramId) {
     throw new ApiError(400, 'Некорректный клиент', 'INVALID_CLIENT');
