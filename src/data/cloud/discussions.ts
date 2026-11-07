@@ -263,15 +263,18 @@ export class DiscussionRepository {
       || (before && (!discussionInstant(before.createdAt) || !discussionId(before.id)))) fail('INVALID_DISCUSSION_PAGE');
     return this.read(async () => {
       const threads = await this.conversationThreads(threadId);
-      const pages = await Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+      const pages: DiscussionMessage[][] = [];
+      for (const thread of threads) pages.push(await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
         .between([this.scope.realmId, thread.id, '', ''],
           before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
             : [this.scope.realmId, thread.id, []], true, false)
-        .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray()));
+        .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray());
       const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
       const more = rows.length > limit; rows.splice(limit);
       const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
-      const messages = await Promise.all(rows.reverse().map(row => this.view(row)));
+      // Keep quote hydration in the same Dexie transaction/observation context.
+      const messages: DiscussionMessageView[] = [];
+      for (const row of rows.reverse()) messages.push(await this.view(row));
       return { messages, before: cursor };
     });
   }

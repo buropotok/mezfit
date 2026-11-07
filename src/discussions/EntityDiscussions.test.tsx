@@ -12,14 +12,17 @@ import { fixture, thread } from './discussion-fixture.test-support';
 import type { EntityDiscussionTarget } from './entity-discussion-target';
 
 const probe = vi.hoisted(() => ({ repository: null as unknown as DiscussionRepository,
-  db: {}, actorUserId: 'tg:1' }));
+  db: {}, actorUserId: 'tg:1', initializationError: false }));
 vi.mock('../data/cloud/discussion-activation', () => ({ CLOUD_DISCUSSIONS_ENABLED: true }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
   db: probe.db, actorUserId: probe.actorUserId, clients: [], coaches: [],
 }) }));
 vi.mock('../data/cloud/discussions', async original => ({
   ...await original<typeof import('../data/cloud/discussions')>(),
-  DiscussionRepository: class { constructor() { return probe.repository; } },
+  DiscussionRepository: class { constructor() {
+    if (probe.initializationError) throw Error('DISCUSSIONS_NOT_ENABLED');
+    return probe.repository;
+  } },
 }));
 const target: EntityDiscussionTarget = { scope: { realmId: 'pair', coachClientId: 'pair' },
   anchor: thread.anchor, name: 'Силовая' };
@@ -29,7 +32,7 @@ let fail: (reason: unknown) => void;
 let unsubscribe = vi.fn<() => void>();
 let ensureThread: ReturnType<typeof vi.fn<DiscussionRepository['ensureEntityThread']>>;
 beforeEach(() => {
-  probe.db = {};
+  probe.db = {}; probe.initializationError = false;
   const f = fixture();
   unsubscribe = vi.fn<() => void>(); ensureThread = vi.fn<DiscussionRepository['ensureEntityThread']>(async () => thread);
   probe.repository = { ...f.port, ensureEntityThread: ensureThread,
@@ -105,6 +108,22 @@ describe('COMM-06 direct entity conversation', () => {
     act(() => old({ threads: [], unread: 99, unreadByThread: {} }));
     expect(screen.getByLabelText('Непрочитанные сущности').textContent).toBe('3');
     expect(screen.queryByText('Мой текст')).toBeNull();
+  });
+  it('keeps the source usable after repository initialization fails and retries in the overlay', async () => {
+    probe.initializationError = true;
+    const view = mount();
+    fireEvent.change(screen.getByLabelText('Фильтр'), { target: { value: 'Ноги' } });
+    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.click(screen.getByText('Обсуждения'));
+    expect(await screen.findByText('Не удалось подключить обсуждение')).toBeTruthy();
+    expect(ensureThread).not.toHaveBeenCalled();
+    expect((screen.getByLabelText('Фильтр') as HTMLInputElement).value).toBe('Ноги');
+    probe.initializationError = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+    await screen.findByText('Мой текст');
+    view.back();
+    await waitFor(() => expect(screen.queryByText('Мой текст')).toBeNull());
+    expect((screen.getByLabelText('Фильтр') as HTMLInputElement).value).toBe('Ноги');
   });
   it('clears stale unread on observer failure', () => {
     mount();

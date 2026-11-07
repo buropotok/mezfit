@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cloneElement, type ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LiquidPopoverProps } from '../ui/LiquidPopover';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -39,7 +39,10 @@ vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: '
 vi.mock('../ui/WorkoutRepeatControl', () => ({ WorkoutRepeatControl: () => null }));
 vi.mock('../workout/WorkoutPlanCard', () => ({ WorkoutPlanCard: () => null,
   WorkoutPlanCardHeader: ({ children }: { children: ReactNode }) => <>{children}</> }));
-afterEach(() => { cleanup(); probe.targets.splice(0); vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+});
+afterEach(() => { cleanup(); probe.targets.splice(0); vi.clearAllMocks(); vi.unstubAllGlobals(); });
 
 const program = { id: 'program', realmId: 'pair', owner: null, coachUserId: 'tg:11', clientUserId: 'tg:22',
   name: 'Силовая', position: 0, status: 'active' as const, startedAt: null, finishedAt: null, createdAt: '', updatedAt: '' };

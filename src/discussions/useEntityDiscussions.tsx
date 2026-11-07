@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -6,6 +7,8 @@ import { DiscussionRepository } from '../data/cloud/discussions';
 import { discussionAnchorKey } from '../../shared/discussion-anchor';
 import type { LiquidPopoverItem } from '../ui/LiquidPopover';
 import { DiscussionSheet } from './DiscussionSheet';
+import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
+import { IconButton, Text } from '../ui/primitives';
 import type { EntityDiscussionTarget } from './entity-discussion-target';
 import './entity-discussions.css';
 
@@ -19,14 +22,20 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   const current = opened?.account === account && enabled ? opened : null;
   const activeTarget = current?.target ?? target;
   const key = activeTarget ? discussionAnchorKey(activeTarget.scope, activeTarget.anchor) : '';
-  const repository = useMemo(() => enabled && onNavigationContextChange && cloud && activeTarget
-    ? new DiscussionRepository(cloud.db, cloud.actorUserId, activeTarget.scope) : null,
-  [enabled, onNavigationContextChange, cloud?.db, cloud?.actorUserId, activeTarget?.scope.realmId, activeTarget?.scope.coachClientId]);
+  const [retry, setRetry] = useState(0);
+  // Constructor errors are a feature failure, not a reason to lose the program screen.
+  // Keep identity/schema checks in the repository and present a retryable local error.
+  const connection = useMemo(() => {
+    if (!enabled || !onNavigationContextChange || !cloud || !activeTarget) return { repository: null, error: '' };
+    try { return { repository: new DiscussionRepository(cloud.db, cloud.actorUserId, activeTarget.scope), error: '' }; }
+    catch { return { repository: null, error: 'Не удалось подключить обсуждение' }; }
+  }, [enabled, onNavigationContextChange, cloud?.db, cloud?.actorUserId,
+    activeTarget?.scope.realmId, activeTarget?.scope.coachClientId, retry]);
+  const repository = connection.repository;
   const [observed, setObserved] = useState<{ repository: DiscussionRepository; key: string; unread: number } | null>(null);
   const unread = observed?.repository === repository && observed?.key === key ? observed.unread : 0;
   const [thread, setThread] = useState<{ opened: typeof opened; id: string } | null>(null);
   const [error, setError] = useState('');
-  const [retry, setRetry] = useState(0);
   const pending = useRef<typeof opened>(null);
   const close = useCallback(() => { pending.current = null; setOpened(null); setThread(null); }, []);
   const sourceKey = target ? discussionAnchorKey(target.scope, target.anchor) : '';
@@ -64,7 +73,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     onNavigationContextChange?.(navigation);
     return () => onNavigationContextChange?.(null);
   }, [current, navigation, onNavigationContextChange]);
-  const canOpen = Boolean(repository && target && onNavigationContextChange);
+  const canOpen = Boolean(enabled && cloud && target && onNavigationContextChange);
   const open = () => {
     if (canOpen && target) setOpened({ target, parent: sourceNavigation, account });
   };
@@ -80,10 +89,16 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])].find(person => person.userId === id
       && person.relationshipId === activeTarget?.scope.realmId)?.displayName ?? 'Участник обсуждения' });
   const threadId = thread?.opened === current ? thread?.id : null;
-  const content = current && repository && onNavigationContextChange
+  const content = current && onNavigationContextChange ? repository
     ? <DiscussionSheet opened repository={repository} threadId={threadId ?? ''} anchor={current.target.anchor}
       opening={threadId ? undefined : { error, retry: () => setRetry(value => value + 1) }}
       onClose={close} onBack={close} resolveAuthor={resolveAuthor} contextLabel={current.target.name}
-      onNavigationContextChange={threadNavigationChange} parentNavigation={navigation} /> : null;
+      onNavigationContextChange={threadNavigationChange} parentNavigation={navigation} />
+    : <MezfitBottomSheet opened label="Обсуждение" lazyMount><div className="entity-discussions">
+      <header className="entity-discussions__header"><Text variant="headline">{current.target.name}</Text>
+        <IconButton icon="x" label="Закрыть обсуждение" onClick={close} /></header>
+      <Text role="alert">{connection.error || 'Обсуждение недоступно'}</Text>
+      <Button rounded onClick={() => setRetry(value => value + 1)}>Повторить</Button>
+    </div></MezfitBottomSheet> : null;
   return { menuItem, unread, content, onMenuPresentationChange, open, canOpen };
 }
