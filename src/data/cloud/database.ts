@@ -1,4 +1,5 @@
 import { DISCUSSION_STORES, type DiscussionThread, type DiscussionMessage, type DiscussionReadState, type MessageAttachment } from './discussion-contracts';
+import { CLOUD_DISCUSSIONS_ENABLED } from './discussion-activation';
 import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 import type { FlexAttributeRow, FlexValueRow } from './flex-attributes';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
@@ -286,7 +287,7 @@ export class MezfitCloudDatabase extends Dexie {
   coachExerciseDefinitions!: Table<CoachExerciseDefinitionRow, string>;
   coachExerciseFavourites!: Table<CoachExerciseFavouriteRow, string>;
 
-  constructor(telegramUserId: string, initData: string, options: { discussions?: boolean } = {}) {
+  constructor(telegramUserId: string, initData: string, options: { discussions?: boolean } = { discussions: CLOUD_DISCUSSIONS_ENABLED }) {
     super(cloudDatabaseName(telegramUserId), { addons: [dexieCloud] });
     this.version(1).stores(CLOUD_DATABASE_STORES_V1);
     this.version(2).stores(CLOUD_DATABASE_STORES_V2);
@@ -320,7 +321,7 @@ export class MezfitCloudDatabase extends Dexie {
 }
 
 /** No singleton: the app lifecycle must own and close the instance on logout/account switch. */
-export function createCloudDatabase(telegramUserId: string, initData: string, options: { discussions?: boolean } = {}): MezfitCloudDatabase {
+export function createCloudDatabase(telegramUserId: string, initData: string, options: { discussions?: boolean } = { discussions: CLOUD_DISCUSSIONS_ENABLED }): MezfitCloudDatabase {
   if (!initData) throw new Error('TELEGRAM_AUTH_REQUIRED');
   return new MezfitCloudDatabase(telegramUserId, initData, options);
 }

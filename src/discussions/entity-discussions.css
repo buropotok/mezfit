@@ -1,0 +1,4 @@
+.entity-discussions{display:flex;flex-direction:column;gap:16px;padding:16px;overflow:auto}
+.entity-discussions__header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.entity-discussion-trigger{position:relative;display:inline-flex}
+.entity-discussion-trigger__unread{position:absolute;inset-inline-end:0;top:0;pointer-events:none}

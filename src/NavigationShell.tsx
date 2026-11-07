@@ -4,6 +4,7 @@ import { useCloudConnections } from './data/cloud/CloudConnectionsProvider';
 import { useCloudContactAvatarUrl } from './contacts/CloudContactAvatar';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { AvatarProfileNavigationContext } from './navigation/AvatarProfileNavigation';
+import { NavigationSurfaceContext } from './navigation/NavigationSurfaceContext';
 import { bindTelegramBackButton, getTelegramWebApp } from './telegram';
 import {
   Avatar,
@@ -382,14 +383,19 @@ export function NavigationShell({
       content.scrollTop = 0;
       return;
     }
-    if (previousSurface === scrollSurfaceKey) return;
+    if (previousSurface === scrollSurfaceKey) {
+      // An overlay can complete Back on the same source scroll surface.
+      // Consume that intent here so a later forward navigation still resets.
+      restoreScrollOnNextSurfaceRef.current = false;
+      return;
+    }
 
     content.scrollTop = restoreScrollOnNextSurfaceRef.current
       ? scrollPositionsRef.current.get(scrollSurfaceKey) ?? 0
       : 0;
     restoreScrollOnNextSurfaceRef.current = false;
     currentScrollSurfaceRef.current = scrollSurfaceKey;
-  }, [scrollSurfaceKey]);
+  }, [scrollSurfaceKey, nestedContext]);
 
   const requestBackTransition = useCallback((transition: () => void) => {
     restoreScrollOnNextSurfaceRef.current = true;
@@ -576,7 +582,9 @@ export function NavigationShell({
             scrollPositionsRef.current.set(scrollSurfaceKey, event.currentTarget.scrollTop);
           }}
         >
-          {children}
+          <NavigationSurfaceContext.Provider value={{ ...context, title: context?.title ?? currentItem.label, scrollKey: nestedScrollKey }}>
+            {children}
+          </NavigationSurfaceContext.Provider>
         </section>
 
         <div
