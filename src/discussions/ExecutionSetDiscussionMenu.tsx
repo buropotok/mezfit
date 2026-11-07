@@ -68,7 +68,8 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
         items={items} onPresentationChange={onPresentationChange} />
     </span>
     {deleteConfirm && typeof document !== 'undefined' ? createPortal(
-      <MezfitDialog opened title={<Text variant="headline">Удалить подход?</Text>}
+      <MezfitDialog opened role="alertdialog" aria-label="Удалить подход?"
+        title={<Text variant="headline">Удалить подход?</Text>}
         onBackdropClick={() => { if (!deleting) setDeleteConfirm(false); }}
         buttons={<>
           <MezfitDialogButton disabled={deleting} onClick={() => setDeleteConfirm(false)}>
