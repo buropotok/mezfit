@@ -53,6 +53,13 @@ export function readConfirmedAccount(initData: string): MeResponse | null {
   } catch { return null; }
 }
 
+/** The Worker owns trust, but a mismatched account response must never select
+ * another user's IndexedDB subset during a launch with a known Telegram ID. */
+export function matchesCurrentLaunch(initData: string, me: MeResponse): boolean {
+  const id = launchUserId(initData);
+  return id === null || isCachedMe(me, id);
+}
+
 export function saveConfirmedAccount(initData: string, me: MeResponse): void {
   const id = launchUserId(initData);
   if (!id || !isCachedMe(me, id)) return;

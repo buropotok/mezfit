@@ -48,7 +48,8 @@ export function UserProfileNavigationShell({
     });
     void repository.migrateOwn().catch(() => {
       if (active) setSnapshot(previous => previous?.repository === repository
-        ? { ...previous, error: true } : { repository, profile: null, error: true, loaded: false });
+        ? { ...previous, error: true, loaded: previous.profile !== null && previous.loaded }
+        : { repository, profile: null, error: true, loaded: false });
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retry]);

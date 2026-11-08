@@ -12,7 +12,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
-import { clearConfirmedAccount, readConfirmedAccount, saveConfirmedAccount } from './appSessionCache';
+import { clearConfirmedAccount, matchesCurrentLaunch, readConfirmedAccount, saveConfirmedAccount } from './appSessionCache';
 import { UserProfilePublicationProvider } from './profile/UserProfilePublicationProvider';
 import { UserProfileNavigationShell } from './profile/UserProfileNavigationShell';
 import { applyBackgroundSettings, loadBrowserBackgroundSettings, saveBrowserBackgroundSettings } from './backgroundSettings';
@@ -301,6 +301,11 @@ export function App() {
     getMe(webApp.initData)
       .then((me) => {
         if (cancelled) return;
+        if (!matchesCurrentLaunch(webApp.initData, me)) {
+          clearConfirmedAccount(webApp.initData);
+          dispatch({ type: 'error', message: 'Некорректный ответ авторизации Telegram.' });
+          return;
+        }
         saveConfirmedAccount(webApp.initData, me);
         dispatch({ type: 'loaded', initData: webApp.initData, startParam, me });
       })
