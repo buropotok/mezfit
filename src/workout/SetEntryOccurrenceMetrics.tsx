@@ -54,7 +54,7 @@ function display(key: EditableMetric, value: number | null) {
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
-  const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
+  const readOnly = props.readOnly === true;
   const [draft, setDraft] = useState(() => createSetEntryDraft(props.data, isPlan ? 'plan' : 'fact'));
   const saveInFlightRef = useRef(false);
   const mounted = useRef(true);
@@ -187,7 +187,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <header className="set-entry-weight-reps__header">
           <div>
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
-            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
+            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : readOnly ? 'Просмотр результата' : 'Фиксация результата'}</Text>
           </div>
           <div className="set-entry-weight-reps__header-actions">
             {props.discussionTarget ? <IconButton icon="message-circle" label="Обсуждения подхода"
