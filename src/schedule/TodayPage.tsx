@@ -136,15 +136,7 @@ export function TodayPage({
   const [viewed, setViewed] = useState<LocalWorkoutOccurrenceDraft | null>(null);
   const [openedDraftId, setOpenedDraftId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showLoadingNotice, setShowLoadingNotice] = useState(false);
   const [error, setError] = useState('');
-  // The first local IndexedDB emission is asynchronous, not a cloud fetch.
-  // Do not flash a loading message during a normal warm local read.
-  useEffect(() => {
-    if (!loading) { setShowLoadingNotice(false); return; }
-    const timer = window.setTimeout(() => setShowLoadingNotice(true), 180);
-    return () => window.clearTimeout(timer);
-  }, [loading]);
   const [programUpdateError, setProgramUpdateError] = useState('');
   const [selectedProgramTitle, setSelectedProgramTitle] = useState<{ id: string; name: string | null } | null>(null);
   const activeRepository = useRef<WorkoutOccurrenceDraftRepository | null>(null);
@@ -500,10 +492,10 @@ export function TodayPage({
           setFilterOpened(false);
         }} /> : null}
 
-      {(loading && showLoadingNotice) || error || (!selected && programUpdateError) || notice ? (
+      {error || (!selected && programUpdateError) || notice ? (
         <div className="today-page__status" aria-live="polite">
           <Text variant="footnote" tone="muted" role={error || (!selected && programUpdateError) ? 'alert' : undefined}>
-            {(!selected && programUpdateError) || error || notice || 'Загружаем расписание…'}
+            {(!selected && programUpdateError) || error || notice}
           </Text>
         </div>
       ) : null}
