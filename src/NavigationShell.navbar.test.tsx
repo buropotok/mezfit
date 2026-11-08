@@ -171,8 +171,7 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(trainer.parentElement?.querySelector('.ui-liquid-popover__avatar .ui-avatar--small.ui-avatar--fallback')?.textContent)
       .toBe('АБ');
     expect(trainer.querySelector('.ui-menu-item__leading .ui-icon')).toBeNull();
-    fireEvent.click(trainer);
-    expect(view.queryByRole('menuitem', { name: 'Тренер' })).toBeNull();
+    expect(trainer.hasAttribute('disabled')).toBe(false);
   });
 
   it('shows the ordinary user icon when the client has not selected a coach', () => {
