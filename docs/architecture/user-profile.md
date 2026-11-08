@@ -47,8 +47,18 @@ and the updated app must be deployed consistently.
 ## Shared presentation
 
 `ProfileWorkspace` owns the common Text Only tabs and accepts a typed `self` or
-`contact` view and authorized Basics/Program/Exercises content slots. CoachShell
-continues to supply its existing client-program and performed-exercise views.
+`contact` view and authorized Basics/Program/Exercises/Plan/History content slots.
+CoachShell reuses the client-scoped program directory with an active-only filter
+and the existing relationship-scoped discussions inbox. The client self profile
+reuses the client program directory with the active-only filter, showing personal
+and trainer-assigned programs. Coach own-profile sections remain independent.
+Plan and History project authorized local-first workout occurrences and execution
+sessions without combining PLAN and FACT models. Plan shows scheduled workouts
+from the viewer's current local date onward; History shows completed executions
+and scheduled workouts with an earlier local date. An optional inclusive From/To
+filter follows the Discussions date-picker behavior. Rows have separate compact
+PLAN/FACT presentation and open existing Bottom Sheets; neither component's
+persistence model is changed.
 Contact Basics resolves relationship overrides over the published canonical profile
 through the authorized relationship realm. Until it exists, it shows membership-visible name and Telegram
 ID and an explicit not-published state. It never reads a contact's private realm.
