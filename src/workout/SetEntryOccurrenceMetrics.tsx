@@ -254,10 +254,10 @@ export function SetEntryOccurrenceMetrics(props: Props) {
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
-                <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0}
+                {readOnly ? <Text variant="body">{draft.rpe ?? '—'}</Text> : <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0}
                   ariaLabel="RPE" onValueChange={value => {
                     if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value }));
-                  }} />
+                  }} />}
               </div>
             </div>
             <div className="set-entry-weight-reps__section">
