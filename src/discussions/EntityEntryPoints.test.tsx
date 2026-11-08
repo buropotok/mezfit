@@ -7,6 +7,8 @@ import type { ProgramManagementRepository } from '../data/cloud/program-manageme
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { EntityDiscussionTarget } from './entity-discussion-target';
+import { plannedDiscussionTarget } from './entity-discussion-target';
+import { executionDiscussionAnchor } from '../data/cloud/discussion-anchors';
 import { CloudProgramsPage } from '../program/CloudProgramsPage';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { OccurrenceDraftCard } from '../schedule/OccurrenceDraftSheet';
@@ -158,6 +160,20 @@ describe('COMM-06 production surface wiring', () => {
         exercise: { kind: 'occurrence', id: 'occ-ex' }, set: { kind: 'occurrence', id: 'occ-set' } },
       name: 'Жим · Подход 1',
     });
+  });
+
+  it('reuses the same exercise and set anchors after Start, independently of template provenance', () => {
+    const session = { id: 'execution', realmId: 'pair', occurrenceId: 'occurrence',
+      occurrencePlan: planWithExercise.plan };
+    const exercise = { id: 'fact-ex', realmId: 'pair', sessionId: 'execution', occurrenceExerciseId: 'occ-ex' };
+    const set = { id: 'fact-set', realmId: 'pair', sessionId: 'execution',
+      exerciseId: 'fact-ex', occurrenceSetId: 'occ-set' };
+    const plannedExercise = plannedDiscussionTarget(planWithExercise, 'occ-ex');
+    const plannedSet = plannedDiscussionTarget(planWithExercise, 'occ-ex', 'occ-set');
+    expect(plannedExercise?.anchor).toEqual(executionDiscussionAnchor(plannedExercise!.scope, session, exercise));
+    expect(plannedSet?.anchor).toEqual(executionDiscussionAnchor(plannedSet!.scope, session, exercise, set));
+    const otherOccurrence = { ...planWithExercise, id: 'draft:another-occurrence' };
+    expect(plannedDiscussionTarget(otherOccurrence, 'occ-ex', 'occ-set')?.anchor).not.toEqual(plannedSet?.anchor);
   });
 
   it('retains the canonical planned-workout entry after execution', () => {
