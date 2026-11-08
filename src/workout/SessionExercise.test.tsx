@@ -162,7 +162,7 @@ describe('SessionExercise rendering', () => {
       }
       return originalStyle(element, pseudoElement);
     });
-    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.classList.contains('session-exercise__set-fact')) return { height: 65 } as DOMRect;
       return originalRect.call(this);
     });
