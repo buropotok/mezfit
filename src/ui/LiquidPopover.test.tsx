@@ -147,13 +147,15 @@ it('renders a 32px avatar in the icon slot without changing the menu item name',
     items={[{ id: 'profile', label: 'Мой профиль', avatar: { name: 'Анна Иванова' } }]} />);
   await act(async () => { vi.advanceTimersByTime(32); });
   const profile = screen.getByRole('menuitem', { name: 'Мой профиль' });
-  const fallback = profile.querySelector('.ui-menu-item__leading--avatar .ui-avatar--small.ui-avatar--fallback');
+  expect(profile.textContent).toBe('Мой профиль');
+  const fallback = profile.parentElement?.querySelector('.ui-liquid-popover__avatar .ui-avatar--small.ui-avatar--fallback');
   expect(fallback?.textContent).toBe('АИ');
 
   view.rerender(<LiquidPopover {...props}
     items={[{ id: 'profile', label: 'Мой профиль', avatar: { name: 'Анна Иванова', src: '/portrait.jpg' } }]} />);
-  const photo = screen.getByRole('menuitem', { name: 'Мой профиль' })
-    .querySelector<HTMLImageElement>('.ui-menu-item__leading--avatar img.ui-avatar--small');
+  const updatedProfile = screen.getByRole('menuitem', { name: 'Мой профиль' });
+  expect(updatedProfile.textContent).toBe('Мой профиль');
+  const photo = updatedProfile.parentElement?.querySelector<HTMLImageElement>('.ui-liquid-popover__avatar img.ui-avatar--small');
   expect(photo?.getAttribute('src')).toBe('/portrait.jpg');
 });
 
