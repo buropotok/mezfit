@@ -1,6 +1,6 @@
 import { DiscussionsProvider } from './discussions/DiscussionsProvider';
 import { DiscussionsPage } from './discussions/DiscussionsPage';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useState, type ComponentProps } from 'react';
 import {
   acceptCurrentInvite,
   addRole,
@@ -206,6 +206,13 @@ function ClientShell({
       <p>{placeholder.text}</p>
     </section>
   );
+}
+
+/** Navigation receives the selected coach from its owning client context. */
+function ClientCoachAwareNavigationShell(props: ComponentProps<typeof UserProfileNavigationShell>) {
+  const { selectedCoach } = useClientCoach();
+  return <UserProfileNavigationShell {...props}
+    selectedCoach={props.activeRole === 'client' ? selectedCoach : null} />;
 }
 
 export function App() {
@@ -458,7 +465,7 @@ export function App() {
           scope={state.activeRole + ':' + destination} onNavigationContextChange={setCompletionNavigation}>
         <DiscussionsProvider key={state.activeRole + state.me.user.telegramUserId} role={state.activeRole}
           details={destination === 'discussions' || destination === 'clients'}>
-        <UserProfileNavigationShell
+        <ClientCoachAwareNavigationShell
           me={state.me}
           activeRole={state.activeRole}
           suppressInitialProfileOpen={state.activeRole === 'client' && isClientInviteStartParam(state.startParam)}
@@ -512,7 +519,7 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
           />
           )}
-        </UserProfileNavigationShell>
+        </ClientCoachAwareNavigationShell>
         </DiscussionsProvider>
         </WorkoutCompletionProvider>
         </PlannedWorkoutStartProvider>
