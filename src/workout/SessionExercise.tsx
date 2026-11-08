@@ -1,4 +1,5 @@
 import { ExecutionSetDiscussionMenu } from '../discussions/ExecutionSetDiscussionMenu';
+import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
@@ -246,19 +247,29 @@ function formatProgramPlanMetrics(set: ProgramSessionExerciseProps['data']['sets
     formatDistance(set.plannedDistanceMeters)]) ?? 'Не заполнено';
 }
 
-function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, showPlanMetrics = false }: {
+function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, discussionTargetForSet, onOpenDiscussion,
+  onNavigationContextChange, onSetDeletionNavigationContextChange, showPlanMetrics = false }: {
   showPlanMetrics?: boolean;
   sets: ProgramSessionExerciseProps['data']['sets'];
   onOpenSet?: ProgramSessionExerciseProps['onOpenSet'];
   onDeleteSet?: ProgramSessionExerciseProps['onDeleteSet'];
+  discussionTargetForSet?: (setId: string) => EntityDiscussionTarget | null;
+  onOpenDiscussion?: ProgramSessionExerciseProps['onOpenDiscussion'];
+  onNavigationContextChange?: ProgramSessionExerciseProps['onNavigationContextChange'];
+  onSetDeletionNavigationContextChange?: ProgramSessionExerciseProps['onSetDeletionNavigationContextChange'];
 }) {
   return (
     <List className="session-exercise__sets" divider="inset">
-      {sets.map((set, index) => (
-        <ListItem key={set.id} className="session-exercise__set-row"
+      {sets.map((set, index) => {
+        const target = discussionTargetForSet?.(set.id) ?? null;
+        return <ListItem key={set.id} className="session-exercise__set-row"
           onClick={onOpenSet ? () => onOpenSet?.(set.id) : undefined}
-          trailing={onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
-            onClick={(event) => { event.stopPropagation(); onDeleteSet?.(set.id); }} /> : undefined}
+          trailing={!target && onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
+            onClick={(event) => { event.stopPropagation(); void onDeleteSet(set.id); }} /> : undefined}
+          trailingAction={target ? <ExecutionSetDiscussionMenu target={target} setNumber={index + 1}
+            onOpenTarget={onOpenDiscussion} onNavigationContextChange={onNavigationContextChange}
+            onDeleteNavigationContextChange={onSetDeletionNavigationContextChange}
+            onDeleteSet={onDeleteSet ? async () => { await onDeleteSet(set.id); } : undefined} /> : undefined}
           leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
           title={<Text variant="body" className={showPlanMetrics ? 'session-exercise__set-plan-line' : undefined}>
             {showPlanMetrics ? `Подход ${index + 1}. План ${formatProgramPlanMetrics(set)}` : `Подход ${index + 1}`}
@@ -270,8 +281,8 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, showPlanMetrics = f
             {set.materialLinks?.length ? <Text variant="caption" tone="muted">Материалы: {set.materialLinks.length}</Text> : null}
             {set.chatLinks?.length ? <Text variant="caption" tone="muted">Обсуждения: {set.chatLinks.length}</Text> : null}
           </span>}
-        />
-      ))}
+        />;
+      })}
     </List>
   );
 }
@@ -287,11 +298,15 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
       subtitle={formatSetCount(sets.length)} notes={item.notes}
       surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
       onCollapsedChange={props.onCollapsedChange} onInformation={props.busy ? undefined : props.onInformation}
-      actions={<ExerciseActionsMenu busy={props.busy}
+      actions={<ExerciseActionsMenu busy={props.busy} discussionTarget={props.discussionTarget}
+        onOpenDiscussion={props.onOpenDiscussion} onNavigationContextChange={props.onNavigationContextChange}
         onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
     >
       <ProgramExerciseSets sets={sets} onOpenSet={props.onOpenSet} onDeleteSet={props.onDeleteSet}
+        discussionTargetForSet={props.discussionTargetForSet} onOpenDiscussion={props.onOpenDiscussion}
+        onNavigationContextChange={props.onNavigationContextChange}
+        onSetDeletionNavigationContextChange={props.onSetDeletionNavigationContextChange}
         showPlanMetrics={props.showPlanMetrics} />
     </SessionExerciseLayout>
   );
