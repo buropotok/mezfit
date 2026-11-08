@@ -492,10 +492,10 @@ export function TodayPage({
           setFilterOpened(false);
         }} /> : null}
 
-      {loading || error || (!selected && programUpdateError) || notice ? (
+      {error || (!selected && programUpdateError) || notice ? (
         <div className="today-page__status" aria-live="polite">
           <Text variant="footnote" tone="muted" role={error || (!selected && programUpdateError) ? 'alert' : undefined}>
-            {(!selected && programUpdateError) || error || notice || 'Загружаем расписание…'}
+            {(!selected && programUpdateError) || error || notice}
           </Text>
         </div>
       ) : null}
