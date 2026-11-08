@@ -26,7 +26,7 @@ export function CalendarSessionSheet({ sessionId, role, actor, initData, onClose
     <div className="calendar-session-sheet">
       <header className="calendar-session-sheet__header">
         <Text variant="headline" className="calendar-session-sheet__title">Тренировка</Text>
-        <div ref={setHeaderActionsHost} className="calendar-session-sheet__actions" aria-label="Действия тренировки" />
+        <div ref={setHeaderActionsHost} className="calendar-session-sheet__actions" role="group" aria-label="Действия тренировки" />
         <IconButton label="Закрыть тренировку" onClick={onClose}>✕</IconButton>
       </header>
       <div className="calendar-session-sheet__body">
