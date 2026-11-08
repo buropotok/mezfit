@@ -224,12 +224,8 @@ function paintContentTexture(
           avatarY = avatarRect.top - bounds.top,
           radius = Math.min(avatarRect.width, avatarRect.height) / 2;
         if (avatar instanceof HTMLImageElement) {
-          const source = avatar.currentSrc || avatar.src;
-          // Remote images without CORS can taint the animation texture.
-          const origin = avatar.ownerDocument.defaultView?.location.origin;
-          const canvasSafe = source.startsWith('blob:') || source.startsWith('data:image/')
-            || Boolean(origin && source.startsWith(`${origin}/`));
-          if (canvasSafe && avatar.complete && avatar.naturalWidth > 0) {
+          // This texture is display-only: remote images may taint it, but no pixels are read back.
+          if (avatar.complete && avatar.naturalWidth > 0) {
             context.save();
             context.beginPath();
             context.arc(avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2, radius, 0, Math.PI * 2);
