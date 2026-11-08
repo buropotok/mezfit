@@ -141,13 +141,13 @@ function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string |
     {fact ? <>
       <span ref={factRef} className="session-exercise__set-fact"><Text variant="body">{fact}</Text></span>
       {plan && showPlan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
-    </> : <>
+    </> : plan ? <>
       <span className="session-exercise__set-pending">
         <Text variant="caption" className="session-exercise__set-plan-heading">План:</Text>
         <Text variant="body" className="session-exercise__set-fact--empty">Ввести факт</Text>
       </span>
-      <Text variant="body" className="session-exercise__set-plan-value">{plan ?? '—'}</Text>
-    </>}
+      <Text variant="body" className="session-exercise__set-plan-value">{plan}</Text>
+    </> : <Text variant="body" className="session-exercise__set-fact--empty">Ввести факт</Text>}
   </span>;
 }
 
