@@ -140,8 +140,11 @@ function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string |
   }, [fact, plan]);
   return <span ref={contentRef} className="session-exercise__set-summary">
     {fact ? <>
-      <span ref={factRef} className="session-exercise__set-fact"><Text variant="body">{fact}</Text></span>
-      {plan && showPlan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
+      <span ref={factRef} className="session-exercise__set-fact"><Text variant="headline">{fact}</Text></span>
+      {plan && showPlan ? <span className="session-exercise__set-plan-block">
+        <Text variant="caption" className="session-exercise__set-plan-heading">План:</Text>
+        <Text variant="body" className="session-exercise__set-plan-value">{plan}</Text>
+      </span> : null}
     </> : plan ? <>
       <span className="session-exercise__set-pending">
         <Text variant="caption" className="session-exercise__set-plan-heading">План:</Text>
