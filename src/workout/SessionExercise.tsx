@@ -1,6 +1,6 @@
 import { ExecutionSetDiscussionMenu } from '../discussions/ExecutionSetDiscussionMenu';
 import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
@@ -114,41 +114,69 @@ function planSetSubtitle<Id extends string | number>(set: SessionExerciseSetData
   return set.setType ? <Text variant="caption" tone="muted">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : undefined;
 }
 
-/** FACT always gets the available row width; PLAN disappears when FACT wraps. */
+/** PLAN is a two-line left column; FACT owns the right column and wins on overflow. */
 function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string | null }) {
   const contentRef = useRef<HTMLSpanElement>(null);
   const factRef = useRef<HTMLSpanElement>(null);
+  const planRef = useRef<HTMLSpanElement>(null);
+  const planWidthRef = useRef(0);
   const [showPlan, setShowPlan] = useState(true);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!fact || !plan) return;
     const update = () => {
+      const content = contentRef.current;
       const node = factRef.current;
-      if (!node) return;
+      if (!content || !node) return;
+
+      const available = content.getBoundingClientRect().width;
+      if (planRef.current) planWidthRef.current = planRef.current.getBoundingClientRect().width;
+
+      // Measure the complete FACT independently of the PLAN width, so hiding PLAN
+      // cannot cause a show/hide loop when the FACT becomes a single line.
+      const previousPosition = node.style.position;
+      const previousWidth = node.style.width;
+      const previousWhiteSpace = node.style.whiteSpace;
+      const previousFlex = node.style.flex;
+      node.style.position = 'absolute';
+      node.style.width = 'max-content';
+      node.style.whiteSpace = 'nowrap';
+      node.style.flex = 'none';
+      const factWidth = node.getBoundingClientRect().width;
+      node.style.position = previousPosition;
+      node.style.width = previousWidth;
+      node.style.whiteSpace = previousWhiteSpace;
+      node.style.flex = previousFlex;
+
+      const gap = Number.parseFloat(window.getComputedStyle(content).columnGap) || 0;
+      if (available > 0 && factWidth > 0 && planWidthRef.current > 0) {
+        setShowPlan(available + 0.5 >= planWidthRef.current + gap + factWidth);
+        return;
+      }
+
+      // DOM-less test environments have no measured widths; preserve the
+      // wrapping fallback without re-showing PLAN after its removal.
+      if (!planRef.current) return;
       const style = window.getComputedStyle(node.firstElementChild ?? node);
       const fontSize = Number.parseFloat(style.fontSize);
       const resolvedLineHeight = Number.parseFloat(style.lineHeight);
       const lineHeight = Number.isFinite(resolvedLineHeight) && resolvedLineHeight > 3
         ? resolvedLineHeight : fontSize * (Number.isFinite(resolvedLineHeight) ? resolvedLineHeight : 1.4);
-      const height = node.getBoundingClientRect().height;
-      if (lineHeight > 0 && height > 0) setShowPlan(height < lineHeight * 1.6);
+      if (lineHeight > 0 && node.getBoundingClientRect().height > lineHeight * 1.6) setShowPlan(false);
     };
     update();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(update);
     if (contentRef.current) observer.observe(contentRef.current);
     return () => observer.disconnect();
-  }, [fact, plan]);
+  }, [fact, plan, showPlan]);
   return <span ref={contentRef} className="session-exercise__set-summary">
-    {fact ? <>
-      <span ref={factRef} className="session-exercise__set-fact"><Text variant="body">{fact}</Text></span>
-      {plan && showPlan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
-    </> : plan ? <>
-      <span className="session-exercise__set-pending">
-        <Text variant="caption" className="session-exercise__set-plan-heading">План:</Text>
-        <Text variant="body" className="session-exercise__set-fact--empty">Ввести факт</Text>
-      </span>
+    {plan && (!fact || showPlan) ? <span ref={planRef} className="session-exercise__set-plan-block">
+      <Text variant="caption" className="session-exercise__set-plan-heading">План:</Text>
       <Text variant="body" className="session-exercise__set-plan-value">{plan}</Text>
-    </> : <Text variant="body" className="session-exercise__set-fact--empty">Ввести факт</Text>}
+    </span> : null}
+    {fact ? <span ref={factRef} className="session-exercise__set-fact">
+      <Text variant="headline">{fact}</Text>
+    </span> : <Text variant="body" className="session-exercise__set-fact--empty">Ввести факт</Text>}
   </span>;
 }
 
