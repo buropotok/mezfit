@@ -12,7 +12,7 @@ import {
   type CSSProperties,
   type RefObject,
 } from 'react';
-import { Text } from './primitives';
+import { Avatar, Text } from './primitives';
 import { UnreadCount } from './UnreadCount';
 import { useSpotlightHintPause } from './SpotlightHint';
 import { paintLiquidPopoverText } from './liquidPopoverText';
@@ -45,6 +45,8 @@ export type LiquidPopoverItem = {
   /** Superscript unread messages for this entity; no preview or business status. */
   unreadCount?: number;
   icon?: UiIconName;
+  /** A 32px UI Kit avatar replaces the leading icon in menu layout. */
+  avatar?: { name: string; src?: string };
   /** Optional per-row icon tint; does not alter default menu appearance. */
   iconColor?: string;
   /** Separate trailing action. Its click never selects the main row. */
@@ -196,10 +198,10 @@ function paintContentTexture(
       context.fillRect(0, y - 9, canvas.width, 1);
     }
     context.globalAlpha = item.disabled ? 0.5 : 1;
-    const leading = item.icon && layout === 'menu'
+    const leading = layout === 'menu' && (item.icon || item.avatar)
       ? row.querySelector<HTMLElement>('.ui-menu-item__leading')
       : null;
-    const image = item.icon ? iconImages?.get(item.icon) : undefined;
+    const image = item.icon && !item.avatar ? iconImages?.get(item.icon) : undefined;
     if (leading && image?.complete && image.naturalWidth > 0) {
       const iconRect = leading.getBoundingClientRect();
       const tintCanvas = canvas.ownerDocument.createElement('canvas');
@@ -212,6 +214,43 @@ function paintContentTexture(
         tint.fillStyle = getComputedStyle(leading).color;
         tint.fillRect(0, 0, tintCanvas.width, tintCanvas.height);
         context.drawImage(tintCanvas, iconRect.left - bounds.left, iconRect.top - bounds.top);
+      }
+    }
+    if (item.avatar && leading) {
+      const avatar = leading.querySelector<HTMLElement>('.ui-avatar');
+      if (avatar) {
+        const avatarRect = avatar.getBoundingClientRect(),
+          avatarX = avatarRect.left - bounds.left,
+          avatarY = avatarRect.top - bounds.top,
+          radius = Math.min(avatarRect.width, avatarRect.height) / 2;
+        if (avatar instanceof HTMLImageElement) {
+          const source = avatar.currentSrc || avatar.src;
+          // Remote images without CORS can taint the animation texture.
+          const origin = avatar.ownerDocument.defaultView?.location.origin;
+          const canvasSafe = source.startsWith('blob:') || source.startsWith('data:image/')
+            || Boolean(origin && source.startsWith(`${origin}/`));
+          if (canvasSafe && avatar.complete && avatar.naturalWidth > 0) {
+            context.save();
+            context.beginPath();
+            context.arc(avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2, radius, 0, Math.PI * 2);
+            context.clip();
+            context.drawImage(avatar, avatarX, avatarY, avatarRect.width, avatarRect.height);
+            context.restore();
+          }
+        } else {
+          const avatarStyle = getComputedStyle(avatar);
+          context.save();
+          context.beginPath();
+          context.arc(avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2, radius, 0, Math.PI * 2);
+          context.fillStyle = avatarStyle.backgroundColor;
+          context.fill();
+          context.fillStyle = avatarStyle.color;
+          context.font = `${avatarStyle.fontStyle} ${avatarStyle.fontWeight} ${avatarStyle.fontSize} ${avatarStyle.fontFamily}`;
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(avatar.textContent ?? '', avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2);
+          context.restore();
+        }
       }
     }
     if (item.trailingAction && layout === 'menu') {
@@ -372,6 +411,8 @@ export function LiquidPopover({
       item.unreadCount,
       item.icon,
       item.iconColor,
+      item.avatar?.name,
+      item.avatar?.src,
       item.trailingAction?.icon,
       item.trailingAction?.label,
       item.disabled,
@@ -394,6 +435,8 @@ export function LiquidPopover({
       item.unreadCount,
       item.icon,
       item.iconColor,
+      item.avatar?.name,
+      item.avatar?.src,
       item.trailingAction?.icon,
       item.trailingAction?.label,
       item.disabled,
@@ -832,7 +875,11 @@ export function LiquidPopover({
               }}
               className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
             >
-              {item.icon && layout === 'menu' ? (
+              {item.avatar && layout === 'menu' ? (
+                <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true">
+                  <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
+                </span>
+              ) : item.icon && layout === 'menu' ? (
                 <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
               ) : null}
               <span className="ui-menu-item__label">{item.label}<UnreadCount count={item.unreadCount ?? 0} className="ui-menu-item__unread" /></span>
@@ -940,7 +987,11 @@ export function LiquidPopover({
                     ? Boolean(item.active) : item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
-                  {item.icon && presentation.layout === 'menu' ? (
+                  {item.avatar && presentation.layout === 'menu' ? (
+                    <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true">
+                      <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
+                    </span>
+                  ) : item.icon && presentation.layout === 'menu' ? (
                     <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
                   ) : null}
                   <span className="ui-menu-item__label">{item.label}<UnreadCount count={item.unreadCount ?? 0} className="ui-menu-item__unread" /></span>
