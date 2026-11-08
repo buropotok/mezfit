@@ -99,15 +99,16 @@ export function UserProfileNavigationShell({
       }} />
   </>;
   const actor = { name, photoUrl: props.me.user.photoUrl };
+  const clientProfile = props.activeRole === 'client';
   return <ClientWorkoutNavigationShell {...props}
     context={showingProfile && profileNavigation ? profileNavigation : props.context}>
     {showingProfile ? <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
       onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
-      programContent={tab === 'program' ? <div className="stack"><Text variant="body">Ваши активные программы</Text>
+      programContent={clientProfile && tab === 'program' ? <div className="stack"><Text variant="body">Ваши активные программы</Text>
         <ClientProgramsPage actor={actor} activeOnly onNavigationContextChange={setProfileNavigation} /></div> : null}
-      calendarContent={tab === 'calendar' ? <ProfileWorkoutTimeline mode="plan" role="client"
+      calendarContent={clientProfile && tab === 'calendar' ? <ProfileWorkoutTimeline mode="plan" role="client"
         initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
-      historyContent={tab === 'history' ? <ProfileWorkoutTimeline mode="history" role="client"
+      historyContent={clientProfile && tab === 'history' ? <ProfileWorkoutTimeline mode="history" role="client"
         initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} /> : props.children}
   </ClientWorkoutNavigationShell>;
 }
