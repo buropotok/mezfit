@@ -252,6 +252,45 @@ describe('WorkoutSessionCard capability ownership', () => {
 });
 
 describe('client read-only Coach FACT card', () => {
+  it('opens a completed timed set for PLAN, PREVIOUS and FACT inspection without writes', () => {
+    const saveSet = vi.fn(async () => undefined);
+    const session: ActiveWorkoutSession = {
+      ...baseSession, status: 'completed', completedAt: '2026-10-08T13:00:00Z',
+      exercises: [{
+        sessionExerciseId: 202, workoutSessionId: 501, sourceProgramExerciseId: null,
+        position: 0, status: 'completed', notes: null,
+        exercise: {
+          id: 22, scope: 'global', name: 'Бег', description: null,
+          tracking_type: 'time_distance', category_code: 'cardio', equipment_code: 'other',
+          reference_source: null, reference_key: null, reference_media_url: null,
+          is_favourite: false, can_edit: false,
+        },
+        sets: [{
+          sessionSetId: 303, sourceProgramSetId: null, position: 0, status: 'completed',
+          plan: { weightKg: null, reps: null, durationSeconds: 120, distanceMeters: 2000 },
+          previous: { workoutDate: '2026-10-01',
+            metrics: { weightKg: null, reps: null, durationSeconds: 110, distanceMeters: 1800 } },
+          fact: { metrics: { weightKg: null, reps: null, durationSeconds: 92, distanceMeters: 1500 },
+            setType: 'cluster', setLabel: null, rpe: 7, comment: 'Ровный темп', bands: [] },
+        }],
+      }],
+    };
+    render(<WorkoutSessionCard session={session} onSaveSet={saveSet} onReorderExerciseIds={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    const sheet = screen.getByRole('dialog', { name: 'Подход 1' });
+    expect(within(sheet).getByText('Просмотр результата')).toBeTruthy();
+    expect(within(sheet).getByText('00:01:32')).toBeTruthy();
+    expect(within(sheet).getByText(/План:.*00:02:00/)).toBeTruthy();
+    expect(within(sheet).getByText(/Пред.:.*00:01:50/)).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Изменить продолжительность' }).getAttribute('aria-disabled')).toBe('true');
+    expect(within(sheet).getByText('Ровный темп')).toBeTruthy();
+    expect(within(sheet).queryByRole('button', { name: 'Удалить подход' })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+    expect(saveSet).not.toHaveBeenCalled();
+  });
+
   it('shows recorded values without allowing set edits, exercise changes or reordering', () => {
     const session: ActiveWorkoutSession = { ...baseSession, exercises: [{
       sessionExerciseId: 200, workoutSessionId: 501, sourceProgramExerciseId: null,
@@ -278,7 +317,14 @@ describe('client read-only Coach FACT card', () => {
     expect(screen.getByTestId('workout-card').getAttribute('data-disabled')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
     expect(screen.getByText('57 кг × 19')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    const sheet = screen.getByRole('dialog', { name: 'Подход 1' });
+    expect(within(sheet).getByText('Просмотр результата')).toBeTruthy();
+    expect(within(sheet).getByText('57 кг × 19')).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Изменить вес и повторения' }).getAttribute('aria-disabled')).toBe('true');
+    expect(within(sheet).queryByRole('button', { name: 'Удалить подход' })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Добавить упражнение' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
     expect(addSet).not.toHaveBeenCalled();
