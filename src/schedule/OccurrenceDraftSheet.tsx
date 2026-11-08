@@ -30,7 +30,8 @@ import { loadBrowserGlassSettings } from '../glassSettings';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { WorkoutSyncStatus } from './WorkoutSyncStatus';
 import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
-import { plannedDiscussionTarget } from '../discussions/entity-discussion-target';
+import { plannedDiscussionTarget, type EntityDiscussionTarget } from '../discussions/entity-discussion-target';
+import { discussionAnchorKey } from '../../shared/discussion-anchor';
 import { UnreadCount } from '../ui/UnreadCount';
 import './occurrence-draft-sheet.css';
 
@@ -197,8 +198,38 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
   inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
   const cloud = useCloudConnections();
+  const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
+  const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
+  const [setDeletionNavigation, setSetDeletionNavigation] = useState<NavigationContext | null>(null);
+  const hasNavigation = useRef(false);
+  useEffect(() => {
+    if (!onNavigationContextChange) return;
+    const report = onNavigationContextChange;
+    const current = setDeletionNavigation ?? discussionNavigation ?? editorNavigation;
+    // Multiple collapsed planned cards share one host: only the open child may own Back.
+    if (current) { hasNavigation.current = true; report(current); }
+    else if (hasNavigation.current) { hasNavigation.current = false; report(null); }
+    return () => {
+      if (hasNavigation.current) { hasNavigation.current = false; report(null); }
+    };
+  }, [onNavigationContextChange, setDeletionNavigation, discussionNavigation, editorNavigation]);
   const discussionTarget = draft ? plannedDiscussionTarget(draft) : null;
-  const discussions = useEntityDiscussions(discussionTarget, onNavigationContextChange, auxiliaryReady && !suspended && !collapsed);
+  const getDiscussionTarget = (exerciseId: string, setId?: string): EntityDiscussionTarget | null => {
+    if (!draft) return null;
+    if (!draft.plan.exercises.some(exercise => exercise.id === exerciseId
+      && (setId === undefined || exercise.sets.some(set => set.id === setId)))) return null;
+    return plannedDiscussionTarget(draft, exerciseId, setId);
+  };
+  const isTargetAvailable = (target: EntityDiscussionTarget): boolean => {
+    if (!draft || !discussionTarget) return false;
+    const key = discussionAnchorKey(target.scope, target.anchor);
+    const candidates = [discussionTarget, ...draft.plan.exercises.flatMap(exercise => [
+      getDiscussionTarget(exercise.id), ...exercise.sets.map(set => getDiscussionTarget(exercise.id, set.id)),
+    ])];
+    return candidates.some(candidate => candidate && discussionAnchorKey(candidate.scope, candidate.anchor) === key);
+  };
+  const discussions = useEntityDiscussions(discussionTarget, onNavigationContextChange ? setDiscussionNavigation : undefined,
+    auxiliaryReady && !suspended, { isTargetAvailable });
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const [programSheetOpen, setProgramSheetOpen] = useState(false);
@@ -547,6 +578,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       if (startAlive.current) setCopyBusy(false);
     }
   };
+  const discussionAction = discussionTarget ? <span className="entity-discussion-trigger occurrence-draft-sheet__discussion-action">
+    <IconButton icon="message-circle" label="Обсуждения" disabled={!discussions.canOpen} onClick={discussions.open} />
+    <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
+  </span> : null;
   const actionsMenu = planner ? <span className="entity-discussion-trigger"><LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
             trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
@@ -573,11 +608,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
           status={collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
             ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : undefined}
-          scheduledTiming={collapsed ? scheduledTiming : undefined}
+          scheduledTiming={collapsed ? scheduledTiming : undefined} discussionAction={discussionAction}
           collapsed={collapsed} onCollapsedChange={onCollapsedChange}>{!collapsed ? actionsMenu : null}</WorkoutPlanCardHeader></div> : null}
         {!collapsed ? <>
         {!inlineCard ? <header className="occurrence-draft-sheet__header">
           {!inlineCard ? <Text variant="headline">Запланированная тренировка</Text> : null}
+          {discussionAction}
           {actionsMenu}
           {!inlineCard ? <IconButton label="Закрыть" onClick={onClose}>✕</IconButton> : null}
         </header> : null}
@@ -592,10 +628,6 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
                   ? <span className="occurrence-draft-sheet__coach-avatar">{owner.compactAvatar}</span> : null}
               </div>
             </div>
-            {discussionTarget ? <span className="entity-discussion-trigger occurrence-draft-sheet__discussion-action">
-              <IconButton icon="message-circle" size="avatar" label="Обсуждения" disabled={!discussions.canOpen} onClick={discussions.open} />
-              <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
-            </span> : null}
           </div>
           <div className="occurrence-draft-sheet__statuses">
             <WorkoutSyncStatus draft={draft} repository={drafts} />
@@ -630,6 +662,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
             creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar} hideProgramMenu hideWorkoutActions
+            discussionTargetFor={getDiscussionTarget} onOpenDiscussion={discussions.openTarget}
+            onNavigationContextChange={setDiscussionNavigation}
+            onSetDeletionNavigationContextChange={setSetDeletionNavigation}
             busy={busy} readOnly={!mayEditStructure}
             onMutationAttempt={planLocked ? onMutationAttempt : undefined}
             onEdit={() => {}} onComment={() => {}} onMove={() => {}}
@@ -718,7 +753,9 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         onClose={() => setExercisePickerOpened(false)} />
       {activeExercise && activeSet && editingSet ? <SetEntry
         key={activeSet.id} mode="occurrence-plan" isOpen readOnly={!mayEditStructure || planLocked}
-        onNavigationContextChange={onNavigationContextChange}
+        onNavigationContextChange={setEditorNavigation}
+        discussionTarget={getDiscussionTarget(editingSet.exerciseId, editingSet.setId)}
+        onOpenDiscussion={discussions.openTarget}
         data={{
           identity: {
             ...(draft.trainingPlanId ? { programId: draft.trainingPlanId, programName: sourceProgramName ?? 'Программа' }

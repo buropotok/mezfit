@@ -16,8 +16,12 @@ export function programDiscussionTarget(program: CloudTrainingPlanRow, actorUser
   return { scope, anchor: programDiscussionAnchor(scope, program), name: program.name };
 }
 /** The editor ID is a projection of the persisted occurrence, never a second anchor. */
-export function plannedDiscussionTarget(draft: LocalWorkoutOccurrenceDraft): EntityDiscussionTarget | null {
+export function plannedDiscussionTarget(draft: LocalWorkoutOccurrenceDraft, exerciseId?: string, setId?: string): EntityDiscussionTarget | null {
   const scope = scopeFor(draft.realmId, draft.actorUserId);
+  const exercise = exerciseId === undefined ? null : draft.plan.exercises.find(item => item.id === exerciseId);
+  const set = setId === undefined ? null : exercise?.sets.find(item => item.id === setId);
+  const name = set ? `${exercise?.exercise.name} · Подход ${set.position + 1}`
+    : exercise ? exercise.exercise.name : draft.plan.name;
   return { scope, anchor: occurrenceDiscussionAnchor(scope, { id: draft.targetOccurrenceId ?? draft.id.slice(6),
-    realmId: draft.realmId, plan: draft.plan, entryKind: 'workout' }), name: draft.plan.name };
+    realmId: draft.realmId, plan: draft.plan, entryKind: 'workout' }, exerciseId, setId), name };
 }

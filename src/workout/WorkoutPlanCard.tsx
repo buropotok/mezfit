@@ -1,5 +1,7 @@
 import { forwardRef, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
+import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
+import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -46,7 +48,12 @@ export interface WorkoutPlanCardProps {
   onAddSet?: (programExerciseId: string) => void;
   onDeleteExercise?: (programExerciseId: string) => void;
   onOpenSet?: (programExerciseId: string, setId: string) => void;
-  onDeleteSet?: (programExerciseId: string, setId: string) => void;
+  onDeleteSet?: (programExerciseId: string, setId: string) => void | Promise<void>;
+  /** Only scheduled occurrence cards supply scoped discussion targets. */
+  discussionTargetFor?: (exerciseId: string, setId?: string) => EntityDiscussionTarget | null;
+  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+  onSetDeletionNavigationContextChange?: (context: NavigationContext | null) => void;
   onExerciseInformation?: (programExerciseId: string) => void;
   onEdit: () => void;
   onComment: () => void;
@@ -68,13 +75,16 @@ export interface WorkoutPlanCardHeaderProps {
   collapsed?: boolean;
   onCollapsedChange?: () => void;
   children?: ReactNode;
+  /** Occurrence-level discussion stays visible when the PLAN card is collapsed. */
+  discussionAction?: ReactNode;
 }
 
 /** Shared program/scheduled day identity, timing and owner header. */
 export function WorkoutPlanCardHeader({ name, programName = 'Без программы', hideProgramName = false,
-  creatorName, creatorAvatar, athleteName, athleteAvatar, scheduledTiming, status, collapsed = false, onCollapsedChange, children,
+  creatorName, creatorAvatar, athleteName, athleteAvatar, scheduledTiming, status, collapsed = false, onCollapsedChange,
+  children, discussionAction,
 }: WorkoutPlanCardHeaderProps) {
-  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}${onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--menu' : ''}`}>
+  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}${onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--menu' : ''}${discussionAction ? ' workout-plan-card__header--with-discussion' : ''}${discussionAction && onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--with-discussion-menu' : ''}${discussionAction && scheduledTiming ? ' workout-plan-card__header--scheduled-discussion' : ''}`}>
     <span className="workout-session-card__icon">
       <Icon name="barbell" className="workout-session-card__icon-artwork" />
     </span>
@@ -89,6 +99,7 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
       <Text variant="footnote">{scheduledTiming.date}</Text>
       <Text variant="footnote" tone="muted">{scheduledTiming.time}</Text>
     </div> : null}
+    {discussionAction}
     {onCollapsedChange && !collapsed ? children : null}
     {onCollapsedChange ? <IconButton
       label={collapsed ? 'Развернуть тренировку' : 'Свернуть тренировку'}
@@ -120,6 +131,7 @@ export function WorkoutPlanCard({
   creatorName, creatorAvatar, athleteName, athleteAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
+  discussionTargetFor, onOpenDiscussion, onNavigationContextChange, onSetDeletionNavigationContextChange,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const authoringVisible = !readOnly;
@@ -151,6 +163,10 @@ export function WorkoutPlanCard({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
       showPlanMetrics={showPlanMetrics}
+      discussionTarget={discussionTargetFor?.(item.exercise.id)}
+      discussionTargetForSet={discussionTargetFor ? setId => discussionTargetFor(item.exercise.id, setId) : undefined}
+      onOpenDiscussion={onOpenDiscussion} onNavigationContextChange={onNavigationContextChange}
+      onSetDeletionNavigationContextChange={onSetDeletionNavigationContextChange}
       collapsed={!expandedExercises.has(item.exercise.id)}
       onCollapsedChange={(collapsed) => setExpandedExercises((current) => {
         const next = new Set(current);
@@ -163,7 +179,10 @@ export function WorkoutPlanCard({
         if (onMutationAttempt && authoringVisible) onMutationAttempt();
         else onOpenSet?.(item.exercise.id, setId);
       } : undefined}
-      onDeleteSet={authoringVisible && (onMutationAttempt || onDeleteSet) ? setId => mutate(() => onDeleteSet?.(item.exercise.id, setId)) : undefined}
+      onDeleteSet={authoringVisible && (onMutationAttempt || onDeleteSet) ? setId => {
+        if (onMutationAttempt) { onMutationAttempt(); return; }
+        return onDeleteSet?.(item.exercise.id, setId);
+      } : undefined}
       onDelete={authoringVisible && (onMutationAttempt || onDeleteExercise) ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));

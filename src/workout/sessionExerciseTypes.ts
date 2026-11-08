@@ -103,7 +103,13 @@ export interface ProgramSessionExerciseProps {
   onDelete?: () => void;
   onInformation?: () => void;
   onOpenSet?: (setId: string) => void;
-  onDeleteSet?: (setId: string) => void;
+  onDeleteSet?: (setId: string) => void | Promise<void>;
+  /** Occurrence-only discussion targets; program templates never receive them. */
+  discussionTarget?: EntityDiscussionTarget | null;
+  discussionTargetForSet?: (setId: string) => EntityDiscussionTarget | null;
+  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+  onSetDeletionNavigationContextChange?: (context: NavigationContext | null) => void;
 }
 
 export type SessionExerciseProps<Id extends string | number = number> = WorkoutSessionExerciseProps<Id> | ProgramSessionExerciseProps;

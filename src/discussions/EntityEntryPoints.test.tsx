@@ -7,15 +7,18 @@ import type { ProgramManagementRepository } from '../data/cloud/program-manageme
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { EntityDiscussionTarget } from './entity-discussion-target';
+import { plannedDiscussionTarget } from './entity-discussion-target';
+import { executionDiscussionAnchor } from '../data/cloud/discussion-anchors';
 import { CloudProgramsPage } from '../program/CloudProgramsPage';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { OccurrenceDraftCard } from '../schedule/OccurrenceDraftSheet';
 
 const probe = vi.hoisted(() => ({ targets: [] as Array<EntityDiscussionTarget | null>,
-  open: vi.fn(), presentation: vi.fn() }));
+  open: vi.fn(), openTarget: vi.fn(), presentation: vi.fn() }));
 vi.mock('./useEntityDiscussions', () => ({ useEntityDiscussions: (target: EntityDiscussionTarget | null) => {
   probe.targets.push(target);
-  return { open: probe.open, canOpen: true, unread: target ? 4 : 0, content: null, onMenuPresentationChange: probe.presentation,
+  return { open: probe.open, openTarget: probe.openTarget, canOpen: true, unread: target ? 4 : 0,
+    content: null, onMenuPresentationChange: probe.presentation,
     menuItem: { id: 'discussions', label: 'Обсуждения', unreadCount: 4, onSelect: probe.open } };
 } }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
@@ -37,8 +40,23 @@ vi.mock('../ui/SpotlightHint', async original => ({
 vi.mock('../schedule/WorkoutSyncStatus', () => ({ WorkoutSyncStatus: () => null }));
 vi.mock('../schedule/WorkoutPerson', () => ({ useWorkoutPerson: () => ({ name: 'Участник', avatar: null }) }));
 vi.mock('../ui/WorkoutRepeatControl', () => ({ WorkoutRepeatControl: () => null }));
-vi.mock('../workout/WorkoutPlanCard', () => ({ WorkoutPlanCard: () => null,
-  WorkoutPlanCardHeader: ({ children }: { children: ReactNode }) => <>{children}</> }));
+vi.mock('../workout/WorkoutPlanCard', () => ({
+  WorkoutPlanCard: ({ discussionTargetFor, onOpenDiscussion }: {
+    discussionTargetFor?: (exerciseId: string, setId?: string) => EntityDiscussionTarget | null;
+    onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  }) => <div>
+    <button onClick={() => {
+      const target = discussionTargetFor?.('occ-ex');
+      if (target) onOpenDiscussion?.(target);
+    }}>Обсудить упражнение PLAN</button>
+    <button onClick={() => {
+      const target = discussionTargetFor?.('occ-ex', 'occ-set');
+      if (target) onOpenDiscussion?.(target);
+    }}>Обсудить подход PLAN</button>
+  </div>,
+  WorkoutPlanCardHeader: ({ children, discussionAction }: { children: ReactNode; discussionAction?: ReactNode }) =>
+    <>{discussionAction}{children}</>,
+}));
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
@@ -51,6 +69,18 @@ const draft: LocalWorkoutOccurrenceDraft = { id: 'draft:occurrence', actorUserId
   coachUserId: 'tg:11', clientUserId: 'tg:22', athleteUserId: 'tg:22', format: 'coached',
   startsAtUtc: '2026-11-07T10:00:00.000Z', durationMinutes: 60, plan, originalPlan: plan,
   saved: true, executionStatus: 'scheduled', createdAt: '', updatedAt: '' };
+
+const planWithExercise: LocalWorkoutOccurrenceDraft = {
+  ...draft, plan: { ...draft.plan, exercises: [{
+    id: 'occ-ex', sourceProgramExerciseId: 'shared-template-ex', position: 0,
+    exercise: { exerciseDefinitionId: 'catalogue-ex', name: 'Жим', nameEn: null, mediaUrl: null, scope: 'public' },
+    notes: null, sets: [{
+      id: 'occ-set', sourceProgramSetId: 'shared-template-set', position: 0,
+      setLabel: null, comment: null, materialLinks: [], chatLinks: [],
+      plannedReps: 10, plannedWeightKg: 50, plannedDurationSeconds: null, plannedDistanceMeters: null,
+    }],
+  }] },
+};
 
 describe('COMM-06 production surface wiring', () => {
   it.each(['coach', 'client'] as const)('exposes only a program root entry for %s, including read-only assigned PLAN', async role => {
@@ -98,6 +128,52 @@ describe('COMM-06 production surface wiring', () => {
     fireEvent.click(icon);
     expect(probe.open).toHaveBeenCalledOnce();
     expect(probe.targets.at(-1)?.anchor).toEqual({ kind: 'workout', workout: { kind: 'occurrence', id: 'occurrence' } });
+  });
+
+  it('keeps the root discussion icon accessible on collapsed planned workouts', () => {
+    const drafts = { repeatStateFor: vi.fn(async () => ({ rule: null, applied: false })), pendingEditError: () => '' };
+    render(<OccurrenceDraftCard draft={draft} drafts={drafts as unknown as WorkoutOccurrenceDraftRepository}
+      readOnly collapsed onCollapsedChange={vi.fn()}
+      onClose={vi.fn()} onSave={async () => {}} onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения' }));
+    expect(probe.open).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Меню тренировки' })).toBeNull();
+  });
+
+  it('routes PLAN exercise and set discussions through the occurrence owner, not the source template', () => {
+    const drafts = { repeatStateFor: vi.fn(async () => ({ rule: null, applied: false })), pendingEditError: () => '' };
+    render(<OccurrenceDraftCard draft={planWithExercise}
+      drafts={drafts as unknown as WorkoutOccurrenceDraftRepository} readOnly
+      collapsed={false} onCollapsedChange={vi.fn()}
+      onClose={vi.fn()} onSave={async () => {}} onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Обсудить упражнение PLAN' }));
+    expect(probe.openTarget).toHaveBeenLastCalledWith({
+      scope: { realmId: 'pair', coachClientId: 'pair' },
+      anchor: { kind: 'exercise', workout: { kind: 'occurrence', id: 'occurrence' },
+        exercise: { kind: 'occurrence', id: 'occ-ex' } },
+      name: 'Жим',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Обсудить подход PLAN' }));
+    expect(probe.openTarget).toHaveBeenLastCalledWith({
+      scope: { realmId: 'pair', coachClientId: 'pair' },
+      anchor: { kind: 'set', workout: { kind: 'occurrence', id: 'occurrence' },
+        exercise: { kind: 'occurrence', id: 'occ-ex' }, set: { kind: 'occurrence', id: 'occ-set' } },
+      name: 'Жим · Подход 1',
+    });
+  });
+
+  it('reuses the same exercise and set anchors after Start, independently of template provenance', () => {
+    const session = { id: 'execution', realmId: 'pair', occurrenceId: 'occurrence',
+      occurrencePlan: planWithExercise.plan };
+    const exercise = { id: 'fact-ex', realmId: 'pair', sessionId: 'execution', occurrenceExerciseId: 'occ-ex' };
+    const set = { id: 'fact-set', realmId: 'pair', sessionId: 'execution',
+      exerciseId: 'fact-ex', occurrenceSetId: 'occ-set' };
+    const plannedExercise = plannedDiscussionTarget(planWithExercise, 'occ-ex');
+    const plannedSet = plannedDiscussionTarget(planWithExercise, 'occ-ex', 'occ-set');
+    expect(plannedExercise?.anchor).toEqual(executionDiscussionAnchor(plannedExercise!.scope, session, exercise));
+    expect(plannedSet?.anchor).toEqual(executionDiscussionAnchor(plannedSet!.scope, session, exercise, set));
+    const otherOccurrence = { ...planWithExercise, id: 'draft:another-occurrence' };
+    expect(plannedDiscussionTarget(otherOccurrence, 'occ-ex', 'occ-set')?.anchor).not.toEqual(plannedSet?.anchor);
   });
 
   it('retains the canonical planned-workout entry after execution', () => {

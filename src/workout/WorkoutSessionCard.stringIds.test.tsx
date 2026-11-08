@@ -121,14 +121,18 @@ describe('WorkoutSessionCard string identities', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/snapshot/exercise-x1.jpg');
     expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
-    expect(screen.getByText('Пред.: —')).toBeTruthy();
+    // PLAN and entry action stay visible in the FACT row, while PREVIOUS belongs in SetEntry.
+    expect(screen.getByText('План:')).toBeTruthy();
+    expect(screen.getByText('80 кг × 8')).toBeTruthy();
+    expect(screen.getByText('Ввести факт')).toBeTruthy();
+    expect(screen.queryByText('Пред.: —')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
     expect(onAddSet).toHaveBeenCalledWith('exercise-x1');
     fireEvent.click(screen.getAllByRole('button', { name: 'Опции упражнения' })[0]);
     expect(onOpenExerciseMenu).toHaveBeenCalledWith('exercise-x1');
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
     expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
-    // A missing PREVIOUS remains null in SetEntry; the placeholder belongs to the row.
+    // A missing PREVIOUS remains null in SetEntry; the list never displays a placeholder.
     expect(within(screen.getByRole('dialog', { name: 'Подход 1' })).queryByText('Пред.: —')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Удалить подход' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'История упражнения' }));
@@ -175,12 +179,14 @@ describe('WorkoutSessionCard string identities', () => {
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Подход 1' })).toBeNull());
   });
 
-  it('does not add the previous placeholder when the projection opts out', () => {
+  it.each([true, undefined])('keeps PREVIOUS off the FACT list regardless of the legacy placeholder flag (%s)', showPreviousPlaceholder => {
     render(<WorkoutSessionCard session={{ ...session, exercises: session.exercises.map(exercise => ({
-      ...exercise, showPreviousPlaceholder: undefined,
+      ...exercise, showPreviousPlaceholder,
     })) }} onReorderExerciseIds={() => {}} onSaveSet={async () => {}} />);
     fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
     expect(screen.queryByText('Пред.: —')).toBeNull();
+    expect(screen.getByText('План:')).toBeTruthy();
+    expect(screen.getByText('80 кг × 8')).toBeTruthy();
   });
 });
 

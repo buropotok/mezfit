@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { SessionExercise } from './SessionExercise';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
-import { WorkoutPlanCard } from './WorkoutPlanCard';
+import { WorkoutPlanCard, WorkoutPlanCardHeader } from './WorkoutPlanCard';
 
 vi.mock('../ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../ui')>();
@@ -25,6 +25,20 @@ const item: CloudProgramDayOutline['exercises'][number] = {
     position: 0, status: 'active', setType: 'dropset', comment: 'Плавно', materialLinks: [], chatLinks: [],
     plannedWeightKg: 123, plannedReps: 15, plannedDurationSeconds: 60, plannedDistanceMeters: 100 }],
 };
+
+it('reserves header action slots for planned-workout discussion in collapsed and expanded layouts', () => {
+  const base = { name: 'День', creatorName: 'Тренер', athleteName: 'Клиент',
+    onCollapsedChange: vi.fn(), discussionAction: <span>Discussion control</span> };
+  const { container, rerender } = render(<WorkoutPlanCardHeader {...base} collapsed scheduledTiming={{
+    date: '08.11.2026', time: '08:00–09:00',
+  }} />);
+  const header = container.querySelector('.workout-session-card__header');
+  expect(header?.classList.contains('workout-plan-card__header--with-discussion')).toBe(true);
+  expect(header?.classList.contains('workout-plan-card__header--scheduled-discussion')).toBe(true);
+  rerender(<WorkoutPlanCardHeader {...base} collapsed={false}><span>Меню</span></WorkoutPlanCardHeader>);
+  expect(header?.classList.contains('workout-plan-card__header--with-discussion-menu')).toBe(true);
+  expect(screen.getByText('Discussion control')).toBeTruthy();
+});
 
 describe('existing exercise component in program mode', () => {
   it('leaves program set details unmounted until first expand and retains them afterwards', () => {
@@ -62,6 +76,27 @@ describe('existing exercise component in program mode', () => {
     expect(menu.hasAttribute('data-no-dnd')).toBe(true);
     expect(screen.getByText('Подход 1')).toBeTruthy();
   });
+  it('shows discussion entry points on an occurrence exercise and its set, without exposing them on templates', () => {
+    const scope = { realmId: 'tg:101', coachClientId: null };
+    const exerciseTarget = { scope, anchor: { kind: 'exercise' as const,
+      workout: { kind: 'occurrence' as const, id: 'occurrence' },
+      exercise: { kind: 'occurrence' as const, id: 'occ-ex' } }, name: 'Жим' };
+    const setTarget = { scope, anchor: { kind: 'set' as const,
+      workout: { kind: 'occurrence' as const, id: 'occurrence' },
+      exercise: { kind: 'occurrence' as const, id: 'occ-ex' },
+      set: { kind: 'occurrence' as const, id: 'occ-set' } }, name: 'Жим · Подход 1' };
+    const view = render(<SessionExercise mode="program" data={item} defaultCollapsed={false}
+      discussionTarget={exerciseTarget} discussionTargetForSet={() => setTarget}
+      onNavigationContextChange={vi.fn()} onOpenDiscussion={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Обсуждения подхода 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Меню упражнения' })).toBeTruthy();
+    view.rerender(<SessionExercise mode="program" data={item} defaultCollapsed={false} />);
+    expect(screen.queryByRole('button', { name: 'Обсуждения подхода 1' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Меню подхода 1' })).toBeNull();
+    expect(screen.getByText('Подход 1')).toBeTruthy();
+  });
+
   it('opens the existing information action by tapping media without collapsing the card', () => {
     const onInformation = vi.fn();
     const { container } = render(<SessionExercise mode="program" data={item} defaultCollapsed={false} onInformation={onInformation} />);
