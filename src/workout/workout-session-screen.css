@@ -79,6 +79,58 @@
   }
 }
 
-.adhoc-workouts__session-overview { display: grid; gap: var(--ui-space-3); }
-.adhoc-workouts__session-timing { display: flex; flex-wrap: wrap; gap: var(--ui-space-2) var(--ui-space-4); }
-.adhoc-workouts__session-timing > * { display: inline-flex; align-items: center; gap: var(--ui-space-1); }
+/* FACT metadata mirrors the PLAN sheet's spacing and UIkit button arrangement. */
+.adhoc-workouts__sheet-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.adhoc-workouts__sheet-overview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.adhoc-workouts__sheet-format {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adhoc-workouts__sheet-coach-avatar {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.adhoc-workouts__sheet-statuses {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.adhoc-workouts__sheet-timing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-inline-start: -10px;
+}
+
+.adhoc-workouts__sheet-time-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.adhoc-workouts__sheet-timing-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

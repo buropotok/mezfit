@@ -176,3 +176,9 @@
 .workout-plan-card__header--scheduled-discussion { grid-template-columns: 44px minmax(0, 1fr) auto repeat(3, 44px); gap: 6px; }
 
 .workout-participants { display: flex; align-items: center; gap: 8px; }
+
+/* The FACT card keeps its own avatar and identity, but its actions live in the sheet header. */
+.workout-session-card__header--sheet {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 10px;
+}

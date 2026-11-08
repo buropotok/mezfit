@@ -6,7 +6,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
 import type { ProgramActor } from '../program/ProgramSummary';
-import { Badge, GlassSurface, Icon, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { Badge, Button as MezfitButton, GlassSurface, Icon, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { WorkoutSessionCard } from './WorkoutSessionCard';
 import { useWorkoutCompletionReview } from './WorkoutCompletionContext';
 
@@ -29,14 +29,26 @@ export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
   'actorUserId' | 'observe' | 'reorder' | 'saveSet' | 'addSet' | 'deleteSet' |
   'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
 
+function localSessionDate(instant: string): string {
+  const date = new Date(instant);
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+    .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0')).join('-');
+}
+
+function localSessionTime(instant: string): string {
+  return new Date(instant).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
-  onNavigationContextChange, onExerciseInformation, readOnly: requestedReadOnly = false, hideActiveStatus = false, sheetLayout = false, personalCatalogueRole = 'coach' }: {
+  onNavigationContextChange, onExerciseInformation, readOnly: requestedReadOnly = false, hideActiveStatus = false, sheetLayout = false, headerActionsHost, personalCatalogueRole = 'coach' }: {
   repository: AdHocSessionRepository;
   readOnly?: boolean;
   personalCatalogueRole?: 'coach' | 'client';
   hideActiveStatus?: boolean;
   /** Render session timing and FACT designation inside a calendar/profile Bottom Sheet. */
   sheetLayout?: boolean;
+  /** Slot in the owning calendar sheet header for the existing session action controls. */
+  headerActionsHost?: HTMLElement | null;
   sessionId: string;
   initData: string;
   actor?: ProgramActor;
@@ -138,22 +150,56 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   return <section className="adhoc-workouts">
     {loading ? <Text variant="body">Загружаем тренировку…</Text> : null}
     {displaySession ? <>
-      <Text variant="body">Атлет: {athlete.name}</Text>
-      <div className="workout-participants"><Text variant="body">{session?.format === 'coached' || (!session?.format && row?.coachUserId) ? 'С тренером в зале' : 'Самостоятельная'}</Text>
-        {(session?.format === 'coached' || (!session?.format && row?.coachUserId)) ? coach.compactAvatar : null}</div>
-      {sheetLayout && row ? <div className="adhoc-workouts__session-overview">
-        <Badge color={row.status === 'active' ? 'green' : 'gray'} textVariant="caption">
-          {row.status === 'completed' ? 'Завершена' : 'Запущена'}
-        </Badge>
-        <div className="adhoc-workouts__session-timing">
-          <Text variant="body"><Icon name="calendar" /> Дата: {new Date(row.startedAt).toLocaleDateString('ru-RU')}</Text>
-          <Text variant="body"><Icon name="clock" /> Начало: {new Date(row.startedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</Text>
-          <Text variant="body"><Icon name="clock" /> Конец: {row.completedAt
-            ? new Date(row.completedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '…'}</Text>
+      {sheetLayout && row ? <div className="adhoc-workouts__sheet-overview">
+        <div className="adhoc-workouts__sheet-overview-details">
+          <Text variant="body">Атлет: {athlete.name}</Text>
+          <div className="adhoc-workouts__sheet-format">
+            <Text variant="body">{session?.format === 'coached' || (!session?.format && row.coachUserId)
+              ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+            <Icon name={session?.format === 'coached' || (!session?.format && row.coachUserId) ? 'users' : 'user'}
+              style={{ width: 22, height: 22 }} />
+            {(session?.format === 'coached' || (!session?.format && row.coachUserId)) && row.coachUserId
+              ? <span className="adhoc-workouts__sheet-coach-avatar">{coach.compactAvatar}</span> : null}
+          </div>
+        </div>
+        <div className="adhoc-workouts__sheet-statuses">
+          <Badge color={session?.status === 'active' ? 'green' : 'gray'} textVariant="caption">
+            {session?.status === 'completed' ? 'Завершена' : 'Запущена'}
+          </Badge>
+        </div>
+        <div className="adhoc-workouts__sheet-timing">
+          <MezfitButton variant="secondary" size="compact" disabled>
+            <span className="adhoc-workouts__sheet-timing-label">
+              <Icon name="calendar" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
+              Дата: {localSessionDate(row.startedAt)}
+            </span>
+          </MezfitButton>
+          <div className="adhoc-workouts__sheet-time-row">
+            <MezfitButton variant="secondary" size="compact" disabled>
+              <span className="adhoc-workouts__sheet-timing-label">
+                <Icon name="clock" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
+                Начало: {localSessionTime(row.startedAt)}
+              </span>
+            </MezfitButton>
+            <MezfitButton variant="secondary" size="compact" disabled>
+              <span className="adhoc-workouts__sheet-timing-label">
+                <Icon name="clock" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
+                Конец: {row.completedAt ? localSessionTime(row.completedAt) : '…'}
+              </span>
+            </MezfitButton>
+          </div>
         </div>
         <Text variant="body">Факт на тренировку</Text>
-      </div> : null}
-      <WorkoutSessionCard showStatus={!hideActiveStatus || displaySession.status !== 'active'} readOnly={readOnly} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
+      </div> : <>
+        <Text variant="body">Атлет: {athlete.name}</Text>
+        <div className="workout-participants">
+          <Text variant="body">{session?.format === 'coached' || (!session?.format && row?.coachUserId)
+            ? 'С тренером в зале' : 'Самостоятельная'}</Text>
+          {(session?.format === 'coached' || (!session?.format && row?.coachUserId)) ? coach.compactAvatar : null}
+        </div>
+      </>}
+      <WorkoutSessionCard showStatus={!sheetLayout && (!hideActiveStatus || displaySession.status !== 'active')}
+        headerActionsHost={sheetLayout ? headerActionsHost : undefined} readOnly={readOnly} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
         onReorderExerciseIds={ids => { void mutate(() => repository.reorder(sessionId, ids)).catch(report); }}
         onSaveSet={input => mutate(() => repository.saveSet(sessionId, input.sessionSetId, input.fact))}
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
