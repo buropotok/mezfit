@@ -130,47 +130,46 @@
 
 .session-exercise__set-summary {
   display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-width: 0;
-  gap: .125rem;
-}
-
-.session-exercise__set-pending {
-  display: flex;
-  align-items: baseline;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
+  width: 100%;
   min-width: 0;
   gap: var(--ui-space-2);
 }
 
 .session-exercise__set-fact {
   display: block;
+  flex: 1 1 auto;
   min-width: 0;
   color: var(--ui-color-surface-text);
   overflow-wrap: anywhere;
   white-space: normal;
+  text-align: right;
 }
 
 .session-exercise__set-fact--empty {
+  flex: 0 1 auto;
+  margin-inline-start: auto;
   color: var(--ui-color-surface-muted);
   white-space: nowrap;
+  text-align: right;
 }
 
 .session-exercise__set-plan-block {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: flex-start;
   min-width: 0;
   gap: .125rem;
-  margin-block-start: var(--ui-space-1);
 }
 
 .session-exercise__set-plan-heading,
 .session-exercise__set-plan-value {
   display: block;
   min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
   color: var(--ui-color-primary);
 }
 
