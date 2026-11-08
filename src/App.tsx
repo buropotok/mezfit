@@ -3,6 +3,7 @@ import { DiscussionsPage } from './discussions/DiscussionsPage';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useState, type ComponentProps } from 'react';
 import {
   acceptCurrentInvite,
+  ApiError,
   addRole,
   getCurrentInvite,
   getMe,
@@ -11,6 +12,7 @@ import {
   type Role,
 } from './api';
 import { ClientCoachProvider, useClientCoach } from './client/ClientCoachContext';
+import { clearConfirmedAccount, readConfirmedAccount, saveConfirmedAccount } from './appSessionCache';
 import { UserProfilePublicationProvider } from './profile/UserProfilePublicationProvider';
 import { UserProfileNavigationShell } from './profile/UserProfileNavigationShell';
 import { applyBackgroundSettings, loadBrowserBackgroundSettings, saveBrowserBackgroundSettings } from './backgroundSettings';
@@ -287,20 +289,31 @@ export function App() {
     const startParam = getTelegramLaunchStartParam(webApp);
 
     let cancelled = false;
+    if (isScreenDiagnosticsStartParam(startParam)) {
+      setCoachDestination('settings');
+      setClientDestination('settings');
+      setInitialScreenDiagnosticsOpen(true);
+    }
+    // Previously Worker-confirmed account metadata opens the local Dexie
+    // working set before this launch is reverified online.
+    const confirmed = readConfirmedAccount(webApp.initData);
+    if (confirmed) dispatch({ type: 'loaded', initData: webApp.initData, startParam, me: confirmed });
     getMe(webApp.initData)
       .then((me) => {
         if (cancelled) return;
-        if (isScreenDiagnosticsStartParam(startParam)) {
-          setCoachDestination('settings');
-          setClientDestination('settings');
-          setInitialScreenDiagnosticsOpen(true);
-        }
+        saveConfirmedAccount(webApp.initData, me);
         dispatch({ type: 'loaded', initData: webApp.initData, startParam, me });
       })
       .catch((error: unknown) => {
-        if (!cancelled) dispatch({ type: 'error', message: error instanceof Error ? error.message : 'Не удалось загрузить профиль' });
+        if (cancelled) return;
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          clearConfirmedAccount(webApp.initData);
+          dispatch({ type: 'error', message: error.message });
+        } else if (!confirmed) {
+          dispatch({ type: 'error', message: error instanceof Error ? error.message : 'Не удалось загрузить профиль' });
+        }
+        // Transient transport failure: keep the confirmed local session readable.
       });
-
     return () => { cancelled = true; };
   }, []);
 

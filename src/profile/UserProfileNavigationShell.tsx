@@ -38,21 +38,19 @@ export function UserProfileNavigationShell({
   useEffect(() => {
     if (!repository) return;
     let active = true;
-    let subscription: { unsubscribe: () => void } | undefined;
-
-    void repository.migrateOwn().then(() => {
-      if (!active) return;
-      subscription = repository.observeOwn(profile => {
-        if (active) setSnapshot({ repository, profile, error: false, loaded: true });
-      }, () => {
-        if (active) setSnapshot(previous => previous?.repository === repository
-          ? { ...previous, error: true } : { repository, profile: null, error: true, loaded: false });
-      });
-    }).catch(() => {
+    // Begin with the available IndexedDB snapshot, not a migration barrier.
+    // The liveQuery will also emit any changes made by the legacy upgrade.
+    const subscription = repository.observeOwn(profile => {
+      if (active) setSnapshot({ repository, profile, error: false, loaded: true });
+    }, () => {
       if (active) setSnapshot(previous => previous?.repository === repository
-          ? { ...previous, error: true } : { repository, profile: null, error: true, loaded: false });
+        ? { ...previous, error: true } : { repository, profile: null, error: true, loaded: false });
     });
-    return () => { active = false; subscription?.unsubscribe(); };
+    void repository.migrateOwn().catch(() => {
+      if (active) setSnapshot(previous => previous?.repository === repository
+        ? { ...previous, error: true } : { repository, profile: null, error: true, loaded: false });
+    });
+    return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retry]);
   useEffect(() => { setTab('basics'); }, [props.activeRole, cloud?.actorUserId]);
   const current = snapshot?.repository === repository ? snapshot : null;
