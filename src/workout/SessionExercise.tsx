@@ -382,7 +382,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
           <ListItem
             key={set.sessionSetId}
             className="session-exercise__set-row"
-            trailingWidth="content"
+            trailingWidth={planMode ? "content" : "default"}
             leading={<SetStatus set={set} />}
             title={planMode ? (
               <span className="session-exercise__set-title">
