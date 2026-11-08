@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactsList } from '../contacts/CloudContactsList';
 import { IconButton, MezfitBottomSheet, MezfitSearchbar, Text } from '../ui';
+import './schedule-client-filter.css';
 
 export function ScheduleClientFilter({ opened, clients, loading, selected, onApply, onClose }: {
   opened: boolean;

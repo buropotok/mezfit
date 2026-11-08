@@ -4,9 +4,11 @@ import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Text } from '../ui';
 import { ScheduleActionButton } from './ScheduleActionButton';
+import './schedule-client-filter.css';
 
 /** Measure our own chip slots; never inspect Konsta's private DOM. */
-export function ScheduleFilterBar({ clients, selected, onRemove, onOpen }: {
+export function ScheduleFilterBar({ clients, selected, onRemove, onOpen, placement = 'schedule' }: {
+  placement?: 'schedule' | 'content';
   clients: readonly CloudContact[];
   selected: readonly string[];
   onRemove: (id: string) => void;
@@ -51,7 +53,7 @@ export function ScheduleFilterBar({ clients, selected, onRemove, onOpen }: {
       document.fonts?.removeEventListener?.('loadingdone', measure);
     };
   }, [selected, clients]);
-  return <div ref={root} className="today-page__filter-bar">
+  return <div ref={root} className={`today-page__filter-bar${placement === 'content' ? ' today-page__filter-bar--content' : ''}`}>
     <ScheduleActionButton icon="search" label="Поиск клиента" onClick={onOpen} />
     <div className="today-page__filter-chips" aria-label="Выбранные клиенты">
       {people.slice(0, count).map(({ id, contact }) => <Chip key={id} deleteButton

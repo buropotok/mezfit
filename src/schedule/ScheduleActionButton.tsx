@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useRef } from 'react';
 import { GlassSurface, Icon } from '../ui';
 import { startSpringScale } from '../ui/SpringScale';
+import './schedule-client-filter.css';
 
 /** Shared calendar actions: identical glass, size and press feedback. */
 export const ScheduleActionButton = forwardRef<HTMLButtonElement, {

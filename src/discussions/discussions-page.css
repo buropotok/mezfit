@@ -1,5 +1,9 @@
-.discussion-inbox { display: grid; gap: 12px; min-width: 0; }
-.discussion-inbox__filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.discussion-inbox { display: grid; gap: var(--ui-space-3); min-width: 0; align-content: start; }
+.discussion-inbox__filters { display: flex; flex-wrap: wrap; gap: var(--ui-space-2); }
 .discussion-inbox__copy { display: grid; min-width: 0; }
 .discussion-inbox__ellipsis { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.discussion-inbox__indicators { display: flex; align-items: center; gap: 4px; }
+.discussion-inbox__indicators { display: flex; align-items: center; gap: var(--ui-space-1); }
+.discussion-inbox__filter-block { display: grid; gap: var(--ui-space-2); min-width: 0; align-content: start; }
+.discussion-inbox__group { min-width: 0; }
+.discussion-inbox__client-filter { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; min-width: 0; }
+.discussion-inbox__client-filter--all { grid-template-columns: auto minmax(0, 1fr); gap: var(--ui-space-2); }

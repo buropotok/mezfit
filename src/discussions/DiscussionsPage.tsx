@@ -1,25 +1,32 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, List as KonstaList, ListInput } from 'konsta/react';
+import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { DiscussionRepository } from '../data/cloud/discussions';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
-import { Avatar, Badge, DatePicker, Icon, IconButton, List, ListItem, Text, type LocalDate } from '../ui';
+import { Avatar, Badge, DatePicker, Icon, List, ListItem, Text, type LocalDate } from '../ui';
 import { DiscussionSheet } from './DiscussionSheet';
 import { DiscussionEntity } from './DiscussionEntity';
 import { useDiscussions, type DiscussionInboxRow } from './DiscussionsProvider';
 import { discussionDateLabel, discussionLocalDate, groupDiscussionFeed } from './feed-presentation';
+import { ScheduleClientFilter } from '../schedule/ScheduleClientFilter';
+import { ScheduleFilterBar } from '../schedule/ScheduleFilterBar';
+import type { DiscussionAnchor } from '../../shared/discussion-anchor';
 import './discussions-page.css';
+
+const entityActionLabels = {
+  program: 'К программе', workout: 'К тренировке', exercise: 'К упражнению', set: 'К подходу',
+} satisfies Record<DiscussionAnchor['kind'], string>;
 
 /** List actions are siblings through ListItem.trailingAction, never nested buttons. */
 export function DiscussionInboxList({ rows, onOpen, onEntity }: {
   rows: readonly DiscussionInboxRow[]; onOpen: (row: DiscussionInboxRow) => void; onEntity: (row: DiscussionInboxRow) => void;
 }) {
-  return <>{groupDiscussionFeed(rows).map(group => <section key={group.date} aria-label={group.date || 'Без сообщений'}>
+  return <>{groupDiscussionFeed(rows).map(group => <section className="discussion-inbox__group" key={group.date} aria-label={group.date || 'Без сообщений'}>
     <Text variant="footnote">{group.date ? discussionDateLabel(group.date) : 'Без сообщений'}</Text>
-    <List divider="inset">{group.rows.map(row => <ListItem key={row.thread.id}
+    <List divider="full">{group.rows.map(row => <ListItem key={row.thread.id}
       leading={row.contact ? <CloudContactAvatar contact={row.contact} /> : <Avatar name="Вы" />}
       title={<Text>{row.contact?.displayName ?? 'Личное обсуждение'}</Text>}
       subtitle={<span className="discussion-inbox__copy">
@@ -35,8 +42,9 @@ export function DiscussionInboxList({ rows, onOpen, onEntity }: {
       </span>}
       aria-label={`Обсуждение: ${row.contact?.displayName ?? 'Вы'}, ${row.thread.derivedTitleSnapshot}`}
       onClick={() => onOpen(row)}
-      trailingAction={<IconButton icon="chevron-right" label={`К сущности: ${row.thread.derivedTitleSnapshot}`}
-        onClick={() => onEntity(row)} />} />)}</List>
+      trailingAction={<Button rounded tonal inline
+        aria-label={`${entityActionLabels[row.thread.anchor.kind]}: ${row.thread.derivedTitleSnapshot}`}
+        onClick={() => onEntity(row)}><Text variant="caption">{entityActionLabels[row.thread.anchor.kind]}</Text></Button>} />)}</List>
   </section>)}</>;
 }
 
@@ -47,7 +55,10 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
   const cloud = useCloudConnections();
   const inbox = useDiscussions();
   const parent = useNavigationSurfaceContext();
-  const [client, setClient] = useState('');
+  const [clientUserIds, setClientUserIds] = useState<string[]>([]);
+  const [clientFilter, setClientFilter] = useState<{ parent: NavigationContext | null } | null>(null);
+  const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(contact => [contact.userId, contact])).values()], [cloud?.clients]);
+  const closeClientFilter = useCallback(() => setClientFilter(null), []);
   const [from, setFrom] = useState<LocalDate | null>(null);
   const [to, setTo] = useState<LocalDate | null>(null);
   const [picker, setPicker] = useState<{ side: 'from' | 'to'; parent: NavigationContext | null } | null>(null);
@@ -78,6 +89,11 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
     onNavigationContextChange({ ...picker.parent, title: 'Период обсуждений', level: 2, onBack: closePicker });
     return () => onNavigationContextChange(picker.parent);
   }, [picker, closePicker, onNavigationContextChange]);
+  useEffect(() => {
+    if (!clientFilter) return;
+    onNavigationContextChange({ ...clientFilter.parent, title: 'Фильтр по клиентам', level: 2, onBack: closeClientFilter });
+    return () => onNavigationContextChange(clientFilter.parent);
+  }, [clientFilter, closeClientFilter, onNavigationContextChange]);
   // Refresh Today/Yesterday headings across local midnight/resume without touching persistence.
   const [, setClock] = useState(0);
   useEffect(() => {
@@ -101,7 +117,9 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
     }
   };
   const rows = inbox.rows.filter(row => {
-    if ((relationshipId || client) && row.thread.coachClientId !== (relationshipId || client)) return false;
+    if (relationshipId && row.thread.coachClientId !== relationshipId) return false;
+    if (!relationshipId && clientUserIds.length && !cloud?.clients.some(contact =>
+      contact.relationshipId === row.thread.coachClientId && clientUserIds.includes(contact.userId))) return false;
     if (!from && !to) return true;
     if (!row.latest) return false;
     const date = discussionLocalDate(row.latest.createdAt);
@@ -110,15 +128,18 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
   if (current?.kind === 'entity') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
-    {role === 'coach' && !relationshipId ? <KonstaList><ListInput type="select" label="Клиент" value={client}
-      onChange={event => { ++request.current; setClient(event.target.value); setLimit(50); }}>
-      <option value="">Все клиенты</option>
-      {(cloud?.clients ?? []).map(contact => <option key={contact.relationshipId} value={contact.relationshipId}>{contact.displayName}</option>)}
-    </ListInput></KonstaList> : null}
-    <div className="discussion-inbox__filters">
-      <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
-      <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'to', parent }); }}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
-      {from || to || client ? <Button rounded clear inline onClick={() => { ++request.current; setFrom(null); setTo(null); setClient(''); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
+    <div className="discussion-inbox__filter-block">
+      {role === 'coach' && !relationshipId ? <div className={`discussion-inbox__client-filter${clientUserIds.length ? '' : ' discussion-inbox__client-filter--all'}`}>
+        {!clientUserIds.length ? <Text variant="footnote" className="discussion-inbox__all-clients">Все клиенты</Text> : null}
+        <ScheduleFilterBar placement="content" clients={clients} selected={clientUserIds}
+          onOpen={() => { ++request.current; setClientFilter({ parent }); }}
+          onRemove={id => { ++request.current; setClientUserIds(current => current.filter(value => value !== id)); setLimit(50); }} />
+      </div> : null}
+      <div className="discussion-inbox__filters">
+        <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
+        <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'to', parent }); }}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
+        {from || to || clientUserIds.length ? <Button rounded clear inline onClick={() => { ++request.current; setFrom(null); setTo(null); setClientUserIds([]); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
+      </div>
     </div>
     {from && to && from > to ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {cloud?.syncStatus === 'offline' ? <Text variant="caption">Нет соединения. Показаны обсуждения на устройстве.</Text>
@@ -129,10 +150,16 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
       <Button rounded tonal onClick={inbox.retry}><Text>Повторить</Text></Button></div> : null}
     {cloud?.status === 'error' && !rows.length ? <Text role="status">{cloud.error}</Text> : null}
     {inbox.loading && !rows.length ? <Text>Загружаем обсуждения…</Text>
-      : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || client ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
+      : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
     <DiscussionInboxList rows={rows.slice(0, limit)} onOpen={row => { void openChat(row); }}
       onEntity={row => { ++request.current; setOpened({ row, kind: 'entity', parent }); }} />
     {rows.length > limit ? <Button rounded tonal onClick={() => setLimit(value => value + 50)}><Text>Показать ещё</Text></Button> : null}
+    {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}
+      clients={clients} loading={cloud?.status === 'loading'} selected={clientUserIds}
+      onClose={closeClientFilter} onApply={ids => {
+        ++request.current; setClientUserIds(ids.filter(id => clients.some(contact => contact.userId === id)));
+        setLimit(50); closeClientFilter();
+      }} /> : null}
     <DatePicker opened={picker !== null} value={(picker?.side === 'to' ? to : from) ?? discussionLocalDate(new Date()) as LocalDate}
       onClose={closePicker} surface="panel" onChange={date => {
         if (picker?.side === 'from') setFrom(date); else setTo(date);
