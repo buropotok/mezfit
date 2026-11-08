@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { factCloudSyncPresentation } from './FactCloudSyncStatus';
