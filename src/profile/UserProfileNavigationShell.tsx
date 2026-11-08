@@ -4,6 +4,9 @@ import { UserProfileRepository, type UserProfile } from '../data/cloud/user-prof
 import { ClientWorkoutNavigationShell } from '../workout/ClientWorkoutContext';
 import { Button, Text } from '../ui';
 import { ProfileWorkspace, type ProfileTab } from './ProfileWorkspace';
+import { ProfileWorkoutTimeline } from './ProfileWorkoutTimeline';
+import { ClientProgramsPage } from '../client/ClientProgramsPage';
+import type { NavigationContext } from '../NavigationShell';
 import { UserProfileSyncStatus } from './UserProfilePublicationProvider';
 import { UserAvatarEditor } from './UserAvatarEditor';
 import { UserProfileForm } from './UserProfileForm';
@@ -12,10 +15,11 @@ import { UserProfileForm } from './UserProfileForm';
 type UserProfileNavigationShellProps = ComponentProps<typeof ClientWorkoutNavigationShell> & {
   /** A Telegram invitation takes precedence over optional first-visit profile onboarding. */
   suppressInitialProfileOpen?: boolean;
+  initData: string;
 };
 
 export function UserProfileNavigationShell({
-  suppressInitialProfileOpen = false, ...props
+  suppressInitialProfileOpen = false, initData, ...props
 }: UserProfileNavigationShellProps) {
   const cloud = useCloudConnections();
   const enabled = props.activeRole === 'client' || props.destination === 'profile';
@@ -32,6 +36,7 @@ export function UserProfileNavigationShell({
   }, [repository]);
   const [retry, setRetry] = useState(0);
   const [tab, setTab] = useState<ProfileTab>('basics');
+  const [profileNavigation, setProfileNavigation] = useState<NavigationContext | null>(null);
   const initialProfileVisit = useRef<string | null>(null);
   const destinationChange = useRef(props.onDestinationChange);
   useLayoutEffect(() => { destinationChange.current = props.onDestinationChange; });
@@ -54,7 +59,8 @@ export function UserProfileNavigationShell({
     });
     return () => { active = false; subscription?.unsubscribe(); };
   }, [repository, retry]);
-  useEffect(() => { setTab('basics'); }, [props.activeRole, cloud?.actorUserId]);
+  useEffect(() => { setTab('basics'); setProfileNavigation(null); }, [props.activeRole, cloud?.actorUserId]);
+  useEffect(() => { if (props.destination !== 'profile') setProfileNavigation(null); }, [props.destination]);
   const current = snapshot?.repository === repository ? snapshot : null;
   useEffect(() => {
     if (suppressInitialProfileOpen || props.activeRole !== 'client' || !repository || !current
@@ -92,8 +98,16 @@ export function UserProfileNavigationShell({
           ? { repository, profile: saved, error: false, loaded: true } : previous);
       }} />
   </>;
-  return <ClientWorkoutNavigationShell {...props}>
+  const actor = { name, photoUrl: props.me.user.photoUrl };
+  return <ClientWorkoutNavigationShell {...props}
+    context={showingProfile && profileNavigation ? profileNavigation : props.context}>
     {showingProfile ? <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
-      onTabChange={setTab} basicsContent={basics} /> : props.children}
+      onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
+      programContent={tab === 'program' ? <div className="stack"><Text variant="body">Ваши активные программы</Text>
+        <ClientProgramsPage actor={actor} activeOnly onNavigationContextChange={setProfileNavigation} /></div> : null}
+      calendarContent={tab === 'calendar' ? <ProfileWorkoutTimeline mode="plan" role="client"
+        initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
+      historyContent={tab === 'history' ? <ProfileWorkoutTimeline mode="history" role="client"
+        initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} /> : props.children}
   </ClientWorkoutNavigationShell>;
 }
