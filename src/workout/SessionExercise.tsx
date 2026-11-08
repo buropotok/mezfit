@@ -127,7 +127,8 @@ function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string |
       const style = window.getComputedStyle(node.firstElementChild ?? node);
       const fontSize = Number.parseFloat(style.fontSize);
       const resolvedLineHeight = Number.parseFloat(style.lineHeight);
-      const lineHeight = Number.isFinite(resolvedLineHeight) ? resolvedLineHeight : fontSize * 1.4;
+      const lineHeight = Number.isFinite(resolvedLineHeight) && resolvedLineHeight > 3
+        ? resolvedLineHeight : fontSize * (Number.isFinite(resolvedLineHeight) ? resolvedLineHeight : 1.4);
       const height = node.getBoundingClientRect().height;
       if (lineHeight > 0 && height > 0) setShowPlan(height < lineHeight * 1.6);
     };
