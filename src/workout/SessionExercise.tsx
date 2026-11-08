@@ -1,6 +1,6 @@
 import { ExecutionSetDiscussionMenu } from '../discussions/ExecutionSetDiscussionMenu';
 import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
@@ -110,19 +110,45 @@ function SetStatus<Id extends string | number>({ set }: { set: SessionExerciseSe
   return <span className="session-exercise__set-status"><Text variant="footnote">{set.position + 1}</Text></span>;
 }
 
-function setSubtitle<Id extends string | number>(set: SessionExerciseSetData<Id>, trackingType: TrackingType, planMode: boolean, showPreviousPlaceholder = false): ReactNode | undefined {
-  const plan = formatSessionSetMetrics(set.plan, trackingType);
-  const previous = formatSessionSetMetrics(set.previous?.metrics ?? null, trackingType)
-    ?? (showPreviousPlaceholder && set.previous === null ? '—' : null);
-  if (planMode) return set.setType ? <Text variant="caption" tone="muted">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : undefined;
-  if (!plan && !previous) return undefined;
+function planSetSubtitle<Id extends string | number>(set: SessionExerciseSetData<Id>): ReactNode | undefined {
+  return set.setType ? <Text variant="caption" tone="muted">Тип подхода: {SET_TYPE_LABELS[set.setType]}</Text> : undefined;
+}
 
-  return (
-    <span className="session-exercise__set-context">
-      {!planMode && plan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
-      {previous ? <Text variant="caption" tone="muted" className="session-exercise__set-previous">Пред.: {previous}</Text> : null}
-    </span>
-  );
+/** FACT always gets the available row width; PLAN disappears when FACT wraps. */
+function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string | null }) {
+  const contentRef = useRef<HTMLSpanElement>(null);
+  const factRef = useRef<HTMLSpanElement>(null);
+  const [showPlan, setShowPlan] = useState(true);
+  useEffect(() => {
+    if (!fact || !plan) return;
+    const update = () => {
+      const node = factRef.current;
+      if (!node) return;
+      const style = window.getComputedStyle(node);
+      const fontSize = Number.parseFloat(style.fontSize);
+      const resolvedLineHeight = Number.parseFloat(style.lineHeight);
+      const lineHeight = Number.isFinite(resolvedLineHeight) ? resolvedLineHeight : fontSize * 1.4;
+      const height = node.getBoundingClientRect().height;
+      if (lineHeight > 0 && height > 0) setShowPlan(height < lineHeight * 1.6);
+    };
+    update();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(update);
+    if (contentRef.current) observer.observe(contentRef.current);
+    return () => observer.disconnect();
+  }, [fact, plan]);
+  return <span ref={contentRef} className="session-exercise__set-summary">
+    {fact ? <>
+      <Text variant="body" className="session-exercise__set-fact" ref={factRef}>{fact}</Text>
+      {plan && showPlan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
+    </> : <>
+      <span className="session-exercise__set-pending">
+        <Text variant="caption" className="session-exercise__set-plan-heading">План:</Text>
+        <Text variant="body" className="session-exercise__set-fact--empty">Ввести факт</Text>
+      </span>
+      <Text variant="body" className="session-exercise__set-plan-value">{plan ?? '—'}</Text>
+    </>}
+  </span>;
 }
 
 interface SessionExerciseLayoutProps {
@@ -345,6 +371,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
           planMode ? set.plan : set.fact?.metrics ?? null,
           exercise.data.exercise.tracking_type,
         );
+        const plan = formatSessionSetMetrics(set.plan, exercise.data.exercise.tracking_type);
         const canOpenSet = !planMode || set.sourceProgramSetId === null;
         const discussionTarget = !planMode && exercise.discussionScope && set.discussionAnchor
           ? { scope: exercise.discussionScope, anchor: set.discussionAnchor,
@@ -357,22 +384,19 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             className="session-exercise__set-row"
             trailingWidth="content"
             leading={<SetStatus set={set} />}
-            title={(
+            title={planMode ? (
               <span className="session-exercise__set-title">
-                <span>{planMode ? `Подход ${setNumber}. План:` : `Подход ${setNumber}`}</span>
-                {planMode || !metrics ? <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
-                  {metrics ?? (planMode ? 'ввести план' : 'ввести факт')}
-                </span> : null}
+                <span>{`Подход ${setNumber}. План:`}</span>
+                <span className={`session-exercise__set-fact${metrics ? '' : ' session-exercise__set-fact--empty'}`}>
+                  {metrics ?? 'ввести план'}
+                </span>
               </span>
-            )}
-            subtitle={setSubtitle(set, exercise.data.exercise.tracking_type, planMode, exercise.data.showPreviousPlaceholder)}
-            trailing={(
-              <span className="session-exercise__set-trailing">
-                {!planMode && metrics ? <Text variant="headline" className="session-exercise__set-fact">{metrics}</Text> : null}
-                {!planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined ? <Badge color="gray">RPE {set.fact.rpe}</Badge> : null}
-                {planMode && canOpenSet ? <SharedIcon name="chevron-right" /> : null}
-              </span>
-            )}
+            ) : <WorkoutSetSummary plan={plan} fact={metrics} />}
+            subtitle={planMode ? planSetSubtitle(set) : undefined}
+            trailing={planMode && canOpenSet ? <SharedIcon name="chevron-right" />
+              : !planMode && set.fact?.rpe !== null && set.fact?.rpe !== undefined
+                ? <span className="session-exercise__set-trailing"><Badge color="gray">RPE {set.fact.rpe}</Badge></span>
+                : undefined}
             trailingAction={!planMode && (discussionTarget || deleteSet) ? <ExecutionSetDiscussionMenu
               target={discussionTarget}
               setNumber={setNumber} onNavigationContextChange={exercise.onNavigationContextChange}
