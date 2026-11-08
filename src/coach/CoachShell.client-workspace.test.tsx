@@ -23,6 +23,11 @@ vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
   }
 } }));
 
+// The workout timeline now replaces the old History placeholder; this test only covers the workspace shell.
+vi.mock('../profile/ProfileWorkoutTimeline', () => ({
+  ProfileWorkoutTimeline: ({ mode }: { mode: string }) => <section>Тренировки: {mode}</section>,
+}));
+
 // Assert the UIkit public contract without replacing its internal gesture mechanics.
 vi.mock('../ui/LiquidGlassTextOnly', () => ({
   LiquidGlassTextOnly: ({ tabs, value, fullWidth, onValueChange }: {
@@ -66,7 +71,7 @@ describe('Coach client workspace presentation', () => {
     expect(tablist.getAttribute('data-full-width')).toBe('true');
     expect(screen.getByRole('group', { name: 'Разделы клиента Анна Иванова' }).contains(tablist)).toBe(true);
     expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
-      'Основные', 'Программа', 'Упражнения', 'Календарь', 'Прогресс', 'История', 'Обсуждения',
+      'Основные', 'Программа', 'Упражнения', 'План', 'Прогресс', 'История', 'Обсуждения',
     ]);
     expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
 
@@ -78,6 +83,6 @@ describe('Coach client workspace presentation', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'История' }));
     expect(screen.getByRole('tab', { name: 'История' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByText('Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом.')).toBeTruthy();
+    expect(screen.getByText('Тренировки: history')).toBeTruthy();
   });
 });
