@@ -25,7 +25,7 @@ export function CalendarSessionSheet({ sessionId, role, actor, initData, onClose
       <header className="calendar-session-sheet__header"><Text variant="headline">Тренировка</Text>
         <IconButton label="Закрыть тренировку" onClick={onClose}>✕</IconButton></header>
       {id && repository ? <AdHocSessionScreen key={id} repository={repository} sessionId={id} initData={initData}
-        actor={actor} personalCatalogueRole={role} onNavigationContextChange={onNavigationContextChange}
+        actor={actor} personalCatalogueRole={role} sheetLayout onNavigationContextChange={onNavigationContextChange}
         onExerciseInformation={exerciseId => repository.exerciseInformation(id, exerciseId)} /> : null}
     </div>
   </MezfitBottomSheet>;

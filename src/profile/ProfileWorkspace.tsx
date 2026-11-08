@@ -11,24 +11,24 @@ const tabs: ReadonlyArray<{ value: ProfileTab; label: string }> = [
   { value: 'basics', label: 'Основные' },
   { value: 'program', label: 'Программа' },
   { value: 'exercises', label: 'Упражнения' },
-  { value: 'calendar', label: 'Календарь' },
+  { value: 'calendar', label: 'План' },
   { value: 'progress', label: 'Прогресс' },
   { value: 'history', label: 'История' },
 ];
 const contactPlaceholders: Partial<Record<ProfileTab, string>> = {
-  calendar: 'Плановые и завершённые тренировки клиента появятся после реализации WorkoutOccurrence.',
   progress: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.',
-  history: 'Хронологическая история WorkoutSession появится вместе с PLAN / FACT анализом.',
 };
 
 /** Shared screen composition; each viewer supplies only its authorized tab content. */
-export function ProfileWorkspace({ view, tab, onTabChange, basicsContent, programContent, exercisesContent, discussionsContent, hideTabs = false }: {
+export function ProfileWorkspace({ view, tab, onTabChange, basicsContent, programContent, exercisesContent, calendarContent, historyContent, discussionsContent, hideTabs = false }: {
   view: ProfileViewContext;
   tab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
   basicsContent?: ReactNode;
   programContent?: ReactNode;
   exercisesContent?: ReactNode;
+  calendarContent?: ReactNode;
+  historyContent?: ReactNode;
   discussionsContent?: ReactNode;
   hideTabs?: boolean;
 }) {
@@ -37,7 +37,8 @@ export function ProfileWorkspace({ view, tab, onTabChange, basicsContent, progra
     ? [...tabs, { value: 'discussions' as const, label: 'Обсуждения' }] : tabs;
   const label = visibleTabs.find(item => item.value === tab)?.label;
   const content = tab === 'basics' ? basicsContent : tab === 'program' ? programContent
-    : tab === 'exercises' ? exercisesContent : tab === 'discussions' ? discussionsContent : undefined;
+    : tab === 'exercises' ? exercisesContent : tab === 'calendar' ? calendarContent
+      : tab === 'history' ? historyContent : tab === 'discussions' ? discussionsContent : undefined;
   return <div className="stack client-workspace">
     {!hideTabs ? <div className="client-workspace-tabs" role="group"
       aria-label={view.kind === 'contact' ? `Разделы клиента ${name}` : 'Разделы моего профиля'}>

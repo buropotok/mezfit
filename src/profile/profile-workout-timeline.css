@@ -1,0 +1,44 @@
+.profile-workout-timeline {
+  display: grid;
+  min-width: 0;
+  gap: var(--ui-space-3);
+}
+
+.profile-workout-list {
+  display: grid;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+
+.profile-workout-card {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: var(--ui-space-3);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-workout-card .workout-session-card__header {
+  min-width: 0;
+}
+
+.profile-workout-card .workout-session-card__copy {
+  min-width: 0;
+}
+
+.profile-workout-card .workout-plan-card__chevron {
+  display: grid;
+  place-items: center;
+}
+
+.profile-workout-card .workout-plan-card__avatar {
+  overflow: hidden;
+}
+
+.profile-workout-timeline__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

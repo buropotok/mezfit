@@ -33,6 +33,10 @@ vi.mock('../workout/ClientWorkoutContext', () => ({
     <button onClick={() => onDestinationChange('settings')}>Настройки</button>
     <button onClick={() => context?.onBack?.()}>Назад</button>{children}</>,
 }));
+// Profile registration tests keep their original navigation focus; the timeline has separate data tests.
+vi.mock('./ProfileWorkoutTimeline', () => ({
+  ProfileWorkoutTimeline: ({ mode }: { mode: string }) => <section>Тренировки: {mode}</section>,
+}));
 vi.mock('../ui/LiquidGlassTextOnly', () => ({
   LiquidGlassTextOnly: ({ tabs, value, onValueChange }: {
     tabs: readonly { value: string; label: string }[]; value: string; onValueChange: (value: string) => void;
