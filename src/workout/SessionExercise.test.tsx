@@ -189,6 +189,26 @@ describe('SessionExercise rendering', () => {
     }
   });
 
+  it('gives FACT the available width when the left two-line PLAN would squeeze it', () => {
+    const originalRect = HTMLElement.prototype.getBoundingClientRect;
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('session-exercise__set-summary')) return { width: 175 } as DOMRect;
+      if (this.classList.contains('session-exercise__set-plan-block')) return { width: 85 } as DOMRect;
+      if (this.classList.contains('session-exercise__set-fact')) return { width: 140 } as DOMRect;
+      return originalRect.call(this);
+    });
+    try {
+      const { container } = renderExercise();
+      const recorded = container.querySelectorAll<HTMLElement>('.session-exercise__set-row')[0];
+      expect(within(recorded).queryByText('План:')).toBeNull();
+      expect(within(recorded).queryByText('80 кг × 10')).toBeNull();
+      expect(within(recorded).getByText('82,5 кг × 10').classList.contains('ui-text--headline')).toBe(true);
+      expect(within(recorded).getByText('RPE 8')).toBeTruthy();
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
   it('keeps FACT visible without PLAN and reserves PREVIOUS for the set detail sheet', () => {
     const noPlan: SessionExerciseData = {
       ...data, sets: [{ ...data.sets[0], plan: null }],
