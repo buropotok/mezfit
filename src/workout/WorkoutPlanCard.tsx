@@ -84,7 +84,7 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
   creatorName, creatorAvatar, athleteName, athleteAvatar, scheduledTiming, status, collapsed = false, onCollapsedChange,
   children, discussionAction,
 }: WorkoutPlanCardHeaderProps) {
-  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}${onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--menu' : ''}`}>
+  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}${onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--menu' : ''}${discussionAction ? ' workout-plan-card__header--with-discussion' : ''}${discussionAction && onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--with-discussion-menu' : ''}${discussionAction && scheduledTiming ? ' workout-plan-card__header--scheduled-discussion' : ''}`}>
     <span className="workout-session-card__icon">
       <Icon name="barbell" className="workout-session-card__icon-artwork" />
     </span>
