@@ -397,9 +397,9 @@ function WorkoutFactCard<Id extends string | number = number>({
         label="Меню тренировки"
         items={menuItems}
       /></span>
-    ) : (
+    ) : headerActionsHost === undefined ? (
       <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
-    )}
+    ) : null}
   </>;
 
   return (
