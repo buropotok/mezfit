@@ -124,7 +124,7 @@ function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string |
     const update = () => {
       const node = factRef.current;
       if (!node) return;
-      const style = window.getComputedStyle(node);
+      const style = window.getComputedStyle(node.firstElementChild ?? node);
       const fontSize = Number.parseFloat(style.fontSize);
       const resolvedLineHeight = Number.parseFloat(style.lineHeight);
       const lineHeight = Number.isFinite(resolvedLineHeight) ? resolvedLineHeight : fontSize * 1.4;
@@ -139,7 +139,7 @@ function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string |
   }, [fact, plan]);
   return <span ref={contentRef} className="session-exercise__set-summary">
     {fact ? <>
-      <Text variant="body" className="session-exercise__set-fact" ref={factRef}>{fact}</Text>
+      <span ref={factRef} className="session-exercise__set-fact"><Text variant="body">{fact}</Text></span>
       {plan && showPlan ? <Text variant="caption" className="session-exercise__set-plan">План: {plan}</Text> : null}
     </> : <>
       <span className="session-exercise__set-pending">
