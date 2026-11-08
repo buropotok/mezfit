@@ -147,10 +147,10 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const validPicker = pickerCompatible(currentWeight, currentReps);
   const needsFactSelection = weightFallback || repsFallback;
   useEffect(() => {
-    if (!validPicker) setError(isPlan
+    if (!validPicker && !readOnly) setError(isPlan
       ? 'Плановое значение не поддерживается текущим пикером'
       : 'Существующее значение FACT не поддерживается текущим пикером');
-  }, [validPicker, isPlan]);
+  }, [validPicker, isPlan, readOnly]);
   const selectedBand = draft.bands[0] ?? null;
   const inputLocked = saving || readOnly;
   // Both overlays must be siblings of the app surface, never descendants of
@@ -191,7 +191,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
             <Text variant="caption" tone="muted">2 показателя</Text>
           </div>
           <SetEntryMetricTile metric="weight_reps" buttonRef={target} blur={glass.blur}
-            value={!isPlan && draft.metrics.weightKg === null && draft.metrics.reps === null
+            value={!isPlan && !readOnly && draft.metrics.weightKg === null && draft.metrics.reps === null
               ? 'Введите факт' : metricsText(draft.metrics.weightKg, draft.metrics.reps)}
             ariaLabel="Изменить вес и повторения" disabled={!validPicker || inputLocked}
             onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }} />
