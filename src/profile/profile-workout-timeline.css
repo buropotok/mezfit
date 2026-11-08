@@ -36,3 +36,9 @@
 .profile-workout-card .workout-plan-card__avatar {
   overflow: hidden;
 }
+
+.profile-workout-timeline__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
