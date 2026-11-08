@@ -79,6 +79,8 @@ interface SetEntrySharedProps {
 export type SetEntryProps =
   | (SetEntrySharedProps & {
       mode?: 'workout';
+      /** Inspect historical/readonly FACT without offering a write action. */
+      readOnly?: boolean;
       onSave: (fact: SetEntryFactDraft) => Promise<void>;
     })
   | (SetEntrySharedProps & {

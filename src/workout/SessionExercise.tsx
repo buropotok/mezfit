@@ -330,7 +330,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
           planMode ? set.plan : set.fact?.metrics ?? null,
           exercise.data.exercise.tracking_type,
         );
-        const canOpenSet = planMode ? set.sourceProgramSetId === null : editable;
+        const canOpenSet = !planMode || set.sourceProgramSetId === null;
         const discussionTarget = !planMode && exercise.discussionScope && set.discussionAnchor
           ? { scope: exercise.discussionScope, anchor: set.discussionAnchor,
             name: `${exerciseDisplayName(data.exercise)} · Подход ${setNumber}` } : null;
@@ -469,6 +469,7 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
         ) : (
           <SetEntry
             mode="workout"
+            readOnly={!editable}
             isOpen
             data={{
               identity: {

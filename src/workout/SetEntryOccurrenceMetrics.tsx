@@ -54,7 +54,7 @@ function display(key: EditableMetric, value: number | null) {
 /** An occurrence-scoped editor for non-weight/reps PLAN metrics. Never writes program template rows. */
 export function SetEntryOccurrenceMetrics(props: Props) {
   const isPlan = props.mode === 'occurrence-plan';
-  const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
+  const readOnly = props.readOnly === true;
   const [draft, setDraft] = useState(() => createSetEntryDraft(props.data, isPlan ? 'plan' : 'fact'));
   const saveInFlightRef = useRef(false);
   const mounted = useRef(true);
@@ -93,8 +93,8 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   };
   const unsupported = keys.some(key => !valid(key, suggested(key)));
   useEffect(() => {
-    if (unsupported) setError('Существующее значение не поддерживается пикером');
-  }, [unsupported]);
+    if (unsupported && !readOnly) setError('Существующее значение не поддерживается пикером');
+  }, [unsupported, readOnly]);
   const selectedBand = draft.bands[0] ?? null;
   const inputLocked = saving || readOnly;
   const change = (update: (value: typeof draft) => typeof draft) => {
@@ -187,7 +187,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
         <header className="set-entry-weight-reps__header">
           <div>
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
-            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
+            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : readOnly ? 'Просмотр результата' : 'Фиксация результата'}</Text>
           </div>
           <div className="set-entry-weight-reps__header-actions">
             {props.discussionTarget ? <IconButton icon="message-circle" label="Обсуждения подхода"
@@ -219,7 +219,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
           {keys.map(key => <div key={key}>
             <SetEntryMetricTile metric={key} blur={glass.blur}
               buttonRef={node => { targets.current[key] = node; }}
-              value={!isPlan && draft.metrics[key] === null ? 'Введите факт' : display(key, draft.metrics[key])}
+              value={!isPlan && !readOnly && draft.metrics[key] === null ? 'Введите факт' : display(key, draft.metrics[key])}
               ariaLabel={EDIT_LABELS[key]}
               disabled={inputLocked || !valid(key, suggested(key))}
               onClick={() => {
@@ -250,15 +250,15 @@ export function SetEntryOccurrenceMetrics(props: Props) {
           {!isPlan ? <>
             <div className="set-entry-weight-reps__section">
               <div className="set-entry-weight-reps__section-heading">
-                <Text variant="footnote">RPE: {draft.rpe ?? 0}</Text>
+                <Text variant="footnote">RPE: {readOnly ? draft.rpe ?? '—' : draft.rpe ?? 0}</Text>
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
-              <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
+              {!readOnly ? <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
                 <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0}
                   ariaLabel="RPE" onValueChange={value => {
                     if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value }));
                   }} />
-              </div>
+              </div> : null}
             </div>
             <div className="set-entry-weight-reps__section">
               <div className="set-entry-weight-reps__section-heading">

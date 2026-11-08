@@ -296,12 +296,19 @@ describe('SessionExercise rendering', () => {
     expect(onAddSet).toHaveBeenCalledWith(200);
   });
 
-  it('removes structural and set editing actions when the exercise is read-only', () => {
-    renderExercise({ editable: false, onAddSet: vi.fn() });
+  it('keeps read-only sets inspectable without exposing FACT or structural mutations', () => {
+    const { onSaveSet } = renderExercise({ editable: false, onAddSet: vi.fn() });
 
     expect(screen.queryByRole('button', { name: 'Добавить подход' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Открыть подход 1' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Свернуть упражнение' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    const sheet = screen.getByRole('dialog', { name: 'Подход 1' });
+    expect(within(sheet).getByText('Просмотр результата')).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Изменить вес и повторения' }).getAttribute('aria-disabled')).toBe('true');
+    expect(within(sheet).queryByRole('button', { name: 'Удалить подход' })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+    expect(onSaveSet).not.toHaveBeenCalled();
   });
 });
 
