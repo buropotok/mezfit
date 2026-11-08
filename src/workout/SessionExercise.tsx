@@ -1,6 +1,6 @@
 import { ExecutionSetDiscussionMenu } from '../discussions/ExecutionSetDiscussionMenu';
 import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
@@ -121,7 +121,7 @@ function WorkoutSetSummary({ plan, fact }: { plan: string | null; fact: string |
   const planRef = useRef<HTMLSpanElement>(null);
   const planWidthRef = useRef(0);
   const [showPlan, setShowPlan] = useState(true);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!fact || !plan) return;
     const update = () => {
       const content = contentRef.current;
