@@ -267,7 +267,8 @@ describe('NavigationShell MezfitNavbar integration', () => {
     const menuLabels = view.getAllByRole('menuitem').map((item) => item.textContent);
     expect(menuLabels).toEqual(['Мой профиль', 'Программы', 'Упражнения', 'Настройки', 'О приложении']);
     const profile = view.getByRole('menuitem', { name: 'Мой профиль' });
-    expect(profile.querySelector('.ui-menu-item__leading--avatar .ui-avatar--small.ui-avatar--fallback')?.textContent).toBe('T');
+    expect(profile.textContent).toBe('Мой профиль');
+    expect(profile.parentElement?.querySelector('.ui-liquid-popover__avatar .ui-avatar--small.ui-avatar--fallback')?.textContent).toBe('T');
     for (const [label, icon] of [
       ['Программы', 'clipboard-list'],
       ['Упражнения', 'barbell'],
@@ -291,7 +292,8 @@ describe('NavigationShell MezfitNavbar integration', () => {
     fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
     fireEvent.click(menuButton);
     const profile = view.getByRole('menuitem', { name: 'Мой профиль' });
-    const photo = profile.querySelector<HTMLImageElement>('.ui-menu-item__leading--avatar img.ui-avatar--small');
+    expect(profile.textContent).toBe('Мой профиль');
+    const photo = profile.parentElement?.querySelector<HTMLImageElement>('.ui-liquid-popover__avatar img.ui-avatar--small');
     expect(photo?.getAttribute('src')).toBe('/my-photo.jpg');
     expect(view.queryByRole('menuitem', { name: 'Календарь' })).toBeNull();
   });
