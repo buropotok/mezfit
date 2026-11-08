@@ -179,7 +179,10 @@ export function WorkoutPlanCard({
         if (onMutationAttempt && authoringVisible) onMutationAttempt();
         else onOpenSet?.(item.exercise.id, setId);
       } : undefined}
-      onDeleteSet={authoringVisible && (onMutationAttempt || onDeleteSet) ? setId => mutate(() => onDeleteSet?.(item.exercise.id, setId)) : undefined}
+      onDeleteSet={authoringVisible && (onMutationAttempt || onDeleteSet) ? setId => {
+        if (onMutationAttempt) { onMutationAttempt(); return; }
+        return onDeleteSet?.(item.exercise.id, setId);
+      } : undefined}
       onDelete={authoringVisible && (onMutationAttempt || onDeleteExercise) ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
