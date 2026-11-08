@@ -17,6 +17,17 @@ import { WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
 import { Avatar, Badge, DatePicker, GlassSurface, Icon, Text, type LocalDate } from '../ui';
 import './profile-workout-timeline.css';
 
+type WorkoutReadSnapshot = {
+  actorUserId: string;
+  occurrences: CloudWorkoutOccurrenceRow[];
+  sessions: CalendarWorkoutSession[];
+  loading: boolean;
+  error: string;
+};
+
+const EMPTY_OCCURRENCES: CloudWorkoutOccurrenceRow[] = [];
+const EMPTY_SESSIONS: CalendarWorkoutSession[] = [];
+
 function dateLabel(date: LocalDate): string {
   return date.split('-').reverse().join('.');
 }
@@ -94,10 +105,14 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const planner = useMemo(() => cloud
     ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
-  const [occurrences, setOccurrences] = useState<CloudWorkoutOccurrenceRow[]>([]);
-  const [sessions, setSessions] = useState<CalendarWorkoutSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // A query snapshot belongs to its actor. A replaced DB starts a new observer;
+  // repeated read failures must not drive a subscribe -> render -> subscribe loop.
+  const [snapshot, setSnapshot] = useState<WorkoutReadSnapshot | null>(null);
+  const current = snapshot?.actorUserId === cloud?.actorUserId ? snapshot : null;
+  const occurrences = current?.occurrences ?? EMPTY_OCCURRENCES;
+  const sessions = current?.sessions ?? EMPTY_SESSIONS;
+  const loading = current?.loading ?? true;
+  const error = current?.error ?? '';
   const [retry, setRetry] = useState(0);
   const [today, setToday] = useState<LocalDate>(() => localDate(new Date()));
   const [from, setFrom] = useState<LocalDate | null>(null);
@@ -116,24 +131,22 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   }, []);
 
   useEffect(() => {
-    if (!repository) return;
+    if (!repository || !cloud?.actorUserId) return;
     let active = true;
-    setLoading(true);
-    setError('');
-    setOccurrences([]);
-    setSessions([]);
+    const actorUserId = cloud.actorUserId;
     const subscription = repository.observeWorkspace(value => {
       if (!active) return;
-      setOccurrences(value.occurrences.filter(row => row.entryKind !== 'personal_event'));
-      setSessions(value.sessions ?? []);
-      setLoading(false); setError('');
+      setSnapshot({ actorUserId,
+        occurrences: value.occurrences.filter(row => row.entryKind !== 'personal_event'),
+        sessions: value.sessions ?? [], loading: false, error: '' });
     }, reason => {
       if (!active) return;
-      setLoading(false);
-      setError(reason instanceof Error ? reason.message : 'Не удалось загрузить тренировки');
+      const error = reason instanceof Error ? reason.message : 'Не удалось загрузить тренировки';
+      setSnapshot(previous => previous?.actorUserId === actorUserId && !previous.loading && previous.error === error
+        ? previous : { actorUserId, occurrences: [], sessions: [], loading: false, error });
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, retry]);
+  }, [repository, cloud?.actorUserId, retry]);
 
   const selected = occurrences.find(row => row.id === openedOccurrenceId) ?? null;
   const selectedDraft = useMemo(() => selected && cloud
@@ -179,7 +192,11 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     {from && to && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
     {error ? <div className="stack"><Text variant="footnote" role="alert">{error}</Text>
-      <KonstaButton rounded tonal onClick={() => setRetry(value => value + 1)}><Text variant="body">Повторить</Text></KonstaButton>
+      <KonstaButton rounded tonal onClick={() => {
+        setSnapshot(previous => previous?.actorUserId === cloud?.actorUserId
+          ? { ...previous, loading: true, error: '' } : previous);
+        setRetry(value => value + 1);
+      }}><Text variant="body">Повторить</Text></KonstaButton>
     </div> : null}
     {!loading && !error && rows.length === 0 ? <Text variant="body" tone="muted">
       {mode === 'plan' ? 'Запланированных тренировок нет' : 'Тренировок за выбранный период нет'}
