@@ -193,7 +193,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
     {error ? <div className="stack"><Text variant="footnote" role="alert">{error}</Text>
       <KonstaButton rounded tonal onClick={() => {
-        setSnapshot(previous => previous?.actorUserId === cloud?.actorUserId
+        setSnapshot(previous => previous && previous.actorUserId === cloud?.actorUserId
           ? { ...previous, loading: true, error: '' } : previous);
         setRetry(value => value + 1);
       }}><Text variant="body">Повторить</Text></KonstaButton>
