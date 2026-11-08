@@ -75,11 +75,14 @@ export interface WorkoutPlanCardHeaderProps {
   collapsed?: boolean;
   onCollapsedChange?: () => void;
   children?: ReactNode;
+  /** Occurrence-level discussion stays visible when the PLAN card is collapsed. */
+  discussionAction?: ReactNode;
 }
 
 /** Shared program/scheduled day identity, timing and owner header. */
 export function WorkoutPlanCardHeader({ name, programName = 'Без программы', hideProgramName = false,
-  creatorName, creatorAvatar, athleteName, athleteAvatar, scheduledTiming, status, collapsed = false, onCollapsedChange, children,
+  creatorName, creatorAvatar, athleteName, athleteAvatar, scheduledTiming, status, collapsed = false, onCollapsedChange,
+  children, discussionAction,
 }: WorkoutPlanCardHeaderProps) {
   return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}${onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--menu' : ''}`}>
     <span className="workout-session-card__icon">
@@ -96,6 +99,7 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
       <Text variant="footnote">{scheduledTiming.date}</Text>
       <Text variant="footnote" tone="muted">{scheduledTiming.time}</Text>
     </div> : null}
+    {discussionAction}
     {onCollapsedChange && !collapsed ? children : null}
     {onCollapsedChange ? <IconButton
       label={collapsed ? 'Развернуть тренировку' : 'Свернуть тренировку'}
