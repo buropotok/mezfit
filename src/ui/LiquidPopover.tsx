@@ -230,7 +230,11 @@ function paintContentTexture(
             context.beginPath();
             context.arc(avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2, radius, 0, Math.PI * 2);
             context.clip();
-            context.drawImage(avatar, avatarX, avatarY, avatarRect.width, avatarRect.height);
+            // Match Avatar's object-fit: cover and centered object position.
+            const cropSide = Math.min(avatar.naturalWidth, avatar.naturalHeight);
+            context.drawImage(avatar,
+              (avatar.naturalWidth - cropSide) / 2, (avatar.naturalHeight - cropSide) / 2,
+              cropSide, cropSide, avatarX, avatarY, avatarRect.width, avatarRect.height);
             context.restore();
           }
         } else {
