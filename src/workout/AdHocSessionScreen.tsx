@@ -16,6 +16,7 @@ import type { ActiveWorkoutSession } from './workoutSessionTypes';
 import type { PreviousSet } from './setEntryTypes';
 import { useWorkoutPerson } from '../schedule/WorkoutPerson';
 import { adHocErrorMessage } from './adhoc-workout-errors';
+import { FactCloudSyncStatus } from './FactCloudSyncStatus';
 import './workout-session-screen.css';
 
 const ProgramExerciseInformationSheet = lazy(() => import('../program/ProgramExerciseInformationSheet')
@@ -163,12 +164,13 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           </div>
         </div>
         <div className="adhoc-workouts__sheet-statuses">
+          <FactCloudSyncStatus />
           <Badge color={session?.status === 'active' ? 'green' : 'gray'} textVariant="caption">
             {session?.status === 'completed' ? 'Завершена' : 'Запущена'}
           </Badge>
         </div>
         <div className="adhoc-workouts__sheet-timing">
-          <MezfitButton variant="secondary" size="compact" disabled>
+          <MezfitButton className="adhoc-workouts__sheet-date-button" variant="secondary" size="compact" disabled>
             <span className="adhoc-workouts__sheet-timing-label">
               <Icon name="calendar" style={{ width: 18, height: 18, flex: '0 0 18px' }} />
               Дата: {localSessionDate(row.startedAt)}

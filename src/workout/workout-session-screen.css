@@ -110,8 +110,9 @@
 .adhoc-workouts__sheet-statuses {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .adhoc-workouts__sheet-timing {
@@ -119,6 +120,11 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
   margin-inline-start: -10px;
+}
+
+.adhoc-workouts__sheet-date-button {
+  grid-column: 1;
+  justify-self: start;
 }
 
 .adhoc-workouts__sheet-time-row {
