@@ -234,7 +234,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       const pulse = () => {
         if (alive.current && focusVersion.current === version) setHighlight(requestedFocus);
       };
-      // The native scroll belongs to this viewport. Start the 100 ms bubble
+      // The native scroll belongs to this viewport. Start the one-second bubble
       // pulse only when its motion settles, never while the row is travelling.
       if (Math.abs(target - list.scrollTop) < 1 || typeof list.scrollTo !== 'function') {
         list.scrollTop = target;

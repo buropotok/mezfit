@@ -15,7 +15,7 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
   bubbleRef?: Ref<HTMLDivElement>;
   onBubbleClick?: MouseEventHandler<HTMLDivElement>;
   bubbleSource?: ReactNode;
-  /** The owning thread activates a single 100 ms brightness pulse after navigation settles. */
+  /** The owning thread activates a stronger one-second brightness pulse after navigation settles. */
   focusPulse?: boolean;
   /** Semantic time / receipt rendered inside the bubble without depending on Konsta's footer DOM. */
   inlineMeta?: ReactNode;
