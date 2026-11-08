@@ -157,17 +157,20 @@
   white-space: nowrap;
 }
 
-.session-exercise__set-plan-heading,
-.session-exercise__set-plan-value,
-.session-exercise__set-plan {
-  display: block;
+.session-exercise__set-plan-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   min-width: 0;
-  overflow-wrap: anywhere;
+  gap: .125rem;
+  margin-block-start: var(--ui-space-1);
 }
 
 .session-exercise__set-plan-heading,
-.session-exercise__set-plan,
 .session-exercise__set-plan-value {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ui-color-primary);
 }
 
