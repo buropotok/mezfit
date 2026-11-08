@@ -78,3 +78,7 @@
     animation-duration: 1.8s;
   }
 }
+
+.adhoc-workouts__session-overview { display: grid; gap: var(--ui-space-3); }
+.adhoc-workouts__session-timing { display: flex; flex-wrap: wrap; gap: var(--ui-space-2) var(--ui-space-4); }
+.adhoc-workouts__session-timing > * { display: inline-flex; align-items: center; gap: var(--ui-space-1); }
