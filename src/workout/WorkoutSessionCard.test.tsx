@@ -284,7 +284,7 @@ describe('client read-only Coach FACT card', () => {
     expect(within(sheet).getByText(/План:.*00:02:00/)).toBeTruthy();
     expect(within(sheet).getByText(/Пред.:.*00:01:50/)).toBeTruthy();
     expect(within(sheet).getByRole('button', { name: 'Изменить продолжительность' }).getAttribute('aria-disabled')).toBe('true');
-    expect(within(sheet).getByText('Ровный темп')).toBeTruthy();
+    expect(within(sheet).getByDisplayValue('Ровный темп')).toBeTruthy();
     expect(within(sheet).queryByRole('button', { name: 'Удалить подход' })).toBeNull();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть подход' }));
     expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
