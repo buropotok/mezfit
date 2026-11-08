@@ -3,6 +3,7 @@ import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
 import { UnreadCount } from '../ui/UnreadCount';
 import { ListInput } from 'konsta/react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Avatar,
   Badge,
@@ -102,6 +103,8 @@ export interface WorkoutFactCardProps<Id extends string | number = number> {
   /** Viewing a coach-authored FACT must not expose mutation controls to clients. */
   readOnly?: boolean;
   showStatus?: boolean;
+  /** Optional sheet-owned action slot; null suppresses inline controls until the slot mounts. */
+  headerActionsHost?: HTMLElement | null;
   session: ActiveWorkoutSession<Id>;
   title?: string;
   athleteName?: string;
@@ -138,6 +141,7 @@ function WorkoutFactCard<Id extends string | number = number>({
   session,
   readOnly = false,
   showStatus = true,
+  headerActionsHost,
   title,
   athleteName,
   athleteAvatar,
@@ -360,9 +364,48 @@ function WorkoutFactCard<Id extends string | number = number>({
     }
   };
 
+  // The session owns its existing discussion and menu state. The Bottom Sheet may
+  // place those same controls in its header; the inline header remains the default.
+  const headerActions = <>
+    {session.discussion ? <span className="entity-discussion-trigger workout-session-card__discussion-action" data-no-dnd>
+      <IconButton icon="message-circle" label="Обсуждения тренировки"
+        disabled={!discussions.canOpen} onClick={discussions.open} />
+      <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
+    </span> : null}
+    {menuItems.length > 0 ? (
+      <span className="entity-discussion-trigger"><LiquidPopover
+        isOpen={menuOpen}
+        onOpenChange={setMenuOpen}
+        onPresentationChange={(presented) => {
+          discussions.onMenuPresentationChange(presented);
+          if (presented || pendingDialog === null) return;
+          if (pendingDialog === 'rename') setRenameOpen(true);
+          else if (pendingDialog === 'comment') setCommentOpen(true);
+          else setCopyOpened(true);
+          setPendingDialog(null);
+        }}
+        triggerRef={menuTriggerRef}
+        trigger={(
+          <IconButton
+            ref={menuTriggerRef}
+            className="workout-session-card__menu-trigger"
+            style={{ width: 44, height: 44, minHeight: 44, padding: 10 }}
+            icon="dots-vertical"
+            label="Меню тренировки"
+          />
+        )}
+        label="Меню тренировки"
+        items={menuItems}
+      /></span>
+    ) : (
+      <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
+    )}
+  </>;
+
   return (
     <>
       {discussions.content}
+      {headerActionsHost ? createPortal(headerActions, headerActionsHost) : null}
       <SortableList
         items={items}
         disabled={!active}
@@ -378,7 +421,7 @@ function WorkoutFactCard<Id extends string | number = number>({
           onReorderExerciseIds(reorderedIds);
         }}
         header={(
-          <div className={`workout-session-card__header${session.discussion ? ' workout-session-card__header--with-discussion' : ''}`}>
+          <div className={`workout-session-card__header${headerActionsHost !== undefined ? ' workout-session-card__header--sheet' : session.discussion ? ' workout-session-card__header--with-discussion' : ''}`}>
             <span className="workout-session-card__icon">
               <Icon name="barbell" variant="outline" className="workout-session-card__icon-artwork" />
             </span>
@@ -389,39 +432,7 @@ function WorkoutFactCard<Id extends string | number = number>({
               </Text>
               {showStatus ? <Badge color={session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : null}
             </div>
-            {session.discussion ? <span className="entity-discussion-trigger workout-session-card__discussion-action" data-no-dnd>
-              <IconButton icon="message-circle" label="Обсуждения тренировки"
-                disabled={!discussions.canOpen} onClick={discussions.open} />
-              <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
-            </span> : null}
-            {menuItems.length > 0 ? (
-              <span className="entity-discussion-trigger"><LiquidPopover
-                isOpen={menuOpen}
-                onOpenChange={setMenuOpen}
-                onPresentationChange={(presented) => {
-                  discussions.onMenuPresentationChange(presented);
-                  if (presented || pendingDialog === null) return;
-                  if (pendingDialog === 'rename') setRenameOpen(true);
-                  else if (pendingDialog === 'comment') setCommentOpen(true);
-                  else setCopyOpened(true);
-                  setPendingDialog(null);
-                }}
-                triggerRef={menuTriggerRef}
-                trigger={(
-                  <IconButton
-                    ref={menuTriggerRef}
-                    className="workout-session-card__menu-trigger"
-                    style={{ width: 44, height: 44, minHeight: 44, padding: 10 }}
-                    icon="dots-vertical"
-                    label="Меню тренировки"
-                  />
-                )}
-                label="Меню тренировки"
-                items={menuItems}
-              /></span>
-            ) : (
-              <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
-            )}
+            {headerActionsHost === undefined ? headerActions : null}
             <div className="workout-plan-card__avatar" aria-label={`Атлет: ${athleteName ?? workoutCreatorName(session)}`}>
               {athleteAvatar ?? <Avatar name={athleteName ?? workoutCreatorName(session)} src={!athleteName ? session.creator?.photoUrl ?? undefined : undefined} />}
             </div>
