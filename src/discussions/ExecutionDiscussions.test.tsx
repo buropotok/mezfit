@@ -93,7 +93,7 @@ describe('COMM-07 completed execution entries', () => {
     await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(setAnchor('exercise-a', 'exercise-a-set-1'), 'Жим · Подход 2'));
     expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
     expect(screen.queryByText('Создать обсуждение')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Открыть подход 2' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Открыть подход 2' })).toBeTruthy();
     expect(screen.getAllByLabelText('Непрочитанных: 3').length).toBeGreaterThan(0);
     const menu = screen.queryByRole('menu');
     expect(menu).toBeNull();
@@ -103,6 +103,20 @@ describe('COMM-07 completed execution entries', () => {
     openFromMenu('Меню подхода 2');
     await waitFor(() => expect(probe.ensure).toHaveBeenCalledTimes(4));
     expect(probe.ensure.mock.calls[2][0]).toEqual(probe.ensure.mock.calls[3][0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+
+    // A historical FACT opens for inspection, and its nested discussion retains the exact execution set anchor.
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
+    const sheet = screen.getByRole('dialog', { name: 'Подход 2' });
+    expect(within(sheet).getByText('Просмотр результата')).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: 'Изменить вес и повторения' }).getAttribute('aria-disabled')).toBe('true');
+    expect(within(sheet).queryByRole('button', { name: 'Удалить подход' })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Обсуждения подхода' }));
+    await waitFor(() => expect(probe.ensure).toHaveBeenCalledTimes(5));
+    expect(probe.ensure).toHaveBeenLastCalledWith(setAnchor('exercise-a', 'exercise-a-set-1'), 'Жим · Подход 2');
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть подход' }));
+    expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
   });
 
 
