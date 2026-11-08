@@ -58,8 +58,8 @@ function PlanRow({ occurrence, missed, actor, onOpen }: {
 }
 
 /** FACT keeps its own compact markup; PLAN and FACT business components are not combined. */
-function SessionRow({ session, actor, onOpen }: {
-  session: CalendarWorkoutSession; actor?: ProgramActor; onOpen: () => void;
+function SessionRow({ session, programName, actor, onOpen }: {
+  session: CalendarWorkoutSession; programName: string; actor?: ProgramActor; onOpen: () => void;
 }) {
   const athlete = useWorkoutPerson(session.athleteUserId, session.realmId, actor);
   return <GlassSurface component="button" wrapContent={false} shape="capsule" optics={false}
@@ -71,7 +71,7 @@ function SessionRow({ session, actor, onOpen }: {
       <div className="workout-session-card__copy">
         <Text variant="body" className="workout-session-card__workout-name">{session.name}</Text>
         <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
-          {session.occurrenceId ? 'Программа тренировок' : 'Без программы'}
+          {programName}
         </Text>
         <Badge color="gray" textVariant="caption">Завершена</Badge>
       </div>
@@ -204,7 +204,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   }, [picker, openedOccurrenceId, openedSessionId, nestedNavigation, onNavigationContextChange]);
 
   return <section className="profile-workout-timeline" aria-label={mode === 'plan' ? 'План тренировок' : 'История тренировок'}>
-    {mode === 'history' ? <div className="discussion-inbox__filters">
+    {mode === 'history' ? <div className="profile-workout-timeline__filters">
       <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{from ? `С ${dateLabel(from)}` : 'С даты'}</Text></KonstaButton>
       <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">{to ? `По ${dateLabel(to)}` : 'По дату'}</Text></KonstaButton>
       {from || to ? <KonstaButton rounded clear inline onClick={() => { setFrom(null); setTo(null); }}><Text variant="footnote">Сбросить</Text></KonstaButton> : null}
@@ -219,7 +219,9 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     </Text> : null}
     <div className="profile-workout-list">
       {rows.map(row => row.kind === 'completed'
-        ? <SessionRow key={`session:${row.session.id}`} session={row.session} actor={actor}
+        ? <SessionRow key={`session:${row.session.id}`} session={row.session}
+          programName={occurrences.find(occurrence => occurrence.id === row.session.occurrenceId)?.trainingPlanId
+            ? 'Программа тренировок' : 'Без программы'} actor={actor}
           onOpen={() => { setNestedNavigation(null); setOpenedSessionId(row.session.id); }} />
         : <PlanRow key={`occurrence:${row.occurrence.id}`} occurrence={row.occurrence}
           missed={row.kind === 'missed'} actor={actor}
