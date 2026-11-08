@@ -4,6 +4,7 @@ import type { NavigationContext } from '../NavigationShell';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
+import { localWorkoutDate as localDate, selectProfileWorkoutRows } from './profile-workout-selection';
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { draftFromOccurrence } from '../data/cloud/workout-occurrence-plan';
@@ -15,16 +16,6 @@ import { CalendarSessionSheet } from '../schedule/CalendarSessionSheet';
 import { WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
 import { Avatar, Badge, DatePicker, GlassSurface, Icon, Text, type LocalDate } from '../ui';
 import './profile-workout-timeline.css';
-
-type TimelineRow =
-  | { kind: 'planned' | 'missed'; occurrence: CloudWorkoutOccurrenceRow; date: LocalDate }
-  | { kind: 'completed'; session: CalendarWorkoutSession; date: LocalDate };
-
-function localDate(value: string | Date): LocalDate {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
-    .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0')).join('-') as LocalDate;
-}
 
 function dateLabel(date: LocalDate): string {
   return date.split('-').reverse().join('.');
@@ -161,33 +152,9 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => { active = false; subscription.unsubscribe(); };
   }, [planner, selected?.trainingPlanId]);
 
-  const rows = useMemo(() => {
-    const belongs = (row: { athleteUserId: string; realmId: string }) =>
-      contact ? row.athleteUserId === contact.userId && row.realmId === contact.relationshipId
-        : row.athleteUserId === cloud?.actorUserId;
-    const planned: TimelineRow[] = [];
-    const history: TimelineRow[] = [];
-    for (const occurrence of occurrences) {
-      if (!belongs(occurrence) || occurrence.inactive || occurrence.cancelledAt
-        || occurrence.status === 'cancelled' || occurrence.publicationStatus === 'draft') continue;
-      const date = localDate(occurrence.startsAtUtc);
-      if (occurrence.status === 'scheduled') {
-        if (date < today) history.push({ kind: 'missed', occurrence, date });
-        else planned.push({ kind: 'planned', occurrence, date });
-      }
-    }
-    for (const session of sessions) {
-      if (belongs(session) && session.status === 'completed') {
-        history.push({ kind: 'completed', session, date: localDate(session.startedAt) });
-      }
-    }
-    const inPeriod = (row: TimelineRow) => (!from || row.date >= from) && (!to || row.date <= to);
-    return (mode === 'plan' ? planned : history.filter(inPeriod)).sort((a, b) => {
-      const left = a.kind === 'completed' ? a.session.startedAt : a.occurrence.startsAtUtc;
-      const right = b.kind === 'completed' ? b.session.startedAt : b.occurrence.startsAtUtc;
-      return mode === 'plan' ? left.localeCompare(right) : right.localeCompare(left);
-    });
-  }, [occurrences, sessions, contact?.userId, contact?.relationshipId, cloud?.actorUserId, today, mode, from, to]);
+  const rows = useMemo(() => selectProfileWorkoutRows({ occurrences, sessions,
+    actorUserId: cloud?.actorUserId, contact, mode, today, from, to,
+  }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, from, to]);
 
   const close = () => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); };
   useEffect(() => {
