@@ -15,11 +15,11 @@ import { UserProfileForm } from './UserProfileForm';
 type UserProfileNavigationShellProps = ComponentProps<typeof ClientWorkoutNavigationShell> & {
   /** A Telegram invitation takes precedence over optional first-visit profile onboarding. */
   suppressInitialProfileOpen?: boolean;
-  initData: string;
+  initData?: string;
 };
 
 export function UserProfileNavigationShell({
-  suppressInitialProfileOpen = false, initData, ...props
+  suppressInitialProfileOpen = false, initData = '', ...props
 }: UserProfileNavigationShellProps) {
   const cloud = useCloudConnections();
   const enabled = props.activeRole === 'client' || props.destination === 'profile';
