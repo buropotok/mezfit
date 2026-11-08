@@ -201,11 +201,17 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
   const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
   const [setDeletionNavigation, setSetDeletionNavigation] = useState<NavigationContext | null>(null);
+  const hasNavigation = useRef(false);
   useEffect(() => {
     if (!onNavigationContextChange) return;
     const report = onNavigationContextChange;
-    report(setDeletionNavigation ?? discussionNavigation ?? editorNavigation);
-    return () => report(null);
+    const current = setDeletionNavigation ?? discussionNavigation ?? editorNavigation;
+    // Multiple collapsed planned cards share one host: only the open child may own Back.
+    if (current) { hasNavigation.current = true; report(current); }
+    else if (hasNavigation.current) { hasNavigation.current = false; report(null); }
+    return () => {
+      if (hasNavigation.current) { hasNavigation.current = false; report(null); }
+    };
   }, [onNavigationContextChange, setDeletionNavigation, discussionNavigation, editorNavigation]);
   const discussionTarget = draft ? plannedDiscussionTarget(draft) : null;
   const getDiscussionTarget = (exerciseId: string, setId?: string): EntityDiscussionTarget | null => {
