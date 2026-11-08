@@ -187,8 +187,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     <div className="profile-workout-list">
       {rows.map(row => row.kind === 'completed'
         ? <SessionRow key={`session:${row.session.id}`} session={row.session}
-          programName={occurrences.find(occurrence => occurrence.id === row.session.occurrenceId)?.trainingPlanId
-            ? 'Программа тренировок' : 'Без программы'} actor={actor}
+          programName={row.session.programName ?? 'Без программы'} actor={actor}
           onOpen={() => { setNestedNavigation(null); setOpenedSessionId(row.session.id); }} />
         : <PlanRow key={`occurrence:${row.occurrence.id}`} occurrence={row.occurrence}
           missed={row.kind === 'missed'} actor={actor}
