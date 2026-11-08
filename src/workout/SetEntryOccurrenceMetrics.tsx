@@ -93,8 +93,8 @@ export function SetEntryOccurrenceMetrics(props: Props) {
   };
   const unsupported = keys.some(key => !valid(key, suggested(key)));
   useEffect(() => {
-    if (unsupported) setError('Существующее значение не поддерживается пикером');
-  }, [unsupported]);
+    if (unsupported && !readOnly) setError('Существующее значение не поддерживается пикером');
+  }, [unsupported, readOnly]);
   const selectedBand = draft.bands[0] ?? null;
   const inputLocked = saving || readOnly;
   const change = (update: (value: typeof draft) => typeof draft) => {
@@ -219,7 +219,7 @@ export function SetEntryOccurrenceMetrics(props: Props) {
           {keys.map(key => <div key={key}>
             <SetEntryMetricTile metric={key} blur={glass.blur}
               buttonRef={node => { targets.current[key] = node; }}
-              value={!isPlan && draft.metrics[key] === null ? 'Введите факт' : display(key, draft.metrics[key])}
+              value={!isPlan && !readOnly && draft.metrics[key] === null ? 'Введите факт' : display(key, draft.metrics[key])}
               ariaLabel={EDIT_LABELS[key]}
               disabled={inputLocked || !valid(key, suggested(key))}
               onClick={() => {
