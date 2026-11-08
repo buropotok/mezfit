@@ -13,7 +13,7 @@ import { useAssignedPrograms } from '../data/cloud/AssignedProgramsProvider';
 import { Button, List, ListItem } from '../ui';
 import { useClientCoach } from './ClientCoachContext';
 
-function CloudClientProgramsPage() {
+function CloudClientProgramsPage({ activeOnly = false }: { activeOnly?: boolean }) {
   const { selectedCoach, status: coachStatus, error: coachError, refreshCoaches } = useClientCoach();
   const cloud = useAssignedPrograms();
 
@@ -44,7 +44,8 @@ function CloudClientProgramsPage() {
 
   const programs = cloud.plans.filter((plan) =>
     plan.coachUserId === selectedCoach.userId
-    && plan.clientUserId === cloud.actorUserId);
+    && plan.clientUserId === cloud.actorUserId
+    && (!activeOnly || plan.status === 'active'));
 
   if (programs.length === 0) {
     return <List><ListItem interactive={false} title="Программ пока нет" subtitle="У выбранного тренера пока нет назначенной вам программы." /></List>;
@@ -68,10 +69,11 @@ function CloudClientProgramsPage() {
 
 function CloudClientProgramsWorkspace({
   repository, cloudStatus, cloudError, syncStatus, syncError, onRetry, onRetrySync,
-  onNavigationContextChange, actor, coaches,
+  onNavigationContextChange, actor, coaches, activeOnly = false,
 }: {
   actor?: ProgramActor;
   coaches: readonly CloudContact[];
+  activeOnly?: boolean;
   repository: ProgramManagementRepository;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -84,7 +86,7 @@ function CloudClientProgramsWorkspace({
   const [detailNavigation, setDetailNavigation] = useState<NavigationContext | null>(null);
   const [selected, setSelected] = useState<CloudTrainingPlanRow | null>(null);
   const [filter, setFilter] = useState<ProgramFilter>('all');
-  const controls: ProgramControls = { filter, onFilterChange: setFilter, search: '', onSearchChange: () => {} };
+  const controls: ProgramControls = { filter: activeOnly ? 'active' : filter, onFilterChange: setFilter, search: '', onSearchChange: () => {} };
   useEffect(() => {
     onNavigationContextChange?.(selected ? detailNavigation ?? {
       title: 'Детали программы', scrollKey: `client-program:${selected.id}`,
@@ -97,15 +99,16 @@ function CloudClientProgramsWorkspace({
     cloudStatus={cloudStatus} cloudError={cloudError} syncStatus={syncStatus} syncError={syncError}
     onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
   return <CloudProgramsPage repository={repository} viewerRole="client" clients={[]} coaches={coaches}
-    controls={controls} onOpen={setSelected} onNavigationContextChange={onNavigationContextChange}
+    controls={controls} hideToolbar={activeOnly} onOpen={setSelected} onNavigationContextChange={onNavigationContextChange}
     cloudStatus={cloudStatus} cloudError={cloudError} syncStatus={syncStatus} syncError={syncError}
     onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
 }
 
 export function ClientProgramsPage({
-  onNavigationContextChange, actor,
+  onNavigationContextChange, actor, activeOnly = false,
 }: {
   actor?: ProgramActor;
+  activeOnly?: boolean;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 } = {}) {
   const cloud = useCloudConnections();
@@ -113,7 +116,7 @@ export function ClientProgramsPage({
     ? new ProgramManagementRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
-    return <CloudClientProgramsWorkspace key={cloud.actorUserId} repository={repository} actor={actor} coaches={cloud.coaches}
+    return <CloudClientProgramsWorkspace key={cloud.actorUserId} repository={repository} actor={actor} coaches={cloud.coaches} activeOnly={activeOnly}
       cloudStatus={cloud.status} cloudError={cloud.error}
       syncStatus={cloud.syncStatus} syncError={cloud.syncError}
       onRetry={cloud.refresh} onRetrySync={cloud.retrySync}
@@ -123,6 +126,6 @@ export function ClientProgramsPage({
   if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
     return <List><ListItem interactive={false} title="Программы пока недоступны" subtitle="Для назначения программ необходимо настроить доступ к Mezfit облаку." /></List>;
   }
-  return <CloudClientProgramsPage />;
+  return <CloudClientProgramsPage activeOnly={activeOnly} />;
 }
 
