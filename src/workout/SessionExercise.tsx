@@ -330,7 +330,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
           planMode ? set.plan : set.fact?.metrics ?? null,
           exercise.data.exercise.tracking_type,
         );
-        const canOpenSet = planMode ? set.sourceProgramSetId === null : true;
+        const canOpenSet = !planMode || set.sourceProgramSetId === null;
         const discussionTarget = !planMode && exercise.discussionScope && set.discussionAnchor
           ? { scope: exercise.discussionScope, anchor: set.discussionAnchor,
             name: `${exerciseDisplayName(data.exercise)} · Подход ${setNumber}` } : null;
