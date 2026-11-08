@@ -466,6 +466,7 @@ export function App() {
         <DiscussionsProvider key={state.activeRole + state.me.user.telegramUserId} role={state.activeRole}
           details={destination === 'discussions' || destination === 'clients'}>
         <ClientCoachAwareNavigationShell
+          initData={state.initData}
           me={state.me}
           activeRole={state.activeRole}
           suppressInitialProfileOpen={state.activeRole === 'client' && isClientInviteStartParam(state.startParam)}
