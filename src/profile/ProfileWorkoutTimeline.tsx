@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button as KonstaButton } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -156,7 +156,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     actorUserId: cloud?.actorUserId, contact, mode, today, from, to,
   }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, from, to]);
 
-  const close = () => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); };
+  const close = useCallback(() => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); }, []);
   useEffect(() => {
     if (picker) {
       onNavigationContextChange({ level: 2, title: 'Период тренировок', onBack: () => setPicker(null) });
@@ -168,7 +168,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
       onNavigationContextChange(null);
     }
     return () => onNavigationContextChange(null);
-  }, [picker, openedOccurrenceId, openedSessionId, nestedNavigation, onNavigationContextChange]);
+  }, [picker, openedOccurrenceId, openedSessionId, nestedNavigation, close, onNavigationContextChange]);
 
   return <section className="profile-workout-timeline" aria-label={mode === 'plan' ? 'План тренировок' : 'История тренировок'}>
     {mode === 'history' ? <div className="profile-workout-timeline__filters">
