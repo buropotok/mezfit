@@ -251,7 +251,7 @@ describe('WorkoutSessionCard capability ownership', () => {
   });
 });
 
-describe('client read-only Coach FACT card', () => {
+describe('read-only workout FACT viewing', () => {
   it('opens a completed timed set for PLAN, PREVIOUS and FACT inspection without writes', () => {
     const saveSet = vi.fn(async () => undefined);
     const session: ActiveWorkoutSession = {
