@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { useDiscussions } from './discussions/DiscussionsProvider';
 import { Icon, Text } from './ui';
 import type { MeResponse, Role } from './api';
-import { useCloudConnections } from './data/cloud/CloudConnectionsProvider';
+import { useCloudConnections, type CloudContact } from './data/cloud/CloudConnectionsProvider';
 import { useCloudContactAvatarUrl } from './contacts/CloudContactAvatar';
 import { ClientCoachSelectorModal } from './client/ClientCoachSelectorModal';
 import { AvatarProfileNavigationContext } from './navigation/AvatarProfileNavigation';
@@ -213,6 +213,8 @@ function todayLocalDate(): LocalDate {
 interface Props {
   me: MeResponse;
   activeRole: Role;
+  /** Current coach from the client selection context; never inferred from the contact list. */
+  selectedCoach?: CloudContact | null;
   destination: AppDestination;
   context: NavigationContext | null;
   onDestinationChange: (destination: AppDestination) => void;
@@ -269,6 +271,7 @@ function NavigationFloatingActionPopover({ action, glassPreset, glassOptics }: {
 export function NavigationShell({
   me,
   activeRole,
+  selectedCoach = null,
   destination,
   context,
   onDestinationChange,
@@ -288,6 +291,7 @@ export function NavigationShell({
     ?? { userId: ownAvatarUserId, relationshipId: ownAvatarUserId,
       telegramUserId: me.user.telegramUserId, displayName: me.user.firstName };
   const ownAvatarSrc = useCloudContactAvatarUrl(ownAvatarContact) ?? me.user.photoUrl ?? undefined;
+  const coachAvatarSrc = useCloudContactAvatarUrl(activeRole === 'client' ? selectedCoach : null);
   const ownAvatar = <span style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
     <Avatar size="small" name={ownAvatarName} src={ownAvatarSrc} />
   </span>;
@@ -508,6 +512,8 @@ export function NavigationShell({
   }));
   if (activeRole === 'client') addSystemItem({
     id: 'coach-selector', label: 'Тренер', dividerBefore: me.roles.length > 1,
+    avatar: selectedCoach ? { name: selectedCoach.displayName, src: coachAvatarSrc } : undefined,
+    icon: selectedCoach ? undefined : 'user',
     onSelect: () => { setMenuOpen(false); setCoachSelectorOpen(true); },
   });
   secondaryItems.filter(item => item.id !== 'profile' && item.id !== 'calendar').forEach((item, index) => addSystemItem({

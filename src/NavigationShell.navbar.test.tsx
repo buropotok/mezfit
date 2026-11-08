@@ -149,6 +149,45 @@ describe('NavigationShell MezfitNavbar integration', () => {
     expect(onDestinationChange).toHaveBeenCalledWith('discussions');
   });
 
+  it('shows the selected coach avatar beside the client Trainer action without changing its label', () => {
+    const selectedCoach = {
+      relationshipId: 'rlm700',
+      userId: 'tg:700',
+      telegramUserId: '700',
+      displayName: 'Анна Белова',
+    };
+    const view = render(<NavigationShell me={me} activeRole="client" selectedCoach={selectedCoach}
+      destination="today" context={null} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
+      <div>Today content</div>
+    </NavigationShell>);
+    const openMenu = () => {
+      const trigger = view.getByRole('button', { name: 'Меню страницы' });
+      fireEvent.pointerDown(trigger, { pointerType: 'touch', button: 0 });
+      fireEvent.click(trigger);
+    };
+    openMenu();
+    const trainer = view.getByRole('menuitem', { name: 'Тренер' });
+    expect(trainer.textContent).toBe('Тренер');
+    expect(trainer.parentElement?.querySelector('.ui-liquid-popover__avatar .ui-avatar--small.ui-avatar--fallback')?.textContent)
+      .toBe('АБ');
+    expect(trainer.querySelector('.ui-menu-item__leading .ui-icon')).toBeNull();
+    expect(trainer.hasAttribute('disabled')).toBe(false);
+  });
+
+  it('shows the ordinary user icon when the client has not selected a coach', () => {
+    const view = render(<NavigationShell me={me} activeRole="client" selectedCoach={null}
+      destination="today" context={null} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
+      <div>Today content</div>
+    </NavigationShell>);
+    const trigger = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(trigger, { pointerType: 'touch', button: 0 });
+    fireEvent.click(trigger);
+    const trainer = view.getByRole('menuitem', { name: 'Тренер' });
+    expect(trainer.parentElement?.querySelector('.ui-liquid-popover__avatar')).toBeNull();
+    const icon = trainer.querySelector<HTMLElement>('.ui-menu-item__leading .ui-icon');
+    expect(icon?.style.maskImage).toContain(getUiIconAsset('user', 'outline'));
+  });
+
   it('forwards the shared glass preset and inherits global blur in navbar and primary tabs', () => {
     const view = render(
       <GlassSurfaceProvider blur={7}>
