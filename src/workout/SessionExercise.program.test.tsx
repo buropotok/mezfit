@@ -62,6 +62,27 @@ describe('existing exercise component in program mode', () => {
     expect(menu.hasAttribute('data-no-dnd')).toBe(true);
     expect(screen.getByText('Подход 1')).toBeTruthy();
   });
+  it('shows discussion entry points on an occurrence exercise and its set, without exposing them on templates', () => {
+    const scope = { realmId: 'tg:101', coachClientId: null };
+    const exerciseTarget = { scope, anchor: { kind: 'exercise' as const,
+      workout: { kind: 'occurrence' as const, id: 'occurrence' },
+      exercise: { kind: 'occurrence' as const, id: 'occ-ex' } }, name: 'Жим' };
+    const setTarget = { scope, anchor: { kind: 'set' as const,
+      workout: { kind: 'occurrence' as const, id: 'occurrence' },
+      exercise: { kind: 'occurrence' as const, id: 'occ-ex' },
+      set: { kind: 'occurrence' as const, id: 'occ-set' } }, name: 'Жим · Подход 1' };
+    const view = render(<SessionExercise mode="program" data={item} defaultCollapsed={false}
+      discussionTarget={exerciseTarget} discussionTargetForSet={() => setTarget}
+      onNavigationContextChange={vi.fn()} onOpenDiscussion={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Обсуждения подхода 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Меню подхода 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Меню упражнения' })).toBeTruthy();
+    view.rerender(<SessionExercise mode="program" data={item} defaultCollapsed={false} />);
+    expect(screen.queryByRole('button', { name: 'Обсуждения подхода 1' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Меню подхода 1' })).toBeNull();
+    expect(screen.getByText('Подход 1')).toBeTruthy();
+  });
+
   it('opens the existing information action by tapping media without collapsing the card', () => {
     const onInformation = vi.fn();
     const { container } = render(<SessionExercise mode="program" data={item} defaultCollapsed={false} onInformation={onInformation} />);
