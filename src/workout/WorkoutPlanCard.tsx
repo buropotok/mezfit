@@ -1,5 +1,7 @@
 import { forwardRef, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
+import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
+import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -46,7 +48,12 @@ export interface WorkoutPlanCardProps {
   onAddSet?: (programExerciseId: string) => void;
   onDeleteExercise?: (programExerciseId: string) => void;
   onOpenSet?: (programExerciseId: string, setId: string) => void;
-  onDeleteSet?: (programExerciseId: string, setId: string) => void;
+  onDeleteSet?: (programExerciseId: string, setId: string) => void | Promise<void>;
+  /** Only scheduled occurrence cards supply scoped discussion targets. */
+  discussionTargetFor?: (exerciseId: string, setId?: string) => EntityDiscussionTarget | null;
+  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  onNavigationContextChange?: (context: NavigationContext | null) => void;
+  onSetDeletionNavigationContextChange?: (context: NavigationContext | null) => void;
   onExerciseInformation?: (programExerciseId: string) => void;
   onEdit: () => void;
   onComment: () => void;
@@ -120,6 +127,7 @@ export function WorkoutPlanCard({
   creatorName, creatorAvatar, athleteName, athleteAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
+  discussionTargetFor, onOpenDiscussion, onNavigationContextChange, onSetDeletionNavigationContextChange,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const authoringVisible = !readOnly;
@@ -151,6 +159,10 @@ export function WorkoutPlanCard({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
       showPlanMetrics={showPlanMetrics}
+      discussionTarget={discussionTargetFor?.(item.exercise.id)}
+      discussionTargetForSet={discussionTargetFor ? setId => discussionTargetFor(item.exercise.id, setId) : undefined}
+      onOpenDiscussion={onOpenDiscussion} onNavigationContextChange={onNavigationContextChange}
+      onSetDeletionNavigationContextChange={onSetDeletionNavigationContextChange}
       collapsed={!expandedExercises.has(item.exercise.id)}
       onCollapsedChange={(collapsed) => setExpandedExercises((current) => {
         const next = new Set(current);
