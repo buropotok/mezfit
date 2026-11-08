@@ -117,8 +117,9 @@ describe('SessionExercise rendering', () => {
     expect(screen.getByText('Грудь · Штанга · 2 подхода')).toBeTruthy();
     expect(screen.getByText('1 / 2').className).toContain('ui-badge');
     expect(screen.getByText('Опускание 3 сек').className).toContain('ui-text--footnote');
-    expect(screen.getByText('82,5 кг × 10')).toBeTruthy();
-    expect(screen.getByText('План: 80 кг × 10')).toBeTruthy();
+    expect(screen.getByText('82,5 кг × 10').classList.contains('ui-text--headline')).toBe(true);
+    expect(screen.getAllByText('План:')).toHaveLength(2);
+    expect(screen.getByText('80 кг × 10').classList.contains('ui-text--body')).toBe(true);
     expect(screen.queryByText(/Пред\.:/)).toBeNull();
     expect(screen.getByText('RPE 8').className).toContain('ui-badge');
     expect(screen.getByText('50% выполнено')).toBeTruthy();
@@ -131,8 +132,15 @@ describe('SessionExercise rendering', () => {
 
     const recorded = rows[0];
     const fact = within(recorded).getByText('82,5 кг × 10');
+    const planHeading = within(recorded).getByText('План:');
+    const planValue = within(recorded).getByText('80 кг × 10');
+    expect(fact.classList.contains('ui-text--headline')).toBe(true);
     expect(fact.closest('.session-exercise__set-summary')).not.toBeNull();
-    expect(within(recorded).getByText('План: 80 кг × 10')).toBeTruthy();
+    expect(fact.closest('.session-exercise__set-plan-block')).toBeNull();
+    expect(planHeading.classList.contains('ui-text--caption')).toBe(true);
+    expect(planValue.classList.contains('ui-text--body')).toBe(true);
+    expect(planHeading.parentElement?.classList.contains('session-exercise__set-plan-block')).toBe(true);
+    expect(planValue.parentElement).toBe(planHeading.parentElement);
     expect(within(recorded).getByText('RPE 8').closest('.ui-list-item__trailing')).not.toBeNull();
     expect(within(recorded).queryByText(/Пред\.:|Подход 1/)).toBeNull();
 
@@ -143,6 +151,32 @@ describe('SessionExercise rendering', () => {
     expect(heading.parentElement).toBe(placeholder.parentElement);
     expect(value.parentElement).toBe(heading.parentElement?.parentElement);
     expect(within(pending).queryByText(/Пред\.:|Подход 2/)).toBeNull();
+  });
+
+  it('prioritizes a wrapped FACT by hiding its whole PLAN block without shrinking the FACT font', async () => {
+    const originalStyle = window.getComputedStyle.bind(window);
+    const originalRect = HTMLElement.prototype.getBoundingClientRect;
+    const styleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
+      if (element.classList.contains('ui-text--headline')) {
+        return { fontSize: '24px', lineHeight: '30px' } as CSSStyleDeclaration;
+      }
+      return originalStyle(element, pseudoElement);
+    });
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+      if (this.classList.contains('session-exercise__set-fact')) return { height: 65 } as DOMRect;
+      return originalRect.call(this);
+    });
+    try {
+      const { container } = renderExercise();
+      const recorded = container.querySelectorAll<HTMLElement>('.session-exercise__set-row')[0];
+      await waitFor(() => expect(within(recorded).queryByText('План:')).toBeNull());
+      expect(within(recorded).queryByText('80 кг × 10')).toBeNull();
+      expect(within(recorded).getByText('82,5 кг × 10').classList.contains('ui-text--headline')).toBe(true);
+      expect(within(recorded).getByText('RPE 8')).toBeTruthy();
+    } finally {
+      styleSpy.mockRestore();
+      rectSpy.mockRestore();
+    }
   });
 
   it('keeps FACT visible without PLAN and reserves PREVIOUS for the set detail sheet', () => {
