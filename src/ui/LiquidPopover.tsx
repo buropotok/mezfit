@@ -217,7 +217,7 @@ function paintContentTexture(
       }
     }
     if (item.avatar && leading) {
-      const avatar = leading.querySelector<HTMLElement>('.ui-avatar');
+      const avatar = row.parentElement?.querySelector<HTMLElement>('.ui-liquid-popover__avatar .ui-avatar');
       if (avatar) {
         const avatarRect = avatar.getBoundingClientRect(),
           avatarX = avatarRect.left - bounds.left,
@@ -876,9 +876,7 @@ export function LiquidPopover({
               className={`ui-menu-item ui-text--body${item.avatar && layout === 'menu' ? ' ui-menu-item--avatar' : ''}${item.active ? ' ui-menu-item--active' : ''}`}
             >
               {item.avatar && layout === 'menu' ? (
-                <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true">
-                  <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
-                </span>
+                <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true" />
               ) : item.icon && layout === 'menu' ? (
                 <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
               ) : null}
@@ -887,10 +885,13 @@ export function LiquidPopover({
           );
           return <Fragment key={item.id}>
             {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
-            {item.trailingAction && layout === 'menu'
-              ? <div className="ui-liquid-popover__item--with-action">
+            {(item.trailingAction || item.avatar) && layout === 'menu'
+              ? <div className={item.trailingAction ? 'ui-liquid-popover__item--with-action' : 'ui-liquid-popover__item--with-avatar'}>
                 {row}
-                <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span>
+                {item.avatar ? <span className="ui-liquid-popover__avatar" aria-hidden="true">
+                  <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
+                </span> : null}
+                {item.trailingAction ? <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span> : null}
               </div>
               : row}
           </Fragment>;
@@ -988,9 +989,7 @@ export function LiquidPopover({
                   aria-current={item['aria-current']}
                 >
                   {item.avatar && presentation.layout === 'menu' ? (
-                    <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true">
-                      <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
-                    </span>
+                    <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true" />
                   ) : item.icon && presentation.layout === 'menu' ? (
                     <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
                   ) : null}
@@ -999,14 +998,17 @@ export function LiquidPopover({
               );
               return <Fragment key={item.id}>
                 {item.dividerBefore ? <div role="separator" className="ui-menu-divider" /> : null}
-                {item.trailingAction && presentation.layout === 'menu'
-                  ? <div className="ui-liquid-popover__item--with-action">
+                {(item.trailingAction || item.avatar) && presentation.layout === 'menu'
+                  ? <div className={item.trailingAction ? 'ui-liquid-popover__item--with-action' : 'ui-liquid-popover__item--with-avatar'}>
                     {primary}
-                    <button type="button" className="ui-liquid-popover__trailing"
+                    {item.avatar ? <span className="ui-liquid-popover__avatar" aria-hidden="true">
+                      <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
+                    </span> : null}
+                    {item.trailingAction ? <button type="button" className="ui-liquid-popover__trailing"
                       aria-label={item.trailingAction.label} disabled={item.disabled}
                       onClick={() => { item.trailingAction?.onSelect(); onOpenChange(false); }}>
                       <Icon name={item.trailingAction.icon} />
-                    </button>
+                    </button> : null}
                   </div>
                   : primary}
               </Fragment>;
