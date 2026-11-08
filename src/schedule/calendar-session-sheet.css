@@ -1,0 +1,38 @@
+/* FACT Bottom Sheet follows the PLAN sheet's content/header geometry, without
+   changing the Konsta sheet or primitive presentation. */
+.calendar-session-sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.calendar-session-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 8px;
+  flex-shrink: 0;
+}
+
+.calendar-session-sheet__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-session-sheet__actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.calendar-session-sheet__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 16px;
+  padding: 0 16px 24px;
+  overscroll-behavior: contain;
+}
