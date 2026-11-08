@@ -10,7 +10,7 @@ vi.mock('./api', async (importOriginal) => ({
   ...await importOriginal<typeof import('./api')>(), getMe: vi.fn(),
 }));
 
-const Pass = ({ children }: { children: ReactNode }) => <>{children}</>;
+function Pass({ children }: { children: ReactNode }) { return <>{children}</>; }
 vi.mock('./profile/UserProfileNavigationShell', () => ({
   UserProfileNavigationShell: ({ children }: { children: ReactNode }) => <div data-testid="local-workspace">{children}</div>,
 }));
@@ -98,5 +98,13 @@ describe('reopen Mezfit from a confirmed local account', () => {
     render(<App />);
     await waitFor(() => expect(readConfirmedAccount(signed)).toEqual(me));
     expect(screen.getByText('Локальное расписание тренера')).toBeTruthy();
+  });
+  it('rejects a mismatched live account instead of switching the local database identity', async () => {
+    saveConfirmedAccount(signed, me);
+    getMeMock.mockResolvedValue({ ...me, user: { ...me.user, telegramUserId: '202' } });
+    render(<App />);
+    expect(await screen.findByText('Некорректный ответ авторизации Telegram.')).toBeTruthy();
+    expect(readConfirmedAccount(signed)).toBeNull();
+    expect(screen.queryByTestId('local-workspace')).toBeNull();
   });
 });

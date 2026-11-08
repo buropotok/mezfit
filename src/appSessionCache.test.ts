@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import type { MeResponse } from './api';
-import { clearConfirmedAccount, readConfirmedAccount, saveConfirmedAccount } from './appSessionCache';
+import { clearConfirmedAccount, matchesCurrentLaunch, readConfirmedAccount, saveConfirmedAccount } from './appSessionCache';
 
 const initData = (id: number) => new URLSearchParams({
   user: JSON.stringify({ id, first_name: 'Тест' }),
@@ -32,6 +32,10 @@ describe('confirmed local account warm start', () => {
     saveConfirmedAccount(initData(101), me);
     clearConfirmedAccount(initData(101));
     expect(readConfirmedAccount(initData(101))).toBeNull();
+  });
+  it('detects mismatched live identities', () => {
+    expect(matchesCurrentLaunch(initData(101), me)).toBe(true);
+    expect(matchesCurrentLaunch(initData(202), me)).toBe(false);
   });
   it('rejects corrupt role data', () => {
     saveConfirmedAccount(initData(101), me);
