@@ -873,7 +873,7 @@ export function LiquidPopover({
                 if (element) rowRefs.current.set(item.id, element);
                 else rowRefs.current.delete(item.id);
               }}
-              className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
+              className={`ui-menu-item ui-text--body${item.avatar && layout === 'menu' ? ' ui-menu-item--avatar' : ''}${item.active ? ' ui-menu-item--active' : ''}`}
             >
               {item.avatar && layout === 'menu' ? (
                 <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true">
@@ -974,7 +974,7 @@ export function LiquidPopover({
                     : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
-                  className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
+                  className={`ui-menu-item ui-text--body${item.avatar && presentation.layout === 'menu' ? ' ui-menu-item--avatar' : ''}${item.active ? ' ui-menu-item--active' : ''}`}
                   onClick={() => {
                     if (selectionMode === 'multi' && item.id === doneItemId) {
                       onOpenChange(false);
