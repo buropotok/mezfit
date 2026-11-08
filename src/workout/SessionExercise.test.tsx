@@ -106,7 +106,7 @@ function renderExercise(overrides?: {
 afterEach(() => cleanup());
 
 describe('SessionExercise rendering', () => {
-  it('uses UI kit list primitives and renders session PLAN, PREVIOUS and FACT', () => {
+  it('uses UI kit list primitives and renders FACT with PLAN but without PREVIOUS', () => {
     const { container } = renderExercise();
 
     const card = container.querySelector('.session-exercise');
@@ -119,58 +119,43 @@ describe('SessionExercise rendering', () => {
     expect(screen.getByText('Опускание 3 сек').className).toContain('ui-text--footnote');
     expect(screen.getByText('82,5 кг × 10')).toBeTruthy();
     expect(screen.getByText('План: 80 кг × 10')).toBeTruthy();
-    expect(screen.getByText('Пред.: 77,5 кг × 10')).toBeTruthy();
+    expect(screen.queryByText(/Пред\.:/)).toBeNull();
     expect(screen.getByText('RPE 8').className).toContain('ui-badge');
     expect(screen.getByText('50% выполнено')).toBeTruthy();
   });
 
-  it('keeps recorded FACT in the workout row and PLAN beneath, including when FACT is empty', () => {
+  it('keeps FACT primary and pending PLAN on two lines without PREVIOUS or redundant set titles', () => {
     const { container } = renderExercise();
     const rows = container.querySelectorAll<HTMLElement>('.session-exercise__set-row');
     expect(rows).toHaveLength(2);
 
-    const completedTitle = rows[0].querySelector('.session-exercise__set-title');
-    expect(completedTitle?.textContent).toContain('Подход 1');
-    expect(completedTitle?.textContent).not.toContain('82,5 кг × 10');
-    const fact = within(rows[0]).getByText('82,5 кг × 10');
-    expect(fact.classList.contains('ui-text--headline')).toBe(true);
-    expect(fact.closest('.session-exercise__set-trailing')).not.toBeNull();
-    expect(completedTitle?.textContent).not.toContain('80 кг × 10');
-    const completedPlan = within(rows[0]).getByText('План: 80 кг × 10');
-    expect(completedPlan.closest('.session-exercise__set-context')).not.toBeNull();
-    const completedPrevious = within(rows[0]).getByText('Пред.: 77,5 кг × 10');
-    expect(completedPrevious.classList.contains('ui-text--caption')).toBe(true);
-    expect(completedPrevious.classList.contains('ui-text--muted')).toBe(true);
-    expect(completedPrevious.closest('.session-exercise__set-context'))
-      .toBe(completedPlan.closest('.session-exercise__set-context'));
-    expect(completedTitle?.textContent).not.toContain('77,5 кг × 10');
+    const recorded = rows[0];
+    const fact = within(recorded).getByText('82,5 кг × 10');
+    expect(fact.closest('.session-exercise__set-summary')).not.toBeNull();
+    expect(within(recorded).getByText('План: 80 кг × 10')).toBeTruthy();
+    expect(within(recorded).getByText('RPE 8').closest('.ui-list-item__trailing')).not.toBeNull();
+    expect(within(recorded).queryByText(/Пред\.:|Подход 1/)).toBeNull();
 
-    const pendingTitle = rows[1].querySelector('.session-exercise__set-title');
-    expect(pendingTitle?.textContent).toContain('Подход 2');
-    expect(pendingTitle?.textContent).toContain('ввести факт');
-    expect(pendingTitle?.textContent).not.toContain('85 кг × 8');
-    const pendingPlan = within(rows[1]).getByText('План: 85 кг × 8');
-    expect(pendingPlan.closest('.session-exercise__set-context')).not.toBeNull();
-    const pendingPrevious = within(rows[1]).getByText('Пред.: 82,5 кг × 8');
-    expect(pendingPrevious.closest('.session-exercise__set-context'))
-      .toBe(pendingPlan.closest('.session-exercise__set-context'));
-    expect(pendingTitle?.textContent).not.toContain('82,5 кг × 8');
+    const pending = rows[1];
+    const heading = within(pending).getByText('План:');
+    const placeholder = within(pending).getByText('Ввести факт');
+    const value = within(pending).getByText('85 кг × 8');
+    expect(heading.parentElement).toBe(placeholder.parentElement);
+    expect(value.parentElement).toBe(heading.parentElement?.parentElement);
+    expect(within(pending).queryByText(/Пред\.:|Подход 2/)).toBeNull();
   });
 
-  it('keeps PREVIOUS beneath FACT when no scheduled PLAN is available', () => {
+  it('keeps FACT visible without PLAN and reserves PREVIOUS for the set detail sheet', () => {
     const noPlan: SessionExerciseData = {
       ...data, sets: [{ ...data.sets[0], plan: null }],
     };
     const { container } = renderExercise({ data: noPlan });
     const row = container.querySelector<HTMLElement>('.session-exercise__set-row');
     expect(row).not.toBeNull();
-    expect(within(row!).queryByText(/^План:/)).toBeNull();
-    const previous = within(row!).getByText('Пред.: 77,5 кг × 10');
-    expect(previous.classList.contains('ui-text--caption')).toBe(true);
-    expect(previous.closest('.session-exercise__set-context')).not.toBeNull();
-    expect(within(row!).getByText('82,5 кг × 10').closest('.session-exercise__set-trailing')).not.toBeNull();
-    expect(row?.querySelector('.session-exercise__set-title')?.textContent)
-      .not.toContain('77,5 кг × 10');
+    expect(within(row!).queryByText(/^План:|Пред\.:/)).toBeNull();
+    expect(within(row!).getByText('82,5 кг × 10').closest('.session-exercise__set-summary')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 1' }));
+    expect(screen.getByText('Пред.: 77,5 кг × 10')).toBeTruthy();
   });
 
   it('does not apply legacy surface geometry when an outer component owns the tile material', () => {
@@ -440,8 +425,9 @@ it('shows the complete FACT before RPE in the result area', () => {
   const result = within(row).getByText('82,5 кг × 10');
   const rpe = within(row).getByText('RPE 8');
   expect(result.compareDocumentPosition(rpe) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(result.closest('.ui-list-item__trailing')?.classList.contains('ui-list-item__trailing--content')).toBe(true);
-  expect(result.classList.contains('ui-text--headline')).toBe(true);
+  expect(result.closest('.session-exercise__set-summary')).not.toBeNull();
+  expect(rpe.closest('.ui-list-item__trailing')).not.toBeNull();
+  expect(row.classList.contains('ui-list-item--content-trailing')).toBe(false);
 });
 
 describe('planned session with an empty projected FACT object', () => {
@@ -462,8 +448,9 @@ describe('planned session with an empty projected FACT object', () => {
     'offers PLAN 23 × 5 only in picker and accepts it as FACT via %s', async action => {
       const { onSaveSet } = renderExercise({ data: pending });
       const row = screen.getByRole('button', { name: 'Открыть подход 2' });
-      expect(within(row).getByText('ввести факт')).toBeTruthy();
-      expect(within(row).getByText('План: 23 кг × 5')).toBeTruthy();
+      expect(within(row).getByText('Ввести факт')).toBeTruthy();
+      expect(within(row).getByText('План:')).toBeTruthy();
+       expect(within(row).getByText('23 кг × 5')).toBeTruthy();
       fireEvent.click(row);
       expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
       fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
