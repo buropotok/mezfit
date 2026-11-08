@@ -28,7 +28,7 @@ function pickerCompatible(weightKg: number, reps: number): boolean {
 /** Feature composition: the wheel, sheet, buttons, popover and text field are unchanged UI Kit primitives. */
 export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const isPlan = props.mode === 'occurrence-plan';
-  const readOnly = props.mode === 'occurrence-plan' && props.readOnly === true;
+  const readOnly = props.readOnly === true;
   const glass = loadBrowserGlassSettings();
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [draft, setDraft] = useState<SetEntryFactDraft>(() => createSetEntryDraft(props.data, isPlan ? 'plan' : 'fact'));
@@ -163,7 +163,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         <header className="set-entry-weight-reps__header">
           <div>
             <Text variant="headline">Подход {props.data.identity.setNumber}</Text>
-            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : 'Фиксация результата'}</Text>
+            <Text variant="caption" tone="muted">{isPlan ? (readOnly ? 'План подхода' : 'Планирование подхода') : readOnly ? 'Просмотр результата' : 'Фиксация результата'}</Text>
           </div>
           <div className="set-entry-weight-reps__header-actions">
             {props.discussionTarget ? <IconButton icon="message-circle" label="Обсуждения подхода"
@@ -195,7 +195,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
               ? 'Введите факт' : metricsText(draft.metrics.weightKg, draft.metrics.reps)}
             ariaLabel="Изменить вес и повторения" disabled={!validPicker || inputLocked}
             onClick={() => { if (validPicker && !inputLocked) setPickerOpened(true); }} />
-          {needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
+          {!readOnly && needsFactSelection ? <Text variant="footnote" role="status">Значение PLAN недоступно в пикере. Выберите новый FACT вручную; PLAN не изменится.</Text> : null}
           {!isPlan && (props.data.plan || props.data.previous) ? <div className="set-entry-weight-reps__context">
             {props.data.plan ? <Text variant="caption" tone="muted">План: {metricsText(props.data.plan.weightKg, props.data.plan.reps)}</Text> : null}
             {props.data.previous ? <Text variant="caption" tone="muted">Пред.: {metricsText(props.data.previous.metrics.weightKg, props.data.previous.metrics.reps)}</Text> : null}
@@ -220,8 +220,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
                 <Text variant="caption" tone="muted">необязательно</Text>
               </div>
               <div className="set-entry-weight-reps__rpe" role="group" aria-label="RPE">
-                <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
-                  onValueChange={value => { if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value })); }} />
+                {readOnly ? <Text variant="body">{draft.rpe ?? '—'}</Text> : <MezfitSlider fullWidth size="small" start={0} end={10} value={draft.rpe ?? 0} ariaLabel="RPE"
+                  onValueChange={value => { if (!inputLocked) change(old => ({ ...old, rpe: value === 0 ? null : value })); }} />}
               </div>
             </div>
             <div className="set-entry-weight-reps__section">
