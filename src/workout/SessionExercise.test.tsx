@@ -125,7 +125,7 @@ describe('SessionExercise rendering', () => {
     expect(screen.getByText('50% выполнено')).toBeTruthy();
   });
 
-  it('keeps FACT primary and pending PLAN on two lines without PREVIOUS or redundant set titles', () => {
+  it('lays out two-line PLAN at left and FACT / entry prompt at right without PREVIOUS or set titles', () => {
     const { container } = renderExercise();
     const rows = container.querySelectorAll<HTMLElement>('.session-exercise__set-row');
     expect(rows).toHaveLength(2);
@@ -139,8 +139,14 @@ describe('SessionExercise rendering', () => {
     expect(fact.closest('.session-exercise__set-plan-block')).toBeNull();
     expect(planHeading.classList.contains('ui-text--caption')).toBe(true);
     expect(planValue.classList.contains('ui-text--body')).toBe(true);
-    expect(planHeading.parentElement?.classList.contains('session-exercise__set-plan-block')).toBe(true);
-    expect(planValue.parentElement).toBe(planHeading.parentElement);
+    const planBlock = planHeading.parentElement!;
+    const summary = planBlock.parentElement!;
+    expect(planBlock.classList.contains('session-exercise__set-plan-block')).toBe(true);
+    expect(planValue.parentElement).toBe(planBlock);
+    expect(summary.classList.contains('session-exercise__set-summary')).toBe(true);
+    expect(fact.parentElement?.parentElement).toBe(summary);
+    expect(summary.firstElementChild).toBe(planBlock);
+    expect(summary.lastElementChild).toBe(fact.parentElement);
     expect(within(recorded).getByText('RPE 8').closest('.ui-list-item__trailing')).not.toBeNull();
     expect(within(recorded).queryByText(/Пред\.:|Подход 1/)).toBeNull();
 
@@ -148,8 +154,12 @@ describe('SessionExercise rendering', () => {
     const heading = within(pending).getByText('План:');
     const placeholder = within(pending).getByText('Ввести факт');
     const value = within(pending).getByText('85 кг × 8');
-    expect(heading.parentElement).toBe(placeholder.parentElement);
-    expect(value.parentElement).toBe(heading.parentElement?.parentElement);
+    const pendingPlan = heading.parentElement!;
+    const pendingSummary = pendingPlan.parentElement!;
+    expect(value.parentElement).toBe(pendingPlan);
+    expect(pendingSummary.firstElementChild).toBe(pendingPlan);
+    expect(pendingSummary.lastElementChild).toBe(placeholder);
+    expect(placeholder.parentElement).toBe(pendingSummary);
     expect(within(pending).queryByText(/Пред\.:|Подход 2/)).toBeNull();
   });
 
