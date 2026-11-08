@@ -265,7 +265,37 @@ describe('NavigationShell MezfitNavbar integration', () => {
     fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
     fireEvent.click(menuButton);
     const menuLabels = view.getAllByRole('menuitem').map((item) => item.textContent);
-    expect(menuLabels).toEqual(['Мой профиль', 'Программы', 'Упражнения', 'Календарь', 'Настройки', 'О приложении']);
+    expect(menuLabels).toEqual(['Мой профиль', 'Программы', 'Упражнения', 'Настройки', 'О приложении']);
+    const profile = view.getByRole('menuitem', { name: 'Мой профиль' });
+    expect(profile.textContent).toBe('Мой профиль');
+    expect(profile.parentElement?.querySelector('.ui-liquid-popover__avatar .ui-avatar--small.ui-avatar--fallback')?.textContent).toBe('T');
+    for (const [label, icon] of [
+      ['Программы', 'clipboard-list'],
+      ['Упражнения', 'barbell'],
+      ['Настройки', 'settings'],
+      ['О приложении', 'info-circle'],
+    ] as const) {
+      const artwork = view.getByRole('menuitem', { name: label })
+        .querySelector<HTMLElement>('.ui-menu-item__leading .ui-icon');
+      expect(artwork?.style.maskImage).toContain(getUiIconAsset(icon, 'outline'));
+    }
+    expect(view.queryByRole('menuitem', { name: 'Календарь' })).toBeNull();
+  });
+
+  it('renders the current account photo in the coach profile menu row', () => {
+    const photoMe = { ...me, user: { ...me.user, photoUrl: '/my-photo.jpg' }, roles: ['coach' as const] };
+    const view = render(<NavigationShell me={photoMe} activeRole="coach"
+      destination="clients" context={null} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
+      <div>Clients content</div>
+    </NavigationShell>);
+    const menuButton = view.getByRole('button', { name: 'Меню страницы' });
+    fireEvent.pointerDown(menuButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(menuButton);
+    const profile = view.getByRole('menuitem', { name: 'Мой профиль' });
+    expect(profile.textContent).toBe('Мой профиль');
+    const photo = profile.parentElement?.querySelector<HTMLImageElement>('.ui-liquid-popover__avatar img.ui-avatar--small');
+    expect(photo?.getAttribute('src')).toBe('/my-photo.jpg');
+    expect(view.queryByRole('menuitem', { name: 'Календарь' })).toBeNull();
   });
 
   it('keeps level-one tabs interactive while rendering the surface action in the shared FAB slot', () => {

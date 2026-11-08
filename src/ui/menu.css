@@ -3,6 +3,8 @@
 .ui-menu[data-state='closed']{animation:ui-menu-close 200ms ease-in}
 .ui-menu-item{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;width:100%;min-height:48px;padding:.75rem 1rem;border:0;border-radius:0;color:var(--ui-color-surface-text);background:none;outline:none;box-shadow:none;font-family:var(--ui-font-family);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .ui-menu-item__leading,.ui-menu-item__label{position:relative;z-index:1}.ui-menu-item__leading{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;margin-right:2rem;color:var(--ui-color-surface-muted)}
+.ui-menu-item--avatar{padding-top:.5rem;padding-bottom:.5rem}
+.ui-menu-item__leading--avatar{width:32px;height:32px;flex-basis:32px;margin-right:1.5rem}
 .ui-menu-item__leading>*{max-width:100%;max-height:100%}.ui-menu-item__label{min-width:0}.ui-menu-item--active{color:var(--ui-color-primary)}.ui-menu-item--active .ui-menu-item__leading{color:currentColor}.ui-menu-item[data-disabled]{cursor:default;opacity:.5}.ui-menu-divider{height:1px;margin:.5rem 0;background:var(--ui-color-border)}
 @keyframes ui-menu-open{from{transform:scale(var(--ui-menu-start-scale));opacity:0}to{transform:scale(1);opacity:1}}
 .ui-menu-item__unread{margin-inline-start:4px;vertical-align:super;line-height:0}

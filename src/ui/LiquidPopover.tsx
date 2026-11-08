@@ -12,7 +12,7 @@ import {
   type CSSProperties,
   type RefObject,
 } from 'react';
-import { Text } from './primitives';
+import { Avatar, Text } from './primitives';
 import { UnreadCount } from './UnreadCount';
 import { useSpotlightHintPause } from './SpotlightHint';
 import { paintLiquidPopoverText } from './liquidPopoverText';
@@ -45,6 +45,8 @@ export type LiquidPopoverItem = {
   /** Superscript unread messages for this entity; no preview or business status. */
   unreadCount?: number;
   icon?: UiIconName;
+  /** A 32px UI Kit avatar replaces the leading icon in menu layout. */
+  avatar?: { name: string; src?: string };
   /** Optional per-row icon tint; does not alter default menu appearance. */
   iconColor?: string;
   /** Separate trailing action. Its click never selects the main row. */
@@ -196,10 +198,10 @@ function paintContentTexture(
       context.fillRect(0, y - 9, canvas.width, 1);
     }
     context.globalAlpha = item.disabled ? 0.5 : 1;
-    const leading = item.icon && layout === 'menu'
+    const leading = layout === 'menu' && (item.icon || item.avatar)
       ? row.querySelector<HTMLElement>('.ui-menu-item__leading')
       : null;
-    const image = item.icon ? iconImages?.get(item.icon) : undefined;
+    const image = item.icon && !item.avatar ? iconImages?.get(item.icon) : undefined;
     if (leading && image?.complete && image.naturalWidth > 0) {
       const iconRect = leading.getBoundingClientRect();
       const tintCanvas = canvas.ownerDocument.createElement('canvas');
@@ -212,6 +214,43 @@ function paintContentTexture(
         tint.fillStyle = getComputedStyle(leading).color;
         tint.fillRect(0, 0, tintCanvas.width, tintCanvas.height);
         context.drawImage(tintCanvas, iconRect.left - bounds.left, iconRect.top - bounds.top);
+      }
+    }
+    if (item.avatar && leading) {
+      const avatar = row.parentElement?.querySelector<HTMLElement>('.ui-liquid-popover__avatar .ui-avatar');
+      if (avatar) {
+        const avatarRect = avatar.getBoundingClientRect(),
+          avatarX = avatarRect.left - bounds.left,
+          avatarY = avatarRect.top - bounds.top,
+          radius = Math.min(avatarRect.width, avatarRect.height) / 2;
+        if (avatar instanceof HTMLImageElement) {
+          // This texture is display-only: remote images may taint it, but no pixels are read back.
+          if (avatar.complete && avatar.naturalWidth > 0) {
+            context.save();
+            context.beginPath();
+            context.arc(avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2, radius, 0, Math.PI * 2);
+            context.clip();
+            // Match Avatar's object-fit: cover and centered object position.
+            const cropSide = Math.min(avatar.naturalWidth, avatar.naturalHeight);
+            context.drawImage(avatar,
+              (avatar.naturalWidth - cropSide) / 2, (avatar.naturalHeight - cropSide) / 2,
+              cropSide, cropSide, avatarX, avatarY, avatarRect.width, avatarRect.height);
+            context.restore();
+          }
+        } else {
+          const avatarStyle = getComputedStyle(avatar);
+          context.save();
+          context.beginPath();
+          context.arc(avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2, radius, 0, Math.PI * 2);
+          context.fillStyle = avatarStyle.backgroundColor;
+          context.fill();
+          context.fillStyle = avatarStyle.color;
+          context.font = `${avatarStyle.fontStyle} ${avatarStyle.fontWeight} ${avatarStyle.fontSize} ${avatarStyle.fontFamily}`;
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(avatar.textContent ?? '', avatarX + avatarRect.width / 2, avatarY + avatarRect.height / 2);
+          context.restore();
+        }
       }
     }
     if (item.trailingAction && layout === 'menu') {
@@ -372,6 +411,8 @@ export function LiquidPopover({
       item.unreadCount,
       item.icon,
       item.iconColor,
+      item.avatar?.name,
+      item.avatar?.src,
       item.trailingAction?.icon,
       item.trailingAction?.label,
       item.disabled,
@@ -394,6 +435,8 @@ export function LiquidPopover({
       item.unreadCount,
       item.icon,
       item.iconColor,
+      item.avatar?.name,
+      item.avatar?.src,
       item.trailingAction?.icon,
       item.trailingAction?.label,
       item.disabled,
@@ -830,9 +873,11 @@ export function LiquidPopover({
                 if (element) rowRefs.current.set(item.id, element);
                 else rowRefs.current.delete(item.id);
               }}
-              className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
+              className={`ui-menu-item ui-text--body${item.avatar && layout === 'menu' ? ' ui-menu-item--avatar' : ''}${item.active ? ' ui-menu-item--active' : ''}`}
             >
-              {item.icon && layout === 'menu' ? (
+              {item.avatar && layout === 'menu' ? (
+                <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true" />
+              ) : item.icon && layout === 'menu' ? (
                 <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
               ) : null}
               <span className="ui-menu-item__label">{item.label}<UnreadCount count={item.unreadCount ?? 0} className="ui-menu-item__unread" /></span>
@@ -840,10 +885,13 @@ export function LiquidPopover({
           );
           return <Fragment key={item.id}>
             {item.dividerBefore ? <div className="ui-menu-divider" /> : null}
-            {item.trailingAction && layout === 'menu'
-              ? <div className="ui-liquid-popover__item--with-action">
+            {(item.trailingAction || item.avatar) && layout === 'menu'
+              ? <div className={item.trailingAction ? 'ui-liquid-popover__item--with-action' : 'ui-liquid-popover__item--with-avatar'}>
                 {row}
-                <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span>
+                {item.avatar ? <span className="ui-liquid-popover__avatar" aria-hidden="true">
+                  <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
+                </span> : null}
+                {item.trailingAction ? <span className="ui-liquid-popover__trailing"><Icon name={item.trailingAction.icon} /></span> : null}
               </div>
               : row}
           </Fragment>;
@@ -927,7 +975,7 @@ export function LiquidPopover({
                     : undefined}
                   disabled={item.disabled}
                   data-disabled={item.disabled || undefined}
-                  className={`ui-menu-item ui-text--body${item.active ? ' ui-menu-item--active' : ''}`}
+                  className={`ui-menu-item ui-text--body${item.avatar && presentation.layout === 'menu' ? ' ui-menu-item--avatar' : ''}${item.active ? ' ui-menu-item--active' : ''}`}
                   onClick={() => {
                     if (selectionMode === 'multi' && item.id === doneItemId) {
                       onOpenChange(false);
@@ -940,7 +988,9 @@ export function LiquidPopover({
                     ? Boolean(item.active) : item['aria-checked']}
                   aria-current={item['aria-current']}
                 >
-                  {item.icon && presentation.layout === 'menu' ? (
+                  {item.avatar && presentation.layout === 'menu' ? (
+                    <span className="ui-menu-item__leading ui-menu-item__leading--avatar" aria-hidden="true" />
+                  ) : item.icon && presentation.layout === 'menu' ? (
                     <span className="ui-menu-item__leading" style={{ color: item.iconColor }}><Icon name={item.icon} /></span>
                   ) : null}
                   <span className="ui-menu-item__label">{item.label}<UnreadCount count={item.unreadCount ?? 0} className="ui-menu-item__unread" /></span>
@@ -948,14 +998,17 @@ export function LiquidPopover({
               );
               return <Fragment key={item.id}>
                 {item.dividerBefore ? <div role="separator" className="ui-menu-divider" /> : null}
-                {item.trailingAction && presentation.layout === 'menu'
-                  ? <div className="ui-liquid-popover__item--with-action">
+                {(item.trailingAction || item.avatar) && presentation.layout === 'menu'
+                  ? <div className={item.trailingAction ? 'ui-liquid-popover__item--with-action' : 'ui-liquid-popover__item--with-avatar'}>
                     {primary}
-                    <button type="button" className="ui-liquid-popover__trailing"
+                    {item.avatar ? <span className="ui-liquid-popover__avatar" aria-hidden="true">
+                      <Avatar size="small" name={item.avatar.name} src={item.avatar.src} />
+                    </span> : null}
+                    {item.trailingAction ? <button type="button" className="ui-liquid-popover__trailing"
                       aria-label={item.trailingAction.label} disabled={item.disabled}
                       onClick={() => { item.trailingAction?.onSelect(); onOpenChange(false); }}>
                       <Icon name={item.trailingAction.icon} />
-                    </button>
+                    </button> : null}
                   </div>
                   : primary}
               </Fragment>;

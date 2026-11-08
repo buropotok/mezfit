@@ -135,6 +135,30 @@ describe('LiquidPopover lifecycle and menu ownership', () => {
   });
 });
 
+it('renders a 32px avatar in the icon slot without changing the menu item name', async () => {
+  const triggerRef = createRef<HTMLButtonElement>();
+  const props = {
+    isOpen: true,
+    onOpenChange: vi.fn(),
+    trigger: <button ref={triggerRef}>Открыть</button>,
+    triggerRef,
+  };
+  const view = render(<LiquidPopover {...props}
+    items={[{ id: 'profile', label: 'Мой профиль', avatar: { name: 'Анна Иванова' } }]} />);
+  await act(async () => { vi.advanceTimersByTime(32); });
+  const profile = screen.getByRole('menuitem', { name: 'Мой профиль' });
+  expect(profile.textContent).toBe('Мой профиль');
+  const fallback = profile.parentElement?.querySelector('.ui-liquid-popover__avatar .ui-avatar--small.ui-avatar--fallback');
+  expect(fallback?.textContent).toBe('АИ');
+
+  view.rerender(<LiquidPopover {...props}
+    items={[{ id: 'profile', label: 'Мой профиль', avatar: { name: 'Анна Иванова', src: '/portrait.jpg' } }]} />);
+  const updatedProfile = screen.getByRole('menuitem', { name: 'Мой профиль' });
+  expect(updatedProfile.textContent).toBe('Мой профиль');
+  const photo = updatedProfile.parentElement?.querySelector<HTMLImageElement>('.ui-liquid-popover__avatar img.ui-avatar--small');
+  expect(photo?.getAttribute('src')).toBe('/portrait.jpg');
+});
+
 it('keeps the multi-selection menu open until Done while respecting selected state', async () => {
   const triggerRef = createRef<HTMLButtonElement>();
   const setOpen = vi.fn();

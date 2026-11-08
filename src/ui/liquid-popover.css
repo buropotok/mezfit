@@ -99,6 +99,18 @@
   overflow-wrap: anywhere;
 }
 
+/* The avatar is decorative sibling artwork so button text remains its label only. */
+.ui-liquid-popover__item--with-avatar { position: relative; }
+.ui-liquid-popover__avatar {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+}
+
 /* Opt-in two-action menu row. Default menu rows retain their existing DOM and geometry. */
 .ui-liquid-popover__item--with-action { position: relative; }
 .ui-liquid-popover__item--with-action > .ui-menu-item { padding-right: 3.5rem; }

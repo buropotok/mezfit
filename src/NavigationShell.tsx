@@ -281,15 +281,15 @@ export function NavigationShell({
   children,
 }: Props) {
   const cloud = useCloudConnections();
-  const ownAvatarContact = activeRole === 'client'
-    ? cloud?.selfAvatars?.find(contact => contact.userId === `tg:${me.user.telegramUserId}` && contact.avatarVersion)
-      ?? { userId: `tg:${me.user.telegramUserId}`, relationshipId: `tg:${me.user.telegramUserId}`,
-        telegramUserId: me.user.telegramUserId, displayName: me.user.firstName }
-    : null;
-  const ownAvatarSrc = useCloudContactAvatarUrl(ownAvatarContact);
+  const ownAvatarUserId = `tg:${me.user.telegramUserId}`;
+  const ownAvatarName = [me.user.firstName, me.user.lastName].filter(Boolean).join(' ');
+  const ownAvatarContact = cloud?.selfAvatars?.find(contact =>
+    contact.userId === ownAvatarUserId && (contact.avatarVersion || contact.userAvatar))
+    ?? { userId: ownAvatarUserId, relationshipId: ownAvatarUserId,
+      telegramUserId: me.user.telegramUserId, displayName: me.user.firstName };
+  const ownAvatarSrc = useCloudContactAvatarUrl(ownAvatarContact) ?? me.user.photoUrl ?? undefined;
   const ownAvatar = <span style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
-    <Avatar size="small" name={[me.user.firstName, me.user.lastName].filter(Boolean).join(' ')}
-      src={ownAvatarSrc ?? me.user.photoUrl ?? undefined} />
+    <Avatar size="small" name={ownAvatarName} src={ownAvatarSrc} />
   </span>;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPresented, setMenuPresented] = useState(false);
@@ -488,6 +488,7 @@ export function NavigationShell({
   const hasSystemMenu = me.roles.length > 1 || activeRole === 'client' || secondaryItems.length > 0;
   const menuItems: LiquidPopoverItem[] = activeRole === 'coach' ? [{
     id: 'destination-profile', label: 'Мой профиль', active: destination === 'profile',
+    avatar: { name: ownAvatarName, src: ownAvatarSrc },
     'aria-current': destination === 'profile' ? 'page' : undefined,
     onSelect: () => chooseDestination('profile'),
   }] : [];
@@ -509,8 +510,8 @@ export function NavigationShell({
     id: 'coach-selector', label: 'Тренер', dividerBefore: me.roles.length > 1,
     onSelect: () => { setMenuOpen(false); setCoachSelectorOpen(true); },
   });
-  secondaryItems.filter(item => item.id !== 'profile').forEach((item, index) => addSystemItem({
-    id: `destination-${item.id}`, label: item.label, active: destination === item.id,
+  secondaryItems.filter(item => item.id !== 'profile' && item.id !== 'calendar').forEach((item, index) => addSystemItem({
+    id: `destination-${item.id}`, label: item.label, icon: item.icon, active: destination === item.id,
     'aria-current': destination === item.id ? 'page' : undefined,
     dividerBefore: index === 0 && (activeRole === 'client' || me.roles.length > 1),
     onSelect: () => chooseDestination(item.id),
