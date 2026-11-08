@@ -512,8 +512,8 @@ export function NavigationShell({
   }));
   if (activeRole === 'client') addSystemItem({
     id: 'coach-selector', label: 'Тренер', dividerBefore: me.roles.length > 1,
-    ...(selectedCoach ? { avatar: { name: selectedCoach.displayName, src: coachAvatarSrc } }
-      : { icon: 'user' as const }),
+    avatar: selectedCoach ? { name: selectedCoach.displayName, src: coachAvatarSrc } : undefined,
+    icon: selectedCoach ? undefined : 'user',
     onSelect: () => { setMenuOpen(false); setCoachSelectorOpen(true); },
   });
   secondaryItems.filter(item => item.id !== 'profile' && item.id !== 'calendar').forEach((item, index) => addSystemItem({
