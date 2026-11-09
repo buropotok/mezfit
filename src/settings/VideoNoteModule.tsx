@@ -302,6 +302,12 @@ export function VideoNoteModule() {
               : 'Тестовый модуль: видео остаётся только на этом устройстве и не отправляется в чат.'}
       </Text>
 
+      {stage === 'review' && liveStream(facing) ? (
+        <Text variant="footnote" tone="muted">
+          Камера и микрофон остаются активны для повторной записи. «Сбросить» отключит их.
+        </Text>
+      ) : null}
+
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
 
       <div className="video-note-module__actions">
