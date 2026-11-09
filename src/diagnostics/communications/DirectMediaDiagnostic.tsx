@@ -32,20 +32,22 @@ export function DirectMediaDiagnostic() {
     active.current = null;
   }, []);
 
-  async function upload() {
+  async function upload(diagnosticOmitIfNoneMatch = false) {
     if (!file || active.current) return;
     const controller = new AbortController();
     active.current = controller;
     setBusy(true);
-    setStatus('Загрузка…');
+    setStatus(diagnosticOmitIfNoneMatch ? 'Тестовый PUT без If-None-Match…' : 'Загрузка…');
     setResult(null);
     try {
-      const next = await uploadDirectMedia(file, { signal: controller.signal });
+      const next = await uploadDirectMedia(file, { signal: controller.signal, diagnosticOmitIfNoneMatch });
       if (active.current !== controller) return;
       setResult(next);
-      setStatus('Файл загружен.');
+      setStatus(diagnosticOmitIfNoneMatch ? 'Тестовый PUT без If-None-Match: файл загружен.' : 'Файл загружен.');
     } catch (error) {
-      if (active.current === controller) setStatus(describeError(error));
+      if (active.current === controller) setStatus(diagnosticOmitIfNoneMatch
+        ? `Тест без If-None-Match: ${describeError(error)}`
+        : describeError(error));
     } finally {
       if (active.current === controller) {
         active.current = null;
@@ -66,6 +68,8 @@ export function DirectMediaDiagnostic() {
     <Button rounded disabled={busy} onClick={() => input.current?.click()}>Выбрать файл</Button>
     {file && <p><Text variant="footnote">{file.name}</Text></p>}
     <Button rounded disabled={!file || busy} onClick={() => void upload()}>{status && !busy && !result ? 'Повторить загрузку' : 'Загрузить'}</Button>
+    <p><Text variant="footnote">Диагностика: отдельный PUT без If-None-Match создаёт новый случайный ключ и может сохранить тестовый файл в бакете.</Text></p>
+    <Button rounded disabled={!file || busy} onClick={() => void upload(true)}>Проверить PUT без If-None-Match</Button>
     {busy && <Button rounded onClick={() => active.current?.abort()}>Отменить загрузку</Button>}
     <p role="status"><Text variant="body">{status}</Text></p>
     {result && <>
