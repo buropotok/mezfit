@@ -8,6 +8,7 @@ import { Avatar, IconButton, Text } from '../ui/primitives';
 import { Icon } from '../ui/Icon';
 import { GlassSurface } from '../ui/GlassSurface';
 import { MezfitMessagebar } from '../ui/konsta-mezfit/Messagebar';
+import { DiscussionActionIcon } from './DiscussionActionIcon';
 import { LiquidPopover, type LiquidPopoverItem } from '../ui/LiquidPopover';
 import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
 import { MezfitMessage } from '../ui/konsta-mezfit/Message';
@@ -87,6 +88,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   menuRef.current = menu;
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [mediaMode, setMediaMode] = useState<'microphone' | 'camera'>('microphone');
+  const actionMode = text.trim() ? 'send' : mediaMode;
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
   const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
   const [receiptError, setReceiptError] = useState(false);
@@ -461,8 +464,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />
       </GlassSurface>
       <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
-        <IconButton icon={editId ? 'check' : 'arrow-up'} label={editId ? 'Сохранить' : 'Отправить'}
-          disabled={busy || !draft.ready || !text.trim() || !state.title || Boolean(state.error)} onClick={submit} />
+        <IconButton label={actionMode === 'send' ? (editId ? 'Сохранить' : 'Отправить')
+          : actionMode === 'microphone' ? 'Переключить на кружок' : 'Переключить на голосовое'}
+          disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
+          onClick={actionMode === 'send' ? submit : () => setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone')}>
+          <DiscussionActionIcon mode={actionMode} />
+        </IconButton>
       </GlassSurface>
     </div>
     <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
