@@ -41,11 +41,12 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
   const [seeking, setSeeking] = useState(false);
 
   useEffect(() => {
+    const video = videoRef.current;
     aliveRef.current = true;
     return () => {
       aliveRef.current = false;
       playGenerationRef.current += 1;
-      videoRef.current?.pause();
+      video?.pause();
     };
   }, []);
 
