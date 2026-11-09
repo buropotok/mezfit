@@ -133,7 +133,11 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
     if (!video.paused) pause(video);
     setSeeking(true);
     seekFromPointer(event);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Some embedded WebViews can decline capture; a tap on the rail still seeks.
+    }
   };
 
   const finishScrubbing = (event: PointerEvent<SVGCircleElement>) => {
@@ -143,8 +147,12 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
     seekFromPointer(event);
     seekingPointerRef.current = null;
     setSeeking(false);
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    try {
+      if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      // The WebView may have released capture before pointerup.
     }
     if (wasPlayingRef.current && videoRef.current) void requestPlay(videoRef.current);
     wasPlayingRef.current = false;
@@ -191,7 +199,11 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
         onSeeked={(event) => {
           if (seekingPointerRef.current === null) setCurrentTime(event.currentTarget.currentTime);
         }}
-        onPlay={() => { if (aliveRef.current) setPlaying(true); }}
+        onPlay={(event) => {
+          if (aliveRef.current && !event.currentTarget.paused && seekingPointerRef.current === null) {
+            setPlaying(true);
+          }
+        }}
         onPause={() => { if (aliveRef.current) setPlaying(false); }}
         onEnded={() => {
           if (aliveRef.current) {
