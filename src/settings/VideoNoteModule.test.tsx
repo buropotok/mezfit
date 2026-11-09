@@ -15,9 +15,11 @@ class FakeMediaRecorder {
   start() { this.state = 'recording'; }
   stop() {
     this.state = 'inactive';
-    this.ondataavailable?.(new BlobEvent('dataavailable', {
-      data: new Blob(['video bytes'], { type: 'video/webm' }),
-    }));
+    const dataEvent = new Event('dataavailable');
+    Object.defineProperty(dataEvent, 'data', {
+      value: new Blob(['video bytes'], { type: 'video/webm' }),
+    });
+    this.ondataavailable?.(dataEvent as BlobEvent);
     this.onstop?.(new Event('stop'));
   }
 }
@@ -26,6 +28,7 @@ const trackStop = vi.fn();
 const getUserMedia = vi.fn();
 const createObjectURL = vi.fn(() => 'blob:video-note');
 const revokeObjectURL = vi.fn();
+const mediaDevicesDescriptor = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
 
 function fakeStream(): MediaStream {
   return { getTracks: () => [{ stop: trackStop }] } as unknown as MediaStream;
@@ -37,6 +40,16 @@ beforeEach(() => {
   createObjectURL.mockClear();
   revokeObjectURL.mockClear();
   vi.stubGlobal('MediaRecorder', FakeMediaRecorder);
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+    disconnect() {}
+  });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0);
+    return 1;
+  });
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   vi.stubGlobal('URL', Object.assign(class extends URL {}, { createObjectURL, revokeObjectURL }));
   Object.defineProperty(navigator, 'mediaDevices', {
     configurable: true,
@@ -50,7 +63,8 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
-  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
+  if (mediaDevicesDescriptor) Object.defineProperty(navigator, 'mediaDevices', mediaDevicesDescriptor);
+  else Reflect.deleteProperty(navigator, 'mediaDevices');
 });
 
 describe('VideoNoteModule', () => {
