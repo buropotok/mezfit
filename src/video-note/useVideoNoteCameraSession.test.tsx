@@ -78,6 +78,34 @@ describe('useVideoNoteCameraSession', () => {
     expect(second.stop).toHaveBeenCalledOnce();
   });
 
+  it('keeps only the newest camera request when a switch supersedes a pending permission', async () => {
+    const front = stream();
+    const rear = stream();
+    let resolveFront: ((value: MediaStream) => void) | undefined;
+    let resolveRear: ((value: MediaStream) => void) | undefined;
+    getUserMedia
+      .mockImplementationOnce(() => new Promise<MediaStream>((resolve) => { resolveFront = resolve; }))
+      .mockImplementationOnce(() => new Promise<MediaStream>((resolve) => { resolveRear = resolve; }));
+    const { result, unmount } = renderHook(() => useVideoNoteCameraSession());
+
+    const firstRequest = result.current.acquire('user');
+    const secondRequest = result.current.acquire('environment');
+    await act(async () => {
+      resolveRear?.(rear.source);
+      expect(await secondRequest).toBe(rear.source);
+    });
+    await act(async () => {
+      resolveFront?.(front.source);
+      expect(await firstRequest).toBeNull();
+    });
+    expect(front.stop).toHaveBeenCalledOnce();
+    expect(result.current.liveStream('environment')).toBe(rear.source);
+    expect(result.current.liveStream('user')).toBeNull();
+
+    unmount();
+    expect(rear.stop).toHaveBeenCalledOnce();
+  });
+
   it('discards an in-flight permission result after unmount instead of leaking the camera', async () => {
     let resolvePermission: ((stream: MediaStream) => void) | undefined;
     getUserMedia.mockImplementation(() => new Promise<MediaStream>((resolve) => {
