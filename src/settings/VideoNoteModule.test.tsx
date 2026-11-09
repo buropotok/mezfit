@@ -99,6 +99,34 @@ describe('VideoNoteModule', () => {
     expect(screen.getByRole('button', { name: 'Записать кружок' })).toBeTruthy();
   });
 
+  it('moves from Record to compact Preview, expands to Play and returns to Preview on ended', async () => {
+    const { container } = render(<VideoNoteModule />);
+    fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Завершить запись' })).toBeTruthy());
+    expect(container.querySelector('.video-note-module__circle--expanded')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Прогресс записи видеокружка' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
+    expect(container.querySelector('.video-note-module__circle--preview')).toBeTruthy();
+    expect(container.querySelector('.video-note-module__circle--expanded')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
+    expect(screen.queryByRole('slider', { name: 'Перемотка видеокружка' })).toBeNull();
+    expect(container.querySelector('.video-note-playback__play-glyph')).toBeNull();
+    const video = screen.getByLabelText('Записанный видеокружок') as HTMLVideoElement;
+    expect(video.getAttribute('preload')).toBe('auto');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть видеокружок' }));
+    expect(container.querySelector('.video-note-module__circle--expanded')).toBeTruthy();
+    expect(screen.getByRole('slider', { name: 'Перемотка видеокружка' })).toBeTruthy();
+    expect(screen.getByLabelText('Записанный видеокружок')).toBe(video);
+
+    fireEvent.ended(video);
+    expect(container.querySelector('.video-note-module__circle--preview')).toBeTruthy();
+    expect(screen.queryByRole('slider', { name: 'Перемотка видеокружка' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+  });
+
   it('switching cameras releases the old stream and acquires the requested facing mode', async () => {
     render(<VideoNoteModule />);
     fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
@@ -115,7 +143,7 @@ describe('VideoNoteModule', () => {
     }));
   });
 
-  it('releases the retained camera and recorded clip on unmount during review', async () => {
+  it('releases the retained camera and recorded clip on unmount during preview', async () => {
     const { unmount } = render(<VideoNoteModule />);
     fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Завершить запись' })).toBeTruthy());
