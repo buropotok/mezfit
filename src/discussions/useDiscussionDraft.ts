@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
+import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import type { DiscussionPort } from './discussion-session';
 
 /** Draft records belong to the repository; this hook owns only composer presentation. */
 export function useDiscussionDraft(repository: DiscussionPort, threadId: string) {
   const [text, setText] = useState('');
   const [replyId, setReplyId] = useState<string | null>(null);
+  const [media, setMedia] = useState<DiscussionMediaDraft>();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -18,6 +20,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     void repository.getDraft(threadId).then(input => {
       if (cancelled) return;
       current.current = input;
+      setMedia(input?.draftMedia);
       setText(input?.text ?? ''); setReplyId(input?.replyToMessageId ?? null);
       setError(null); setReady(true);
     }, () => { if (!cancelled) setError('Не удалось восстановить черновик'); });
@@ -26,7 +29,8 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
   const persist = (input: DiscussionMessageInput) => {
     // Invoke now, not from an unmount effect: local transactions are queued before
     // a later send/reopen. Pending local saves may finish after the sheet closes.
-    void repository.saveDraft(input).then(() => {
+    const { draftMedia: _media, ...caption } = input;
+    void repository.saveDraft(caption).then(() => {
       if (alive.current && current.current === input) setError(null);
     }, reason => {
       if (reason instanceof Error && reason.message === 'DISCUSSION_ID_REUSED') {
@@ -41,11 +45,26 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     if (!latest || latest.id !== publishedId) return;
     const replacement = prepareDiscussionMessage(threadId, latest.text, latest.replyToMessageId);
     current.current = replacement;
-    if (alive.current) { setText(replacement.text); setReplyId(replacement.replyToMessageId ?? null); }
+    if (alive.current) { setText(replacement.text); setReplyId(replacement.replyToMessageId ?? null); setMedia(undefined); }
     persist(replacement);
   }
   return {
-    text, replyId, ready, error,
+    text, replyId, ready, error, media,
+    async stageMedia(attachment: DiscussionMediaDraft): Promise<DiscussionMessageInput> {
+      const input = { ...(current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
+        draftMedia: attachment };
+      await repository.saveDraft(input);
+      current.current = input;
+      if (alive.current) setMedia(attachment);
+      return { ...input, requireUnsentDraft: true };
+    },
+    async clearMedia() {
+      const input = current.current;
+      if (!input?.draftMedia || !repository.updateDraftMedia) return;
+      await repository.updateDraftMedia(threadId, input.id, input.draftMedia.storageKey, 'clear');
+      if (current.current?.id === input.id) delete current.current.draftMedia;
+      if (alive.current) setMedia(undefined);
+    },
     update(nextText: string, nextReply: string | null) {
       if (!ready) return;
       const input = { ...(current.current ?? prepareDiscussionMessage(threadId, '')),
@@ -60,7 +79,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     sent(id: string) {
       if (current.current?.id !== id) return;
       current.current = null;
-      if (alive.current) { setText(''); setReplyId(null); setError(null); }
+      if (alive.current) { setText(''); setReplyId(null); setError(null); setMedia(undefined); }
     },
     retry() {
       if (!ready) setReload(value => value + 1);

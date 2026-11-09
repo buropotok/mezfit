@@ -152,3 +152,33 @@
 }
 /* Reserve space below the scroll viewport, not a new composer scroll owner.
    Messages keep moving underneath the three independent glass surfaces. */
+
+.discussion-media {
+  width: min(15rem, 55vw);
+  max-width: 100%;
+}
+
+.discussion-media img,
+.discussion-media video {
+  display: block;
+  width: 100%;
+  max-height: 16rem;
+  object-fit: contain;
+}
+
+.discussion-media--preview {
+  width: min(7rem, 30vw);
+  flex-shrink: 0;
+}
+
+.discussion-media--preview img,
+.discussion-media--preview video {
+  max-height: 5rem;
+}
+
+.discussion-media-filename {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

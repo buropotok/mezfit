@@ -8,7 +8,16 @@ const limits = new Map<string, number>([
 ]);
 export const MEDIA_FILE_ACCEPT = [...limits.keys()].join(',');
 
-type UploadErrorCode = 'INVALID_TYPE' | 'INVALID_SIZE' | 'CANCELLED' | 'TIMEOUT' | 'NETWORK' | 'HTTP';
+export function directMediaUrl(key: string): string | null {
+  return /^mvp-media\/[a-f0-9]{64}$/.test(key) ? `${endpoint}/${MEDIA_BUCKET}/${key}` : null;
+}
+
+export function createDirectMediaKey(): string {
+  return 'mvp-media/' + Array.from(crypto.getRandomValues(new Uint8Array(32)),
+    byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+type UploadErrorCode = 'INVALID_KEY' | 'INVALID_TYPE' | 'INVALID_SIZE' | 'CANCELLED' | 'TIMEOUT' | 'NETWORK' | 'HTTP';
 export class MediaUploadError extends Error {
   constructor(readonly code: UploadErrorCode, readonly status?: number) {
     super(code);
@@ -24,37 +33,53 @@ export interface UploadedMedia {
   fileName: string;
 }
 
+export function directMediaSizeLimit(contentType: string): number {
+  return (limits.get(contentType) ?? 0) * MiB;
+}
+
+export function validateDirectMedia(file: File): string {
+  const contentType = file.type.toLowerCase().split(';')[0].trim();
+  const limit = directMediaSizeLimit(contentType);
+  if (!limit) throw new MediaUploadError('INVALID_TYPE');
+  if (!file.size || file.size > limit) throw new MediaUploadError('INVALID_SIZE');
+  return contentType;
+}
+
 export async function uploadDirectMedia(
   file: File,
-  { signal, timeoutMs = 300_000 }: { signal?: AbortSignal; timeoutMs?: number } = {},
+  { signal, timeoutMs = 300_000, retryKey }: { signal?: AbortSignal; timeoutMs?: number; retryKey?: string } = {},
 ): Promise<UploadedMedia> {
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
-  const contentType = file.type.toLowerCase().split(';')[0].trim();
-  const limit = limits.get(contentType);
-  if (!limit) throw new MediaUploadError('INVALID_TYPE');
-  if (!file.size || file.size > limit * MiB) throw new MediaUploadError('INVALID_SIZE');
-
-  const key = 'mvp-media/' + Array.from(crypto.getRandomValues(new Uint8Array(32)),
-    byte => byte.toString(16).padStart(2, '0')).join('');
-  const url = `${endpoint}/${MEDIA_BUCKET}/${key}`;
+  const contentType = validateDirectMedia(file);
+  const key = retryKey ?? createDirectMediaKey();
+  const url = directMediaUrl(key);
+  if (!url) throw new MediaUploadError('INVALID_KEY');
   const controller = new AbortController();
   const cancel = () => controller.abort();
   signal?.addEventListener('abort', cancel, { once: true });
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   try {
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': contentType, 'If-None-Match': '*' },
-      body: file,
+    const request = {
       credentials: 'omit',
       redirect: 'error',
       referrerPolicy: 'no-referrer',
       signal: controller.signal,
+    } satisfies RequestInit;
+    const response = await fetch(url, {
+      ...request,
+      method: 'PUT',
+      headers: { 'Content-Type': contentType, 'If-None-Match': '*' },
+      body: file,
     });
     // Object Storage has no useful response body for a successful PUT.
     void response.body?.cancel().catch(() => undefined);
-    if (!response.ok) throw new MediaUploadError('HTTP', response.status);
+    if (retryKey && response.status === 412) {
+      // A previous PUT may have committed before its response was lost.
+      const stored = await fetch(url, { ...request, method: 'HEAD', cache: 'no-store' });
+      if (!stored.ok || stored.headers.get('content-type') !== contentType
+        || stored.headers.get('content-length') !== String(file.size)) throw new MediaUploadError('HTTP', 412);
+    } else if (!response.ok) throw new MediaUploadError('HTTP', response.status);
     if (controller.signal.aborted) throw new MediaUploadError(timedOut ? 'TIMEOUT' : 'CANCELLED');
     return { key, url, contentType, sizeBytes: file.size, fileName: file.name };
   } catch (error) {
