@@ -59,10 +59,14 @@ export function VideoNoteModule() {
   const clipUrlRef = useRef<string | null>(null);
   const startedAtRef = useRef(0);
   const tickRef = useRef<number | null>(null);
+  const deadlineRef = useRef<number | null>(null);
+  const playbackSequence = useRef(0);
 
   const clearTick = useCallback(() => {
     if (tickRef.current !== null) window.clearInterval(tickRef.current);
+    if (deadlineRef.current !== null) window.clearTimeout(deadlineRef.current);
     tickRef.current = null;
+    deadlineRef.current = null;
   }, []);
 
   const stopStream = useCallback(() => {
@@ -72,11 +76,14 @@ export function VideoNoteModule() {
   }, []);
 
   const discardClip = useCallback(() => {
+    playbackSequence.current += 1;
     playbackRef.current?.pause();
     if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
     clipUrlRef.current = null;
-    setClip(null);
-    setPlaying(false);
+    if (mounted.current) {
+      setClip(null);
+      setPlaying(false);
+    }
   }, []);
 
   const cancelCapture = useCallback(() => {
@@ -179,7 +186,11 @@ export function VideoNoteModule() {
       recorder.onerror = () => {
         if (recorderRef.current !== recorder) return;
         recorderRef.current = null;
+        recorder.onstop = null;
         clearTick();
+        if (recorder.state !== 'inactive') {
+          try { recorder.stop(); } catch { /* Recorder failed before stopping. */ }
+        }
         stopStream();
         setError('Произошла ошибка видеозаписи. Попробуйте ещё раз.');
         setStage('error');
@@ -197,7 +208,14 @@ export function VideoNoteModule() {
           setStage('error');
           return;
         }
-        const url = URL.createObjectURL(blob);
+        let url: string;
+        try {
+          url = URL.createObjectURL(blob);
+        } catch {
+          setError('Не удалось подготовить видео для просмотра.');
+          setStage('error');
+          return;
+        }
         clipUrlRef.current = url;
         setClip({
           url,
@@ -217,6 +235,9 @@ export function VideoNoteModule() {
         setElapsedSeconds(Math.min(60, Math.ceil(duration / 1000)));
         if (duration >= MAX_RECORDING_MS && recorderRef.current === recorder) stopRecording();
       }, 250);
+      deadlineRef.current = window.setTimeout(() => {
+        if (recorderRef.current === recorder) stopRecording();
+      }, MAX_RECORDING_MS);
     } catch {
       recorderRef.current = null;
       clearTick();
@@ -228,6 +249,7 @@ export function VideoNoteModule() {
   const togglePlayback = async () => {
     const video = playbackRef.current;
     if (!video) return;
+    const sequence = ++playbackSequence.current;
     if (!video.paused) {
       video.pause();
       setPlaying(false);
@@ -235,9 +257,9 @@ export function VideoNoteModule() {
     }
     try {
       await video.play();
-      if (mounted.current) setPlaying(true);
+      if (mounted.current && playbackSequence.current === sequence) setPlaying(true);
     } catch {
-      if (mounted.current) {
+      if (mounted.current && playbackSequence.current === sequence) {
         setPlaying(false);
         setError('Устройство не смогло воспроизвести этот видеоформат.');
       }
