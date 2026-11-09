@@ -320,8 +320,9 @@ export class DiscussionRepository {
     if (!discussionId(input.id) || !discussionInstant(input.createdAt)
       || (input.requireUnsentDraft !== undefined && input.requireUnsentDraft !== true)) fail('INVALID_DISCUSSION_MESSAGE');
     const media = input.draftMedia;
-    if (media !== undefined && (!this.supportsMedia || !isDiscussionMediaDraft(media)
-      || uploaded?.key !== media.storageKey || uploaded.contentType !== media.mimeType
+    const attachments = this.db.messageAttachments;
+    if (media !== undefined && (!attachments || !isDiscussionMediaDraft(media) || !uploaded
+      || uploaded.key !== media.storageKey || uploaded.contentType !== media.mimeType
       || uploaded.sizeBytes !== media.sizeBytes)) fail('INVALID_DISCUSSION_ATTACHMENT');
     if (typeof input.text !== 'string' || (!input.text.trim() && !media) || input.text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
     return this.write(async () => {
@@ -331,8 +332,8 @@ export class DiscussionRepository {
         if (!this.visible(existing, thread.id) || existing.authorUserId !== this.actorUserId
           || existing.replyToMessageId !== input.replyToMessageId) fail('DISCUSSION_ID_REUSED');
         if (media) {
-          const attachment = await this.db.messageAttachments?.get(media.id);
-          if (!attachment || attachment.storageKey !== uploaded?.key || attachment.uploadState !== 'ready') fail('DISCUSSION_ID_REUSED');
+          const attachment = await attachments?.get(media.id);
+          if (!attachment || attachment.storageKey !== media.storageKey || attachment.uploadState !== 'ready') fail('DISCUSSION_ID_REUSED');
           // A retry acknowledges the same publication even after the message
           // was deleted. The returned view still masks the tombstone.
           assertMessageAttachmentWrite(this.actorUserId, thread, { ...existing, deletedAt: undefined }, attachment);
@@ -361,12 +362,13 @@ export class DiscussionRepository {
         text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId, draftMedia: undefined });
       else await this.db.discussionMessages.add(row);
       if (media) {
+        if (!attachments) fail('INVALID_DISCUSSION_ATTACHMENT');
         const attachment: MessageAttachment = { id: media.id, messageId: row.id, realmId: row.realmId,
           owner: row.owner, authorUserId: row.authorUserId, mediaType: media.mediaType, storageKey: media.storageKey,
           mimeType: media.mimeType, sizeBytes: media.sizeBytes, durationSeconds: media.durationSeconds,
           uploadState: 'ready', confirmedAt: row.createdAt };
         assertMessageAttachmentWrite(this.actorUserId, thread, row, attachment);
-        await this.db.messageAttachments?.add(attachment);
+        await attachments.add(attachment);
       }
       if (row.createdAt > thread.lastActivityAt) await this.db.discussionThreads
         .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt: row.createdAt });

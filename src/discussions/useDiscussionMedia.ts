@@ -112,8 +112,8 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         : 'Не удалось сохранить сообщение. Повторите отправку');
       setPhase('failed');
     } finally {
-      publishing.current = false;
       if (active.current === controller) {
+        publishing.current = false;
         active.current = null;
         if (controller.signal.aborted) {
           setError('Загрузка отменена. Можно повторить отправку');
