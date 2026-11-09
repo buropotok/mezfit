@@ -80,9 +80,16 @@ export function validateDirectMedia(file: File): string {
 
 export async function uploadDirectMedia(
   file: File,
-  { signal, timeoutMs = 300_000, retryKey }: { signal?: AbortSignal; timeoutMs?: number; retryKey?: string } = {},
+  { signal, timeoutMs = 300_000, retryKey, diagnosticOmitIfNoneMatch = false }: {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+    retryKey?: string;
+    diagnosticOmitIfNoneMatch?: boolean;
+  } = {},
 ): Promise<UploadedMedia> {
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
+  // Diagnostic-only unconditional PUT must never target a caller-supplied existing object key.
+  if (diagnosticOmitIfNoneMatch && retryKey !== undefined) throw new MediaUploadError('INVALID_KEY');
   const contentType = validateDirectMedia(file);
   const key = retryKey ?? createDirectMediaKey();
   const url = directMediaUrl(key);
@@ -102,7 +109,9 @@ export async function uploadDirectMedia(
     const response = await fetch(url, {
       ...request,
       method: 'PUT',
-      headers: { 'Content-Type': contentType, 'If-None-Match': '*' },
+      headers: diagnosticOmitIfNoneMatch
+        ? { 'Content-Type': contentType }
+        : { 'Content-Type': contentType, 'If-None-Match': '*' },
       body: file,
     });
     // Keep failed PUT bodies readable for S3 error diagnostics.

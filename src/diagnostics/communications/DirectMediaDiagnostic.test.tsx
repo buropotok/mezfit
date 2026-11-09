@@ -32,3 +32,26 @@ it('shows the safe S3 error details when direct upload returns HTTP 403', async 
   expect(await screen.findByText('Хранилище отклонило загрузку (HTTP 403; S3 AccessDenied: Access Denied.).')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Повторить загрузку' })).toBeTruthy();
 });
+
+it('performs an unconditioned PUT only on the explicit diagnostic action', async () => {
+  const put = vi.fn<typeof fetch>().mockResolvedValue(new Response(
+    '<Error><Code>AccessDenied</Code><Message>Access Denied.</Message></Error>',
+    { status: 403, headers: { 'Content-Type': 'application/xml' } },
+  ));
+  vi.stubGlobal('fetch', put);
+  const view = render(<DirectMediaDiagnostic />);
+  const input = view.container.querySelector('input[type="file"]');
+  if (!input) throw new Error('Missing file input');
+  fireEvent.change(input, { target: { files: [new File(['test'], 'photo.jpg', { type: 'image/jpeg' })] } });
+  expect(put).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить PUT без If-None-Match' }));
+  expect(await screen.findByText(
+    'Тест без If-None-Match: Хранилище отклонило загрузку (HTTP 403; S3 AccessDenied: Access Denied.).',
+  )).toBeTruthy();
+  expect(put).toHaveBeenCalledOnce();
+  expect(put.mock.calls[0][1]).toEqual(expect.objectContaining({
+    method: 'PUT',
+    headers: { 'Content-Type': 'image/jpeg' },
+  }));
+  expect(put.mock.calls[0][0]).toMatch(/^https:\/\/storage\.yandexcloud\.net\/mezfit-comm-poc-20261106\/mvp-media\/[a-f0-9]{64}$/);
+});
