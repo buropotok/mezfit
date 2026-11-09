@@ -39,6 +39,7 @@ import { ScreenDiagnostics } from './ScreenDiagnostics';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
 import { WorkoutReminderSettings } from './WorkoutReminderSettings';
+import { VideoNoteModule } from './VideoNoteModule';
 import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
@@ -709,6 +710,14 @@ export function SettingsPage({
           Здесь отображаются реальные React-компоненты приложения на демонстрационных данных.
         </Text>
       </div>
+
+      <section className="modules-gallery__example" aria-labelledby="module-video-note-title">
+        <Text id="module-video-note-title" variant="headline">Видеокружок</Text>
+        <Text variant="footnote" tone="muted">
+          Запись до 60 секунд с камеры, просмотр и повторная запись. Тестируется локально, без отправки.
+        </Text>
+        <VideoNoteModule />
+      </section>
 
       <Suspense fallback={<Text variant="footnote" tone="muted">Загрузка графиков…</Text>}>
         <ChartsCatalog />
