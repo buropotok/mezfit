@@ -25,7 +25,7 @@ it('accepts a user preference as controlled mode without changing the UI Kit swi
   const onChange = vi.fn();
   const props = { opened: true, target, value: { reps: 8, weightKg: 77.5 }, onClose: vi.fn(), onChange, onModeChange };
   const view = render(<KonstaProvider theme="ios" dark>
-    <WeightRepsPicker {...props} mode="wheels" />
+    <div className="k-ios dark"><WeightRepsPicker {...props} mode="wheels" /></div>
   </KonstaProvider>);
   expect(screen.getByRole('listbox', { name: 'Повторения' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Режим' }).getAttribute('aria-pressed')).toBe('true');
@@ -37,7 +37,7 @@ it('accepts a user preference as controlled mode without changing the UI Kit swi
   expect(screen.getByRole('listbox', { name: 'Повторения' })).toBeTruthy();
 
   view.rerender(<KonstaProvider theme="ios" dark>
-    <WeightRepsPicker {...props} mode="numbers" />
+    <div className="k-ios dark"><WeightRepsPicker {...props} mode="numbers" /></div>
   </KonstaProvider>);
   expect(screen.queryByRole('listbox', { name: 'Повторения' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Режим' }).getAttribute('aria-pressed')).toBe('false');
