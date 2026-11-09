@@ -97,7 +97,14 @@ describe('circular video-note playback', () => {
     expect(slider.getAttribute('aria-valuenow')).toBe('0');
   });
 
-  it('uses recorded duration until metadata is ready and pauses on unmount', async () => {
+  it('keeps the recorded duration visible and seek disabled before metadata arrives', () => {
+    render(<CircularVideoPlayback src="blob:video-note" fallbackDuration={17} onError={vi.fn()} />);
+    const slider = screen.getByRole('slider', { name: 'Перемотка видеокружка' });
+    expect(slider.getAttribute('aria-disabled')).toBe('true');
+    expect(slider.getAttribute('aria-valuetext')).toBe('0 из 17 секунд');
+  });
+
+  it('pauses the video on unmount', async () => {
     const { video, play, pause, unmount } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Воспроизвести' }));
     await waitFor(() => expect(play).toHaveBeenCalledOnce());
