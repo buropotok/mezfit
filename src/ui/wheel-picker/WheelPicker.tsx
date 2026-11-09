@@ -31,7 +31,7 @@ const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
 // In the 72px SVG source this is an 8px band on compact 36px capsules.
 const IOS_LENS_EDGE_RADIUS = 16;
-const IOS_LENS_EDGE_SLICES = buildLensEdgeCylinderSlices(LENS_HEIGHT, IOS_LENS_EDGE_RADIUS, 12);
+const IOS_LENS_EDGE_SLICES = buildLensEdgeCylinderSlices(LENS_HEIGHT, IOS_LENS_EDGE_RADIUS, 8);
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
 // of native scroll events instead of changing scrollTop during momentum.
 const SCROLL_END_FALLBACK_MS = 450;
