@@ -41,6 +41,7 @@ function withActor(actorUserId = 'tg:11') {
 afterEach(async () => {
   cleanup();
   vi.mocked(useCloudConnections).mockReset();
+  vi.restoreAllMocks();
   for (const db of databases.splice(0)) {
     db.close();
     await db.delete();
@@ -69,6 +70,7 @@ describe('set entry picker mode composition', () => {
 
   it('serializes rapid taps so that the last chosen mode is the persisted one', async () => {
     const repo = withActor();
+    const setSpy = vi.spyOn(WeightRepsPickerPreferencesRepository.prototype, 'set');
     const onError = vi.fn();
     const view = renderHook(() => useWeightRepsPickerMode(onError));
     await waitFor(() => expect(view.result.current.ready).toBe(true));
@@ -78,10 +80,11 @@ describe('set entry picker mode composition', () => {
       view.result.current.onModeChange('wheels');
     });
     expect(view.result.current.mode).toBe('wheels');
-    await waitFor(async () => {
-      expect(await repo.read()).toBe('wheels');
-      expect(view.result.current.mode).toBe('wheels');
-    });
+    await waitFor(() => expect(setSpy).toHaveBeenCalledTimes(3));
+    await Promise.all(setSpy.mock.results.map(result => result.value));
+    expect(setSpy.mock.calls.map(([selected]) => selected)).toEqual(['wheels', 'numbers', 'wheels']);
+    expect(await repo.read()).toBe('wheels');
+    expect(view.result.current.mode).toBe('wheels');
     expect(onError).not.toHaveBeenCalled();
     view.unmount();
   });
