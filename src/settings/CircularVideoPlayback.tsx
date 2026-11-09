@@ -247,6 +247,8 @@ export function CircularVideoPlayback({
         onPause={() => { if (aliveRef.current) setPlaying(false); }}
         onEnded={() => {
           if (aliveRef.current) {
+            // Invalidate an unresolved play() attempt before collapsing to Preview.
+            playGenerationRef.current += 1;
             setPlaying(false);
             setCurrentTime(0);
             const video = videoRef.current;
