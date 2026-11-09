@@ -1,0 +1,8 @@
+{
+  "ID": "MezfitMvpDirectMedia",
+  "AllowedOrigins": ["https://REPLACE-WITH-ACTUAL-MINI-APP-HOST"],
+  "AllowedMethods": ["PUT", "GET", "HEAD"],
+  "AllowedHeaders": ["Content-Type", "If-None-Match", "Range"],
+  "ExposeHeaders": ["Content-Range", "Accept-Ranges", "ETag"],
+  "MaxAgeSeconds": 300
+}
