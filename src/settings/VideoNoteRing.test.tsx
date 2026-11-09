@@ -15,7 +15,8 @@ describe('Telegram-style video-note ring', () => {
     expect(screen.getByRole('img', { name: 'Прогресс записи видеокружка' })).toBeTruthy();
     expect(container.querySelector('.video-note-ring--recording')).toBeTruthy();
     expect(container.querySelector('.video-note-playback__marker')).toBeNull();
-    expect(container.querySelector('.video-note-ring__progress')?.getAttribute('stroke-dasharray')).toMatch(/^105/);
+    const dash = container.querySelector('.video-note-ring__progress')?.getAttribute('stroke-dasharray');
+    expect(Number(dash?.split(' ')[0])).toBeCloseTo(2 * Math.PI * 48.2 * 0.35);
   });
 
   it('keeps the marker on the paused inset ring, but hides it during playback', () => {
