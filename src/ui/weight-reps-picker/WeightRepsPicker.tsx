@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Button as KonstaButton } from 'konsta/react';
+import { DEFAULT_WEIGHT_REPS_PICKER_MODE, type WeightRepsPickerMode } from '../../../shared/weight-reps-picker-mode';
 import { loadBrowserGlassSettings } from '../../glassSettings';
 import { FloatingActionButton } from '../components';
 import { Icon, type UiIconName } from '../Icon';
@@ -21,7 +22,6 @@ import {
 } from '../weight-picker/weightUnits';
 import './weight-reps-picker.css';
 
-type PickerMode = 'numbers' | 'wheels';
 const REPS_VALUES = Array.from({ length: 101 }, (_, index) => index);
 
 type NumericField = 'reps' | 'kilograms';
@@ -73,11 +73,19 @@ export interface WeightRepsPickerProps {
   onChange: (value: WeightRepsPickerValue, filledFields?: WeightRepsPickerFields) => void;
   onClose: () => void;
   target: HTMLElement | null;
+  /** Optional controlled mode; the UI Kit still works independently without it. */
+  mode?: WeightRepsPickerMode;
+  onModeChange?: (mode: WeightRepsPickerMode) => void;
 }
 
 export function WeightRepsPicker(props: WeightRepsPickerProps) {
-  const [mode, setMode] = useState<PickerMode>('numbers');
-  return props.opened ? <WeightRepsPickerSession {...props} mode={mode} onModeChange={setMode} /> : null;
+  const [localMode, setLocalMode] = useState<WeightRepsPickerMode>(DEFAULT_WEIGHT_REPS_PICKER_MODE);
+  const mode = props.mode ?? localMode;
+  const changeMode = (next: WeightRepsPickerMode) => {
+    if (props.mode === undefined) setLocalMode(next);
+    props.onModeChange?.(next);
+  };
+  return props.opened ? <WeightRepsPickerSession {...props} mode={mode} onModeChange={changeMode} /> : null;
 }
 
 function WeightRepsPickerSession({
@@ -89,7 +97,7 @@ function WeightRepsPickerSession({
   target,
   mode,
   onModeChange,
-}: WeightRepsPickerProps & { mode: PickerMode; onModeChange: (mode: PickerMode) => void }) {
+}: WeightRepsPickerProps & { mode: WeightRepsPickerMode; onModeChange: (mode: WeightRepsPickerMode) => void }) {
   // Explicit picker-session draft: publish once on close, never on scroll.
   const [value, setValue] = useState(initialValue);
   const valueRef = useRef(initialValue);

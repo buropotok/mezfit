@@ -4,6 +4,7 @@ import { Button as KonstaButton, List, Toast } from 'konsta/react';
 import { SET_TYPES, SET_TYPE_LABELS, type SetType } from '../../shared/set-type';
 import { BadgeChoice, Divider, IconButton, MezfitAutosizeTextarea, MezfitBottomSheet, MezfitDialog, MezfitDialogButton, MezfitSlider, Text, WeightRepsPicker } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
+import { useWeightRepsPickerMode } from './useWeightRepsPickerMode';
 import { hasSetMeasurements, sameSetEntryDraft, createSetEntryDraft, type SetEntryFactDraft, type SetEntryProps } from './setEntryTypes';
 import { SetEntryChatButton } from './SetEntryChatButton';
 import { WorkoutBandControl } from './WorkoutBandControl';
@@ -43,6 +44,7 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
   const initialDraft = useRef(draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { mode: pickerMode, ready: pickerModeReady, onModeChange: changePickerMode } = useWeightRepsPickerMode(setError);
   useEffect(() => {
     if (!error) return;
     const timer = window.setTimeout(() => setError(''), 4000);
@@ -256,7 +258,8 @@ export function SetEntryWeightReps(props: WeightRepsSetEntryProps) {
         }}><Text variant="body">Нет</Text></MezfitDialogButton>
         <MezfitDialogButton strong disabled={saving} onClick={() => { void saveEntry(); }}><Text variant="body">Да</Text></MezfitDialogButton>
       </>} />, portalHost)}
-    {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker && !saving}
+    {createPortal(<WeightRepsPicker opened={pickerOpened && validPicker && !saving && pickerModeReady}
+      mode={pickerMode} onModeChange={changePickerMode}
       emptyFields={{
         reps: draft.metrics.reps === null && (props.data.plan?.reps == null || repsFallback),
         weightKg: draft.metrics.weightKg === null && (props.data.plan?.weightKg == null || weightFallback),

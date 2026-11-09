@@ -158,3 +158,15 @@ allows only override_* keys for the Coach's Client in that confirmed pair; ordin
 peer profile writes remain forbidden. Existing server grants and shared visibility
 are unchanged. No schema, ACL, physical deletion or custom transport is added.
 See user-profile.md for the exact semantics and limits.
+
+## Weight/repetitions picker mode
+
+The shared UI Kit WeightRepsPicker accepts an optional controlled mode but owns no
+persistent storage. Set entry restores the actor's `picker_weight_reps_mode`
+preference from the personal `user` realm through
+`WeightRepsPickerPreferencesRepository`. The value `wheels` selects the three
+wheel controls; a missing, null, or unrecognized string falls back to `numbers`
+(the numeric-entry controls). Returning to `numbers` persists a null reset.
+Switching mode updates the UI immediately and serializes local writes so the
+last choice wins. Dexie Cloud Addon owns multi-device replication. This preference
+does not alter a set's PLAN, FACT, measurements, or any sharing/authorization rule.
