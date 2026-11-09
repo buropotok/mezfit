@@ -46,6 +46,21 @@ describe('voice message bubble player', () => {
     expect(formatVoiceDuration(Number.NaN)).toBe('00:00');
   });
 
+  it('does not pause a fresh audio, but stops the old clip when the source changes', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause');
+    const { rerender } = render(
+      <VoiceMessagePlayer src="blob:first" durationMs={2000} waveform={[0.5]} />,
+    );
+    expect(pause).not.toHaveBeenCalled();
+
+    const audio = screen.getByLabelText('Аудиозапись') as HTMLAudioElement;
+    Object.defineProperty(audio, 'paused', { configurable: true, value: false });
+    rerender(<VoiceMessagePlayer src="blob:second" durationMs={3000} waveform={[0.3]} />);
+    expect(pause).toHaveBeenCalledOnce();
+    expect(screen.getByText('00:03')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Воспроизвести голосовое сообщение' })).toBeTruthy();
+  });
+
   it('shows large play/pause, real waveform and elapsed progress inside the bubble content', async () => {
     const { container, audio, play, pause } = renderPlayer();
     expect(screen.getByText('00:04')).toBeTruthy();
