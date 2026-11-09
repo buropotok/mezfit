@@ -42,7 +42,10 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
   useEffect(() => {
     // A virtualized message bubble may reuse the component for a different clip.
     generationRef.current += 1;
-    audioRef.current?.pause();
+    // A fresh <audio> is already paused. Stop only a clip that was playing:
+    // pausing on the initial mount is redundant and can emit spurious events.
+    const audio = audioRef.current;
+    if (audio && !audio.paused) audio.pause();
     setPosition(0);
     setPlaying(false);
     setDuration(Math.max(0, durationMs / 1000));
