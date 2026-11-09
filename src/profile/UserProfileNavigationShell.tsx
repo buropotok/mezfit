@@ -6,6 +6,7 @@ import { Button, Text } from '../ui';
 import { ProfileWorkspace, type ProfileTab } from './ProfileWorkspace';
 import { ProfileWorkoutTimeline } from './ProfileWorkoutTimeline';
 import { ClientProgramsPage } from '../client/ClientProgramsPage';
+import { ClientPerformedExercisesPage } from './ProfilePerformedExercisesPage';
 import type { NavigationContext } from '../NavigationShell';
 import { UserProfileSyncStatus } from './UserProfilePublicationProvider';
 import { UserAvatarEditor } from './UserAvatarEditor';
@@ -103,8 +104,11 @@ export function UserProfileNavigationShell({
     context={showingProfile && profileNavigation ? profileNavigation : props.context}>
     {showingProfile ? <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
       onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
-      programContent={clientProfile && tab === 'program' ? <div className="stack"><Text variant="body">Ваши активные программы</Text>
-        <ClientProgramsPage actor={actor} activeOnly onNavigationContextChange={setProfileNavigation} /></div> : null}
+      hideTabs={clientProfile && tab === 'exercises' && profileNavigation !== null}
+      programContent={clientProfile && tab === 'program' ? <ClientProgramsPage actor={actor}
+        onNavigationContextChange={setProfileNavigation} /> : null}
+      exercisesContent={clientProfile && tab === 'exercises' ? <ClientPerformedExercisesPage
+        key={cloud?.actorUserId} onDetailNavigationChange={setProfileNavigation} /> : null}
       calendarContent={clientProfile && tab === 'calendar' ? <ProfileWorkoutTimeline mode="plan" role="client"
         initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
       historyContent={clientProfile && tab === 'history' ? <ProfileWorkoutTimeline mode="history" role="client"
