@@ -55,3 +55,106 @@
   overflow-wrap: anywhere;
   text-align: center;
 }
+
+/* Video-note media controls are content owned by the player, not UIkit Button geometry. */
+.video-note-playback {
+  position: absolute;
+  inset: 0;
+}
+
+.video-note-playback__tap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.video-note-playback__tap:focus-visible {
+  outline: 3px solid var(--ui-color-primary);
+  outline-offset: -10px;
+}
+
+.video-note-playback__play-glyph {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.34);
+  position: relative;
+  pointer-events: none;
+}
+
+.video-note-playback__play-glyph::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 19px;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-left: 17px solid #fff;
+}
+
+.video-note-playback__timeline {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.video-note-playback__timeline:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: -8px;
+  border-radius: 50%;
+}
+
+.video-note-playback__track,
+.video-note-playback__progress {
+  fill: none;
+  stroke-width: 2;
+}
+
+.video-note-playback__track {
+  stroke: rgba(255, 255, 255, 0.48);
+}
+
+.video-note-playback__progress {
+  stroke: var(--ui-color-primary);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.video-note-playback__marker {
+  fill: var(--ui-color-primary);
+  stroke: #fff;
+  stroke-width: 0.65;
+}
+
+.video-note-playback__seek-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 7;
+  pointer-events: stroke;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.video-note-playback__timeline[aria-disabled='true'] .video-note-playback__seek-hit {
+  pointer-events: none;
+}
