@@ -64,6 +64,10 @@ describe('anonymous direct media upload', () => {
       .mockResolvedValueOnce(new Response(
         '<Error><Code>AccessDenied</Code><Message>Denied for https://example.com/private/key</Message></Error>',
         { status: 403 },
+      ))
+      .mockResolvedValueOnce(new Response(
+        `<Error><Code>NoSuchKey</Code><Message>Object ${'a'.repeat(64)} not found</Message></Error>`,
+        { status: 404 },
       ));
     vi.stubGlobal('fetch', put);
     await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
@@ -71,6 +75,9 @@ describe('anonymous direct media upload', () => {
     });
     await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
       code: 'HTTP', status: 403, s3Code: 'AccessDenied', s3Message: undefined,
+    });
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 404, s3Code: 'NoSuchKey', s3Message: undefined,
     });
   });
 
