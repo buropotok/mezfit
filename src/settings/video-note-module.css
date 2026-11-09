@@ -15,6 +15,15 @@
   border: 1px solid var(--ui-color-border, rgba(255, 255, 255, 0.18));
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
+  transition: width 460ms cubic-bezier(.19, 1.27, .32, 1);
+  will-change: width;
+}
+
+.video-note-module__circle--preview {
+  /* A compact in-chat-style first frame, half the usable Telegram width. */
+  width: calc((100vw - 24px) / 2);
+  width: calc((100dvw - 24px) / 2);
+  max-width: none;
 }
 
 .video-note-module__circle--expanded {
@@ -67,6 +76,11 @@
 .video-note-playback {
   position: absolute;
   inset: 0;
+}
+
+.video-note-playback--preview {
+  /* No ring or glyph, but the whole video remains an accessible tap target. */
+  touch-action: manipulation;
 }
 
 .video-note-playback--paused {
@@ -203,6 +217,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .video-note-module__circle { transition: none; }
   .video-note-ring,
   .video-note-playback__marker {
     transition: none;
