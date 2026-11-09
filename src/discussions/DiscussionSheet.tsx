@@ -89,7 +89,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [mediaMode, setMediaMode] = useState<'microphone' | 'camera'>('microphone');
-  const actionMode = text.trim() ? 'send' : mediaMode;
+  const actionMode = editId !== null || Boolean(text.trim()) ? 'send' : mediaMode;
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
   const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
   const [receiptError, setReceiptError] = useState(false);
@@ -466,7 +466,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
         <IconButton label={actionMode === 'send' ? (editId ? 'Сохранить' : 'Отправить')
           : actionMode === 'microphone' ? 'Переключить на кружок' : 'Переключить на голосовое'}
-          disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
+          disabled={busy || !draft.ready || !state.title || Boolean(state.error) || (actionMode === 'send' && !text.trim())}
           onClick={actionMode === 'send' ? submit : () => setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone')}>
           <DiscussionActionIcon mode={actionMode} />
         </IconButton>
