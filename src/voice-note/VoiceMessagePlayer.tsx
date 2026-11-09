@@ -40,6 +40,9 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
   }, []);
 
   useEffect(() => {
+    // A virtualized message bubble may reuse the component for a different clip.
+    generationRef.current += 1;
+    audioRef.current?.pause();
     setPosition(0);
     setPlaying(false);
     setDuration(Math.max(0, durationMs / 1000));
@@ -109,7 +112,12 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
   const bars = waveform.length > 0 ? waveform : Array.from({ length: 42 }, () => 0.08);
 
   return (
-    <div className="voice-message-player" role="group" aria-label="Голосовое сообщение">
+    <div
+      className="voice-message-player"
+      role="group"
+      aria-label="Голосовое сообщение"
+      onClick={(event) => event.stopPropagation()}
+    >
       <audio
         ref={audioRef}
         src={src}
@@ -141,6 +149,7 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
         label={playing ? 'Приостановить голосовое сообщение' : 'Воспроизвести голосовое сообщение'}
         color="gray"
         selected
+        aria-pressed={playing}
         onClick={() => void toggle()}
       >
         {playing ? (
