@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Text } from '../ui';
-import { MezfitMessage } from '../ui/konsta-mezfit/Message';
+import { MezfitMessage } from '../ui/konsta-mezfit';
 import { VoiceMessagePlayer } from '../voice-note/VoiceMessagePlayer';
 import { useVoiceRecorder, type VoiceRecording } from '../voice-note/useVoiceRecorder';
 
