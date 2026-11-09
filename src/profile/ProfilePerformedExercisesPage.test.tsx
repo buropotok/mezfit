@@ -63,8 +63,8 @@ it('uses the athlete-wide FACT read while retaining the Coach exercise page and 
   expect(probes.own).toHaveBeenCalledOnce();
   expect(probes.scoped).not.toHaveBeenCalled();
   expect(screen.getByText('Radar')).toBeTruthy();
-  expect(screen.getByRole('button', { name: /Жим лёжа/ })).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
+  expect(screen.getByRole('button', { name: /^Жим лёжа 1 раз$/ })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /^Жим лёжа 1 раз$/ }));
   expect(screen.getByText('Статистика упражнения')).toBeTruthy();
   expect(navigation).toHaveBeenCalledWith(expect.objectContaining({
     title: 'Жим лёжа', scrollKey: 'client-exercise:tg:202:public::press',
