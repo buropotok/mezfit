@@ -36,7 +36,7 @@ function renderPicker(lensMode: 'ios' | 'displacement') {
 }
 
 describe('WheelPicker iOS cylinder edge rendering', () => {
-  it('reuses a single SVG wheel source in the flat core and 24 edge strips', () => {
+  it('reuses a single SVG wheel source in the flat core and 16 edge strips', () => {
     const lens = renderPicker('ios');
     expect(lens).not.toBeNull();
     const source = lens?.querySelector('[data-ui-picker-lens-source]');
@@ -44,11 +44,11 @@ describe('WheelPicker iOS cylinder edge rendering', () => {
     const strips = Array.from(lens?.querySelectorAll('[data-ui-picker-lens-edge]') ?? []);
     expect(source).not.toBeNull();
     expect(core).not.toBeNull();
-    expect(strips).toHaveLength(24);
+    expect(strips).toHaveLength(16);
     expect(strips.filter(strip => strip.getAttribute('data-ui-picker-lens-edge') === 'top'))
-      .toHaveLength(12);
+      .toHaveLength(8);
     expect(strips.filter(strip => strip.getAttribute('data-ui-picker-lens-edge') === 'bottom'))
-      .toHaveLength(12);
+      .toHaveLength(8);
 
     const href = `#${source?.id}`;
     expect(core?.querySelector('use')?.getAttribute('href')).toBe(href);
