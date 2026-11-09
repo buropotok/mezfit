@@ -190,7 +190,7 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
 
   const progress = boundedFraction(currentTime / duration);
   return (
-    <div className="video-note-playback">
+    <div className={`video-note-playback${playing ? "" : " video-note-playback--paused"}`}>
       <video
         ref={videoRef}
         className="video-note-module__video"
