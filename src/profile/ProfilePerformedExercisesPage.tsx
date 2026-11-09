@@ -83,17 +83,17 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     setFacts([]);
     setError('');
     const onChange = (rows: ClientExerciseFact[]) => {
-        if (!active) return;
-        setFacts(rows);
-        setLoading(false);
-        setError('');
-      };
+      if (!active) return;
+      setFacts(rows);
+      setLoading(false);
+      setError('');
+    };
     const onError = (reason: unknown) => {
-        if (!active) return;
-        setFacts([]);
-        setLoading(false);
-        setError(reason instanceof Error ? reason.message : 'Не удалось загрузить упражнения');
-      };
+      if (!active) return;
+      setFacts([]);
+      setLoading(false);
+      setError(reason instanceof Error ? reason.message : 'Не удалось загрузить упражнения');
+    };
     const subscription = client
       ? repository.observeClientExerciseFacts(client.userId, client.relationshipId, onChange, onError)
       : repository.observeOwnExerciseFacts(onChange, onError);
