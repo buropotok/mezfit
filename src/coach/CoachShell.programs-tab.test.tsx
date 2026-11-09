@@ -62,7 +62,8 @@ describe('CoachShell selected client program navigation', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Программа' }));
     expect(screen.getByText(client.relationshipId)).toBeTruthy();
-    expect(screen.getByText('Без общего фильтра')).toBeTruthy();
+    // The profile now reuses the full Programs screen: filters are intentionally visible.
+    expect(screen.getByText('С фильтром')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: plan.name }));
 
     const details = screen.getByRole('region', { name: 'Детали программы' });

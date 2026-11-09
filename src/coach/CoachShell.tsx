@@ -20,7 +20,6 @@ import { CLOUD_ASSIGNED_PROGRAMS_ENABLED } from '../data/cloud/pilot-activation'
 import { CoachExercises } from '../exercises/CoachExercises';
 import { ProgramDetailsPage } from './ProgramDetailsPage';
 import { CloudProgramsPage } from '../program/CloudProgramsPage';
-import type { ProgramControls } from '../program/ProgramToolbar';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
@@ -28,10 +27,6 @@ import { CLOUD_PROGRAM_MANAGEMENT_ENABLED } from '../data/cloud/program-manageme
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import { TodayPage } from '../schedule/TodayPage';
 import { ProgramsPage, type ProgramCreationDraft } from './ProgramsPage';
-
-const activeClientPrograms: ProgramControls = {
-  filter: 'active', onFilterChange: () => {}, search: '', onSearchChange: () => {},
-};
 
 const coachPlaceholderCopy: Partial<Record<AppDestination, { title: string; text: string }>> = {
   analytics: { title: 'Аналитика', text: 'Здесь появятся аналитика клиентов, тренировок и нагрузки.' },
@@ -327,7 +322,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     }
     const programContent = CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository
       ? <CloudProgramsPage repository={programRepository} clients={[selectedClient]}
-        clientScope={selectedClient} hideToolbar controls={activeClientPrograms}
+        clientScope={selectedClient}
         onOpen={(plan) => {
           setClientProgramDetailNavigation(null);
           setClientSelectedProgram(plan);
@@ -345,9 +340,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
         relationshipId={selectedClient.relationshipId} onNavigationContextChange={setClientDiscussionNavigation} /> : null}
       onTabChange={tab => { setClientTab(tab); setClientWorkoutNavigation(null); }}
-      programContent={clientTab === 'program' ? <div className="stack">
-        <Text variant="body">Активные программы клиента</Text>{programContent}
-      </div> : null}
+      programContent={clientTab === 'program' ? programContent : null}
       calendarContent={clientTab === 'calendar' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':plan'}
         mode="plan" role="coach" contact={selectedClient} actor={actor} initData={initData}
         onNavigationContextChange={setClientWorkoutNavigation} /> : null}
