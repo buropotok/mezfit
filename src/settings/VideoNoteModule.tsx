@@ -115,14 +115,16 @@ export function VideoNoteModule() {
   useEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
+    let disposed = false;
     if (stage === 'ready' || stage === 'recording' || stage === 'processing') {
       preview.srcObject = streamRef.current;
       void preview.play().catch(() => {
-        if (mounted.current) setError('Автовоспроизведение камеры заблокировано. Проверьте настройки Telegram.');
+        if (!disposed && mounted.current) setError('Автовоспроизведение камеры заблокировано. Проверьте настройки Telegram.');
       });
     } else {
       preview.srcObject = null;
     }
+    return () => { disposed = true; };
   }, [stage]);
 
   const openCamera = async (nextFacing: FacingMode) => {
