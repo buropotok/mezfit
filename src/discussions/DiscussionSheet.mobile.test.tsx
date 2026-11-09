@@ -44,7 +44,7 @@ describe('COMM-05 mobile presentation', () => {
     expect(row?.querySelector('.discussion-message-meta .ui-text--caption')).not.toBeNull();
     expect(row?.querySelector('.discussion-quote .ui-text--footnote')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Добавить вложение (пока недоступно)' })).toHaveProperty('disabled', true);
-    expect(screen.getByRole('button', { name: 'Отправить' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Переключить на кружок' })).toBeTruthy();
     const composer = view.container.querySelector('.discussion-composer');
     expect(composer).not.toBeNull();
     expect(composer?.classList.contains('ui-glass-surface')).toBe(false);
@@ -55,6 +55,26 @@ describe('COMM-05 mobile presentation', () => {
     expect(composer?.querySelector('.discussion-composer__field.ui-glass-surface .ui-mezfit-messagebar--bare')).not.toBeNull();
     expect(composer?.querySelectorAll(':scope > .discussion-composer__button.ui-glass-surface')).toHaveLength(2);
     expect(composer?.querySelectorAll('.discussion-composer__button > .ui-icon-button')).toHaveLength(2);
+  });
+
+  it('morphs microphone, camera and send while preserving the last media mode', async () => {
+    const options = props();
+    const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet {...options} /></KonstaProvider>);
+    await screen.findByText('Доброе утро! Как прошла тренировка по новой программе?');
+    const microphone = screen.getByRole('button', { name: 'Переключить на кружок' });
+    expect(microphone.querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 24 24');
+    expect(microphone.querySelectorAll('svg path')).toHaveLength(1);
+    await waitFor(() => expect((microphone as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(microphone);
+    expect(screen.getByRole('button', { name: 'Переключить на голосовое' })).toBeTruthy();
+    const input = screen.getByPlaceholderText('Сообщение');
+    fireEvent.change(input, { target: { value: 'Текст' } });
+    expect(screen.getByRole('button', { name: 'Отправить' })).toBeTruthy();
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByRole('button', { name: 'Переключить на голосовое' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Переключить на голосовое' }));
+    expect(screen.getByRole('button', { name: 'Переключить на кружок' })).toBeTruthy();
+    expect(view.container.querySelectorAll('.discussion-composer__button > .ui-icon-button')).toHaveLength(2);
   });
 
   it('uses the same sheet for author mode and preserves multiline drafts', async () => {
