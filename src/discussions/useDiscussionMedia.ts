@@ -78,11 +78,15 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     const controller = new AbortController();
     active.current = controller;
     interrupted.current = document.visibilityState === 'hidden' || navigator.onLine === false;
-    let command: DiscussionMessageInput | undefined;
+    let command: DiscussionMessageInput | null = null;
     setError(undefined); setPhase('uploading');
     try {
       command = await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' });
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
+      if (!command) {
+        if (active.current === controller) { setSelection(undefined); setPhase('idle'); }
+        return;
+      }
       const result = await uploadDirectMedia(selected.file, { signal: controller.signal, retryKey: selected.metadata.storageKey });
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;

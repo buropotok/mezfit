@@ -166,6 +166,22 @@
   object-fit: contain;
 }
 
+.discussion-media:not(.discussion-media--preview) {
+  position: relative;
+  aspect-ratio: 4 / 3;
+}
+
+.discussion-media:not(.discussion-media--preview) > :is(img, video, .discussion-media__error) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.discussion-media__error {
+  overflow: auto;
+}
+
 .discussion-media--preview {
   width: min(7rem, 30vw);
   flex-shrink: 0;

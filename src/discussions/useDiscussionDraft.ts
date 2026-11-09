@@ -34,7 +34,8 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
       if (alive.current && current.current === input) setError(null);
     }, reason => {
       if (reason instanceof Error && reason.message === 'DISCUSSION_ID_REUSED') {
-        rebase(input.id); return;
+        if (!input.draftMedia && !current.current?.draftMedia) rebase(input.id);
+        return;
       }
       if (alive.current && current.current === input) setError('Не удалось сохранить черновик');
     });
@@ -48,12 +49,31 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     if (alive.current) { setText(replacement.text); setReplyId(replacement.replyToMessageId ?? null); setMedia(undefined); }
     persist(replacement);
   }
+  function sent(id: string) {
+    if (current.current?.id !== id) return;
+    current.current = null;
+    if (alive.current) { setText(''); setReplyId(null); setError(null); setMedia(undefined); }
+  }
   return {
     text, replyId, ready, error, media,
-    async stageMedia(attachment: DiscussionMediaDraft): Promise<DiscussionMessageInput> {
+    async stageMedia(attachment: DiscussionMediaDraft): Promise<DiscussionMessageInput | null> {
       const input = { ...(current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
         draftMedia: attachment };
-      await repository.saveDraft(input);
+      try {
+        await repository.saveDraft(input);
+      } catch (reason) {
+        if (!(reason instanceof Error) || reason.message !== 'DISCUSSION_ID_REUSED') throw reason;
+        // Dexie can receive the message before its attachment. Keep the draft
+        // retryable until both records confirm this exact publication.
+        const published = await repository.getMessage(threadId, input.id);
+        if (published.deleted || published.authorUserId !== repository.actorUserId
+          || !published.attachments?.some(row => row.id === attachment.id && row.storageKey === attachment.storageKey)) throw reason;
+        const latest = current.current;
+        if (latest?.id === input.id && (latest.text !== published.text
+          || latest.replyToMessageId !== published.reply?.messageId)) rebase(input.id);
+        else sent(input.id);
+        return null;
+      }
       current.current = input;
       if (alive.current) setMedia(attachment);
       return { ...input, requireUnsentDraft: true };
@@ -76,11 +96,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
       return { ...current.current, createdAt: new Date().toISOString(), requireUnsentDraft: true };
     },
     rebase,
-    sent(id: string) {
-      if (current.current?.id !== id) return;
-      current.current = null;
-      if (alive.current) { setText(''); setReplyId(null); setError(null); setMedia(undefined); }
-    },
+    sent,
     retry() {
       if (!ready) setReload(value => value + 1);
       else if (current.current) persist(current.current);
