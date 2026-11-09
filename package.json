@@ -23,6 +23,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "dexie": "4.4.6",
     "dexie-cloud-addon": "4.4.15",
+    "gsap": "3.15.1",
     "konsta": "5.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
