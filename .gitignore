@@ -8,3 +8,5 @@ dist/
 
 # Built once from immutable approved full-quality color-atlas chunks.
 /public/anatomy/front/color-atlas.png
+
+.yandex-media-package/
