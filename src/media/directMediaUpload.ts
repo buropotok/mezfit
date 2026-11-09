@@ -45,9 +45,11 @@ async function readS3Error(response: Response): Promise<{ s3Code?: string; s3Mes
     };
     const code = field('Code');
     const message = field('Message');
+    const safeCode = code && /^[A-Za-z][A-Za-z0-9]{0,63}$/.test(code) ? code : undefined;
     return {
-      s3Code: code && /^[A-Za-z][A-Za-z0-9]{0,63}$/.test(code) ? code : undefined,
-      s3Message: message && message.length <= 160 && !/[\u0000-\u001f<>/?&=\\@]/.test(message)
+      s3Code: safeCode,
+      s3Message: safeCode && message && message.length <= 160
+        && !/[\u0000-\u001f<>/?&=\\@]/.test(message) && !/[A-Za-z0-9_-]{32,}/.test(message)
         ? message : undefined,
     };
   } catch {
