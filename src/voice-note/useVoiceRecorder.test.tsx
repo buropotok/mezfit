@@ -48,6 +48,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   if (mediaDevicesDescriptor) Object.defineProperty(navigator, 'mediaDevices', mediaDevicesDescriptor);
@@ -80,6 +81,38 @@ describe('useVoiceRecorder', () => {
     await act(async () => expect(await result.current.stop()).not.toBeNull());
     expect(getUserMedia).toHaveBeenCalledOnce();
     expect(media.track.stop).not.toHaveBeenCalled();
+
+    unmount();
+    expect(media.track.stop).toHaveBeenCalledOnce();
+  });
+
+  it('stores measured waveform peaks from the real-time microphone analyser', async () => {
+    const media = fakeAudioStream();
+    getUserMedia.mockResolvedValue(media.stream);
+    vi.stubGlobal('AudioContext', class {
+      state = 'running';
+      createMediaStreamSource() { return { connect: () => undefined }; }
+      createAnalyser() {
+        return {
+          fftSize: 512,
+          getByteTimeDomainData: (values: Uint8Array) => {
+            values.fill(128);
+            values[0] = 214; // Nonzero measured PCM deviation.
+          },
+        };
+      }
+      resume() { return Promise.resolve(); }
+      close() { return Promise.resolve(); }
+    });
+    vi.useFakeTimers();
+    const { result, unmount } = renderHook(() => useVoiceRecorder());
+
+    await act(async () => expect(await result.current.start()).toBe(true));
+    act(() => vi.advanceTimersByTime(430));
+    let clip: VoiceRecording | null = null;
+    await act(async () => { clip = await result.current.stop(); });
+    expect((clip as unknown as VoiceRecording).waveform).toHaveLength(42);
+    expect((clip as unknown as VoiceRecording).waveform.every((bar) => bar > 0)).toBe(true);
 
     unmount();
     expect(media.track.stop).toHaveBeenCalledOnce();
