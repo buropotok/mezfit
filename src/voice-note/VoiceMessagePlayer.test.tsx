@@ -86,6 +86,21 @@ describe('voice message bubble player', () => {
     expect(new Set(Array.from(bars, (bar) => bar.getAttribute('height'))).size).toBe(1);
   });
 
+  it('keeps play and seek taps inside the bubble instead of opening the message menu', () => {
+    const onBubbleClick = vi.fn();
+    render(
+      <div onClick={onBubbleClick}>
+        <VoiceMessagePlayer src="blob:voice" waveform={[0.1, 0.6]} durationMs={3000} />
+      </div>,
+    );
+    const audio = screen.getByLabelText('Аудиозапись') as HTMLAudioElement;
+    vi.spyOn(audio, 'play').mockResolvedValue();
+    fireEvent.click(screen.getByRole('button', { name: 'Воспроизвести голосовое сообщение' }));
+    expect(onBubbleClick).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('slider', { name: 'Перемотка голосового сообщения' }));
+    expect(onBubbleClick).not.toHaveBeenCalled();
+  });
+
   it('does not report an obsolete playback failure after unmount', async () => {
     const { unmount, audio, onError } = renderPlayer();
     let rejectPlay: ((cause: Error) => void) | undefined;
