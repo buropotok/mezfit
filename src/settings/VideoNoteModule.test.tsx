@@ -68,18 +68,17 @@ afterEach(() => {
 });
 
 describe('VideoNoteModule', () => {
-  it('requests permission once across several takes, and stops media only on reset', async () => {
+  it('starts recording with one tap, reuses permission for retakes and stops only on reset', async () => {
     render(<VideoNoteModule />);
     expect(getUserMedia).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Завершить запись' })).toBeTruthy());
     expect(getUserMedia).toHaveBeenCalledWith(expect.objectContaining({ audio: expect.any(Object) }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
     expect(screen.getByText(/Запись: .*\/ 60 сек/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
-    expect(screen.getByRole('button', { name: 'Воспроизвести' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
     expect(createObjectURL).toHaveBeenCalledOnce();
     // The old requirement to stop tracks after every clip is intentionally retired:
     // reusing the same live MediaStream avoids re-requesting Telegram permissions.
@@ -87,26 +86,28 @@ describe('VideoNoteModule', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Записать заново' }));
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:video-note');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Завершить запись' })).toBeTruthy());
     expect(getUserMedia).toHaveBeenCalledTimes(1);
     expect(trackStop).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
     fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
     expect(getUserMedia).toHaveBeenCalledTimes(1);
     expect(trackStop).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить' }));
     expect(trackStop).toHaveBeenCalledOnce();
-    expect(screen.getByRole('button', { name: 'Включить камеру' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Записать кружок' })).toBeTruthy();
   });
 
   it('switching cameras releases the old stream and acquires the requested facing mode', async () => {
     render(<VideoNoteModule />);
-    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Завершить запись' })).toBeTruthy());
 
+    fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
+    expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Сменить камеру' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать заново' }));
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
     expect(trackStop).toHaveBeenCalledOnce();
     expect(getUserMedia).toHaveBeenLastCalledWith(expect.objectContaining({
@@ -116,9 +117,8 @@ describe('VideoNoteModule', () => {
 
   it('releases the retained camera and recorded clip on unmount during review', async () => {
     const { unmount } = render(<VideoNoteModule />);
-    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
-    fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Завершить запись' })).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
     expect(trackStop).not.toHaveBeenCalled();
 
@@ -130,7 +130,7 @@ describe('VideoNoteModule', () => {
   it('rejects unsupported video APIs without asking for camera access', () => {
     vi.stubGlobal('MediaRecorder', undefined);
     render(<VideoNoteModule />);
-    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
     expect(screen.getByRole('alert').textContent).toMatch(/не поддерживает/);
     expect(getUserMedia).not.toHaveBeenCalled();
   });
@@ -141,7 +141,7 @@ describe('VideoNoteModule', () => {
       resolveStream = resolve;
     }));
     const { unmount } = render(<VideoNoteModule />);
-    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать кружок' }));
     unmount();
     await act(async () => {
       resolveStream?.(fakeStream());
@@ -154,7 +154,7 @@ describe('VideoNoteModule', () => {
     render(<SettingsPage onNavigationContextChange={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
     const module = screen.getByRole('region', { name: 'Видеокружок' });
-    expect(within(module).getByRole('button', { name: 'Включить камеру' })).toBeTruthy();
+    expect(within(module).getByRole('button', { name: 'Записать кружок' })).toBeTruthy();
     expect(getUserMedia).not.toHaveBeenCalled();
   });
 });
