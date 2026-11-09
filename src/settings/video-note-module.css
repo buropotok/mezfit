@@ -144,7 +144,7 @@
 /* Live playback and recording sit on the extreme edge. Pausing scales the
    entire timeline (including the touch target) inward with a slight spring. */
 .video-note-ring {
-  transform-origin: 50px 50px;
+  transform-origin: 50% 50%;
   transform-box: view-box;
   transform: scale(1);
   transition: transform 520ms cubic-bezier(.19, 1.38, .34, 1);
