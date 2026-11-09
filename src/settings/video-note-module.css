@@ -69,6 +69,13 @@
   inset: 0;
 }
 
+.video-note-playback--paused {
+  /* In WebKit the ancestor constraint protects marker drags even if a narrow
+     SVG child is missed by the first touch sample. */
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
 .video-note-playback__tap {
   position: absolute;
   inset: 0;
