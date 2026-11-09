@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Text } from '../ui';
 import { CircularVideoPlayback } from './CircularVideoPlayback';
+import { VideoNoteRecordingRing } from './VideoNoteRing';
 import './video-note-module.css';
 
 const MAX_RECORDING_MS = 60_000;
@@ -47,6 +48,7 @@ export function VideoNoteModule() {
   const [stage, setStage] = useState<CaptureStage>('idle');
   const [facing, setFacing] = useState<FacingMode>('user');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [recordingProgress, setRecordingProgress] = useState(0);
   const [clip, setClip] = useState<RecordedNote | null>(null);
   const [error, setError] = useState('');
 
@@ -95,6 +97,7 @@ export function VideoNoteModule() {
     stopStream();
     discardClip();
     setElapsedSeconds(0);
+    setRecordingProgress(0);
   }, [clearTick, discardClip, stopStream]);
 
   useEffect(() => {
@@ -154,7 +157,9 @@ export function VideoNoteModule() {
     const recorder = recorderRef.current;
     if (!recorder || recorder.state !== 'recording') return;
     clearTick();
-    setElapsedSeconds(Math.min(60, Math.ceil((Date.now() - startedAtRef.current) / 1000)));
+    const duration = Date.now() - startedAtRef.current;
+    setElapsedSeconds(Math.min(60, Math.ceil(duration / 1000)));
+    setRecordingProgress(Math.min(1, duration / MAX_RECORDING_MS));
     setStage('processing');
     try {
       recorder.stop();
@@ -222,11 +227,13 @@ export function VideoNoteModule() {
       };
       recorder.start(1000);
       setElapsedSeconds(0);
+      setRecordingProgress(0);
       setError('');
       setStage('recording');
       tickRef.current = window.setInterval(() => {
         const duration = Date.now() - startedAtRef.current;
         setElapsedSeconds(Math.min(60, Math.ceil(duration / 1000)));
+        setRecordingProgress(Math.min(1, duration / MAX_RECORDING_MS));
         if (duration >= MAX_RECORDING_MS && recorderRef.current === recorder) stopRecording();
       }, 250);
       deadlineRef.current = window.setTimeout(() => {
@@ -250,7 +257,10 @@ export function VideoNoteModule() {
 
   return (
     <section className="video-note-module">
-      <div className="video-note-module__circle" aria-label="Круглый видеопредпросмотр">
+      <div
+        className={`video-note-module__circle${cameraVisible || stage === 'review' ? ' video-note-module__circle--expanded' : ''}`}
+        aria-label="Круглый видеопредпросмотр"
+      >
         <video
           ref={previewRef}
           className="video-note-module__video"
@@ -272,6 +282,9 @@ export function VideoNoteModule() {
           <Text variant="footnote" tone="muted" className="video-note-module__placeholder">
             {stage === 'requesting' ? 'Подключаем камеру…' : 'Предпросмотр камеры'}
           </Text>
+        ) : null}
+        {(stage === 'recording' || stage === 'processing') ? (
+          <VideoNoteRecordingRing progress={recordingProgress} />
         ) : null}
         {stage === 'recording' ? <div className="video-note-module__recording-dot" aria-label="Идёт запись" /> : null}
       </div>

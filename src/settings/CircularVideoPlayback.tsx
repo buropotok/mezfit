@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-
-const RING_RADIUS = 46;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+import { VideoNoteRing, VIDEO_NOTE_RING_RADIUS } from './VideoNoteRing';
 
 function boundedFraction(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
@@ -69,6 +67,18 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
       window.cancelAnimationFrame(frame);
     };
   }, [playing]);
+
+  // React's delegated touch handlers may be passive in mobile WebViews.
+  // Keep the cancellation local to this seek surface, never to the page.
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return undefined;
+    const blockScrollDuringScrub = (event: TouchEvent) => {
+      if (seekingPointerRef.current !== null && event.cancelable) event.preventDefault();
+    };
+    rail.addEventListener('touchmove', blockScrollDuringScrub, { passive: false });
+    return () => rail.removeEventListener('touchmove', blockScrollDuringScrub);
+  }, []);
 
   const readDuration = (video: HTMLVideoElement) => {
     const measured = video.duration;
@@ -179,12 +189,8 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
   };
 
   const progress = boundedFraction(currentTime / duration);
-  const angle = 2 * Math.PI * progress - Math.PI / 2;
-  const markerX = 50 + RING_RADIUS * Math.cos(angle);
-  const markerY = 50 + RING_RADIUS * Math.sin(angle);
-
   return (
-    <div className="video-note-playback">
+    <div className={`video-note-playback${playing ? "" : " video-note-playback--paused"}`}>
       <video
         ref={videoRef}
         className="video-note-module__video"
@@ -237,29 +243,24 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
         tabIndex={canSeek ? 0 : -1}
         onKeyDown={handleSeekKeyDown}
       >
-        <circle className="video-note-playback__track" cx="50" cy="50" r={RING_RADIUS} />
-        <circle
-          className="video-note-playback__progress"
-          cx="50"
-          cy="50"
-          r={RING_RADIUS}
-          strokeDasharray={`${progress * RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
-          transform="rotate(-90 50 50)"
-        />
-        <circle className="video-note-playback__marker" cx={markerX} cy={markerY} r="2.25" />
-        <circle
-          className="video-note-playback__seek-hit"
-          cx="50"
-          cy="50"
-          r={RING_RADIUS}
-          onPointerDown={startScrubbing}
-          onPointerMove={(event) => {
-            if (seekingPointerRef.current === event.pointerId) seekFromPointer(event);
-          }}
-          onPointerUp={finishScrubbing}
-          onPointerCancel={cancelScrubbing}
-          onLostPointerCapture={cancelScrubbing}
-        />
+        <VideoNoteRing progress={progress} mode={playing ? 'playing' : 'paused'}>
+          <circle
+            className="video-note-playback__seek-hit"
+            cx="50"
+            cy="50"
+            r={VIDEO_NOTE_RING_RADIUS}
+            onPointerDown={startScrubbing}
+            onPointerMove={(event) => {
+              if (seekingPointerRef.current === event.pointerId) {
+                event.preventDefault();
+                seekFromPointer(event);
+              }
+            }}
+            onPointerUp={finishScrubbing}
+            onPointerCancel={cancelScrubbing}
+            onLostPointerCapture={cancelScrubbing}
+          />
+        </VideoNoteRing>
       </svg>
     </div>
   );
