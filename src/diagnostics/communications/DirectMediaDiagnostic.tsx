@@ -12,7 +12,10 @@ function describeError(error: unknown): string {
     case 'CANCELLED': return 'Загрузка отменена.';
     case 'TIMEOUT': return 'Время загрузки истекло. Можно повторить.';
     case 'NETWORK': return 'Нет ответа от хранилища. Проверьте сеть и настройки CORS.';
-    case 'HTTP': return `Хранилище отклонило загрузку (HTTP ${error.status}).`;
+    case 'HTTP': {
+      const details = [error.s3Code, error.s3Message].filter(Boolean).join(': ');
+      return `Хранилище отклонило загрузку (HTTP ${error.status}${details ? `; S3 ${details}` : ''}).`;
+    }
   }
 }
 
