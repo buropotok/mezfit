@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 describe('VideoNoteModule', () => {
-  it('requests camera and microphone only on user action, records and revokes the local clip on retake', async () => {
+  it('requests permission once across several takes, and stops media only on reset', async () => {
     render(<VideoNoteModule />);
     expect(getUserMedia).not.toHaveBeenCalled();
 
@@ -81,11 +81,50 @@ describe('VideoNoteModule', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
     expect(screen.getByRole('button', { name: 'Воспроизвести' })).toBeTruthy();
     expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(trackStop).toHaveBeenCalled();
+    // The old requirement to stop tracks after every clip is intentionally retired:
+    // reusing the same live MediaStream avoids re-requesting Telegram permissions.
+    expect(trackStop).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Записать заново' }));
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:video-note');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+    expect(trackStop).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+    expect(trackStop).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить' }));
+    expect(trackStop).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Включить камеру' })).toBeTruthy();
+  });
+
+  it('switching cameras releases the old stream and acquires the requested facing mode', async () => {
+    render(<VideoNoteModule />);
+    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сменить камеру' }));
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    expect(trackStop).toHaveBeenCalledOnce();
+    expect(getUserMedia).toHaveBeenLastCalledWith(expect.objectContaining({
+      video: { facingMode: { ideal: 'environment' } },
+    }));
+  });
+
+  it('releases the retained camera and recorded clip on unmount during review', async () => {
+    const { unmount } = render(<VideoNoteModule />);
+    fireEvent.click(screen.getByRole('button', { name: 'Включить камеру' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Начать запись' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Завершить запись' }));
+    expect(trackStop).not.toHaveBeenCalled();
+
+    unmount();
+    expect(trackStop).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:video-note');
   });
 
   it('rejects unsupported video APIs without asking for camera access', () => {
