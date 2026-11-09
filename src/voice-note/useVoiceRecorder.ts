@@ -30,7 +30,8 @@ type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext };
 
 function audioContextConstructor(): typeof AudioContext | undefined {
   if (typeof window === 'undefined') return undefined;
-  return window.AudioContext ?? (window as WebkitWindow).webkitAudioContext;
+  return (typeof AudioContext !== 'undefined' ? AudioContext : undefined)
+    ?? (window as WebkitWindow).webkitAudioContext;
 }
 
 /**
