@@ -90,6 +90,16 @@ A coach may mutate a client only when server-side authorization proves that rela
 
 Keep authorization logic auditable and avoid subtly different duplicated checks.
 
+**Owner-approved COMM-09 test exception (2026-11-09).** This section and the
+server-authorization completion criterion in §31 permit anonymous direct PUT
+and GET only for disposable media under the dedicated Yandex Object Storage
+test prefix `mvp-media/`. The typed transport in §8 may call that storage
+endpoint directly. Object URLs use cryptographically random keys and are
+readable by anyone with the link. This exception covers file bytes only.
+Application authentication, Dexie realm authorization and private objects
+retain their existing requirements. Applying cloud configuration requires
+separate owner approval after inspecting the existing bucket.
+
 ## 10. Validation and error contracts
 
 Treat JSON bodies, query/route parameters, Telegram data, and legacy persisted data as untrusted. Validate before domain mutation. Use deliberate status codes and stable error shapes. Do not expose stack traces, SQL details, tokens, secrets, or unnecessary personal data.
