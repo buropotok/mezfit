@@ -64,6 +64,7 @@ describe('COMM-05 mobile presentation', () => {
     const microphone = screen.getByRole('button', { name: 'Переключить на кружок' });
     expect(microphone.querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 24 24');
     expect(microphone.querySelectorAll('svg path')).toHaveLength(1);
+    await waitFor(() => expect((microphone as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(microphone);
     expect(screen.getByRole('button', { name: 'Переключить на голосовое' })).toBeTruthy();
     const input = screen.getByPlaceholderText('Сообщение');
