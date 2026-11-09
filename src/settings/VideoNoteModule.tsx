@@ -142,7 +142,12 @@ export function VideoNoteModule() {
     setStage('requesting');
     try {
       const stream = await acquire(nextFacing);
-      if (!stream || !mounted.current || sequence !== requestSequence.current) return;
+      if (!mounted.current || sequence !== requestSequence.current) return;
+      if (!stream) {
+        setError('Получение камеры было прервано. Включите её повторно.');
+        setStage('error');
+        return;
+      }
       setStage('ready');
     } catch (cause) {
       if (!mounted.current || sequence !== requestSequence.current) return;
