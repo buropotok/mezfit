@@ -16,8 +16,7 @@ vi.mock('../media/directMediaUpload', async importOriginal => ({
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 it('previews a photo and retries an attachment-only send with the same message, attachment and object IDs', async () => {
-  const { port } = fixture();
-  port.supportsMedia = true;
+  const port = { ...fixture().port, supportsMedia: true };
   const file = new File(['photo'], 'photo.jpg', { type: 'image/jpeg' });
   const metadata: DiscussionMediaDraft = { id: 'gallery-photo', storageKey: 'mvp-media/' + 'b'.repeat(64),
     mediaType: 'photo', mimeType: file.type, sizeBytes: file.size, durationSeconds: null,
