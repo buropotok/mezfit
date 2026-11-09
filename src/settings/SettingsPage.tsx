@@ -40,6 +40,7 @@ import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
 import { WorkoutReminderSettings } from './WorkoutReminderSettings';
 import { VideoNoteModule } from './VideoNoteModule';
+import { VoiceMessageModule } from './VoiceMessageModule';
 import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
@@ -717,6 +718,14 @@ export function SettingsPage({
           Запись до 60 секунд с камеры, просмотр и повторная запись. Тестируется локально, без отправки.
         </Text>
         <VideoNoteModule />
+      </section>
+
+      <section className="modules-gallery__example" aria-labelledby="module-voice-note-title">
+        <Text id="module-voice-note-title" variant="headline">Голосовое сообщение</Text>
+        <Text variant="footnote" tone="muted">
+          Запись с микрофона и локальное предпрослушивание в пузыре сообщения. Без отправки на сервер.
+        </Text>
+        <VoiceMessageModule />
       </section>
 
       <Suspense fallback={<Text variant="footnote" tone="muted">Загрузка графиков…</Text>}>
