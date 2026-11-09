@@ -50,6 +50,26 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
     };
   }, []);
 
+  // timeupdate is sparse on mobile WebViews; sample the actual frame time while playing.
+  useEffect(() => {
+    if (!playing || typeof window.requestAnimationFrame !== 'function') return undefined;
+    let active = true;
+    let frame = 0;
+    const advance = () => {
+      if (!active) return;
+      const video = videoRef.current;
+      if (video && seekingPointerRef.current === null && Number.isFinite(video.currentTime)) {
+        setCurrentTime(video.currentTime);
+      }
+      frame = window.requestAnimationFrame(advance);
+    };
+    frame = window.requestAnimationFrame(advance);
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [playing]);
+
   const readDuration = (video: HTMLVideoElement) => {
     const measured = video.duration;
     if (Number.isFinite(measured) && measured > 0) setDuration(measured);
