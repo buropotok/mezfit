@@ -45,6 +45,57 @@ describe('anonymous direct media upload', () => {
     expect(new Set(put.mock.calls.map(([url]) => url)).size).toBe(3);
   });
 
+  it('reports an S3 XML error code and message for a rejected upload', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(
+      '<Error><Code>AccessDenied</Code><Message>Access Denied.</Message></Error>',
+      { status: 403, headers: { 'Content-Type': 'application/xml' } },
+    )));
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 403, s3Code: 'AccessDenied', s3Message: 'Access Denied.',
+    });
+  });
+
+  it('recognizes other S3 error codes but never displays object paths in messages', async () => {
+    const put = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(
+        '<Error><Code>OperationAborted</Code><Message>Operation aborted.</Message></Error>',
+        { status: 409 },
+      ))
+      .mockResolvedValueOnce(new Response(
+        '<Error><Code>AccessDenied</Code><Message>Denied for https://example.com/private/key</Message></Error>',
+        { status: 403 },
+      ))
+      .mockResolvedValueOnce(new Response(
+        `<Error><Code>NoSuchKey</Code><Message>Object ${'a'.repeat(64)} not found</Message></Error>`,
+        { status: 404 },
+      ));
+    vi.stubGlobal('fetch', put);
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 409, s3Code: 'OperationAborted', s3Message: 'Operation aborted.',
+    });
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 403, s3Code: 'AccessDenied', s3Message: undefined,
+    });
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 404, s3Code: 'NoSuchKey', s3Message: undefined,
+    });
+  });
+
+  it('preserves HTTP status when the error response is malformed or cannot be read', async () => {
+    const unreadable = new Response(null, { status: 503 });
+    vi.spyOn(unreadable, 'text').mockRejectedValue(new Error('body read failed'));
+    const put = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('<html>Unauthorized</html>', { status: 403 }))
+      .mockResolvedValueOnce(unreadable);
+    vi.stubGlobal('fetch', put);
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 403, s3Code: undefined, s3Message: undefined,
+    });
+    await expect(uploadDirectMedia(photo())).rejects.toMatchObject({
+      code: 'HTTP', status: 503, s3Code: undefined, s3Message: undefined,
+    });
+  });
+
   it('aborts an active PUT on cancellation and distinguishes timeout', async () => {
     vi.useFakeTimers();
     const put = vi.fn<typeof fetch>().mockImplementation((_url, init) => new Promise((_resolve, reject) => {

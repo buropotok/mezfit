@@ -19,9 +19,42 @@ export function createDirectMediaKey(): string {
 
 type UploadErrorCode = 'INVALID_KEY' | 'INVALID_TYPE' | 'INVALID_SIZE' | 'CANCELLED' | 'TIMEOUT' | 'NETWORK' | 'HTTP';
 export class MediaUploadError extends Error {
-  constructor(readonly code: UploadErrorCode, readonly status?: number) {
+  constructor(
+    readonly code: UploadErrorCode,
+    readonly status?: number,
+    readonly s3Code?: string,
+    readonly s3Message?: string,
+  ) {
     super(code);
     this.name = 'MediaUploadError';
+  }
+}
+
+// S3 error bodies are untrusted XML. Return only small, safe diagnostic fields.
+async function readS3Error(response: Response): Promise<{ s3Code?: string; s3Message?: string }> {
+  try {
+    const body = await response.text();
+    if (body.length > 8192 || body.includes('<!DOCTYPE')) return {};
+    const document = new DOMParser().parseFromString(body, 'application/xml');
+    const root = document.documentElement;
+    if (root.localName !== 'Error') return {};
+    const field = (name: string): string | undefined => {
+      const element = Array.from(root.children).find(child =>
+        child.localName === name && child.namespaceURI === root.namespaceURI);
+      return element?.childElementCount ? undefined : element?.textContent?.trim();
+    };
+    const code = field('Code');
+    const message = field('Message');
+    const safeCode = code && /^[A-Za-z][A-Za-z0-9]{0,63}$/.test(code) ? code : undefined;
+    return {
+      s3Code: safeCode,
+      s3Message: safeCode && message && message.length <= 160
+        && !/[\u0000-\u001f<>/?&=\\@]/.test(message) && !/[A-Za-z0-9_-]{32,}/.test(message)
+        ? message : undefined,
+    };
+  } catch {
+    // Unreadable, non-XML or malformed bodies must not hide the HTTP status.
+    return {};
   }
 }
 
@@ -72,14 +105,19 @@ export async function uploadDirectMedia(
       headers: { 'Content-Type': contentType, 'If-None-Match': '*' },
       body: file,
     });
-    // Object Storage has no useful response body for a successful PUT.
-    void response.body?.cancel().catch(() => undefined);
+    // Keep failed PUT bodies readable for S3 error diagnostics.
+    if (response.ok || (retryKey && response.status === 412)) {
+      void response.body?.cancel().catch(() => undefined);
+    }
     if (retryKey && response.status === 412) {
       // A previous PUT may have committed before its response was lost.
       const stored = await fetch(url, { ...request, method: 'HEAD', cache: 'no-store' });
       if (!stored.ok || stored.headers.get('content-type') !== contentType
         || stored.headers.get('content-length') !== String(file.size)) throw new MediaUploadError('HTTP', 412);
-    } else if (!response.ok) throw new MediaUploadError('HTTP', response.status);
+    } else if (!response.ok) {
+      const { s3Code, s3Message } = await readS3Error(response);
+      throw new MediaUploadError('HTTP', response.status, s3Code, s3Message);
+    }
     if (controller.signal.aborted) throw new MediaUploadError(timedOut ? 'TIMEOUT' : 'CANCELLED');
     return { key, url, contentType, sizeBytes: file.size, fileName: file.name };
   } catch (error) {
