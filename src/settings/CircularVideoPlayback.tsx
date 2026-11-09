@@ -90,7 +90,7 @@ export function CircularVideoPlayback({
     };
     rail.addEventListener('touchmove', blockScrollDuringScrub, { passive: false });
     return () => rail.removeEventListener('touchmove', blockScrollDuringScrub);
-  }, []);
+  }, [mode]);
 
   const readDuration = (video: HTMLVideoElement) => {
     const measured = video.duration;
