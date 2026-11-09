@@ -277,7 +277,7 @@ export function VideoNoteModule() {
   const cameraVisible = stage === 'ready' || stage === 'recording' || stage === 'processing';
 
   return (
-    <section className="video-note-module" aria-label="Видеокружок">
+    <section className="video-note-module">
       <div className="video-note-module__circle" aria-label="Круглый видеопредпросмотр">
         <video
           ref={previewRef}
