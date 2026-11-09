@@ -6,7 +6,7 @@ export function voiceWaveformFromPeaks(samples: readonly number[], bars = 42): n
   if (samples.length === 0 || bars < 1) return [];
   const count = Math.max(1, Math.floor(bars));
   const sanitized = samples.map((value) => Number.isFinite(value) ? Math.max(0, value) : 0);
-  const max = Math.max(...sanitized, 0.01);
+  const max = sanitized.reduce((highest, value) => Math.max(highest, value), 0.01);
   return Array.from({ length: count }, (_, i) => {
     const start = Math.min(sanitized.length - 1, Math.floor(i * sanitized.length / count));
     const end = Math.max(start + 1, Math.ceil((i + 1) * sanitized.length / count));
