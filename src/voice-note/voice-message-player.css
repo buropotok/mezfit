@@ -1,0 +1,62 @@
+.voice-message-player {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  width: min(100%, 18rem);
+  min-width: 0;
+  padding-block: var(--ui-space-1);
+}
+
+.voice-message-player__body {
+  display: grid;
+  gap: var(--ui-space-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.voice-message-player__waveform {
+  display: block;
+  width: 100%;
+  height: 32px;
+  overflow: visible;
+  color: inherit;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.voice-message-player__waveform:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.voice-message-player__bar {
+  fill: currentColor;
+  opacity: .38;
+}
+
+.voice-message-player__bar--played {
+  fill: currentColor;
+  opacity: .95;
+}
+
+.voice-message-player__duration {
+  display: block;
+  align-self: start;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.voice-note-module {
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-3);
+  min-width: 0;
+}
+
+.voice-note-module__sample {
+  width: 100%;
+  min-width: 0;
+}
