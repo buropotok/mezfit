@@ -18,7 +18,7 @@ vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
 }));
 vi.mock('../data/cloud/adhoc-workouts', () => ({
   AdHocWorkoutRepository: class {
-    observeOwnExerciseFacts(next: (rows: typeof fact[]) => void) {
+    observeOwnExerciseFacts(next: (rows: Array<typeof fact>) => void) {
       probes.own();
       next([fact]);
       return { unsubscribe: vi.fn() };
