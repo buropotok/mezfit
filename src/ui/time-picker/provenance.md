@@ -48,7 +48,7 @@ scaled continuously from 1.0 at the lens boundary to 1.55 at the center. The
 selected value keeps approximately the same optical size and UX emphasis.
 
 On iOS, the moving glyph layer is reused through local SVG `<use>` references:
-the center remains untransformed, while 12 narrow clipped strips at each vertical
+the center remains untransformed, while 8 narrow clipped strips at each vertical
 edge approximate a quarter-cylinder (16 SVG units of radius, or 8 CSS px in the
 36px compact capsule). Each strip uses a local affine scale/offset and a
 cylinder-normal opacity. This bends portions of the already-rendered SVG glyphs
