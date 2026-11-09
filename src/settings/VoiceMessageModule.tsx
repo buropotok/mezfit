@@ -9,7 +9,7 @@ import { useVoiceRecorder, type VoiceRecording } from '../voice-note/useVoiceRec
  * don't depend on Settings; a future Messagebar/bubble owns the same API.
  */
 export function VoiceMessageModule() {
-  const { start, stop, cancel, status, error } = useVoiceRecorder();
+  const { start, stop, status, error } = useVoiceRecorder();
   const [recording, setRecording] = useState<{ clip: VoiceRecording; url: string } | null>(null);
   const [playerError, setPlayerError] = useState('');
   const urlRef = useRef<string | null>(null);
@@ -74,12 +74,6 @@ export function VoiceMessageModule() {
           {recording ? 'Записать заново' : 'Записать голосовое'}
         </Button>
       )}
-      {status === 'recording' ? (
-        <Button variant="secondary" onClick={() => {
-          cancel();
-          discardRecording();
-        }}>Отменить запись</Button>
-      ) : null}
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
       {playerError ? <Text variant="footnote" role="alert">{playerError}</Text> : null}
     </section>
