@@ -22,7 +22,8 @@ vi.mock('../data/cloud/user-profile', () => ({ UserProfileRepository: class {
   migrateOwn() { return Promise.resolve(); }
 } }));
 vi.mock('../workout/ClientWorkoutContext', () => ({
-  ClientWorkoutNavigationShell: ({ children }: { children: ReactNode }) => <main>{children}</main>,
+  ClientWorkoutNavigationShell: ({ children, context }: { children: ReactNode; context?: { onBack?: () => void } | null }) =>
+    <main>{context?.onBack ? <button onClick={context.onBack}>Назад к упражнениям</button> : null}{children}</main>,
 }));
 vi.mock('../ui/LiquidGlassTextOnly', () => ({
   LiquidGlassTextOnly: ({ tabs, value, onValueChange }: {
@@ -48,9 +49,16 @@ vi.mock('../client/ClientProgramsPage', () => ({
   },
 }));
 vi.mock('./ProfilePerformedExercisesPage', () => ({
-  ClientPerformedExercisesPage: (props: { client?: { userId: string } }) => {
+  ClientPerformedExercisesPage: (props: {
+    client?: { userId: string };
+    onDetailNavigationChange?: (value: { title: string; onBack: () => void } | null) => void;
+  }) => {
     probes.exercises(props);
-    return <section aria-label="Выполненные упражнения клиента">Все личные и тренерские FACT</section>;
+    return <section aria-label="Выполненные упражнения клиента">Все личные и тренерские FACT
+      <button onClick={() => props.onDetailNavigationChange?.({
+        title: 'Статистика жима', onBack: () => props.onDetailNavigationChange?.(null),
+      })}>Открыть статистику</button>
+    </section>;
   },
 }));
 
@@ -77,4 +85,8 @@ it('duplicates the unrestricted Client Programs page and opens the shared self e
   expect(probes.exercises).toHaveBeenCalled();
   expect(probes.exercises.mock.lastCall?.[0].client).toBeUndefined();
   expect(screen.queryByText('Все статусы')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть статистику' }));
+  expect(screen.queryByRole('tab', { name: 'Программа' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Назад к упражнениям' }));
+  expect(screen.getByRole('tab', { name: 'Упражнения' })).toBeTruthy();
 });
