@@ -277,6 +277,82 @@ export class AdHocWorkoutRepository {
       .subscribe({ next: onChange, error: onError });
   }
 
+  /**
+   * The athlete's own performed FACT history across personal and every approved
+   * coach-client realm. Each session must pass the repository's access contract;
+   * other participants' locally cached rows never grant access by ID alone.
+   */
+  async listOwnExerciseFacts(): Promise<ClientExerciseFact[]> {
+    // Observe all three execution tables before asynchronous membership checks,
+    // so liveQuery updates on new sessions, completed sets and revoked access.
+    const [sessions, exercises, sets] = await Promise.all([
+      this.db.adHocSessions.where('athleteUserId').equals(this.actorUserId).toArray(),
+      this.db.adHocExercises.toArray(),
+      this.db.adHocSets.toArray(),
+    ]);
+    const accessibleSessions = new Map<string, AdHocSessionRow>();
+    for (const session of sessions) {
+      if (isAdHocSessionRow(session) && session.athleteUserId === this.actorUserId
+        && await this.accessible(session)) accessibleSessions.set(session.id, session);
+    }
+    const sessionExercises = new Map<string, AdHocExerciseRow[]>();
+    for (const exercise of exercises) {
+      if (!isAdHocExerciseRow(exercise) || exercise.deletedAt) continue;
+      const session = accessibleSessions.get(exercise.sessionId);
+      if (!session || exercise.realmId !== session.realmId || exercise.owner !== session.realmId) continue;
+      const existing = sessionExercises.get(session.id) ?? [];
+      existing.push(exercise);
+      sessionExercises.set(session.id, existing);
+    }
+    const completedSets = new Map<string, AdHocSetRow[]>();
+    for (const set of sets) {
+      if (!isAdHocSetRow(set) || set.deletedAt || set.setStatus !== 'completed') continue;
+      const session = accessibleSessions.get(set.sessionId);
+      if (!session || set.realmId !== session.realmId || set.owner !== session.realmId) continue;
+      const existing = completedSets.get(set.exerciseId) ?? [];
+      existing.push(set);
+      completedSets.set(set.exerciseId, existing);
+    }
+    const facts: ClientExerciseFact[] = [];
+    const categories = new Map<string, string>();
+    for (const session of accessibleSessions.values()) {
+      for (const exercise of sessionExercises.get(session.id) ?? []) {
+        const validSets = (completedSets.get(exercise.id) ?? [])
+          .filter(set => set.sessionId === session.id);
+        if (!validSets.length) continue;
+        const snapshot = exercise.exercise;
+        const key = `${snapshot.scope}:${snapshot.catalogueCoachUserId ?? ''}:${snapshot.exerciseDefinitionId}`;
+        let category = categories.get(key);
+        if (category === undefined) {
+          const definition = snapshot.scope === 'public'
+            ? await this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId) : null;
+          const candidate = definition && isPublicExerciseRow(definition)
+            ? definition.category : snapshot.catalogueDefinition?.category;
+          category = PUBLIC_EXERCISE_CATEGORIES.some(item => item[0] === candidate)
+            ? candidate ?? 'other' : 'other';
+          categories.set(key, category);
+        }
+        facts.push({
+          key, name: snapshot.name, mediaUrl: snapshot.mediaUrl,
+          category, trackingType: snapshot.trackingType,
+          sessionId: session.id, sessionExerciseId: exercise.id, startedAt: session.startedAt,
+          sets: validSets.map(set => ({
+            actualReps: set.actualReps, actualWeightKg: set.actualWeightKg,
+            actualDurationSeconds: set.actualDurationSeconds, actualDistanceMeters: set.actualDistanceMeters,
+          })),
+        });
+      }
+    }
+    return facts;
+  }
+
+  observeOwnExerciseFacts(
+    onChange: (facts: ClientExerciseFact[]) => void, onError: (reason: unknown) => void,
+  ): { unsubscribe(): void } {
+    return liveQuery(() => this.listOwnExerciseFacts())
+      .subscribe({ next: onChange, error: onError });
+  }
+
   async getRow(id: string): Promise<AdHocSessionRow | null> {
     const row = await this.db.adHocSessions.get(id);
     return row && await this.accessible(row) ? row : null;
