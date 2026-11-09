@@ -53,8 +53,11 @@ export function useVideoNoteCameraSession() {
 
   useEffect(() => {
     mountedRef.current = true;
+    // pagehide covers full Mini App navigation/closure in WebViews that keep React mounted.
+    window.addEventListener('pagehide', release);
     return () => {
       mountedRef.current = false;
+      window.removeEventListener('pagehide', release);
       release();
     };
   }, [release]);
