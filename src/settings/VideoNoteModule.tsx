@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Text } from '../ui';
+import { CircularVideoPlayback } from './CircularVideoPlayback';
 import './video-note-module.css';
 
 const MAX_RECORDING_MS = 60_000;
@@ -48,19 +49,16 @@ export function VideoNoteModule() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [clip, setClip] = useState<RecordedNote | null>(null);
   const [error, setError] = useState('');
-  const [playing, setPlaying] = useState(false);
 
   const mounted = useRef(false);
   const requestSequence = useRef(0);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const previewRef = useRef<HTMLVideoElement | null>(null);
-  const playbackRef = useRef<HTMLVideoElement | null>(null);
   const clipUrlRef = useRef<string | null>(null);
   const startedAtRef = useRef(0);
   const tickRef = useRef<number | null>(null);
   const deadlineRef = useRef<number | null>(null);
-  const playbackSequence = useRef(0);
 
   const clearTick = useCallback(() => {
     if (tickRef.current !== null) window.clearInterval(tickRef.current);
@@ -76,14 +74,9 @@ export function VideoNoteModule() {
   }, []);
 
   const discardClip = useCallback(() => {
-    playbackSequence.current += 1;
-    playbackRef.current?.pause();
     if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
     clipUrlRef.current = null;
-    if (mounted.current) {
-      setClip(null);
-      setPlaying(false);
-    }
+    if (mounted.current) setClip(null);
   }, []);
 
   const cancelCapture = useCallback(() => {
@@ -225,7 +218,6 @@ export function VideoNoteModule() {
           sizeBytes: blob.size,
           durationSeconds: Math.min(60, Math.max(1, Math.ceil((Date.now() - startedAtRef.current) / 1000))),
         });
-        setPlaying(false);
         setStage('review');
       };
       recorder.start(1000);
@@ -245,26 +237,6 @@ export function VideoNoteModule() {
       clearTick();
       setError('Формат записи не поддерживается этим устройством.');
       setStage('ready');
-    }
-  };
-
-  const togglePlayback = async () => {
-    const video = playbackRef.current;
-    if (!video) return;
-    const sequence = ++playbackSequence.current;
-    if (!video.paused) {
-      video.pause();
-      setPlaying(false);
-      return;
-    }
-    try {
-      await video.play();
-      if (mounted.current && playbackSequence.current === sequence) setPlaying(true);
-    } catch {
-      if (mounted.current && playbackSequence.current === sequence) {
-        setPlaying(false);
-        setError('Устройство не смогло воспроизвести этот видеоформат.');
-      }
     }
   };
 
@@ -289,15 +261,11 @@ export function VideoNoteModule() {
           aria-label="Изображение с камеры"
         />
         {stage === 'review' && clip ? (
-          <video
-            ref={playbackRef}
+          <CircularVideoPlayback
             key={clip.url}
-            className="video-note-module__video"
             src={clip.url}
-            playsInline
-            preload="metadata"
-            onEnded={() => setPlaying(false)}
-            aria-label="Записанный видеокружок"
+            fallbackDuration={clip.durationSeconds}
+            onError={setError}
           />
         ) : null}
         {!cameraVisible && stage !== 'review' ? (
@@ -334,10 +302,7 @@ export function VideoNoteModule() {
         ) : null}
         {stage === 'recording' ? <Button onClick={stopRecording}>Завершить запись</Button> : null}
         {stage === 'review' && clip ? (
-          <>
-            <Button onClick={() => void togglePlayback()}>{playing ? 'Пауза' : 'Воспроизвести'}</Button>
-            <Button variant="secondary" onClick={() => void openCamera(facing)}>Записать заново</Button>
-          </>
+          <Button variant="secondary" onClick={() => void openCamera(facing)}>Записать заново</Button>
         ) : null}
         {stage !== 'idle' && stage !== 'error' && stage !== 'requesting' ? (
           <Button variant="secondary" onClick={reset}>Сбросить</Button>
