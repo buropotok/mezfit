@@ -13,7 +13,7 @@ const MIME_CANDIDATES = [
   'video/webm',
 ];
 
-type CaptureStage = 'idle' | 'requesting' | 'ready' | 'recording' | 'processing' | 'review' | 'error';
+type CaptureStage = 'idle' | 'requesting' | 'recording' | 'processing' | 'preview' | 'play' | 'error';
 
 interface RecordedNote {
   url: string;
@@ -111,7 +111,7 @@ export function VideoNoteModule() {
     const preview = previewRef.current;
     if (!preview) return;
     let disposed = false;
-    if (stage === 'ready' || stage === 'recording' || stage === 'processing') {
+    if (stage === 'recording' || stage === 'processing') {
       preview.srcObject = liveStream(facing);
       void preview.play().catch(() => {
         if (!disposed && mounted.current) setError('Автовоспроизведение камеры заблокировано. Проверьте настройки Telegram.');
@@ -122,7 +122,7 @@ export function VideoNoteModule() {
     return () => { disposed = true; };
   }, [stage, facing, liveStream]);
 
-  const openCamera = async (nextFacing: VideoNoteFacingMode) => {
+  const beginRecording = async (nextFacing: VideoNoteFacingMode) => {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Этот Telegram WebView не поддерживает запись видео через камеру.');
       setStage('error');
@@ -133,9 +133,10 @@ export function VideoNoteModule() {
     setFacing(nextFacing);
     setError('');
 
-    // A retake reuses the active camera+microphone stream and never requests permission again.
-    if (liveStream(nextFacing)) {
-      setStage('ready');
+    // A retake reuses the active stream; the same button starts recording immediately.
+    const existing = liveStream(nextFacing);
+    if (existing) {
+      startRecording(existing);
       return;
     }
 
@@ -148,7 +149,7 @@ export function VideoNoteModule() {
         setStage('error');
         return;
       }
-      setStage('ready');
+      startRecording(stream);
     } catch (cause) {
       if (!mounted.current || sequence !== requestSequence.current) return;
       setError(cameraError(cause));
@@ -174,14 +175,8 @@ export function VideoNoteModule() {
     }
   };
 
-  const startRecording = () => {
+  const startRecording = (stream: MediaStream) => {
     if (recorderRef.current) return;
-    const stream = liveStream(facing);
-    if (!stream) {
-      setError('Камера отключилась. Включите её повторно.');
-      setStage('error');
-      return;
-    }
     try {
       const options = recordingOptions();
       const recorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
@@ -231,7 +226,7 @@ export function VideoNoteModule() {
           sizeBytes: blob.size,
           durationSeconds: Math.min(60, Math.max(1, Math.ceil((Date.now() - startedAtRef.current) / 1000))),
         });
-        setStage('review');
+        setStage('preview');
       };
       recorder.start(1000);
       setElapsedSeconds(0);
@@ -251,7 +246,7 @@ export function VideoNoteModule() {
       recorderRef.current = null;
       clearTick();
       setError('Формат записи не поддерживается этим устройством.');
-      setStage('ready');
+      setStage('error');
     }
   };
 
@@ -261,12 +256,13 @@ export function VideoNoteModule() {
     setStage('idle');
   };
 
-  const cameraVisible = stage === 'ready' || stage === 'recording' || stage === 'processing';
+  const cameraVisible = stage === 'recording' || stage === 'processing';
+  const hasClip = (stage === 'preview' || stage === 'play') && clip !== null;
 
   return (
     <section className="video-note-module">
       <div
-        className={`video-note-module__circle${cameraVisible || stage === 'review' ? ' video-note-module__circle--expanded' : ''}`}
+        className={`video-note-module__circle${cameraVisible || stage === 'play' ? ' video-note-module__circle--expanded' : stage === 'preview' ? ' video-note-module__circle--preview' : ''}`}
         aria-label="Круглый видеопредпросмотр"
       >
         <video
@@ -278,15 +274,18 @@ export function VideoNoteModule() {
           style={{ display: cameraVisible ? 'block' : 'none' }}
           aria-label="Изображение с камеры"
         />
-        {stage === 'review' && clip ? (
+        {hasClip ? (
           <CircularVideoPlayback
             key={clip.url}
             src={clip.url}
             fallbackDuration={clip.durationSeconds}
+            mode={stage === 'play' ? 'play' : 'preview'}
+            onExpand={() => setStage('play')}
+            onReturnToPreview={() => setStage('preview')}
             onError={setError}
           />
         ) : null}
-        {!cameraVisible && stage !== 'review' ? (
+        {!cameraVisible && !hasClip ? (
           <Text variant="footnote" tone="muted" className="video-note-module__placeholder">
             {stage === 'requesting' ? 'Подключаем камеру…' : 'Предпросмотр камеры'}
           </Text>
@@ -300,14 +299,14 @@ export function VideoNoteModule() {
       <Text variant="footnote" tone="muted" role="status">
         {stage === 'recording' || stage === 'processing'
           ? `Запись: ${elapsedSeconds} / 60 сек.`
-          : stage === 'review' && clip
-            ? `Готово: ${clip.durationSeconds} сек., ${(clip.sizeBytes / 1024 / 1024).toFixed(1)} МБ · ${clip.mimeType}`
-            : stage === 'ready'
-              ? 'Камера готова. Видео записывается со звуком.'
+          : stage === 'preview' && clip
+            ? `Предпросмотр: ${clip.durationSeconds} сек. Коснитесь кружка, чтобы воспроизвести.`
+            : stage === 'play' && clip
+              ? `Воспроизведение: ${clip.durationSeconds} сек. После окончания вернёмся к превью.`
               : 'Тестовый модуль: видео остаётся только на этом устройстве и не отправляется в чат.'}
       </Text>
 
-      {stage === 'review' && liveStream(facing) ? (
+      {hasClip && liveStream(facing) ? (
         <Text variant="footnote" tone="muted">
           Камера и микрофон остаются активны для повторной записи. «Сбросить» отключит их.
         </Text>
@@ -317,19 +316,16 @@ export function VideoNoteModule() {
 
       <div className="video-note-module__actions">
         {(stage === 'idle' || stage === 'error') ? (
-          <Button onClick={() => void openCamera(facing)}>Включить камеру</Button>
+          <Button onClick={() => void beginRecording(facing)}>Записать кружок</Button>
         ) : null}
-        {stage === 'ready' ? (
-          <>
-            <Button onClick={startRecording}>Начать запись</Button>
-            <Button variant="secondary" onClick={() => void openCamera(facing === 'user' ? 'environment' : 'user')}>
-              Сменить камеру
-            </Button>
-          </>
+        {(stage === 'idle' || stage === 'preview' || stage === 'error') ? (
+          <Button variant="secondary" onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>
+            Сменить камеру
+          </Button>
         ) : null}
         {stage === 'recording' ? <Button onClick={stopRecording}>Завершить запись</Button> : null}
-        {stage === 'review' && clip ? (
-          <Button variant="secondary" onClick={() => void openCamera(facing)}>Записать заново</Button>
+        {stage === 'preview' && clip ? (
+          <Button variant="secondary" onClick={() => void beginRecording(facing)}>Записать заново</Button>
         ) : null}
         {stage !== 'idle' && stage !== 'error' && stage !== 'requesting' ? (
           <Button variant="secondary" onClick={reset}>Сбросить</Button>
