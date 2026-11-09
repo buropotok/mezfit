@@ -15,7 +15,7 @@
   border: 1px solid var(--ui-color-border, rgba(255, 255, 255, 0.18));
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
-  transition: width 460ms cubic-bezier(.19, 1.27, .32, 1);
+  transition: width 420ms cubic-bezier(.22, 1, .36, 1);
   will-change: width;
 }
 
