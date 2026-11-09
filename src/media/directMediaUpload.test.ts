@@ -23,6 +23,29 @@ describe('anonymous direct media upload', () => {
     }));
   });
 
+  it('sends a diagnostic PUT without If-None-Match only when explicitly requested', async () => {
+    const put = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', put);
+    const file = photo();
+    const result = await uploadDirectMedia(file, { diagnosticOmitIfNoneMatch: true });
+    expect(result.key).toMatch(/^mvp-media\/[a-f0-9]{64}$/);
+    expect(put).toHaveBeenCalledOnce();
+    expect(put).toHaveBeenCalledWith(result.url, expect.objectContaining({
+      method: 'PUT', body: file, credentials: 'omit',
+      headers: { 'Content-Type': 'image/jpeg' },
+    }));
+  });
+
+  it('blocks diagnostic unconditional PUT with a previously supplied key', async () => {
+    const put = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', put);
+    await expect(uploadDirectMedia(photo(), {
+      diagnosticOmitIfNoneMatch: true,
+      retryKey: 'mvp-media/' + 'a'.repeat(64),
+    })).rejects.toMatchObject({ code: 'INVALID_KEY' });
+    expect(put).not.toHaveBeenCalled();
+  });
+
   it('rejects unsupported, empty and oversized files before networking', async () => {
     const put = vi.fn();
     vi.stubGlobal('fetch', put);
