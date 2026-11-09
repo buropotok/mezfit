@@ -17,14 +17,26 @@ export function videoNoteSeekFraction(
   return (Math.atan2(y, x) / (2 * Math.PI) + 1.25) % 1;
 }
 
+export type VideoNotePlaybackMode = 'preview' | 'play';
+
 interface CircularVideoPlaybackProps {
   src: string;
   fallbackDuration: number;
   onError: (message: string) => void;
+  mode?: VideoNotePlaybackMode;
+  onExpand?: () => void;
+  onReturnToPreview?: () => void;
 }
 
 /** Device-local playback: media surface and circular seek rail are not UIkit action primitives. */
-export function CircularVideoPlayback({ src, fallbackDuration, onError }: CircularVideoPlaybackProps) {
+export function CircularVideoPlayback({
+  src,
+  fallbackDuration,
+  onError,
+  mode = 'play',
+  onExpand,
+  onReturnToPreview,
+}: CircularVideoPlaybackProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const railRef = useRef<SVGSVGElement>(null);
   const seekingPointerRef = useRef<number | null>(null);
@@ -97,6 +109,7 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
       if (aliveRef.current && generation === playGenerationRef.current) {
         setPlaying(false);
         onError('Устройство не смогло воспроизвести этот видеоформат.');
+        onReturnToPreview?.();
       }
     }
   };
@@ -110,6 +123,12 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
   const toggle = () => {
     const video = videoRef.current;
     if (!video || seekingPointerRef.current !== null) return;
+    if (mode === 'preview') {
+      // Play in the user's tap handler, before React animates the circle outward.
+      onExpand?.();
+      void requestPlay(video);
+      return;
+    }
     if (video.paused) void requestPlay(video);
     else pause(video);
   };
@@ -189,15 +208,30 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
   };
 
   const progress = boundedFraction(currentTime / duration);
+
+  const showPreviewFrame = (video: HTMLVideoElement) => {
+    // iOS WebKit may show a black video until seeking just past time zero.
+    // Keep the clip paused: this is only a first-frame decode workaround.
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const frameTime = Number.isFinite(video.duration) && video.duration > 0
+        ? Math.min(0.04, video.duration / 2)
+        : 0.04;
+      try { video.currentTime = frameTime; } catch { /* Still waiting for decodable data. */ }
+    }
+  };
+
   return (
-    <div className={`video-note-playback${playing ? "" : " video-note-playback--paused"}`}>
+    <div className={`video-note-playback${mode === 'preview' ? ' video-note-playback--preview' : playing ? '' : ' video-note-playback--paused'}`}>
       <video
         ref={videoRef}
         className="video-note-module__video"
         src={src}
         playsInline
-        preload="metadata"
-        onLoadedMetadata={(event) => readDuration(event.currentTarget)}
+        preload="auto"
+        onLoadedMetadata={(event) => {
+          readDuration(event.currentTarget);
+          if (mode === 'preview') showPreviewFrame(event.currentTarget);
+        }}
         onDurationChange={(event) => readDuration(event.currentTarget)}
         onTimeUpdate={(event) => {
           if (seekingPointerRef.current === null) setCurrentTime(event.currentTarget.currentTime);
@@ -215,7 +249,13 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
           if (aliveRef.current) {
             setPlaying(false);
             setCurrentTime(0);
-            if (videoRef.current) videoRef.current.currentTime = 0;
+            const video = videoRef.current;
+            if (video) {
+              video.currentTime = onReturnToPreview && Number.isFinite(video.duration)
+                ? Math.min(0.04, video.duration / 2)
+                : 0;
+            }
+            onReturnToPreview?.();
           }
         }}
         onError={() => onError('Не удалось воспроизвести записанное видео на этом устройстве.')}
@@ -225,11 +265,13 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
         type="button"
         className="video-note-playback__tap"
         onClick={toggle}
-        aria-label={playing ? 'Пауза' : 'Воспроизвести'}
+        aria-label={mode === 'preview' ? 'Открыть видеокружок' : playing ? 'Пауза' : 'Воспроизвести'}
       >
-        {!playing && !seeking ? <span className="video-note-playback__play-glyph" aria-hidden="true" /> : null}
+        {mode !== 'preview' && !playing && !seeking ? (
+          <span className="video-note-playback__play-glyph" aria-hidden="true" />
+        ) : null}
       </button>
-      <svg
+      {mode === 'play' ? <svg
         ref={railRef}
         className="video-note-playback__timeline"
         viewBox="0 0 100 100"
@@ -261,7 +303,7 @@ export function CircularVideoPlayback({ src, fallbackDuration, onError }: Circul
             onLostPointerCapture={cancelScrubbing}
           />
         </VideoNoteRing>
-      </svg>
+      </svg> : null}
     </div>
   );
 }
