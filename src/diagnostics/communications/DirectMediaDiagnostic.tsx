@@ -6,6 +6,7 @@ import { MEDIA_FILE_ACCEPT, MediaUploadError, uploadDirectMedia, type UploadedMe
 function describeError(error: unknown): string {
   if (!(error instanceof MediaUploadError)) return 'Загрузка не удалась.';
   switch (error.code) {
+    case 'INVALID_KEY': return 'Некорректный ключ файла.';
     case 'INVALID_TYPE': return 'Выберите фото, видео или аудио поддерживаемого формата.';
     case 'INVALID_SIZE': return 'Файл пустой или превышает лимит для своего формата.';
     case 'CANCELLED': return 'Загрузка отменена.';

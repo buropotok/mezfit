@@ -1,14 +1,17 @@
 import Dexie, { liveQuery } from 'dexie';
 import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, assertMessageAttachmentWrite, discussionReadStateId,
-  type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
+  type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
 import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, discussionInstant, discussionMessageView, isDiscussionMessage,
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
 import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
+import { isDiscussionMediaDraft, isDiscussionMediaType, type DiscussionMediaDraft } from './discussion-media';
+import { directMediaSizeLimit, directMediaUrl, type UploadedMedia } from '../../media/directMediaUpload';
 import type { MezfitCloudDatabase } from './database';
 export type DiscussionDatabase = Pick<MezfitCloudDatabase,
   'discussionThreads' | 'discussionMessages' | 'discussionReadStates' | 'realms' | 'members' | 'cloud'> & {
+  messageAttachments?: MezfitCloudDatabase['messageAttachments'];
   /** Only the callback-based transaction capability is needed, not every app table on its context. */
   transaction<T>(mode: 'r' | 'rw', tables: readonly string[], task: () => Promise<T>): Promise<T>;
 };
@@ -17,6 +20,7 @@ export interface DiscussionMessageInput {
   id: string; threadId: string; text: string; createdAt: string; replyToMessageId?: string;
   /** Composer publication must consume a private draft, not acknowledge another device's send. */
   requireUnsentDraft?: true;
+  draftMedia?: DiscussionMediaDraft;
 }
 export interface DiscussionPage { messages: DiscussionMessageView[]; before: DiscussionCursor | null }
 export interface DiscussionFeedRow {
@@ -65,11 +69,12 @@ export class DiscussionRepository {
     if (!coach || !client || (this.actorUserId !== coach && this.actorUserId !== client)
       || !await isApprovedAssignedPair(realm, members, coach, client)) fail('DISCUSSION_ACCESS_DENIED');
   }
-  private read<T>(task: () => Promise<T>): Promise<T> {
-    return this.db.transaction('r', tables, async () => { await this.access(); return task(); });
+  get supportsMedia(): boolean { return Boolean(this.db.messageAttachments); }
+  private read<T>(task: () => Promise<T>, withMedia = false): Promise<T> {
+    return this.db.transaction('r', withMedia && this.supportsMedia ? [...tables, 'messageAttachments'] : tables, async () => { await this.access(); return task(); });
   }
-  private async write<T>(task: () => Promise<T>): Promise<T> {
-    const result = await this.db.transaction('rw', tables, async () => { await this.access(); return task(); });
+  private async write<T>(task: () => Promise<T>, withMedia = false): Promise<T> {
+    const result = await this.db.transaction('rw', withMedia && this.supportsMedia ? [...tables, 'messageAttachments'] : tables, async () => { await this.access(); return task(); });
     this.sync.changed(); return result;
   }
   private thread(id: string): Promise<DiscussionThread> {
@@ -195,6 +200,32 @@ export class DiscussionRepository {
       }));
     });
   }
+  private withAttachments(messages: DiscussionMessageView[], rows: DiscussionMessage[]): Promise<DiscussionMessageView[]> {
+    const table = this.db.messageAttachments;
+    const active = rows.filter(row => !row.deletedAt);
+    if (!table || !active.length) return Dexie.Promise.resolve(messages);
+    const byId = new Map(active.map(row => [row.id, row]));
+    return table.where('[realmId+messageId]').anyOf(active.map(row => [row.realmId, row.id])).toArray().then(attachments => {
+      const projected = new Map<string, MessageAttachment[]>();
+      for (const attachment of attachments) {
+        const row = byId.get(attachment.messageId);
+        if (!row || attachment.deletedAt || attachment.uploadState !== 'ready'
+          || typeof attachment.storageKey !== 'string' || !directMediaUrl(attachment.storageKey)
+          || !isDiscussionMediaType(attachment.mimeType) || attachment.sizeBytes > directMediaSizeLimit(attachment.mimeType)
+          || (attachment.mediaType !== 'photo' && attachment.mediaType !== 'video')) continue;
+        try {
+          assertMessageAttachmentWrite(row.authorUserId, { id: row.threadId, realmId: row.realmId }, row, attachment);
+        } catch { continue; }
+        const items = projected.get(row.id) ?? [];
+        items.push(attachment);
+        projected.set(row.id, items);
+      }
+      return messages.map(message => {
+        const items = projected.get(message.id);
+        return items ? { ...message, attachments: items } : message;
+      });
+    });
+  }
   private async view(row: DiscussionMessage): Promise<DiscussionMessageView> {
     const reply = row.replyToMessageId ? await this.db.discussionMessages.get(row.replyToMessageId) : undefined;
     if (!isDiscussionMessage(reply) || reply.draftForRealmId || reply.realmId !== this.scope.realmId) return discussionMessageView(row);
@@ -213,12 +244,17 @@ export class DiscussionRepository {
     return discussionMessageView(row, sameConversation ? { ...reply, threadId: row.threadId } : undefined);
   }
   async getMessage(threadId: string, id: string): Promise<DiscussionMessageView> {
-    return this.read(async () => { await this.thread(threadId); return this.view(await this.message(threadId, id)); });
+    return this.read(async () => {
+      const row = await this.message(threadId, id);
+      const [view] = await this.withAttachments([await this.view(row)], [row]);
+      return view;
+    }, true);
   }
   async saveDraft(input: DiscussionMessageInput): Promise<void> {
     input = structuredClone(input);
     if (!discussionId(input.id) || (input.replyToMessageId !== undefined && !discussionId(input.replyToMessageId))
       || typeof input.text !== 'string' || input.text.length > 20000 || !discussionInstant(input.createdAt)) fail('INVALID_DISCUSSION_DRAFT');
+    if (input.draftMedia !== undefined && (!this.supportsMedia || !isDiscussionMediaDraft(input.draftMedia))) fail('INVALID_DISCUSSION_ATTACHMENT');
     return this.write(async () => {
       await this.thread(input.threadId);
       if (input.replyToMessageId) await this.message(input.threadId, input.replyToMessageId);
@@ -226,11 +262,17 @@ export class DiscussionRepository {
       if (previous && (!isDiscussionMessage(previous) || previous.realmId !== this.actorUserId
         || previous.owner !== this.actorUserId || previous.threadId !== input.threadId
         || previous.draftForRealmId !== this.scope.realmId)) fail('DISCUSSION_ID_REUSED');
+      if (input.draftMedia && previous?.draftMedia
+        && (previous.draftMedia.id !== input.draftMedia.id || previous.draftMedia.storageKey !== input.draftMedia.storageKey)) {
+        fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
+      }
       const draft: DiscussionMessage = { id: input.id, threadId: input.threadId, text: input.text,
         createdAt: input.createdAt, replyToMessageId: input.replyToMessageId, realmId: this.actorUserId,
         owner: this.actorUserId, authorUserId: this.actorUserId, draftForRealmId: this.scope.realmId, deletedAt: '' };
+      if (input.draftMedia) draft.draftMedia = input.draftMedia;
       if (previous) await this.db.discussionMessages.where({ id: input.id, realmId: this.actorUserId,
-        owner: this.actorUserId, draftForRealmId: this.scope.realmId }).modify({ text: input.text, replyToMessageId: input.replyToMessageId });
+        owner: this.actorUserId, draftForRealmId: this.scope.realmId }).modify({ text: input.text, replyToMessageId: input.replyToMessageId,
+          ...(input.draftMedia ? { draftMedia: input.draftMedia } : {}) });
       else await this.db.discussionMessages.add(draft);
     });
   }
@@ -246,7 +288,19 @@ export class DiscussionRepository {
           .sortBy('createdAt')).at(-1);
       return isDiscussionMessage(row) && row.realmId === this.actorUserId && row.owner === this.actorUserId
         && !row.deletedAt && row.threadId === threadId && row.draftForRealmId === this.scope.realmId
-        ? { id: row.id, threadId: row.threadId, text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId } : null;
+        ? { id: row.id, threadId: row.threadId, text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId,
+          ...(isDiscussionMediaDraft(row.draftMedia) ? { draftMedia: row.draftMedia } : {}) } : null;
+    });
+  }
+  async updateDraftMedia(threadId: string, id: string, key: string, action: 'failed' | 'clear'): Promise<void> {
+    return this.write(async () => {
+      await this.thread(threadId);
+      await this.db.discussionMessages.where({ id, realmId: this.actorUserId, owner: this.actorUserId,
+        threadId, draftForRealmId: this.scope.realmId }).filter(row => row.draftMedia?.storageKey === key)
+        .modify(row => {
+          if (action === 'clear') delete row.draftMedia;
+          else if (row.draftMedia) row.draftMedia.uploadState = 'failed';
+        });
     });
   }
   async discardDraft(threadId: string, id: string): Promise<void> {
@@ -261,23 +315,40 @@ export class DiscussionRepository {
         owner: this.actorUserId, draftForRealmId: this.scope.realmId }).delete();
     });
   }
-  async send(input: DiscussionMessageInput): Promise<DiscussionMessageView> {
+  async send(input: DiscussionMessageInput, uploaded?: UploadedMedia): Promise<DiscussionMessageView> {
     input = structuredClone(input);
     if (!discussionId(input.id) || !discussionInstant(input.createdAt)
       || (input.requireUnsentDraft !== undefined && input.requireUnsentDraft !== true)) fail('INVALID_DISCUSSION_MESSAGE');
-    if (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
+    const media = input.draftMedia;
+    const attachments = this.db.messageAttachments;
+    if (media !== undefined && (!attachments || !isDiscussionMediaDraft(media) || !uploaded
+      || uploaded.key !== media.storageKey || uploaded.contentType !== media.mimeType
+      || uploaded.sizeBytes !== media.sizeBytes)) fail('INVALID_DISCUSSION_ATTACHMENT');
+    if (typeof input.text !== 'string' || (!input.text.trim() && !media) || input.text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
     return this.write(async () => {
       const thread = await this.thread(input.threadId);
       const existing = await this.db.discussionMessages.get(input.id);
       if (existing && !existing.draftForRealmId) {
         if (!this.visible(existing, thread.id) || existing.authorUserId !== this.actorUserId
           || existing.replyToMessageId !== input.replyToMessageId) fail('DISCUSSION_ID_REUSED');
-        if (input.requireUnsentDraft) fail('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
+        if (media) {
+          const attachment = await attachments?.get(media.id);
+          if (!attachment || attachment.storageKey !== media.storageKey || attachment.uploadState !== 'ready') fail('DISCUSSION_ID_REUSED');
+          // A retry acknowledges the same publication even after the message
+          // was deleted. The returned view still masks the tombstone.
+          assertMessageAttachmentWrite(this.actorUserId, thread, { ...existing, deletedAt: undefined }, attachment);
+        } else if (input.requireUnsentDraft) fail('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
         return this.view(existing);
       }
       if (input.requireUnsentDraft && !existing) fail('DISCUSSION_DRAFT_NOT_SAVED');
       if (existing && (!isDiscussionMessage(existing) || existing.owner !== this.actorUserId
         || existing.realmId !== this.actorUserId || existing.threadId !== thread.id || existing.draftForRealmId !== this.scope.realmId)) fail('DISCUSSION_ID_REUSED');
+      if (media && (!existing?.draftMedia || existing.text !== input.text || existing.replyToMessageId !== input.replyToMessageId
+        || existing.draftMedia.id !== media.id
+        || existing.draftMedia.storageKey !== media.storageKey || existing.draftMedia.mimeType !== media.mimeType
+        || existing.draftMedia.sizeBytes !== media.sizeBytes || existing.draftMedia.durationSeconds !== media.durationSeconds
+        || existing.draftMedia.mediaType !== media.mediaType)) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
+      if (!media && existing?.draftMedia) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
       // Draft creation is private, not publication. Freeze the first local send
       // time on the row; retries above return that same row without moving it.
@@ -288,12 +359,21 @@ export class DiscussionRepository {
       assertDiscussionMessageWrite(this.actorUserId, thread, row, undefined, reply ? { ...reply, threadId: thread.id } : undefined);
       if (existing) await this.db.discussionMessages.where({ id: row.id, realmId: this.actorUserId,
         owner: this.actorUserId, draftForRealmId: this.scope.realmId }).modify({ realmId: row.realmId, draftForRealmId: undefined,
-        text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId });
+        text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId, draftMedia: undefined });
       else await this.db.discussionMessages.add(row);
+      if (media) {
+        if (!attachments) fail('INVALID_DISCUSSION_ATTACHMENT');
+        const attachment: MessageAttachment = { id: media.id, messageId: row.id, realmId: row.realmId,
+          owner: row.owner, authorUserId: row.authorUserId, mediaType: media.mediaType, storageKey: media.storageKey,
+          mimeType: media.mimeType, sizeBytes: media.sizeBytes, durationSeconds: media.durationSeconds,
+          uploadState: 'ready', confirmedAt: row.createdAt };
+        assertMessageAttachmentWrite(this.actorUserId, thread, row, attachment);
+        await attachments.add(attachment);
+      }
       if (row.createdAt > thread.lastActivityAt) await this.db.discussionThreads
         .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt: row.createdAt });
       return this.view(row);
-    });
+    }, Boolean(media));
   }
   async edit(threadId: string, id: string, text: string): Promise<void> {
     if (typeof text !== 'string' || !text.trim() || text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
@@ -354,11 +434,11 @@ export class DiscussionRepository {
               const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
               return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
             });
-            return { messages, before: cursor };
+            return this.withAttachments(messages, rows).then(projected => ({ messages: projected, before: cursor }));
           });
         });
       });
-    }));
+    }), true);
   }
 
   async markRead(threadId: string, messageId: string): Promise<void> {

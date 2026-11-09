@@ -17,6 +17,10 @@ import { loadBrowserGlassSettings, type GlassSettings } from '../glassSettings';
 import { DiscussionSession, type DiscussionPort, type DiscussionTarget } from './discussion-session';
 import { useDiscussionViewport } from './useDiscussionViewport';
 import { useDiscussionDraft } from './useDiscussionDraft';
+import { DISCUSSION_MEDIA_ACCEPT } from '../data/cloud/discussion-media';
+import { directMediaUrl } from '../media/directMediaUpload';
+import { DiscussionMedia } from './DiscussionMedia';
+import { useDiscussionMedia } from './useDiscussionMedia';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -77,6 +81,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
   const draft = useDiscussionDraft(repository, threadId);
+  const media = useDiscussionMedia(repository, draft);
+  const gallery = useRef<HTMLInputElement>(null);
+  const mediaBusy = media.phase !== 'idle' && media.phase !== 'failed';
+  const mediaPresent = Boolean(media.selection || draft.media);
   const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const replyId = editId ? null : draft.replyId;
@@ -89,7 +97,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [mediaMode, setMediaMode] = useState<'microphone' | 'camera'>('microphone');
-  const actionMode = editId !== null || Boolean(text.trim()) ? 'send' : mediaMode;
+  const actionMode = editId !== null || mediaPresent || Boolean(text.trim()) ? 'send' : mediaMode;
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
   const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
   const [receiptError, setReceiptError] = useState(false);
@@ -322,30 +330,34 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     catch { if (alive.current && version === actionVersion.current) setError('Не удалось выполнить действие. Повторите попытку'); }
     finally { pending.current = false; if (alive.current && version === actionVersion.current) setBusy(false); }
   };
-  const submit = () => void run(async () => {
-    if (!text.trim()) return;
-    if (editId) await repository.edit(threadId, editId, text);
-    else {
-      const command = draft.command();
-      if (!prepared.current || prepared.current.id !== command.id || prepared.current.text !== text
-        || prepared.current.replyToMessageId !== (replyId ?? undefined)) prepared.current = command;
-      const submitted = prepared.current;
-      try {
-        await repository.send(submitted);
-        draft.sent(submitted.id);
-      } catch (reason) {
-        if (reason instanceof Error && (reason.message === 'DISCUSSION_DRAFT_ALREADY_PUBLISHED'
-          || reason.message === 'DISCUSSION_ID_REUSED')) {
-          draft.rebase(submitted.id); prepared.current = null;
+  const submit = () => {
+    if (pending.current || mediaBusy) return;
+    if (!editId && mediaPresent) { void media.send(); return; }
+    void run(async () => {
+      if (!text.trim()) return;
+      if (editId) await repository.edit(threadId, editId, text);
+      else {
+        const command = draft.command();
+        if (!prepared.current || prepared.current.id !== command.id || prepared.current.text !== text
+          || prepared.current.replyToMessageId !== (replyId ?? undefined)) prepared.current = command;
+        const submitted = prepared.current;
+        try {
+          await repository.send(submitted);
+          draft.sent(submitted.id);
+        } catch (reason) {
+          if (reason instanceof Error && (reason.message === 'DISCUSSION_DRAFT_ALREADY_PUBLISHED'
+            || reason.message === 'DISCUSSION_ID_REUSED')) {
+            draft.rebase(submitted.id); prepared.current = null;
+          }
+          throw reason;
         }
-        throw reason;
       }
-    }
-    if (alive.current) { prepared.current = null; setEditText(''); setEditId(null); }
-  });
+      if (alive.current) { prepared.current = null; setEditText(''); setEditId(null); }
+    });
+  };
   const selected = menu ? state.messages.find(row => row.id === menu.id && !row.deleted) : undefined;
   const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
-    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current) return;
+    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy) return;
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
@@ -366,8 +378,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const own = selected?.authorUserId === repository.actorUserId;
   const items: LiquidPopoverItem[] = [
     { id: 'reply', label: 'Ответить', icon: 'arrow-back-up', onSelect: () => choose('reply') },
-    ...(own ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
-    { id: 'copy', label: 'Копировать', icon: 'copy', onSelect: () => choose('copy') },
+    ...(own && selected?.text.trim() && !mediaPresent ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
+    ...(selected?.text.trim() ? [{ id: 'copy', label: 'Копировать', icon: 'copy' as const, onSelect: () => choose('copy') }] : []),
     ...(own ? [{ id: 'delete', label: 'Удалить', icon: 'trash' as const, onSelect: () => choose('delete') }] : []),
   ];
   const replying = replyId ? state.messages.find(row => row.id === replyId) : undefined;
@@ -418,13 +430,17 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
                 text={<Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
                 textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => { if (message.reply) void jump(message.reply.messageId); }} />}
-                textFooter={!message.deleted && renderAttachment?.(message)}
+                textFooter={!message.deleted && (message.attachments?.length ? message.attachments.map(attachment => {
+                  const src = attachment.storageKey && directMediaUrl(attachment.storageKey);
+                  return src && attachment.mediaType !== 'voice'
+                    ? <DiscussionMedia key={attachment.id} src={src} type={attachment.mediaType} /> : null;
+                }) : renderAttachment?.(message))}
                 inlineMeta={<span className="discussion-message-meta"><Text variant="caption">{time}</Text>
                   {receiptIcon && <span className="discussion-message-meta__check" role="img"
                     aria-label={isRead ? 'Прочитано собеседником' : 'Отправка подтверждена Dexie Cloud'}>
                     <Icon name={receiptIcon} /></span>}
                 </span>}
-                onBubbleClick={() => { if (!message.deleted && !pending.current) setMenu({ id: message.id, open: true }); }}
+                onBubbleClick={() => { if (!message.deleted && !pending.current && !mediaBusy) setMenu({ id: message.id, open: true }); }}
                 bubbleSource={menu?.id === message.id && <span onClick={event => event.stopPropagation()}><LiquidPopover key={message.id} triggerRef={trigger}
                   triggerActivation="controlled" isOpen={menu.open} onOpenChange={open => {
                     if (menuRef.current?.id !== message.id) return;
@@ -445,28 +461,54 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {readError && <><Text variant="footnote" role="alert">Не удалось отметить сообщения прочитанными</Text>
         <Button rounded onClick={() => setReadPosition(value => value + 1)}>Повторить отметку прочтения</Button></>}
       {error && <Text variant="footnote" role="alert">{error}</Text>}
+      {media.error && <Text variant="footnote" role="alert">{media.error}</Text>}
+      {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
+      {(mediaPresent || media.phase === 'uploading' || media.phase === 'publishing') && <div className="discussion-composer-context__mode">
+        {media.preview && media.selection
+          ? <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} preview />
+          : <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
+        {media.phase === 'uploading' ? <>
+          <Text variant="footnote" role="status">Загружаем вложение…</Text>
+          <IconButton icon="x" label="Отменить загрузку" onClick={media.cancel} />
+        </> : media.phase === 'publishing' ? <Text variant="footnote" role="status">Сохраняем сообщение…</Text> : <>
+          {!media.selection && draft.media && <Button rounded disabled={busy || mediaBusy} onClick={() => gallery.current?.click()}>
+            <Text variant="footnote">Выбрать файл снова</Text>
+          </Button>}
+          <IconButton icon="x" label="Убрать вложение" disabled={busy || mediaBusy} onClick={() => void media.remove()} />
+        </>}
+      </div>}
       {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
         {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor} onJump={() => void jump(replyQuote.messageId)} /> : <Text variant="footnote">Редактирование сообщения</Text>}
-        <IconButton icon="x" label="Отменить ответ или редактирование" disabled={busy}
+        <IconButton icon="x" label="Отменить ответ или редактирование" disabled={busy || mediaBusy}
           onClick={cancelMode} />
       </div>}
     </div>
     <div className="discussion-composer" ref={composer}>
       <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
-        <IconButton icon="plus" label="Добавить вложение (пока недоступно)" disabled />
+        {repository.supportsMedia && <input type="file" hidden ref={gallery} accept={DISCUSSION_MEDIA_ACCEPT}
+          onChange={event => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = '';
+            if (file) void media.choose(file);
+          }} />}
+        <IconButton icon="plus" label={repository.supportsMedia ? 'Добавить вложение' : 'Добавить вложение (пока недоступно)'}
+          disabled={!repository.supportsMedia || busy || mediaBusy || mediaPresent || Boolean(editId) || !draft.ready || !state.title || Boolean(state.error)}
+          onClick={() => gallery.current?.click()} />
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
         <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
-          value={text} maxRows={5} disabled={busy || !draft.ready || !state.title || Boolean(state.error)}
+          value={text} maxRows={5} disabled={busy || mediaBusy || !draft.ready || !state.title || Boolean(state.error)}
           onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />
       </GlassSurface>
       <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
-        <IconButton label={actionMode === 'send' ? (editId ? 'Сохранить' : 'Отправить')
+        <IconButton label={actionMode === 'send'
+          ? (editId ? 'Сохранить' : media.phase === 'failed' && media.selection ? 'Повторить отправку' : 'Отправить')
           : actionMode === 'microphone' ? 'Переключить на кружок' : 'Переключить на голосовое'}
-          disabled={busy || !draft.ready || !state.title || Boolean(state.error) || (actionMode === 'send' && !text.trim())}
+          disabled={busy || mediaBusy || !draft.ready || !state.title || Boolean(state.error)
+            || (actionMode === 'send' && (mediaPresent ? !media.selection : !text.trim()))}
           onClick={actionMode === 'send' ? submit : () => setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone')}>
           <DiscussionActionIcon mode={actionMode} />
         </IconButton>
@@ -474,7 +516,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     </div>
     <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
       title={<Text variant="headline">Удалить сообщение?</Text>}
-      content={<Text>Текст сообщения будет удалён.</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}
+      content={<Text>Сообщение будет удалено из переписки.</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}
       buttons={<><MezfitDialogButton disabled={busy} onClick={() => setDeletingId(null)}><Text>Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
           const id = deletingId; if (!id) return;

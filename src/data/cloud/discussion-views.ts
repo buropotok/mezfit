@@ -1,5 +1,5 @@
 import { discussionId, discussionRecord } from '../../../shared/discussion-anchor';
-import { matchesDiscussionReadStateId, type DiscussionMessage } from './discussion-contracts';
+import { matchesDiscussionReadStateId, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
 export interface DiscussionCursor { createdAt: string; id: string }
 export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean }
 /** Evidence captured by the repository, never inferred from its general sync indicator. */
@@ -9,6 +9,7 @@ export interface DiscussionReceiptSnapshot {
 }
 export interface DiscussionMessageView {
   id: string; threadId: string; authorUserId: string; createdAt: string;
+  attachments?: readonly MessageAttachment[];
   text: string; deleted: boolean; editedAt?: string; reply: DiscussionQuote | null;
 }
 export const discussionInstant = (value: unknown): value is string => typeof value === 'string'

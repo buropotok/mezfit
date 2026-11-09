@@ -1,4 +1,5 @@
 import { discussionAnchorKey, discussionId, discussionParents, type DiscussionAnchor, type DiscussionScope } from '../../../shared/discussion-anchor';
+import type { DiscussionMediaDraft } from './discussion-media';
 export type { DiscussionAnchor, DiscussionScope } from '../../../shared/discussion-anchor';
 export const DISCUSSION_STORES = {
   discussionThreads: 'id, realmId, [realmId+coachClientId], [realmId+anchorKey], [realmId+lastActivityAt]',
@@ -21,6 +22,7 @@ export interface DiscussionMessage {
   id: string; realmId: string; owner: string; threadId: string; authorUserId: string;
   /** Present only on private unsent drafts. */
   draftForRealmId?: string;
+  draftMedia?: DiscussionMediaDraft;
   /** Active repository messages use deletedAt: '' for a consistent edit predicate. */
   text: string; replyToMessageId?: string; createdAt: string; editedAt?: string; deletedAt?: string;
 }
