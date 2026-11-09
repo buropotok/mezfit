@@ -1,12 +1,20 @@
 name: Deploy Yandex media gateway
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/yandex-media-gateway/**'
+      - 'tools/yandex-media/**'
+      - 'shared/approved-relationship.ts'
+      - 'shared/relationship-id.ts'
+      - 'shared/discussion-anchor.ts'
+      - 'worker/lib/telegram.ts'
+      - 'dexie-cloud.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-yandex-media.yml'
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Type DEPLOY_YANDEX_MEDIA to publish a new private function version'
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -20,8 +28,7 @@ jobs:
   deploy:
     if: >-
       github.repository == 'buropotok/mezfit' &&
-      github.ref == 'refs/heads/main' &&
-      inputs.confirm == 'DEPLOY_YANDEX_MEDIA'
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +38,12 @@ jobs:
           YC_RUNTIME_SA_ID: ${{ vars.YC_RUNTIME_SA_ID }}
           YC_FUNCTION_ID: ${{ vars.YC_FUNCTION_ID }}
           YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          MEDIA_ORIGIN: ${{ vars.MEDIA_ORIGIN }}
+          YC_MEDIA_SECRET_ID: ${{ vars.YC_MEDIA_SECRET_ID }}
+          YC_MEDIA_SECRET_VERSION_ID: ${{ vars.YC_MEDIA_SECRET_VERSION_ID }}
         run: |
           set -euo pipefail
-          for key in YC_DEPLOY_SA_ID YC_RUNTIME_SA_ID YC_FUNCTION_ID YC_FOLDER_ID; do
+          for key in YC_DEPLOY_SA_ID YC_RUNTIME_SA_ID YC_FUNCTION_ID YC_FOLDER_ID MEDIA_ORIGIN YC_MEDIA_SECRET_ID YC_MEDIA_SECRET_VERSION_ID; do
             if [[ -z "${!key}" ]]; then
               echo "Missing required repository variable: $key" >&2
               exit 1
@@ -65,7 +75,20 @@ jobs:
             exit 1
           fi
 
-      - name: Publish private function version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node tools/yandex-media/package.mjs
+      - name: Reconcile existing media bucket
+        env:
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          MEDIA_ORIGIN: ${{ vars.MEDIA_ORIGIN }}
+        run: node tools/yandex-media/reconcile.mjs
+
+      - name: Publish authenticated gateway version
         uses: yc-actions/yc-sls-function@v3.1.0
         with:
           yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
@@ -74,9 +97,14 @@ jobs:
           runtime: nodejs22
           entrypoint: index.handler
           memory: 128Mb
-          execution-timeout: '5'
+          execution-timeout: '60'
           service-account: ${{ vars.YC_RUNTIME_SA_ID }}
-          source-root: infra/yandex-media-gateway
+          environment: |
+            MEDIA_ORIGIN=${{ vars.MEDIA_ORIGIN }}
+            MEDIA_BUCKET=mezfit-comm-poc-20261106
+          secrets: |
+            TELEGRAM_BOT_TOKEN=${{ vars.YC_MEDIA_SECRET_ID }}/${{ vars.YC_MEDIA_SECRET_VERSION_ID }}/telegram-bot-token
+            MEDIA_PROVENANCE_KEY=${{ vars.YC_MEDIA_SECRET_ID }}/${{ vars.YC_MEDIA_SECRET_VERSION_ID }}/media-provenance-key
+          source-root: .yandex-media-package
           include: |
-            index.js
-            package.json
+            .
