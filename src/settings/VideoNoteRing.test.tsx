@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CircularVideoPlayback } from './CircularVideoPlayback';
 import { VideoNoteRecordingRing, VideoNoteRing } from './VideoNoteRing';
@@ -31,6 +31,35 @@ describe('Telegram-style video-note ring', () => {
     rerender(<svg><VideoNoteRing progress={0.25} mode="playing" /></svg>);
     expect(container.querySelector('.video-note-ring--playing')).toBeTruthy();
     expect(container.querySelector('.video-note-ring--paused')).toBeNull();
+  });
+
+  it('springs between inset paused and edge playback states when tapping the video', async () => {
+    const { container } = render(
+      <CircularVideoPlayback src="blob:video-note" fallbackDuration={30} onError={vi.fn()} />,
+    );
+    const video = screen.getByLabelText('Записанный видеокружок') as HTMLVideoElement;
+    let paused = true;
+    Object.defineProperty(video, 'paused', { configurable: true, get: () => paused });
+    vi.spyOn(video, 'play').mockImplementation(() => {
+      paused = false;
+      fireEvent.play(video);
+      return Promise.resolve();
+    });
+    vi.spyOn(video, 'pause').mockImplementation(() => {
+      paused = true;
+      fireEvent.pause(video);
+    });
+
+    expect(container.querySelector('.video-note-playback--paused')).toBeTruthy();
+    expect(container.querySelector('.video-note-ring--paused')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Воспроизвести' }));
+    await waitFor(() => expect(container.querySelector('.video-note-ring--playing')).toBeTruthy());
+    expect(container.querySelector('.video-note-playback--paused')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Пауза' }));
+    expect(container.querySelector('.video-note-ring--paused')).toBeTruthy();
+    expect(container.querySelector('.video-note-playback--paused')).toBeTruthy();
   });
 
   it('cancels native touch scrolling only while the circular seek is active', () => {
