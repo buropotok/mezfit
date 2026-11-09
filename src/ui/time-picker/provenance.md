@@ -47,6 +47,16 @@ scaled continuously from 1.0 at the lens boundary to 1.55 at the center. The
 1.55 center scale matches the displacement lens magnification constant, so the
 selected value keeps approximately the same optical size and UX emphasis.
 
+On iOS, the moving glyph layer is reused through local SVG `<use>` references:
+the center remains untransformed, while 8 narrow clipped strips at each vertical
+edge approximate a quarter-cylinder (16 SVG units of radius, or 8 CSS px in the
+36px compact capsule). Each strip uses a local affine scale/offset and a
+cylinder-normal opacity. This bends portions of the already-rendered SVG glyphs
+without changing the native scroll, popover, shell, or selected value semantics.
+Stationary units, separators and interactive lens controls remain unwarped. It
+is a picker-owned geometric approximation, not general DOM backdrop refraction.
+The displacement lens on non-iOS platforms is unchanged.
+
 The default `auto` mode resolves to `ios` on iPhone/iPad/iPod user agents
 (including iPadOS desktop-style Macintosh user agents with touch points) and to
 `displacement` elsewhere. Explicit `ios` and `displacement` modes exist

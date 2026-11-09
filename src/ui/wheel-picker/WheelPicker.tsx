@@ -16,6 +16,7 @@ import { COMPACT_TIME_GEOMETRY, STANDARD_GEOMETRY, type WheelGeometry } from '..
 import { MezfitPopover } from '../konsta-mezfit';
 import { CYLINDER_HEIGHT, cylinderIndexAt, projectCylinder, visibleCylinderRows } from '../time-picker/cylinderProjection';
 import { centeredLensScale } from '../time-picker/centeredLensScale';
+import { buildLensEdgeCylinderSlices } from '../time-picker/lensEdgeCylinder';
 import { buildTimeLensAssets, type TimeLensAssets } from '../time-picker/timePickerLens';
 import {
   resolveTwoColumnPickerLensMode,
@@ -28,6 +29,9 @@ const LENS_HEIGHT = 72;
 const LENS_WIDTH = 288;
 const LENS_SOURCE_VERTICAL_INSET = 8;
 const IOS_LENS_MAGNIFICATION = 1.55;
+// In the 72px SVG source this is an 8px band on compact 36px capsules.
+const IOS_LENS_EDGE_RADIUS = 16;
+const IOS_LENS_EDGE_SLICES = buildLensEdgeCylinderSlices(LENS_HEIGHT, IOS_LENS_EDGE_RADIUS, 8);
 // Older Telegram WKWebViews do not deliver scrollend; wait for a quiet period
 // of native scroll events instead of changing scrollTop during momentum.
 const SCROLL_END_FALLBACK_MS = 450;
@@ -279,25 +283,27 @@ function PickerLens({
   const filterId = `ui-three-column-picker-lens-${reactId}`;
   const clipId = `ui-three-column-picker-lens-clip-${reactId}`;
   const sourceClipId = `ui-three-column-picker-lens-source-clip-${reactId}`;
+  const iosSourceId = `ui-three-column-picker-lens-edge-source-${reactId}`;
+  const iosCoreClipId = `ui-three-column-picker-lens-edge-core-${reactId}`;
+  const iosSliceClipId = (index: number) => `ui-three-column-picker-lens-edge-strip-${reactId}-${index}`;
   const fixedUnits = parts.map((part, index) => columns[part].fixedUnit ? (
     <text key={part} x={lensXs[index] + 36} y={LENS_HEIGHT / 2}
       textAnchor="start" dominantBaseline="central"
       transform={geometry.glyphScaleY !== 1 ? `translate(${lensXs[index] + 36} ${LENS_HEIGHT / 2}) scale(1 ${geometry.glyphScaleY}) translate(${-lensXs[index] - 36} ${-LENS_HEIGHT / 2})` : undefined}
       className="ui-time-picker__lens-unit ui-text--footnote">{columns[part].fixedUnit}</text>
   ) : null);
-  const lensContent = (
+  const wheelLensContent = parts.map((part, index) => staticLens?.[part] ? null : (
+    <LensText
+      key={part}
+      x={lensXs[index]}
+      column={columns[part]}
+      scrollTop={scrollTops[part]}
+      lensMode={lensMode}
+      geometry={geometry}
+    />
+  ));
+  const stationaryLensContent = (
     <>
-      <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
-      {parts.map((part, index) => staticLens?.[part] ? null : (
-        <LensText
-          key={part}
-          x={lensXs[index]}
-          column={columns[part]}
-          scrollTop={scrollTops[part]}
-          lensMode={lensMode}
-          geometry={geometry}
-        />
-      ))}
       {parts.map((part, index) => staticLensValues?.[part] !== undefined ? (
         <StaticLensValue key={part} part={part} x={lensXs[index]}
           value={staticLensValues?.[part] ?? ''} column={columns[part]}
@@ -318,6 +324,13 @@ function PickerLens({
           {label}
         </text>
       ))}
+    </>
+  );
+  const lensContent = (
+    <>
+      <rect width={LENS_WIDTH} height={LENS_HEIGHT} fill="transparent" />
+      {wheelLensContent}
+      {stationaryLensContent}
     </>
   );
 
@@ -344,6 +357,20 @@ function PickerLens({
               height={LENS_HEIGHT - LENS_SOURCE_VERTICAL_INSET * 2}
             />
           </clipPath>
+          {lensMode === 'ios' ? (
+            <>
+              <g id={iosSourceId} data-ui-picker-lens-source="true">{wheelLensContent}</g>
+              <clipPath id={iosCoreClipId} clipPathUnits="userSpaceOnUse">
+                <rect x="0" y={IOS_LENS_EDGE_RADIUS} width={LENS_WIDTH}
+                  height={LENS_HEIGHT - IOS_LENS_EDGE_RADIUS * 2} />
+              </clipPath>
+              {IOS_LENS_EDGE_SLICES.map((slice, index) => (
+                <clipPath key={index} id={iosSliceClipId(index)} clipPathUnits="userSpaceOnUse">
+                  <rect x="0" y={slice.clipY} width={LENS_WIDTH} height={slice.clipHeight} />
+                </clipPath>
+              ))}
+            </>
+          ) : null}
           {lensMode === 'displacement' && assets ? (
             <filter
               id={filterId}
@@ -394,7 +421,20 @@ function PickerLens({
         </defs>
 
         {lensMode === 'ios' ? (
-          <g clipPath={`url(#${clipId})`}>{lensContent}{fixedUnits}</g>
+          <g clipPath={`url(#${clipId})`}>
+            <g clipPath={`url(#${iosCoreClipId})`} data-ui-picker-lens-core="true">
+              <use href={`#${iosSourceId}`} />
+            </g>
+            {IOS_LENS_EDGE_SLICES.map((slice, index) => (
+              <g key={index} clipPath={`url(#${iosSliceClipId(index)})`}
+                data-ui-picker-lens-edge={slice.edge}>
+                <use href={`#${iosSourceId}`} opacity={slice.opacity}
+                  transform={`matrix(1 0 0 ${slice.scaleY} 0 ${slice.translateY})`} />
+              </g>
+            ))}
+            {stationaryLensContent}
+            {fixedUnits}
+          </g>
         ) : (
           <g clipPath={`url(#${clipId})`}>
             <g filter={assets ? `url(#${filterId})` : undefined}>
