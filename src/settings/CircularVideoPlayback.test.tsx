@@ -51,6 +51,7 @@ describe('circular video-note playback', () => {
 
   it('plays and pauses by tapping the video itself, without external playback buttons', async () => {
     const { video, play, pause } = setup();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Воспроизвести' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Пауза' })).toBeTruthy());
     expect(play).toHaveBeenCalledOnce();
