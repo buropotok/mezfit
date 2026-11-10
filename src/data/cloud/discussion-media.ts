@@ -13,7 +13,7 @@ export function isDiscussionMediaType(type: string): boolean {
 export interface DiscussionMediaDraft {
   id: string;
   storageKey: string;
-  mediaType: 'photo' | 'video' | 'voice';
+  mediaType: 'photo' | 'video' | 'video-note' | 'voice';
   mimeType: string;
   sizeBytes: number;
   durationSeconds: number | null;
@@ -34,8 +34,9 @@ export function isDiscussionMediaDraft(value: unknown): value is DiscussionMedia
     && isVoiceWaveform(value.waveform);
   if (value.waveform !== undefined) return false;
   if (value.mediaType === 'photo') return value.mimeType.startsWith('image/') && value.durationSeconds === null;
-  return value.mediaType === 'video' && value.mimeType.startsWith('video/') && typeof value.durationSeconds === 'number'
-    && value.durationSeconds > 0 && value.durationSeconds <= 180;
+  return (value.mediaType === 'video' || value.mediaType === 'video-note') && value.mimeType.startsWith('video/')
+    && typeof value.durationSeconds === 'number' && value.durationSeconds > 0
+    && value.durationSeconds <= (value.mediaType === 'video-note' ? 60 : 180);
 }
 
 /** The text sent with a gallery upload has one identity across retries and devices. */
