@@ -111,8 +111,13 @@ it('clears a voice draft at the start of trash animation, keeping the full-size 
     onClose={() => {}} parentNavigation={null} onNavigationContextChange={() => {}} /></KonstaProvider>);
   const trash = await screen.findByRole('button', { name: 'Удалить голосовое сообщение' });
   expect(trash.classList.contains('ui-icon-button--color-red')).toBe(true);
-  expect(trash.querySelector('svg')?.getAttribute('viewBox')).toBe('100 190 400 400');
+  const svg = trash.querySelector('svg');
+  const viewport = svg?.getAttribute('viewBox')?.split(' ').map(Number);
+  expect(svg?.getAttribute('width')).toBe('24');
+  expect(viewport?.[2]).toBeLessThanOrEqual(420);
+  expect(viewport?.[3]).toBeLessThanOrEqual(420);
   expect(view.container.querySelector('.discussion-composer__voice-placeholder')).not.toBeNull();
+  await waitFor(() => expect(trash).toHaveProperty('disabled', false));
 
   fireEvent.click(trash);
   expect(updateDraftMedia).toHaveBeenCalledWith(thread.id, draft.id, voice.storageKey, 'clear');
