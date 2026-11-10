@@ -7,7 +7,7 @@ const galleryTypes = new Set(MEDIA_FILE_ACCEPT.split(',')
 export const DISCUSSION_MEDIA_ACCEPT = [...galleryTypes].join(',');
 
 export function isDiscussionMediaType(type: string): boolean {
-  return galleryTypes.has(type) || (type.startsWith('audio/') && directMediaSizeLimit(type) > 0);
+  return galleryTypes.has(type) || (typeof type === 'string' && type.startsWith('audio/') && directMediaSizeLimit(type) > 0);
 }
 
 export interface DiscussionMediaDraft {

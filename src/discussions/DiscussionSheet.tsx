@@ -24,7 +24,8 @@ import { DiscussionMedia, type DiscussionMediaSource } from './DiscussionMedia';
 import { useDiscussionMedia } from './useDiscussionMedia';
 import { useDiscussionVoice } from './useDiscussionVoice';
 import { DiscussionVoice, DiscussionVoiceRecording } from './DiscussionVoice';
-import voiceTrash from './voice-trash.png';
+import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
+import { startPressScale } from '../ui/PressScale';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -98,7 +99,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const voiceInProgress = recordingVoice || voice.status === 'requesting' || voice.status === 'processing';
   const voiceDraft = media.selection?.metadata.mediaType === 'voice' ? media.selection.metadata
     : draft.media?.mediaType === 'voice' ? draft.media : undefined;
-  const trashArtwork = useRef<HTMLImageElement>(null);
+  const addSurface = useRef<HTMLElement>(null);
+  const actionSurface = useRef<HTMLElement>(null);
+  const actionPress = useRef<Animation | undefined>(undefined);
+  useLayoutEffect(() => {
+    if (recordingVoice) actionPress.current?.cancel();
+  }, [recordingVoice]);
   const removingVoice = useRef(false);
   const [discardingVoice, setDiscardingVoice] = useState(false);
   const voiceComposer = voiceInProgress || Boolean(voiceDraft) || discardingVoice;
@@ -204,24 +210,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (media.phase === 'uploading') media.cancel();
     else if (!mediaBusy) void media.remove();
   };
-  const discardVoice = async () => {
+  const discardVoice = () => {
     if (removingVoice.current || mediaBusy) return;
     removingVoice.current = true;
     setDiscardingVoice(true);
-    const artwork = trashArtwork.current;
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const animation = reduceMotion ? undefined : artwork?.animate?.([
-      { transform: 'rotate(0) scale(1)', opacity: 1 },
-      { transform: 'rotate(-18deg) scale(1.1)', opacity: 1, offset: 0.35 },
-      { transform: 'rotate(16deg) scale(.45)', opacity: 0 },
-    ], { duration: 320, easing: 'ease-in-out' });
     if (voiceInProgress) voice.cancel();
-    try {
-      await animation?.finished;
-    } catch {
-      // A canceled visual animation still discards the clip.
-    }
-    if (!alive.current) return;
+  };
+  const finishVoiceDiscard = async () => {
+    if (!alive.current || !removingVoice.current) return;
     await media.remove();
     removingVoice.current = false;
     if (alive.current) setDiscardingVoice(false);
@@ -582,7 +578,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </div>}
     </div>
     <div className="discussion-composer" ref={composer} inert={Boolean(viewer)} data-previewing={previewing || undefined}>
-      <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
+      <GlassSurface ref={addSurface} className="discussion-composer__button discussion-composer__button--add" {...material} shape="capsule" wrapContent={false}>
         {repository.supportsMedia && <input type="file" hidden ref={gallery} accept={DISCUSSION_MEDIA_ACCEPT}
           onChange={event => {
             const file = event.currentTarget.files?.[0];
@@ -592,8 +588,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <IconButton icon={voiceComposer ? undefined : 'plus'} label={voiceComposer ? 'Удалить голосовое сообщение'
           : repository.supportsMedia ? 'Добавить вложение' : 'Добавить вложение (пока недоступно)'}
           disabled={!canCompose || discardingVoice || (!voiceComposer && (!repository.supportsMedia || mediaPresent || Boolean(editId)))}
-          onClick={voiceComposer ? () => void discardVoice() : () => gallery.current?.click()}>
-          {voiceComposer && <img className="discussion-composer__trash" ref={trashArtwork} src={voiceTrash} alt="" draggable={false} />}
+          onPointerDown={() => {
+            const surface = addSurface.current;
+            if (!voiceComposer && typeof surface?.animate === 'function') startPressScale(surface, 1.5);
+          }}
+          onClick={voiceComposer ? discardVoice : () => gallery.current?.click()}>
+          {voiceComposer && <DiscussionVoiceTrash deleting={discardingVoice} onComplete={() => void finishVoiceDiscard()} />}
         </IconButton>
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
@@ -607,7 +607,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             value={text} maxRows={5} disabled={!canCompose || voiceInProgress || discardingVoice}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />}
       </GlassSurface>
-      <GlassSurface className="discussion-composer__button discussion-composer__action" {...material}
+      <GlassSurface ref={actionSurface} className="discussion-composer__button discussion-composer__action" {...material}
         data-recording={recordingVoice || undefined} shape="capsule" wrapContent={false}>
         <IconButton label={actionMode === 'send'
           ? (editId ? 'Сохранить' : media.phase === 'failed' && media.selection ? 'Повторить отправку' : 'Отправить')
@@ -616,7 +616,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           className={actionMode === 'microphone' ? 'discussion-composer__microphone' : undefined}
           disabled={!canCompose || discardingVoice || voice.status === 'processing'
             || (actionMode === 'send' && (mediaPresent ? !media.selection : !text.trim()))}
-          onPointerDown={event => voice.onPointerDown(event, actionMode === 'microphone' && Boolean(repository.supportsMedia))}
+          onPointerDown={event => {
+            const surface = actionSurface.current;
+            if (typeof surface?.animate === 'function') actionPress.current = startPressScale(surface, 1.5);
+            voice.onPointerDown(event, actionMode === 'microphone' && Boolean(repository.supportsMedia));
+          }}
           onPointerUp={voice.onPointerUp} onPointerCancel={voice.onPointerCancel} onLostPointerCapture={voice.onPointerCancel}
           onContextMenu={event => { if (actionMode === 'microphone') event.preventDefault(); }}
           onClick={event => {

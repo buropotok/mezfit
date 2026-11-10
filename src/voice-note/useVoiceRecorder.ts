@@ -211,7 +211,7 @@ export function useVoiceRecorder({ session = false, onSample }: {
           recordingStream.getTracks().forEach(track => track.stop());
           streamRef.current = null;
         }
-        const mimeType = recorder.mimeType || chunksRef.current[0]?.type || 'audio/webm';
+        const mimeType = recorder.mimeType || chunksRef.current[0]?.type || options?.mimeType || '';
         const blob = new Blob(chunksRef.current, { type: mimeType });
         chunksRef.current = [];
         const durationMs = Math.max(0, Date.now() - startedAtRef.current);

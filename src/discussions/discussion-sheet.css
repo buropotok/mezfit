@@ -292,9 +292,11 @@
   user-select: none;
 }
 
+.discussion-composer__button--add { transform-origin: left bottom; }
+.discussion-composer__action { transform-origin: right bottom; }
+
 .discussion-composer__action[data-recording] {
   z-index: 1;
-  transform-origin: right bottom;
   animation: discussion-voice-breath 1.1s ease-in-out infinite alternate;
 }
 
@@ -308,11 +310,6 @@
     animation: none;
     transform: scale(2);
   }
-}
-
-.discussion-composer__trash {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 
 .discussion-voice {
