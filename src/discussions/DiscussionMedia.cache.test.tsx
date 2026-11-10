@@ -105,3 +105,26 @@ it('caches a visible video thumbnail and serves it locally on reopening', async 
   await waitFor(() => expect(second.container.querySelector('video')?.getAttribute('src')).toBe('blob:cached-attachment'));
   expect(get).toHaveBeenCalledTimes(1);
 });
+
+it('does not preload a large video until the viewer is opened', async () => {
+  setupBrowser();
+  const get = vi.fn<typeof fetch>().mockResolvedValue(
+    new Response(video, { status: 200, headers: { 'Content-Type': video.type } }),
+  );
+  vi.stubGlobal('fetch', get);
+  const largeEntry = { ...videoEntry, storageKey: 'mvp-media/' + 'c'.repeat(64), sizeBytes: 9 * 1024 * 1024 };
+  const src = directMediaUrl(largeEntry.storageKey) ?? '';
+
+  const thumbnail = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={src} type="video" cache={largeEntry} mode="thumbnail" />
+  </KonstaProvider>);
+  visible(thumbnail.container);
+  await waitFor(() => expect(thumbnail.container.querySelector('video')?.getAttribute('src')).toBe(src));
+  expect(get).not.toHaveBeenCalled();
+  thumbnail.unmount();
+
+  render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={src} type="video" cache={largeEntry} mode="viewer" />
+  </KonstaProvider>);
+  await waitFor(() => expect(get).toHaveBeenCalledTimes(1));
+});
