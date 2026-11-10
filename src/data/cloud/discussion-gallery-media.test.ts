@@ -4,6 +4,7 @@ import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { directMediaUrl, uploadDirectMedia } from '../../media/directMediaUpload';
+import { mockSignedMediaTransport, signedMediaResponse } from '../../media/mediaUploadTestFixtures';
 import { MezfitCloudDatabase } from './database';
 import type { DiscussionMediaDraft } from './discussion-media';
 import { DiscussionRepository, prepareDiscussionMessage, prepareDiscussionThread } from './discussions';
@@ -19,6 +20,7 @@ const databases: Dexie[] = [];
 afterEach(async () => {
   for (const db of databases.splice(0)) await db.delete();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('gallery attachments', () => {
@@ -27,13 +29,21 @@ describe('gallery attachments', () => {
       .mockRejectedValueOnce(new TypeError('connection interrupted'))
       .mockResolvedValueOnce(new Response(null, { status: 412 }))
       .mockResolvedValueOnce(new Response(null, { headers: { 'Content-Length': '3', 'Content-Type': 'video/mp4' } }));
-    vi.stubGlobal('fetch', put);
+    const signer = vi.fn<typeof fetch>()
+      .mockImplementationOnce(async (_url, init) => signedMediaResponse(init, { signature: 'a'.repeat(64) }))
+      .mockImplementationOnce(async (_url, init) => signedMediaResponse(init));
+    mockSignedMediaTransport(put, signer);
     const file = new File(['mp4'], 'sample.mp4', { type: 'video/mp4' });
     await expect(uploadDirectMedia(file, { retryKey: key })).rejects.toMatchObject({ code: 'NETWORK' });
     await expect(uploadDirectMedia(file, { retryKey: key })).resolves.toEqual(uploaded);
     expect(put.mock.calls.map(([url, init]) => [url, init?.method])).toEqual([
-      [uploaded.url, 'PUT'], [uploaded.url, 'PUT'], [uploaded.url, 'HEAD'],
+      [expect.stringContaining(uploaded.url + '?'), 'PUT'],
+      [expect.stringContaining(uploaded.url + '?'), 'PUT'],
+      [uploaded.url, 'HEAD'],
     ]);
+    expect(put.mock.calls[0][0]).not.toBe(put.mock.calls[1][0]);
+    expect(signer).toHaveBeenCalledTimes(2);
+    expect(signer.mock.calls[0][1]?.body).toBe(signer.mock.calls[1][1]?.body);
     expect(put.mock.calls[1][1]).toMatchObject({ body: file, headers: { 'If-None-Match': '*' } });
   });
 

@@ -39,6 +39,7 @@ jobs:
           # Enable only after discussions Apply and real Coach/Client ACL checks.
           # Keep enabled once account databases have upgraded to v16.
           VITE_CLOUD_DISCUSSIONS_ENABLED: ${{ vars.VITE_CLOUD_DISCUSSIONS_ENABLED }}
+          VITE_YANDEX_MEDIA_FUNCTION_URL: ${{ vars.VITE_YANDEX_MEDIA_FUNCTION_URL }}
       - name: Resolve D1 database id
         shell: bash
         run: |
