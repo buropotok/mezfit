@@ -1,6 +1,9 @@
 import Dexie, { type Table } from 'dexie';
 import { directMediaSizeLimit, directMediaUrl } from './directMediaUpload';
 
+/** Do not download very large clips merely because their thumbnail became visible. */
+export const DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES = 8 * 1024 * 1024;
+
 export interface DiscussionMediaCacheEntry {
   accountId: string;
   storageKey: string;

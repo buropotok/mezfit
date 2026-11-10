@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Button } from 'konsta/react';
 import { IconButton, Text } from '../ui/primitives';
-import type { DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 
 export interface DiscussionMediaSource {
@@ -26,8 +26,9 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const thumbnail = mode === 'thumbnail';
+  const autoCacheVideo = !thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES);
   const { url: mediaSrc, container } = useDiscussionMediaSource(
-    src, cache, type === 'photo' ? 'photo' : thumbnail ? 'cache-only' : 'video', retry, thumbnail && type === 'photo',
+    src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
   const label = type === 'photo' ? 'Фото' : 'Видео';
   const duration = Math.floor(durationSeconds ?? 0);
