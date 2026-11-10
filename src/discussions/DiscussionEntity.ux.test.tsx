@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionDestination } from '../data/cloud/discussion-destination';
+import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { DiscussionThread } from '../data/cloud/discussion-contracts';
 import type { NavigationContext } from '../NavigationShell';
 import { DiscussionEntity } from './DiscussionEntity';
@@ -21,7 +22,9 @@ vi.mock('../data/cloud/discussion-destination', () => ({ observeDiscussionDestin
   next: (target: DiscussionDestination) => void, fail: () => void,
 ) => { state.observe(actor, role, exactThread); state.next = next; state.fail = fail; return { unsubscribe: state.unsubscribe }; } }));
 vi.mock('../program/CloudProgramDetailsPage', () => ({ CloudProgramDetailsPage: ({ planId }: { planId: string }) => <div>Программа {planId}</div> }));
-vi.mock('../schedule/OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: () => <div>Плановая тренировка</div> }));
+vi.mock('../schedule/OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ focusExerciseId, focusSetId }: {
+  focusExerciseId?: string; focusSetId?: string;
+}) => <><div>Плановая тренировка</div><div data-testid="planned-focus">{[focusExerciseId, focusSetId].filter(Boolean).join('/')}</div></> }));
 vi.mock('../workout/WorkoutSessionCard', () => ({ WorkoutSessionCard: () => <div>Выполнение</div> }));
 afterEach(() => { cleanup(); state.next = null; state.fail = null; vi.clearAllMocks(); });
 
@@ -51,4 +54,19 @@ it('offers the existing retry action when the authorized reader fails', () => {
   expect(screen.getByRole('alert').textContent).toBe('Не удалось открыть сущность');
   expect(screen.getByRole('button', { name: 'Повторить' })).toBeTruthy();
   expect(screen.queryByText('Выполнение')).toBeNull();
+});
+
+it('forwards the exact scheduled exercise and set to the existing PLAN viewer', () => {
+  const draft: LocalWorkoutOccurrenceDraft = {
+    id: 'draft:occurrence', actorUserId: 'tg:11', realmId: 'tg:11',
+    athleteUserId: 'tg:11', coachUserId: null, clientUserId: null,
+    format: 'independent', startsAtUtc: '2026-11-07T10:00:00.000Z', durationMinutes: 60,
+    plan: { name: 'План', comment: null, exercises: [] },
+    originalPlan: { name: 'План', comment: null, exercises: [] },
+    createdAt: '', updatedAt: '',
+  };
+  render(<DiscussionEntity thread={thread} role="coach" onBack={vi.fn()} onNavigationContextChange={vi.fn()} />);
+  act(() => state.next?.({ kind: 'occurrence', draft, focus: { exerciseId: 'occ-ex', setId: 'occ-set' } }));
+  expect(screen.getByText('Плановая тренировка')).toBeTruthy();
+  expect(screen.getByTestId('planned-focus').textContent).toBe('occ-ex/occ-set');
 });

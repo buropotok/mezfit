@@ -89,6 +89,9 @@ export interface OccurrenceDraftSheetProps {
   drafts: WorkoutOccurrenceDraftRepository;
   actor?: ProgramActor;
   readOnly?: boolean;
+  /** Read-only deep-link from an occurrence exercise or set discussion. */
+  focusExerciseId?: string;
+  focusSetId?: string;
   /** Published Client PLAN can be read-only while execution Start is allowed. */
   allowReadOnlyStart?: boolean;
   /** Owner-controlled lock; pass the frozen occurrence PLAN in draft after Start. */
@@ -193,7 +196,7 @@ export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabl
 }
 
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
-  actor, readOnly = false, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef, suspended = false,
+  actor, readOnly = false, focusExerciseId, focusSetId, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef, suspended = false,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
   inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
@@ -517,23 +520,40 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const activeExercise = draft?.plan.exercises.find(item => item.id === editingSet?.exerciseId);
   const activeSet = activeExercise?.sets.find(item => item.id === editingSet?.setId);
-  const openSet = async (exerciseId: string, setId: string) => {
-    if (access.current.planLocked) { onMutationAttempt(); return; }
-    if (!draft || !planner || busy) return;
+  const openSet = async (exerciseId: string, setId: string, isCurrent: () => boolean = () => true): Promise<boolean> => {
+    if (!isCurrent()) return false;
+    if (access.current.planLocked) { onMutationAttempt(); return false; }
+    if (!draft || !planner || busy) return false;
     const exercise = draft.plan.exercises.find(item => item.id === exerciseId);
-    if (!exercise?.sets.some(item => item.id === setId)) return;
+    if (!exercise?.sets.some(item => item.id === setId)) return false;
     try {
       const type = await planner.programs.trackingTypeForExercise(exercise.exercise);
+      if (!isCurrent()) return false;
       if (!type) {
         setError('Не удалось определить тип учёта упражнения');
-        return;
+        return false;
       }
-      if (access.current.planLocked) { onMutationAttempt(); return; }
+      if (access.current.planLocked) { onMutationAttempt(); return false; }
       setEditingSet({ exerciseId, setId, trackingType: type });
+      return true;
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
+      if (isCurrent()) setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
+      return false;
     }
   };
+  const focusedSet = useRef<string | null>(null);
+  useEffect(() => {
+    if (!readOnly || !auxiliaryReady || !draft || !focusExerciseId || !focusSetId || !planner) return;
+    const key = JSON.stringify([draft.id, focusExerciseId, focusSetId]);
+    if (focusedSet.current === key) return;
+    let active = true;
+    // Mark the focus consumed only after success: StrictMode effect replay cancels
+    // the first attempt and must still be able to open the requested set.
+    void openSet(focusExerciseId, focusSetId, () => active).then(opened => {
+      if (active && opened) focusedSet.current = key;
+    });
+    return () => { active = false; };
+  }, [auxiliaryReady, draft?.id, focusExerciseId, focusSetId, planner, readOnly]);
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
   const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
   const end = actual ? new Date(actual.endsAtUtc) : draft ? currentEnd(draft) : new Date(now);
@@ -658,6 +678,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
           <Text variant="body">План на тренировку</Text>
           <WorkoutPlanCard mode="planning" surface={inlineCard ? 'transparent' : 'default'} hideHeader={inlineCard} collapsed={planCollapsed}
+            focusExerciseId={focusExerciseId}
             onCollapsedChange={inlineCard ? undefined : () => setPlanCollapsed(value => !value)}
             scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight

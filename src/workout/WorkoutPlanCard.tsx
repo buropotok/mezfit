@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { forwardRef, useEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
 import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
 import type { NavigationContext } from '../NavigationShell';
@@ -19,6 +19,8 @@ export interface WorkoutPlanCardProps {
   hideHeader?: boolean;
   /** Numeric assignments belong only to a scheduled occurrence. */
   showPlanMetrics?: boolean;
+  /** Expand the exact occurrence exercise when arriving from its discussion. */
+  focusExerciseId?: string;
   programName?: string;
   hideProgramName?: boolean;
   canScheduleCoached?: boolean;
@@ -132,13 +134,20 @@ export function WorkoutPlanCard({
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
   discussionTargetFor, onOpenDiscussion, onNavigationContextChange, onSetDeletionNavigationContextChange,
+  focusExerciseId,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const authoringVisible = !readOnly;
   const mutate = (action?: () => void) => { if (readOnly) return; if (onMutationAttempt) onMutationAttempt(); else action?.(); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
-  const [expandedExercises, setExpandedExercises] = useState<ReadonlySet<string>>(() => new Set());
+  const [expandedExercises, setExpandedExercises] = useState<ReadonlySet<string>>(
+    () => new Set(focusExerciseId ? [focusExerciseId] : []));
+  useEffect(() => {
+    if (!focusExerciseId) return;
+    setExpandedExercises(current => current.has(focusExerciseId)
+      ? current : new Set([...current, focusExerciseId]));
+  }, [focusExerciseId]);
   const scheduleTriggerRef = useRef<HTMLElement>(null);
   const [afterMenu, setAfterMenu] = useState<(() => void) | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
