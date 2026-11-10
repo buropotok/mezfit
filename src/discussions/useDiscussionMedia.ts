@@ -27,18 +27,18 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [selection]);
-  const savedVoice = draft.media?.mediaType === 'voice' ? draft.media : undefined;
+  const savedMedia = draft.media;
   useEffect(() => {
-    if (selection || !savedVoice) return;
+    if (selection || !savedMedia) return;
     let current = true;
-    const { storageKey, mimeType, sizeBytes, fileName } = savedVoice;
+    const { storageKey, mimeType, sizeBytes, fileName } = savedMedia;
     void readDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }).then(blob => {
       if (current && blob && !active.current) {
-        setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedVoice });
+        setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedMedia });
       }
     });
     return () => { current = false; };
-  }, [repository.actorUserId, savedVoice, selection]);
+  }, [repository.actorUserId, savedMedia, selection]);
   useEffect(() => {
     const retry = () => {
       if (document.visibilityState === 'hidden' || navigator.onLine === false) {
@@ -107,7 +107,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     let command: DiscussionMessageInput | null = null;
     setError(undefined); setPhase('uploading');
     try {
-      if (selected.metadata.mediaType === 'voice') {
+      if (selected.metadata.mediaType === 'voice' || selected.compressed) {
         const { storageKey, mimeType, sizeBytes } = selected.metadata;
         await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file);
         if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
