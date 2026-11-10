@@ -13,6 +13,7 @@ interface RecordedNote {
   durationSeconds: number;
   mimeType: string;
   sizeBytes: number;
+  capture: VideoNoteRecording['capture'];
 }
 
 /** The Settings gallery is a probe. Chat reuses the same recording engine and player. */
@@ -34,7 +35,7 @@ export function VideoNoteModule() {
     try {
       const url = URL.createObjectURL(recording.blob);
       clipUrlRef.current = url;
-      setClip({ url, mimeType: recording.mimeType, sizeBytes: recording.blob.size,
+      setClip({ url, mimeType: recording.mimeType, sizeBytes: recording.blob.size, capture: recording.capture,
         durationSeconds: Math.min(60, Math.max(1, Math.ceil(recording.durationMs / 1000))) });
       setStage('preview');
     } catch {
@@ -137,6 +138,13 @@ export function VideoNoteModule() {
           Камера и микрофон остаются активны для повторной записи. «Сбросить» отключит их.
         </Text>
       ) : null}
+
+      {clip?.capture && <Text variant="footnote" tone="muted">
+        Кадр камеры {clip.capture.settings.width ?? '—'} × {clip.capture.settings.height ?? '—'}.
+        Частота {clip.capture.settings.frameRate ?? '—'} кадр/с.
+        {clip.capture.videoBitsPerSecond > 0 && ` Битрейт по данным рекордера ${clip.capture.videoBitsPerSecond} бит/с.`}
+        {clip.capture.recorderMimeType && ` Формат ${clip.capture.recorderMimeType}.`}
+      </Text>}
 
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
 

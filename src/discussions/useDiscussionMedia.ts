@@ -8,7 +8,7 @@ import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
 
-type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>>;
+type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { recorded?: boolean };
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
@@ -28,7 +28,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [selection]);
-  const savedCapture = draft.media?.mediaType === 'voice' || draft.media?.mediaType === 'video-note' ? draft.media : undefined;
+  const savedCapture = draft.media?.mediaType === 'photo' ? undefined : draft.media;
   useEffect(() => {
     if (selection || !savedCapture) return;
     let current = true;
@@ -60,7 +60,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     };
   }, []);
 
-  async function choose(file: File) {
+  async function choose(file: File, { recorded = false } = {}) {
     if (active.current) return;
     resume.current = null;
     const controller = new AbortController();
@@ -75,7 +75,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         || saved.durationSeconds !== next.metadata.durationSeconds)) {
         throw new Error('Выберите тот же файл или удалите прежнее вложение');
       }
-      setSelection({ ...next, metadata: saved ?? next.metadata });
+      setSelection({ ...next, metadata: saved ?? next.metadata, recorded });
       setPhase('idle');
     } catch (reason) {
       if (active.current === controller) {
@@ -122,7 +122,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     let command: DiscussionMessageInput | null = null;
     setError(undefined); setPhase('uploading');
     try {
-      if (selected.metadata.mediaType === 'voice' || selected.metadata.mediaType === 'video-note') {
+      if (selected.recorded || selected.metadata.mediaType === 'voice' || selected.metadata.mediaType === 'video-note') {
         const { storageKey, mimeType, sizeBytes } = selected.metadata;
         await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file);
         if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
@@ -137,7 +137,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
       setPhase('publishing');
-      if (selected.metadata.mediaType !== 'voice' && selected.metadata.mediaType !== 'video-note') await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey: result.key,
+      if (!selected.recorded && selected.metadata.mediaType !== 'voice' && selected.metadata.mediaType !== 'video-note') await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey: result.key,
         mimeType: result.contentType, sizeBytes: result.sizeBytes }, selected.file);
       await repository.send(command, result);
       draft.sent(command.id);

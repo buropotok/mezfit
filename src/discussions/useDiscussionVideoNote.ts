@@ -77,7 +77,7 @@ export function useDiscussionVideoNote(onRecorded: (clip: VideoNoteRecording) =>
 
   return {
     status: recorder.status, error: recorder.error, stream: recorder.stream, progress: recorder.progress,
-    permissionReady, cancel, onPointerDown, onPointerUp, onPointerCancel,
+    permissionReady, cancel, release, onPointerDown, onPointerUp, onPointerCancel,
     consumeClick: () => {
       const value = suppressClick.current;
       suppressClick.current = false;

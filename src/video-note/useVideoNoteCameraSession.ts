@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 
+import { videoRecordingConstraints, type VideoRecordingProfile } from './video-recording-profile';
+
 export type VideoNoteFacingMode = 'user' | 'environment';
 
 /**
@@ -7,7 +9,7 @@ export type VideoNoteFacingMode = 'user' | 'environment';
  * Keep it across takes, but never across recorder unmount/reset or camera switches.
  * This hook is independent of Settings, so a discussion composer can reuse it.
  */
-export function useVideoNoteCameraSession() {
+export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circle') {
   const streamRef = useRef<MediaStream | null>(null);
   const facingRef = useRef<VideoNoteFacingMode | null>(null);
   const requestIdRef = useRef(0);
@@ -38,7 +40,7 @@ export function useVideoNoteCameraSession() {
     release();
     const requestId = ++requestIdRef.current;
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facing } },
+      video: { facingMode: { ideal: facing }, ...videoRecordingConstraints(profile) },
       audio: { echoCancellation: true, noiseSuppression: true },
     });
     if (!mountedRef.current || requestId !== requestIdRef.current) {
@@ -49,7 +51,7 @@ export function useVideoNoteCameraSession() {
     streamRef.current = stream;
     facingRef.current = facing;
     return stream;
-  }, [liveStream, release]);
+  }, [liveStream, profile, release]);
 
   useEffect(() => {
     mountedRef.current = true;
