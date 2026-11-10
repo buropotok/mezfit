@@ -105,7 +105,7 @@ export async function inspectDiscussionMedia(original: File, signal: AbortSignal
       mimeType: selectedType, sizeBytes: selected.size, durationSeconds: details?.durationSeconds ?? null,
       fileName: selected.name, uploadState: 'uploading',
     };
-    return { file: selected, metadata };
+    return { file: selected, metadata, ...(selected !== file ? { compressed: true } : {}) };
   } finally {
     URL.revokeObjectURL(url);
   }
