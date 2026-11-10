@@ -87,26 +87,28 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
-  function chooseVoice(clip: VoiceRecording) {
+  function chooseVoice(clip: VoiceRecording, immediately = false) {
     if (active.current || selection || draft.media) return;
     setError(undefined);
     try {
-      setSelection(prepareDiscussionVoice(clip));
-      setPhase('idle');
+      const next = prepareDiscussionVoice(clip);
+      setSelection(next);
+      if (immediately) void send(next);
+      else setPhase('idle');
     } catch {
       setError('Формат голосового не поддерживается или запись превышает 25 МБ');
       setPhase('failed');
     }
   }
 
-  function sendVideoNote(clip: VideoNoteRecording) {
+  function sendVideoNote(clip: VideoNoteRecording, previewOnly = false) {
     if (active.current || selection || draft.media) return;
     setError(undefined);
     try {
       const next = prepareDiscussionVideoNote(clip);
       setSelection(next);
-      // Upload and publication begin without the MessageBar preview/Send step.
-      void send(next);
+      if (previewOnly) setPhase('idle');
+      else void send(next);
     } catch {
       setError('Не удалось подготовить видеокружок. Проверьте формат и размер записи.');
       setPhase('failed');
