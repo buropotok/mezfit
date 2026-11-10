@@ -29,6 +29,8 @@ import { DiscussionVoice, DiscussionVoiceRecording } from './DiscussionVoice';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { startPressScale } from '../ui/PressScale';
+import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
+import { RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -97,8 +99,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
   const draft = useDiscussionDraft(repository, threadId);
   const media = useDiscussionMedia(repository, draft);
-  const voice = useDiscussionVoice(media.chooseVoice);
-  const videoNote = useDiscussionVideoNote(media.sendVideoNote);
+  const voice = useDiscussionVoice(media.chooseVoice, () => discardVoice());
+  const videoNote = useDiscussionVideoNote(media.sendVideoNote, () => discardVoice());
   const [videoPlaybackHost, setVideoPlaybackHost] = useState<HTMLDivElement | null>(null);
   const recordingVoice = voice.status === 'recording';
   const recordingCircle = videoNote.status === 'recording';
@@ -110,10 +112,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     : draft.media?.mediaType === 'video-note' ? draft.media : undefined;
   const addSurface = useRef<HTMLElement>(null);
   const actionSurface = useRef<HTMLElement>(null);
-  const actionPress = useRef<Animation | undefined>(undefined);
-  useLayoutEffect(() => {
-    if (recordingVoice || recordingCircle) actionPress.current?.cancel();
-  }, [recordingVoice, recordingCircle]);
+  const recordingGesture = voice.phase !== 'idle' ? voice : videoNote;
+  const lockedRecording = recordingGesture.phase === 'locked';
+  const holdingRecording = recordingGesture.phase === 'holding' || lockedRecording;
+  useRecordingButtonAnimation(actionSurface, recordingGesture.phase);
   const removingVoice = useRef(false);
   const discardAnimationDone = useRef(false);
   const discardRemovalDone = useRef(false);
@@ -145,7 +147,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [busy, setBusy] = useState(false);
   const [mediaMode, setMediaMode] = useState<'microphone' | 'camera'>('microphone');
   const canCompose = !cameraOpen && !busy && !mediaBusy && draft.ready && Boolean(state.title) && !state.error;
-  const actionMode = editId !== null || mediaPresent || Boolean(text.trim()) ? 'send' : mediaMode;
+  const actionMode = lockedRecording || editId !== null || mediaPresent || Boolean(text.trim()) ? 'send' : mediaMode;
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
   const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
   const [receiptError, setReceiptError] = useState(false);
@@ -237,7 +239,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     discardAnimationDone.current = false;
     discardRemovalDone.current = false;
     setDiscardingVoice(true);
-    if (voiceInProgress) voice.cancel();
+    voice.cancel();
+    videoNote.cancel();
     // Clear immediately; the animation must never delay the local draft mutation.
     void media.remove().finally(() => {
       discardRemovalDone.current = true;
@@ -251,7 +254,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
     if (viewer) { setViewing(null); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
-    if (previewing || voiceComposer) {
+    if (previewing || voiceComposer || circleDraft) {
       if (removingVoice.current) { updateNavigation(); return; }
       if (voiceInProgress) voice.cancel();
       else closePreview();
@@ -650,6 +653,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     </div>
     <div ref={setVideoPlaybackHost} className="discussion-video-note-live discussion-video-note-playback"
       style={{ bottom: composerHeight + contextHeight + 12 }} />
+    {circleDraft && media.preview && !mediaBusy && <DiscussionVideoNote key={media.preview} src={media.preview}
+      durationSeconds={circleDraft.durationSeconds ?? 0} playbackHost={videoPlaybackHost} review />}
     {(recordingCircle || videoNote.status === 'processing') && <div className="discussion-video-note-live"
       style={{ bottom: composerHeight + contextHeight + 12 }}>
       <DiscussionVideoNoteCapture stream={videoNote.stream} progress={videoNote.progress} />
@@ -662,9 +667,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     <div className="discussion-composer" ref={composer} inert={Boolean(viewer) || cameraOpen} data-previewing={previewing || undefined}>
       <GlassSurface ref={addSurface} className="discussion-composer__button discussion-composer__button--add" {...material}
         shape="capsule" wrapContent={false} style={{ visibility: !voiceComposer && attachmentsPresented ? 'hidden' : undefined }}>
-        {voiceComposer
-          ? <IconButton color="red" label="Удалить голосовое сообщение"
-            disabled={!canCompose || circleInProgress || discardingVoice} onClick={discardVoice}>
+        {voiceComposer || circleInProgress || circleDraft
+          ? <IconButton color="red" label={circleInProgress || circleDraft ? "Удалить видеокружок" : "Удалить голосовое сообщение"}
+            disabled={!canCompose || discardingVoice} onClick={discardVoice}>
             <DiscussionVoiceTrash deleting={discardingVoice} onComplete={() => {
               discardAnimationDone.current = true;
               finishVoiceDiscard();
@@ -692,8 +697,23 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             value={text} maxRows={5} disabled={!canCompose || voiceInProgress || circleInProgress || Boolean(circleDraft) || discardingVoice}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />}
       </GlassSurface>
+      {holdingRecording && <div className="discussion-composer__recording-control" data-locked={lockedRecording || undefined}
+        style={{ bottom: lockedRecording ? 88 : RECORDING_LOCK_DISTANCE }}>
+        <GlassSurface {...material} shape="capsule" wrapContent={false}>
+          {lockedRecording
+            ? <IconButton icon="player-stop" label="Остановить запись" onClick={recordingGesture.stop} />
+            : <div className="discussion-composer__lock" role="img" aria-label="Сдвиньте вверх до замка"
+              style={{ opacity: 0.6 + recordingGesture.lockProgress * 0.4 }}>
+              <Icon name="arrow-up" />
+              <Icon name="lock-open" />
+            </div>}
+        </GlassSurface>
+      </div>}
+      {holdingRecording && !lockedRecording && <Text variant="caption" className="discussion-composer__cancel-hint">
+        ‹ Сдвиньте для отмены
+      </Text>}
       <GlassSurface ref={actionSurface} className="discussion-composer__button discussion-composer__action" {...material}
-        data-recording={recordingVoice || recordingCircle || undefined} shape="capsule" wrapContent={false}>
+        data-recording={holdingRecording || undefined} shape="capsule" wrapContent={false}>
         <IconButton label={actionMode === 'send'
           ? (editId ? 'Сохранить' : media.phase === 'failed' && media.selection ? 'Повторить отправку' : 'Отправить')
           : actionMode === 'microphone' ? 'Переключить на кружок' : 'Переключить на голосовое'}
@@ -701,13 +721,17 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             : repository.supportsMedia && actionMode === 'camera' ? 'Удерживайте для записи видеокружка' : undefined}
           className={actionMode === 'microphone' || actionMode === 'camera' ? 'discussion-composer__microphone' : undefined}
           disabled={!canCompose || attachmentsOpen || discardingVoice || voice.status === 'processing' || videoNote.status === 'processing'
-            || (actionMode === 'send' && (mediaPresent ? !media.selection : !text.trim()))}
+            || (actionMode === 'send' && !lockedRecording && (mediaPresent ? !media.selection : !text.trim()))}
           onPointerDown={event => {
+            // The chat material owns the continuous scale; suppress the primitive's second press animation.
+            event.preventDefault();
             const surface = actionSurface.current;
-            if (typeof surface?.animate === 'function') actionPress.current = startPressScale(surface, 1.5);
-            voice.onPointerDown(event, actionMode === 'microphone' && Boolean(repository.supportsMedia));
-            videoNote.onPointerDown(event, actionMode === 'camera' && Boolean(repository.supportsMedia));
+            if (((actionMode === 'send' && !lockedRecording) || !repository.supportsMedia)
+              && typeof surface?.animate === 'function') startPressScale(surface, 1.5);
+            voice.onPointerDown(event, actionMode === 'microphone' && !circleInProgress && !mediaPresent && Boolean(repository.supportsMedia));
+            videoNote.onPointerDown(event, actionMode === 'camera' && !voiceInProgress && !mediaPresent && Boolean(repository.supportsMedia));
           }}
+          onPointerMove={event => { voice.onPointerMove(event); videoNote.onPointerMove(event); }}
           onPointerUp={event => { voice.onPointerUp(event); videoNote.onPointerUp(event); }}
           onPointerCancel={event => { voice.onPointerCancel(event); videoNote.onPointerCancel(event); }}
           onLostPointerCapture={event => { voice.onPointerCancel(event); videoNote.onPointerCancel(event); }}
@@ -716,7 +740,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             const voiceConsumed = voice.consumeClick();
             const circleConsumed = videoNote.consumeClick();
             if ((voiceConsumed || circleConsumed) && event.detail !== 0) return;
-            if (actionMode === 'send') submit();
+            if (lockedRecording) recordingGesture.send();
+            else if (actionMode === 'send') submit();
             else setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone');
           }}>
           <DiscussionActionIcon mode={actionMode} />
