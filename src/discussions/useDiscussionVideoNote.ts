@@ -24,6 +24,9 @@ export function useDiscussionVideoNote(onRecorded: (clip: VideoNoteRecording) =>
     setPermissionReady(false);
   };
 
+  const releaseRef = useRef(release);
+  releaseRef.current = release;
+
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') releaseRef.current();
@@ -37,9 +40,6 @@ export function useDiscussionVideoNote(onRecorded: (clip: VideoNoteRecording) =>
       releaseRef.current();
     };
   }, []);
-  const releaseRef = useRef(release);
-  releaseRef.current = release;
-
   function onPointerDown(event: PointerEvent<HTMLButtonElement>, canRecord: boolean) {
     if (event.button !== 0 || !event.isPrimary || gesture.current) return;
     suppressClick.current = false;
