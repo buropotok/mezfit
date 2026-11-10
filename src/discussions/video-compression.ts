@@ -40,7 +40,7 @@ function recordingMime(): string | null {
 /** A null result means compression is unavailable or failed safely. */
 export async function compressGalleryVideo(file: File, info: VideoProbe, signal: AbortSignal): Promise<File | null> {
   if (file.size <= COMPRESS_VIDEO_ABOVE_BYTES || signal.aborted || !Number.isFinite(info.durationSeconds)
-    || info.durationSeconds <= 0 || info.durationSeconds > 180 || !recordingMime()) return null;
+    || info.durationSeconds <= 0 || info.durationSeconds > 180) return null;
   const mime = recordingMime();
   if (!mime) return null;
   const canvas = document.createElement('canvas');
@@ -112,9 +112,14 @@ export async function compressGalleryVideo(file: File, info: VideoProbe, signal:
             });
           }
           if (settled) return;
-          // On Android this captures existing audio without altering its volume.
+          // Chrome exposes audio tracks only once the media element has started.
+          // Rewind before recording so the first frames are not intentionally lost.
+          await video.play();
+          if (settled) return;
           originalStream = capture.captureStream?.() ?? null;
-          if (!originalStream) throw new Error('Захват видео недоступен');
+          if (!originalStream?.getAudioTracks().length) throw new Error('Безопасный захват звука недоступен');
+          video.pause();
+          video.currentTime = 0;
           canvasStream = canvas.captureStream(FRAME_RATE);
           const tracks = [...canvasStream.getVideoTracks(), ...originalStream.getAudioTracks()];
           if (tracks.length === 0) throw new Error('Захват дорожек недоступен');
