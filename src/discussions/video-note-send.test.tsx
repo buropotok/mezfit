@@ -18,6 +18,7 @@ vi.mock('../media/discussionMediaCache', async importOriginal => ({
   ...await importOriginal<typeof import('../media/discussionMediaCache')>(),
   storeDiscussionMedia: vi.fn(async () => undefined),
   readDiscussionMedia: vi.fn(async () => null),
+  downloadDiscussionMedia: vi.fn(async () => null),
 }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
