@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
+import { Blob as NodeBlob } from 'node:buffer';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import Dexie from 'dexie';
 import { KonstaProvider } from 'konsta/react';
@@ -9,13 +10,11 @@ import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMe
 import { DiscussionMedia } from './DiscussionMedia';
 
 const accountId = 'tg:8172';
-const photo = new Blob(['photo'], { type: 'image/jpeg' });
-const video = new Blob(['video'], { type: 'video/mp4' });
 const photoEntry = {
-  accountId, storageKey: 'mvp-media/' + 'a'.repeat(64), mimeType: photo.type, sizeBytes: photo.size,
+  accountId, storageKey: 'mvp-media/' + 'a'.repeat(64), mimeType: 'image/jpeg', sizeBytes: 5,
 };
 const videoEntry = {
-  accountId, storageKey: 'mvp-media/' + 'b'.repeat(64), mimeType: video.type, sizeBytes: video.size,
+  accountId, storageKey: 'mvp-media/' + 'b'.repeat(64), mimeType: 'video/mp4', sizeBytes: 5,
 };
 
 class VisibleObserver implements IntersectionObserver {
@@ -51,6 +50,8 @@ function visible(container: HTMLElement) {
 }
 
 function setupBrowser() {
+  // jsdom Blob lacks stream() and does not survive fake-indexeddb's structured clone.
+  vi.stubGlobal('Blob', NodeBlob);
   vi.stubGlobal('IntersectionObserver', VisibleObserver);
   vi.stubGlobal('URL', class extends URL {
     static createObjectURL = vi.fn(() => 'blob:cached-attachment');
@@ -66,8 +67,8 @@ afterEach(async () => {
 });
 
 it('reads a cached photo from IndexedDB before requesting Yandex', async () => {
-  await storeDiscussionMedia(photoEntry, photo);
   setupBrowser();
+  await storeDiscussionMedia(photoEntry, new Blob(['photo'], { type: photoEntry.mimeType }));
   const get = vi.fn<typeof fetch>();
   vi.stubGlobal('fetch', get);
 
@@ -82,6 +83,7 @@ it('reads a cached photo from IndexedDB before requesting Yandex', async () => {
 
 it('caches a visible video thumbnail and serves it locally on reopening', async () => {
   setupBrowser();
+  const video = new Blob(['video'], { type: videoEntry.mimeType });
   const get = vi.fn<typeof fetch>().mockResolvedValue(
     new Response(video, { status: 200, headers: { 'Content-Type': video.type, 'Content-Length': String(video.size) } }),
   );
@@ -108,6 +110,7 @@ it('caches a visible video thumbnail and serves it locally on reopening', async 
 
 it('does not preload a large video until the viewer is opened', async () => {
   setupBrowser();
+  const video = new Blob(['video'], { type: videoEntry.mimeType });
   const get = vi.fn<typeof fetch>().mockResolvedValue(
     new Response(video, { status: 200, headers: { 'Content-Type': video.type } }),
   );
