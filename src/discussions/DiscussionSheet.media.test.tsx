@@ -4,6 +4,7 @@ import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import { directMediaUrl, MediaUploadError, uploadDirectMedia, type UploadedMedia } from '../media/directMediaUpload';
+import { DiscussionMedia } from './DiscussionMedia';
 import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
 import { inspectDiscussionMedia } from './discussion-media-file';
@@ -95,4 +96,27 @@ it('opens a gallery video in the sheet and returns to the same chat via Back', a
   expect(screen.queryByRole('region', { name: 'Просмотр вложения' })).toBeNull();
   expect(screen.getByRole('link', { name: 'Открыть видео' })).toBeTruthy();
   expect(onClose).not.toHaveBeenCalled();
+});
+
+it('seeks only the in-chat thumbnail to a frame within the clip', () => {
+  const src = 'blob:gallery-video';
+  const { container, rerender } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={src} type="video" mode="thumbnail" />
+  </KonstaProvider>);
+  const video = container.querySelector('video');
+  if (!video) throw new Error('Missing thumbnail video');
+  Object.defineProperty(video, 'duration', { configurable: true, value: 8 });
+  fireEvent.loadedMetadata(video);
+  expect(video.currentTime).toBe(3);
+
+  Object.defineProperty(video, 'duration', { configurable: true, value: 2 });
+  fireEvent.loadedMetadata(video);
+  expect(video.currentTime).toBe(1);
+
+  rerender(<KonstaProvider theme="ios" dark><DiscussionMedia src={src} type="video" mode="viewer" /></KonstaProvider>);
+  const player = container.querySelector('video');
+  if (!player) throw new Error('Missing video player');
+  Object.defineProperty(player, 'duration', { configurable: true, value: 8 });
+  fireEvent.loadedMetadata(player);
+  expect(player.currentTime).toBe(0);
 });

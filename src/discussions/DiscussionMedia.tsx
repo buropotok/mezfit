@@ -8,6 +8,12 @@ export interface DiscussionMediaSource {
   durationSeconds?: number | null;
 }
 
+function seekThumbnail(video: HTMLVideoElement) {
+  if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+  // Seek within short clips as well, without landing on the final boundary.
+  video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
+}
+
 export function DiscussionMedia({ src, type, durationSeconds, mode, onOpen, onMenu, meta }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
@@ -22,7 +28,9 @@ export function DiscussionMedia({ src, type, durationSeconds, mode, onOpen, onMe
     ? <img src={src} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
     : <video src={src} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
-        playsInline controls={!thumbnail} preload="metadata" onError={() => setFailed(true)} />;
+        playsInline controls={!thumbnail} preload="metadata"
+        onLoadedMetadata={thumbnail ? event => seekThumbnail(event.currentTarget) : undefined}
+        onError={() => setFailed(true)} />;
 
   return <div className={`discussion-media discussion-media--${mode}`} onClick={event => event.stopPropagation()}>
     {failed ? <div className="discussion-media__error">

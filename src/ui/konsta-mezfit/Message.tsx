@@ -15,6 +15,8 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
   bubbleRef?: Ref<HTMLDivElement>;
   onBubbleClick?: MouseEventHandler<HTMLDivElement>;
   bubbleSource?: ReactNode;
+  /** Gallery media already paints its own surface. */
+  bubbleVariant?: 'media';
   /** The owning thread activates a stronger one-second brightness pulse after navigation settles. */
   focusPulse?: boolean;
   /** Semantic time / receipt rendered inside the bubble without depending on Konsta's footer DOM. */
@@ -24,7 +26,7 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
 export function MezfitMessage(props: MezfitMessageProps) {
   const { component = 'div', className, colors: colorsProp, ref, id, text, name,
     type = 'sent', header, footer, textHeader, textFooter, avatar,
-    children, bubbleRef, onBubbleClick, bubbleSource, focusPulse = false, inlineMeta, ...rest } = props;
+    children, bubbleRef, onBubbleClick, bubbleSource, bubbleVariant, focusPulse = false, inlineMeta, ...rest } = props;
   const theme = useTheme();
   const c = MessageClasses({ ...props, type }, MessageColors(colorsProp, (classes: string) => classes), className);
   const classes = (part: { common?: string; ios?: string; material?: string }) => cls(part.common, part[theme]);
@@ -35,7 +37,8 @@ export function MezfitMessage(props: MezfitMessageProps) {
     <div className={classes(c.messageContent)}>
       {name && <div className={classes(c.messageName)}>{name}</div>}
       {header && <div className={classes(c.messageHeader)}>{header}</div>}
-      <div className={cls(classes(c.messageBubble), focusPulse && 'ui-mezfit-message__focus-pulse')}
+      <div className={cls(classes(c.messageBubble), bubbleVariant === 'media' && 'ui-mezfit-message__bubble--media',
+        focusPulse && 'ui-mezfit-message__focus-pulse')}
         ref={bubbleRef} onClick={onBubbleClick}>
         {textHeader && <div className={classes(c.messageTextHeader)}>{textHeader}</div>}
         {text && <div className={classes(c.messageText)}>{inlineMeta ? <div className="ui-mezfit-message__inline">
