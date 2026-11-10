@@ -285,3 +285,82 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.discussion-composer__microphone {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.discussion-composer__button--add { transform-origin: left bottom; }
+.discussion-composer__action { transform-origin: right bottom; }
+
+.discussion-composer__action[data-recording] {
+  z-index: 1;
+  animation: discussion-voice-breath 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes discussion-voice-breath {
+  from { transform: scale(1.85); }
+  to { transform: scale(2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discussion-composer__action[data-recording] {
+    animation: none;
+    transform: scale(2);
+  }
+}
+
+.discussion-voice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: min(64vw, 17rem);
+  min-width: 0;
+}
+
+.discussion-voice > .voice-message-player {
+  flex: 1;
+}
+
+.discussion-voice__error,
+.discussion-voice__meta {
+  flex-basis: 100%;
+}
+
+.discussion-voice__meta {
+  text-align: end;
+}
+
+.discussion-composer__field > .discussion-voice,
+.discussion-voice-recording {
+  width: 100%;
+  padding-inline: 8px;
+}
+
+.discussion-composer__voice-placeholder {
+  align-self: center;
+  padding-inline: 12px;
+}
+
+.discussion-voice-recording {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.discussion-voice-recording svg {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  fill: currentColor;
+}
+
+.discussion-voice-recording__dot {
+  width: 14px;
+  height: 14px;
+  margin-inline: 12px;
+  border-radius: 50%;
+  background: var(--ui-color-danger, #ff453a);
+}

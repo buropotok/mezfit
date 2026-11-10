@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { acquireSessionMicrophone } from './sessionMicrophone';
 import { voiceWaveformFromAudioBuffer, voiceWaveformFromPeaks } from './voiceWaveform';
 
 export interface VoiceRecording {
-  /** Raw recording for a future message attachment/storage integration. */
+  /** Raw recording for message attachment/storage integration. */
   blob: Blob;
   mimeType: string;
   durationMs: number;
@@ -35,12 +36,16 @@ function audioContextConstructor(): typeof AudioContext | undefined {
 }
 
 /**
- * Standalone mic session and recording API for the future Messagebar:
+ * Standalone mic session and recording API:
  * start() -> stop() yields a Blob + real waveform; cancel()/release() discard.
- * A live microphone is reused between takes, scoped to the mounted hook owner.
+ * The chat opts into a shared WebView permission session.
  * It never uploads media or starts capture at import/mount time.
  */
-export function useVoiceRecorder() {
+export function useVoiceRecorder({ session = false, onSample }: {
+  session?: boolean; onSample?: (level: number) => void;
+} = {}) {
+  const onSampleRef = useRef(onSample);
+  onSampleRef.current = onSample;
   const [status, setStatus] = useState<VoiceRecorderStatus>('idle');
   const [error, setError] = useState('');
   const statusRef = useRef<VoiceRecorderStatus>('idle');
@@ -90,7 +95,9 @@ export function useVoiceRecorder() {
           const normalized = (sample - 128) / 128;
           energy += normalized * normalized;
         }
-        samplesRef.current.push(Math.sqrt(energy / values.length));
+        const level = Math.sqrt(energy / values.length);
+        samplesRef.current.push(level);
+        onSampleRef.current?.(level);
       }, 85);
     } catch {
       stopSampling(); // decodeAudioData is attempted after recording as fallback.
@@ -141,7 +148,7 @@ export function useVoiceRecorder() {
     }
   }, []);
 
-  const start = useCallback(async (): Promise<boolean> => {
+  const start = useCallback(async (permissionOnly = false): Promise<boolean> => {
     if (statusRef.current !== 'idle' && statusRef.current !== 'error') return false;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Telegram WebView не поддерживает запись звука.');
@@ -158,10 +165,12 @@ export function useVoiceRecorder() {
       stream?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        const constraints = {
           audio: { echoCancellation: true, noiseSuppression: true },
           video: false,
-        });
+        };
+        stream = session ? await acquireSessionMicrophone(constraints)
+          : await navigator.mediaDevices.getUserMedia(constraints);
       } catch (cause) {
         if (mountedRef.current && epoch === epochRef.current) {
           setError(microphoneError(cause));
@@ -177,9 +186,11 @@ export function useVoiceRecorder() {
     }
 
     if (!mountedRef.current || epoch !== epochRef.current) return false;
+    if (permissionOnly) { release(); return false; }
+    const recordingStream = stream;
     try {
       const options = audioRecorderOptions();
-      const recorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
+      const recorder = options ? new MediaRecorder(recordingStream, options) : new MediaRecorder(recordingStream);
       recorderRef.current = recorder;
       chunksRef.current = [];
       startedAtRef.current = Date.now();
@@ -196,7 +207,11 @@ export function useVoiceRecorder() {
         if (recorderRef.current !== recorder || epoch !== epochRef.current) return;
         recorderRef.current = null;
         stopSampling();
-        const mimeType = recorder.mimeType || chunksRef.current[0]?.type || 'audio/webm';
+        if (session) {
+          recordingStream.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        const mimeType = recorder.mimeType || chunksRef.current[0]?.type || options?.mimeType || '';
         const blob = new Blob(chunksRef.current, { type: mimeType });
         chunksRef.current = [];
         const durationMs = Math.max(0, Date.now() - startedAtRef.current);
@@ -219,17 +234,18 @@ export function useVoiceRecorder() {
         })();
       };
       recorder.start(1000);
-      sampleAudio(stream);
+      sampleAudio(recordingStream);
       updateStatus('recording');
       return true;
     } catch {
       recorderRef.current = null;
-      stopSampling();
+      if (session) release();
+      else stopSampling();
       setError('Не удалось запустить запись на этом устройстве.');
       updateStatus('error');
       return false;
     }
-  }, [decodeFallback, release, sampleAudio, stopSampling, updateStatus]);
+  }, [decodeFallback, release, sampleAudio, session, stopSampling, updateStatus]);
 
   const stop = useCallback((): Promise<VoiceRecording | null> => {
     const recorder = recorderRef.current;

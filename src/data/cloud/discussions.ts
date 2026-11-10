@@ -211,8 +211,7 @@ export class DiscussionRepository {
         const row = byId.get(attachment.messageId);
         if (!row || attachment.deletedAt || attachment.uploadState !== 'ready'
           || typeof attachment.storageKey !== 'string' || !directMediaUrl(attachment.storageKey)
-          || !isDiscussionMediaType(attachment.mimeType) || attachment.sizeBytes > directMediaSizeLimit(attachment.mimeType)
-          || (attachment.mediaType !== 'photo' && attachment.mediaType !== 'video')) continue;
+          || !isDiscussionMediaType(attachment.mimeType) || attachment.sizeBytes > directMediaSizeLimit(attachment.mimeType)) continue;
         try {
           assertMessageAttachmentWrite(row.authorUserId, { id: row.threadId, realmId: row.realmId }, row, attachment);
         } catch { continue; }
@@ -352,7 +351,8 @@ export class DiscussionRepository {
         || existing.draftMedia.id !== media.id
         || existing.draftMedia.storageKey !== media.storageKey || existing.draftMedia.mimeType !== media.mimeType
         || existing.draftMedia.sizeBytes !== media.sizeBytes || existing.draftMedia.durationSeconds !== media.durationSeconds
-        || existing.draftMedia.mediaType !== media.mediaType)) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
+        || existing.draftMedia.mediaType !== media.mediaType
+        || JSON.stringify(existing.draftMedia.waveform) !== JSON.stringify(media.waveform))) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       if (!media && existing?.draftMedia) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
       // Draft creation is private, not publication. Freeze the first local send
@@ -371,6 +371,7 @@ export class DiscussionRepository {
         const attachment: MessageAttachment = { id: media.id, messageId: row.id, realmId: row.realmId,
           owner: row.owner, authorUserId: row.authorUserId, mediaType: media.mediaType, storageKey: media.storageKey,
           mimeType: media.mimeType, sizeBytes: media.sizeBytes, durationSeconds: media.durationSeconds,
+          ...(media.waveform === undefined ? {} : { waveform: media.waveform }),
           uploadState: 'ready', confirmedAt: row.createdAt };
         assertMessageAttachmentWrite(this.actorUserId, thread, row, attachment);
         await attachments.add(attachment);

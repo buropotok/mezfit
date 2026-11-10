@@ -5,6 +5,7 @@ export interface MessageAttachment {
   id: string; realmId: string; owner: string; authorUserId: string; messageId: string;
   mediaType: 'photo' | 'video' | 'voice'; storageKey: string | null;
   mimeType: string; sizeBytes: number; durationSeconds: number | null;
+  waveform?: number[];
   uploadState: 'pending' | 'uploading' | 'failed' | 'ready';
   confirmedAt: string | null;
   deletedAt?: string;
@@ -30,12 +31,17 @@ const instant = (value: unknown): value is string => typeof value === 'string'
 const storageKey = (value: unknown): value is string => typeof value === 'string'
   && value.length > 0 && value.length <= 1024 && !/[\s\u0000-\u001f?#]/.test(value)
   && !value.includes('://') && !value.startsWith('/') && !value.split('/').some(part => part === '..' || part === '.');
+export function isVoiceWaveform(value: unknown): value is number[] {
+  return Array.isArray(value) && value.length <= 42
+    && Array.from(value).every(level => typeof level === 'number' && Number.isFinite(level) && level >= 0 && level <= 1);
+}
 function media(value: Record<string, unknown>): boolean {
   if (typeof value.mimeType !== 'string' || value.mimeType.length > 256
     || !Number.isSafeInteger(value.sizeBytes) || Number(value.sizeBytes) <= 0) return false;
   const prefix = value.mediaType === 'photo' ? 'image/' : value.mediaType === 'video' ? 'video/' : value.mediaType === 'voice' ? 'audio/' : null;
   if (!prefix || !value.mimeType.startsWith(prefix) || value.mimeType.length === prefix.length
     || /[\r\n\u0000]/.test(value.mimeType)) return false;
+  if (value.waveform !== undefined && (value.mediaType !== 'voice' || !isVoiceWaveform(value.waveform))) return false;
   if (value.mediaType === 'photo') return value.durationSeconds === null;
   return typeof value.durationSeconds === 'number' && Number.isFinite(value.durationSeconds)
     && value.durationSeconds > 0 && (value.mediaType !== 'video' || value.durationSeconds <= 180);
@@ -66,7 +72,8 @@ export function assertMessageAttachmentWrite(
   if (previous) {
     for (const field of ['id', 'realmId', 'owner', 'authorUserId', 'messageId', 'mediaType', 'mimeType', 'sizeBytes', 'durationSeconds'] as const)
       if (previous[field] !== attachment[field]) invalid();
-    if ((previous.storageKey !== null && previous.storageKey !== attachment.storageKey)
+    if (JSON.stringify(previous.waveform) !== JSON.stringify(attachment.waveform)
+      || (previous.storageKey !== null && previous.storageKey !== attachment.storageKey)
       || (previous.confirmedAt !== null && previous.confirmedAt !== attachment.confirmedAt)
       || (previous.uploadState === 'ready' && attachment.uploadState !== 'ready')
       || (previous.deletedAt !== undefined && previous.deletedAt !== attachment.deletedAt)) invalid();
