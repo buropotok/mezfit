@@ -1,13 +1,12 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { webcrypto } from 'node:crypto';
 import Dexie from 'dexie';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../worker/lib/dexie-cloud-membership';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
-import type { AdHocSessionRow } from '../data/cloud/adhoc-workout-types';
+import type { AdHocExerciseRow, AdHocSessionRow, AdHocSetRow } from '../data/cloud/adhoc-workout-types';
 import type { MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
@@ -51,6 +50,7 @@ function completed(id: string, athleteUserId = 'tg:101'): AdHocSessionRow {
 }
 
 async function fixture() {
+  const { webcrypto } = await vi.importActual<{ webcrypto: Crypto }>('node:crypto');
   vi.stubGlobal('crypto', webcrypto);
   const db = new Dexie('profile-data-' + crypto.randomUUID(), { addons: [] }) as MezfitCloudDatabase;
   databases.push(db);
@@ -130,8 +130,8 @@ it('clears the old scope before a new client or account paints and cleans up eve
   const first = await relationshipMembership('101', '202');
   const second = await relationshipMembership('101', '303');
   for (const pair of [first, second]) {
-    await db.realms.add(pair.realm);
-    await db.members.bulkAdd(pair.members);
+    await db.table<typeof pair.realm>('realms').add(pair.realm);
+    await db.table<(typeof pair.members)[number]>('members').bulkAdd(pair.members);
   }
   const anna = contact('202', first.realm.realmId);
   const maria = contact('303', second.realm.realmId);
@@ -210,12 +210,12 @@ it('shows the initial read error and starts a new subscription on retry', async 
 it('retains the independent FACT projection while visiting other profile tabs', async () => {
   const db = await fixture();
   await db.adHocSessions.add(completed('session'));
-  await db.adHocExercises.add({
+  await db.table<AdHocExerciseRow>('adHocExercises').add({
     id: 'exercise', sessionId: 'session', realmId: 'tg:101', owner: 'tg:101', position: 0,
     notes: null, deletedAt: null, exercise: { exerciseDefinitionId: 'press', scope: 'public',
       name: 'Жим', nameEn: null, mediaUrl: null, trackingType: 'weight_reps' },
   });
-  await db.adHocSets.add({
+  await db.table<AdHocSetRow>('adHocSets').add({
     id: 'set', exerciseId: 'exercise', sessionId: 'session', realmId: 'tg:101', owner: 'tg:101',
     position: 0, deletedAt: null, setType: null, actualReps: 8, actualWeightKg: null,
     actualDurationSeconds: null, actualDistanceMeters: null, setLabel: null, rpe: null,
