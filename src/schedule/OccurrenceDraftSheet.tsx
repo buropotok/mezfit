@@ -520,23 +520,25 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const activeExercise = draft?.plan.exercises.find(item => item.id === editingSet?.exerciseId);
   const activeSet = activeExercise?.sets.find(item => item.id === editingSet?.setId);
-  const openSet = async (exerciseId: string, setId: string, isCurrent: () => boolean = () => true) => {
-    if (!isCurrent()) return;
-    if (access.current.planLocked) { onMutationAttempt(); return; }
-    if (!draft || !planner || busy) return;
+  const openSet = async (exerciseId: string, setId: string, isCurrent: () => boolean = () => true): Promise<boolean> => {
+    if (!isCurrent()) return false;
+    if (access.current.planLocked) { onMutationAttempt(); return false; }
+    if (!draft || !planner || busy) return false;
     const exercise = draft.plan.exercises.find(item => item.id === exerciseId);
-    if (!exercise?.sets.some(item => item.id === setId)) return;
+    if (!exercise?.sets.some(item => item.id === setId)) return false;
     try {
       const type = await planner.programs.trackingTypeForExercise(exercise.exercise);
-      if (!isCurrent()) return;
+      if (!isCurrent()) return false;
       if (!type) {
         setError('Не удалось определить тип учёта упражнения');
-        return;
+        return false;
       }
-      if (access.current.planLocked) { onMutationAttempt(); return; }
+      if (access.current.planLocked) { onMutationAttempt(); return false; }
       setEditingSet({ exerciseId, setId, trackingType: type });
+      return true;
     } catch (reason) {
       if (isCurrent()) setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
+      return false;
     }
   };
   const focusedSet = useRef<string | null>(null);
@@ -544,10 +546,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     if (!readOnly || !auxiliaryReady || !draft || !focusExerciseId || !focusSetId || !planner) return;
     const key = JSON.stringify([draft.id, focusExerciseId, focusSetId]);
     if (focusedSet.current === key) return;
-    focusedSet.current = key;
     let active = true;
-    // Use the normal read-only set detail and its established nested Back handling.
-    void openSet(focusExerciseId, focusSetId, () => active);
+    // Mark the focus consumed only after success: StrictMode effect replay cancels
+    // the first attempt and must still be able to open the requested set.
+    void openSet(focusExerciseId, focusSetId, () => active).then(opened => {
+      if (active && opened) focusedSet.current = key;
+    });
     return () => { active = false; };
   }, [auxiliaryReady, draft?.id, focusExerciseId, focusSetId, planner, readOnly]);
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
