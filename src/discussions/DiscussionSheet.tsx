@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
 import { Button, Messages, MessagesTitle } from 'konsta/react';
+import type { MessageAttachment } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { discussionCursorKey, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 import type { DiscussionSyncState } from '../data/cloud/discussion-sync';
@@ -43,6 +44,13 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   /** Compact direct conversation by default; retain native author presentation for groups. */
   showAvatars?: boolean;
   renderAttachment?: (message: DiscussionMessageView) => ReactNode;
+}
+
+function galleryMediaSource(attachment: MessageAttachment, accountId: string): DiscussionMediaSource | null {
+  const { storageKey, mediaType, mimeType, sizeBytes, durationSeconds } = attachment;
+  const src = storageKey && directMediaUrl(storageKey);
+  if (!storageKey || !src || mediaType === 'voice') return null;
+  return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes } };
 }
 
 function Quote({ quote, resolveAuthor, onJump }: {
@@ -89,9 +97,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
   const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
     ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
-  const viewerSrc = viewedAttachment && viewedAttachment.storageKey && directMediaUrl(viewedAttachment.storageKey);
-  const viewer: DiscussionMediaSource | null = viewerSrc && viewedAttachment && viewedAttachment.mediaType !== 'voice'
-    ? { src: viewerSrc, type: viewedAttachment.mediaType } : null;
+  const viewer = viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId) : null;
   const mediaSurfaceOpen = previewing || Boolean(viewer);
   const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -441,9 +447,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           const time = new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
           const day = new Date(message.createdAt).toLocaleDateString('ru-RU');
           const attachments = message.deleted ? [] : (message.attachments ?? []).flatMap(attachment => {
-            const src = attachment.storageKey && directMediaUrl(attachment.storageKey);
-            return src && attachment.mediaType !== 'voice'
-              ? [{ id: attachment.id, src, type: attachment.mediaType, durationSeconds: attachment.durationSeconds }] : [];
+            const source = galleryMediaSource(attachment, repository.actorUserId);
+            return source ? [{ id: attachment.id, ...source }] : [];
           });
           const mediaOnly = attachments.length > 0 && !message.text.trim();
           const metadata = <span className="discussion-message-meta"><Text variant="caption">{time}</Text>

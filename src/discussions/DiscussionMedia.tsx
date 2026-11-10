@@ -1,11 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import { Button } from 'konsta/react';
 import { IconButton, Text } from '../ui/primitives';
+import type { DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 
 export interface DiscussionMediaSource {
   src: string;
   type: 'photo' | 'video';
   durationSeconds?: number | null;
+  cache?: DiscussionMediaCacheEntry;
 }
 
 function seekThumbnail(video: HTMLVideoElement) {
@@ -14,30 +17,34 @@ function seekThumbnail(video: HTMLVideoElement) {
   video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
 }
 
-export function DiscussionMedia({ src, type, durationSeconds, mode, onOpen, onMenu, meta }: DiscussionMediaSource & {
+export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
   onMenu?: () => void;
   meta?: ReactNode;
 }) {
   const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const thumbnail = mode === 'thumbnail';
+  const { url: mediaSrc, container } = useDiscussionMediaSource(
+    src, cache, type === 'photo' ? 'photo' : thumbnail ? 'cache-only' : 'video', retry, thumbnail && type === 'photo',
+  );
   const label = type === 'photo' ? 'Фото' : 'Видео';
   const duration = Math.floor(durationSeconds ?? 0);
   const content = type === 'photo'
-    ? <img src={src} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
+    ? <img src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
-    : <video src={src} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
+    : <video src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
         playsInline controls={!thumbnail} preload="metadata"
         onLoadedMetadata={thumbnail ? event => seekThumbnail(event.currentTarget) : undefined}
         onError={() => setFailed(true)} />;
 
-  return <div className={`discussion-media discussion-media--${mode}`} onClick={event => event.stopPropagation()}>
+  return <div ref={container} className={`discussion-media discussion-media--${mode}`} onClick={event => event.stopPropagation()}>
     {failed ? <div className="discussion-media__error">
       <Text variant="footnote" role="status">
         {label} недоступно. Проверьте сеть и поддержку формата на устройстве.
       </Text>
-      <Button rounded onClick={() => setFailed(false)}><Text variant="footnote">Повторить</Text></Button>
+      <Button rounded onClick={() => { setFailed(false); setRetry(value => value + 1); }}><Text variant="footnote">Повторить</Text></Button>
     </div> : thumbnail ? <a href={src} className="discussion-media__open"
       aria-label={type === 'photo' ? 'Открыть фото' : 'Открыть видео'} onClick={event => {
         event.preventDefault();
