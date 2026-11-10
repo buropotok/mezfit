@@ -9,6 +9,7 @@ import {
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { PublishedUserProfile } from '../profile/PublishedUserProfile';
+import { ProfileDataProvider } from '../profile/ProfileDataProvider';
 import { ProfileWorkoutTimeline } from '../profile/ProfileWorkoutTimeline';
 import { ProfileWorkspace, type ProfileTab } from '../profile/ProfileWorkspace';
 import { CloudContactAvatar, useCloudContactAvatarUrl } from '../contacts/CloudContactAvatar';
@@ -286,7 +287,8 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     const selectedClientName = displayName(selectedClient);
     onNavigationContextChange({
       title: selectedClientName,
-      scrollKey: `client:${selectedClient.userId}`,
+      scrollKey: `client:${cloudConnections?.actorUserId}:${selectedClient.relationshipId}:${selectedClient.userId}:${clientTab}`,
+      restoreScroll: true,
       identity: {
         title: selectedClientName,
         avatar: {
@@ -304,7 +306,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [clientDiscussionNavigation, clientWorkoutNavigation, programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [clientDiscussionNavigation, clientWorkoutNavigation, programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, cloudConnections?.actorUserId, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (destination === 'discussions') return <DiscussionsPage role="coach" onNavigationContextChange={onNavigationContextChange} />;
 
@@ -334,7 +336,9 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
-    return <><ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
+    return <>
+      <ProfileDataProvider tab={clientTab} contact={selectedClient}>
+        <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
       basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
       hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
       discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
@@ -350,6 +354,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
         key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
         onDetailNavigationChange={setClientExerciseNavigation} /> : null} />
+      </ProfileDataProvider>
       {destination === 'clients' && clientTab === 'basics' ? <div className="stack">
         <Button variant="secondary" disabled={resetBusy} onClick={() => {
           setResetError('');

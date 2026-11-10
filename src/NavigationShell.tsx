@@ -77,6 +77,7 @@ export interface NavigationContext {
   level?: NavigationLevel;
   title: string;
   scrollKey?: string;
+  restoreScroll?: boolean;
   onBack?: () => void;
   identity?: MezfitNavbarIdentity;
   onIdentityClick?: () => void;
@@ -324,7 +325,7 @@ export function NavigationShell({
     ? surfaceFloatingAction ?? destinationFloatingAction ?? (currentItem.showFab === false ? null : floatingAction ?? null)
     : null;
   const resolvedSurfaceFloatingAction = level === 2 ? surfaceFloatingAction : null;
-  const nestedScrollKey = nestedContext?.scrollKey ?? (nestedContext ? `nested:${nestedContext.title}` : 'root');
+  const nestedScrollKey = context?.scrollKey ?? (nestedContext ? `nested:${nestedContext.title}` : 'root');
   const scrollSurfaceKey = `${activeRole}:${destination}:${nestedScrollKey}`;
   const identity: MezfitNavbarIdentity = context?.identity ?? {
     title: context?.title ?? currentItem.label,
@@ -399,12 +400,12 @@ export function NavigationShell({
       return;
     }
 
-    content.scrollTop = restoreScrollOnNextSurfaceRef.current
+    content.scrollTop = restoreScrollOnNextSurfaceRef.current || context?.restoreScroll
       ? scrollPositionsRef.current.get(scrollSurfaceKey) ?? 0
       : 0;
     restoreScrollOnNextSurfaceRef.current = false;
     currentScrollSurfaceRef.current = scrollSurfaceKey;
-  }, [scrollSurfaceKey, nestedContext]);
+  }, [scrollSurfaceKey, nestedContext, context?.restoreScroll]);
 
   const requestBackTransition = useCallback((transition: () => void) => {
     restoreScrollOnNextSurfaceRef.current = true;
