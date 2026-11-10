@@ -60,6 +60,16 @@ export function CircularVideoPlayback({
     };
   }, []);
 
+  useEffect(() => {
+    if (mode !== 'preview') return;
+    playGenerationRef.current += 1;
+    videoRef.current?.pause();
+    setPlaying(false);
+    seekingPointerRef.current = null;
+    wasPlayingRef.current = false;
+    setSeeking(false);
+  }, [mode]);
+
   // timeupdate is sparse on mobile WebViews; sample the actual frame time while playing.
   useEffect(() => {
     if (!playing || typeof window.requestAnimationFrame !== 'function') return undefined;

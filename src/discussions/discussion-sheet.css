@@ -384,10 +384,6 @@
   flex-direction: column;
 }
 
-.discussion-video-note[data-expanded] {
-  width: min(70vw, 19rem);
-}
-
 .discussion-video-note__circle {
   width: 100%;
   max-width: none;
@@ -432,4 +428,20 @@
 
 .discussion-video-recorder__record-icon {
   color: var(--ui-color-danger, #ff453a);
+}
+
+.discussion-video-note__inline {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.discussion-video-note-playback > div {
+  width: 100%;
+  pointer-events: auto;
+}
+
+.discussion-video-note-live .discussion-video-note-capture,
+.discussion-video-note-live .discussion-video-note__circle--expanded {
+  width: 100%;
+  max-width: none;
 }

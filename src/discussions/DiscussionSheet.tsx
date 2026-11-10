@@ -99,6 +99,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const media = useDiscussionMedia(repository, draft);
   const voice = useDiscussionVoice(media.chooseVoice);
   const videoNote = useDiscussionVideoNote(media.sendVideoNote);
+  const [videoPlaybackHost, setVideoPlaybackHost] = useState<HTMLDivElement | null>(null);
   const recordingVoice = voice.status === 'recording';
   const recordingCircle = videoNote.status === 'recording';
   const circleInProgress = recordingCircle || videoNote.status === 'requesting' || videoNote.status === 'processing';
@@ -564,7 +565,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                     const { storageKey, mimeType, sizeBytes, durationSeconds } = attachment;
                     const src = directMediaUrl(storageKey);
                     return src && <DiscussionVideoNote key={attachment.id} src={src}
-                      durationSeconds={durationSeconds ?? 0} meta={meta} onMenu={onMenu}
+                      durationSeconds={durationSeconds ?? 0} playbackHost={videoPlaybackHost} meta={meta} onMenu={onMenu}
                       cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
                   }
                   const source = galleryMediaSource(attachment, repository.actorUserId);
@@ -647,6 +648,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
+    <div ref={setVideoPlaybackHost} className="discussion-video-note-live discussion-video-note-playback"
+      style={{ bottom: composerHeight + contextHeight + 12 }} />
     {(recordingCircle || videoNote.status === 'processing') && <div className="discussion-video-note-live"
       style={{ bottom: composerHeight + contextHeight + 12 }}>
       <DiscussionVideoNoteCapture stream={videoNote.stream} progress={videoNote.progress} />
