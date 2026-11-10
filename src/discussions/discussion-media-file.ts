@@ -61,6 +61,11 @@ export async function inspectDiscussionMedia(original: File, signal: AbortSignal
     throw new Error('Этот формат фото или видео не поддерживается');
   }
   const video = mimeType.startsWith('video/');
+  // Photos retain their existing pre-decode size validation.
+  if (!video) {
+    try { validateDirectMedia(file); }
+    catch { throw new Error('Файл пустой или превышает лимит. Фото до 20 МБ'); }
+  }
   // A video larger than the upload limit can be processed locally first.
   // Do not decode arbitrarily large files in the embedded WebView.
   if (!file.size || (video && file.size > 1024 * 1024 * 1024)) {
