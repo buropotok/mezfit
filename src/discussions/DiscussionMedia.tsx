@@ -27,7 +27,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const [retry, setRetry] = useState(0);
   const thumbnail = mode === 'thumbnail';
   const { url: mediaSrc, container } = useDiscussionMediaSource(
-    src, cache, type === 'photo' ? 'photo' : thumbnail ? 'cache-only' : 'video', retry, thumbnail && type === 'photo',
+    src, cache, type === 'photo' ? 'photo' : 'video', retry, thumbnail,
   );
   const label = type === 'photo' ? 'Фото' : 'Видео';
   const duration = Math.floor(durationSeconds ?? 0);
