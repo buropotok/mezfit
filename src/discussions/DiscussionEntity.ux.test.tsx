@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionDestination } from '../data/cloud/discussion-destination';
+import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { DiscussionThread } from '../data/cloud/discussion-contracts';
 import type { NavigationContext } from '../NavigationShell';
 import { DiscussionEntity } from './DiscussionEntity';
@@ -21,7 +22,9 @@ vi.mock('../data/cloud/discussion-destination', () => ({ observeDiscussionDestin
   next: (target: DiscussionDestination) => void, fail: () => void,
 ) => { state.observe(actor, role, exactThread); state.next = next; state.fail = fail; return { unsubscribe: state.unsubscribe }; } }));
 vi.mock('../program/CloudProgramDetailsPage', () => ({ CloudProgramDetailsPage: ({ planId }: { planId: string }) => <div>Программа {planId}</div> }));
-vi.mock('../schedule/OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: () => <div>Плановая тренировка</div> }));
+vi.mock('../schedule/OccurrenceDraftSheet', () => ({ OccurrenceDraftSheet: ({ focusExerciseId, focusSetId }: {
+  focusExerciseId?: string; focusSetId?: string;
+}) => <><div>Плановая тренировка</div><div data-testid="planned-focus">{[focusExerciseId, focusSetId].filter(Boolean).join('/')}</div></> }));
 vi.mock('../workout/WorkoutSessionCard', () => ({ WorkoutSessionCard: () => <div>Выполнение</div> }));
 afterEach(() => { cleanup(); state.next = null; state.fail = null; vi.clearAllMocks(); });
 
