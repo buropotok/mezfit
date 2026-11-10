@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, renderHook, screen, waitFor, fireEvent } from '@testing-library/react';
+import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { directMediaUrl, MediaUploadError, uploadDirectMedia, type UploadedMedia } from '../media/directMediaUpload';
-import { fixture, thread } from './discussion-fixture.test-support';
+import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
+import { prepareDiscussionMessage } from '../data/cloud/discussions';
+import { DiscussionSheet } from './DiscussionSheet';
 import { useDiscussionDraft } from './useDiscussionDraft';
 import { useDiscussionMedia } from './useDiscussionMedia';
 import { DiscussionVideoNote } from './DiscussionVideoNote';
@@ -88,4 +91,38 @@ it('renders a media bubble using the existing compact circular player and expand
   fireEvent.click(screen.getByRole('button', { name: 'Открыть видеокружок' }));
   expect(view.container.querySelector('.discussion-video-note[data-expanded]')).toBeTruthy();
   expect(screen.getByRole('slider', { name: 'Перемотка видеокружка' })).toBeTruthy();
+});
+
+it('keeps MessageBar empty for a restored video note and shows no attachment preview', async () => {
+  const draft = { ...prepareDiscussionMessage(thread.id, ''), draftMedia: {
+    id: 'circle', storageKey: 'mvp-media/' + 'a'.repeat(64), mediaType: 'video-note' as const,
+    mimeType: 'video/mp4', sizeBytes: 10, durationSeconds: 5,
+    fileName: 'Видеокружок.mp4', uploadState: 'failed' as const,
+  } };
+  const port = { ...fixture().port, supportsMedia: true, getDraft: vi.fn(async () => draft) };
+  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
+    threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
+    parentNavigation={null} onClose={() => {}} onNavigationContextChange={() => {}} /></KonstaProvider>);
+  await screen.findByRole('button', { name: 'Отправить' });
+  await waitFor(() => expect(view.container.querySelector('.discussion-composer__field textarea')).toHaveProperty('disabled', true));
+  const field = view.container.querySelector('.discussion-composer__field');
+  expect(field?.querySelector('textarea')?.placeholder).toBe('');
+  expect(field?.querySelector('.video-note-playback')).toBeNull();
+  expect(screen.queryByRole('region', { name: 'Предпросмотр вложения' })).toBeNull();
+});
+
+it('renders published video-note metadata in a circular bubble, not a rectangular gallery viewer', async () => {
+  const circle = { ...message('circle-message', ''), attachments: [{
+    id: 'circle-attachment', messageId: 'circle-message', realmId: thread.realmId,
+    owner: 'tg:1', authorUserId: 'tg:1', mediaType: 'video-note' as const, mimeType: 'video/mp4',
+    sizeBytes: 10, durationSeconds: 5, storageKey: 'mvp-media/' + 'b'.repeat(64),
+    uploadState: 'ready' as const, confirmedAt: thread.createdAt,
+  }] };
+  const port = fixture([circle]).port;
+  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
+    threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
+    parentNavigation={null} onClose={() => {}} onNavigationContextChange={() => {}} /></KonstaProvider>);
+  await screen.findByRole('button', { name: 'Открыть видеокружок' });
+  expect(view.container.querySelector('[data-message-id="circle-message"] .discussion-video-note__circle')).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'Открыть видео' })).toBeNull();
 });
