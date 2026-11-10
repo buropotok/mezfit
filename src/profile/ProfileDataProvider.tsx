@@ -90,6 +90,12 @@ export function ProfileDataProvider({ tab, contact, expectedActor, children }: {
 }) {
   const connection = useCloudConnections();
   const cloud = connection?.db && (!expectedActor || connection.actorUserId === expectedActor) ? connection : null;
+  return <ProfileAccessScope cloud={cloud} tab={tab} contact={contact}>{children}</ProfileAccessScope>;
+}
+
+function ProfileAccessScope({ cloud, tab, contact, children }: {
+  cloud: Cloud | null; tab: ProfileTab; contact?: CloudContact; children: ReactNode;
+}) {
   const db = cloud?.db;
   const [databaseScope, setDatabaseScope] = useState({ db, revision: 0 });
   // React restarts this render before rendering children if the DB instance changed.
