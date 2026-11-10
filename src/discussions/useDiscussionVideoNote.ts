@@ -5,15 +5,18 @@ import { useRecordingGesture } from './useRecordingGesture';
 /** Chat owns gestures and delivery intent; the existing engine owns the recording. */
 export function useDiscussionVideoNote(onRecorded: (clip: VideoNoteRecording, preview?: boolean) => void, onCancelGesture?: () => void) {
   const [permissionReady, setPermissionReady] = useState(false);
-  const delivery = useRef<'send' | 'preview'>('send');
+  const delivery = useRef<'send' | 'preview'>('preview');
   const recorder = useVideoNoteRecorder(clip => {
-    if (delivery.current === 'preview') onRecorded(clip, true);
-    else onRecorded(clip);
+    const intent = delivery.current;
+    // Recorder deadlines and later engine events cannot authorize publication.
+    delivery.current = 'preview';
+    if (intent === 'send') onRecorded(clip);
+    else onRecorded(clip, true);
   });
   const gesture = useRecordingGesture({ status: recorder.status, onCancelGesture,
     onLock: () => { delivery.current = 'preview'; },
     start: async () => {
-      delivery.current = 'send';
+      delivery.current = 'preview';
       const permissionOnly = !recorder.hasStream('user');
       setPermissionReady(false);
       const started = await recorder.start('user', permissionOnly);
