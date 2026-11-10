@@ -18,7 +18,7 @@ class DiscussionMediaDatabase extends Dexie {
 }
 
 function mediaUrl(entry: DiscussionMediaCacheEntry) {
-  if (!/^tg:[1-9]\d*$/.test(entry.accountId) || !/^(image|video)\//.test(entry.mimeType)
+  if (!/^tg:[1-9]\d*$/.test(entry.accountId) || !/^(image|video|audio)\//.test(entry.mimeType)
     || !Number.isSafeInteger(entry.sizeBytes) || entry.sizeBytes <= 0
     || entry.sizeBytes > directMediaSizeLimit(entry.mimeType)) return null;
   return directMediaUrl(entry.storageKey);

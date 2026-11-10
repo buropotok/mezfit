@@ -22,6 +22,9 @@ import { DISCUSSION_MEDIA_ACCEPT } from '../data/cloud/discussion-media';
 import { directMediaUrl } from '../media/directMediaUpload';
 import { DiscussionMedia, type DiscussionMediaSource } from './DiscussionMedia';
 import { useDiscussionMedia } from './useDiscussionMedia';
+import { useDiscussionVoice } from './useDiscussionVoice';
+import { DiscussionVoice, DiscussionVoiceRecording } from './DiscussionVoice';
+import voiceTrash from './voice-trash.png';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -90,10 +93,19 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
   const draft = useDiscussionDraft(repository, threadId);
   const media = useDiscussionMedia(repository, draft);
+  const voice = useDiscussionVoice(media.chooseVoice);
+  const recordingVoice = voice.status === 'recording';
+  const voiceInProgress = recordingVoice || voice.status === 'requesting' || voice.status === 'processing';
+  const voiceDraft = media.selection?.metadata.mediaType === 'voice' ? media.selection.metadata
+    : draft.media?.mediaType === 'voice' ? draft.media : undefined;
+  const trashArtwork = useRef<HTMLImageElement>(null);
+  const removingVoice = useRef(false);
+  const [discardingVoice, setDiscardingVoice] = useState(false);
+  const voiceComposer = voiceInProgress || Boolean(voiceDraft) || discardingVoice;
   const gallery = useRef<HTMLInputElement>(null);
   const mediaBusy = media.phase !== 'idle' && media.phase !== 'failed';
   const mediaPresent = Boolean(media.selection || draft.media);
-  const previewing = Boolean(media.preview && media.selection);
+  const previewing = Boolean(media.preview && media.selection && !voiceDraft);
   const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
   const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
     ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
@@ -111,6 +123,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [mediaMode, setMediaMode] = useState<'microphone' | 'camera'>('microphone');
+  const canCompose = !busy && !mediaBusy && draft.ready && Boolean(state.title) && !state.error;
   const actionMode = editId !== null || mediaPresent || Boolean(text.trim()) ? 'send' : mediaMode;
   const [syncState, setSyncState] = useState<DiscussionSyncState | null>(null);
   const [receipts, setReceipts] = useState<DiscussionReceiptSnapshot>({ confirmedIds: [], recipientReadThrough: [] });
@@ -191,12 +204,36 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (media.phase === 'uploading') media.cancel();
     else if (!mediaBusy) void media.remove();
   };
+  const discardVoice = async () => {
+    if (removingVoice.current || mediaBusy) return;
+    removingVoice.current = true;
+    setDiscardingVoice(true);
+    const artwork = trashArtwork.current;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const animation = reduceMotion ? undefined : artwork?.animate?.([
+      { transform: 'rotate(0) scale(1)', opacity: 1 },
+      { transform: 'rotate(-18deg) scale(1.1)', opacity: 1, offset: 0.35 },
+      { transform: 'rotate(16deg) scale(.45)', opacity: 0 },
+    ], { duration: 320, easing: 'ease-in-out' });
+    if (voiceInProgress) voice.cancel();
+    try {
+      await animation?.finished;
+    } catch {
+      // A canceled visual animation still discards the clip.
+    }
+    if (!alive.current) return;
+    await media.remove();
+    removingVoice.current = false;
+    if (alive.current) setDiscardingVoice(false);
+  };
   const updateNavigation = () => onNavigationContextChange({ ...parentNavigation,
     title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
   back.current = () => {
     if (viewer) { setViewing(null); return; }
-    if (previewing) {
-      closePreview();
+    if (previewing || voiceComposer) {
+      if (removingVoice.current) { updateNavigation(); return; }
+      if (voiceInProgress) voice.cancel();
+      else closePreview();
       // Back may consume the browser entry while cancellation or removal is pending.
       updateNavigation();
       return;
@@ -229,7 +266,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (composer.current) observer.observe(composer.current);
     if (context.current) observer.observe(context.current);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error]);
+  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error, voice.status, voice.error, voice.permissionReady, voiceDraft]);
 
   const jump = async (id: string) => {
     const version = ++focusVersion.current;
@@ -383,7 +420,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   };
   const selected = menu ? state.messages.find(row => row.id === menu.id && !row.deleted) : undefined;
   const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
-    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy) return;
+    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy || voiceComposer) return;
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
@@ -446,18 +483,17 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           const receiptIcon = isRead ? 'message-double-check' : isConfirmed ? 'message-check' : null;
           const time = new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
           const day = new Date(message.createdAt).toLocaleDateString('ru-RU');
-          const attachments = message.deleted ? [] : (message.attachments ?? []).flatMap(attachment => {
-            const source = galleryMediaSource(attachment, repository.actorUserId);
-            return source ? [{ id: attachment.id, ...source }] : [];
-          });
+          const attachments = message.deleted ? [] : (message.attachments ?? []).filter(attachment =>
+            attachment.storageKey && directMediaUrl(attachment.storageKey));
           const mediaOnly = attachments.length > 0 && !message.text.trim();
+          const galleryOnly = mediaOnly && attachments.every(attachment => attachment.mediaType !== 'voice');
           const metadata = <span className="discussion-message-meta"><Text variant="caption">{time}</Text>
             {receiptIcon && <span className="discussion-message-meta__check" role="img"
               aria-label={isRead ? 'Прочитано собеседником' : 'Отправка подтверждена Dexie Cloud'}>
               <Icon name={receiptIcon} /></span>}
           </span>;
           const openMenu = () => {
-            if (!message.deleted && !pending.current && !mediaBusy) setMenu({ id: message.id, open: true });
+            if (!message.deleted && !pending.current && !mediaBusy && !voiceComposer) setMenu({ id: message.id, open: true });
           };
           return <Fragment key={message.id}>
             {(index === 0 || new Date(state.messages[index - 1].createdAt).toLocaleDateString('ru-RU') !== day) && <MessagesTitle>{day}</MessagesTitle>}
@@ -465,17 +501,26 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               data-highlighted={highlight === message.id || undefined}
               ref={el => { if (el) rows.current.set(message.id, el); else rows.current.delete(message.id); }}>
               <MezfitMessage type={isOwn ? 'sent' : 'received'} focusPulse={highlight === message.id}
-                bubbleVariant={mediaOnly ? 'media' : undefined}
+                bubbleVariant={galleryOnly ? 'media' : undefined}
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
                 text={!mediaOnly && <Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
                 textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => { if (message.reply) void jump(message.reply.messageId); }} />}
-                textFooter={!message.deleted && (message.attachments?.length ? attachments.map((attachment, position) =>
-                  <DiscussionMedia key={attachment.id} {...attachment} mode="thumbnail"
+                textFooter={!message.deleted && (message.attachments?.length ? attachments.map((attachment, position) => {
+                  const meta = mediaOnly && position === attachments.length - 1 ? metadata : undefined;
+                  const onMenu = position === 0 ? openMenu : undefined;
+                  if (attachment.mediaType === 'voice' && attachment.storageKey) {
+                    const { storageKey, mimeType, sizeBytes, waveform, durationSeconds } = attachment;
+                    const src = directMediaUrl(storageKey);
+                    return src && <DiscussionVoice key={attachment.id} src={src} waveform={waveform ?? []}
+                      durationMs={(durationSeconds ?? 0) * 1000} meta={meta} onMenu={onMenu}
+                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
+                  }
+                  const source = galleryMediaSource(attachment, repository.actorUserId);
+                  return source && <DiscussionMedia key={attachment.id} {...source} mode="thumbnail"
                     onOpen={() => { closeMenu(); setViewing({ messageId: message.id, attachmentId: attachment.id }); }}
-                    onMenu={position === 0 ? openMenu : undefined}
-                    meta={mediaOnly && position === attachments.length - 1 ? metadata : undefined} />
-                ) : renderAttachment?.(message))}
+                    onMenu={onMenu} meta={meta} />;
+                }) : renderAttachment?.(message))}
                 inlineMeta={mediaOnly ? undefined : metadata}
                 onBubbleClick={openMenu}
                 bubbleSource={menu?.id === message.id && <span onClick={event => event.stopPropagation()}><LiquidPopover key={message.id} triggerRef={trigger}
@@ -492,7 +537,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         })}
       </Messages>
     </div>
-    {previewing && media.preview && media.selection && <section className="discussion-media-stage"
+    {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && <section className="discussion-media-stage"
       aria-label="Предпросмотр вложения" style={{ bottom: composerHeight + contextHeight }}>
       <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
     </section>}
@@ -509,14 +554,18 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {readError && <><Text variant="footnote" role="alert">Не удалось отметить сообщения прочитанными</Text>
         <Button rounded onClick={() => setReadPosition(value => value + 1)}>Повторить отметку прочтения</Button></>}
       {error && <Text variant="footnote" role="alert">{error}</Text>}
+      {voice.error && <Text variant="footnote" role="alert">{voice.error}</Text>}
+      {voice.status === 'requesting' && <Text variant="footnote" role="status">Разрешите доступ к микрофону, затем удерживайте кнопку записи</Text>}
+      {voice.permissionReady && actionMode === 'microphone' && <Text variant="footnote" role="status">Микрофон доступен. Удерживайте кнопку для записи</Text>}
+      {voice.status === 'processing' && <Text variant="footnote" role="status">Готовим голосовое сообщение…</Text>}
       {media.error && <Text variant="footnote" role="alert">{media.error}</Text>}
       {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
       {(mediaPresent || media.phase === 'uploading' || media.phase === 'publishing') && <div className="discussion-composer-context__mode">
-        {!previewing && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
+        {!previewing && !voiceDraft && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
         {media.phase === 'uploading' ? <>
           <Text variant="footnote" role="status">Загружаем вложение…</Text>
           <IconButton icon="x" label="Отменить загрузку" onClick={media.cancel} />
-        </> : media.phase === 'publishing' ? <Text variant="footnote" role="status">Сохраняем сообщение…</Text> : <>
+        </> : media.phase === 'publishing' ? <Text variant="footnote" role="status">Сохраняем сообщение…</Text> : !voiceDraft && <>
           {!media.selection && draft.media && <Button rounded disabled={busy || mediaBusy} onClick={() => gallery.current?.click()}>
             <Text variant="footnote">Выбрать файл снова</Text>
           </Button>}
@@ -540,22 +589,41 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             event.currentTarget.value = '';
             if (file) void media.choose(file);
           }} />}
-        <IconButton icon="plus" label={repository.supportsMedia ? 'Добавить вложение' : 'Добавить вложение (пока недоступно)'}
-          disabled={!repository.supportsMedia || busy || mediaBusy || mediaPresent || Boolean(editId) || !draft.ready || !state.title || Boolean(state.error)}
-          onClick={() => gallery.current?.click()} />
+        <IconButton icon={voiceComposer ? undefined : 'plus'} label={voiceComposer ? 'Удалить голосовое сообщение'
+          : repository.supportsMedia ? 'Добавить вложение' : 'Добавить вложение (пока недоступно)'}
+          disabled={!canCompose || discardingVoice || (!voiceComposer && (!repository.supportsMedia || mediaPresent || Boolean(editId)))}
+          onClick={voiceComposer ? () => void discardVoice() : () => gallery.current?.click()}>
+          {voiceComposer && <img className="discussion-composer__trash" ref={trashArtwork} src={voiceTrash} alt="" draggable={false} />}
+        </IconButton>
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
-        <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
-          value={text} maxRows={5} disabled={busy || mediaBusy || !draft.ready || !state.title || Boolean(state.error)}
-          onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />
+        {recordingVoice ? <DiscussionVoiceRecording levels={voice.levels} />
+          : voiceDraft && media.preview ? <DiscussionVoice key={media.preview} src={media.preview}
+            waveform={voiceDraft.waveform ?? []} durationMs={(voiceDraft.durationSeconds ?? 0) * 1000} />
+          : voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
+            {media.selection ? 'Готовим голосовое сообщение…' : 'Голосовое сообщение'}
+          </Text>
+          : <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
+            value={text} maxRows={5} disabled={!canCompose || voiceInProgress || discardingVoice}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />}
       </GlassSurface>
-      <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
+      <GlassSurface className="discussion-composer__button discussion-composer__action" {...material}
+        data-recording={recordingVoice || undefined} shape="capsule" wrapContent={false}>
         <IconButton label={actionMode === 'send'
           ? (editId ? 'Сохранить' : media.phase === 'failed' && media.selection ? 'Повторить отправку' : 'Отправить')
           : actionMode === 'microphone' ? 'Переключить на кружок' : 'Переключить на голосовое'}
-          disabled={busy || mediaBusy || !draft.ready || !state.title || Boolean(state.error)
+          aria-description={actionMode === 'microphone' && repository.supportsMedia ? 'Удерживайте для записи голосового' : undefined}
+          className={actionMode === 'microphone' ? 'discussion-composer__microphone' : undefined}
+          disabled={!canCompose || discardingVoice || voice.status === 'processing'
             || (actionMode === 'send' && (mediaPresent ? !media.selection : !text.trim()))}
-          onClick={actionMode === 'send' ? submit : () => setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone')}>
+          onPointerDown={event => voice.onPointerDown(event, actionMode === 'microphone' && Boolean(repository.supportsMedia))}
+          onPointerUp={voice.onPointerUp} onPointerCancel={voice.onPointerCancel} onLostPointerCapture={voice.onPointerCancel}
+          onContextMenu={event => { if (actionMode === 'microphone') event.preventDefault(); }}
+          onClick={event => {
+            if (voice.consumeClick() && event.detail !== 0) return;
+            if (actionMode === 'send') submit();
+            else setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone');
+          }}>
           <DiscussionActionIcon mode={actionMode} />
         </IconButton>
       </GlassSurface>

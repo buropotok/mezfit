@@ -32,7 +32,17 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
   useEffect(() => {
     const audio = audioRef.current;
     mountedRef.current = true;
+    const pause = () => {
+      generationRef.current += 1;
+      if (audio && !audio.paused) audio.pause();
+      setPlaying(false);
+    };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') pause(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', pause);
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', pause);
       mountedRef.current = false;
       generationRef.current += 1;
       audio?.pause();

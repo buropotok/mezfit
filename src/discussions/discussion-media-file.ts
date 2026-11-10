@@ -1,5 +1,6 @@
+import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import { createDirectMediaKey, MediaUploadError, validateDirectMedia } from '../media/directMediaUpload';
-import { isDiscussionMediaType, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
+import { DISCUSSION_MEDIA_ACCEPT, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
 
 const extensionTypes = new Map([
   ['jpg', 'image/jpeg'], ['jpeg', 'image/jpeg'], ['png', 'image/png'], ['webp', 'image/webp'],
@@ -57,7 +58,7 @@ export async function inspectDiscussionMedia(original: File, signal: AbortSignal
   let mimeType: string;
   try {
     mimeType = validateDirectMedia(file);
-    if (!isDiscussionMediaType(mimeType)) throw new MediaUploadError('INVALID_TYPE');
+    if (!DISCUSSION_MEDIA_ACCEPT.split(',').includes(mimeType)) throw new MediaUploadError('INVALID_TYPE');
   } catch (reason) {
     if (reason instanceof MediaUploadError && reason.code === 'INVALID_SIZE') {
       throw new Error('Файл пустой или превышает лимит. Фото до 20 МБ, видео до 250 МБ');
@@ -77,4 +78,16 @@ export async function inspectDiscussionMedia(original: File, signal: AbortSignal
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+export function prepareDiscussionVoice(clip: VoiceRecording) {
+  const extension = clip.mimeType.startsWith('audio/mp4') ? 'm4a'
+    : clip.mimeType.startsWith('audio/ogg') ? 'ogg' : 'webm';
+  const file = new File([clip.blob], `Голосовое сообщение.${extension}`, { type: clip.mimeType });
+  const metadata: DiscussionMediaDraft = {
+    id: crypto.randomUUID(), storageKey: createDirectMediaKey(), mediaType: 'voice',
+    mimeType: validateDirectMedia(file), sizeBytes: file.size, durationSeconds: Math.max(1, clip.durationMs) / 1000,
+    waveform: clip.waveform, fileName: file.name, uploadState: 'uploading',
+  };
+  return { file, metadata };
 }
