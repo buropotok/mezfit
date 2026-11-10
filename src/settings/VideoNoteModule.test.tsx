@@ -5,9 +5,9 @@ import { SettingsPage } from './SettingsPage';
 import { VideoNoteModule } from './VideoNoteModule';
 
 class FakeMediaRecorder {
-  static isTypeSupported = (mimeType: string) => mimeType === 'video/webm';
+  static isTypeSupported = (mimeType: string) => mimeType === 'video/mp4;codecs=avc1,mp4a.40.2';
   state: 'inactive' | 'recording' = 'inactive';
-  mimeType = 'video/webm';
+  mimeType = 'video/mp4;codecs=avc1,mp4a.40.2';
   onstop: ((event: Event) => void) | null = null;
   onerror: ((event: Event) => void) | null = null;
   ondataavailable: ((event: BlobEvent) => void) | null = null;
@@ -17,7 +17,7 @@ class FakeMediaRecorder {
     this.state = 'inactive';
     const dataEvent = new Event('dataavailable');
     Object.defineProperty(dataEvent, 'data', {
-      value: new Blob(['video bytes'], { type: 'video/webm' }),
+      value: new Blob(['video bytes'], { type: this.mimeType }),
     });
     this.ondataavailable?.(dataEvent as BlobEvent);
     this.onstop?.(new Event('stop'));
@@ -31,7 +31,8 @@ const revokeObjectURL = vi.fn();
 const mediaDevicesDescriptor = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
 
 function fakeStream(): MediaStream {
-  return { getTracks: () => [{ stop: trackStop }] } as unknown as MediaStream;
+  const track = { stop: trackStop };
+  return { getTracks: () => [track], getVideoTracks: () => [track] } as unknown as MediaStream;
 }
 
 beforeEach(() => {
@@ -139,7 +140,7 @@ describe('VideoNoteModule', () => {
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
     expect(trackStop).toHaveBeenCalledOnce();
     expect(getUserMedia).toHaveBeenLastCalledWith(expect.objectContaining({
-      video: { facingMode: { ideal: 'environment' } },
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 480 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
     }));
   });
 

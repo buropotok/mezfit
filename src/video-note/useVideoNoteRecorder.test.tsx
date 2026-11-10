@@ -4,9 +4,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useVideoNoteRecorder } from './useVideoNoteRecorder';
 
 class FakeMediaRecorder {
-  static isTypeSupported = (type: string) => type === 'video/mp4';
+  static isTypeSupported = (type: string) => type === 'video/mp4;codecs=avc1,mp4a.40.2';
   state: RecordingState = 'inactive';
-  mimeType = 'video/mp4';
+  mimeType = 'video/mp4;codecs=avc1,mp4a.40.2';
   ondataavailable: ((event: BlobEvent) => void) | null = null;
   onstop: ((event: Event) => void) | null = null;
   onerror: ((event: Event) => void) | null = null;
@@ -25,7 +25,7 @@ function fakeStream() {
   let readyState: MediaStreamTrackState = 'live';
   const stop = vi.fn(() => { readyState = 'ended'; });
   const track = { stop, get readyState() { return readyState; } };
-  return { stream: { getTracks: () => [track] } as unknown as MediaStream, stop };
+  return { stream: { getTracks: () => [track], getVideoTracks: () => [track] } as unknown as MediaStream, stop };
 }
 
 beforeEach(() => {
@@ -54,7 +54,7 @@ it('requests camera and microphone only once per mounted session and reuses the 
   expect(result.current.status).toBe('idle');
   expect(onRecorded).not.toHaveBeenCalled();
   expect(getUserMedia).toHaveBeenCalledWith(expect.objectContaining({
-    video: { facingMode: { ideal: 'user' } }, audio: expect.any(Object),
+    video: { facingMode: { ideal: 'user' }, width: { ideal: 480 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: expect.any(Object),
   }));
 
   await act(async () => { expect(await result.current.start('user')).toBe(true); });

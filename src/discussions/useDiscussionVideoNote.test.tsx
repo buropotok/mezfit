@@ -8,9 +8,9 @@ class Pointer extends MouseEvent {
   readonly isPrimary = true;
 }
 class Recorder {
-  static isTypeSupported = (type: string) => type === 'video/webm';
+  static isTypeSupported = (type: string) => type === 'video/mp4;codecs=avc1,mp4a.40.2';
   state: RecordingState = 'inactive';
-  mimeType = 'video/webm';
+  mimeType = 'video/mp4;codecs=avc1,mp4a.40.2';
   ondataavailable: ((event: BlobEvent) => void) | null = null;
   onstop: ((event: Event) => void) | null = null;
   onerror: ((event: Event) => void) | null = null;
@@ -28,7 +28,7 @@ function fakeStream() {
   let state: MediaStreamTrackState = 'live';
   const stop = vi.fn(() => { state = 'ended'; });
   const track = { stop, get readyState() { return state; } };
-  return { stream: { getTracks: () => [track] } as unknown as MediaStream, stop };
+  return { stream: { getTracks: () => [track], getVideoTracks: () => [track] } as unknown as MediaStream, stop };
 }
 beforeEach(() => {
   vi.useFakeTimers();
@@ -82,7 +82,7 @@ it('short tap switches mode, long press first grants permission, next hold recor
   expect(onRecorded).toHaveBeenCalledOnce();
   expect(getUserMedia).toHaveBeenCalledOnce();
   expect(onClick).toHaveBeenCalledOnce();
-  expect(onRecorded).toHaveBeenCalledWith(expect.objectContaining({ mimeType: 'video/webm' }));
+  expect(onRecorded).toHaveBeenCalledWith(expect.objectContaining({ mimeType: 'video/mp4' }));
   act(() => window.dispatchEvent(new Event('pagehide')));
   expect(stream.stop).toHaveBeenCalledOnce();
 });
