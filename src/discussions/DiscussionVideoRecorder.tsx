@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { FloatingActionButton, Icon } from '../ui';
 import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
-import { VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from '../video-note/video-recording-profile';
+import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
 
 const topControls: CSSProperties = { top: '1rem', bottom: 'auto' };
 const centerControl: CSSProperties = { right: '50%', translate: '50% 0' };
@@ -14,9 +14,15 @@ interface Props {
   onUse: (file: File) => void;
 }
 
+function phoneVideoProfile(): 'portrait' | 'landscape' {
+  const orientation = window.screen.orientation?.type;
+  if (orientation) return orientation.startsWith('portrait') ? 'portrait' : 'landscape';
+  return (window.matchMedia?.('(orientation: portrait)').matches ?? (window.innerHeight >= window.innerWidth))
+    ? 'portrait' : 'landscape';
+}
+
 export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
-  const [profile] = useState<VideoRecordingProfile>(() =>
-    (window.matchMedia?.('(orientation: portrait)').matches ?? (window.innerHeight >= window.innerWidth)) ? 'portrait' : 'landscape');
+  const [profile] = useState(phoneVideoProfile);
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const cameraPreview = useRef<HTMLVideoElement>(null);
@@ -60,7 +66,7 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
     {!inProgress && !clip && <>
       <FloatingActionButton label="Выбрать из галереи" icon="photo" onClick={onGallery} />
       {stream && status === 'idle'
-        ? <FloatingActionButton label="Начать запись" style={centerControl} onClick={() => void start('environment')}>
+        ? <FloatingActionButton label="Начать запись" style={centerControl} onClick={() => void start('environment', false, { video: cameraPreview.current, profile: phoneVideoProfile() })}>
           <Icon name="record-circle" className="discussion-video-recorder__record-icon" style={recordIconSize} />
         </FloatingActionButton>
         : <FloatingActionButton label="Включить камеру" icon="video" style={centerControl} onClick={enableCamera} />}
