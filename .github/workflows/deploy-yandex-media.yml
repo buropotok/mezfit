@@ -1,0 +1,73 @@
+name: Deploy Yandex media gateway
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type DEPLOY_YANDEX_MEDIA to proceed
+        required: true
+        type: string
+      check_only:
+        description: Check OIDC and existing configuration without publishing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yandex-media-gateway-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner &&
+      inputs.confirm == 'DEPLOY_YANDEX_MEDIA'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate dispatch confirmation and repository variables
+        env:
+          CONFIRMATION: ${{ inputs.confirm }}
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_RUNTIME_SA_ID: ${{ vars.YC_RUNTIME_SA_ID }}
+          YC_FUNCTION_ID: ${{ vars.YC_FUNCTION_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          if [[ "$CONFIRMATION" != DEPLOY_YANDEX_MEDIA ]]; then
+            echo 'Invalid deployment confirmation.'
+            exit 1
+          fi
+          for key in YC_DEPLOY_SA_ID YC_RUNTIME_SA_ID YC_FUNCTION_ID YC_FOLDER_ID; do
+            if [[ ! "${!key}" =~ ^[a-z0-9]+$ ]]; then
+              echo "Missing or invalid repository variable: $key"
+              exit 1
+            fi
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Get short-lived Yandex IAM token
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+
+      - name: Validate or publish the existing function version
+        env:
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          YC_RUNTIME_SA_ID: ${{ vars.YC_RUNTIME_SA_ID }}
+          YC_FUNCTION_ID: ${{ vars.YC_FUNCTION_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          CHECK_ONLY: ${{ inputs.check_only }}
+        run: python3 tools/yandex-media/deploy.py
