@@ -112,16 +112,16 @@ export function UserProfileNavigationShell({
     context={navigation}>
     {showingProfile ? <ProfileDataProvider tab={tab} expectedActor={`tg:${props.me.user.telegramUserId}`}>
       <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
-      onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
-      hideTabs={clientProfile && tab === 'exercises' && profileNavigation !== null}
-      programContent={clientProfile && tab === 'program' ? <ClientProgramsPage actor={actor}
-        onNavigationContextChange={setProfileNavigation} /> : null}
-      exercisesContent={clientProfile && tab === 'exercises' ? <ClientPerformedExercisesPage
-        key={cloud?.actorUserId} onDetailNavigationChange={setProfileNavigation} /> : null}
-      calendarContent={clientProfile && tab === 'calendar' ? <ProfileWorkoutTimeline mode="plan" role="client"
-        initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
-      historyContent={clientProfile && tab === 'history' ? <ProfileWorkoutTimeline mode="history" role="client"
-        initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} />
+        onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
+        hideTabs={clientProfile && tab === 'exercises' && profileNavigation !== null}
+        programContent={clientProfile && tab === 'program' ? <ClientProgramsPage actor={actor}
+          onNavigationContextChange={setProfileNavigation} /> : null}
+        exercisesContent={clientProfile && tab === 'exercises' ? <ClientPerformedExercisesPage
+          key={cloud?.actorUserId} onDetailNavigationChange={setProfileNavigation} /> : null}
+        calendarContent={clientProfile && tab === 'calendar' ? <ProfileWorkoutTimeline key="plan" mode="plan" role="client"
+          initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
+        historyContent={clientProfile && tab === 'history' ? <ProfileWorkoutTimeline key="history" mode="history" role="client"
+          initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} />
     </ProfileDataProvider> : props.children}
   </ClientWorkoutNavigationShell>;
 }

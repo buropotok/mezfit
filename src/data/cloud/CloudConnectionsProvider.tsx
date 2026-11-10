@@ -291,13 +291,11 @@ export function CloudConnectionsProvider({
       next: (snapshot) => {
         const { contacts, hasRelationshipMembership } = snapshot;
         if (!active) return;
+        publish(snapshot);
         if (initialPullSucceededRef.current && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
-          publish(snapshot);
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
-          return;
         }
-        publish(snapshot);
       },
       error: (reason: unknown) => {
         if (!active) return;
@@ -320,11 +318,10 @@ export function CloudConnectionsProvider({
         const { contacts, hasRelationshipMembership } = snapshot;
         if (!active) return;
         initialPullSucceededRef.current = true;
+        publish(snapshot);
         if (hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
-        } else {
-          publish(snapshot);
         }
       } catch {
         if (!active) return;

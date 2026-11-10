@@ -312,15 +312,17 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
 
   if (selectedClient) {
     if (selectedClientProgram && destination === 'clients' && programRepository) {
-      return <CloudProgramDetailsPage key={selectedClientProgram.id}
-        onNavigationContextChange={setClientProgramDetailNavigation}
-        actor={actor} viewerRole="coach" repository={programRepository} planId={selectedClientProgram.id}
-        cloudStatus={cloudConnections?.status ?? 'loading'}
-        cloudError={cloudConnections?.error ?? ''}
-        syncStatus={cloudConnections?.syncStatus ?? 'pending'}
-        syncError={cloudConnections?.syncError ?? ''}
-        onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
-        onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />;
+      return <ProfileDataProvider tab={clientTab} contact={selectedClient}>
+        <CloudProgramDetailsPage key={selectedClientProgram.id}
+          onNavigationContextChange={setClientProgramDetailNavigation}
+          actor={actor} viewerRole="coach" repository={programRepository} planId={selectedClientProgram.id}
+          cloudStatus={cloudConnections?.status ?? 'loading'}
+          cloudError={cloudConnections?.error ?? ''}
+          syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+          syncError={cloudConnections?.syncError ?? ''}
+          onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
+          onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
+      </ProfileDataProvider>;
     }
     const programContent = CLOUD_PROGRAM_MANAGEMENT_ENABLED && programRepository
       ? <CloudProgramsPage repository={programRepository} clients={[selectedClient]}
@@ -336,25 +338,23 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
       : <Text variant="body" tone="muted">Программы пока недоступны</Text>;
-    return <>
-      <ProfileDataProvider tab={clientTab} contact={selectedClient}>
-        <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
-      basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
-      hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
-      discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
-        relationshipId={selectedClient.relationshipId} onNavigationContextChange={setClientDiscussionNavigation} /> : null}
-      onTabChange={tab => { setClientTab(tab); setClientWorkoutNavigation(null); }}
-      programContent={clientTab === 'program' ? programContent : null}
-      calendarContent={clientTab === 'calendar' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':plan'}
-        mode="plan" role="coach" contact={selectedClient} actor={actor} initData={initData}
-        onNavigationContextChange={setClientWorkoutNavigation} /> : null}
-      historyContent={clientTab === 'history' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':history'}
-        mode="history" role="coach" contact={selectedClient} actor={actor} initData={initData}
-        onNavigationContextChange={setClientWorkoutNavigation} /> : null}
-      exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
-        key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
-        onDetailNavigationChange={setClientExerciseNavigation} /> : null} />
-      </ProfileDataProvider>
+    return <ProfileDataProvider tab={clientTab} contact={selectedClient}>
+      <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
+        basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
+        hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
+        discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
+          relationshipId={selectedClient.relationshipId} onNavigationContextChange={setClientDiscussionNavigation} /> : null}
+        onTabChange={tab => { setClientTab(tab); setClientWorkoutNavigation(null); }}
+        programContent={clientTab === 'program' ? programContent : null}
+        calendarContent={clientTab === 'calendar' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':plan'}
+          mode="plan" role="coach" contact={selectedClient} actor={actor} initData={initData}
+          onNavigationContextChange={setClientWorkoutNavigation} /> : null}
+        historyContent={clientTab === 'history' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':history'}
+          mode="history" role="coach" contact={selectedClient} actor={actor} initData={initData}
+          onNavigationContextChange={setClientWorkoutNavigation} /> : null}
+        exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
+          key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
+          onDetailNavigationChange={setClientExerciseNavigation} /> : null} />
       {destination === 'clients' && clientTab === 'basics' ? <div className="stack">
         <Button variant="secondary" disabled={resetBusy} onClick={() => {
           setResetError('');
@@ -374,7 +374,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         </>}
         onBackdropClick={() => { if (!resetBusy) setResetTarget(null); }}
         role="alertdialog" aria-modal="true" aria-label="Сброс тестовой связи" />
-    </>;
+    </ProfileDataProvider>;
   }
 
   if (destination === 'today') {
