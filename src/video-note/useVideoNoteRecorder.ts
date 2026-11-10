@@ -95,7 +95,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const release = useCallback(() => {
     cancel();
     releaseCamera();
-    if (mountedRef.current) setStream(null);
+    if (mountedRef.current) { setStream(null); setError(''); }
   }, [cancel, releaseCamera]);
 
   const stop = useCallback((): Promise<VideoNoteRecording | null> => {
