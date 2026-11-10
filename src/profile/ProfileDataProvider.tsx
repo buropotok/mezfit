@@ -85,23 +85,20 @@ function ProfileDataScope({ cloud, tab, contact, children }: {
   return <ProfileDataContext.Provider value={value}>{children}</ProfileDataContext.Provider>;
 }
 
-// Key the lifetime before children render so a new access scope never paints the previous snapshot.
-const databaseKeys = new WeakMap<Cloud['db'], number>();
-let nextDatabaseKey = 0;
-
 export function ProfileDataProvider({ tab, contact, expectedActor, children }: {
   tab: ProfileTab; contact?: CloudContact; expectedActor?: string; children: ReactNode;
 }) {
   const connection = useCloudConnections();
   const cloud = connection?.db && (!expectedActor || connection.actorUserId === expectedActor) ? connection : null;
-  let databaseKey = cloud ? databaseKeys.get(cloud.db) : undefined;
-  if (cloud && databaseKey === undefined) {
-    databaseKey = ++nextDatabaseKey;
-    databaseKeys.set(cloud.db, databaseKey);
+  const db = cloud?.db;
+  const [databaseScope, setDatabaseScope] = useState({ db, revision: 0 });
+  // React restarts this render before rendering children if the DB instance changed.
+  if (databaseScope.db !== db) {
+    setDatabaseScope({ db, revision: databaseScope.revision + 1 });
   }
   const accessRealms = contact ? [contact.relationshipId] : (cloud?.coaches ?? [])
     .map(coach => coach.relationshipId).sort();
-  return <ProfileDataScope key={JSON.stringify([databaseKey, cloud?.actorUserId, contact?.userId, accessRealms])}
+  return <ProfileDataScope key={JSON.stringify([databaseScope.revision, cloud?.actorUserId, contact?.userId, accessRealms])}
     cloud={cloud} tab={tab} contact={contact}>{children}</ProfileDataScope>;
 }
 

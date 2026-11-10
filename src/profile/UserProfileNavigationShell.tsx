@@ -110,7 +110,8 @@ export function UserProfileNavigationShell({
     : props.context;
   return <ClientWorkoutNavigationShell {...props}
     context={navigation}>
-    {showingProfile ? <ProfileDataProvider tab={tab} expectedActor={`tg:${props.me.user.telegramUserId}`}>
+    {showingProfile ? <ProfileDataProvider key={props.activeRole} tab={clientProfile ? tab : 'basics'}
+      expectedActor={`tg:${props.me.user.telegramUserId}`}>
       <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
         onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
         hideTabs={clientProfile && tab === 'exercises' && profileNavigation !== null}
