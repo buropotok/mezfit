@@ -60,6 +60,9 @@ describe('signed direct media upload', () => {
     const signer = vi.fn<typeof fetch>()
       .mockImplementationOnce(async (_url, init) => {
         const payload = await signedMediaResponse(init).json();
+        if (!payload || typeof payload !== 'object' || !('putUrl' in payload) || typeof payload.putUrl !== 'string') {
+          throw new Error('Invalid signed media fixture');
+        }
         return Response.json({ ...payload, putUrl: payload.putUrl.replace(key, 'mvp-media/' + 'c'.repeat(64)) });
       })
       .mockImplementation(async (_url, init) => signedMediaResponse(init, { expiresAt: Date.now() - 1 }));
