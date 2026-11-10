@@ -55,3 +55,18 @@ it('offers the existing retry action when the authorized reader fails', () => {
   expect(screen.getByRole('button', { name: 'Повторить' })).toBeTruthy();
   expect(screen.queryByText('Выполнение')).toBeNull();
 });
+
+it('forwards the exact scheduled exercise and set to the existing PLAN viewer', () => {
+  const draft: LocalWorkoutOccurrenceDraft = {
+    id: 'draft:occurrence', actorUserId: 'tg:11', realmId: 'tg:11',
+    athleteUserId: 'tg:11', coachUserId: null, clientUserId: null,
+    format: 'independent', startsAtUtc: '2026-11-07T10:00:00.000Z', durationMinutes: 60,
+    plan: { name: 'План', comment: null, exercises: [] },
+    originalPlan: { name: 'План', comment: null, exercises: [] },
+    createdAt: '', updatedAt: '',
+  };
+  render(<DiscussionEntity thread={thread} role="coach" onBack={vi.fn()} onNavigationContextChange={vi.fn()} />);
+  act(() => state.next?.({ kind: 'occurrence', draft, focus: { exerciseId: 'occ-ex', setId: 'occ-set' } }));
+  expect(screen.getByText('Плановая тренировка')).toBeTruthy();
+  expect(screen.getByTestId('planned-focus').textContent).toBe('occ-ex/occ-set');
+});
