@@ -364,3 +364,50 @@
   border-radius: 50%;
   background: var(--ui-color-danger, #ff453a);
 }
+
+/* Video note presentation composes the existing Settings ring/player without
+   modifying Konsta Message, Messagebar or IconButton internals. */
+.discussion-video-note-live {
+  position: absolute;
+  z-index: 3;
+  inset-inline: 12px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.discussion-video-note {
+  position: relative;
+  width: min(46vw, 11.5rem);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.discussion-video-note[data-expanded] {
+  width: min(70vw, 19rem);
+}
+
+.discussion-video-note__circle {
+  width: 100%;
+  max-width: none;
+}
+
+.discussion-video-note__menu {
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 4px;
+  z-index: 3;
+}
+
+.discussion-video-note__error {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.discussion-video-note__meta {
+  display: flex;
+  justify-content: flex-end;
+  padding-inline: 4px;
+}

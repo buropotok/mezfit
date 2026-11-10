@@ -3,7 +3,7 @@ import { discussionId, discussionRecord } from './discussion-anchor';
 /** Metadata only. Native owner has full row control; these guards describe normal app writes. */
 export interface MessageAttachment {
   id: string; realmId: string; owner: string; authorUserId: string; messageId: string;
-  mediaType: 'photo' | 'video' | 'voice'; storageKey: string | null;
+  mediaType: 'photo' | 'video' | 'video-note' | 'voice'; storageKey: string | null;
   mimeType: string; sizeBytes: number; durationSeconds: number | null;
   waveform?: number[];
   uploadState: 'pending' | 'uploading' | 'failed' | 'ready';
@@ -38,13 +38,13 @@ export function isVoiceWaveform(value: unknown): value is number[] {
 function media(value: Record<string, unknown>): boolean {
   if (typeof value.mimeType !== 'string' || value.mimeType.length > 256
     || !Number.isSafeInteger(value.sizeBytes) || Number(value.sizeBytes) <= 0) return false;
-  const prefix = value.mediaType === 'photo' ? 'image/' : value.mediaType === 'video' ? 'video/' : value.mediaType === 'voice' ? 'audio/' : null;
+  const prefix = value.mediaType === 'photo' ? 'image/' : (value.mediaType === 'video' || value.mediaType === 'video-note') ? 'video/' : value.mediaType === 'voice' ? 'audio/' : null;
   if (!prefix || !value.mimeType.startsWith(prefix) || value.mimeType.length === prefix.length
     || /[\r\n\u0000]/.test(value.mimeType)) return false;
   if (value.waveform !== undefined && (value.mediaType !== 'voice' || !isVoiceWaveform(value.waveform))) return false;
   if (value.mediaType === 'photo') return value.durationSeconds === null;
   return typeof value.durationSeconds === 'number' && Number.isFinite(value.durationSeconds)
-    && value.durationSeconds > 0 && (value.mediaType !== 'video' || value.durationSeconds <= 180);
+    && value.durationSeconds > 0 && (value.mediaType === 'video-note' ? value.durationSeconds <= 60 : value.mediaType !== 'video' || value.durationSeconds <= 180);
 }
 export function isAttachmentUploadConfirmation(value: unknown): value is AttachmentUploadConfirmation {
   return discussionRecord(value) && discussionId(value.attachmentId) && discussionId(value.realmId)

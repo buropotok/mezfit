@@ -1,4 +1,5 @@
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
+import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import { createDirectMediaKey, MediaUploadError, validateDirectMedia } from '../media/directMediaUpload';
 import { DISCUSSION_MEDIA_ACCEPT, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
 
@@ -78,6 +79,18 @@ export async function inspectDiscussionMedia(original: File, signal: AbortSignal
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+export function prepareDiscussionVideoNote(clip: VideoNoteRecording) {
+  const extension = clip.mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+  const file = new File([clip.blob], 'Видеокружок.' + extension, { type: clip.mimeType });
+  const metadata: DiscussionMediaDraft = {
+    id: crypto.randomUUID(), storageKey: createDirectMediaKey(), mediaType: 'video-note',
+    mimeType: validateDirectMedia(file), sizeBytes: file.size,
+    durationSeconds: Math.min(60, Math.max(1, clip.durationMs) / 1000),
+    fileName: file.name, uploadState: 'uploading',
+  };
+  return { file, metadata };
 }
 
 export function prepareDiscussionVoice(clip: VoiceRecording) {

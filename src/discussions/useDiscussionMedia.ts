@@ -3,8 +3,9 @@ import { MediaUploadError, uploadDirectMedia } from '../media/directMediaUpload'
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionPort } from './discussion-session';
-import { inspectDiscussionMedia, prepareDiscussionVoice } from './discussion-media-file';
+import { inspectDiscussionMedia, prepareDiscussionVoice, prepareDiscussionVideoNote } from './discussion-media-file';
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
+import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
 
 type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>>;
@@ -27,18 +28,18 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [selection]);
-  const savedVoice = draft.media?.mediaType === 'voice' ? draft.media : undefined;
+  const savedCapture = draft.media?.mediaType === 'voice' || draft.media?.mediaType === 'video-note' ? draft.media : undefined;
   useEffect(() => {
-    if (selection || !savedVoice) return;
+    if (selection || !savedCapture) return;
     let current = true;
-    const { storageKey, mimeType, sizeBytes, fileName } = savedVoice;
+    const { storageKey, mimeType, sizeBytes, fileName } = savedCapture;
     void readDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }).then(blob => {
       if (current && blob && !active.current) {
-        setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedVoice });
+        setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedCapture });
       }
     });
     return () => { current = false; };
-  }, [repository.actorUserId, savedVoice, selection]);
+  }, [repository.actorUserId, savedCapture, selection]);
   useEffect(() => {
     const retry = () => {
       if (document.visibilityState === 'hidden' || navigator.onLine === false) {
@@ -98,6 +99,20 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
+  function sendVideoNote(clip: VideoNoteRecording) {
+    if (active.current || selection || draft.media) return;
+    setError(undefined);
+    try {
+      const next = prepareDiscussionVideoNote(clip);
+      setSelection(next);
+      // Upload and publication begin without the MessageBar preview/Send step.
+      void send(next);
+    } catch {
+      setError('Не удалось подготовить видеокружок. Проверьте формат и размер записи.');
+      setPhase('failed');
+    }
+  }
+
   async function send(selected = selection, allowResume = true) {
     if (!selected || active.current) return;
     resume.current = null;
@@ -107,7 +122,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     let command: DiscussionMessageInput | null = null;
     setError(undefined); setPhase('uploading');
     try {
-      if (selected.metadata.mediaType === 'voice') {
+      if (selected.metadata.mediaType === 'voice' || selected.metadata.mediaType === 'video-note') {
         const { storageKey, mimeType, sizeBytes } = selected.metadata;
         await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file);
         if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
@@ -122,7 +137,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
       setPhase('publishing');
-      if (selected.metadata.mediaType !== 'voice') await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey: result.key,
+      if (selected.metadata.mediaType !== 'voice' && selected.metadata.mediaType !== 'video-note') await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey: result.key,
         mimeType: result.contentType, sizeBytes: result.sizeBytes }, selected.file);
       await repository.send(command, result);
       draft.sent(command.id);
@@ -181,6 +196,6 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
-  return { selection, preview, phase, error, choose, chooseVoice, send, remove,
+  return { selection, preview, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
     cancel: () => { resume.current = null; if (!publishing.current) active.current?.abort(); } };
 }
