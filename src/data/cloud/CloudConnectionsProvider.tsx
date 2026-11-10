@@ -271,11 +271,13 @@ export function CloudConnectionsProvider({
       const own = next.selfAvatars ?? [];
       if (!active) return;
       const hasContacts = directory.clients.length > 0 || directory.coaches.length > 0;
-      locallyAvailable = hasContacts;
       // An empty IndexedDB is not evidence that the cloud has no relationships.
       // Personal portraits remain usable offline even before relationships hydrate.
       setSelfAvatars(own);
-      if (!initialPullSucceededRef.current && !hasContacts) return;
+      // Once a local directory was known, an empty local result also revokes
+      // its previous access scopes, even when the first pull is still pending.
+      if (!initialPullSucceededRef.current && !hasContacts && !locallyAvailable) return;
+      locallyAvailable = hasContacts;
       reconcileAvatarPermissions(directory, own);
       setClients(directory.clients);
       setCoaches(directory.coaches);
@@ -289,12 +291,11 @@ export function CloudConnectionsProvider({
       next: (snapshot) => {
         const { contacts, hasRelationshipMembership } = snapshot;
         if (!active) return;
+        publish(snapshot);
         if (initialPullSucceededRef.current && hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
-          return;
         }
-        publish(snapshot);
       },
       error: (reason: unknown) => {
         if (!active) return;
@@ -317,11 +318,10 @@ export function CloudConnectionsProvider({
         const { contacts, hasRelationshipMembership } = snapshot;
         if (!active) return;
         initialPullSucceededRef.current = true;
+        publish(snapshot);
         if (hasRejectedContacts({ contacts, hasRelationshipMembership })) {
           setError(INVALID_CONTACTS_MESSAGE);
           setStatus('error');
-        } else {
-          publish(snapshot);
         }
       } catch {
         if (!active) return;
@@ -448,13 +448,13 @@ export function CloudConnectionsProvider({
       await db.cloud.sync({ purpose: 'pull', wait: true });
       const snapshot = await readContactSnapshot(db, actorUserId);
       if (!alive.current) return;
-      if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
       initialPullSucceededRef.current = true;
       reconcileAvatarPermissions(snapshot.contacts, snapshot.selfAvatars);
       userAvatarSources.refresh();
       setClients(snapshot.contacts.clients);
       setCoaches(snapshot.contacts.coaches);
       setSelfAvatars(snapshot.selfAvatars);
+      if (hasRejectedContacts(snapshot)) throw new Error(INVALID_CONTACTS_MESSAGE);
       setError('');
       setStatus('ready');
     } catch (reason) {

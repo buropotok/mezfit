@@ -15,15 +15,8 @@ import { OccurrenceDraftSheet } from '../schedule/OccurrenceDraftSheet';
 import { CalendarSessionSheet } from '../schedule/CalendarSessionSheet';
 import { WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
 import { Avatar, Badge, DatePicker, GlassSurface, Icon, Text, type LocalDate } from '../ui';
+import { useProfileSnapshot } from './ProfileDataProvider';
 import './profile-workout-timeline.css';
-
-type WorkoutReadSnapshot = {
-  actorUserId: string;
-  occurrences: CloudWorkoutOccurrenceRow[];
-  sessions: CalendarWorkoutSession[];
-  loading: boolean;
-  error: string;
-};
 
 const EMPTY_OCCURRENCES: CloudWorkoutOccurrenceRow[] = [];
 const EMPTY_SESSIONS: CalendarWorkoutSession[] = [];
@@ -105,18 +98,12 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const planner = useMemo(() => cloud
     ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
-  // A query snapshot belongs to its actor. A replaced DB starts a new observer;
-  // repeated read failures must not drive a subscribe -> render -> subscribe loop.
-  const [snapshot, setSnapshot] = useState<WorkoutReadSnapshot | null>(null);
-  const current = snapshot?.actorUserId === cloud?.actorUserId ? snapshot : null;
-  const occurrences = current?.occurrences ?? EMPTY_OCCURRENCES;
-  const sessions = current?.sessions ?? EMPTY_SESSIONS;
-  const loading = current?.loading ?? true;
-  const error = current?.error ?? '';
-  const [retry, setRetry] = useState(0);
+  const { workouts, historyFilter, setHistoryFilter } = useProfileSnapshot();
+  const occurrences = workouts.data?.occurrences ?? EMPTY_OCCURRENCES;
+  const sessions = workouts.data?.sessions ?? EMPTY_SESSIONS;
+  const loading = !workouts.data && !workouts.failed;
   const [today, setToday] = useState<LocalDate>(() => localDate(new Date()));
-  const [from, setFrom] = useState<LocalDate | null>(null);
-  const [to, setTo] = useState<LocalDate | null>(null);
+  const { from, to } = historyFilter;
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
   const [openedOccurrenceId, setOpenedOccurrenceId] = useState<string | null>(null);
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null);
@@ -130,31 +117,13 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
   }, []);
 
-  useEffect(() => {
-    if (!repository || !cloud?.actorUserId) return;
-    let active = true;
-    const actorUserId = cloud.actorUserId;
-    const subscription = repository.observeWorkspace(value => {
-      if (!active) return;
-      setSnapshot({ actorUserId,
-        occurrences: value.occurrences.filter(row => row.entryKind !== 'personal_event'),
-        sessions: value.sessions ?? [], loading: false, error: '' });
-    }, reason => {
-      if (!active) return;
-      const error = reason instanceof Error ? reason.message : 'Не удалось загрузить тренировки';
-      setSnapshot(previous => previous?.actorUserId === actorUserId && !previous.loading && previous.error === error
-        ? previous : { actorUserId, occurrences: [], sessions: [], loading: false, error });
-    });
-    return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, cloud?.actorUserId, retry]);
-
   const selected = occurrences.find(row => row.id === openedOccurrenceId) ?? null;
   const selectedDraft = useMemo(() => selected && cloud
     ? draftFromOccurrence(cloud.actorUserId, selected) : null, [selected, cloud?.actorUserId]);
   useEffect(() => {
-    if (loading || !openedOccurrenceId || selected) return;
+    if (!workouts.data || !openedOccurrenceId || selected) return;
     setOpenedOccurrenceId(null);
-  }, [loading, openedOccurrenceId, selected]);
+  }, [workouts.data, openedOccurrenceId, selected]);
   useEffect(() => {
     setSourceProgramName(null);
     if (!planner || !selected?.trainingPlanId) return;
@@ -187,18 +156,16 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     {mode === 'history' ? <div className="profile-workout-timeline__filters">
       <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{from ? `С ${dateLabel(from)}` : 'С даты'}</Text></KonstaButton>
       <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">{to ? `По ${dateLabel(to)}` : 'По дату'}</Text></KonstaButton>
-      {from || to ? <KonstaButton rounded clear inline onClick={() => { setFrom(null); setTo(null); }}><Text variant="footnote">Сбросить</Text></KonstaButton> : null}
+      {from || to ? <KonstaButton rounded clear inline onClick={() => { setHistoryFilter({ from: null, to: null }); }}><Text variant="footnote">Сбросить</Text></KonstaButton> : null}
     </div> : null}
     {from && to && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
-    {error ? <div className="stack"><Text variant="footnote" role="alert">{error}</Text>
-      <KonstaButton rounded tonal onClick={() => {
-        setSnapshot(previous => previous && previous.actorUserId === cloud?.actorUserId
-          ? { ...previous, loading: true, error: '' } : previous);
-        setRetry(value => value + 1);
-      }}><Text variant="body">Повторить</Text></KonstaButton>
-    </div> : null}
-    {!loading && !error && rows.length === 0 ? <Text variant="body" tone="muted">
+    {workouts.failed ? <div className="stack"><Text variant="footnote" role="alert">
+      Не удалось {workouts.data ? 'обновить' : 'загрузить'} тренировки.
+    </Text><KonstaButton rounded tonal onClick={workouts.retry}>
+      <Text variant="body">Повторить</Text>
+    </KonstaButton></div> : null}
+    {workouts.data && rows.length === 0 ? <Text variant="body" tone="muted">
       {mode === 'plan' ? 'Запланированных тренировок нет' : 'Тренировок за выбранный период нет'}
     </Text> : null}
     <div className="profile-workout-list">
@@ -213,8 +180,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     <DatePicker opened={picker !== null} surface="panel"
       value={(picker === 'to' ? to : from) ?? today}
       onClose={() => setPicker(null)} onChange={value => {
-        if (picker === 'from') setFrom(value);
-        else if (picker === 'to') setTo(value);
+        if (picker) setHistoryFilter(previous => ({ ...previous, [picker]: value }));
         setPicker(null);
       }} />
     <CalendarSessionSheet sessionId={openedSessionId} role={role} initData={initData} actor={actor}

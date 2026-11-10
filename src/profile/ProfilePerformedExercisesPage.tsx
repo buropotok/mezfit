@@ -16,7 +16,10 @@ import {
   filterFacts, periodBounds, periodOptions, radarCategories, shiftCalendarMonths, summarizeExercises,
   type ExercisePeriod,
 } from '../coach/clientExerciseStatistics';
+import { ProfileDataProvider, useProfileDataContext, useProfileSnapshot } from './ProfileDataProvider';
 import '../coach/client-performed-exercises.css';
+
+const EMPTY_FACTS: ClientExerciseFact[] = [];
 
 const countLabel = (count: number) => {
   const mod100 = count % 100;
@@ -47,25 +50,27 @@ function shiftPeriod(period: ExercisePeriod, current: Date, direction: number, p
 }
 
 /** Shared read-only FACT analytics for either a scoped Coach relationship or the athlete's own history. */
-export function ClientPerformedExercisesPage({ client, onDetailNavigationChange }: {
+type PerformedExercisesProps = {
   /** Omitted for the signed-in athlete's personal profile. */
   client?: CloudContact;
   onDetailNavigationChange?: (context: NavigationContext | null) => void;
-}) {
+};
+
+export function ClientPerformedExercisesPage(props: PerformedExercisesProps) {
+  return useProfileDataContext() ? <PerformedExercises {...props} />
+    : <ProfileDataProvider tab="exercises" contact={props.client}><PerformedExercises {...props} /></ProfileDataProvider>;
+}
+
+function PerformedExercises({ client, onDetailNavigationChange }: PerformedExercisesProps) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud
     ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
-  const [facts, setFacts] = useState<ClientExerciseFact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [retryKey, setRetryKey] = useState(0);
-  const [period, setPeriod] = useState<ExercisePeriod>('30d');
-  const [anchor, setAnchor] = useState(() => new Date());
-  const [anchorDay, setAnchorDay] = useState(() => new Date().getDate());
+  const { exercises, exerciseFilter, setExerciseFilter } = useProfileSnapshot();
+  const facts = exercises.data ?? EMPTY_FACTS;
+  const { period, anchor, anchorDay, category } = exerciseFilter;
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
-  const [category, setCategory] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [info, setInfo] = useState<ClientExerciseFact | null>(null);
   const [informationNavigation, setInformationNavigation] = useState<NavigationContext | null>(null);
@@ -75,30 +80,6 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
     if (!repository || !info) return Promise.reject(new Error('Упражнение недоступно'));
     return repository.exerciseInformation(info.sessionId, info.sessionExerciseId);
   }, [repository, info?.sessionId, info?.sessionExerciseId]);
-
-  useEffect(() => {
-    if (!repository) return undefined;
-    let active = true;
-    setLoading(true);
-    setFacts([]);
-    setError('');
-    const onChange = (rows: ClientExerciseFact[]) => {
-      if (!active) return;
-      setFacts(rows);
-      setLoading(false);
-      setError('');
-    };
-    const onError = (reason: unknown) => {
-      if (!active) return;
-      setFacts([]);
-      setLoading(false);
-      setError(reason instanceof Error ? reason.message : 'Не удалось загрузить упражнения');
-    };
-    const subscription = client
-      ? repository.observeClientExerciseFacts(client.userId, client.relationshipId, onChange, onError)
-      : repository.observeOwnExerciseFacts(onChange, onError);
-    return () => { active = false; subscription.unsubscribe(); };
-  }, [repository, client?.userId, client?.relationshipId, retryKey]);
 
   const allExercises = useMemo(() => summarizeExercises(facts), [facts]);
   const periodFacts = useMemo(() => filterFacts(facts, period, anchor), [facts, period, anchor]);
@@ -136,8 +117,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
   const changePeriod = (direction: number) => {
     if (direction > 0 && !canGoForward) return;
     const next = direction > 0 ? nextPeriod : shiftPeriod(period, anchor, direction, anchorDay);
-    setPeriod(next.period);
-    setAnchor(next.date);
+    setExerciseFilter(previous => ({ ...previous, period: next.period, anchor: next.date }));
   };
 
   return <div className="client-exercises">
@@ -150,9 +130,7 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
           id: option.value, label: option.label, active: period === option.value,
           onSelect: () => {
             const current = new Date();
-            setPeriod(option.value);
-            setAnchor(current);
-            setAnchorDay(current.getDate());
+            setExerciseFilter(previous => ({ ...previous, period: option.value, anchor: current, anchorDay: current.getDate() }));
           },
         }))}
         trigger={<IconButton ref={periodTrigger} label={`Период: ${bounds.label}`} icon="calendar" />} />
@@ -161,17 +139,17 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
         onClick={() => changePeriod(1)} />
     </div>
 
-    {!repository || loading ? <Text variant="body" tone="muted">Загружаем упражнения…</Text> : null}
-    {error ? <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}>
-      <Text variant="body" role="alert">{error}</Text>
-      <Button onClick={() => setRetryKey(value => value + 1)}>Повторить</Button>
+    {!exercises.data && !exercises.failed ? <Text variant="body" tone="muted">Загружаем упражнения…</Text> : null}
+    {exercises.failed ? <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}>
+      <Text variant="body" role="alert">Не удалось {exercises.data ? 'обновить' : 'загрузить'} упражнения.</Text>
+      <Button onClick={exercises.retry}>Повторить</Button>
     </GlassSurface> : null}
 
-    {!loading && !error && selected ? <>
+    {exercises.data && selected ? <>
       <ClientExerciseStatisticsView key={`${selected.key}:${selected.trackingType}`}
         trackingType={selected.trackingType} facts={detailFacts} />
     </> : null}
-    {!loading && !error && !selected ? <>
+    {exercises.data && !selected ? <>
       <GlassSurface component="section" preset="modalTuned" optics={false} blur={2}
         className="client-exercises__radar" contentClassName="client-exercises__panel-content">
         <Text variant="headline">Выполнено упражнений</Text>
@@ -188,10 +166,10 @@ export function ClientPerformedExercisesPage({ client, onDetailNavigationChange 
           <LiquidPopover isOpen={categoryMenuOpen} onOpenChange={setCategoryMenuOpen}
             triggerRef={filterTrigger} label="Фильтр упражнений по категории"
             items={[{ id: 'all', label: 'Все категории', active: category === null,
-              onSelect: () => setCategory(null) },
+              onSelect: () => setExerciseFilter(previous => ({ ...previous, category: null })) },
             ...radar.map(item => ({
               id: item.category, label: item.label, active: category === item.category,
-              onSelect: () => setCategory(item.category),
+              onSelect: () => setExerciseFilter(previous => ({ ...previous, category: item.category })),
             }))]}
             trigger={<IconButton ref={filterTrigger} label="Фильтр по категориям"
               aria-pressed={category !== null}><TablerFilter /></IconButton>} />

@@ -4,6 +4,7 @@ import { UserProfileRepository, type UserProfile } from '../data/cloud/user-prof
 import { ClientWorkoutNavigationShell } from '../workout/ClientWorkoutContext';
 import { Button, Text } from '../ui';
 import { ProfileWorkspace, type ProfileTab } from './ProfileWorkspace';
+import { ProfileDataProvider } from './ProfileDataProvider';
 import { ProfileWorkoutTimeline } from './ProfileWorkoutTimeline';
 import { ClientProgramsPage } from '../client/ClientProgramsPage';
 import { ClientPerformedExercisesPage } from './ProfilePerformedExercisesPage';
@@ -100,18 +101,28 @@ export function UserProfileNavigationShell({
   </>;
   const actor = { name, photoUrl: props.me.user.photoUrl };
   const clientProfile = props.activeRole === 'client';
+  const clientProfileContext = useMemo<NavigationContext>(() => ({
+    level: 1, title: 'Мой профиль', ...props.context,
+    scrollKey: `profile:${props.me.user.telegramUserId}:${tab}`, restoreScroll: true,
+  }), [props.context, props.me.user.telegramUserId, tab]);
+  const navigation = showingProfile
+    ? profileNavigation ?? (clientProfile ? clientProfileContext : props.context)
+    : props.context;
   return <ClientWorkoutNavigationShell {...props}
-    context={showingProfile && profileNavigation ? profileNavigation : props.context}>
-    {showingProfile ? <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
-      onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
-      hideTabs={clientProfile && tab === 'exercises' && profileNavigation !== null}
-      programContent={clientProfile && tab === 'program' ? <ClientProgramsPage actor={actor}
-        onNavigationContextChange={setProfileNavigation} /> : null}
-      exercisesContent={clientProfile && tab === 'exercises' ? <ClientPerformedExercisesPage
-        key={cloud?.actorUserId} onDetailNavigationChange={setProfileNavigation} /> : null}
-      calendarContent={clientProfile && tab === 'calendar' ? <ProfileWorkoutTimeline mode="plan" role="client"
-        initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
-      historyContent={clientProfile && tab === 'history' ? <ProfileWorkoutTimeline mode="history" role="client"
-        initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} /> : props.children}
+    context={navigation}>
+    {showingProfile ? <ProfileDataProvider key={props.activeRole} tab={clientProfile ? tab : 'basics'}
+      expectedActor={`tg:${props.me.user.telegramUserId}`}>
+      <ProfileWorkspace view={{ kind: 'self', name }} tab={tab}
+        onTabChange={next => { setTab(next); setProfileNavigation(null); }} basicsContent={basics}
+        hideTabs={clientProfile && tab === 'exercises' && profileNavigation !== null}
+        programContent={clientProfile && tab === 'program' ? <ClientProgramsPage actor={actor}
+          onNavigationContextChange={setProfileNavigation} /> : null}
+        exercisesContent={clientProfile && tab === 'exercises' ? <ClientPerformedExercisesPage
+          key={cloud?.actorUserId} onDetailNavigationChange={setProfileNavigation} /> : null}
+        calendarContent={clientProfile && tab === 'calendar' ? <ProfileWorkoutTimeline key="plan" mode="plan" role="client"
+          initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
+        historyContent={clientProfile && tab === 'history' ? <ProfileWorkoutTimeline key="history" mode="history" role="client"
+          initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} />
+    </ProfileDataProvider> : props.children}
   </ClientWorkoutNavigationShell>;
 }
