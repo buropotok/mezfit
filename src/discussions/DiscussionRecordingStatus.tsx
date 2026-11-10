@@ -17,7 +17,7 @@ export function DiscussionRecordingStatus({ locked, onCancel }: { locked: boolea
     <Text variant="body" className="discussion-recording-status__time">{time}</Text>
     <div className="discussion-recording-status__cancel">
       {locked
-        ? <Link role="button" onClick={onCancel}><Text variant="body">ОТМЕНА</Text></Link>
+        ? <Link onClick={onCancel}><Text variant="body">ОТМЕНА</Text></Link>
         : <Text variant="body">‹ Влево — отмена</Text>}
     </div>
   </div>;
