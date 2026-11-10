@@ -19,6 +19,6 @@ it('shows elapsed recording time and replaces the swipe hint with explicit cance
   rerender(<KonstaProvider theme="ios" dark><DiscussionRecordingStatus locked onCancel={cancel} /></KonstaProvider>);
   expect(screen.queryByText('‹ Влево — отмена')).toBeNull();
   expect(screen.getByText('0:01,6')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'ОТМЕНА' }));
+  fireEvent.click(screen.getByRole('link', { name: 'ОТМЕНА' }));
   expect(cancel).toHaveBeenCalledOnce();
 });
