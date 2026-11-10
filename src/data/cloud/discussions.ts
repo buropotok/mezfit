@@ -6,7 +6,7 @@ import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, dis
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
 import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
-import { isDiscussionMediaDraft, isDiscussionMediaType, type DiscussionMediaDraft } from './discussion-media';
+import { discussionMediaTextId, isDiscussionMediaDraft, isDiscussionMediaType, type DiscussionMediaDraft } from './discussion-media';
 import { directMediaSizeLimit, directMediaUrl, type UploadedMedia } from '../../media/directMediaUpload';
 import type { MezfitCloudDatabase } from './database';
 export type DiscussionDatabase = Pick<MezfitCloudDatabase,
@@ -337,6 +337,11 @@ export class DiscussionRepository {
           // A retry acknowledges the same publication even after the message
           // was deleted. The returned view still masks the tombstone.
           assertMessageAttachmentWrite(this.actorUserId, thread, { ...existing, deletedAt: undefined }, attachment);
+          if (input.text.trim() && !existing.text && !existing.deletedAt) {
+            const textRow = await this.db.discussionMessages.get(discussionMediaTextId(media));
+            if (!this.visible(textRow, thread.id) || textRow.authorUserId !== this.actorUserId
+              || (!textRow.editedAt && !textRow.deletedAt && textRow.text !== input.text)) fail('DISCUSSION_ID_REUSED');
+          }
         } else if (input.requireUnsentDraft) fail('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
         return this.view(existing);
       }
@@ -352,7 +357,7 @@ export class DiscussionRepository {
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
       // Draft creation is private, not publication. Freeze the first local send
       // time on the row; retries above return that same row without moving it.
-      const row: DiscussionMessage = { id: input.id, threadId: input.threadId, text: input.text,
+      const row: DiscussionMessage = { id: input.id, threadId: input.threadId, text: media ? '' : input.text,
         createdAt: existing ? new Date().toISOString() : input.createdAt,
         replyToMessageId: input.replyToMessageId, realmId: this.scope.realmId,
         owner: this.actorUserId, authorUserId: this.actorUserId, deletedAt: '' };
@@ -370,8 +375,16 @@ export class DiscussionRepository {
         assertMessageAttachmentWrite(this.actorUserId, thread, row, attachment);
         await attachments.add(attachment);
       }
-      if (row.createdAt > thread.lastActivityAt) await this.db.discussionThreads
-        .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt: row.createdAt });
+      let lastActivityAt = row.createdAt;
+      if (media && input.text.trim()) {
+        const textRow: DiscussionMessage = { ...row, id: discussionMediaTextId(media), text: input.text,
+          replyToMessageId: undefined, createdAt: new Date(Date.parse(row.createdAt) + 1).toISOString() };
+        assertDiscussionMessageWrite(this.actorUserId, thread, textRow);
+        await this.db.discussionMessages.add(textRow);
+        lastActivityAt = textRow.createdAt;
+      }
+      if (lastActivityAt > thread.lastActivityAt) await this.db.discussionThreads
+        .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt });
       return this.view(row);
     }, Boolean(media));
   }

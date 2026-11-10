@@ -31,3 +31,8 @@ export function isDiscussionMediaDraft(value: unknown): value is DiscussionMedia
   return value.mediaType === 'video' && value.mimeType.startsWith('video/') && typeof value.durationSeconds === 'number'
     && value.durationSeconds > 0 && value.durationSeconds <= 180;
 }
+
+/** The text sent with a gallery upload has one identity across retries and devices. */
+export function discussionMediaTextId(attachment: DiscussionMediaDraft): string {
+  return 'gallery-text:' + attachment.storageKey;
+}

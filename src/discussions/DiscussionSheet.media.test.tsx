@@ -4,7 +4,7 @@ import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import { directMediaUrl, MediaUploadError, uploadDirectMedia, type UploadedMedia } from '../media/directMediaUpload';
-import { DiscussionSheet } from './DiscussionSheet';
+import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
 import { inspectDiscussionMedia } from './discussion-media-file';
 import { useDiscussionDraft } from './useDiscussionDraft';
@@ -72,4 +72,27 @@ it('acknowledges a restored attachment sent on another device once its metadata 
   expect(result.current.media).toBeUndefined();
   expect(result.current.text).toBe('');
   expect(port.send).not.toHaveBeenCalled();
+});
+
+it('opens a gallery video in the sheet and returns to the same chat via Back', async () => {
+  const video = { ...message('gallery-video', ''), attachments: [{
+    id: 'video-attachment', messageId: 'gallery-video', realmId: thread.realmId, owner: 'tg:1', authorUserId: 'tg:1',
+    mediaType: 'video' as const, mimeType: 'video/mp4', sizeBytes: 5, durationSeconds: 8,
+    storageKey: 'mvp-media/' + 'a'.repeat(64), uploadState: 'ready' as const, confirmedAt: thread.createdAt,
+  }] };
+  const onNavigationContextChange = vi.fn<DiscussionSheetProps['onNavigationContextChange']>();
+  const onClose = vi.fn();
+  const { port } = fixture([video]);
+  render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
+    anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={onClose} parentNavigation={null}
+    onNavigationContextChange={onNavigationContextChange} /></KonstaProvider>);
+
+  fireEvent.click(await screen.findByRole('link', { name: 'Открыть видео' }));
+  const viewer = screen.getByRole('region', { name: 'Просмотр вложения' });
+  expect(viewer.querySelector('video')?.controls).toBe(true);
+  expect(viewer.closest('[role="dialog"]')?.getAttribute('aria-label')).toBe('Обсуждение');
+  act(() => onNavigationContextChange.mock.lastCall?.[0]?.onBack?.());
+  expect(screen.queryByRole('region', { name: 'Просмотр вложения' })).toBeNull();
+  expect(screen.getByRole('link', { name: 'Открыть видео' })).toBeTruthy();
+  expect(onClose).not.toHaveBeenCalled();
 });
