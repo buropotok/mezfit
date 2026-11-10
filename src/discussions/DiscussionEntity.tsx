@@ -47,6 +47,7 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
     syncStatus={cloud.syncStatus} syncError={cloud.syncError} onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync}
     onNavigationContextChange={setNested} />;
   if (target.kind === 'occurrence') return <OccurrenceDraftSheet draft={target.draft} drafts={repositories.drafts}
+    focusExerciseId={target.focus?.exerciseId} focusSetId={target.focus?.setId}
     readOnly onClose={onBack} onSave={async () => {}} onNavigationContextChange={setNested} />;
   return <WorkoutSessionCard readOnly session={target.session} title={target.name} comment={target.comment}
     initiallyExpanded={thread.anchor.kind === 'exercise' || thread.anchor.kind === 'set'}
