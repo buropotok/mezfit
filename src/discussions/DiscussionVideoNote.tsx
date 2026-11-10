@@ -27,7 +27,9 @@ export function DiscussionVideoNoteCapture({ stream, progress }: { stream: Media
 }
 
 /** Sent/received circular attachment uses the existing round player and timeline. */
-export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta, playbackHost }: {
+export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta, playbackHost, review = false }: {
+  /** Unsent locked take stays expanded, including outside taps and playback end. */
+  review?: boolean;
   playbackHost?: HTMLElement | null;
   src: string;
   durationSeconds: number;
@@ -38,7 +40,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   const inlineHost = useRef<HTMLDivElement>(null);
   const circle = useRef<HTMLDivElement>(null);
   const [playerHost] = useState(() => document.createElement('div'));
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(review);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const { url, container } = useDiscussionMediaSource(src, cache, 'video', retry, false);
@@ -51,7 +53,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   }, [expanded, playbackHost, playerHost]);
 
   useEffect(() => {
-    if (!expanded) return;
+    if (!expanded || review) return;
     const outside = (event: PointerEvent) => {
       const element = circle.current;
       if (!element) return;
@@ -65,16 +67,16 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     };
     document.addEventListener('pointerdown', outside, true);
     return () => document.removeEventListener('pointerdown', outside, true);
-  }, [expanded]);
+  }, [expanded, review]);
 
-  return <div ref={container} className="discussion-video-note" data-expanded={expanded || undefined}
+  return <div ref={container} className={`discussion-video-note${review ? ' discussion-video-note--review' : ''}`} data-expanded={expanded || undefined}
     onClick={event => event.stopPropagation()}>
-    <div ref={inlineHost} className="discussion-video-note__inline" />
+    {!review && <div ref={inlineHost} className="discussion-video-note__inline" />}
     {url && createPortal(<div ref={circle}
       className={`discussion-video-note__circle video-note-module__circle${expanded ? ' discussion-video-note__circle--expanded' : ''}`}>
       <CircularVideoPlayback key={retry} src={url} fallbackDuration={durationSeconds}
         mode={expanded ? 'play' : 'preview'} onExpand={() => setExpanded(true)}
-        onReturnToPreview={() => setExpanded(false)} onError={setError} />
+        onReturnToPreview={() => { if (!review) setExpanded(false); }} onError={setError} />
     </div>, playerHost)}
     {onMenu && <span className="discussion-video-note__menu">
       <IconButton icon="dots-vertical" label="Действия сообщения" onClick={event => {
