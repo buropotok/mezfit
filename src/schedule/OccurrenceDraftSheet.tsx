@@ -520,13 +520,15 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const informationExercise = draft?.plan.exercises.find(item => item.id === exerciseInformationId);
   const activeExercise = draft?.plan.exercises.find(item => item.id === editingSet?.exerciseId);
   const activeSet = activeExercise?.sets.find(item => item.id === editingSet?.setId);
-  const openSet = async (exerciseId: string, setId: string) => {
+  const openSet = async (exerciseId: string, setId: string, isCurrent: () => boolean = () => true) => {
+    if (!isCurrent()) return;
     if (access.current.planLocked) { onMutationAttempt(); return; }
     if (!draft || !planner || busy) return;
     const exercise = draft.plan.exercises.find(item => item.id === exerciseId);
     if (!exercise?.sets.some(item => item.id === setId)) return;
     try {
       const type = await planner.programs.trackingTypeForExercise(exercise.exercise);
+      if (!isCurrent()) return;
       if (!type) {
         setError('Не удалось определить тип учёта упражнения');
         return;
@@ -534,7 +536,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       if (access.current.planLocked) { onMutationAttempt(); return; }
       setEditingSet({ exerciseId, setId, trackingType: type });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
+      if (isCurrent()) setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
     }
   };
   const focusedSet = useRef<string | null>(null);
@@ -543,8 +545,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     const key = JSON.stringify([draft.id, focusExerciseId, focusSetId]);
     if (focusedSet.current === key) return;
     focusedSet.current = key;
+    let active = true;
     // Use the normal read-only set detail and its established nested Back handling.
-    void openSet(focusExerciseId, focusSetId);
+    void openSet(focusExerciseId, focusSetId, () => active);
+    return () => { active = false; };
   }, [auxiliaryReady, draft?.id, focusExerciseId, focusSetId, planner, readOnly]);
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
   const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
