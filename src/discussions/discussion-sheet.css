@@ -303,22 +303,38 @@
   z-index: 5;
   transition: bottom 180ms ease-out;
 }
-.discussion-composer__lock {
+/* The disabled hit target retains its semantics; the animation is an independent
+   decoration so disabled opacity and press scaling cannot alter its artwork. */
+.discussion-composer__trash-animation {
+  position: absolute;
+  inset: 0;
   display: grid;
-  justify-items: center;
-  gap: 6px;
-  padding: 10px 12px;
+  place-items: center;
   pointer-events: none;
 }
-.discussion-composer__lock > span { width: 24px; height: 24px; }
-.discussion-composer__cancel-hint {
-  position: absolute;
-  inset-inline-end: 70px;
-  bottom: 14px;
-  max-width: calc(100% - 145px);
-  padding-inline: 6px;
-  background: var(--ui-color-background, #171717);
-  pointer-events: none;
+.discussion-recording-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding-inline: 8px;
+}
+.discussion-recording-status__dot {
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ui-color-danger, #ff453a);
+}
+.discussion-recording-status__time { flex-shrink: 0; white-space: nowrap; }
+.discussion-recording-status__cancel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  text-align: center;
 }
 @media (prefers-reduced-motion: reduce) {
   .discussion-composer__recording-control { transition: none; }
@@ -345,8 +361,7 @@
   text-align: end;
 }
 
-.discussion-composer__field > .discussion-voice,
-.discussion-voice-recording {
+.discussion-composer__field > .discussion-voice {
   width: 100%;
   padding-inline: 8px;
 }
@@ -354,27 +369,6 @@
 .discussion-composer__voice-placeholder {
   align-self: center;
   padding-inline: 12px;
-}
-
-.discussion-voice-recording {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.discussion-voice-recording svg {
-  flex: 1;
-  min-width: 0;
-  height: 32px;
-  fill: currentColor;
-}
-
-.discussion-voice-recording__dot {
-  width: 14px;
-  height: 14px;
-  margin-inline: 12px;
-  border-radius: 50%;
-  background: var(--ui-color-danger, #ff453a);
 }
 
 /* Video note presentation composes the existing Settings ring/player without
@@ -402,6 +396,8 @@
   bottom: 72px;
   z-index: 3;
 }
+
+.discussion-video-note__circle--review { background: #000; }
 
 .discussion-video-note__circle {
   width: 100%;
