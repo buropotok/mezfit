@@ -588,7 +588,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         {media.phase === 'uploading' ? <>
           <Text variant="footnote" role="status">Загружаем вложение…</Text>
           <IconButton icon="x" label="Отменить загрузку" onClick={media.cancel} />
-        </> : media.phase === 'publishing' ? <Text variant="footnote" role="status">Сохраняем сообщение…</Text> : !voiceDraft && <>
+        </> : media.phase === 'publishing' ? <Text variant="footnote" role="status">Сохраняем сообщение…</Text> : circleDraft ? <>
+          {!media.selection && <Text variant="footnote" role="alert">Запись кружка недоступна на этом устройстве. Удалите черновик и запишите заново.</Text>}
+          <IconButton icon="x" label="Убрать видеокружок" disabled={busy || mediaBusy} onClick={closePreview} />
+        </> : !voiceDraft && <>
           {!media.selection && draft.media && <Button rounded disabled={busy || mediaBusy} onClick={() => gallery.current?.click()}>
             <Text variant="footnote">Выбрать файл снова</Text>
           </Button>}
@@ -663,8 +666,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onLostPointerCapture={event => { voice.onPointerCancel(event); videoNote.onPointerCancel(event); }}
           onContextMenu={event => { if (actionMode === 'microphone' || actionMode === 'camera') event.preventDefault(); }}
           onClick={event => {
-            const consumed = voice.consumeClick() || videoNote.consumeClick();
-            if (consumed && event.detail !== 0) return;
+            const voiceConsumed = voice.consumeClick();
+            const circleConsumed = videoNote.consumeClick();
+            if ((voiceConsumed || circleConsumed) && event.detail !== 0) return;
             if (actionMode === 'send') submit();
             else setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone');
           }}>
