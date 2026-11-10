@@ -240,7 +240,7 @@ export function CircularVideoPlayback({
         preload="auto"
         onLoadedMetadata={(event) => {
           readDuration(event.currentTarget);
-          if (mode === 'preview') showPreviewFrame(event.currentTarget);
+          if (event.currentTarget.paused) showPreviewFrame(event.currentTarget);
         }}
         onDurationChange={(event) => readDuration(event.currentTarget)}
         onTimeUpdate={(event) => {

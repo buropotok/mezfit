@@ -23,13 +23,11 @@ export function useRecordingGesture(options: {
   const gesture = useRef<Gesture | null>(null);
   const suppressClick = useRef(false);
   const [phase, setPhase] = useState<RecordingGesturePhase>('idle');
-  const [lockProgress, setLockProgress] = useState(0);
 
   function reset() {
     if (gesture.current) window.clearTimeout(gesture.current.timer);
     gesture.current = null;
     setPhase('idle');
-    setLockProgress(0);
   }
   function cancel() {
     if (gesture.current?.held) suppressClick.current = true;
@@ -82,7 +80,7 @@ export function useRecordingGesture(options: {
         return;
       }
       current.started = started;
-      if (!started) { setPhase('idle'); setLockProgress(0); }
+      if (!started) setPhase('idle');
     }, PRESS_SCALE_PEAK_TIME);
   }
   function onPointerMove(event: PointerEvent<HTMLButtonElement>) {
@@ -94,15 +92,12 @@ export function useRecordingGesture(options: {
       cancel();
       triggerTelegramSelectionHaptic();
       latest.current.onCancelGesture?.();
-    } else if (up > left) {
-      setLockProgress(Math.max(0, Math.min(1, up / RECORDING_LOCK_DISTANCE)));
-      if (up >= RECORDING_LOCK_DISTANCE) {
-        current.locked = true;
-        triggerTelegramSelectionHaptic();
-        latest.current.onLock?.();
-        setPhase('locked');
-      }
-    } else setLockProgress(0);
+    } else if (up >= RECORDING_LOCK_DISTANCE && up > left) {
+      current.locked = true;
+      triggerTelegramSelectionHaptic();
+      latest.current.onLock?.();
+      setPhase('locked');
+    }
   }
   function onPointerUp(event: PointerEvent<HTMLButtonElement>) {
     const current = gesture.current;
@@ -114,7 +109,7 @@ export function useRecordingGesture(options: {
   function onPointerCancel(event: PointerEvent<HTMLButtonElement>) {
     if (gesture.current?.id === event.pointerId && !gesture.current.locked) cancel();
   }
-  return { phase, lockProgress, cancel, stop: () => finish('preview'), send: () => finish('send'),
+  return { phase, cancel, stop: () => finish('preview'), send: () => finish('send'),
     onPointerDown, onPointerMove, onPointerUp, onPointerCancel,
     consumeClick: () => { const consumed = suppressClick.current; suppressClick.current = false; return consumed; } };
 }

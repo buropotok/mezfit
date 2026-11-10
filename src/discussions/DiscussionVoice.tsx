@@ -30,15 +30,3 @@ export function DiscussionVoice({ src, waveform, durationMs, cache, onMenu, meta
     {meta && <div className="discussion-voice__meta">{meta}</div>}
   </div>;
 }
-
-export function DiscussionVoiceRecording({ levels }: { levels: number[] }) {
-  return <div className="discussion-voice-recording" role="status" aria-label="Идёт запись голосового сообщения">
-    <span className="discussion-voice-recording__dot" />
-    <svg viewBox="0 0 210 32" preserveAspectRatio="none" aria-hidden="true">
-      {levels.map((level, index) => {
-        const height = 3 + level * 25;
-        return <rect key={index} x={index * 5 + 1} y={(32 - height) / 2} width="3" height={height} rx="1.5" />;
-      })}
-    </svg>
-  </div>;
-}

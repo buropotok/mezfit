@@ -4,7 +4,6 @@ import { gsap } from 'gsap';
 // Paths and transform keyframes extracted from the supplied Trash Can.json.
 const lidPosition = [[0.2336,298.741,277.677],[0.4004,298.741,299.677],[0.5672,286.182,221.947],[0.8342,252.741,176.677],[1.0677,298.741,277.677],[1.2346,298.741,232.677],[1.368,298.741,277.677],[1.4681,298.741,252.677],[1.5682,298.741,277.677],[1.6683,298.741,266.677],[1.7684,298.741,267.677],[1.8018,298.741,277.677]];
 const lidRotation = [[0.2336,0],[0.4004,0],[0.8342,-40],[1.0764,0],[1.2346,15],[1.368,0],[1.4681,-10],[1.5697,0],[1.6683,6],[1.7684,2],[1.8018,0]];
-const bodyScale = [[0.2336,846.762,846.762],[0.4004,920,776.762],[0.5756,846.762,892.762],[0.7007,846.762,846.762],[0.8342,863,850],[0.9676,846.762,846.762]];
 const trashDuration = 1.969;
 
 export function DiscussionVoiceTrash({ deleting, onComplete }: { deleting: boolean; onComplete: () => void }) {
@@ -19,6 +18,7 @@ export function DiscussionVoiceTrash({ deleting, onComplete }: { deleting: boole
       return;
     }
     const animation = gsap.timeline();
+    animation.timeScale(1.5);
     for (let i = 1; i < lidPosition.length; i += 1) {
       const [end, x, y] = lidPosition[i];
       const [begin] = lidPosition[i - 1];
@@ -29,17 +29,11 @@ export function DiscussionVoiceTrash({ deleting, onComplete }: { deleting: boole
       const [begin] = lidRotation[i - 1];
       animation.to(lid.current, { rotation, svgOrigin: '298.741 277.677', duration: end - begin, ease: 'power1.inOut' }, begin);
     }
-    for (let i = 1; i < bodyScale.length; i += 1) {
-      const [end, x, y] = bodyScale[i];
-      const [begin] = bodyScale[i - 1];
-      animation.to(body.current, { scaleX: x / 846.762, scaleY: y / 846.762, svgOrigin: '299.997 572.338',
-        duration: end - begin, ease: 'power1.inOut' }, begin);
-    }
     animation.call(() => complete.current(), undefined, trashDuration);
     return () => { animation.kill(); };
   }, [deleting]);
 
-  return <svg width="24" height="24" viewBox="100 190 400 400" overflow="visible" fill="currentColor" aria-hidden="true">
+  return <svg width="24" height="24" viewBox="100 190 400 400" overflow="visible" fill="#ff6b6b" aria-hidden="true">
     <g ref={body}>
       <g transform="translate(299.997 572.338) scale(8.46762) translate(-16.931 -33.878)">
         <path transform="translate(23.808 15.506)" fillRule="evenodd" d="M0.874 -12.199C0.03 -12.259 -0.702 -11.624 -0.762 -10.78L-0.762 -10.779L-2.292 10.621C-2.354 11.463 -1.722 12.195 -0.88 12.257L-0.764 12.257C0.04 12.259 0.709 11.638 0.766 10.837L2.294 -10.563C2.353 -11.407 1.718 -12.139 0.874 -12.199Z" />

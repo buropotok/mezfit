@@ -1,3 +1,4 @@
+import lockUrl from './lock.svg';
 import lockOpenUrl from './lock-open.svg';
 import recordCircleUrl from './record-circle.svg';
 import playerStopUrl from './player-stop.svg';
@@ -69,6 +70,7 @@ import tablerNumber8Url from './tabler-number-8.svg';
 import tablerNumber9Url from './tabler-number-9.svg';
 
 const uiIconRegistry = {
+  lock: { outline: lockUrl, filled: lockUrl },
   'lock-open': { outline: lockOpenUrl, filled: lockOpenUrl },
   'pencil-plus': { outline: tablerPencilPlusUrl, filled: tablerPencilPlusUrl },
   'letter-i': { outline: tablerLetterIUrl, filled: tablerLetterIUrl },

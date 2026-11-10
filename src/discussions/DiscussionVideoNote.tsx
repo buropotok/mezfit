@@ -73,10 +73,10 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     onClick={event => event.stopPropagation()}>
     {!review && <div ref={inlineHost} className="discussion-video-note__inline" />}
     {url && createPortal(<div ref={circle}
-      className={`discussion-video-note__circle video-note-module__circle${expanded ? ' discussion-video-note__circle--expanded' : ''}`}>
+      className={`discussion-video-note__circle video-note-module__circle${expanded ? ' discussion-video-note__circle--expanded' : ''}${review ? ' discussion-video-note__circle--review' : ''}`}>
       <CircularVideoPlayback key={retry} src={url} fallbackDuration={durationSeconds}
         mode={expanded ? 'play' : 'preview'} onExpand={() => setExpanded(true)}
-        onReturnToPreview={() => { if (!review) setExpanded(false); }} onError={setError} />
+        onReturnToPreview={review ? undefined : () => setExpanded(false)} onError={setError} />
     </div>, playerHost)}
     {onMenu && <span className="discussion-video-note__menu">
       <IconButton icon="dots-vertical" label="Действия сообщения" onClick={event => {
