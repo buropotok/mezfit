@@ -25,7 +25,8 @@ import { useDiscussionMedia } from './useDiscussionMedia';
 import { useDiscussionVoice } from './useDiscussionVoice';
 import { useDiscussionVideoNote } from './useDiscussionVideoNote';
 import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVideoNote';
-import { DiscussionVoice, DiscussionVoiceRecording } from './DiscussionVoice';
+import { DiscussionVoice } from './DiscussionVoice';
+import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { startPressScale } from '../ui/PressScale';
@@ -669,11 +670,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         shape="capsule" wrapContent={false} style={{ visibility: !voiceComposer && attachmentsPresented ? 'hidden' : undefined }}>
         {voiceComposer || circleInProgress || circleDraft
           ? <IconButton color="red" label={circleInProgress || circleDraft ? "Удалить видеокружок" : "Удалить голосовое сообщение"}
-            disabled={!canCompose || discardingVoice} onClick={discardVoice}>
-            <DiscussionVoiceTrash deleting={discardingVoice} onComplete={() => {
-              discardAnimationDone.current = true;
-              finishVoiceDiscard();
-            }} />
+            disabled={!canCompose || discardingVoice} onPointerDown={event => event.preventDefault()} onClick={discardVoice}>
+            {!discardingVoice && <DiscussionVoiceTrash deleting={false} onComplete={() => {}} />}
           </IconButton>
           : !repository.supportsMedia
           ? <IconButton icon="paperclip" label="Добавить вложение (пока недоступно)" disabled />
@@ -685,9 +683,15 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 const surface = addSurface.current;
                 if (typeof surface?.animate === 'function') startPressScale(surface, 1.5);
               }} />} />}
+        {discardingVoice && <span className="discussion-composer__trash-animation" aria-hidden="true">
+          <DiscussionVoiceTrash deleting onComplete={() => {
+            discardAnimationDone.current = true;
+            finishVoiceDiscard();
+          }} />
+        </span>}
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
-        {!discardingVoice && recordingVoice ? <DiscussionVoiceRecording levels={voice.levels} />
+        {!discardingVoice && (recordingVoice || recordingCircle) ? <DiscussionRecordingStatus locked={lockedRecording} onCancel={discardVoice} />
           : !discardingVoice && voiceDraft && media.preview ? <DiscussionVoice key={media.preview} src={media.preview}
             waveform={voiceDraft.waveform ?? []} durationMs={(voiceDraft.durationSeconds ?? 0) * 1000} />
           : !discardingVoice && voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
@@ -699,19 +703,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </GlassSurface>
       {holdingRecording && <div className="discussion-composer__recording-control" data-locked={lockedRecording || undefined}
         style={{ bottom: lockedRecording ? 88 : RECORDING_LOCK_DISTANCE }}>
-        <GlassSurface {...material} shape="capsule" wrapContent={false}>
+        <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
           {lockedRecording
             ? <IconButton icon="player-stop" label="Остановить запись" onClick={recordingGesture.stop} />
-            : <div className="discussion-composer__lock" role="img" aria-label="Сдвиньте вверх до замка"
-              style={{ opacity: 0.6 + recordingGesture.lockProgress * 0.4 }}>
-              <Icon name="arrow-up" />
-              <Icon name="lock-open" />
-            </div>}
+            : <IconButton icon="lock" label="Сдвиньте вверх до замка" />}
         </GlassSurface>
       </div>}
-      {holdingRecording && !lockedRecording && <Text variant="caption" className="discussion-composer__cancel-hint">
-        ‹ Сдвиньте для отмены
-      </Text>}
       <GlassSurface ref={actionSurface} className="discussion-composer__button discussion-composer__action" {...material}
         data-recording={holdingRecording || undefined} shape="capsule" wrapContent={false}>
         <IconButton label={actionMode === 'send'
