@@ -89,6 +89,9 @@ export interface OccurrenceDraftSheetProps {
   drafts: WorkoutOccurrenceDraftRepository;
   actor?: ProgramActor;
   readOnly?: boolean;
+  /** Read-only deep-link from an occurrence exercise or set discussion. */
+  focusExerciseId?: string;
+  focusSetId?: string;
   /** Published Client PLAN can be read-only while execution Start is allowed. */
   allowReadOnlyStart?: boolean;
   /** Owner-controlled lock; pass the frozen occurrence PLAN in draft after Start. */
@@ -193,7 +196,7 @@ export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabl
 }
 
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
-  actor, readOnly = false, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef, suspended = false,
+  actor, readOnly = false, focusExerciseId, focusSetId, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef, suspended = false,
   onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
   inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
@@ -534,6 +537,15 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       setError(reason instanceof Error ? reason.message : 'Не удалось открыть подход');
     }
   };
+  const focusedSet = useRef<string | null>(null);
+  useEffect(() => {
+    if (!readOnly || !auxiliaryReady || !draft || !focusExerciseId || !focusSetId || !planner) return;
+    const key = JSON.stringify([draft.id, focusExerciseId, focusSetId]);
+    if (focusedSet.current === key) return;
+    focusedSet.current = key;
+    // Use the normal read-only set detail and its established nested Back handling.
+    void openSet(focusExerciseId, focusSetId);
+  }, [auxiliaryReady, draft?.id, focusExerciseId, focusSetId, planner, readOnly]);
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
   const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
   const end = actual ? new Date(actual.endsAtUtc) : draft ? currentEnd(draft) : new Date(now);
@@ -658,6 +670,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
           <Text variant="body">План на тренировку</Text>
           <WorkoutPlanCard mode="planning" surface={inlineCard ? 'transparent' : 'default'} hideHeader={inlineCard} collapsed={planCollapsed}
+            focusExerciseId={focusExerciseId}
             onCollapsedChange={inlineCard ? undefined : () => setPlanCollapsed(value => !value)}
             scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
