@@ -156,3 +156,46 @@ describe('COMM-07 authorized execution projections', () => {
     expect(invalid?.exercises[0].sets[0].fact?.comment).toBe('Тяжело FACT');
   });
 });
+
+describe('COMM-08 planned child destinations before Start', () => {
+  it.each(['exercise', 'set'] as const)('opens the exact %s PLAN child for Coach and Client', async kind => {
+    const { db, session, plan } = await fixture(true);
+    await db.table('adHocSessions').clear();
+    const occurrence: CloudWorkoutOccurrenceRow = { id: 'occurrence', realmId: session.realmId, owner: session.realmId,
+      athleteUserId: 'tg:22', coachUserId: 'tg:11', clientUserId: 'tg:22', format: 'coached',
+      plan, workoutSessionId: null, startsAtUtc: time, durationMinutes: 60, status: 'scheduled',
+      publicationStatus: 'published', createdByUserId: 'tg:11', draftAuthorUserId: 'tg:11' };
+    await db.table('workoutOccurrences').put(occurrence);
+    const scope = { realmId: session.realmId, coachClientId: session.realmId };
+    const anchor = occurrenceDiscussionAnchor(scope, occurrence, 'occurrence-exercise',
+      kind === 'set' ? 'occurrence-set' : undefined);
+    const thread: DiscussionThread = { ...scope, id: 'planned-child', owner: scope.realmId, anchor,
+      anchorKey: discussionAnchorKey(scope, anchor), contextPath: discussionParents(anchor),
+      derivedTitleSnapshot: 'Подход PLAN', createdAt: time, lastActivityAt: time };
+    const database = db as unknown as MezfitCloudDatabase;
+    for (const [actor, role] of [['tg:11', 'coach'], ['tg:22', 'client']] as const) {
+      const destination = await readDiscussionDestination(database, actor, role, thread);
+      expect(destination.kind).toBe('occurrence');
+      if (destination.kind !== 'occurrence') throw Error('Expected planned child');
+      expect(destination.draft.targetOccurrenceId).toBe('occurrence');
+      expect(destination.draft.plan).toEqual(plan);
+      expect(destination.focus).toEqual(kind === 'set'
+        ? { exerciseId: 'occurrence-exercise', setId: 'occurrence-set' }
+        : { exerciseId: 'occurrence-exercise' });
+    }
+    // A replacement with the same source/template ID must never inherit the old discussion.
+    const changedPlan = { ...plan, exercises: plan.exercises.map(exercise => ({
+      ...exercise, ...(kind === 'exercise'
+        ? { id: 'replacement-exercise' }
+        : { sets: exercise.sets.map(set => ({ ...set, id: 'replacement-set' })) }),
+    })) };
+    await db.table('workoutOccurrences').update('occurrence', { plan: changedPlan });
+    for (const [actor, role] of [['tg:11', 'coach'], ['tg:22', 'client']] as const) {
+      expect(await readDiscussionDestination(database, actor, role, thread)).toEqual({ kind: 'unavailable' });
+    }
+    await db.table('workoutOccurrences').update('occurrence', { plan, publicationStatus: 'draft' });
+    expect(await readDiscussionDestination(database, 'tg:22', 'client', thread)).toEqual({ kind: 'unavailable' });
+    await expect(readDiscussionDestination(database, 'tg:33', 'coach', thread))
+      .rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+  });
+});
