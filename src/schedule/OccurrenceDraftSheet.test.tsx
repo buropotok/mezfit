@@ -723,3 +723,24 @@ describe('read-only PLAN execution Start', () => {
     expect(start).not.toHaveBeenCalled();
   });
 });
+
+it('opens the requested scheduled set read-only without editing PLAN', async () => {
+  cloudEnabled.value = true;
+  const set = { id: 'focused-set', sourceProgramSetId: 'source-set', position: 0,
+    setType: null, setLabel: null, comment: null, materialLinks: [], chatLinks: [],
+    plannedReps: 8, plannedWeightKg: 50, plannedDurationSeconds: null, plannedDistanceMeters: null };
+  const focusedPlan = { ...plan, exercises: [{ ...plan.exercises[0], sets: [set] }] };
+  const scheduled: LocalWorkoutOccurrenceDraft = { ...draft, plan: focusedPlan, originalPlan: focusedPlan, saved: true };
+  const repository = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+  vi.spyOn(repository, 'pendingEditError').mockReturnValue('');
+  render(<OccurrenceDraftSheet draft={scheduled} drafts={repository} readOnly
+    focusExerciseId="exercise" focusSetId="focused-set" onClose={vi.fn()} onSave={vi.fn()} />);
+  const detail = await screen.findByRole('dialog', { name: 'План конкретной тренировки' });
+  expect(detail.getAttribute('data-read-only')).toBe('true');
+  expect(screen.getByTestId('occurrence-plan-weight').textContent).toBe('50');
+  expect(screen.getByRole('button', { name: 'Сохранить план подхода' }).hasAttribute('disabled')).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть план' }));
+  expect(screen.queryByRole('dialog', { name: 'План конкретной тренировки' })).toBeNull();
+  // Closing the nested detail must not trigger another automatic opening.
+  expect(screen.getByText('Запланированная тренировка')).toBeTruthy();
+});
