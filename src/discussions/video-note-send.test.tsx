@@ -19,7 +19,7 @@ vi.mock('../media/discussionMediaCache', async importOriginal => ({
   storeDiscussionMedia: vi.fn(async () => undefined),
   readDiscussionMedia: vi.fn(async () => null),
 }));
-afterEach(() => { cleanup(); vi.resetAllMocks(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.clearAllMocks(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 function setup() {
   const port = { ...fixture().port, supportsMedia: true, updateDraftMedia: vi.fn(async () => undefined) };
