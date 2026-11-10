@@ -11,7 +11,7 @@ import { AdHocWorkoutRepository } from './adhoc-workouts';
 import { ClientWorkoutRepository } from './client-workouts';
 
 export type DiscussionDestination = { kind: 'program'; id: string }
-  | { kind: 'occurrence'; draft: LocalWorkoutOccurrenceDraft }
+  | { kind: 'occurrence'; draft: LocalWorkoutOccurrenceDraft; focus?: { exerciseId: string; setId?: string } }
   | { kind: 'session'; session: ActiveWorkoutSession<string>; name: string; comment: string | null }
   | { kind: 'unavailable' };
 
@@ -44,8 +44,17 @@ export async function readDiscussionDestination(db: MezfitCloudDatabase, actor: 
       const occurrence = (await new WorkoutSchedulingRepository(db, actor).listWorkspace())
         .find(row => row.id === id && row.realmId === thread.realmId && row.entryKind !== 'personal_event');
       if (!occurrence || occurrence.workoutSessionId) return { kind: 'unavailable' };
-      return anchor.kind === 'workout'
-        ? { kind: 'occurrence', draft: draftFromOccurrence(actor, occurrence) } : { kind: 'unavailable' };
+      const draft = draftFromOccurrence(actor, occurrence);
+      if (anchor.kind === 'workout') return { kind: 'occurrence', draft };
+      // A planned child is identified only by the immutable occurrence snapshot IDs.
+      // Never resolve it through reusable program IDs, positions or exercise names.
+      if (anchor.exercise.kind !== 'occurrence') return { kind: 'unavailable' };
+      const exercise = occurrence.plan.exercises.find(item => item.id === anchor.exercise.id);
+      if (!exercise) return { kind: 'unavailable' };
+      if (anchor.kind === 'exercise') return { kind: 'occurrence', draft, focus: { exerciseId: exercise.id } };
+      if (anchor.set.kind !== 'occurrence' || !exercise.sets.some(item => item.id === anchor.set.id))
+        return { kind: 'unavailable' };
+      return { kind: 'occurrence', draft, focus: { exerciseId: exercise.id, setId: anchor.set.id } };
     }
   } else if (anchor.workout.kind === 'legacy-session') {
     // Legacy rows have no adopted execution viewer. Never reinterpret their IDs
