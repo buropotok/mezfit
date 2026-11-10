@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MediaUploadError, uploadDirectMedia } from '../media/directMediaUpload';
+import { storeDiscussionMedia } from '../media/discussionMediaCache';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionPort } from './discussion-session';
 import { inspectDiscussionMedia } from './discussion-media-file';
@@ -91,6 +92,8 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
       setPhase('publishing');
+      await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey: result.key,
+        mimeType: result.contentType, sizeBytes: result.sizeBytes }, selected.file);
       await repository.send(command, result);
       draft.sent(command.id);
       if (active.current === controller) { setSelection(undefined); setPhase('idle'); }
