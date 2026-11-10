@@ -47,7 +47,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   useLayoutEffect(() => {
     const target = expanded && playbackHost ? playbackHost : inlineHost.current;
     target?.appendChild(playerHost);
-    return () => playerHost.remove();
+    return () => { playerHost.remove(); };
   }, [expanded, playbackHost, playerHost]);
 
   useEffect(() => {
