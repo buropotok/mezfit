@@ -108,7 +108,7 @@ export function VideoNoteModule() {
             mode={viewStage === 'play' ? 'play' : 'preview'}
             onExpand={() => setStage('play')}
             onReturnToPreview={() => setStage('preview')}
-            onError={setError}
+            onError={setPreviewError}
           />
         ) : null}
         {!cameraVisible && !hasClip ? (
