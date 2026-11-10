@@ -97,6 +97,9 @@ def deploy():
     folder_id = os.environ.get("YC_FOLDER_ID")
     runtime_account = os.environ.get("YC_RUNTIME_SA_ID")
     token = os.environ.get("YC_IAM_TOKEN")
+    check_only = os.environ.get("CHECK_ONLY")
+    if check_only not in {"true", "false"}:
+        raise DeployError("Invalid dispatch mode.")
     if not token or not all(resource_id(value) for value in (function_id, folder_id, runtime_account)):
         raise DeployError("Missing IAM token or invalid target configuration.")
     opener = build_opener(NoRedirect())
@@ -106,8 +109,9 @@ def deploy():
 
     def latest():
         version = api(f"{FUNCTIONS}/versions:byTag?{query}", "Read current function version")
+        tags = version.get("tags")
         if (version.get("functionId") != function_id or version.get("status") != "ACTIVE"
-                or not resource_id(version.get("id")) or "$latest" not in version.get("tags", [])
+                or not resource_id(version.get("id")) or not isinstance(tags, list) or "$latest" not in tags
                 or version.get("serviceAccountId") != runtime_account):
             raise DeployError("Current active version or runtime service account does not match the target.")
         return version
@@ -120,7 +124,7 @@ def deploy():
     previous = latest()
     settings = runtime_settings(previous)
     print(f"Current version: {previous['id']}", flush=True)
-    if os.environ.get("CHECK_ONLY") == "true":
+    if check_only == "true":
         print("OIDC, version read access and signer configuration checks passed.")
         return
 
