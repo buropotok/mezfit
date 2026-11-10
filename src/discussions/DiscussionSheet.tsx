@@ -557,7 +557,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         })}
       </Messages>
     </div>
-    {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && <section className="discussion-media-stage"
+    {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' && <section className="discussion-media-stage"
       aria-label="Предпросмотр вложения" style={{ bottom: composerHeight + contextHeight }}>
       <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
     </section>}
