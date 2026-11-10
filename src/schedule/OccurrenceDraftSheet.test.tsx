@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ButtonHTMLAttributes, ReactNode, TransitionEventHandler } from 'react';
+import { StrictMode, type ButtonHTMLAttributes, type ReactNode, type TransitionEventHandler } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -733,8 +733,8 @@ it('opens the requested scheduled set read-only without editing PLAN', async () 
   const scheduled: LocalWorkoutOccurrenceDraft = { ...draft, plan: focusedPlan, originalPlan: focusedPlan, saved: true };
   const repository = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
   vi.spyOn(repository, 'pendingEditError').mockReturnValue('');
-  render(<OccurrenceDraftSheet draft={scheduled} drafts={repository} readOnly
-    focusExerciseId="exercise" focusSetId="focused-set" onClose={vi.fn()} onSave={vi.fn()} />);
+  render(<StrictMode><OccurrenceDraftSheet draft={scheduled} drafts={repository} readOnly
+    focusExerciseId="exercise" focusSetId="focused-set" onClose={vi.fn()} onSave={vi.fn()} /></StrictMode>);
   const detail = await screen.findByRole('dialog', { name: 'План конкретной тренировки' });
   expect(detail.getAttribute('data-read-only')).toBe('true');
   expect(screen.getByTestId('occurrence-plan-weight').textContent).toBe('50');
