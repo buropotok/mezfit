@@ -11,7 +11,9 @@ function describeError(error: unknown): string {
     case 'INVALID_SIZE': return 'Файл пустой или превышает лимит для своего формата.';
     case 'CANCELLED': return 'Загрузка отменена.';
     case 'TIMEOUT': return 'Время загрузки истекло. Можно повторить.';
-    case 'NETWORK': return 'Нет ответа от хранилища. Проверьте сеть и настройки CORS.';
+    case 'NETWORK': return 'Нет ответа от Яндекса. Проверьте сеть и настройки CORS.';
+    case 'SIGNER_AUTH': return 'Яндекс не разрешил загрузку. Переоткройте Mezfit в Telegram.';
+    case 'SIGNER_UNAVAILABLE': return 'Не удалось получить ссылку для загрузки.';
     case 'HTTP': {
       const details = [error.s3Code, error.s3Message].filter(Boolean).join(': ');
       return `Хранилище отклонило загрузку (HTTP ${error.status}${details ? `; S3 ${details}` : ''}).`;
@@ -32,22 +34,20 @@ export function DirectMediaDiagnostic() {
     active.current = null;
   }, []);
 
-  async function upload(diagnosticOmitIfNoneMatch = false) {
+  async function upload() {
     if (!file || active.current) return;
     const controller = new AbortController();
     active.current = controller;
     setBusy(true);
-    setStatus(diagnosticOmitIfNoneMatch ? 'Тестовый PUT без If-None-Match…' : 'Загрузка…');
+    setStatus('Загрузка…');
     setResult(null);
     try {
-      const next = await uploadDirectMedia(file, { signal: controller.signal, diagnosticOmitIfNoneMatch });
+      const next = await uploadDirectMedia(file, { signal: controller.signal });
       if (active.current !== controller) return;
       setResult(next);
-      setStatus(diagnosticOmitIfNoneMatch ? 'Тестовый PUT без If-None-Match: файл загружен.' : 'Файл загружен.');
+      setStatus('Файл загружен.');
     } catch (error) {
-      if (active.current === controller) setStatus(diagnosticOmitIfNoneMatch
-        ? `Тест без If-None-Match: ${describeError(error)}`
-        : describeError(error));
+      if (active.current === controller) setStatus(describeError(error));
     } finally {
       if (active.current === controller) {
         active.current = null;
@@ -68,8 +68,6 @@ export function DirectMediaDiagnostic() {
     <Button rounded disabled={busy} onClick={() => input.current?.click()}>Выбрать файл</Button>
     {file && <p><Text variant="footnote">{file.name}</Text></p>}
     <Button rounded disabled={!file || busy} onClick={() => void upload()}>{status && !busy && !result ? 'Повторить загрузку' : 'Загрузить'}</Button>
-    <p><Text variant="footnote">Диагностика: отдельный PUT без If-None-Match создаёт новый случайный ключ и может сохранить тестовый файл в бакете.</Text></p>
-    <Button rounded disabled={!file || busy} onClick={() => void upload(true)}>Проверить PUT без If-None-Match</Button>
     {busy && <Button rounded onClick={() => active.current?.abort()}>Отменить загрузку</Button>}
     <p role="status"><Text variant="body">{status}</Text></p>
     {result && <>

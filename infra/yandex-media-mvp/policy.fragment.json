@@ -1,21 +1,23 @@
 {
-  "Version": "2012-10-17",
+  "Version": "2025-12-24",
   "Statement": [
     {
       "Sid": "MezfitMvpRead",
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::mezfit-comm-poc-20261106/mvp-media/*"
+      "Resource": "arn:aws:s3:::mezfit-comm-poc-20261106/mvp-media/*",
+      "Condition": { "Bool": { "aws:SecureTransport": "true" } }
     },
     {
-      "Sid": "MezfitMvpConditionalPut",
+      "Sid": "MezfitMvpSignedPut",
       "Effect": "Allow",
-      "Principal": "*",
+      "Principal": { "CanonicalUser": "REPLACE-WITH-EXISTING-SIGNER-SA-ID" },
       "Action": "s3:PutObject",
       "Resource": "arn:aws:s3:::mezfit-comm-poc-20261106/mvp-media/*",
       "Condition": {
-        "Null": { "s3:if-none-match": "false" }
+        "Null": { "s3:if-none-match": "false" },
+        "Bool": { "aws:SecureTransport": "true" }
       }
     }
   ]
