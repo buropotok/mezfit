@@ -55,6 +55,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const mountedRef = useRef(false);
   const epochRef = useRef(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
   const resolveStopRef = useRef<((clip: VideoNoteRecording | null) => void) | null>(null);
   const startedAtRef = useRef(0);
   const tickRef = useRef<number | null>(null);
@@ -84,6 +85,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         try { recorder.stop(); } catch { /* WebView already ended recording. */ }
       }
     }
+    recordingStreamRef.current?.getTracks().forEach(track => { track.enabled = false; });
+    recordingStreamRef.current = null;
     resolveStopRef.current?.(null);
     resolveStopRef.current = null;
     updateStatus('idle');
@@ -138,9 +141,19 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     }
     // The first permission prompt can outlive the original pointer gesture.
     // Keep an acquired live session, but never record for a released gesture.
-    if (!mountedRef.current || epoch !== epochRef.current || !source) return false;
+    if (!source) return false;
+    if (!mountedRef.current || epoch !== epochRef.current) {
+      source.getTracks().forEach(track => { track.enabled = false; });
+      return false;
+    }
     setStream(source);
-    if (permissionOnly) { updateStatus('idle'); return false; }
+    if (permissionOnly) {
+      source.getTracks().forEach(track => { track.enabled = false; });
+      updateStatus('idle');
+      return false;
+    }
+    source.getTracks().forEach(track => { track.enabled = true; });
+    recordingStreamRef.current = source;
 
     let recorder: MediaRecorder | null = null;
     try {
@@ -163,6 +176,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         if (recorderRef.current !== activeRecorder || epoch !== epochRef.current) return;
         recorderRef.current = null;
         clearTimers();
+        recordingStreamRef.current?.getTracks().forEach(track => { track.enabled = false; });
+        recordingStreamRef.current = null;
         const mimeType = activeRecorder.mimeType || chunks[0]?.type || options?.mimeType || 'video/webm';
         const blob = new Blob(chunks, { type: mimeType });
         const durationMs = Math.min(MAX_RECORDING_MS, Math.max(1, Date.now() - startedAtRef.current));
@@ -188,6 +203,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       return true;
     } catch {
       recorderRef.current = null;
+      recordingStreamRef.current?.getTracks().forEach(track => { track.enabled = false; });
+      recordingStreamRef.current = null;
       if (recorder && recorder.state !== 'inactive') {
         try { recorder.stop(); } catch { /* Startup already failed. */ }
       }
