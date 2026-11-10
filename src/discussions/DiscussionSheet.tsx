@@ -106,6 +106,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (recordingVoice) actionPress.current?.cancel();
   }, [recordingVoice]);
   const removingVoice = useRef(false);
+  const discardAnimationDone = useRef(false);
+  const discardRemovalDone = useRef(false);
   const [discardingVoice, setDiscardingVoice] = useState(false);
   const voiceComposer = voiceInProgress || Boolean(voiceDraft) || discardingVoice;
   const gallery = useRef<HTMLInputElement>(null);
@@ -210,17 +212,24 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (media.phase === 'uploading') media.cancel();
     else if (!mediaBusy) void media.remove();
   };
+  const finishVoiceDiscard = () => {
+    if (!alive.current || !removingVoice.current
+      || !discardAnimationDone.current || !discardRemovalDone.current) return;
+    removingVoice.current = false;
+    setDiscardingVoice(false);
+  };
   const discardVoice = () => {
     if (removingVoice.current || mediaBusy) return;
     removingVoice.current = true;
+    discardAnimationDone.current = false;
+    discardRemovalDone.current = false;
     setDiscardingVoice(true);
     if (voiceInProgress) voice.cancel();
-  };
-  const finishVoiceDiscard = async () => {
-    if (!alive.current || !removingVoice.current) return;
-    await media.remove();
-    removingVoice.current = false;
-    if (alive.current) setDiscardingVoice(false);
+    // Clear immediately; the animation must never delay the local draft mutation.
+    void media.remove().finally(() => {
+      discardRemovalDone.current = true;
+      finishVoiceDiscard();
+    });
   };
   const updateNavigation = () => onNavigationContextChange({ ...parentNavigation,
     title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
@@ -585,7 +594,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             event.currentTarget.value = '';
             if (file) void media.choose(file);
           }} />}
-        <IconButton icon={voiceComposer ? undefined : 'plus'} label={voiceComposer ? 'Удалить голосовое сообщение'
+        <IconButton icon={voiceComposer ? undefined : 'plus'} color={voiceComposer ? 'red' : undefined}
+          label={voiceComposer ? 'Удалить голосовое сообщение'
           : repository.supportsMedia ? 'Добавить вложение' : 'Добавить вложение (пока недоступно)'}
           disabled={!canCompose || discardingVoice || (!voiceComposer && (!repository.supportsMedia || mediaPresent || Boolean(editId)))}
           onPointerDown={() => {
@@ -593,14 +603,17 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             if (!voiceComposer && typeof surface?.animate === 'function') startPressScale(surface, 1.5);
           }}
           onClick={voiceComposer ? discardVoice : () => gallery.current?.click()}>
-          {voiceComposer && <DiscussionVoiceTrash deleting={discardingVoice} onComplete={() => void finishVoiceDiscard()} />}
+          {voiceComposer && <DiscussionVoiceTrash deleting={discardingVoice} onComplete={() => {
+            discardAnimationDone.current = true;
+            finishVoiceDiscard();
+          }} />}
         </IconButton>
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
-        {recordingVoice ? <DiscussionVoiceRecording levels={voice.levels} />
-          : voiceDraft && media.preview ? <DiscussionVoice key={media.preview} src={media.preview}
+        {!discardingVoice && recordingVoice ? <DiscussionVoiceRecording levels={voice.levels} />
+          : !discardingVoice && voiceDraft && media.preview ? <DiscussionVoice key={media.preview} src={media.preview}
             waveform={voiceDraft.waveform ?? []} durationMs={(voiceDraft.durationSeconds ?? 0) * 1000} />
-          : voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
+          : !discardingVoice && voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
             {media.selection ? 'Готовим голосовое сообщение…' : 'Голосовое сообщение'}
           </Text>
           : <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}

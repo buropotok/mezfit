@@ -39,7 +39,7 @@ export function DiscussionVoiceTrash({ deleting, onComplete }: { deleting: boole
     return () => { animation.kill(); };
   }, [deleting]);
 
-  return <svg width="24" height="24" viewBox="-20 -20 640 640" overflow="visible" fill="currentColor" aria-hidden="true">
+  return <svg width="24" height="24" viewBox="100 190 400 400" overflow="visible" fill="currentColor" aria-hidden="true">
     <g ref={body}>
       <g transform="translate(299.997 572.338) scale(8.46762) translate(-16.931 -33.878)">
         <path transform="translate(23.808 15.506)" fillRule="evenodd" d="M0.874 -12.199C0.03 -12.259 -0.702 -11.624 -0.762 -10.78L-0.762 -10.779L-2.292 10.621C-2.354 11.463 -1.722 12.195 -0.88 12.257L-0.764 12.257C0.04 12.259 0.709 11.638 0.766 10.837L2.294 -10.563C2.353 -11.407 1.718 -12.139 0.874 -12.199Z" />
