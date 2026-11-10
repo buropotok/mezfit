@@ -54,6 +54,23 @@ describe('signed direct media upload', () => {
     expect(put).not.toHaveBeenCalled();
   });
 
+  it('rejects a successful response for another object and never PUTs with two expired signatures', async () => {
+    const key = 'mvp-media/' + 'a'.repeat(64);
+    const put = vi.fn<typeof fetch>();
+    const signer = vi.fn<typeof fetch>()
+      .mockImplementationOnce(async (_url, init) => {
+        const payload = await signedMediaResponse(init).json();
+        return Response.json({ ...payload, putUrl: payload.putUrl.replace(key, 'mvp-media/' + 'c'.repeat(64)) });
+      })
+      .mockImplementation(async (_url, init) => signedMediaResponse(init, { expiresAt: Date.now() - 1 }));
+    mockSignedMediaTransport(put, signer);
+    await expect(uploadDirectMedia(photo(), { retryKey: key })).rejects.toMatchObject({ code: 'SIGNER_UNAVAILABLE' });
+    expect(signer).toHaveBeenCalledOnce();
+    await expect(uploadDirectMedia(photo(), { retryKey: key })).rejects.toMatchObject({ code: 'SIGNER_UNAVAILABLE' });
+    expect(signer).toHaveBeenCalledTimes(3);
+    expect(put).not.toHaveBeenCalled();
+  });
+
   it.each(['before PUT', 'during PUT'])('refreshes a signature that expires %s without changing the key', async when => {
     const file = photo();
     const key = 'mvp-media/' + 'a'.repeat(64);
