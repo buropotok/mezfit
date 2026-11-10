@@ -48,6 +48,7 @@ it('opens a LiquidPopover with two items and uses the image-only chooser for Ð¤Ð
   fireEvent.click(photo);
   expect(click).toHaveBeenCalledOnce();
   const picker = click.mock.instances[0];
+  if (!(picker instanceof HTMLInputElement)) throw new Error('Expected a file input');
   expect(picker.accept).toContain('image/jpeg');
   expect(picker.accept).not.toContain('video/');
 });

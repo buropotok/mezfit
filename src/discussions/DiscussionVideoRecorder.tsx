@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '../ui';
 import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
-import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
+import { VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from '../video-note/video-recording-profile';
 
 interface Props {
   onCancel: () => void;
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
-  const [profile] = useState(() =>
+  const [profile] = useState<VideoRecordingProfile>(() =>
     (window.matchMedia?.('(orientation: portrait)').matches ?? (window.innerHeight >= window.innerWidth)) ? 'portrait' : 'landscape');
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>();
