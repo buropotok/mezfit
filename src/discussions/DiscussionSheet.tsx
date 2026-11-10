@@ -279,7 +279,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (composer.current) observer.observe(composer.current);
     if (context.current) observer.observe(context.current);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error, voice.status, voice.error, voice.permissionReady, voiceDraft]);
+  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error, voice.status, voice.error, voice.permissionReady, voiceDraft, videoNote.status, videoNote.error, videoNote.permissionReady, circleDraft]);
 
   const jump = async (id: string) => {
     const version = ++focusVersion.current;
@@ -433,7 +433,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   };
   const selected = menu ? state.messages.find(row => row.id === menu.id && !row.deleted) : undefined;
   const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
-    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy || voiceComposer) return;
+    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy || voiceComposer || circleInProgress) return;
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
@@ -506,7 +506,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               <Icon name={receiptIcon} /></span>}
           </span>;
           const openMenu = () => {
-            if (!message.deleted && !pending.current && !mediaBusy && !voiceComposer) setMenu({ id: message.id, open: true });
+            if (!message.deleted && !pending.current && !mediaBusy && !voiceComposer && !circleInProgress) setMenu({ id: message.id, open: true });
           };
           return <Fragment key={message.id}>
             {(index === 0 || new Date(state.messages[index - 1].createdAt).toLocaleDateString('ru-RU') !== day) && <MessagesTitle>{day}</MessagesTitle>}
@@ -622,7 +622,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <IconButton icon={voiceComposer ? undefined : 'plus'} color={voiceComposer ? 'red' : undefined}
           label={voiceComposer ? 'Удалить голосовое сообщение'
           : repository.supportsMedia ? 'Добавить вложение' : 'Добавить вложение (пока недоступно)'}
-          disabled={!canCompose || discardingVoice || (!voiceComposer && (!repository.supportsMedia || mediaPresent || Boolean(editId)))}
+          disabled={!canCompose || circleInProgress || discardingVoice || (!voiceComposer && (!repository.supportsMedia || mediaPresent || Boolean(editId)))}
           onPointerDown={() => {
             const surface = addSurface.current;
             if (!voiceComposer && typeof surface?.animate === 'function') startPressScale(surface, 1.5);
