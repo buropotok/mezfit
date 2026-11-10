@@ -23,6 +23,8 @@ import { directMediaUrl } from '../media/directMediaUpload';
 import { DiscussionMedia, type DiscussionMediaSource } from './DiscussionMedia';
 import { useDiscussionMedia } from './useDiscussionMedia';
 import { useDiscussionVoice } from './useDiscussionVoice';
+import { useDiscussionVideoNote } from './useDiscussionVideoNote';
+import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVideoNote';
 import { DiscussionVoice, DiscussionVoiceRecording } from './DiscussionVoice';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
 import { startPressScale } from '../ui/PressScale';
@@ -53,7 +55,7 @@ export interface DiscussionSheetProps extends DiscussionTarget {
 function galleryMediaSource(attachment: MessageAttachment, accountId: string): DiscussionMediaSource | null {
   const { storageKey, mediaType, mimeType, sizeBytes, durationSeconds } = attachment;
   const src = storageKey && directMediaUrl(storageKey);
-  if (!storageKey || !src || mediaType === 'voice') return null;
+  if (!storageKey || !src || mediaType === 'voice' || mediaType === 'video-note') return null;
   return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes } };
 }
 
@@ -95,16 +97,21 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const draft = useDiscussionDraft(repository, threadId);
   const media = useDiscussionMedia(repository, draft);
   const voice = useDiscussionVoice(media.chooseVoice);
+  const videoNote = useDiscussionVideoNote(media.sendVideoNote);
   const recordingVoice = voice.status === 'recording';
+  const recordingCircle = videoNote.status === 'recording';
+  const circleInProgress = recordingCircle || videoNote.status === 'requesting' || videoNote.status === 'processing';
   const voiceInProgress = recordingVoice || voice.status === 'requesting' || voice.status === 'processing';
   const voiceDraft = media.selection?.metadata.mediaType === 'voice' ? media.selection.metadata
     : draft.media?.mediaType === 'voice' ? draft.media : undefined;
+  const circleDraft = media.selection?.metadata.mediaType === 'video-note' ? media.selection.metadata
+    : draft.media?.mediaType === 'video-note' ? draft.media : undefined;
   const addSurface = useRef<HTMLElement>(null);
   const actionSurface = useRef<HTMLElement>(null);
   const actionPress = useRef<Animation | undefined>(undefined);
   useLayoutEffect(() => {
-    if (recordingVoice) actionPress.current?.cancel();
-  }, [recordingVoice]);
+    if (recordingVoice || recordingCircle) actionPress.current?.cancel();
+  }, [recordingVoice, recordingCircle]);
   const removingVoice = useRef(false);
   const discardAnimationDone = useRef(false);
   const discardRemovalDone = useRef(false);
@@ -113,7 +120,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const gallery = useRef<HTMLInputElement>(null);
   const mediaBusy = media.phase !== 'idle' && media.phase !== 'failed';
   const mediaPresent = Boolean(media.selection || draft.media);
-  const previewing = Boolean(media.preview && media.selection && !voiceDraft);
+  const previewing = Boolean(media.preview && media.selection && !voiceDraft && !circleDraft);
   const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
   const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
     ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
@@ -235,6 +242,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
   back.current = () => {
     if (viewer) { setViewing(null); return; }
+    if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
     if (previewing || voiceComposer) {
       if (removingVoice.current) { updateNavigation(); return; }
       if (voiceInProgress) voice.cancel();
@@ -521,6 +529,13 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                       durationMs={(durationSeconds ?? 0) * 1000} meta={meta} onMenu={onMenu}
                       cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
                   }
+                  if (attachment.mediaType === 'video-note' && attachment.storageKey) {
+                    const { storageKey, mimeType, sizeBytes, durationSeconds } = attachment;
+                    const src = directMediaUrl(storageKey);
+                    return src && <DiscussionVideoNote key={attachment.id} src={src}
+                      durationSeconds={durationSeconds ?? 0} meta={meta} onMenu={onMenu}
+                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
+                  }
                   const source = galleryMediaSource(attachment, repository.actorUserId);
                   return source && <DiscussionMedia key={attachment.id} {...source} mode="thumbnail"
                     onOpen={() => { closeMenu(); setViewing({ messageId: message.id, attachmentId: attachment.id }); }}
@@ -560,13 +575,16 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <Button rounded onClick={() => setReadPosition(value => value + 1)}>Повторить отметку прочтения</Button></>}
       {error && <Text variant="footnote" role="alert">{error}</Text>}
       {voice.error && <Text variant="footnote" role="alert">{voice.error}</Text>}
+      {videoNote.error && <Text variant="footnote" role="alert">{videoNote.error}</Text>}
+      {videoNote.status === 'requesting' && <Text variant="footnote" role="status">Разрешите камеру и микрофон, затем удерживайте кнопку кружка</Text>}
+      {videoNote.permissionReady && actionMode === 'camera' && <Text variant="footnote" role="status">Камера доступна. Удерживайте кнопку для записи</Text>}
       {voice.status === 'requesting' && <Text variant="footnote" role="status">Разрешите доступ к микрофону, затем удерживайте кнопку записи</Text>}
       {voice.permissionReady && actionMode === 'microphone' && <Text variant="footnote" role="status">Микрофон доступен. Удерживайте кнопку для записи</Text>}
       {voice.status === 'processing' && <Text variant="footnote" role="status">Готовим голосовое сообщение…</Text>}
       {media.error && <Text variant="footnote" role="alert">{media.error}</Text>}
       {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
       {(mediaPresent || media.phase === 'uploading' || media.phase === 'publishing') && <div className="discussion-composer-context__mode">
-        {!previewing && !voiceDraft && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
+        {!previewing && !voiceDraft && !circleDraft && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
         {media.phase === 'uploading' ? <>
           <Text variant="footnote" role="status">Загружаем вложение…</Text>
           <IconButton icon="x" label="Отменить загрузку" onClick={media.cancel} />
@@ -586,6 +604,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
+    {(recordingCircle || videoNote.status === 'processing') && <div className="discussion-video-note-live"
+      style={{ bottom: composerHeight + contextHeight + 12 }}>
+      <DiscussionVideoNoteCapture stream={videoNote.stream} progress={videoNote.progress} />
+    </div>}
     <div className="discussion-composer" ref={composer} inert={Boolean(viewer)} data-previewing={previewing || undefined}>
       <GlassSurface ref={addSurface} className="discussion-composer__button discussion-composer__button--add" {...material} shape="capsule" wrapContent={false}>
         {repository.supportsMedia && <input type="file" hidden ref={gallery} accept={DISCUSSION_MEDIA_ACCEPT}
@@ -616,28 +638,33 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           : !discardingVoice && voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
             {media.selection ? 'Готовим голосовое сообщение…' : 'Голосовое сообщение'}
           </Text>
-          : <MezfitMessagebar bare textareaId={textareaId} placeholder={editId ? 'Редактировать сообщение' : 'Сообщение'}
-            value={text} maxRows={5} disabled={!canCompose || voiceInProgress || discardingVoice}
+          : <MezfitMessagebar bare textareaId={textareaId} placeholder={circleInProgress || circleDraft ? '' : editId ? 'Редактировать сообщение' : 'Сообщение'}
+            value={text} maxRows={5} disabled={!canCompose || voiceInProgress || circleInProgress || Boolean(circleDraft) || discardingVoice}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />}
       </GlassSurface>
       <GlassSurface ref={actionSurface} className="discussion-composer__button discussion-composer__action" {...material}
-        data-recording={recordingVoice || undefined} shape="capsule" wrapContent={false}>
+        data-recording={recordingVoice || recordingCircle || undefined} shape="capsule" wrapContent={false}>
         <IconButton label={actionMode === 'send'
           ? (editId ? 'Сохранить' : media.phase === 'failed' && media.selection ? 'Повторить отправку' : 'Отправить')
           : actionMode === 'microphone' ? 'Переключить на кружок' : 'Переключить на голосовое'}
-          aria-description={actionMode === 'microphone' && repository.supportsMedia ? 'Удерживайте для записи голосового' : undefined}
-          className={actionMode === 'microphone' ? 'discussion-composer__microphone' : undefined}
-          disabled={!canCompose || discardingVoice || voice.status === 'processing'
+          aria-description={repository.supportsMedia && actionMode === 'microphone' ? 'Удерживайте для записи голосового'
+            : repository.supportsMedia && actionMode === 'camera' ? 'Удерживайте для записи видеокружка' : undefined}
+          className={actionMode === 'microphone' || actionMode === 'camera' ? 'discussion-composer__microphone' : undefined}
+          disabled={!canCompose || discardingVoice || voice.status === 'processing' || videoNote.status === 'processing'
             || (actionMode === 'send' && (mediaPresent ? !media.selection : !text.trim()))}
           onPointerDown={event => {
             const surface = actionSurface.current;
             if (typeof surface?.animate === 'function') actionPress.current = startPressScale(surface, 1.5);
             voice.onPointerDown(event, actionMode === 'microphone' && Boolean(repository.supportsMedia));
+            videoNote.onPointerDown(event, actionMode === 'camera' && Boolean(repository.supportsMedia));
           }}
-          onPointerUp={voice.onPointerUp} onPointerCancel={voice.onPointerCancel} onLostPointerCapture={voice.onPointerCancel}
-          onContextMenu={event => { if (actionMode === 'microphone') event.preventDefault(); }}
+          onPointerUp={event => { voice.onPointerUp(event); videoNote.onPointerUp(event); }}
+          onPointerCancel={event => { voice.onPointerCancel(event); videoNote.onPointerCancel(event); }}
+          onLostPointerCapture={event => { voice.onPointerCancel(event); videoNote.onPointerCancel(event); }}
+          onContextMenu={event => { if (actionMode === 'microphone' || actionMode === 'camera') event.preventDefault(); }}
           onClick={event => {
-            if (voice.consumeClick() && event.detail !== 0) return;
+            const consumed = voice.consumeClick() || videoNote.consumeClick();
+            if (consumed && event.detail !== 0) return;
             if (actionMode === 'send') submit();
             else setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone');
           }}>
