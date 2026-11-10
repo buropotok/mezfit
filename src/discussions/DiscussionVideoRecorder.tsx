@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from '../ui';
+import { Button } from 'konsta/react';
 import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import { VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from '../video-note/video-recording-profile';
@@ -51,17 +51,17 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
     {status === 'processing' && <Text variant="footnote" role="status">Готовим видео…</Text>}
     {status === 'recording' && <Text variant="footnote">{time} / {Math.floor(maxSeconds / 60)}:00</Text>}
     <div className="discussion-video-recorder__actions">
-      <Button variant="secondary" onClick={onCancel}><Text>Отменить</Text></Button>
-      {status === 'recording' && <Button onClick={() => void stop()}><Text>Остановить запись</Text></Button>}
+      <Button rounded tonal inline onClick={onCancel}><Text>Отменить</Text></Button>
+      {status === 'recording' && <Button rounded inline onClick={() => void stop()}><Text>Остановить запись</Text></Button>}
       {!inProgress && !clip && <>
-        <Button variant="secondary" onClick={onGallery}><Text>Выбрать из галереи</Text></Button>
+        <Button rounded tonal inline onClick={onGallery}><Text>Выбрать из галереи</Text></Button>
         {stream && status === 'idle'
-          ? <Button onClick={() => void start('environment')}><Text>Начать запись</Text></Button>
-          : <Button variant="secondary" onClick={enableCamera}><Text>Включить камеру</Text></Button>}
+          ? <Button rounded inline onClick={() => void start('environment')}><Text>Начать запись</Text></Button>
+          : <Button rounded tonal inline onClick={enableCamera}><Text>Включить камеру</Text></Button>}
       </>}
       {clip && <>
-        <Button variant="secondary" onClick={() => { setClip(null); enableCamera(); }}><Text>Записать заново</Text></Button>
-        <Button disabled={!previewUrl} onClick={() => {
+        <Button rounded tonal inline onClick={() => { setClip(null); enableCamera(); }}><Text>Записать заново</Text></Button>
+        <Button rounded inline disabled={!previewUrl} onClick={() => {
           onUse(new File([clip.blob], 'Видео.mp4', { type: clip.mimeType }));
         }}><Text>Использовать видео</Text></Button>
       </>}
