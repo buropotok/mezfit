@@ -1,16 +1,19 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KonstaProvider } from 'konsta/react';
 import { DiscussionSheet } from './DiscussionSheet';
 import { createDiscussionPreviewPort, previewDiscussionAnchor, previewDiscussionThread } from '../ui/discussion-preview';
 import type { LiquidPopoverProps } from '../ui/LiquidPopover';
+import { prepareDiscussionMessage } from '../data/cloud/discussions';
+import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
+import { anchor, fixture, thread } from './discussion-fixture.test-support';
 
 // This test covers the real Konsta message renderer; the animation is independent.
 vi.mock('../ui/LiquidPopover', () => ({
   LiquidPopover: ({ trigger }: LiquidPopoverProps) => <>{trigger}</>,
 }));
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('COMM-05 mobile presentation', () => {
   const authors = (id: string) => ({ name: id === 'tg:101' ? 'Тренер' : 'Спортсмен' });
@@ -87,4 +90,42 @@ describe('COMM-05 mobile presentation', () => {
     fireEvent.change(input, { target: { value: 'Тест многострочного ввода\nВторая строка' } });
     await waitFor(() => expect((input as HTMLTextAreaElement).value).toContain('Вторая строка'));
   });
+});
+
+
+it('clears a voice draft at the start of trash animation, keeping the full-size red icon until removal completes', async () => {
+  // A reduced-motion device completes the visual effect immediately; persistence
+  // must still begin at the click and keep the composer from showing stale audio.
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const voice: DiscussionMediaDraft = {
+    id: 'voice-preview', storageKey: 'mvp-media/' + 'c'.repeat(64), mediaType: 'voice',
+    mimeType: 'audio/mp4', sizeBytes: 16, durationSeconds: 4, waveform: [0.2, 0.8],
+    fileName: 'voice.m4a', uploadState: 'failed',
+  };
+  const draft = { ...prepareDiscussionMessage(thread.id, ''), draftMedia: voice };
+  let finishRemoval: (() => void) | undefined;
+  const updateDraftMedia = vi.fn(() => new Promise<void>(resolve => { finishRemoval = resolve; }));
+  const port = { ...fixture().port, supportsMedia: true, getDraft: vi.fn(async () => draft), updateDraftMedia };
+  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
+    threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
+    onClose={() => {}} parentNavigation={null} onNavigationContextChange={() => {}} /></KonstaProvider>);
+  const trash = await screen.findByRole('button', { name: 'Удалить голосовое сообщение' });
+  expect(trash.classList.contains('ui-icon-button--color-red')).toBe(true);
+  const svg = trash.querySelector('svg');
+  const viewport = svg?.getAttribute('viewBox')?.split(' ').map(Number);
+  expect(svg?.getAttribute('width')).toBe('24');
+  expect(viewport?.[2]).toBeLessThanOrEqual(420);
+  expect(viewport?.[3]).toBeLessThanOrEqual(420);
+  expect(view.container.querySelector('.discussion-composer__voice-placeholder')).not.toBeNull();
+  await waitFor(() => expect(trash).toHaveProperty('disabled', false));
+
+  fireEvent.click(trash);
+  expect(updateDraftMedia).toHaveBeenCalledWith(thread.id, draft.id, voice.storageKey, 'clear');
+  expect(view.container.querySelector('.discussion-composer__voice-placeholder')).toBeNull();
+  expect(screen.getByPlaceholderText('Сообщение')).toHaveProperty('disabled', true);
+  expect(screen.getByRole('button', { name: 'Удалить голосовое сообщение' })).toHaveProperty('disabled', true);
+
+  await act(async () => { finishRemoval?.(); });
+  expect(screen.getByRole('button', { name: 'Добавить вложение' })).toBeTruthy();
+  expect(screen.getByPlaceholderText('Сообщение')).toHaveProperty('disabled', false);
 });
