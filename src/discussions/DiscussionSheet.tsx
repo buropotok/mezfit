@@ -564,7 +564,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {voice.permissionReady && actionMode === 'microphone' && <Text variant="footnote" role="status">Микрофон доступен. Удерживайте кнопку для записи</Text>}
       {voice.status === 'processing' && <Text variant="footnote" role="status">Готовим голосовое сообщение…</Text>}
       {media.error && <Text variant="footnote" role="alert">{media.error}</Text>}
-      {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
+      {media.phase === 'checking' && <div className="discussion-composer-context__mode">
+        <Text variant="footnote" role="status">Проверяем файл и при необходимости сжимаем видео…</Text>
+        <IconButton icon="x" label="Отменить подготовку видео" onClick={media.cancel} />
+      </div>}
       {(mediaPresent || media.phase === 'uploading' || media.phase === 'publishing') && <div className="discussion-composer-context__mode">
         {!previewing && !voiceDraft && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
         {media.phase === 'uploading' ? <>
