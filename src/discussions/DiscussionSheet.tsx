@@ -19,7 +19,7 @@ import { useDiscussionViewport } from './useDiscussionViewport';
 import { useDiscussionDraft } from './useDiscussionDraft';
 import { DISCUSSION_MEDIA_ACCEPT } from '../data/cloud/discussion-media';
 import { directMediaUrl } from '../media/directMediaUpload';
-import { DiscussionMedia } from './DiscussionMedia';
+import { DiscussionMedia, type DiscussionMediaSource } from './DiscussionMedia';
 import { useDiscussionMedia } from './useDiscussionMedia';
 import './discussion-sheet.css';
 
@@ -85,6 +85,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const gallery = useRef<HTMLInputElement>(null);
   const mediaBusy = media.phase !== 'idle' && media.phase !== 'failed';
   const mediaPresent = Boolean(media.selection || draft.media);
+  const previewing = Boolean(media.preview && media.selection);
+  const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
+  const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
+    ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
+  const viewerSrc = viewedAttachment && viewedAttachment.storageKey && directMediaUrl(viewedAttachment.storageKey);
+  const viewer: DiscussionMediaSource | null = viewerSrc && viewedAttachment && viewedAttachment.mediaType !== 'voice'
+    ? { src: viewerSrc, type: viewedAttachment.mediaType } : null;
+  const mediaSurfaceOpen = previewing || Boolean(viewer);
   const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const replyId = editId ? null : draft.replyId;
@@ -173,7 +181,20 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     setMenu(menuRef.current);
   };
   const cancelMode = () => { if (!editId) draft.update(draft.text, null); setEditId(null); setEditText(''); };
+  const closePreview = () => {
+    if (media.phase === 'uploading') media.cancel();
+    else if (!mediaBusy) void media.remove();
+  };
+  const updateNavigation = () => onNavigationContextChange({ ...parentNavigation,
+    title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
   back.current = () => {
+    if (viewer) { setViewing(null); return; }
+    if (previewing) {
+      closePreview();
+      // Back may consume the browser entry while cancellation or removal is pending.
+      updateNavigation();
+      return;
+    }
     if (deletingId) { setDeletingId(null); return; }
     if (menu?.open) { closeMenu(); return; }
     if (replyId || editId) { cancelMode(); return; }
@@ -181,10 +202,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   };
   useEffect(() => {
     // Preserve the underlying entity and its scroll identity; no independent history/Back listeners.
-    onNavigationContextChange({ ...parentNavigation, title: parentNavigation?.title ?? 'Обсуждение',
-      onBack: () => back.current() });
+    updateNavigation();
     return () => onNavigationContextChange(parentNavigation);
-  }, [onNavigationContextChange, parentNavigation, session]);
+  }, [onNavigationContextChange, parentNavigation, session, mediaSurfaceOpen]);
   useEffect(() => {
     const update = () => setVisible(document.visibilityState !== 'hidden');
     document.addEventListener('visibilitychange', update);
@@ -203,7 +223,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (composer.current) observer.observe(composer.current);
     if (context.current) observer.observe(context.current);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline]);
+  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error]);
 
   const jump = async (id: string) => {
     const version = ++focusVersion.current;
@@ -302,7 +322,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     });
   };
   useEffect(() => {
-    if (!visible || focusing.current || state.loading || state.error || requestedFocus) return;
+    if (mediaSurfaceOpen || !visible || focusing.current || state.loading || state.error || requestedFocus) return;
     const list = scroller.current;
     const bounds = list?.getBoundingClientRect();
     const newest = [...state.messages].reverse().find(message => {
@@ -314,7 +334,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     });
     if (!newest || lastRead.current === newest.id) return;
     markViewed(newest.id);
-  }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, repository, threadId, composerHeight, contextHeight, syncState?.status, syncState?.offline]);
+  }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, mediaSurfaceOpen, repository, threadId, composerHeight, contextHeight, syncState?.status, syncState?.offline]);
 
   useEffect(() => {
     if (menu && !state.messages.some(row => row.id === menu.id && !row.deleted)) setMenu(null);
@@ -389,7 +409,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
 
   return <div className="discussion-thread" data-thread-id={threadId} data-focus-message-id={focusMessageId}
     data-show-avatars={String(showAvatars)}>
-    <header className="discussion-thread__header">
+    <header className="discussion-thread__header" inert={mediaSurfaceOpen}>
       <div className="discussion-thread__identity">
         <div className="discussion-thread__title-row">
           <Text variant="headline" className="discussion-thread__title">{contextLabel || state.title || 'Обсуждение'}</Text>
@@ -401,7 +421,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </div>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>
-    <div className="discussion-thread__scroll" ref={scroller} style={{ paddingBottom: composerHeight + contextHeight + 16 }}
+    <div className="discussion-thread__scroll" ref={scroller} inert={mediaSurfaceOpen} style={{ paddingBottom: composerHeight + contextHeight + 16 }}
       onScroll={event => { const el = event.currentTarget; setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 48); rememberPosition(); setReadPosition(value => value + 1); closeMenu(); }}>
       {state.error && <div role="alert"><Text>{state.error}</Text><Button rounded onClick={() => { setError(null); deepFocus.current = null; session.retry(); }}>Повторить</Button></div>}
       {state.more && <Button rounded disabled={state.loading || Boolean(state.error)} onClick={() => {
@@ -420,6 +440,20 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           const receiptIcon = isRead ? 'message-double-check' : isConfirmed ? 'message-check' : null;
           const time = new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
           const day = new Date(message.createdAt).toLocaleDateString('ru-RU');
+          const attachments = message.deleted ? [] : (message.attachments ?? []).flatMap(attachment => {
+            const src = attachment.storageKey && directMediaUrl(attachment.storageKey);
+            return src && attachment.mediaType !== 'voice'
+              ? [{ id: attachment.id, src, type: attachment.mediaType, durationSeconds: attachment.durationSeconds }] : [];
+          });
+          const mediaOnly = attachments.length > 0 && !message.text.trim();
+          const metadata = <span className="discussion-message-meta"><Text variant="caption">{time}</Text>
+            {receiptIcon && <span className="discussion-message-meta__check" role="img"
+              aria-label={isRead ? 'Прочитано собеседником' : 'Отправка подтверждена Dexie Cloud'}>
+              <Icon name={receiptIcon} /></span>}
+          </span>;
+          const openMenu = () => {
+            if (!message.deleted && !pending.current && !mediaBusy) setMenu({ id: message.id, open: true });
+          };
           return <Fragment key={message.id}>
             {(index === 0 || new Date(state.messages[index - 1].createdAt).toLocaleDateString('ru-RU') !== day) && <MessagesTitle>{day}</MessagesTitle>}
             <div className="discussion-message-target" data-message-id={message.id} data-own={String(isOwn)}
@@ -428,19 +462,16 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               <MezfitMessage type={isOwn ? 'sent' : 'received'} focusPulse={highlight === message.id}
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
-                text={<Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
+                text={!mediaOnly && <Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
                 textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => { if (message.reply) void jump(message.reply.messageId); }} />}
-                textFooter={!message.deleted && (message.attachments?.length ? message.attachments.map(attachment => {
-                  const src = attachment.storageKey && directMediaUrl(attachment.storageKey);
-                  return src && attachment.mediaType !== 'voice'
-                    ? <DiscussionMedia key={attachment.id} src={src} type={attachment.mediaType} /> : null;
-                }) : renderAttachment?.(message))}
-                inlineMeta={<span className="discussion-message-meta"><Text variant="caption">{time}</Text>
-                  {receiptIcon && <span className="discussion-message-meta__check" role="img"
-                    aria-label={isRead ? 'Прочитано собеседником' : 'Отправка подтверждена Dexie Cloud'}>
-                    <Icon name={receiptIcon} /></span>}
-                </span>}
-                onBubbleClick={() => { if (!message.deleted && !pending.current && !mediaBusy) setMenu({ id: message.id, open: true }); }}
+                textFooter={!message.deleted && (message.attachments?.length ? attachments.map((attachment, position) =>
+                  <DiscussionMedia key={attachment.id} {...attachment} mode="thumbnail"
+                    onOpen={() => { closeMenu(); setViewing({ messageId: message.id, attachmentId: attachment.id }); }}
+                    onMenu={position === 0 ? openMenu : undefined}
+                    meta={mediaOnly && position === attachments.length - 1 ? metadata : undefined} />
+                ) : renderAttachment?.(message))}
+                inlineMeta={mediaOnly ? undefined : metadata}
+                onBubbleClick={openMenu}
                 bubbleSource={menu?.id === message.id && <span onClick={event => event.stopPropagation()}><LiquidPopover key={message.id} triggerRef={trigger}
                   triggerActivation="controlled" isOpen={menu.open} onOpenChange={open => {
                     if (menuRef.current?.id !== message.id) return;
@@ -455,7 +486,18 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         })}
       </Messages>
     </div>
-    <div className="discussion-composer-context" ref={context} style={{ bottom: composerHeight }}>
+    {previewing && media.preview && media.selection && <section className="discussion-media-stage"
+      aria-label="Предпросмотр вложения" style={{ bottom: composerHeight + contextHeight }}>
+      <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
+    </section>}
+    {viewer && <section className="discussion-media-stage discussion-media-stage--viewer" aria-label="Просмотр вложения">
+      <DiscussionMedia key={viewer.src} {...viewer} mode="viewer" />
+      <div className="discussion-media-stage__close">
+        <IconButton icon="x" label="Закрыть просмотр" onClick={() => setViewing(null)} />
+      </div>
+    </section>}
+    <div className="discussion-composer-context" ref={context} inert={Boolean(viewer)}
+      data-previewing={previewing || undefined} style={{ bottom: composerHeight }}>
       {receiptError && <><Text variant="footnote" role="alert">Не удалось обновить статусы прочтения</Text>
         <Button rounded onClick={() => setReceiptRetry(value => value + 1)}>Повторить обновление статусов</Button></>}
       {readError && <><Text variant="footnote" role="alert">Не удалось отметить сообщения прочитанными</Text>
@@ -464,9 +506,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {media.error && <Text variant="footnote" role="alert">{media.error}</Text>}
       {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
       {(mediaPresent || media.phase === 'uploading' || media.phase === 'publishing') && <div className="discussion-composer-context__mode">
-        {media.preview && media.selection
-          ? <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} preview />
-          : <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
+        {!previewing && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
         {media.phase === 'uploading' ? <>
           <Text variant="footnote" role="status">Загружаем вложение…</Text>
           <IconButton icon="x" label="Отменить загрузку" onClick={media.cancel} />
@@ -474,7 +514,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           {!media.selection && draft.media && <Button rounded disabled={busy || mediaBusy} onClick={() => gallery.current?.click()}>
             <Text variant="footnote">Выбрать файл снова</Text>
           </Button>}
-          <IconButton icon="x" label="Убрать вложение" disabled={busy || mediaBusy} onClick={() => void media.remove()} />
+          <IconButton icon="x" label="Убрать вложение" disabled={busy || mediaBusy} onClick={closePreview} />
         </>}
       </div>}
       {draft.error && <><Text variant="footnote" role="alert">{draft.error}</Text>
@@ -486,7 +526,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
-    <div className="discussion-composer" ref={composer}>
+    <div className="discussion-composer" ref={composer} inert={Boolean(viewer)} data-previewing={previewing || undefined}>
       <GlassSurface className="discussion-composer__button" {...material} shape="capsule" wrapContent={false}>
         {repository.supportsMedia && <input type="file" hidden ref={gallery} accept={DISCUSSION_MEDIA_ACCEPT}
           onChange={event => {

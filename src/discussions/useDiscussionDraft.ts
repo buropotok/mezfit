@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
-import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
+import { discussionMediaTextId, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import type { DiscussionPort } from './discussion-session';
 
 /** Draft records belong to the repository; this hook owns only composer presentation. */
@@ -69,7 +69,11 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
         if (published.deleted || published.authorUserId !== repository.actorUserId
           || !published.attachments?.some(row => row.id === attachment.id && row.storageKey === attachment.storageKey)) throw reason;
         const latest = current.current;
-        if (latest?.id === input.id && (latest.text !== published.text
+        // Older clients put the text on the attachment message itself.
+        const separateText = !published.text && latest?.id === input.id && latest.text.trim()
+          ? await repository.getMessage(threadId, discussionMediaTextId(attachment)) : undefined;
+        if (separateText && separateText.authorUserId !== repository.actorUserId) throw reason;
+        if (latest?.id === input.id && (latest.text.trim() && latest.text !== (separateText?.text ?? published.text)
           || latest.replyToMessageId !== published.reply?.messageId)) rebase(input.id);
         else sent(input.id);
         return null;

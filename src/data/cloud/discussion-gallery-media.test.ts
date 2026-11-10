@@ -76,3 +76,27 @@ describe('gallery attachments', () => {
     expect((await coach.getMessage(thread.id, command.id)).attachments).toBeUndefined();
   });
 });
+
+it('publishes gallery media and typed text as two messages in one retryable send', async () => {
+  const actor = 'tg:22';
+  const db = new MezfitCloudDatabase('9987654322', '', { discussions: true });
+  databases.push(db);
+  db.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true, disableWebSocket: true,
+    tryUseServiceWorker: false, unsyncedTables: ['localWorkoutOccurrenceDrafts'] });
+  await db.open();
+  const repository = new DiscussionRepository(db, actor, { realmId: actor, coachClientId: null });
+  const thread = await repository.createThread(prepareDiscussionThread(
+    { kind: 'program', trainingPlanId: 'plan' }, 'Тест', '2026-11-09',
+  ));
+  const command = { ...prepareDiscussionMessage(thread.id, 'Текст к видео'), draftMedia: media, requireUnsentDraft: true as const };
+  await repository.saveDraft(command);
+  await repository.send(command, uploaded);
+  await repository.send(command, uploaded);
+
+  const { messages } = await repository.page(thread.id);
+  expect(messages).toHaveLength(2);
+  expect(messages[0]).toMatchObject({ id: command.id, text: '', attachments: [{ id: media.id }] });
+  expect(messages[1]).toMatchObject({ text: 'Текст к видео' });
+  expect(messages[1].attachments).toBeUndefined();
+  expect(await repository.getDraft(thread.id)).toBeNull();
+});
