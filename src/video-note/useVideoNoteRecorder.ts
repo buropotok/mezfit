@@ -141,7 +141,13 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     }
     // The first permission prompt can outlive the original pointer gesture.
     // Keep an acquired live session, but never record for a released gesture.
-    if (!source) return false;
+    if (!source) {
+      if (mountedRef.current && epoch === epochRef.current) {
+        setError('Получение камеры было прервано. Включите её повторно.');
+        updateStatus('error');
+      }
+      return false;
+    }
     if (!mountedRef.current || epoch !== epochRef.current) {
       source.getTracks().forEach(track => { track.enabled = false; });
       return false;
