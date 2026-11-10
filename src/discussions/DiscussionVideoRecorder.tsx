@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from 'konsta/react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { FloatingActionButton, Icon } from '../ui';
 import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import { VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from '../video-note/video-recording-profile';
+
+const topControls: CSSProperties = { top: '1rem', bottom: 'auto' };
+const centerControl: CSSProperties = { right: '50%', translate: '50% 0' };
+const recordIconSize = { width: 28, height: 28 };
 
 interface Props {
   onCancel: () => void;
@@ -42,29 +46,31 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
 
   return <section className="discussion-media-stage discussion-media-stage--viewer discussion-video-recorder"
     aria-label="Запись видео">
-    <Text variant="headline">Запись видео</Text>
     {clip
-      ? <video src={previewUrl} controls playsInline aria-label="Предпросмотр записи" />
-      : <video ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры" />}
-    {error && <Text variant="footnote" role="alert">{error}</Text>}
-    {status === 'requesting' && <Text variant="footnote" role="status">Подключаем камеру…</Text>}
-    {status === 'processing' && <Text variant="footnote" role="status">Готовим видео…</Text>}
-    {status === 'recording' && <Text variant="footnote">{time} / {Math.floor(maxSeconds / 60)}:00</Text>}
-    <div className="discussion-video-recorder__actions">
-      <Button rounded tonal inline onClick={onCancel}><Text>Отменить</Text></Button>
-      {status === 'recording' && <Button rounded inline onClick={() => void stop()}><Text>Остановить запись</Text></Button>}
-      {!inProgress && !clip && <>
-        <Button rounded tonal inline onClick={onGallery}><Text>Выбрать из галереи</Text></Button>
-        {stream && status === 'idle'
-          ? <Button rounded inline onClick={() => void start('environment')}><Text>Начать запись</Text></Button>
-          : <Button rounded tonal inline onClick={enableCamera}><Text>Включить камеру</Text></Button>}
-      </>}
-      {clip && <>
-        <Button rounded tonal inline onClick={() => { setClip(null); enableCamera(); }}><Text>Записать заново</Text></Button>
-        <Button rounded inline disabled={!previewUrl} onClick={() => {
-          onUse(new File([clip.blob], 'Видео.mp4', { type: clip.mimeType }));
-        }}><Text>Использовать видео</Text></Button>
-      </>}
-    </div>
+      ? <video key="preview" src={previewUrl} controls playsInline aria-label="Предпросмотр записи" />
+      : <video key="camera" ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры" />}
+    <FloatingActionButton label="Назад" icon="arrow-left" placement="left" style={topControls} onClick={onCancel} />
+    {error && <Text variant="footnote" role="alert" className="discussion-video-recorder__status">{error}</Text>}
+    {status === 'requesting' && <Text variant="footnote" role="status" className="discussion-video-recorder__status">Подключаем камеру…</Text>}
+    {status === 'processing' && <Text variant="footnote" role="status" className="discussion-video-recorder__status">Готовим видео…</Text>}
+    {status === 'recording' && <Text variant="footnote" className="discussion-video-recorder__status">{time} / {Math.floor(maxSeconds / 60)}:00</Text>}
+    {status === 'recording' && <FloatingActionButton label="Остановить запись" style={centerControl} onClick={() => void stop()}>
+      <Icon name="player-stop" className="discussion-video-recorder__record-icon" style={recordIconSize} />
+    </FloatingActionButton>}
+    {!inProgress && !clip && <>
+      <FloatingActionButton label="Выбрать из галереи" icon="photo" onClick={onGallery} />
+      {stream && status === 'idle'
+        ? <FloatingActionButton label="Начать запись" style={centerControl} onClick={() => void start('environment')}>
+          <Icon name="record-circle" className="discussion-video-recorder__record-icon" style={recordIconSize} />
+        </FloatingActionButton>
+        : <FloatingActionButton label="Включить камеру" icon="video" style={centerControl} onClick={enableCamera} />}
+    </>}
+    {clip && <>
+      <FloatingActionButton label="Записать заново" icon="history" style={{ ...topControls, ...centerControl }}
+        onClick={() => { setClip(null); enableCamera(); }} />
+      <FloatingActionButton label="Использовать видео" icon="check" style={topControls} disabled={!previewUrl} onClick={() => {
+        onUse(new File([clip.blob], 'Видео.mp4', { type: clip.mimeType }));
+      }} />
+    </>}
   </section>;
 }

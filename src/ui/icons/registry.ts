@@ -1,3 +1,5 @@
+import recordCircleUrl from './record-circle.svg';
+import playerStopUrl from './player-stop.svg';
 import paperclipUrl from './paperclip.svg';
 import photoUrl from './photo.svg';
 import videoUrl from './video.svg';
@@ -108,6 +110,8 @@ const uiIconRegistry = {
   'info-circle': { outline: infoCircleUrl, filled: infoCircleUrl },
   'menu-2': { outline: menu2Url, filled: menu2Url },
   x: { outline: xUrl, filled: xUrl },
+  'record-circle': { outline: recordCircleUrl, filled: recordCircleUrl },
+  'player-stop': { outline: playerStopUrl, filled: playerStopUrl },
   paperclip: { outline: paperclipUrl, filled: paperclipUrl },
   photo: { outline: photoUrl, filled: photoUrl },
   video: { outline: videoUrl, filled: videoUrl },
