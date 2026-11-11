@@ -225,27 +225,24 @@ function SessionExerciseLayout({
     if (controlledCollapsed === undefined) setInternalCollapsed(nextCollapsed);
     onCollapsedChange?.(nextCollapsed);
   };
+  const header = <ListItem
+    className="session-exercise__header-toggle"
+    leadingShape="square"
+    leading={media}
+    title={exerciseName}
+    subtitle={subtitle}
+    trailing={badge}
+    aria-expanded={!collapsed}
+    aria-controls={bodyId}
+    onClick={toggleCollapsed}
+  />;
   return (
     <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={typeof exerciseId === 'number' ? exerciseId : undefined}
       data-program-exercise-id={typeof exerciseId === 'string' ? exerciseId : undefined}>
       <div className="session-exercise__header">
         <div className="session-exercise__header-list">
           <List>
-            {(() => {
-              const header = <ListItem
-                className="session-exercise__header-toggle"
-                leadingShape="square"
-                leading={media}
-                title={exerciseName}
-                subtitle={subtitle}
-                trailing={badge}
-                aria-expanded={!collapsed}
-                aria-controls={bodyId}
-                onClick={toggleCollapsed}
-              />;
-              return focusHeader
-                ? <DiscussionSetFocus ready={focusReady}>{header}</DiscussionSetFocus> : header;
-            })()}
+            {focusHeader ? <DiscussionSetFocus ready={focusReady}>{header}</DiscussionSetFocus> : header}
           </List>
           {onInformation ? <button type="button" className="session-exercise__media-action"
             data-no-dnd aria-label={`Информация об упражнении: ${exerciseName}`}
