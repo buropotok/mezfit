@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
-import { Button, Messages, MessagesTitle } from 'konsta/react';
+import { Button, Messages, MessagesTitle, Toast } from 'konsta/react';
 import type { MessageAttachment } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { discussionCursorKey, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
@@ -179,6 +179,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [deleting, setDeleting] = useState<{ id: string; kind: 'published' | 'outgoing-video' } | null>(null);
   const deletingOutgoingVideo = deleting?.kind === 'outgoing-video';
   const [savingVideo, setSavingVideo] = useState<DiscussionVideoSaveTarget | null>(null);
+  const [videoSaveNotice, setVideoSaveNotice] = useState('');
+  useEffect(() => {
+    if (!videoSaveNotice) return;
+    const timer = window.setTimeout(() => setVideoSaveNotice(''), 8_000);
+    return () => window.clearTimeout(timer);
+  }, [videoSaveNotice]);
   const [menu, setMenu] = useState<{ id: string; open: boolean } | null>(null);
   const menuRef = useRef(menu);
   menuRef.current = menu;
@@ -510,6 +516,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     id: 'save-video-' + attachmentId, label: 'Сохранить', icon: 'arrow-down', onSelect: () => {
       if (!menuRef.current?.open || menuRef.current.id !== menu?.id) return;
       closeMenu();
+      setVideoSaveNotice('');
       setSavingVideo(target);
     },
   });
@@ -830,7 +837,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         </IconButton>
       </GlassSurface>
     </div>
-    {savingVideo && <DiscussionVideoSaveDialog target={savingVideo} onClose={() => setSavingVideo(null)} />}
+    {savingVideo && <DiscussionVideoSaveDialog target={savingVideo} onClose={() => setSavingVideo(null)} onStatus={setVideoSaveNotice} />}
+    {videoSaveNotice && <Toast opened position="center" role="status"><Text variant="body">{videoSaveNotice}</Text></Toast>}
     <MezfitDialog opened={Boolean(deleting)} aria-hidden={deleting ? undefined : true} inert={deleting ? undefined : true}
       title={<Text variant="headline">{deletingOutgoingVideo ? 'Убрать неотправленное видео?' : 'Удалить сообщение?'}</Text>}
       content={<Text>{deletingOutgoingVideo
