@@ -135,6 +135,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   const [clientProgramDetailNavigation, setClientProgramDetailNavigation] = useState<NavigationContext | null>(null);
   const [clientDiscussionNavigation, setClientDiscussionNavigation] = useState<NavigationContext | null>(null);
   const [clientWorkoutNavigation, setClientWorkoutNavigation] = useState<NavigationContext | null>(null);
+  const [clientHistoryCalendar, setClientHistoryCalendar] = useState<NavigationContext['calendar']>();
   const [clientExerciseNavigation, setClientExerciseNavigation] = useState<NavigationContext | null>(null);
   const selectedClientProgram = clientSelectedProgram && selectedClient
     && clientSelectedProgram.clientUserId === selectedClient.userId
@@ -303,10 +304,12 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         setClientExerciseNavigation(null);
         setClientWorkoutNavigation(null);
       },
+      onCalendarOpen: destination === 'clients' ? () => setClientTab('history') : undefined,
+      calendar: clientTab === 'history' ? clientHistoryCalendar : undefined,
       onBack: () => setSelectedClientId(null),
     });
     return () => onNavigationContextChange(null);
-  }, [clientDiscussionNavigation, clientWorkoutNavigation, programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, cloudConnections?.actorUserId, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
+  }, [clientDiscussionNavigation, clientWorkoutNavigation, clientHistoryCalendar, programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, cloudConnections?.actorUserId, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
   if (destination === 'discussions') return <DiscussionsPage role="coach" onNavigationContextChange={onNavigationContextChange} />;
 
@@ -351,6 +354,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
           onNavigationContextChange={setClientWorkoutNavigation} /> : null}
         historyContent={clientTab === 'history' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':history'}
           mode="history" role="coach" contact={selectedClient} actor={actor} initData={initData}
+          onCalendarChange={destination === 'clients' ? setClientHistoryCalendar : undefined}
           onNavigationContextChange={setClientWorkoutNavigation} /> : null}
         exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
           key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}
