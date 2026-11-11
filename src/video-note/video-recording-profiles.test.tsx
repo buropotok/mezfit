@@ -119,3 +119,33 @@ it.each(['error', 'pagehide', 'hidden', 'unmount'] as const)(
     }
   },
 );
+
+it.each([
+  { width: 720, height: 1280, starts: true },
+  { width: 1280, height: 720, starts: false },
+  { width: 720, height: 720, starts: false },
+])('only starts portrait recording with a portrait camera frame ($width × $height)', async ({ width, height, starts }) => {
+  camera();
+  const { result } = renderHook(() => useVideoNoteRecorder(undefined, 'portrait'));
+  await act(async () => { await result.current.start('environment', true); });
+  const source = result.current.stream;
+  expect(source).not.toBeNull();
+  const video = document.createElement('video');
+  Object.defineProperties(video, {
+    srcObject: { value: source },
+    videoWidth: { value: width },
+    videoHeight: { value: height },
+    readyState: { value: 2 },
+  });
+  const previousRecorder = Recorder.latest;
+  await act(async () => {
+    expect(await result.current.start('environment', false, { video, profile: 'portrait' })).toBe(starts);
+  });
+  if (starts) {
+    expect(Recorder.latest).not.toBe(previousRecorder);
+    expect(result.current.status).toBe('recording');
+  } else {
+    expect(Recorder.latest).toBe(previousRecorder);
+    expect(result.current.error).toContain('не отдаёт вертикальный кадр');
+  }
+});
