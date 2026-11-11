@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useState, type ReactNode, type ButtonHTMLAttributes } from 'react';
 import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-types';
-import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
+import type { EntityDiscussionTarget, OpenEntityDiscussion } from '../discussions/entity-discussion-target';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
 import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
@@ -55,7 +55,7 @@ export interface WorkoutPlanCardProps {
   onDeleteSet?: (programExerciseId: string, setId: string) => void | Promise<void>;
   /** Only scheduled occurrence cards supply scoped discussion targets. */
   discussionTargetFor?: (exerciseId: string, setId?: string) => EntityDiscussionTarget | null;
-  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  onOpenDiscussion?: OpenEntityDiscussion;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onSetDeletionNavigationContextChange?: (context: NavigationContext | null) => void;
   onExerciseInformation?: (programExerciseId: string) => void;

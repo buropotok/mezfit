@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { MediaUploadError, uploadDirectMedia } from '../media/directMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
-import type { DiscussionMessageInput } from '../data/cloud/discussions';
+import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionPort } from './discussion-session';
 import { inspectDiscussionMedia, prepareDiscussionVoice, prepareDiscussionVideoNote } from './discussion-media-file';
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
 
-type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { recorded?: boolean };
+type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { recorded?: boolean; separate?: DiscussionMessageInput };
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
@@ -60,7 +60,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     };
   }, []);
 
-  async function choose(file: File, { recorded = false } = {}) {
+  async function choose(file: File, { recorded = false, sendToThread }: { recorded?: boolean; sendToThread?: string } = {}) {
     if (active.current) return;
     resume.current = null;
     const controller = new AbortController();
@@ -69,14 +69,19 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     try {
       const next = await inspectDiscussionMedia(file, controller.signal);
       if (active.current !== controller) return;
-      const saved = draft.media;
+      const separate = sendToThread ? prepareDiscussionMessage(sendToThread, '') : undefined;
+      const saved = separate ? undefined : draft.media;
       if (saved && (saved.fileName !== next.metadata.fileName
         || saved.sizeBytes !== next.metadata.sizeBytes || saved.mimeType !== next.metadata.mimeType
         || saved.durationSeconds !== next.metadata.durationSeconds)) {
         throw new Error('Выберите тот же файл или удалите прежнее вложение');
       }
-      setSelection({ ...next, metadata: saved ?? next.metadata, recorded });
-      setPhase('idle');
+      const selected = { ...next, metadata: saved ?? next.metadata, recorded, separate };
+      setSelection(selected);
+      if (separate) {
+        active.current = null;
+        void send(selected);
+      } else setPhase('idle');
     } catch (reason) {
       if (active.current === controller) {
         setError(reason instanceof Error ? reason.message : 'Не удалось проверить файл');
@@ -129,7 +134,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file);
         if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       }
-      command = await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' });
+      command = await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' }, selected.separate);
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       if (!command) {
         if (active.current === controller) { setSelection(undefined); setPhase('idle'); }
@@ -188,7 +193,8 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     active.current = controller;
     setPhase('clearing');
     try {
-      await draft.clearMedia();
+      if (selection?.separate) await repository.discardDraft?.(selection.separate.threadId, selection.separate.id);
+      else await draft.clearMedia();
       if (active.current !== controller) return;
       setSelection(undefined); setError(undefined); setPhase('idle');
     } catch {

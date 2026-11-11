@@ -10,6 +10,7 @@ import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import type { ActiveWorkoutSession } from '../workout/workoutSessionTypes';
 
 const probe = vi.hoisted(() => ({ actor: 'tg:11', ensure: vi.fn(), navigations: [] as Array<NavigationContext | null> }));
+const take = new File(['video'], 'Видео.mp4', { type: 'video/mp4' });
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
   db: database, actorUserId: probe.actor, clients: [], coaches: [],
 }) }));
@@ -17,6 +18,7 @@ const database = {};
 vi.mock('../data/cloud/discussions', async original => ({
   ...await original<typeof import('../data/cloud/discussions')>(),
   DiscussionRepository: class {
+  supportsMedia = true;
   ensureEntityThread = probe.ensure;
   observeAnchor(_anchor: DiscussionAnchor, next: (value: { unread: number }) => void) {
     next({ unread: 3 }); return { unsubscribe() {} };
@@ -24,10 +26,21 @@ vi.mock('../data/cloud/discussions', async original => ({
 } }));
 vi.mock('./DiscussionSheet', () => ({ DiscussionSheet: (props: {
   contextLabel: string; contextUnavailable?: boolean; anchor: DiscussionAnchor; onClose: () => void; threadId: string;
+  takeRecordedVideo?: () => File | undefined;
 }) => <div role="dialog" aria-label="Обсуждение" data-anchor={JSON.stringify(props.anchor)}>
   <span>{props.contextLabel}</span><span>{props.threadId}</span>
   {props.contextUnavailable && <span>Объект недоступен. История обсуждения сохранена.</span>}
+  {props.takeRecordedVideo && props.threadId && <button onClick={() => {
+    expect(props.takeRecordedVideo?.()).toBe(take);
+    expect(props.takeRecordedVideo?.()).toBeUndefined();
+  }}>Получить подтверждённое видео</button>}
   <button onClick={props.onClose}>Закрыть обсуждение</button>
+</div> }));
+vi.mock('./DiscussionVideoRecorder', () => ({ DiscussionVideoRecorder: ({ onCancel, onUse }: {
+  onCancel: () => void; onUse: (file: File) => void;
+}) => <div role="dialog" aria-label="Запись видео">
+  <button onClick={onCancel}>Назад</button>
+  <button onClick={() => onUse(take)}>Использовать видео</button>
 </div> }));
 vi.mock('../ExerciseMedia', () => ({ ExerciseMedia: () => null }));
 vi.mock('../ui', async original => ({ ...await original<typeof import('../ui')>(),
@@ -89,7 +102,7 @@ describe('COMM-07 completed execution entries', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: /Обсуждения/ }));
     await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(exerciseAnchor('exercise-a'), 'Жим'));
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
-    openFromMenu('Меню подхода 2');
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода 2' }));
     await waitFor(() => expect(probe.ensure).toHaveBeenLastCalledWith(setAnchor('exercise-a', 'exercise-a-set-1'), 'Жим · Подход 2'));
     expect(screen.getAllByRole('dialog', { name: 'Обсуждение' })).toHaveLength(1);
     expect(screen.queryByText('Создать обсуждение')).toBeNull();
@@ -100,7 +113,7 @@ describe('COMM-07 completed execution entries', () => {
     act(() => { probe.navigations.at(-1)?.onBack?.(); });
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Обсуждение' })).toBeNull());
     expect(screen.getByRole('button', { name: 'Свернуть упражнение' })).toBeTruthy();
-    openFromMenu('Меню подхода 2');
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода 2' }));
     await waitFor(() => expect(probe.ensure).toHaveBeenCalledTimes(4));
     expect(probe.ensure.mock.calls[2][0]).toEqual(probe.ensure.mock.calls[3][0]);
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
@@ -117,6 +130,27 @@ describe('COMM-07 completed execution entries', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть обсуждение' }));
     fireEvent.click(within(sheet).getByRole('button', { name: 'Закрыть подход' }));
     expect(screen.queryByRole('alertdialog', { name: 'Сохранить изменения?' })).toBeNull();
+  });
+
+  it('records from the set menu and opens only that set chat on confirmation', async () => {
+    mount();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
+    const openCamera = () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Меню подхода 2' }));
+      expect(screen.queryByRole('menuitem', { name: /Обсуждения/ })).toBeNull();
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Видео' }));
+      expect(screen.getByRole('dialog', { name: 'Запись видео' })).toBeTruthy();
+      expect(probe.ensure).not.toHaveBeenCalled();
+    };
+    openCamera();
+    act(() => probe.navigations.at(-1)?.onBack?.());
+    expect(screen.queryByRole('dialog', { name: 'Запись видео' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Обсуждение' })).toBeNull();
+    openCamera();
+    fireEvent.click(screen.getByRole('button', { name: 'Использовать видео' }));
+    expect(screen.queryByRole('dialog', { name: 'Запись видео' })).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Получить подтверждённое видео' }));
+    expect(probe.ensure).toHaveBeenCalledExactlyOnceWith(setAnchor('exercise-a', 'exercise-a-set-1'), 'Жим · Подход 2');
   });
 
 
@@ -312,7 +346,7 @@ describe('COMM-07 completed execution entries', () => {
     const value = session();
     const view = mount(value);
     fireEvent.click(screen.getAllByRole('button', { name: 'Развернуть упражнение' })[0]);
-    openFromMenu('Меню подхода 1');
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения подхода 1' }));
     const dialog = await screen.findByRole('dialog', { name: 'Обсуждение' });
     await waitFor(() => expect(probe.ensure).toHaveBeenCalledOnce());
     view.rerender(<WorkoutSessionCard {...view.props} session={{ ...value, exercises: [...value.exercises].reverse() }} />);

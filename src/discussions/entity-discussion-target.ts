@@ -8,6 +8,7 @@ export interface EntityDiscussionTarget {
   anchor: DiscussionAnchor;
   name: string;
 }
+export type OpenEntityDiscussion = (target: EntityDiscussionTarget, action?: 'record-video') => void;
 function scopeFor(realmId: string, actorUserId: string): DiscussionScope {
   return { realmId, coachClientId: realmId === actorUserId ? null : realmId };
 }

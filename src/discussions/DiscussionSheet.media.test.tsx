@@ -52,6 +52,41 @@ it('previews a photo and retries an attachment-only send with the same message, 
   ]);
 });
 
+it('automatically delivers a confirmed set video as its own message and leaves the chat draft in place', async () => {
+  const existing = { id: 'existing-draft', threadId: thread.id, text: 'Набранный черновик', createdAt: thread.createdAt };
+  const port = { ...fixture().port, supportsMedia: true, getDraft: async () => existing };
+  const file = new File(['video'], 'Видео.mp4', { type: 'video/mp4' });
+  const metadata: DiscussionMediaDraft = { id: 'set-video', storageKey: 'mvp-media/' + 'b'.repeat(64),
+    mediaType: 'video', mimeType: file.type, sizeBytes: file.size, durationSeconds: 2,
+    fileName: file.name, uploadState: 'uploading' };
+  const uploaded: UploadedMedia = { key: metadata.storageKey, url: directMediaUrl(metadata.storageKey) ?? '',
+    contentType: file.type, sizeBytes: file.size, fileName: file.name };
+  vi.mocked(inspectDiscussionMedia).mockResolvedValue({ file, metadata });
+  vi.mocked(uploadDirectMedia).mockRejectedValueOnce(new MediaUploadError('NETWORK')).mockResolvedValueOnce(uploaded);
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:set-video');
+    static revokeObjectURL = vi.fn();
+  });
+  const takeRecordedVideo = vi.fn<() => File | undefined>().mockReturnValueOnce(file);
+  render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
+    anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
+    onNavigationContextChange={() => {}} takeRecordedVideo={takeRecordedVideo} /></KonstaProvider>);
+
+  const retry = await screen.findByRole('button', { name: 'Повторить отправку' });
+  expect(uploadDirectMedia).toHaveBeenCalledWith(file, expect.objectContaining({ retryKey: metadata.storageKey }));
+  expect(port.send).not.toHaveBeenCalled();
+  fireEvent.click(retry);
+  await waitFor(() => expect(port.send).toHaveBeenCalledOnce());
+  const drafts = vi.mocked(port.saveDraft).mock.calls.map(([command]) => command);
+  expect(drafts).toHaveLength(2);
+  expect(drafts[0]).toEqual(drafts[1]);
+  expect(drafts[0].id).not.toBe(existing.id);
+  expect(port.send).toHaveBeenCalledWith(expect.objectContaining({
+    id: drafts[0].id, threadId: thread.id, text: '', draftMedia: metadata,
+  }), uploaded);
+  expect(screen.getByPlaceholderText('Сообщение')).toHaveProperty('value', existing.text);
+});
+
 it('acknowledges a restored attachment sent on another device once its metadata arrives', async () => {
   const metadata: DiscussionMediaDraft = { id: 'gallery-photo', storageKey: 'mvp-media/' + 'b'.repeat(64),
     mediaType: 'photo', mimeType: 'image/jpeg', sizeBytes: 5, durationSeconds: null,

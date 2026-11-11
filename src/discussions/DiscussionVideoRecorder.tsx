@@ -16,7 +16,7 @@ const recordIconSize = { width: 28, height: 28 };
 
 interface Props {
   onCancel: () => void;
-  onGallery: () => void;
+  onGallery?: () => void;
   onUse: (file: File) => void;
 }
 
@@ -98,7 +98,7 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
         isShown={!inProgress && !clip && status === 'idle' && Boolean(stream)}
         style={{ ...bottomControls, ...leftControl, visibility: delayPresented ? 'hidden' : undefined }} />} />
     {!inProgress && !clip && <>
-      <FloatingActionButton label="Выбрать из галереи" disabled={delayOpen} icon="photo" style={{ ...bottomControls, ...rightControl }} onClick={onGallery} />
+      {onGallery && <FloatingActionButton label="Выбрать из галереи" disabled={delayOpen} icon="photo" style={{ ...bottomControls, ...rightControl }} onClick={onGallery} />}
       {stream && status === 'idle'
         ? <FloatingActionButton label="Начать запись" disabled={delayOpen} style={centerControl} onClick={beginRecording}>
           <Icon name="record-circle" className="discussion-video-recorder__record-icon" style={recordIconSize} />

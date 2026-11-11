@@ -8,20 +8,29 @@ import { DiscussionRepository } from '../data/cloud/discussions';
 import { discussionAnchorKey } from '../../shared/discussion-anchor';
 import type { LiquidPopoverItem } from '../ui/LiquidPopover';
 import { DiscussionSheet } from './DiscussionSheet';
+import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
 import { IconButton, Text } from '../ui/primitives';
-import type { EntityDiscussionTarget } from './entity-discussion-target';
+import type { EntityDiscussionTarget, OpenEntityDiscussion } from './entity-discussion-target';
 import './entity-discussions.css';
+
+interface OpenedEntity {
+  target: EntityDiscussionTarget;
+  parent: NavigationContext | null;
+  account: object;
+  recording?: boolean;
+  takeRecordedVideo?: () => File | undefined;
+}
 
 /** The source remains mounted; the existing shell owns Back throughout opening and reading. */
 export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   onNavigationContextChange?: (value: NavigationContext | null) => void, enabled = true,
-  options?: { onOpenTarget?: (target: EntityDiscussionTarget) => void;
+  options?: { onOpenTarget?: OpenEntityDiscussion;
     isTargetAvailable?: (target: EntityDiscussionTarget) => boolean }) {
   const cloud = useCloudConnections();
   const sourceNavigation = useNavigationSurfaceContext();
   const account = useMemo(() => ({}), [cloud?.db, cloud?.actorUserId]);
-  const [opened, setOpened] = useState<{ target: EntityDiscussionTarget; parent: NavigationContext | null; account: object } | null>(null);
+  const [opened, setOpened] = useState<OpenedEntity | null>(null);
   const current = opened?.account === account && enabled ? opened : null;
   const activeTarget = current?.target ?? target;
   const key = activeTarget ? discussionAnchorKey(activeTarget.scope, activeTarget.anchor) : '';
@@ -56,7 +65,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   }, [repository, key, retry]);
   useEffect(() => {
     setError('');
-    if (!current || !repository) return;
+    if (!current || current.recording || !repository) return;
     let active = true;
     void repository.ensureEntityThread(current.target.anchor, current.target.name).then(value => {
       if (active) setThread({ opened: current, id: value.id });
@@ -64,7 +73,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     return () => { active = false; };
   }, [current, repository, retry]);
   const navigation = useMemo<NavigationContext>(() => ({ ...current?.parent,
-    level: 2, title: current?.target.name ?? 'Обсуждение', onBack: close }), [current, close]);
+    level: 2, title: current?.recording ? 'Запись видео' : current?.target.name ?? 'Обсуждение', onBack: close }), [current, close]);
   const openRef = useRef(false);
   openRef.current = Boolean(current);
   useEffect(() => () => { openRef.current = false; pending.current = null; }, []);
@@ -77,9 +86,11 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     return () => onNavigationContextChange?.(null);
   }, [current, navigation, onNavigationContextChange]);
   const canOpen = Boolean(enabled && cloud && target && onNavigationContextChange);
-  const openTarget = (nextTarget: EntityDiscussionTarget) => {
+  const canRecordVideo = canOpen && Boolean(repository?.supportsMedia);
+  const openTarget: OpenEntityDiscussion = (nextTarget, action) => {
+    if (action === 'record-video' && options?.isTargetAvailable?.(nextTarget) === false) return;
     if (enabled && cloud && onNavigationContextChange)
-      setOpened({ target: nextTarget, parent: sourceNavigation, account });
+      setOpened({ target: nextTarget, parent: sourceNavigation, account, recording: action === 'record-video' });
   };
   const open = () => { if (canOpen && target) openTarget(target); };
   const menuItem: LiquidPopoverItem = { id: 'discussions', label: 'Обсуждения', icon: 'message-circle',
@@ -97,11 +108,25 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     : [...(cloud?.clients ?? []), ...(cloud?.coaches ?? [])].find(person => person.userId === id
       && person.relationshipId === activeTarget?.scope.realmId)?.displayName ?? 'Участник обсуждения' });
   const threadId = thread?.opened === current ? thread?.id : null;
-  const content = current && onNavigationContextChange ? repository
+  const confirmVideo = (recording: OpenedEntity, file: File) => {
+    let pendingVideo: File | undefined = file;
+    const takeRecordedVideo = () => {
+      const video = pendingVideo;
+      pendingVideo = undefined;
+      return video;
+    };
+    setOpened(previous => previous === recording ? { ...previous, recording: false, takeRecordedVideo } : previous);
+  };
+  const content = current && onNavigationContextChange ? current.recording
+    ? <DiscussionVideoRecorder onCancel={close} onUse={file => {
+      if (options?.isTargetAvailable?.(current.target) === false) close();
+      else confirmVideo(current, file);
+    }} /> : repository
     ? <DiscussionSheet opened repository={repository} threadId={threadId ?? ''} anchor={current.target.anchor}
       opening={threadId ? undefined : { error, retry: () => setRetry(value => value + 1) }}
       onClose={close} onBack={close} resolveAuthor={resolveAuthor}
       contextLabel={current.target.name} contextUnavailable={options?.isTargetAvailable?.(current.target) === false}
+      takeRecordedVideo={current.takeRecordedVideo}
       onNavigationContextChange={threadNavigationChange} parentNavigation={navigation} />
     : <MezfitBottomSheet opened label="Обсуждение" lazyMount><div className="entity-discussions">
       <header className="entity-discussions__header"><Text variant="headline">{current.target.name}</Text>
@@ -112,5 +137,5 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   // GlassSurface owns a clipping/containing block. Mount the feature overlay
   // outside every program row while retaining React context and shell Back ownership.
   return { menuItem, unread, content: content && typeof document !== 'undefined'
-    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{content}</div>, document.body) : content, onMenuPresentationChange, open, openTarget, canOpen };
+    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{content}</div>, document.body) : content, onMenuPresentationChange, open, openTarget, canOpen, canRecordVideo };
 }
