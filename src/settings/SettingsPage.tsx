@@ -185,8 +185,8 @@ interface SettingsPageProps {
 const glassPresetOptions = GLASS_PRESET_NAMES.map((preset) => ({ value: preset, label: preset }));
 const typographyWeightOptions = TYPOGRAPHY_WEIGHTS.map((weight) => ({ value: String(weight), label: String(weight) }));
 const fontFamilyOptions: Array<{ value: FontFamily; label: string }> = [
-  { value: 'zen-maru-gothic', label: 'Zen Maru Gothic' },
   { value: 'inter', label: 'Inter' },
+  { value: 'zen-maru-gothic', label: 'Zen Maru Gothic' },
 ];
 
 const typographyFontStyleOptions = [

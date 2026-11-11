@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
 
 :root {
-  --ui-font-family: 'Zen Maru Gothic', sans-serif;
+  --ui-font-family: 'Inter', 'Zen Maru Gothic', sans-serif;
 
   --ui-font-size-caption: 0.75rem;
   --ui-line-height-caption: 1rem;

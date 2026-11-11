@@ -10,7 +10,7 @@ Use the shared typography font stack only:
 font-family: var(--ui-font-family);
 ```
 
-`--ui-font-family` resolves to Zen Maru Gothic by default, with Inter available through Settings → **Шрифты**. Both fonts are loaded centrally by `src/ui/tokens/typography.css`. The selected family applies to app text and Konsta through the shared token. Do not introduce component-local font-family stacks.
+`--ui-font-family` resolves to Inter by default, with Zen Maru Gothic available through Settings → **Шрифты**. Both fonts are loaded centrally by `src/ui/tokens/typography.css`. The selected family applies to app text and Konsta through the shared token. Do not introduce component-local font-family stacks.
 
 ## Type scale
 
@@ -50,7 +50,7 @@ Component CSS may own layout around text and non-typographic presentation, but t
 
 The Settings → **Шрифты** screen may change the values of the seven semantic presets at runtime. This is the only supported runtime customization path for app-owned typography.
 
-The same Settings screen also selects the product-wide font family (Zen Maru Gothic or Inter), independently of the seven presets. This preference is persisted separately in local browser/WebView storage, validated against the supported choices and applied to `--ui-font-family` before React renders. Resetting fonts restores both the default family and all seven default presets. `src/fontFamilySettings.ts` owns this selection.
+The same Settings screen also selects the product-wide font family (Inter or Zen Maru Gothic), independently of the seven presets. This preference is persisted separately in local browser/WebView storage, validated against the supported choices and applied to `--ui-font-family` before React renders. Inter is the default on both new and previously installed clients. The former v1 preference cannot distinguish an untouched, automatically saved Zen Maru Gothic default from an explicit selection, so that legacy value is ignored; choices made after this change persist in the v2 preference. Resetting fonts restores both the default family and all seven default presets. `src/fontFamilySettings.ts` owns this selection.
 
 For each preset the runtime settings may override:
 
@@ -146,7 +146,7 @@ Normal textual content must not use sizes below Caption 12/16. Smaller dimension
 
 Every newly created app-owned text-bearing element in the application must use one of the seven semantic presets as a complete bundle. Prefer the shared `Text` primitive or another shared component API that delegates to those presets. Component-owned CSS must not recreate or partially override a semantic preset with typography declarations.
 
-Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. The product-level font choice is configured through Konsta's supported Tailwind theme API: the iOS token `--font-ios` points to `var(--ui-font-family)` in `src/ui/konsta.css`, using the shared selected family (Zen Maru Gothic by default, or Inter). Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
+Konsta UI primitives are the exception at the primitive boundary: their internal typography is part of the library-owned visual representation and must not be overridden to force Mezfit typography tokens onto the primitive. The product-level font choice is configured through Konsta's supported Tailwind theme API: the iOS token `--font-ios` points to `var(--ui-font-family)` in `src/ui/konsta.css`, using the shared selected family (Inter by default, or Zen Maru Gothic). Do not target Konsta internal `.k-*` selectors or otherwise restyle a Konsta primitive's text. Mezfit typography tokens still apply to app-owned text and composition outside the primitive itself.
 
 Do not create parallel component-specific typography systems. A component may choose an existing semantic role, but it must not invent its own type scale.
 
