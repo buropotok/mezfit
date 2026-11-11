@@ -8,9 +8,10 @@ import type { ProgramSessionExerciseProps } from './sessionExerciseTypes';
 import { WorkoutPlanCard } from './WorkoutPlanCard';
 
 const mounted = vi.hoisted(() => ({ exercises: 0 }));
-vi.mock('./SessionExercise', () => ({ SessionExercise: ({ data, collapsed, focusSetId }: ProgramSessionExerciseProps) => {
+vi.mock('./SessionExercise', () => ({ SessionExercise: ({ data, collapsed, focusSetId, focusHeader }: ProgramSessionExerciseProps) => {
   mounted.exercises += 1;
-  return <div data-testid={data.exercise.id} data-collapsed={collapsed} data-focus-set={focusSetId}>Упражнение дня</div>;
+  return <div data-testid={data.exercise.id} data-collapsed={collapsed} data-focus-set={focusSetId}
+    data-focus-header={focusHeader ? 'true' : 'false'}>Упражнение дня</div>;
 } }));
 vi.mock('../ui', async importOriginal => ({
   ...await importOriginal<typeof import('../ui')>(),
@@ -68,4 +69,18 @@ it('expands only the exact discussion exercise, keeping all others collapsed', (
   expect(screen.getByTestId('second-exercise').getAttribute('data-collapsed')).toBe('false');
   expect(screen.getByTestId('second-exercise').getAttribute('data-focus-set')).toBe('target-set');
   expect(screen.getByTestId('exercise').getAttribute('data-focus-set')).toBeNull();
+  expect(screen.getByTestId('second-exercise').getAttribute('data-focus-header')).toBe('false');
+});
+
+it('highlights only the requested PLAN exercise header for an exercise link', () => {
+  const other = structuredClone(day.exercises[0]);
+  other.exercise.id = 'second-exercise';
+  other.exercise.position = 1;
+  const withTwo = { ...day, exercises: [...day.exercises, other] };
+  render(<WorkoutPlanCard {...props} day={withTwo} focusExerciseId="second-exercise" />);
+  expect(screen.getByTestId('exercise').getAttribute('data-collapsed')).toBe('true');
+  expect(screen.getByTestId('exercise').getAttribute('data-focus-header')).toBe('false');
+  expect(screen.getByTestId('second-exercise').getAttribute('data-collapsed')).toBe('false');
+  expect(screen.getByTestId('second-exercise').getAttribute('data-focus-header')).toBe('true');
+  expect(screen.getByTestId('second-exercise').getAttribute('data-focus-set')).toBeNull();
 });
