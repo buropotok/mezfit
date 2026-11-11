@@ -12,7 +12,8 @@ import { ClientWorkoutRepository } from './client-workouts';
 
 export type DiscussionDestination = { kind: 'program'; id: string }
   | { kind: 'occurrence'; draft: LocalWorkoutOccurrenceDraft; focus?: { exerciseId: string; setId?: string } }
-  | { kind: 'session'; session: ActiveWorkoutSession<string>; name: string; comment: string | null }
+  | { kind: 'session'; session: ActiveWorkoutSession<string>; name: string; comment: string | null;
+    focus?: { exerciseId: string; setId?: string } }
   | { kind: 'unavailable' };
 
 export function observeDiscussionDestination(db: MezfitCloudDatabase, actor: string,
@@ -69,11 +70,19 @@ export async function readDiscussionDestination(db: MezfitCloudDatabase, actor: 
     return { kind: 'unavailable' };
   if (anchor.kind === 'workout') return { kind: 'session', session, name: row.name, comment: row.comment };
   const key = discussionAnchorKey(thread, anchor);
-  const exercises = session.exercises.flatMap(exercise => {
-    if (anchor.kind === 'exercise') return exercise.discussionAnchor
-      && discussionAnchorKey(thread, exercise.discussionAnchor) === key ? [exercise] : [];
-    const sets = exercise.sets.filter(set => set.discussionAnchor && discussionAnchorKey(thread, set.discussionAnchor) === key);
-    return sets.length ? [{ ...exercise, sets }] : [];
-  });
-  return exercises.length ? { kind: 'session', session: { ...session, exercises }, name: row.name, comment: row.comment } : { kind: 'unavailable' };
+  // Validate the exact child using its canonical discussion anchor, but give the
+  // destination the complete session. The working screen owns editing and focus.
+  for (const exercise of session.exercises) {
+    if (anchor.kind === 'exercise' && exercise.discussionAnchor
+      && discussionAnchorKey(thread, exercise.discussionAnchor) === key)
+      return { kind: 'session', session, name: row.name, comment: row.comment,
+        focus: { exerciseId: exercise.sessionExerciseId } };
+    if (anchor.kind === 'set') {
+      const set = exercise.sets.find(item => item.discussionAnchor
+        && discussionAnchorKey(thread, item.discussionAnchor) === key);
+      if (set) return { kind: 'session', session, name: row.name, comment: row.comment,
+        focus: { exerciseId: exercise.sessionExerciseId, setId: set.sessionSetId } };
+    }
+  }
+  return { kind: 'unavailable' };
 }
