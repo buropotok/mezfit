@@ -203,3 +203,32 @@ describe('calendar PLAN versus reusable template', () => {
     expect(screen.queryByText(/^Подход 1\. План\b/)).toBeNull();
   });
 });
+
+describe('exercise discussion deep-link highlight in PLAN', () => {
+  it('highlights the GIF/name header after the sheet is ready without highlighting sets', () => {
+    const information = vi.fn();
+    const view = render(<SessionExercise mode="program" data={item} defaultCollapsed={false}
+      focusHeader focusReady={false} onInformation={information} />);
+    const headerFocus = view.container.querySelector('.session-exercise__header-list .discussion-set-focus');
+    expect(headerFocus?.querySelector('.session-exercise__header-toggle')).not.toBeNull();
+    expect(headerFocus?.querySelector('.ui-list-item__leading img')?.getAttribute('src')).toBe('/exercise-image');
+    expect(headerFocus?.textContent).toContain('Жим');
+    expect(headerFocus?.querySelector('.discussion-set-focus__flash')).toBeNull();
+    expect(view.container.querySelector('.session-exercise__sets .discussion-set-focus')).toBeNull();
+
+    view.rerender(<SessionExercise mode="program" data={item} defaultCollapsed={false}
+      focusHeader focusReady onInformation={information} />);
+    expect(view.container.querySelector('.session-exercise__header-list .discussion-set-focus__flash')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Информация об упражнении: Жим' }));
+    expect(information).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByText('Жим'));
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+  });
+
+  it('highlights only the targeted set for a set link, never the exercise header', () => {
+    const view = render(<SessionExercise mode="program" data={item} defaultCollapsed={false}
+      focusSetId="program-set" focusReady />);
+    expect(view.container.querySelector('.session-exercise__header-list .discussion-set-focus')).toBeNull();
+    expect(view.container.querySelector('.session-exercise__sets .discussion-set-focus__flash')).not.toBeNull();
+  });
+});
