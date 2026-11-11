@@ -505,28 +505,11 @@
 
 .discussion-outgoing__loader {
   position: absolute;
-  inset: -5px;
-  border: 2px solid rgb(255 255 255 / 0.8);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: discussion-outgoing-loader 2.94s linear infinite;
-}
-
-.discussion-outgoing__loader img {
-  position: absolute;
-  width: 36px;
-  max-width: none;
-  top: 0;
+  top: 50%;
   left: 50%;
+  width: min(8rem, 100%);
   translate: -50% -50%;
-}
-
-@keyframes discussion-outgoing-loader {
-  to { transform: rotate(1turn); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .discussion-outgoing__loader { animation: none; }
+  pointer-events: none;
 }
 
 .discussion-outgoing__status {

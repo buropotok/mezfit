@@ -40,11 +40,9 @@ export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, er
               : <DiscussionMedia src={src} type={mediaType} durationSeconds={durationSeconds} mode="thumbnail" />}
         </div>
         <div className="discussion-media__meta">{meta}</div>
+        {sending && <img className="discussion-outgoing__loader" src={paperplane} alt="" />}
         <div className="discussion-outgoing__cancel">
-          {sending && <span className="discussion-outgoing__loader" aria-hidden="true">
-            <img src={paperplane} alt="" />
-          </span>}
-          <IconButton icon="x" theme="glass" label={sending ? 'Отменить загрузку' : 'Убрать вложение'}
+          <IconButton icon="x" theme={sending ? 'liquidGlass' : 'glass'} label={sending ? 'Отменить загрузку' : 'Убрать вложение'}
             disabled={status === 'publishing' || status === 'clearing'}
             onClick={sending ? onCancel : onRemove} />
         </div>

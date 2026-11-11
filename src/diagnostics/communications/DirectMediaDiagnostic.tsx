@@ -11,8 +11,8 @@ function describeError(error: unknown): string {
     case 'INVALID_SIZE': return 'Файл пустой или превышает лимит для своего формата.';
     case 'CANCELLED': return 'Загрузка отменена.';
     case 'TIMEOUT': return 'Время загрузки истекло. Можно повторить.';
-    case 'NETWORK': return 'Нет ответа от Яндекса. Проверьте сеть и настройки CORS.';
-    case 'SIGNER_AUTH': return 'Яндекс не разрешил загрузку. Переоткройте Mezfit в Telegram.';
+    case 'NETWORK': return 'Mezfit облако недоступно. Проверьте сеть и настройки CORS.';
+    case 'SIGNER_AUTH': return 'Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram.';
     case 'SIGNER_UNAVAILABLE': return 'Не удалось получить ссылку для загрузки.';
     case 'HTTP': {
       const details = [error.s3Code, error.s3Message].filter(Boolean).join(': ');
