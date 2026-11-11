@@ -66,9 +66,15 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
         const latest = await repositories.drafts.get(selected.id);
         if (!latest) throw new Error('Тренировка недоступна');
         await repositories.drafts.save(selected.id);
-        if (updateProgram && latest.trainingPlanId && latest.programDayId)
-          await repositories.programs.applyOccurrencePlan(latest.trainingPlanId, latest.programDayId,
-            latest.plan, latest.originalPlan);
+        if (updateProgram && latest.trainingPlanId && latest.programDayId) {
+          try {
+            await repositories.programs.applyOccurrencePlan(latest.trainingPlanId, latest.programDayId,
+              latest.plan, latest.originalPlan);
+          } catch (reason) {
+            const detail = reason instanceof Error ? reason.message : 'Не удалось обновить день программы';
+            throw new Error('Тренировка сохранена. Программа не обновлена: ' + detail);
+          }
+        }
       }}
       onNavigationContextChange={setNested} />;
   }
