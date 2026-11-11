@@ -207,6 +207,7 @@ function WorkoutFactCard<Id extends string | number = number>({
   const copyPickerDate = [today.getFullYear(), today.getMonth() + 1, today.getDate()]
     .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0')).join('-');
   const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Partial<Record<Id, boolean>>>({});
+  useEffect(() => { setCollapsedByExerciseId({}); }, [session.sessionId, focusExerciseId]);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(sourceTitle);
   const [renameSaving, setRenameSaving] = useState(false);
