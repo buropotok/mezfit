@@ -103,6 +103,10 @@ it('shows the local video during upload, cancels on tap and retries the same fil
     contentType: file.type, sizeBytes: file.size, fileName: file.name };
   let saved: DiscussionMessageInput | null = null;
   const port = { ...fixture().port, supportsMedia: true, getDraft: async () => saved,
+    send: vi.fn(async (input: DiscussionMessageInput, _media?: UploadedMedia) => {
+      saved = null;
+      return message(input.id, input.text);
+    }),
     saveDraft: vi.fn(async (input: DiscussionMessageInput) => { saved = input; }) };
   vi.mocked(inspectDiscussionMedia).mockResolvedValue({ file, metadata });
   vi.stubGlobal('URL', class extends URL {
@@ -136,6 +140,7 @@ it('shows the local video during upload, cancels on tap and retries the same fil
     id: first.id, threadId: thread.id, draftMedia: metadata,
   }), uploaded));
   expect(inspectDiscussionMedia).toHaveBeenCalledOnce();
+  expect(screen.queryByRole('button', { name: 'Ещё раз' })).toBeNull();
 });
 
 it('acknowledges a restored attachment sent on another device once its metadata arrives', async () => {

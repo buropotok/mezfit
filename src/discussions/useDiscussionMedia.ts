@@ -9,7 +9,7 @@ import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
 
-type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { separate?: DiscussionMessageInput };
+type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { separate?: DiscussionMessageInput; restored?: boolean };
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
 type OutgoingMedia = Pick<DiscussionMessageInput, 'id' | 'createdAt'> & { attachmentId: string };
 
@@ -42,7 +42,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     void readDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }).then(blob => {
       if (current && blob && !active.current) {
         storedKey.current = storageKey;
-        setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedCapture });
+        setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedCapture, restored: true });
         if (savedMessage) {
           setOutgoing({ id: savedMessage.id, createdAt: savedMessage.createdAt, attachmentId: savedCapture.id });
           setPhase('failed');
@@ -161,7 +161,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       publishing.current = true;
       setPhase('publishing');
       const sent = await repository.send(command, result);
-      draft.sent(command.id);
+      draft.sent(command.id, selected.restored);
       if (active.current === controller) {
         if (sent.attachments?.length) setPublished(sent);
         setSelection(undefined); setOutgoing(undefined); setPhase('idle');
@@ -212,7 +212,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setPhase('clearing');
     try {
       if (selection?.separate) await repository.discardDraft?.(selection.separate.threadId, selection.separate.id);
-      else await draft.clearMedia();
+      else await draft.clearMedia(selection?.restored);
       if (active.current !== controller) return;
       setSelection(undefined); setOutgoing(undefined); setError(undefined); setPhase('idle');
     } catch {

@@ -293,7 +293,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     }
     if (deletingId) { setDeletingId(null); return; }
     if (menu?.open) { closeMenu(); return; }
-    if (replyId || editId) { cancelMode(); return; }
+    if ((replyId || editId) && !outgoing) { cancelMode(); return; }
     (onBack ?? onClose)();
   };
   useEffect(() => {
@@ -570,7 +570,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               <Icon name={receiptIcon} /></span>}
           </span>;
           const openMenu = () => {
-            if (!message.deleted && !pending.current && !mediaBusy && !voiceComposer && !circleInProgress) setMenu({ id: message.id, open: true });
+            if (!message.deleted && !pending.current && !mediaBusy && !outgoing && !voiceComposer && !circleInProgress) {
+              setMenu({ id: message.id, open: true });
+            }
           };
           return <Fragment key={message.id}>
             {(index === 0 || new Date(renderedMessages[index - 1].createdAt).toLocaleDateString('ru-RU') !== day) && <MessagesTitle>{day}</MessagesTitle>}
@@ -692,7 +694,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
         {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor} onJump={() => void jump(replyQuote.messageId)} /> : <Text variant="footnote">Редактирование сообщения</Text>}
-        <IconButton icon="x" label="Отменить ответ или редактирование" disabled={busy || mediaBusy}
+        <IconButton icon="x" label="Отменить ответ или редактирование" disabled={busy || mediaBusy || Boolean(outgoing)}
           onClick={cancelMode} />
       </div>}
     </div>

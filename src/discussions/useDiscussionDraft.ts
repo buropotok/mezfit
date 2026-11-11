@@ -49,10 +49,13 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     if (alive.current) { setText(replacement.text); setReplyId(replacement.replyToMessageId ?? null); setMedia(undefined); }
     persist(replacement);
   }
-  function sent(id: string) {
+  function sent(id: string, restorePrevious = false) {
     if (current.current?.id !== id) return;
     current.current = null;
-    if (alive.current) { setText(''); setReplyId(null); setError(null); setMedia(undefined); }
+    if (alive.current) {
+      setText(''); setReplyId(null); setError(null); setMedia(undefined);
+      if (restorePrevious) { setReady(false); setReload(value => value + 1); }
+    }
   }
   return {
     text, replyId, ready, error, media, mediaMessage: media ? current.current : null,
@@ -87,9 +90,15 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
       }
       return { ...input, requireUnsentDraft: true };
     },
-    async clearMedia() {
+    async clearMedia(restorePrevious = false) {
       const input = current.current;
-      if (!input?.draftMedia || !repository.updateDraftMedia) return;
+      if (!input?.draftMedia) return;
+      if (restorePrevious && !input.text.trim() && !input.replyToMessageId && repository.discardDraft) {
+        await repository.discardDraft(threadId, input.id);
+        sent(input.id, true);
+        return;
+      }
+      if (!repository.updateDraftMedia) return;
       await repository.updateDraftMedia(threadId, input.id, input.draftMedia.storageKey, 'clear');
       if (current.current?.id === input.id) delete current.current.draftMedia;
       if (alive.current) setMedia(undefined);
