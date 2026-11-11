@@ -121,14 +121,14 @@ afterEach(() => {
 });
 
 describe('AdHocSessionScreen discussion focus', () => {
-  it('keeps the canonical editable FACT owner and forwards the exact exercise/set identity', () => {
+  it('keeps the canonical editable FACT owner and forwards the exact exercise/set identity', async () => {
     const { observations, repository } = fixture({ exerciseId: 'exercise-x1', setId: 'set-target' });
     act(() => observations[0].next(session, row));
     const card = screen.getByTestId('session-card');
     expect(card.getAttribute('data-focus-exercise')).toBe('exercise-x1');
     expect(card.getAttribute('data-focus-set')).toBe('set-target');
     fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
-    expect(repository.addSet).toHaveBeenCalled();
+    await waitFor(() => expect(repository.addSet).toHaveBeenCalled());
   });
 });
 
