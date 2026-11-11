@@ -49,6 +49,17 @@ it('reads only the supplied relationship projection and renders published defaul
   expect(screen.queryByText('Сохранить анкету')).toBeNull();
 });
 
+it('uses separate Caption and Headline roles for a published age', () => {
+  const contact: CloudContact = { relationshipId: 'shared-relationship', userId: 'tg:202',
+    telegramUserId: '202', displayName: 'Анна' };
+  render(<PublishedUserProfile contact={contact} />);
+  act(() => source.next?.({ firstName: 'Анна', lastName: '', email: '', phone: '',
+    birthDate: '1990-05-31', sex: 'female', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' }));
+  const label = screen.getByText('Возраст:');
+  expect(label.getAttribute('data-variant')).toBe('caption');
+  expect(label.nextElementSibling?.getAttribute('data-variant')).toBe('headline');
+});
+
 it('keeps the contact screen available when profile storage or identity is not ready', () => {
   source.available = false;
   const contact: CloudContact = { relationshipId: 'shared-relationship', userId: 'tg:202',
