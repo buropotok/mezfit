@@ -5,6 +5,7 @@ import playerStopUrl from './player-stop.svg';
 import paperclipUrl from './paperclip.svg';
 import photoUrl from './photo.svg';
 import videoUrl from './video.svg';
+import cameraRotateUrl from './camera-rotate.svg';
 import trashThinUrl from './trash-outline.svg';
 import copyThinUrl from './copy-outline.svg';
 import treadmillUrl from './treadmill.svg';
@@ -72,6 +73,7 @@ import tablerNumber8Url from './tabler-number-8.svg';
 import tablerNumber9Url from './tabler-number-9.svg';
 
 const uiIconRegistry = {
+  'camera-rotate': { outline: cameraRotateUrl, filled: cameraRotateUrl },
   lock: { outline: lockUrl, filled: lockUrl },
   'lock-open': { outline: lockOpenUrl, filled: lockOpenUrl },
   'pencil-plus': { outline: tablerPencilPlusUrl, filled: tablerPencilPlusUrl },

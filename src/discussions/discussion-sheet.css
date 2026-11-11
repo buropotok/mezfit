@@ -468,6 +468,18 @@
   color: var(--ui-color-danger, #ff453a);
 }
 
+.discussion-video-recorder__switch-with-gallery {
+  --discussion-camera-switch-right: calc(4.75rem + var(--discussion-media-safe-right));
+  --discussion-camera-switch-bottom: calc(1rem + var(--discussion-media-safe-bottom));
+}
+
+@media (max-width: 339px) {
+  .discussion-video-recorder__switch-with-gallery {
+    --discussion-camera-switch-right: calc(1rem + var(--discussion-media-safe-right));
+    --discussion-camera-switch-bottom: calc(4.75rem + var(--discussion-media-safe-bottom));
+  }
+}
+
 .discussion-video-note__inline {
   width: 100%;
   aspect-ratio: 1;
