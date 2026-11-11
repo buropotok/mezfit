@@ -81,7 +81,9 @@ describe('user profile form', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать дату рождения' }));
     expect(screen.getByRole('dialog').getAttribute('data-surface')).toBe('panel');
     fireEvent.click(screen.getByRole('button', { name: '31 мая 1990' }));
-    expect(screen.getByText('Возраст')).toBeTruthy();
+    const ageLabel = screen.getByText('Возраст');
+    expect(ageLabel.getAttribute('data-variant')).toBe('caption');
+    expect(ageLabel.nextElementSibling?.getAttribute('data-variant')).toBe('headline');
     fireEvent.change(screen.getByLabelText('Вес, кг'), { target: { value: '63.5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить анкету' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
@@ -125,6 +127,17 @@ describe('user profile form', () => {
     for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол', 'Вес, кг'])
       expect(surfaces[1].textContent).toContain(label);
     expect(surfaces[1].contains(screen.getByLabelText('Вес, кг'))).toBe(true);
+  });
+
+  it('keeps the Coach contact editor layout while applying Caption/Headline roles', () => {
+    const view = render(<UserProfileForm purpose="contact" defaults={defaults} {...identity}
+      onSave={async () => {}} />);
+    const surfaces = view.container.querySelectorAll('[data-profile-glass]');
+    expect(surfaces).toHaveLength(2);
+    expect(surfaces[1].textContent).toContain('Вес, кг');
+    expect(surfaces[1].textContent).not.toContain('Telegram ID');
+    expect(screen.getByText('Telegram ID').getAttribute('data-variant')).toBe('caption');
+    expect(screen.getByText('202').getAttribute('data-variant')).toBe('headline');
   });
 
   it('uses Caption labels, Headline values and the compact sex popover', () => {
