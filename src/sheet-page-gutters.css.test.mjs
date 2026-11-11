@@ -51,7 +51,14 @@ describe('Bottom Sheet page gutters', () => {
     const occurrence = css('./schedule/occurrence-draft-sheet.css');
     expect(rule(occurrence, '.occurrence-draft-sheet--inline .occurrence-draft-sheet__body {'))
       .toContain('padding-inline: 16px');
-    expect(rule(css('./schedule/personal-event-sheet.css'), '.personal-event-sheet__field-list {'))
+    expect(rule(occurrence, '.occurrence-draft-sheet__timing {'))
+      .toContain('margin-inline-start: max(-10px, calc(var(--page-pad-x) * -1))');
+    expect(rule(occurrence, '.occurrence-draft-sheet--inline .occurrence-draft-sheet__timing {'))
+      .toContain('margin-inline-start: -10px');
+    const personalEvent = css('./schedule/personal-event-sheet.css');
+    expect(rule(personalEvent, '.personal-event-sheet__timing {'))
+      .toContain('margin-inline-start: max(-10px, calc(var(--page-pad-x) * -1))');
+    expect(rule(personalEvent, '.personal-event-sheet__field-list {'))
       .toContain('margin-inline: -16px');
   });
 });
