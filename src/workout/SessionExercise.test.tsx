@@ -585,3 +585,28 @@ it('keeps FACT row openable by tapping the row, with no chevron when a discussio
   expect(screen.getByRole('dialog', { name: 'Подход 1' })).toBeTruthy();
 });
 
+
+describe('exercise discussion deep-link highlight in FACT', () => {
+  it('highlights only the GIF/name header when arriving at an exercise', () => {
+    const save = vi.fn(async () => undefined);
+    const view = render(<SessionExercise context={context} data={data} onSaveSet={save}
+      defaultCollapsed={false} focusHeader />);
+    const headerFocus = view.container.querySelector('.session-exercise__header-list .discussion-set-focus');
+    expect(headerFocus?.querySelector('.session-exercise__header-toggle')).not.toBeNull();
+    expect(headerFocus?.textContent).toContain('Жим лёжа');
+    expect(headerFocus?.querySelector('.discussion-set-focus__flash')).not.toBeNull();
+    expect(view.container.querySelector('.session-exercise__sets .discussion-set-focus')).toBeNull();
+    fireEvent.click(screen.getByText('Жим лёжа'));
+    expect(screen.getByRole('button', { name: 'Развернуть упражнение' })).toBeTruthy();
+  });
+
+  it('highlights a FACT approach without flashing its containing exercise header', () => {
+    const save = vi.fn(async () => undefined);
+    const view = render(<SessionExercise context={context} data={data} onSaveSet={save}
+      defaultCollapsed={false} focusSetId={302} />);
+    expect(view.container.querySelector('.session-exercise__header-list .discussion-set-focus')).toBeNull();
+    const flash = view.container.querySelector('.session-exercise__sets .discussion-set-focus__flash');
+    expect(flash).not.toBeNull();
+    expect(flash?.closest('.discussion-set-focus')?.querySelector('[aria-label="Открыть подход 2"]')).not.toBeNull();
+  });
+});
