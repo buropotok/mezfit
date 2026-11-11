@@ -40,7 +40,7 @@ describe('SettingsPage typography settings', () => {
     const onFontFamilyChange = vi.fn();
     render(
       <SettingsPage
-        fontFamily="zen-maru-gothic"
+        fontFamily="inter"
         onFontFamilyChange={onFontFamilyChange}
         onNavigationContextChange={vi.fn()}
       />,
@@ -48,10 +48,10 @@ describe('SettingsPage typography settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
 
     const selector = screen.getByRole('button', { name: 'Семейство шрифта' });
-    expect(selector.textContent).toBe('Zen Maru Gothic');
+    expect(selector.textContent).toBe('Inter');
     fireEvent.click(selector);
-    fireEvent.click(screen.getByRole('button', { name: 'Inter' }));
-    expect(onFontFamilyChange).toHaveBeenLastCalledWith('inter');
+    fireEvent.click(screen.getByRole('button', { name: 'Zen Maru Gothic' }));
+    expect(onFontFamilyChange).toHaveBeenLastCalledWith('zen-maru-gothic');
 
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить шрифты' }));
     expect(onFontFamilyChange).toHaveBeenLastCalledWith('inter');
