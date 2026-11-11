@@ -27,9 +27,11 @@ vi.mock('../schedule/CalendarSessionSheet', () => ({
 }));
 
 beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 9, 11, 12));
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const pair = {
   realmId: 'pair', owner: 'pair', athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202',
@@ -37,7 +39,7 @@ const pair = {
 };
 const singleDay = '2026-10-10';
 const multipleDay = '2026-10-11';
-const plannedDay = '2098-10-12';
+const plannedDay = '2026-10-12';
 
 function completed(id: string, day: string): CalendarWorkoutSession {
   const time = day + 'T12:00:00';
