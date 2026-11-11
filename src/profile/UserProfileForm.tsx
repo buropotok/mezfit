@@ -160,7 +160,6 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
           {draft.birthDate ? <Button variant="secondary" size="compact" disabled={saving}
             onClick={() => update('birthDate', '')}>Убрать дату рождения</Button> : null}
         </div>
-
         {age !== null ? <div className="user-profile__field">
           <Text variant="caption">Возраст</Text>
           <Text variant="headline">{age}</Text>
@@ -174,9 +173,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
             trigger={<span ref={sexTrigger}><Button variant="secondary" size="compact" disabled={saving}
               onClick={() => setSexOpen(true)}>Изменить пол</Button></span>} />
         </div>
-
         {weightInput}
-
       </div>
     </GlassSurface> : <>
       <Text variant="caption">Telegram ID</Text>
