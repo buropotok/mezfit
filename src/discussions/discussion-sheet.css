@@ -50,6 +50,7 @@
   z-index: 0;
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -350,7 +351,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  width: min(64vw, 17rem);
+  /* Fit the Konsta bubble content box rather than sizing from the viewport. */
+  width: min(100%, 17rem);
+  max-width: 100%;
   min-width: 0;
 }
 

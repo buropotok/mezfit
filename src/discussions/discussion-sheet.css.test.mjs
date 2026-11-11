@@ -13,6 +13,18 @@ describe('discussion-owned composition', () => {
     expect(css).not.toContain('.discussion-message-target[data-highlighted]');
     expect(css).not.toContain('outline-offset: -2px');
   });
+  it('keeps voice attachments inside the message bubble and prevents sideways chat scrolling', () => {
+    const voice = css.match(/\.discussion-voice\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(voice).toContain('width: min(100%, 17rem)');
+    expect(voice).toContain('max-width: 100%');
+    expect(voice).toContain('min-width: 0');
+    expect(voice).not.toMatch(/\b(?:vw|dvw|svw|lvw)\b/);
+
+    const scroller = css.match(/\.discussion-thread__scroll\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(scroller).toContain('overflow-x: hidden');
+    expect(scroller).toContain('overflow-y: auto');
+  });
+
   it('reserves 24px corners for the growing glass input and no black sync strip', () => {
     const sheet = readFileSync(new URL('./DiscussionSheet.tsx', import.meta.url), 'utf8');
     expect(sheet).toContain('className="discussion-composer__field" {...material} shape={{ radius: 24 }}');
