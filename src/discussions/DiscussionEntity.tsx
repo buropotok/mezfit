@@ -6,6 +6,7 @@ import { observeDiscussionDestination, type DiscussionDestination } from '../dat
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { OccurrenceDraftSheet } from '../schedule/OccurrenceDraftSheet';
 import { AdHocSessionScreen } from '../workout/AdHocSessionScreen';
@@ -26,6 +27,7 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
   const repositories = useMemo(() => cloud ? {
     programs: new ProgramManagementRepository(cloud.db, cloud.actorUserId),
     drafts: new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId),
+    planning: new WorkoutPlanningRepository(cloud.db, cloud.actorUserId),
     sessions: role === 'coach' ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId)
       : new ClientWorkoutRepository(cloud.db, cloud.actorUserId),
   } : null, [cloud?.db, cloud?.actorUserId, role]);
@@ -65,7 +67,9 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
       onSave={async (selected, updateProgram) => {
         const latest = await repositories.drafts.get(selected.id);
         if (!latest) throw new Error('Тренировка недоступна');
-        await repositories.drafts.save(selected.id);
+        if (latest.autoCreatedProgram && !latest.previouslyPublished)
+          await repositories.planning.publish(selected.id);
+        else await repositories.drafts.save(selected.id);
         if (updateProgram && latest.trainingPlanId && latest.programDayId) {
           try {
             await repositories.programs.applyOccurrencePlan(latest.trainingPlanId, latest.programDayId,
