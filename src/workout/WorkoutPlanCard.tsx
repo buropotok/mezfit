@@ -146,9 +146,8 @@ export function WorkoutPlanCard({
   const [expandedExercises, setExpandedExercises] = useState<ReadonlySet<string>>(
     () => new Set(focusExerciseId ? [focusExerciseId] : []));
   useEffect(() => {
-    if (!focusExerciseId) return;
-    setExpandedExercises(current => current.has(focusExerciseId)
-      ? current : new Set([...current, focusExerciseId]));
+    // A new discussion destination starts from a deterministic collapsed workout.
+    setExpandedExercises(new Set(focusExerciseId ? [focusExerciseId] : []));
   }, [focusExerciseId]);
   const scheduleTriggerRef = useRef<HTMLElement>(null);
   const [afterMenu, setAfterMenu] = useState<(() => void) | null>(null);
