@@ -114,7 +114,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
       </div>)}
         {data?.canEdit && repository ? <Button disabled={resetting}
           onClick={() => { setMessage(null); setEditor({ repository, key, profile }); }}>Изменить анкету</Button> : null}
-        {age !== null ? <Text variant="headline">Возраст: {age}</Text> : null}
+        {age !== null ? <div><Text variant="caption">Возраст:</Text>{' '}<Text variant="headline">{age}</Text></div> : null}
         <Text variant="caption" tone="muted">Изменено: {new Date(profile.updatedAt).toLocaleString('ru-RU')}</Text>
       </>}
     {notice ? <Text variant="footnote" role={notice.error ? 'alert' : 'status'}>{notice.text}</Text> : null}
