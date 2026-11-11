@@ -36,6 +36,27 @@ describe('SettingsPage typography settings', () => {
     );
   });
 
+  it('offers the app-wide Inter font alongside the original default and resets the choice', () => {
+    const onFontFamilyChange = vi.fn();
+    render(
+      <SettingsPage
+        fontFamily="zen-maru-gothic"
+        onFontFamilyChange={onFontFamilyChange}
+        onNavigationContextChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
+
+    const selector = screen.getByRole('button', { name: 'Семейство шрифта' });
+    expect(selector.textContent).toBe('Zen Maru Gothic');
+    fireEvent.click(selector);
+    fireEvent.click(screen.getByRole('button', { name: 'Inter' }));
+    expect(onFontFamilyChange).toHaveBeenLastCalledWith('inter');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить шрифты' }));
+    expect(onFontFamilyChange).toHaveBeenLastCalledWith('zen-maru-gothic');
+  });
+
   it('keeps incomplete numeric drafts editable until they become valid', () => {
     const onTypographySettingsChange = vi.fn();
     const view = render(

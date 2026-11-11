@@ -26,6 +26,7 @@ import { PersonalExercises } from './exercises/PersonalExercises';
 import { PublicExerciseMediaPrefetch } from './exercises/PublicExerciseMediaPrefetch';
 import { PublicCategoryArtworkProvider } from './exercises/PublicCategoryArtworkProvider';
 import { loadBrowserGlassSettings, saveBrowserGlassSettings } from './glassSettings';
+import { applyFontFamily, loadBrowserFontFamily, saveBrowserFontFamily } from './fontFamilySettings';
 import {
   type AppDestination,
   type NavigationContext,
@@ -236,6 +237,7 @@ export function App() {
   const [glassSettings, setGlassSettings] = useState(loadBrowserGlassSettings);
   const [backgroundSettings, setBackgroundSettings] = useState(loadBrowserBackgroundSettings);
   const [typographySettings, setTypographySettings] = useState(loadBrowserTypographySettings);
+  const [fontFamily, setFontFamily] = useState(loadBrowserFontFamily);
 
   const handleNavigationContextChange = useCallback((context: NavigationContext | null) => {
     setNavigationContext(context);
@@ -277,6 +279,11 @@ export function App() {
     applyTypographySettings(typographySettings);
     saveBrowserTypographySettings(typographySettings);
   }, [typographySettings]);
+
+  useEffect(() => {
+    applyFontFamily(fontFamily);
+    saveBrowserFontFamily(fontFamily);
+  }, [fontFamily]);
 
   useEffect(() => {
     const webApp = getTelegramWebApp();
@@ -514,6 +521,8 @@ export function App() {
             onGlassSettingsChange={setGlassSettings}
             typographySettings={typographySettings}
             onTypographySettingsChange={setTypographySettings}
+            fontFamily={fontFamily}
+            onFontFamilyChange={setFontFamily}
             onNavigationContextChange={handleNavigationContextChange}
             initialScreenDiagnosticsOpen={initialScreenDiagnosticsOpen}
             onScreenDiagnosticsDeepLinkConsumed={() => setInitialScreenDiagnosticsOpen(false)}
