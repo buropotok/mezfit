@@ -36,11 +36,11 @@ describe('SettingsPage typography settings', () => {
     );
   });
 
-  it('offers the app-wide Inter font alongside the original default and resets the choice', () => {
+  it('offers both font families and resets the choice to Inter', () => {
     const onFontFamilyChange = vi.fn();
     render(
       <SettingsPage
-        fontFamily="zen-maru-gothic"
+        fontFamily="inter"
         onFontFamilyChange={onFontFamilyChange}
         onNavigationContextChange={vi.fn()}
       />,
@@ -48,13 +48,19 @@ describe('SettingsPage typography settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
 
     const selector = screen.getByRole('button', { name: 'Семейство шрифта' });
-    expect(selector.textContent).toBe('Zen Maru Gothic');
+    expect(selector.textContent).toBe('Inter');
     fireEvent.click(selector);
-    fireEvent.click(screen.getByRole('button', { name: 'Inter' }));
-    expect(onFontFamilyChange).toHaveBeenLastCalledWith('inter');
+    fireEvent.click(screen.getByRole('button', { name: 'Zen Maru Gothic' }));
+    expect(onFontFamilyChange).toHaveBeenLastCalledWith('zen-maru-gothic');
 
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить шрифты' }));
-    expect(onFontFamilyChange).toHaveBeenLastCalledWith('zen-maru-gothic');
+    expect(onFontFamilyChange).toHaveBeenLastCalledWith('inter');
+  });
+
+  it('shows Inter as the initial family when no preference is supplied', () => {
+    render(<SettingsPage onNavigationContextChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Шрифты' }));
+    expect(screen.getByRole('button', { name: 'Семейство шрифта' }).textContent).toBe('Inter');
   });
 
   it('keeps incomplete numeric drafts editable until they become valid', () => {

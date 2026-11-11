@@ -2,14 +2,18 @@
  * App-wide font selection is a local presentation preference, not synchronized
  * business data. Keep the public CSS token stable for app text and Konsta.
  */
-export const FONT_FAMILIES = ['zen-maru-gothic', 'inter'] as const;
+export const FONT_FAMILIES = ['inter', 'zen-maru-gothic'] as const;
 export type FontFamily = (typeof FONT_FAMILIES)[number];
 
-export const DEFAULT_FONT_FAMILY: FontFamily = 'zen-maru-gothic';
-const FONT_FAMILY_STORAGE_KEY = 'mezfit.fontFamily.v1';
+export const DEFAULT_FONT_FAMILY: FontFamily = 'inter';
+// v1 automatically saved the old Zen default on every mount, so it cannot
+// distinguish an explicit user selection from an untouched default.
+// Start a fresh preference version so existing installations receive Inter;
+// subsequent manual choices (including Zen) persist normally.
+const FONT_FAMILY_STORAGE_KEY = 'mezfit.fontFamily.v2';
 
 export function normalizeFontFamily(value: unknown): FontFamily {
-  return value === 'inter' ? 'inter' : DEFAULT_FONT_FAMILY;
+  return value === 'zen-maru-gothic' ? 'zen-maru-gothic' : DEFAULT_FONT_FAMILY;
 }
 
 export function loadFontFamily(storage: Pick<Storage, 'getItem'>): FontFamily {
