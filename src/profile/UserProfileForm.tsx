@@ -87,6 +87,15 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
   const age = ageFromBirthDate(draft.birthDate);
   const today = getTodayLocalDate();
   const selectDate = parseLocalDate(draft.birthDate) ? draft.birthDate : `${new Date().getFullYear() - 25}-01-01`;
+  const sexValue = draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан';
+  const sexItems = sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
+    onSelect: () => { if (!saving) update('sex', option.value); setSexOpen(false); } }));
+  const weightInput = <List nested strong={false} dividers={false}>
+    <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-weight`} type="number"
+      inputMode="decimal" label="Вес, кг"
+      value={draft.weightKg ?? ''} disabled={saving}
+      onChange={event => update('weightKg', event.target.value === '' ? null : Number(event.target.value))} />
+  </List>;
   const submit = async () => {
     if (busy.current) return;
     setAttempted(true);
@@ -138,10 +147,10 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
           <Text variant="caption">Telegram ID</Text>
           <Text variant="headline">{telegramUserId}</Text>
         </div>
-        {purpose === 'self' ? <div className="user-profile__field">
+        <div className="user-profile__field">
           <Text variant="caption">Telegram</Text>
           <Text variant="headline">{telegramUsername ? '@' + telegramUsername : 'Не указан'}</Text>
-        </div> : null}
+        </div>
         <div className="user-profile__field">
           <Text variant="caption">Дата рождения</Text>
           <Text variant="headline">{readableDate(draft.birthDate) || 'Не указана'}</Text>
@@ -151,29 +160,23 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
           {draft.birthDate ? <Button variant="secondary" size="compact" disabled={saving}
             onClick={() => update('birthDate', '')}>Убрать дату рождения</Button> : null}
         </div>
-        {overrideControl('birthDate')}
+
         {age !== null ? <div className="user-profile__field">
           <Text variant="caption">Возраст</Text>
           <Text variant="headline">{age}</Text>
         </div> : null}
         <div className="user-profile__field">
           <Text variant="caption">Пол</Text>
-          <Text variant="headline">{draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
+          <Text variant="headline">{sexValue}</Text>
           <LiquidPopover isOpen={sexOpen} onOpenChange={setSexOpen} triggerRef={sexTrigger}
             label="Выберите пол" triggerActivation="controlled"
-            items={sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
-              onSelect: () => { if (!saving) update('sex', option.value); setSexOpen(false); } }))}
+            items={sexItems}
             trigger={<span ref={sexTrigger}><Button variant="secondary" size="compact" disabled={saving}
               onClick={() => setSexOpen(true)}>Изменить пол</Button></span>} />
         </div>
-        {overrideControl('sex')}
-        <List nested strong={false} dividers={false}>
-          <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-weight`} type="number"
-            inputMode="decimal" label="Вес, кг"
-            value={draft.weightKg ?? ''} disabled={saving}
-            onChange={event => update('weightKg', event.target.value === '' ? null : Number(event.target.value))} />
-        </List>
-        {overrideControl('weightKg')}
+
+        {weightInput}
+
       </div>
     </GlassSurface> : <>
       <Text variant="caption">Telegram ID</Text>
@@ -190,19 +193,13 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       {overrideControl('birthDate')}
       <LiquidPopover isOpen={sexOpen} onOpenChange={setSexOpen} triggerRef={sexTrigger}
         label="Выберите пол" triggerActivation="controlled"
-        items={sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
-          onSelect: () => { if (!saving) update('sex', option.value); setSexOpen(false); } }))}
+        items={sexItems}
         trigger={<span ref={sexTrigger}><Button variant="secondary" disabled={saving} onClick={() => setSexOpen(true)}>
-          <Text variant="caption">Пол:</Text>{' '}<Text variant="headline">{draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
+          <Text variant="caption">Пол:</Text>{' '}<Text variant="headline">{sexValue}</Text>
         </Button></span>} />
       {overrideControl('sex')}
       <GlassSurface preset="modalTuned" optics={false} shape="auto">
-        <List nested strong={false} dividers={false}>
-          <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-weight`} type="number"
-            inputMode="decimal" label="Вес, кг"
-            value={draft.weightKg ?? ''} disabled={saving}
-            onChange={event => update('weightKg', event.target.value === '' ? null : Number(event.target.value))} />
-        </List>
+        {weightInput}
       </GlassSurface>
       {overrideControl('weightKg')}
     </>}
