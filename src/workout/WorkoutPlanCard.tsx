@@ -174,7 +174,7 @@ export function WorkoutPlanCard({
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
       showPlanMetrics={showPlanMetrics}
       focusSetId={item.exercise.id === focusExerciseId ? focusSetId : undefined}
-      focusHeader={item.exercise.id === focusExerciseId && !focusSetId} focusReady={focusReady}
+      focusHeader={item.exercise.id === focusExerciseId && focusSetId === undefined} focusReady={focusReady}
       discussionTarget={discussionTargetFor?.(item.exercise.id)}
       discussionTargetForSet={discussionTargetFor ? setId => discussionTargetFor(item.exercise.id, setId) : undefined}
       onOpenDiscussion={onOpenDiscussion} onNavigationContextChange={onNavigationContextChange}
