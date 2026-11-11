@@ -8,7 +8,10 @@ import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { CloudProgramDetailsPage } from '../program/CloudProgramDetailsPage';
 import { OccurrenceDraftSheet } from '../schedule/OccurrenceDraftSheet';
-import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
+import { AdHocSessionScreen } from '../workout/AdHocSessionScreen';
+import { AdHocWorkoutRepository } from '../data/cloud/adhoc-workouts';
+import { ClientWorkoutRepository } from '../data/cloud/client-workouts';
+import { getTelegramWebApp } from '../telegram';
 import { Text } from '../ui';
 
 export function DiscussionEntity({ thread, role, onBack, onNavigationContextChange }: {
@@ -23,7 +26,9 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
   const repositories = useMemo(() => cloud ? {
     programs: new ProgramManagementRepository(cloud.db, cloud.actorUserId),
     drafts: new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId),
-  } : null, [cloud?.db, cloud?.actorUserId]);
+    sessions: role === 'coach' ? new AdHocWorkoutRepository(cloud.db, cloud.actorUserId)
+      : new ClientWorkoutRepository(cloud.db, cloud.actorUserId),
+  } : null, [cloud?.db, cloud?.actorUserId, role]);
   useEffect(() => {
     setTarget(null); setError('');
     if (!cloud) return;
@@ -46,11 +51,30 @@ export function DiscussionEntity({ thread, role, onBack, onNavigationContextChan
     viewerRole={role} readOnly={role === 'client'} cloudStatus={cloud.status} cloudError={cloud.error}
     syncStatus={cloud.syncStatus} syncError={cloud.syncError} onRetryCloud={cloud.refresh} onRetrySync={cloud.retrySync}
     onNavigationContextChange={setNested} />;
-  if (target.kind === 'occurrence') return <OccurrenceDraftSheet draft={target.draft} drafts={repositories.drafts}
+  if (target.kind === 'occurrence') {
+    const draft = target.draft;
+    // Match the calendar editor's participant/format rules; repositories still
+    // enforce structural and PLAN-authoring permissions on every mutation.
+    const editable = (!draft.executionStatus || draft.executionStatus === 'scheduled')
+      && !draft.workoutSessionId
+      && (draft.athleteUserId === cloud.actorUserId || draft.coachUserId === cloud.actorUserId)
+      && (draft.format !== 'coached' || draft.coachUserId === cloud.actorUserId);
+    return <OccurrenceDraftSheet draft={draft} drafts={repositories.drafts}
+      focusExerciseId={target.focus?.exerciseId} focusSetId={target.focus?.setId}
+      readOnly={!editable} onClose={onBack}
+      onSave={async (selected, updateProgram) => {
+        const latest = await repositories.drafts.get(selected.id);
+        if (!latest) throw new Error('Тренировка недоступна');
+        await repositories.drafts.save(selected.id);
+        if (updateProgram && latest.trainingPlanId && latest.programDayId)
+          await repositories.programs.applyOccurrencePlan(latest.trainingPlanId, latest.programDayId,
+            latest.plan, latest.originalPlan);
+      }}
+      onNavigationContextChange={setNested} />;
+  }
+  return <AdHocSessionScreen repository={repositories.sessions} sessionId={target.session.sessionId}
+    initData={getTelegramWebApp()?.initData ?? ''} personalCatalogueRole={role}
     focusExerciseId={target.focus?.exerciseId} focusSetId={target.focus?.setId}
-    readOnly onClose={onBack} onSave={async () => {}} onNavigationContextChange={setNested} />;
-  return <WorkoutSessionCard readOnly session={target.session} title={target.name} comment={target.comment}
-    initiallyExpanded={thread.anchor.kind === 'exercise' || thread.anchor.kind === 'set'}
-    onReorderExerciseIds={() => {}} onSaveSet={async () => {}}
+    onExerciseInformation={exerciseId => repositories.sessions.exerciseInformation(target.session.sessionId, exerciseId)}
     onNavigationContextChange={setNested} />;
 }
