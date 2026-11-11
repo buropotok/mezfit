@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionDestination } from '../data/cloud/discussion-destination';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
+import type { ActiveWorkoutSession } from '../workout/workoutSessionTypes';
 import type { DiscussionThread } from '../data/cloud/discussion-contracts';
 import type { NavigationContext } from '../NavigationShell';
 import { DiscussionEntity } from './DiscussionEntity';
@@ -83,4 +84,47 @@ it('forwards the exact scheduled exercise and set to the existing PLAN viewer', 
   expect(screen.getByText('Плановая тренировка')).toBeTruthy();
   expect(screen.getByTestId('planned-focus').textContent).toBe('occ-ex/occ-set');
   expect(entityView.readOnly).toBe(false);
+});
+
+it('saves edits through the real scheduled repository rather than a no-op callback', async () => {
+  const draft: LocalWorkoutOccurrenceDraft = {
+    id: 'draft:occurrence', actorUserId: 'tg:11', realmId: 'tg:11',
+    athleteUserId: 'tg:11', coachUserId: null, clientUserId: null,
+    format: 'independent', startsAtUtc: '2026-11-07T10:00:00.000Z', durationMinutes: 60,
+    plan: { name: 'План', comment: null, exercises: [] },
+    originalPlan: { name: 'План', comment: null, exercises: [] }, createdAt: '', updatedAt: '',
+  };
+  draftCalls.get.mockResolvedValue(draft);
+  draftCalls.save.mockResolvedValue('occurrence');
+  render(<DiscussionEntity thread={thread} role="coach" onBack={vi.fn()} onNavigationContextChange={vi.fn()} />);
+  act(() => state.next?.({ kind: 'occurrence', draft }));
+  expect(entityView.readOnly).toBe(false);
+  await act(async () => { await entityView.save?.(draft, false); });
+  expect(draftCalls.get).toHaveBeenCalledWith(draft.id);
+  expect(draftCalls.save).toHaveBeenCalledWith(draft.id);
+});
+
+it('keeps coach-authored coached PLAN read-only to an athlete', () => {
+  const draft: LocalWorkoutOccurrenceDraft = {
+    id: 'draft:shared', actorUserId: 'tg:11', realmId: 'pair',
+    athleteUserId: 'tg:11', coachUserId: 'tg:22', clientUserId: 'tg:11',
+    format: 'coached', startsAtUtc: '2026-11-07T10:00:00.000Z', durationMinutes: 60,
+    plan: { name: 'План', comment: null, exercises: [] },
+    originalPlan: { name: 'План', comment: null, exercises: [] }, createdAt: '', updatedAt: '',
+  };
+  render(<DiscussionEntity thread={thread} role="client" onBack={vi.fn()} onNavigationContextChange={vi.fn()} />);
+  act(() => state.next?.({ kind: 'occurrence', draft }));
+  expect(entityView.readOnly).toBe(true);
+});
+
+it('opens a complete FACT workout via the normal session owner with only the target focused', () => {
+  const session: ActiveWorkoutSession<string> = {
+    sessionId: 'execution', occurrenceId: 'occurrence', status: 'active',
+    workoutDate: '2026-11-07', startedAt: '2026-11-07T10:00:00.000Z',
+    completedAt: null, program: null, phase: null, day: null, exercises: [],
+  };
+  render(<DiscussionEntity thread={thread} role="coach" onBack={vi.fn()} onNavigationContextChange={vi.fn()} />);
+  act(() => state.next?.({ kind: 'session', session, name: 'Факт', comment: null,
+    focus: { exerciseId: 'execution-ex', setId: 'execution-set' } }));
+  expect(screen.getByText('Выполнение execution, фокус execution-ex/execution-set')).toBeTruthy();
 });
