@@ -36,7 +36,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     ? <img src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
     : <video src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
-        playsInline controls={!thumbnail} preload="metadata"
+        playsInline controls={!thumbnail} controlsList="nofullscreen" preload="metadata"
         onLoadedMetadata={thumbnail ? event => seekThumbnail(event.currentTarget) : undefined}
         onError={() => setFailed(true)} />;
 

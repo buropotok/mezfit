@@ -30,6 +30,10 @@ export interface TelegramWebApp {
   ready(): void;
   expand(): void;
   disableVerticalSwipes?(): void;
+  isFullscreen?: boolean;
+  isVersionAtLeast?(version: string): boolean;
+  requestFullscreen?(): void;
+  exitFullscreen?(): void;
   addToHomeScreen?(): void;
   checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
   onEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
@@ -127,6 +131,20 @@ export function prepareTelegramWebApp(webApp: TelegramWebApp): void {
   webApp.ready();
   webApp.expand();
   webApp.disableVerticalSwipes?.();
+}
+
+/** Ask the host to expand a video surface and restore its previous mode on close. */
+export function requestTelegramVideoFullscreen(): (() => void) | undefined {
+  const app = getTelegramWebApp();
+  if (!app?.requestFullscreen || !app.exitFullscreen || app.isFullscreen || app.isVersionAtLeast?.('8.0') === false) return;
+  try {
+    app.requestFullscreen();
+  } catch {
+    return;
+  }
+  return () => {
+    try { app.exitFullscreen?.(); } catch { /* The app's own video layout still returns to the sheet. */ }
+  };
 }
 
 export function bindTelegramBackButton(
