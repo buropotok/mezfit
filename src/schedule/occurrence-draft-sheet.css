@@ -1,10 +1,10 @@
 .occurrence-draft-sheet { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .occurrence-draft-sheet__host { height: 100%; min-height: 0; }
-.occurrence-draft-sheet__header, .occurrence-draft-sheet__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; flex-shrink: 0; }
+.occurrence-draft-sheet__header, .occurrence-draft-sheet__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px var(--page-pad-x); flex-shrink: 0; }
 .occurrence-draft-sheet__header { padding-bottom: 8px; }
-.occurrence-draft-sheet__body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; gap: 16px; padding: 0 16px 24px; overscroll-behavior: contain; }
-/* Compact UIkit Buttons have a 10px leading inset; offset their container, not the primitive. */
-.occurrence-draft-sheet__timing { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0; margin-inline-start: -10px; }
+.occurrence-draft-sheet__body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; gap: 16px; padding: 0 var(--page-pad-x) 24px; overscroll-behavior: contain; }
+/* Compact UIkit Buttons have a 10px leading inset; keep their wrapper within the sheet gutter. */
+.occurrence-draft-sheet__timing { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0; margin-inline-start: max(-10px, calc(var(--page-pad-x) * -1)); }
 .occurrence-draft-sheet__date-button { grid-column: 1; grid-row: 1; justify-self: start; }
 .occurrence-draft-sheet__repeat-control { grid-column: 2; grid-row: 1; justify-self: end; }
 .occurrence-draft-sheet__time-row { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; max-width: 100%; }
@@ -22,7 +22,8 @@
 .occurrence-draft-sheet__coach-avatar { display: inline-flex; align-items: center; flex-shrink: 0; }
 
 .occurrence-draft-sheet--inline { height: auto; gap: 16px; }
-.occurrence-draft-sheet--inline .occurrence-draft-sheet__body { overflow: visible; flex: none; }
+.occurrence-draft-sheet--inline .occurrence-draft-sheet__body { overflow: visible; flex: none; padding-inline: 16px; }
+.occurrence-draft-sheet--inline .occurrence-draft-sheet__timing { margin-inline-start: -10px; }
 .occurrence-draft-sheet__start { padding: 0 0 max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
 .occurrence-draft-sheet__identity { padding: 16px 16px 0; }
 

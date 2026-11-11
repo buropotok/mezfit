@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px;
+  padding: 16px var(--page-pad-x);
   flex: 0 0 auto;
 }
 .personal-event-sheet__body {
@@ -21,7 +21,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   gap: 20px;
-  padding: 0 16px 24px;
+  padding: 0 var(--page-pad-x) 24px;
 }
 /* Match the existing workout editor's compact UIkit timing layout. */
 .personal-event-sheet__timing {
@@ -29,7 +29,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
-  margin-inline-start: -10px;
+  margin-inline-start: max(-10px, calc(var(--page-pad-x) * -1));
 }
 .personal-event-sheet__time-row {
   display: flex;
@@ -50,7 +50,7 @@
 /*
  * Konsta 5.4.0 outlined ListInput places its visible border 16px inside
  * the List on both sides. Offset only that public List wrapper so the border
- * aligns with the sheet body's 16px content inset (never with the viewport edge).
+ * aligns with the sheet body's configurable content inset (never with the viewport edge).
  * Leave Konsta's internal structure, controls and typography untouched.
  */
 .personal-event-sheet__field-list {

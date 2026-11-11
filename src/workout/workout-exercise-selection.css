@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-3);
+  padding: var(--space-3) var(--page-pad-x);
 }
 .workout-exercise-selection__header > :last-child {
   margin-left: auto;
@@ -17,9 +17,9 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 var(--space-3) var(--space-3);
+  padding: 0 var(--page-pad-x) var(--space-3);
 }
 .workout-exercise-selection__footer {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--page-pad-x);
   flex-shrink: 0;
 }

@@ -1,5 +1,5 @@
 .workout-planning-sheet {
-  padding: 16px;
+  padding: 16px var(--page-pad-x);
   display: flex;
   flex-direction: column;
   gap: 16px;

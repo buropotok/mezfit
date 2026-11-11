@@ -1,5 +1,5 @@
 .schedule-client-avatar { width: 28px; height: 28px; }
-.schedule-client-filter { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.schedule-client-filter { padding: 16px var(--page-pad-x); display: flex; flex-direction: column; gap: 16px; }
 .schedule-client-filter__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .schedule-client-filter__apply { padding: 0; border: 0; background: transparent; color: var(--ui-color-primary, #329bff); }
 
