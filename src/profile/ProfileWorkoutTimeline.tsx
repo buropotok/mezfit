@@ -184,7 +184,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   }, [close, setHistoryFilter, rowsByDate, workouts.data, openWorkout]);
 
   useEffect(() => {
-    onCalendarChange?.({ value: calendarDay ?? today, onChange: selectCalendarDay, dayStatuses, closeOnSelect: true });
+    onCalendarChange?.({ value: calendarDay ?? today, onChange: selectCalendarDay, dayStatuses });
     return () => onCalendarChange?.(undefined);
   }, [onCalendarChange, calendarDay, today, selectCalendarDay, dayStatuses]);
 

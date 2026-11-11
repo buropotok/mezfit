@@ -64,7 +64,7 @@ it('filters client History by a calendar day and opens details only for a single
   expect(screen.getByRole('region', { name: 'История тренировок' })).toBeTruthy();
   const selectDay = (day: string) => {
     const calendar = context()?.calendar;
-    expect(calendar?.closeOnSelect).toBe(true);
+    expect(calendar).toBeDefined();
     act(() => calendar?.onChange(day));
   };
 
@@ -78,8 +78,8 @@ it('filters client History by a calendar day and opens details only for a single
     completed('Одна', singleDay), completed('Первая', multipleDay), completed('Вторая', multipleDay),
     { ...completed('Чужая', singleDay), realmId: 'other-pair' },
   ] }));
-  fireEvent.click(screen.getByRole('button', { name: 'Закрыть Одна' }));
-  expect(screen.queryByRole('button', { name: 'Закрыть Одна' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Закрыть Одна' })).toBeTruthy();
+  expect(context()?.calendar?.value).toBe(singleDay);
   expect(context()?.calendar?.dayStatuses).toEqual(expect.arrayContaining([
     { date: singleDay, status: 'completed' },
     { date: multipleDay, status: 'completed' },
@@ -91,8 +91,11 @@ it('filters client History by a calendar day and opens details only for a single
   expect(screen.getAllByRole('button', { name: /^Завершённая тренировка:/ })).toHaveLength(2);
   expect(screen.queryByRole('button', { name: /^Закрыть/ })).toBeNull();
 
+  const markers = context()?.calendar?.dayStatuses;
   selectDay(plannedDay);
   expect(screen.getByRole('button', { name: 'Запланированная тренировка: План' })).toBeTruthy();
   expect(screen.getByRole('dialog', { name: 'draft:planned' })).toBeTruthy();
+  expect(context()?.calendar?.value).toBe(plannedDay);
+  expect(context()?.calendar?.dayStatuses).toEqual(markers);
   expect(screen.queryByRole('button', { name: /^Завершённая тренировка:/ })).toBeNull();
 });
