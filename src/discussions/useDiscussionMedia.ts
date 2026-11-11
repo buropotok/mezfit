@@ -183,9 +183,9 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         resume.current = () => { void send(selected, false); };
       }
       setError(controller.signal.aborted ? 'Загрузка отменена. Можно повторить отправку'
-        : network ? 'Не удалось связаться с Яндексом. Проверьте сеть и повторите отправку'
+        : network ? 'Mezfit облако недоступно. Проверьте сеть и повторите отправку'
         : reason instanceof MediaUploadError && reason.code === 'SIGNER_AUTH'
-          ? 'Яндекс не разрешил загрузку. Переоткройте Mezfit в Telegram'
+          ? 'Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram'
         : reason instanceof MediaUploadError && reason.code === 'SIGNER_UNAVAILABLE'
           ? 'Не удалось получить ссылку для загрузки. Повторите отправку'
         : reason instanceof MediaUploadError ? 'Хранилище не приняло файл. Повторите отправку'
