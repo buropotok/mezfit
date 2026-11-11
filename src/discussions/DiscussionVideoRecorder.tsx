@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { FloatingActionButton, Icon } from '../ui';
 import { LiquidPopover } from '../ui/LiquidPopover';
 import { useRecordingCountdown } from '../video-note/useRecordingCountdown';
 import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
+import type { VideoNoteFacingMode } from '../video-note/useVideoNoteCameraSession';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
 
@@ -12,6 +13,10 @@ const bottomControls: CSSProperties = { bottom: 'calc(1rem + var(--discussion-me
 const leftControl: CSSProperties = { left: 'calc(1rem + var(--discussion-media-safe-left))' };
 const rightControl: CSSProperties = { right: 'calc(1rem + var(--discussion-media-safe-right))' };
 const centerControl: CSSProperties = { ...bottomControls, right: '50%', translate: '50% 0' };
+const switchWithGallery: CSSProperties = {
+  right: 'var(--discussion-camera-switch-right)',
+  bottom: 'var(--discussion-camera-switch-bottom)',
+};
 const recordIconSize = { width: 28, height: 28 };
 
 interface Props {
@@ -29,6 +34,7 @@ function phoneVideoProfile(): 'portrait' | 'landscape' {
 
 export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
   const [profile] = useState(phoneVideoProfile);
+  const [selectedFacing, setSelectedFacing] = useState<VideoNoteFacingMode | null>(null);
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const cameraPreview = useRef<HTMLVideoElement>(null);
@@ -36,15 +42,22 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
   const delayTrigger = useRef<HTMLElement>(null);
   const [delayOpen, setDelayOpen] = useState(false);
   const [delayPresented, setDelayPresented] = useState(false);
+  const facing = selectedFacing ?? 'environment';
+  const actualFacing = stream?.getVideoTracks()[0]?.getSettings?.().facingMode ?? facing;
+  const nextFacing = actualFacing === 'user' ? 'environment' : 'user';
   const beginRecording = () => {
-    void start('environment', false, { video: cameraPreview.current, profile: phoneVideoProfile() });
+    void start(facing, false, { video: cameraPreview.current, profile: phoneVideoProfile(), requireFacing: selectedFacing !== null });
   };
   const countdown = useRecordingCountdown(beginRecording);
   const countingDown = countdown.remaining !== null;
   const maxSeconds = VIDEO_RECORDING_PROFILES[profile].maxDurationMs / 1000;
 
-  const enableCamera = useCallback(() => { void start('environment', true); }, [start]);
-  useEffect(enableCamera, [enableCamera]);
+  const enableCamera = () => { void start(facing, true, { requireFacing: selectedFacing !== null }); };
+  const switchCamera = () => {
+    setSelectedFacing(nextFacing);
+    void start(nextFacing, true, { requireFacing: true });
+  };
+  useEffect(() => { void start('environment', true); }, [start]);
 
   useEffect(() => {
     const element = cameraPreview.current;
@@ -99,6 +112,10 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
         style={{ ...bottomControls, ...leftControl, visibility: delayPresented ? 'hidden' : undefined }} />} />
     {!inProgress && !clip && <>
       {onGallery && <FloatingActionButton label="Выбрать из галереи" disabled={delayOpen} icon="photo" style={{ ...bottomControls, ...rightControl }} onClick={onGallery} />}
+      <FloatingActionButton label={nextFacing === 'user' ? 'Переключить на фронтальную камеру' : 'Переключить на заднюю камеру'}
+        icon="camera-rotate" disabled={delayOpen || delayPresented}
+        className={onGallery ? 'discussion-video-recorder__switch-with-gallery' : undefined}
+        style={onGallery ? switchWithGallery : { ...bottomControls, ...rightControl }} onClick={switchCamera} />
       {stream && status === 'idle'
         ? <FloatingActionButton label="Начать запись" disabled={delayOpen} style={centerControl} onClick={beginRecording}>
           <Icon name="record-circle" className="discussion-video-recorder__record-icon" style={recordIconSize} />

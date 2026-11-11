@@ -36,16 +36,16 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
     else stream?.getTracks().forEach((track) => track.stop());
   }, [session]);
 
-  const acquire = useCallback(async (facing: VideoNoteFacingMode): Promise<MediaStream | null> => {
+  const acquire = useCallback(async (facing: VideoNoteFacingMode, requireFacing = false): Promise<MediaStream | null> => {
     const existing = liveStream(facing);
     if (existing) return existing;
 
     // When a stream is dead or the camera changes, dispose it before reacquiring.
     release();
     const requestId = ++requestIdRef.current;
-    const stream = session ? await acquireSessionCamera(token.current, facing, profile)
+    const stream = session ? await acquireSessionCamera(token.current, facing, profile, requireFacing)
       : await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facing }, ...videoRecordingConstraints(profile) },
+      video: { facingMode: requireFacing ? { exact: facing } : { ideal: facing }, ...videoRecordingConstraints(profile) },
       audio: { echoCancellation: true, noiseSuppression: true },
     });
     if (!stream) return null;

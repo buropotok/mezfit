@@ -11,6 +11,10 @@ export interface VideoNoteRecording {
 }
 
 export type VideoNoteRecorderStatus = 'idle' | 'requesting' | 'recording' | 'processing' | 'error';
+type CameraOptions = { requireFacing?: boolean } & (
+  { video: HTMLVideoElement | null; profile: Exclude<VideoRecordingProfile, 'circle'> }
+  | { video?: never; profile?: never }
+);
 function cameraError(error: unknown): string {
   if (error instanceof DOMException) {
     if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
@@ -18,6 +22,9 @@ function cameraError(error: unknown): string {
     }
     if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
       return 'Камера или микрофон не найдены на устройстве.';
+    }
+    if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+      return 'Выбранная камера недоступна на этом устройстве.';
     }
     if (error.name === 'NotReadableError' || error.name === 'AbortError') {
       return 'Камера занята другим приложением или временно недоступна.';
@@ -113,7 +120,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const start = useCallback(async (
     facing: VideoNoteFacingMode = 'user',
     permissionOnly = false,
-    preview?: { video: HTMLVideoElement | null; profile: Exclude<VideoRecordingProfile, 'circle'> },
+    cameraOptions?: CameraOptions,
   ): Promise<boolean> => {
     if (statusRef.current !== 'idle' && statusRef.current !== 'error') return false;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -132,7 +139,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     updateStatus('requesting');
     let source = liveStream(facing);
     if (!source) {
-      try { source = await acquire(facing); }
+      setStream(null);
+      try { source = await acquire(facing, cameraOptions?.requireFacing); }
       catch (cause) {
         if (mountedRef.current && epoch === epochRef.current) {
           setError(cameraError(cause));
@@ -160,18 +168,18 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('idle');
       return false;
     }
-    if (preview) {
-      const { video } = preview;
+    if (cameraOptions?.profile) {
+      const { video, profile: orientationProfile } = cameraOptions;
       if (!video || video.srcObject !== source || !video.videoWidth || !video.videoHeight || video.readyState < 2) {
         setError('Дождитесь изображения с камеры и повторите попытку.');
         updateStatus('error');
         return false;
       }
-      const matchesOrientation = preview.profile === 'portrait'
+      const matchesOrientation = orientationProfile === 'portrait'
         ? video.videoHeight > video.videoWidth
         : video.videoWidth > video.videoHeight;
       if (!matchesOrientation) {
-        const orientation = preview.profile === 'portrait' ? 'вертикальный' : 'горизонтальный';
+        const orientation = orientationProfile === 'portrait' ? 'вертикальный' : 'горизонтальный';
         setError(`Камера Telegram не отдаёт ${orientation} кадр. Можно выбрать готовое видео из галереи.`);
         updateStatus('error');
         return false;
