@@ -89,7 +89,12 @@ describe('COMM-07 authorized execution projections', () => {
   });
 
   it.each([false, true])('COMM-08 resolves an exact approach and retains execution without its calendar row (scheduled=%s)', async scheduled => {
-    const { db, coach, session, set } = await fixture(scheduled);
+    const { db, coach, session, exercise, set } = await fixture(scheduled);
+    // The destination must keep unrelated exercises and approaches visible.
+    await db.table('adHocExercises').put({ ...exercise, id: 'other-exercise', position: 1,
+      occurrenceExerciseId: undefined });
+    await db.table('adHocSets').put({ ...set, id: 'other-set', exerciseId: 'other-exercise',
+      occurrenceSetId: undefined });
     const projected = await coach.get(session.id);
     const anchor = projected?.exercises[0].sets[0].discussionAnchor;
     if (!anchor) throw Error('Missing execution anchor');
@@ -102,8 +107,10 @@ describe('COMM-07 authorized execution projections', () => {
       const target = await readDiscussionDestination(database, actor, role, thread);
       expect(target.kind).toBe('session');
       if (target.kind !== 'session') throw Error('Expected exact execution');
-      expect(target.session.exercises).toHaveLength(1);
+      expect(target.session.exercises).toHaveLength(2);
       expect(target.session.exercises[0].sets.map(row => row.sessionSetId)).toEqual([set.id]);
+      expect(target.session.exercises[1].sets.map(row => row.sessionSetId)).toEqual(['other-set']);
+      expect(target.focus).toEqual({ exerciseId: exercise.id, setId: set.id });
       expect(target.comment).toBe('Заметка FACT');
       expect(target.session.exercises[0].notes).toBe('Техника FACT');
     }
