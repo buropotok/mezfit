@@ -31,6 +31,7 @@ import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
+import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './DiscussionVideoSaveDialog';
 import { startPressScale } from '../ui/PressScale';
 import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
 import { RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
@@ -122,6 +123,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const outgoing = media.outgoing && media.selection?.metadata.id === media.outgoing.attachmentId
     ? media.outgoing : undefined;
   const outgoingStatus = media.phase === 'checking' || media.phase === 'idle' ? undefined : media.phase;
+  const outgoingVideo = outgoing && media.selection
+    && (media.selection.metadata.mediaType === 'video' || media.selection.metadata.mediaType === 'video-note')
+    ? media.selection : undefined;
   const published = media.published;
   const publishedObserved = Boolean(published && state.messages.some(message => message.id === published.id));
   const renderedMessages = published && !publishedObserved ? [...state.messages, published] : state.messages;
@@ -152,9 +156,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     && !outgoing);
   const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
   const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
-  const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
+  const viewedAttachment = viewing && renderedMessages.find(row => row.id === viewing.messageId && !row.deleted)
     ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
-  const viewer = viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId) : null;
+  const localVideoUrl = viewing && outgoing?.id === viewing.messageId
+    && outgoingVideo?.metadata.id === viewing.attachmentId && outgoingVideo.metadata.mediaType === 'video' && media.preview
+    ? media.preview : undefined;
+  const viewer: DiscussionMediaSource | null = localVideoUrl
+    ? { src: localVideoUrl, type: 'video' }
+    : viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId) : null;
   const previewVideoUrl = previewing && media.selection?.metadata.mediaType === 'video' ? media.preview : undefined;
   const videoUrl = viewer ? (viewer.type === 'video' ? viewer.src : undefined) : previewVideoUrl;
   const videoFullscreen = Boolean(videoUrl && videoUrl === fullscreenVideo);
@@ -168,6 +177,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const text = editId ? editText : draft.text;
   const setText = (value: string) => { if (editId) setEditText(value); else draft.update(value, replyId); };
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deletingOutgoingVideo = Boolean(deletingId && deletingId === outgoing?.id && outgoingVideo);
+  const [savingVideo, setSavingVideo] = useState<DiscussionVideoSaveTarget | null>(null);
   const [menu, setMenu] = useState<{ id: string; open: boolean } | null>(null);
   const menuRef = useRef(menu);
   menuRef.current = menu;
@@ -278,10 +289,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const updateNavigation = () => onNavigationContextChange({ ...parentNavigation,
     title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
   back.current = () => {
+    if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
     if (videoFullscreen) { setFullscreenVideo(null); updateNavigation(); return; }
-    if (viewer) { setViewing(null); return; }
+    if (viewer) { setViewing(null); updateNavigation(); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
     if (previewing || voiceComposer || circleDraft) {
       if (removingVoice.current) { updateNavigation(); return; }
@@ -300,7 +312,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     // Preserve the underlying entity and its scroll identity; no independent history/Back listeners.
     updateNavigation();
     return () => onNavigationContextChange(parentNavigation);
-  }, [onNavigationContextChange, parentNavigation, session, mediaSurfaceOpen]);
+  }, [onNavigationContextChange, parentNavigation, session, mediaSurfaceOpen, savingVideo]);
   useEffect(() => {
     const update = () => setVisible(document.visibilityState !== 'hidden');
     document.addEventListener('visibilitychange', update);
@@ -433,11 +445,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, mediaSurfaceOpen, repository, threadId, composerHeight, contextHeight, syncState?.status, syncState?.offline]);
 
   useEffect(() => {
-    if (menu && !state.messages.some(row => row.id === menu.id && !row.deleted)) setMenu(null);
+    if (menu && !(menu.id === outgoing?.id && outgoingStatus === 'failed' && outgoingVideo)
+      && !state.messages.some(row => row.id === menu.id && !row.deleted)) setMenu(null);
     if (editId && state.messages.some(row => row.id === editId && row.deleted)) {
       setEditId(null); setEditText(''); setError('Сообщение уже удалено');
     }
-  }, [state.messages, menu?.id, editId]);
+  }, [state.messages, menu?.id, editId, outgoing?.id, outgoingStatus, outgoingVideo]);
   const run = async (operation: () => Promise<void>) => {
     if (pending.current) return;
     pending.current = true; setBusy(true); setError(null);
@@ -492,12 +505,38 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     });
   };
   const own = selected?.authorUserId === repository.actorUserId;
-  const items: LiquidPopoverItem[] = [
+  const outgoingMenu = Boolean(menu && outgoing?.id === menu.id && outgoingStatus === 'failed' && outgoingVideo);
+  const saveItem = (attachmentId: string, target: DiscussionVideoSaveTarget): LiquidPopoverItem => ({
+    id: 'save-video-' + attachmentId, label: 'Сохранить', icon: 'arrow-down', onSelect: () => {
+      if (!menuRef.current?.open || menuRef.current.id !== menu?.id) return;
+      closeMenu();
+      setSavingVideo(target);
+    },
+  });
+  const items: LiquidPopoverItem[] = outgoingMenu && outgoingVideo
+    ? [saveItem(outgoingVideo.metadata.id, { file: outgoingVideo.file })] : [
     { id: 'reply', label: 'Ответить', icon: 'arrow-back-up', onSelect: () => choose('reply') },
     ...(own && selected?.text.trim() && !mediaPresent ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
     ...(selected?.text.trim() ? [{ id: 'copy', label: 'Копировать', icon: 'copy' as const, onSelect: () => choose('copy') }] : []),
+    ...(selected?.attachments ?? []).flatMap(attachment => {
+      if (attachment.mediaType !== 'video' && attachment.mediaType !== 'video-note') return [];
+      const { storageKey, mimeType, sizeBytes } = attachment;
+      const url = storageKey && directMediaUrl(storageKey);
+      if (!url || !storageKey) return [];
+      return [saveItem(attachment.id, { url, cache: { accountId: repository.actorUserId, storageKey, mimeType, sizeBytes } })];
+    }),
     ...(own ? [{ id: 'delete', label: 'Удалить', icon: 'trash' as const, onSelect: () => choose('delete') }] : []),
   ];
+  const renderMessageMenu = (id: string) => menu?.id === id && <span onClick={event => event.stopPropagation()}>
+    <LiquidPopover key={id} triggerRef={trigger} triggerActivation="controlled" isOpen={menu.open}
+      onOpenChange={open => {
+        if (menuRef.current?.id !== id) return;
+        menuRef.current = { ...menuRef.current, open }; setMenu(menuRef.current);
+      }}
+      onPresentationChange={presented => { if (!presented) setMenu(current => current?.id === id && !current.open ? null : current); }}
+      layout="menu" label="Действия сообщения" items={items} {...material}
+      trigger={<button type="button" ref={trigger} aria-hidden="true" tabIndex={-1} className="discussion-menu-source" />} />
+  </span>;
   const replying = replyId ? state.messages.find(row => row.id === replyId) : undefined;
   const replyQuote: DiscussionQuote | null = replyId ? { messageId: replyId,
     authorUserId: replying?.authorUserId ?? null, deleted: Boolean(replying?.deleted), unavailable: !replying,
@@ -609,14 +648,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 }) : renderAttachment?.(message))}
                 inlineMeta={mediaOnly ? undefined : metadata}
                 onBubbleClick={openMenu}
-                bubbleSource={menu?.id === message.id && <span onClick={event => event.stopPropagation()}><LiquidPopover key={message.id} triggerRef={trigger}
-                  triggerActivation="controlled" isOpen={menu.open} onOpenChange={open => {
-                    if (menuRef.current?.id !== message.id) return;
-                    menuRef.current = { ...menuRef.current, open }; setMenu(menuRef.current);
-                  }}
-                  onPresentationChange={presented => { if (!presented) setMenu(current => current?.id === message.id && !current.open ? null : current); }}
-                  layout="menu" label="Действия сообщения" items={items} {...material}
-                  trigger={<button type="button" ref={trigger} aria-hidden="true" tabIndex={-1} className="discussion-menu-source" />} /></span>}
+                bubbleSource={renderMessageMenu(message.id)}
               />
             </div>
           </Fragment>;
@@ -630,7 +662,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           <div className="discussion-message-target" data-own="true" data-message-id={outgoing.id}>
             <DiscussionOutgoingMedia src={media.preview} attachment={media.selection.metadata} createdAt={outgoing.createdAt}
               status={outgoingStatus} error={media.error} onCancel={media.cancel}
-              onRetry={() => void media.send()} onRemove={() => void media.remove()} />
+              onRetry={() => void media.send()}
+              onRemove={outgoingVideo ? () => setDeletingId(outgoing.id) : () => void media.remove()}
+              onOpen={outgoingVideo?.metadata.mediaType === 'video' ? () => {
+                closeMenu();
+                setViewing({ messageId: outgoing.id, attachmentId: outgoing.attachmentId });
+              } : undefined}
+              onMenu={outgoingVideo && outgoingStatus === 'failed' ? () => setMenu({ id: outgoing.id, open: true }) : undefined}
+              menu={renderMessageMenu(outgoing.id)} />
           </div>
         </Fragment>}
       </Messages>
@@ -643,7 +682,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </DiscussionMediaStage>}
     {viewer && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
       fullscreen={viewer.type === 'video' && videoFullscreen}>
-      <DiscussionMedia key={viewer.src} {...viewer} mode="viewer" />
+      <DiscussionMedia key={viewer.src} {...viewer} mode="viewer" autoPlay={Boolean(localVideoUrl)} />
       <div className="discussion-media-stage__close">
         {fullscreenButton}
         <IconButton icon="x" label="Закрыть просмотр" onClick={() => {
@@ -791,12 +830,20 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         </IconButton>
       </GlassSurface>
     </div>
+    {savingVideo && <DiscussionVideoSaveDialog target={savingVideo} onClose={() => setSavingVideo(null)} />}
     <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
-      title={<Text variant="headline">Удалить сообщение?</Text>}
-      content={<Text>Сообщение будет удалено из переписки.</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}
+      title={<Text variant="headline">{deletingOutgoingVideo ? 'Убрать неотправленное видео?' : 'Удалить сообщение?'}</Text>}
+      content={<Text>{deletingOutgoingVideo
+        ? 'Видео исчезнет из чата. Перед удалением можно сохранить копию на устройство.'
+        : 'Сообщение будет удалено из переписки.'}</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}
       buttons={<><MezfitDialogButton disabled={busy} onClick={() => setDeletingId(null)}><Text>Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
           const id = deletingId; if (!id) return;
+          if (deletingOutgoingVideo) {
+            if (outgoingStatus === 'failed') void media.remove();
+            setDeletingId(null);
+            return;
+          }
           void run(async () => { await repository.remove(threadId, id); if (alive.current) setDeletingId(null); });
         }}><Text>Удалить</Text></MezfitDialogButton></>} />
   </div>;

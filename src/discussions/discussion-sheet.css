@@ -502,15 +502,19 @@
   max-width: 100%;
 }
 
-.discussion-outgoing__preview .discussion-media__play {
+.discussion-outgoing__preview:not([data-playable]) .discussion-media__play {
   display: none;
+}
+
+.discussion-outgoing__preview .discussion-media__duration {
+  top: auto;
+  bottom: 4px;
 }
 
 .discussion-outgoing__cancel {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
+  top: 4px;
+  left: 4px;
   display: grid;
   place-items: center;
 }

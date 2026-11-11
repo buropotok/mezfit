@@ -17,11 +17,12 @@ function seekThumbnail(video: HTMLVideoElement) {
   video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
 }
 
-export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta }: DiscussionMediaSource & {
+export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta, autoPlay }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
   onMenu?: () => void;
   meta?: ReactNode;
+  autoPlay?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -36,7 +37,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     ? <img src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
     : <video src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
-        playsInline controls={!thumbnail} controlsList="nofullscreen" preload="metadata"
+        playsInline autoPlay={autoPlay} controls={!thumbnail} controlsList="nofullscreen" preload="metadata"
         onLoadedMetadata={thumbnail ? event => seekThumbnail(event.currentTarget) : undefined}
         onError={() => setFailed(true)} />;
 
