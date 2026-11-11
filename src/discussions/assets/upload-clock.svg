@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-195 -195 390 390" fill="white">
+  <style>
+    @keyframes hour { to { transform: rotate(360deg) } }
+    @keyframes minute { to { transform: rotate(4320deg) } }
+    .hour { animation: hour 12s linear infinite }
+    .minute { animation: minute 12s linear infinite }
+    @media (prefers-reduced-motion: reduce) { .hour, .minute { animation: none } .minute { transform: rotate(90deg) } }
+  </style>
+  <circle r="190" fill="none" stroke="white" stroke-width="10"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(0)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(30)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(60)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(90)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(120)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(150)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(180)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(210)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(240)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(270)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(300)"/>
+  <rect x="-2.5" y="-177" width="5" height="20" rx="2.5" transform="rotate(330)"/>
+  <rect class="hour" x="-5.2" y="-135.239" width="10.4" height="141" rx="5"/>
+  <rect class="minute" x="-5" y="-154.713" width="10" height="160" rx="5"/>
+  <circle r="10"/>
+</svg>

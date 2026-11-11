@@ -3,7 +3,9 @@ import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@t
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
+import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { directMediaUrl, MediaUploadError, uploadDirectMedia, type UploadedMedia } from '../media/directMediaUpload';
+import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import { DiscussionMedia } from './DiscussionMedia';
 import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
@@ -15,7 +17,12 @@ vi.mock('../media/directMediaUpload', async importOriginal => ({
   ...await importOriginal<typeof import('../media/directMediaUpload')>(),
   uploadDirectMedia: vi.fn(),
 }));
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+vi.mock('../media/discussionMediaCache', async importOriginal => ({
+  ...await importOriginal<typeof import('../media/discussionMediaCache')>(),
+  readDiscussionMedia: vi.fn(async () => null),
+  storeDiscussionMedia: vi.fn(async () => undefined),
+}));
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
 
 it('previews a photo and retries an attachment-only send with the same message, attachment and object IDs', async () => {
   const port = { ...fixture().port, supportsMedia: true };
@@ -41,7 +48,7 @@ it('previews a photo and retries an attachment-only send with the same message, 
   fireEvent.change(input, { target: { files: [file] } });
   await screen.findByAltText('Предпросмотр фото');
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
-  const retry = await screen.findByRole('button', { name: 'Повторить отправку' });
+  const retry = await screen.findByRole('button', { name: 'Ещё раз' });
   expect(port.send).not.toHaveBeenCalled();
   fireEvent.click(retry);
   await waitFor(() => expect(port.send).toHaveBeenCalledOnce());
@@ -72,7 +79,7 @@ it('automatically delivers a confirmed set video as its own message and leaves t
     anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
     onNavigationContextChange={() => {}} takeRecordedVideo={takeRecordedVideo} /></KonstaProvider>);
 
-  const retry = await screen.findByRole('button', { name: 'Повторить отправку' });
+  const retry = await screen.findByRole('button', { name: 'Ещё раз' });
   expect(uploadDirectMedia).toHaveBeenCalledWith(file, expect.objectContaining({ retryKey: metadata.storageKey }));
   expect(port.send).not.toHaveBeenCalled();
   fireEvent.click(retry);
@@ -85,6 +92,55 @@ it('automatically delivers a confirmed set video as its own message and leaves t
     id: drafts[0].id, threadId: thread.id, text: '', draftMedia: metadata,
   }), uploaded);
   expect(screen.getByPlaceholderText('Сообщение')).toHaveProperty('value', existing.text);
+});
+
+it('shows the local video during upload, cancels on tap and retries the same file after reopening', async () => {
+  const file = new File(['video'], 'Видео.mp4', { type: 'video/mp4' });
+  const metadata: DiscussionMediaDraft = { id: 'local-video', storageKey: 'mvp-media/' + 'd'.repeat(64),
+    mediaType: 'video', mimeType: file.type, sizeBytes: file.size, durationSeconds: 2,
+    fileName: file.name, uploadState: 'uploading' };
+  const uploaded: UploadedMedia = { key: metadata.storageKey, url: directMediaUrl(metadata.storageKey) ?? '',
+    contentType: file.type, sizeBytes: file.size, fileName: file.name };
+  let saved: DiscussionMessageInput | null = null;
+  const port = { ...fixture().port, supportsMedia: true, getDraft: async () => saved,
+    send: vi.fn(async (input: DiscussionMessageInput, _media?: UploadedMedia) => {
+      saved = null;
+      return message(input.id, input.text);
+    }),
+    saveDraft: vi.fn(async (input: DiscussionMessageInput) => { saved = input; }) };
+  vi.mocked(inspectDiscussionMedia).mockResolvedValue({ file, metadata });
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:local-video');
+    static revokeObjectURL = vi.fn();
+  });
+  vi.mocked(uploadDirectMedia).mockImplementationOnce((_file, options) => new Promise((_resolve, reject) => {
+    options?.signal?.addEventListener('abort', () => reject(new MediaUploadError('CANCELLED')), { once: true });
+  })).mockResolvedValueOnce(uploaded);
+  const renderChat = (takeRecordedVideo?: () => File | undefined) => render(<KonstaProvider theme="ios" dark>
+    <DiscussionSheet opened repository={port} threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
+      onClose={() => {}} parentNavigation={null} onNavigationContextChange={() => {}} takeRecordedVideo={takeRecordedVideo} />
+  </KonstaProvider>);
+  const view = renderChat(vi.fn<() => File | undefined>().mockReturnValueOnce(file));
+  expect(await screen.findByAltText('Отправляется')).toBeTruthy();
+  expect(view.container.querySelector('[data-message-id] video')?.getAttribute('src')).toBe('blob:local-video');
+  await waitFor(() => expect(uploadDirectMedia).toHaveBeenCalledOnce());
+  expect(storeDiscussionMedia).toHaveBeenCalledWith(expect.objectContaining({ storageKey: metadata.storageKey }), file, true);
+  expect(vi.mocked(storeDiscussionMedia).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(uploadDirectMedia).mock.invocationCallOrder[0]);
+  const first = port.saveDraft.mock.calls[0][0];
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить загрузку' }));
+  expect(await screen.findByRole('img', { name: 'Отправка не удалась' })).toBeTruthy();
+  expect(screen.queryByAltText('Отправляется')).toBeNull();
+  expect(port.send).not.toHaveBeenCalled();
+  view.unmount();
+
+  vi.mocked(readDiscussionMedia).mockResolvedValueOnce(file);
+  renderChat();
+  fireEvent.click(await screen.findByRole('button', { name: 'Ещё раз' }));
+  await waitFor(() => expect(port.send).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+    id: first.id, threadId: thread.id, draftMedia: metadata,
+  }), uploaded));
+  expect(inspectDiscussionMedia).toHaveBeenCalledOnce();
+  expect(screen.queryByRole('button', { name: 'Ещё раз' })).toBeNull();
 });
 
 it('acknowledges a restored attachment sent on another device once its metadata arrives', async () => {
