@@ -81,7 +81,8 @@ export function DiscussionVideoSaveDialog({ target, onClose, onStatus }: {
     } catch (reason) {
       if (!active.current) return;
       if (reason instanceof DOMException && reason.name === 'AbortError') {
-        setNotice(cancelled);
+        setShareFailed(true);
+        setNotice('Сохранение не завершилось. Видео осталось в чате.');
         return;
       }
       setShareFailed(true);

@@ -37,7 +37,8 @@ it('reports cancellation in the dialog without starting a download', async () =>
   });
   const { onClose, onStatus } = open({ file: new File(['video'], 'Запись.mp4', { type: 'video/mp4' }) });
   fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
-  expect(await screen.findByText('Сохранение отменено. Видео осталось в чате.')).toBeTruthy();
+  expect(await screen.findByText('Сохранение не завершилось. Видео осталось в чате.')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Скачать файл' })).toBeTruthy();
   expect(onClose).not.toHaveBeenCalled();
   expect(onStatus).not.toHaveBeenCalled();
 });
