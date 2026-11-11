@@ -342,7 +342,8 @@ export class DiscussionRepository {
               || (!textRow.editedAt && !textRow.deletedAt && textRow.text !== input.text)) fail('DISCUSSION_ID_REUSED');
           }
         } else if (input.requireUnsentDraft) fail('DISCUSSION_DRAFT_ALREADY_PUBLISHED');
-        return this.view(existing);
+        const view = await this.view(existing);
+        return media ? (await this.withAttachments([view], [existing]))[0] : view;
       }
       if (input.requireUnsentDraft && !existing) fail('DISCUSSION_DRAFT_NOT_SAVED');
       if (existing && (!isDiscussionMessage(existing) || existing.owner !== this.actorUserId
@@ -386,7 +387,8 @@ export class DiscussionRepository {
       }
       if (lastActivityAt > thread.lastActivityAt) await this.db.discussionThreads
         .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt });
-      return this.view(row);
+      const view = await this.view(row);
+      return media ? (await this.withAttachments([view], [row]))[0] : view;
     }, Boolean(media));
   }
   async edit(threadId: string, id: string, text: string): Promise<void> {

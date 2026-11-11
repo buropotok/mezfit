@@ -83,6 +83,16 @@ it('reads a cached photo from IndexedDB before requesting Yandex', async () => {
   expect(get).not.toHaveBeenCalled();
 });
 
+it('requires a valid local copy for an outgoing video and reads it back from IndexedDB', async () => {
+  await setupBrowser();
+  const video = new Blob(['video'], { type: videoEntry.mimeType });
+  await expect(storeDiscussionMedia({ ...videoEntry, sizeBytes: video.size + 1 }, video, true))
+    .rejects.toThrow('INVALID_LOCAL_MEDIA');
+  expect(await readDiscussionMedia(videoEntry)).toBeNull();
+  await storeDiscussionMedia(videoEntry, video, true);
+  expect(await (await readDiscussionMedia(videoEntry))?.text()).toBe('video');
+});
+
 it('caches a visible video thumbnail and serves it locally on reopening', async () => {
   await setupBrowser();
   const video = new Blob(['video'], { type: videoEntry.mimeType });

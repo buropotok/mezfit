@@ -2,23 +2,28 @@ import { useEffect, useRef, useState } from 'react';
 import { MediaUploadError, uploadDirectMedia } from '../media/directMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
+import type { DiscussionMessageView } from '../data/cloud/discussion-views';
 import type { DiscussionPort } from './discussion-session';
 import { inspectDiscussionMedia, prepareDiscussionVoice, prepareDiscussionVideoNote } from './discussion-media-file';
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
 
-type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { recorded?: boolean; separate?: DiscussionMessageInput };
+type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { separate?: DiscussionMessageInput };
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
+type OutgoingMedia = Pick<DiscussionMessageInput, 'id' | 'createdAt'> & { attachmentId: string };
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
   const [selection, setSelection] = useState<Selection>();
   const [preview, setPreview] = useState<string>();
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string>();
+  const [outgoing, setOutgoing] = useState<OutgoingMedia>();
+  const [published, setPublished] = useState<DiscussionMessageView>();
   const active = useRef<AbortController | null>(null);
   const publishing = useRef(false);
   const interrupted = useRef(false);
+  const storedKey = useRef<string | undefined>(undefined);
   const resume = useRef<(() => void) | null>(null);
 
   useEffect(() => () => { active.current?.abort(); active.current = null; resume.current = null; }, []);
@@ -28,18 +33,24 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [selection]);
-  const savedCapture = draft.media?.mediaType === 'photo' ? undefined : draft.media;
+  const savedCapture = draft.media;
+  const savedMessage = draft.mediaMessage;
   useEffect(() => {
     if (selection || !savedCapture) return;
     let current = true;
     const { storageKey, mimeType, sizeBytes, fileName } = savedCapture;
     void readDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }).then(blob => {
       if (current && blob && !active.current) {
+        storedKey.current = storageKey;
         setSelection({ file: new File([blob], fileName, { type: mimeType }), metadata: savedCapture });
+        if (savedMessage) {
+          setOutgoing({ id: savedMessage.id, createdAt: savedMessage.createdAt, attachmentId: savedCapture.id });
+          setPhase('failed');
+        }
       }
     });
     return () => { current = false; };
-  }, [repository.actorUserId, savedCapture, selection]);
+  }, [repository.actorUserId, savedCapture, savedMessage, selection]);
   useEffect(() => {
     const retry = () => {
       if (document.visibilityState === 'hidden' || navigator.onLine === false) {
@@ -60,7 +71,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     };
   }, []);
 
-  async function choose(file: File, { recorded = false, sendToThread }: { recorded?: boolean; sendToThread?: string } = {}) {
+  async function choose(file: File, { sendToThread }: { sendToThread?: string } = {}) {
     if (active.current) return;
     resume.current = null;
     const controller = new AbortController();
@@ -76,7 +87,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         || saved.durationSeconds !== next.metadata.durationSeconds)) {
         throw new Error('Выберите тот же файл или удалите прежнее вложение');
       }
-      const selected = { ...next, metadata: saved ?? next.metadata, recorded, separate };
+      const selected = { ...next, metadata: saved ?? next.metadata, separate };
       setSelection(selected);
       if (separate) {
         active.current = null;
@@ -127,28 +138,34 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     active.current = controller;
     interrupted.current = document.visibilityState === 'hidden' || navigator.onLine === false;
     let command: DiscussionMessageInput | null = null;
+    let savingFile = true;
+    const message = selected.separate ?? draft.mediaCommand();
+    setOutgoing({ id: message.id, createdAt: message.createdAt, attachmentId: selected.metadata.id });
     setError(undefined); setPhase('uploading');
     try {
-      if (selected.recorded || selected.metadata.mediaType === 'voice' || selected.metadata.mediaType === 'video-note') {
-        const { storageKey, mimeType, sizeBytes } = selected.metadata;
-        await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file);
-        if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
+      const { storageKey, mimeType, sizeBytes } = selected.metadata;
+      if (storedKey.current !== storageKey) {
+        await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file, true);
+        storedKey.current = storageKey;
       }
+      savingFile = false;
+      // Finish the private draft even if the sheet closes while IndexedDB is writing.
       command = await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' }, selected.separate);
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       if (!command) {
-        if (active.current === controller) { setSelection(undefined); setPhase('idle'); }
+        if (active.current === controller) { setSelection(undefined); setOutgoing(undefined); setPhase('idle'); }
         return;
       }
       const result = await uploadDirectMedia(selected.file, { signal: controller.signal, retryKey: selected.metadata.storageKey });
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
       setPhase('publishing');
-      if (!selected.recorded && selected.metadata.mediaType !== 'voice' && selected.metadata.mediaType !== 'video-note') await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey: result.key,
-        mimeType: result.contentType, sizeBytes: result.sizeBytes }, selected.file);
-      await repository.send(command, result);
+      const sent = await repository.send(command, result);
       draft.sent(command.id);
-      if (active.current === controller) { setSelection(undefined); setPhase('idle'); }
+      if (active.current === controller) {
+        if (sent.attachments?.length) setPublished(sent);
+        setSelection(undefined); setOutgoing(undefined); setPhase('idle');
+      }
     } catch (reason) {
       if (command) {
         try { await repository.updateDraftMedia?.(command.threadId, command.id, selected.metadata.storageKey, 'failed'); }
@@ -172,6 +189,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         : reason instanceof MediaUploadError && reason.code === 'SIGNER_UNAVAILABLE'
           ? 'Не удалось получить ссылку для загрузки. Повторите отправку'
         : reason instanceof MediaUploadError ? 'Хранилище не приняло файл. Повторите отправку'
+        : savingFile ? 'Не удалось сохранить файл на устройстве. Освободите место и попробуйте ещё раз'
         : 'Не удалось сохранить сообщение. Повторите отправку');
       setPhase('failed');
     } finally {
@@ -196,7 +214,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (selection?.separate) await repository.discardDraft?.(selection.separate.threadId, selection.separate.id);
       else await draft.clearMedia();
       if (active.current !== controller) return;
-      setSelection(undefined); setError(undefined); setPhase('idle');
+      setSelection(undefined); setOutgoing(undefined); setError(undefined); setPhase('idle');
     } catch {
       if (active.current === controller) { setError('Не удалось убрать вложение'); setPhase('failed'); }
     } finally {
@@ -204,6 +222,6 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
-  return { selection, preview, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
+  return { selection, preview, outgoing, published, setPublished, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
     cancel: () => { resume.current = null; if (!publishing.current) active.current?.abort(); } };
 }

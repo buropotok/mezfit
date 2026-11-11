@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="242 225 296 137">
+  <style>
+    .motion, .fade, .tilt { animation-duration: 2.94s; animation-iteration-count: infinite; animation-timing-function: linear }
+    @keyframes layer0-motion { 0% {transform:translate(327.38px,267.583px);animation-timing-function:cubic-bezier(0.167,0.167,0.833,0.833)} 100% {transform:translate(482.38px,267.583px)} }
+    .layer0-motion { animation-name: layer0-motion }
+    @keyframes layer0-fade { 0% {opacity:0;animation-timing-function:cubic-bezier(0.333,0,0.667,1)} 30.6122% {opacity:1;animation-timing-function:cubic-bezier(0.333,0,0.667,1)} 69.3878% {opacity:1;animation-timing-function:cubic-bezier(0.333,0,0.667,1)} 100% {opacity:0} }
+    .layer0-fade { animation-name: layer0-fade }
+    @keyframes layer1-motion { 0% {transform:translate(390.319px,298.2px);animation-timing-function:cubic-bezier(0.333,0,0.667,1)} 29.932% {transform:translate(390.319px,282.7px);animation-timing-function:cubic-bezier(0.333,0,0.667,1)} 74.8299% {transform:translate(390.319px,319.25px);animation-timing-function:cubic-bezier(0.333,0,0.667,1)} 100% {transform:translate(390.319px,298.2px)} }
+    .layer1-motion { animation-name: layer1-motion }
+    @keyframes layer1-tilt { 0% {transform:rotate(0deg);animation-timing-function:cubic-bezier(0.547,0,0.667,1)} 52.381% {transform:rotate(35deg);animation-timing-function:cubic-bezier(0.333,0,0.845,1)} 100% {transform:rotate(0deg)} }
+    .layer1-tilt { animation-name: layer1-tilt }
+    @keyframes layer2-motion { 0% {transform:translate(468.336px,323.378px);animation-timing-function:cubic-bezier(0.167,0.167,0.833,0.833)} 69.3878% {transform:translate(294.336px,323.378px)} }
+    .layer2-motion { animation-name: layer2-motion }
+    @keyframes layer2-fade { 0% {opacity:0;animation-timing-function:cubic-bezier(0.167,0.167,0.833,0.833)} 25.8503% {opacity:0.5;animation-timing-function:cubic-bezier(0.167,0.167,0.833,0.833)} 59.8639% {opacity:0.5;animation-timing-function:cubic-bezier(0.167,0.167,0.833,0.833)} 81.6327% {opacity:0} }
+    .layer2-fade { animation-name: layer2-fade }
+    @media (prefers-reduced-motion: reduce) { .motion, .fade, .tilt { animation: none } }
+  </style>
+  <g class="motion layer0-motion" transform="translate(327.38 267.583)">
+  <g class="fade layer0-fade" opacity="0">
+    <g transform="scale(0.5 0.5) translate(-171.76 -193.166)">
+      <g transform="translate(171.76 193.166) scale(1 1) translate(0 0)">
+        <path fill="#d0d2d3" d="M59.669 -8.242C53.143 -8.242 47.22 -5.677 42.84 -1.506C42.047 -23.225 24.2 -40.592 2.287 -40.592C-17.519 -40.592 -34.001 -26.403 -37.576 -7.638C-39.31 -8.029 -41.111 -8.242 -42.962 -8.242C-56.447 -8.242 -67.378 2.69 -67.378 16.174C-67.378 16.467 -67.367 16.758 -67.356 17.049C-68.756 16.49 -70.279 16.174 -71.878 16.174C-78.62 16.174 -84.086 21.64 -84.086 28.383C-84.086 35.125 -78.62 40.591 -71.878 40.591L59.669 40.591C73.154 40.591 84.086 29.659 84.086 16.174C84.086 2.69 73.154 -8.242 59.669 -8.242Z"/>
+      </g>
+    </g>
+  </g>
+  </g>
+  <g class="motion layer1-motion" transform="translate(390.319 298.2)">
+  <g class="tilt layer1-tilt">
+    <g transform="scale(1 1) translate(-664.319 -256.2)">
+      <g transform="translate(664.319 256.2) scale(0.5 0.5) translate(-297.638 -254.4)">
+        <g transform="translate(297.638 254.4) scale(1 1) translate(0 0)">
+          <path fill="#5d68f9" d="M-133.812 -42.171L133.812 -75.141L5.765 75.141L-61.708 18.402L124.227 -71.307L-87.011 -1.534L-133.812 -42.171Z"/>
+        </g>
+      </g>
+      <g transform="translate(673.623 252.941) scale(0.5 0.5) translate(-316.247 -247.882)">
+        <g transform="translate(316.247 247.882) scale(1 1) translate(0 0)">
+          <path fill="#474bd8" d="M-98.335 64.79L-105.619 4.984L105.619 -64.79L-80.316 24.919L-98.335 64.79Z"/>
+        </g>
+      </g>
+      <g transform="translate(633.939 275.369) scale(0.5 0.5) translate(-236.879 -292.737)">
+        <g transform="translate(236.879 292.737) scale(1 1) translate(0 0)">
+          <path fill="#3931ac" d="M18.967 -3.189L-18.967 19.935L-0.949 -19.935L18.967 -3.189Z"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  </g>
+  <g class="motion layer2-motion" transform="translate(468.336 323.378)">
+  <g class="fade layer2-fade" opacity="0">
+    <g transform="scale(0.5 0.5) translate(-453.672 -304.756)">
+      <g transform="translate(453.672 304.756) scale(1 1) translate(0 0)">
+        <path fill="#d0d2d3" d="M75.134 16.175C74.353 16.175 73.591 16.256 72.85 16.396C72.851 16.322 72.856 16.249 72.856 16.175C72.856 2.691 61.924 -8.241 48.44 -8.241C46.662 -8.241 44.931 -8.046 43.262 -7.685C39.668 -26.427 23.196 -40.591 3.406 -40.591C-16.624 -40.591 -33.254 -26.077 -36.571 -6.995C-38.992 -7.799 -41.578 -8.241 -44.269 -8.241C-57.754 -8.241 -68.685 2.691 -68.685 16.175C-68.685 16.817 -68.652 17.45 -68.604 18.079C-70.494 16.88 -72.728 16.175 -75.133 16.175C-81.875 16.175 -87.341 21.641 -87.341 28.383C-87.341 35.126 -81.875 40.592 -75.133 40.592L75.134 40.592C81.876 40.592 87.342 35.126 87.342 28.383C87.342 21.641 81.876 16.175 75.134 16.175Z"/>
+      </g>
+    </g>
+  </g>
+  </g>
+</svg>

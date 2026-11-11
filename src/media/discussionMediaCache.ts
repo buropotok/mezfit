@@ -44,12 +44,16 @@ export async function readDiscussionMedia(entry: DiscussionMediaCacheEntry): Pro
   }
 }
 
-export async function storeDiscussionMedia(entry: DiscussionMediaCacheEntry, blob: Blob): Promise<void> {
-  if (!mediaUrl(entry) || !matches(entry, blob)) return;
+export async function storeDiscussionMedia(entry: DiscussionMediaCacheEntry, blob: Blob, required = false): Promise<void> {
+  if (!mediaUrl(entry) || !matches(entry, blob)) {
+    if (required) throw new Error('INVALID_LOCAL_MEDIA');
+    return;
+  }
   const db = new DiscussionMediaDatabase(entry.accountId);
   try {
     await db.files.put({ key: entry.storageKey, blob });
-  } catch {
+  } catch (reason) {
+    if (required) throw reason;
     // Unavailable storage or an exhausted quota must not block sending or playback.
   } finally {
     db.close();

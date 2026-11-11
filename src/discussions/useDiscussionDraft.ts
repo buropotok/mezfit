@@ -55,7 +55,10 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     if (alive.current) { setText(''); setReplyId(null); setError(null); setMedia(undefined); }
   }
   return {
-    text, replyId, ready, error, media,
+    text, replyId, ready, error, media, mediaMessage: media ? current.current : null,
+    mediaCommand() {
+      return current.current ??= prepareDiscussionMessage(threadId, text, replyId ?? undefined);
+    },
     async stageMedia(attachment: DiscussionMediaDraft, separate?: DiscussionMessageInput): Promise<DiscussionMessageInput | null> {
       const input = { ...(separate ?? current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
         draftMedia: attachment };
