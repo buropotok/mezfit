@@ -27,11 +27,17 @@ function downloadLocalFile(file: File) {
   }
 }
 
-export function DiscussionVideoSaveDialog({ target, onClose }: { target: DiscussionVideoSaveTarget; onClose: () => void }) {
+export function DiscussionVideoSaveDialog({ target, onClose, onStatus }: {
+  target: DiscussionVideoSaveTarget;
+  onClose: () => void;
+  onStatus: (message: string) => void;
+}) {
   const [file, setFile] = useState<File | null>('file' in target ? target.file : null);
   const [loading, setLoading] = useState(!('file' in target));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [shareFailed, setShareFailed] = useState(false);
   const active = useRef(false);
 
   useEffect(() => {
@@ -55,51 +61,75 @@ export function DiscussionVideoSaveDialog({ target, onClose }: { target: Discuss
     return () => { current = false; active.current = false; };
   }, [target]);
 
-  const save = async () => {
-    if (saving || loading) return;
+  const shareData = file ? { files: [file] } : null;
+  const canShareVideo = !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
+  const cancelled = 'Сохранение отменено. Видео осталось в чате.';
+  const finish = (message: string) => {
+    if (!active.current) return;
+    onStatus(message);
+    onClose();
+  };
+
+  const share = async () => {
+    if (!shareData || saving) return;
     setSaving(true);
     setError('');
+    setNotice('');
     try {
-      if (file) {
-        const data = { files: [file] };
-        if (navigator.canShare?.(data) && navigator.share) {
-          try {
-            await navigator.share(data);
-            if (active.current) onClose();
-            return;
-          } catch (reason) {
-            if (reason instanceof DOMException && reason.name === 'AbortError') return;
-          }
-        }
-        if (!active.current) return;
-        downloadLocalFile(file);
-        onClose();
+      await navigator.share(shareData);
+      finish('Видео передано в системное меню. Если выбрали «Сохранить видео», проверьте галерею.');
+    } catch (reason) {
+      if (!active.current) return;
+      if (reason instanceof DOMException && reason.name === 'AbortError') {
+        setNotice(cancelled);
         return;
       }
-      if ('url' in target && navigator.onLine !== false
-        && requestTelegramFileDownload(target.url, videoFileName(target.cache.mimeType))) {
-        onClose();
-        return;
-      }
-      setError('Видео недоступно для скачивания. Проверьте сеть и попробуйте ещё раз.');
-    } catch {
-      if (active.current) setError('Не удалось открыть системное сохранение видео.');
+      setShareFailed(true);
+      setError('Системное меню не открылось. Можно попробовать скачать файл.');
     } finally {
       if (active.current) setSaving(false);
     }
   };
 
+  const download = () => {
+    if (saving || loading) return;
+    setError('');
+    setNotice('');
+    if ('url' in target && navigator.onLine !== false) {
+      const name = videoFileName(target.cache.mimeType);
+      setSaving(true);
+      if (requestTelegramFileDownload(target.url, name, accepted => {
+        if (!active.current) return;
+        setSaving(false);
+        if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
+        else setNotice(cancelled);
+      })) return;
+      setSaving(false);
+    }
+    if (!file) {
+      setError('Видео недоступно для скачивания. Проверьте сеть и попробуйте ещё раз.');
+      return;
+    }
+    try {
+      downloadLocalFile(file);
+      finish(`Запрос на скачивание отправлен. Ищите «${file.name}» в «Файлах» или «Загрузках».`);
+    } catch {
+      setError('Не удалось начать скачивание. Видео осталось в чате.');
+    }
+  };
+
   return <MezfitDialog opened title={<Text variant="headline">Сохранить видео</Text>} onBackdropClick={onClose}
     content={<>
-      <Text>{loading ? 'Подготавливаем видео…' : file
-        ? 'Выберите сохранение в галерею, если система предлагает такой пункт. На некоторых устройствах видео сохраняется в загрузки.'
-        : 'Видео можно скачать через Telegram, если устройство подключено к сети.'}</Text>
+      <Text>{loading ? 'Подготавливаем видео…' : canShareVideo
+        ? 'В системном меню выберите «Сохранить видео», если этот пункт доступен.'
+        : 'Скачанный файл можно найти в «Файлах» или «Загрузках».'}</Text>
+      {notice && <div><Text variant="footnote" role="status">{notice}</Text></div>}
       {error && <div><Text variant="footnote" role="alert">{error}</Text></div>}
     </>}
     buttons={<>
       <MezfitDialogButton onClick={onClose}><Text>Отмена</Text></MezfitDialogButton>
-      <MezfitDialogButton strong disabled={loading || saving} onClick={() => void save()}>
-        <Text>{file || loading ? 'Сохранить' : 'Скачать'}</Text>
+      <MezfitDialogButton strong disabled={loading || saving} onClick={canShareVideo ? () => void share() : download}>
+        <Text>{canShareVideo || loading ? 'Сохранить' : 'Скачать файл'}</Text>
       </MezfitDialogButton>
     </>} />;
 }

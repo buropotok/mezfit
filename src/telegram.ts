@@ -34,7 +34,7 @@ export interface TelegramWebApp {
   isVersionAtLeast?(version: string): boolean;
   requestFullscreen?(): void;
   exitFullscreen?(): void;
-  downloadFile?(params: { url: string; file_name: string }): void;
+  downloadFile?(params: { url: string; file_name: string }, callback?: (accepted: boolean) => void): void;
   addToHomeScreen?(): void;
   checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
   onEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
@@ -47,12 +47,12 @@ export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
 }
 
-export function requestTelegramFileDownload(url: string, fileName: string): boolean {
+export function requestTelegramFileDownload(url: string, fileName: string, onResult: (accepted: boolean) => void): boolean {
   const webApp = getTelegramWebApp();
   if (!webApp?.downloadFile) return false;
   try {
     if (webApp.isVersionAtLeast?.('8.0') === false) return false;
-    webApp.downloadFile({ url, file_name: fileName });
+    webApp.downloadFile({ url, file_name: fileName }, onResult);
     return true;
   } catch {
     return false;
