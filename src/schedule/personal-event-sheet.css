@@ -29,7 +29,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
-  margin-inline-start: -10px;
+  margin-inline-start: max(-10px, calc(var(--page-pad-x) * -1));
 }
 .personal-event-sheet__time-row {
   display: flex;
