@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useRef } from 'react';
 
+import { acquireSessionCamera, hasCameraSessionAccess, hasSessionCamera, ownsSessionCamera, parkSessionCamera } from './sessionCamera';
 import { videoRecordingConstraints, type VideoRecordingProfile } from './video-recording-profile';
 
 export type VideoNoteFacingMode = 'user' | 'environment';
 
 /**
  * Owns a single camera+microphone session for one mounted video-note recorder.
- * Keep it across takes, but never across recorder unmount/reset or camera switches.
+ * Shared product recorders park the source across navigation within Mezfit.
  * This hook is independent of Settings, so a discussion composer can reuse it.
  */
-export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circle') {
+export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circle', session = false) {
+  const token = useRef(Symbol('camera lease'));
   const streamRef = useRef<MediaStream | null>(null);
   const facingRef = useRef<VideoNoteFacingMode | null>(null);
   const requestIdRef = useRef(0);
@@ -17,20 +19,22 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
 
   const liveStream = useCallback((facing?: VideoNoteFacingMode): MediaStream | null => {
     const stream = streamRef.current;
+    if (session && !ownsSessionCamera(token.current)) return null;
     if (!stream || (facing && facing !== facingRef.current)) return null;
     const tracks = stream.getTracks();
     // A WebView may revoke a track while the app is backgrounded. Reacquire then.
     if (tracks.length === 0 || tracks.some((track) => track.readyState === 'ended')) return null;
     return stream;
-  }, []);
+  }, [session]);
 
   const release = useCallback(() => {
     requestIdRef.current += 1;
     const stream = streamRef.current;
     streamRef.current = null;
     facingRef.current = null;
-    stream?.getTracks().forEach((track) => track.stop());
-  }, []);
+    if (session) parkSessionCamera(token.current);
+    else stream?.getTracks().forEach((track) => track.stop());
+  }, [session]);
 
   const acquire = useCallback(async (facing: VideoNoteFacingMode): Promise<MediaStream | null> => {
     const existing = liveStream(facing);
@@ -39,19 +43,21 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
     // When a stream is dead or the camera changes, dispose it before reacquiring.
     release();
     const requestId = ++requestIdRef.current;
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const stream = session ? await acquireSessionCamera(token.current, facing, profile)
+      : await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: facing }, ...videoRecordingConstraints(profile) },
       audio: { echoCancellation: true, noiseSuppression: true },
     });
+    if (!stream) return null;
     if (!mountedRef.current || requestId !== requestIdRef.current) {
-      stream.getTracks().forEach((track) => track.stop());
+      if (!session) stream.getTracks().forEach((track) => track.stop());
       return null;
     }
 
     streamRef.current = stream;
     facingRef.current = facing;
     return stream;
-  }, [liveStream, profile, release]);
+  }, [liveStream, profile, release, session]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -64,5 +70,7 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
     };
   }, [release]);
 
-  return { acquire, liveStream, release };
+  return { acquire, liveStream, release,
+    hasStream: (facing: VideoNoteFacingMode, includeOtherProfiles = false) => liveStream(facing) !== null
+      || (session && (includeOtherProfiles ? hasCameraSessionAccess() : hasSessionCamera(facing, profile))) };
 }

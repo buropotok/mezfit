@@ -12,12 +12,13 @@ export function useDiscussionVideoNote(onRecorded: (clip: VideoNoteRecording, pr
     delivery.current = 'preview';
     if (intent === 'send') onRecorded(clip);
     else onRecorded(clip, true);
-  });
+  }, 'circle', true);
   const gesture = useRecordingGesture({ status: recorder.status, onCancelGesture,
     onLock: () => { delivery.current = 'preview'; },
     start: async () => {
       delivery.current = 'preview';
-      const permissionOnly = !recorder.hasStream('user');
+      // A live grant from ordinary video or another facing mode is already sufficient.
+      const permissionOnly = !recorder.hasStream('user', true);
       setPermissionReady(false);
       const started = await recorder.start('user', permissionOnly);
       if (recorder.hasStream('user') && permissionOnly) setPermissionReady(true);
