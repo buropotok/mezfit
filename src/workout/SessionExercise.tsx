@@ -335,7 +335,7 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, discussionTargetFor
             onDeleteSet={onDeleteSet ? async () => { await onDeleteSet(set.id); } : undefined} /> : undefined}
           leading={<span className="session-exercise__set-status"><Text variant="footnote">{index + 1}</Text></span>}
           title={<Text variant="body" className={showPlanMetrics ? 'session-exercise__set-plan-line' : undefined}>
-            {showPlanMetrics ? `Подход ${index + 1}. План ${formatProgramPlanMetrics(set)}` : `Подход ${index + 1}`}
+            {showPlanMetrics ? `План ${formatProgramPlanMetrics(set)}` : `Подход ${index + 1}`}
           </Text>}
           subtitle={<span className="session-exercise__set-recommendations">
             {set.setType ? <Text variant={showPlanMetrics ? 'caption' : 'footnote'}
