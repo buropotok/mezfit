@@ -132,7 +132,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       </List>
     </GlassSurface>
     {(['firstName', 'lastName', 'email', 'phone'] as const).map(field => <div key={field}>{overrideControl(field)}</div>)}
-    <GlassSurface preset="modalTuned" optics={false} shape="auto">
+    {purpose === 'self' ? <GlassSurface preset="modalTuned" optics={false} shape="auto">
       <div className="user-profile__details">
         <div className="user-profile__field">
           <Text variant="caption">Telegram ID</Text>
@@ -175,7 +175,37 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
         </List>
         {overrideControl('weightKg')}
       </div>
-    </GlassSurface>
+    </GlassSurface> : <>
+      <Text variant="caption">Telegram ID</Text>
+      <Text variant="headline">{telegramUserId}</Text>
+      <div className="user-profile__date">
+        <Text variant="caption">Дата рождения</Text>
+        <Button variant="secondary" disabled={saving} onClick={() => setPickerOpen(true)}>
+          {readableDate(draft.birthDate) || 'Выбрать дату рождения'}
+        </Button>
+        {draft.birthDate ? <Button variant="secondary" disabled={saving}
+          onClick={() => update('birthDate', '')}>Убрать дату рождения</Button> : null}
+        {age !== null ? <Text variant="headline">Возраст: {age}</Text> : null}
+      </div>
+      {overrideControl('birthDate')}
+      <LiquidPopover isOpen={sexOpen} onOpenChange={setSexOpen} triggerRef={sexTrigger}
+        label="Выберите пол" triggerActivation="controlled"
+        items={sexes.map(option => ({ id: option.value, label: option.label, active: draft.sex === option.value,
+          onSelect: () => { if (!saving) update('sex', option.value); setSexOpen(false); } }))}
+        trigger={<span ref={sexTrigger}><Button variant="secondary" disabled={saving} onClick={() => setSexOpen(true)}>
+          <Text variant="caption">Пол:</Text>{' '}<Text variant="headline">{draft.sex === 'male' ? 'муж' : draft.sex === 'female' ? 'жен' : 'не указан'}</Text>
+        </Button></span>} />
+      {overrideControl('sex')}
+      <GlassSurface preset="modalTuned" optics={false} shape="auto">
+        <List nested strong={false} dividers={false}>
+          <ListInput colors={{ bgIos: 'bg-transparent' }} floatingLabel inputId={`${id}-weight`} type="number"
+            inputMode="decimal" label="Вес, кг"
+            value={draft.weightKg ?? ''} disabled={saving}
+            onChange={event => update('weightKg', event.target.value === '' ? null : Number(event.target.value))} />
+        </List>
+      </GlassSurface>
+      {overrideControl('weightKg')}
+    </>}
     {attempted && validation ? <Text variant="footnote" role="alert">{validation}</Text> : null}
     {saved ? <Text variant="footnote" role="status">{purpose === 'contact' ? 'Переопределения сохранены на устройстве.' : 'Анкета сохранена на устройстве.'}</Text> : null}
     {saveError ? <Text variant="footnote" role="alert">{saveError}</Text> : null}
