@@ -541,19 +541,6 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       return false;
     }
   };
-  const focusedSet = useRef<string | null>(null);
-  useEffect(() => {
-    if (!readOnly || !auxiliaryReady || !draft || !focusExerciseId || !focusSetId || !planner) return;
-    const key = JSON.stringify([draft.id, focusExerciseId, focusSetId]);
-    if (focusedSet.current === key) return;
-    let active = true;
-    // Mark the focus consumed only after success: StrictMode effect replay cancels
-    // the first attempt and must still be able to open the requested set.
-    void openSet(focusExerciseId, focusSetId, () => active).then(opened => {
-      if (active && opened) focusedSet.current = key;
-    });
-    return () => { active = false; };
-  }, [auxiliaryReady, draft?.id, focusExerciseId, focusSetId, planner, readOnly]);
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
   const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
   const end = actual ? new Date(actual.endsAtUtc) : draft ? currentEnd(draft) : new Date(now);
@@ -678,7 +665,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           {actual ? <Text variant="footnote" tone="muted">Запланировано: {localDate(new Date(draft.startsAtUtc))}, {localTime(new Date(draft.startsAtUtc))} – {localTime(currentEnd(draft))}</Text> : null}
           <Text variant="body">План на тренировку</Text>
           <WorkoutPlanCard mode="planning" surface={inlineCard ? 'transparent' : 'default'} hideHeader={inlineCard} collapsed={planCollapsed}
-            focusExerciseId={focusExerciseId}
+            focusExerciseId={focusExerciseId} focusSetId={focusSetId} focusReady={auxiliaryReady}
             onCollapsedChange={inlineCard ? undefined : () => setPlanCollapsed(value => !value)}
             scheduledTiming={planCollapsed ? scheduledTiming : undefined} showPlanMetrics day={displayedDay!} programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
             portalDragOverlay preserveDragHeight
