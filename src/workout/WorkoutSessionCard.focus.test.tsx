@@ -9,8 +9,9 @@ import { WorkoutSessionCard } from './WorkoutSessionCard';
 vi.mock('../discussions/useEntityDiscussions', () => ({
   useEntityDiscussions: () => ({ content: null, openTarget: vi.fn(), menuItem: null }),
 }));
-vi.mock('./SessionExercise', () => ({ SessionExercise: ({ data, collapsed, focusSetId }: WorkoutSessionExerciseProps<string>) =>
-  <div data-testid={String(data.sessionExerciseId)} data-collapsed={collapsed} data-focus-set={focusSetId}>Упражнение</div> }));
+vi.mock('./SessionExercise', () => ({ SessionExercise: ({ data, collapsed, focusSetId, focusHeader }: WorkoutSessionExerciseProps<string>) =>
+  <div data-testid={String(data.sessionExerciseId)} data-collapsed={collapsed} data-focus-set={focusSetId}
+    data-focus-header={focusHeader ? 'true' : 'false'}>Упражнение</div> }));
 vi.mock('../ui', async original => ({
   ...await original<typeof import('../ui')>(),
   SortableList: ({ items, header, footer }: SortableListProps) => <div>{header}
@@ -48,4 +49,14 @@ it('opens the complete FACT workout with only the target exercise expanded', () 
   expect(screen.getByTestId('ex-1').getAttribute('data-collapsed')).toBe('true');
   expect(screen.getByTestId('ex-2').getAttribute('data-collapsed')).toBe('false');
   expect(screen.getByTestId('ex-2').getAttribute('data-focus-set')).toBe('set-2');
+  expect(screen.getByTestId('ex-2').getAttribute('data-focus-header')).toBe('false');
+});
+
+it('focuses the exact FACT exercise header only for an exercise link', () => {
+  render(<WorkoutSessionCard session={session} {...handlers} focusExerciseId="ex-2" />);
+  expect(screen.getByTestId('ex-1').getAttribute('data-collapsed')).toBe('true');
+  expect(screen.getByTestId('ex-1').getAttribute('data-focus-header')).toBe('false');
+  expect(screen.getByTestId('ex-2').getAttribute('data-collapsed')).toBe('false');
+  expect(screen.getByTestId('ex-2').getAttribute('data-focus-header')).toBe('true');
+  expect(screen.getByTestId('ex-2').getAttribute('data-focus-set')).toBeNull();
 });
