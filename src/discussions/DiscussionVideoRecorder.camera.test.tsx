@@ -82,20 +82,21 @@ it('switches the live preview both ways and records from the selected camera', a
 });
 
 it('reports when the WebView returns the wrong camera and lets the user switch back', async () => {
-  const rear = camera('environment');
-  const wrongCamera = camera('environment');
-  const rearAgain = camera('environment');
+  const fallbackFront = camera('user');
+  const wrongCamera = camera('user');
+  const front = camera('user');
   const { open, getUserMedia } = openRecorder();
-  getUserMedia.mockResolvedValueOnce(rear.stream).mockResolvedValueOnce(wrongCamera.stream).mockResolvedValueOnce(rearAgain.stream);
+  getUserMedia.mockResolvedValueOnce(fallbackFront.stream).mockResolvedValueOnce(wrongCamera.stream).mockResolvedValueOnce(front.stream);
   open();
 
   const preview = screen.getByLabelText<HTMLVideoElement>('Изображение с камеры');
-  await waitFor(() => expect(preview.srcObject).toBe(rear.stream));
-  fireEvent.click(screen.getByRole('button', { name: 'Переключить на фронтальную камеру' }));
+  await waitFor(() => expect(preview.srcObject).toBe(fallbackFront.stream));
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить на заднюю камеру' }));
   expect((await screen.findByRole('alert')).textContent).toContain('Выбранная камера недоступна');
   expect(preview.srcObject).toBeNull();
+  expect(fallbackFront.video.stop).toHaveBeenCalledOnce();
   expect(wrongCamera.video.stop).toHaveBeenCalledOnce();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Переключить на заднюю камеру' }));
-  await waitFor(() => expect(preview.srcObject).toBe(rearAgain.stream));
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить на фронтальную камеру' }));
+  await waitFor(() => expect(preview.srcObject).toBe(front.stream));
 });

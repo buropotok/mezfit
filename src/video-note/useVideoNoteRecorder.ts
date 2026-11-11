@@ -137,7 +137,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     const epoch = ++epochRef.current;
     setError('');
     updateStatus('requesting');
-    let source = liveStream(facing);
+    let source = liveStream(facing, cameraOptions?.requireFacing);
     if (!source) {
       setStream(null);
       try { source = await acquire(facing, cameraOptions?.requireFacing); }

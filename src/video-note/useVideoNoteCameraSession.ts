@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { acquireSessionCamera, hasCameraSessionAccess, hasSessionCamera, ownsSessionCamera, parkSessionCamera } from './sessionCamera';
+import { acquireSessionCamera, hasCameraSessionAccess, hasSessionCamera, matchesCameraFacing, ownsSessionCamera, parkSessionCamera } from './sessionCamera';
 import { videoRecordingConstraints, type VideoRecordingProfile } from './video-recording-profile';
 
 export type VideoNoteFacingMode = 'user' | 'environment';
@@ -17,10 +17,10 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
   const requestIdRef = useRef(0);
   const mountedRef = useRef(false);
 
-  const liveStream = useCallback((facing?: VideoNoteFacingMode): MediaStream | null => {
+  const liveStream = useCallback((facing?: VideoNoteFacingMode, requireFacing = false): MediaStream | null => {
     const stream = streamRef.current;
     if (session && !ownsSessionCamera(token.current)) return null;
-    if (!stream || (facing && facing !== facingRef.current)) return null;
+    if (!stream || (facing && (facing !== facingRef.current || (requireFacing && !matchesCameraFacing(stream, facing))))) return null;
     const tracks = stream.getTracks();
     // A WebView may revoke a track while the app is backgrounded. Reacquire then.
     if (tracks.length === 0 || tracks.some((track) => track.readyState === 'ended')) return null;
@@ -37,7 +37,7 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
   }, [session]);
 
   const acquire = useCallback(async (facing: VideoNoteFacingMode, requireFacing = false): Promise<MediaStream | null> => {
-    const existing = liveStream(facing);
+    const existing = liveStream(facing, requireFacing);
     if (existing) return existing;
 
     // When a stream is dead or the camera changes, dispose it before reacquiring.
@@ -52,6 +52,10 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
     if (!mountedRef.current || requestId !== requestIdRef.current) {
       if (!session) stream.getTracks().forEach((track) => track.stop());
       return null;
+    }
+    if (!session && requireFacing && !matchesCameraFacing(stream, facing)) {
+      stream.getTracks().forEach(track => track.stop());
+      throw new DOMException('Requested camera unavailable', 'OverconstrainedError');
     }
 
     streamRef.current = stream;
