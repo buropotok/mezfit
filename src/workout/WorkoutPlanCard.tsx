@@ -21,6 +21,8 @@ export interface WorkoutPlanCardProps {
   showPlanMetrics?: boolean;
   /** Expand the exact occurrence exercise when arriving from its discussion. */
   focusExerciseId?: string;
+  focusSetId?: string;
+  focusReady?: boolean;
   programName?: string;
   hideProgramName?: boolean;
   canScheduleCoached?: boolean;
@@ -134,7 +136,7 @@ export function WorkoutPlanCard({
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
   onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
   discussionTargetFor, onOpenDiscussion, onNavigationContextChange, onSetDeletionNavigationContextChange,
-  focusExerciseId,
+  focusExerciseId, focusSetId, focusReady,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const authoringVisible = !readOnly;
@@ -172,6 +174,7 @@ export function WorkoutPlanCard({
     id: item.exercise.id,
     content: <SessionExercise mode="program" data={item} surface="transparent" editable={authoringVisible}
       showPlanMetrics={showPlanMetrics}
+      focusSetId={item.exercise.id === focusExerciseId ? focusSetId : undefined} focusReady={focusReady}
       discussionTarget={discussionTargetFor?.(item.exercise.id)}
       discussionTargetForSet={discussionTargetFor ? setId => discussionTargetFor(item.exercise.id, setId) : undefined}
       onOpenDiscussion={onOpenDiscussion} onNavigationContextChange={onNavigationContextChange}
