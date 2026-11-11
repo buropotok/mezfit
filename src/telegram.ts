@@ -34,6 +34,7 @@ export interface TelegramWebApp {
   isVersionAtLeast?(version: string): boolean;
   requestFullscreen?(): void;
   exitFullscreen?(): void;
+  downloadFile?(params: { url: string; file_name: string }): void;
   addToHomeScreen?(): void;
   checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
   onEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
@@ -44,6 +45,18 @@ export interface TelegramWebApp {
 
 export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
+}
+
+export function requestTelegramFileDownload(url: string, fileName: string): boolean {
+  const webApp = getTelegramWebApp();
+  if (!webApp?.downloadFile) return false;
+  try {
+    if (webApp.isVersionAtLeast?.('8.0') === false) return false;
+    webApp.downloadFile({ url, file_name: fileName });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Keep native Telegram shortcut events outside React presentation components. */

@@ -143,6 +143,63 @@ it('shows the local video during upload, cancels on tap and retries the same fil
   expect(screen.queryByRole('button', { name: 'Ещё раз' })).toBeNull();
 });
 
+it('plays and exports a failed local video offline without removing its retry draft', async () => {
+  const file = new File(['video'], 'Видео.mp4', { type: 'video/mp4' });
+  const draftMedia: DiscussionMediaDraft = { id: 'offline-video', storageKey: 'mvp-media/' + 'e'.repeat(64),
+    mediaType: 'video', mimeType: file.type, sizeBytes: file.size, durationSeconds: 2,
+    fileName: file.name, uploadState: 'failed' };
+  const discardDraft = vi.fn(async () => {});
+  const updateDraftMedia = vi.fn(async () => {});
+  const port = { ...fixture().port, supportsMedia: true, discardDraft, updateDraftMedia,
+    getDraft: async () => ({ id: 'offline-draft', threadId: thread.id, text: '', createdAt: thread.createdAt, draftMedia }) };
+  vi.mocked(readDiscussionMedia).mockResolvedValueOnce(file);
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:offline-video');
+    static revokeObjectURL = vi.fn();
+  });
+  const share = vi.fn(async (_data: ShareData) => {});
+  const properties = ['onLine', 'canShare', 'share'] as const;
+  const descriptors = properties.map(key => Object.getOwnPropertyDescriptor(navigator, key));
+  Object.defineProperties(navigator, {
+    onLine: { configurable: true, value: false },
+    canShare: { configurable: true, value: () => true },
+    share: { configurable: true, value: share },
+  });
+  try {
+    render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
+      anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
+      onNavigationContextChange={() => {}} /></KonstaProvider>);
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Открыть видео' }));
+    const player = screen.getByRole('region', { name: 'Просмотр вложения' }).querySelector('video');
+    expect(player?.src).toBe('blob:offline-video');
+    expect(player?.controls).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть просмотр' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Действия неотправленного видео' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Сохранить' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+    await waitFor(() => expect(share).toHaveBeenCalledExactlyOnceWith({ files: [
+      expect.objectContaining({ name: file.name, type: file.type, size: file.size }),
+    ] }));
+    await waitFor(() => expect(screen.queryByText('Сохранить видео')).toBeNull());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать вложение' }));
+    expect(screen.getByText('Убрать неотправленное видео?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(screen.getByRole('button', { name: 'Ещё раз' })).toBeTruthy();
+    expect(discardDraft).not.toHaveBeenCalled();
+    expect(updateDraftMedia).not.toHaveBeenCalled();
+    expect(uploadDirectMedia).not.toHaveBeenCalled();
+  } finally {
+    properties.forEach((key, index) => {
+      const descriptor = descriptors[index];
+      if (descriptor) Object.defineProperty(navigator, key, descriptor);
+      else Reflect.deleteProperty(navigator, key);
+    });
+  }
+});
+
 it('acknowledges a restored attachment sent on another device once its metadata arrives', async () => {
   const metadata: DiscussionMediaDraft = { id: 'gallery-photo', storageKey: 'mvp-media/' + 'b'.repeat(64),
     mediaType: 'photo', mimeType: 'image/jpeg', sizeBytes: 5, durationSeconds: null,
