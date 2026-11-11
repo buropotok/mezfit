@@ -8,7 +8,12 @@ export type VideoRecordingProfile = keyof typeof VIDEO_RECORDING_PROFILES;
 
 export function videoRecordingConstraints(profile: VideoRecordingProfile): MediaTrackConstraints {
   const { width, height } = VIDEO_RECORDING_PROFILES[profile];
-  return { width: { ideal: width }, height: { ideal: height }, frameRate: { ideal: 30 } };
+  const supported = navigator.mediaDevices?.getSupportedConstraints?.();
+  const canRequireNativeSize = profile !== 'circle' && supported && 'resizeMode' in supported && supported.resizeMode === true;
+  return {
+    width: { ideal: width }, height: { ideal: height }, frameRate: { ideal: 30 },
+    ...(canRequireNativeSize ? { resizeMode: { exact: 'none' } } : {}),
+  };
 }
 
 const AVC_MP4_TYPES = [

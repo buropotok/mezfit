@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
-import { orientedRecordingStream } from './oriented-recording-stream';
 import { avcRecordingOptions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
 
 export interface VideoNoteRecording {
@@ -46,7 +45,6 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const mountedRef = useRef(false);
   const epochRef = useRef(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const disposeOrientedStream = useRef<(() => void) | undefined>(undefined);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const resolveStopRef = useRef<((clip: VideoNoteRecording | null) => void) | null>(null);
   const startedAtRef = useRef(0);
@@ -65,11 +63,6 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     deadlineRef.current = null;
   }, []);
 
-  const clearOrientedStream = useCallback(() => {
-    disposeOrientedStream.current?.();
-    disposeOrientedStream.current = undefined;
-  }, []);
-
   const cancel = useCallback(() => {
     epochRef.current += 1;
     clearTimers();
@@ -83,13 +76,12 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         try { recorder.stop(); } catch { /* WebView already ended recording. */ }
       }
     }
-    clearOrientedStream();
     recordingStreamRef.current?.getTracks().forEach(track => { track.enabled = false; });
     recordingStreamRef.current = null;
     resolveStopRef.current?.(null);
     resolveStopRef.current = null;
     updateStatus('idle');
-  }, [clearOrientedStream, clearTimers, updateStatus]);
+  }, [clearTimers, updateStatus]);
 
   const release = useCallback(() => {
     cancel();
@@ -168,30 +160,29 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('idle');
       return false;
     }
+    if (preview) {
+      const { video } = preview;
+      if (!video || video.srcObject !== source || !video.videoWidth || !video.videoHeight || video.readyState < 2) {
+        setError('Дождитесь изображения с камеры и повторите попытку.');
+        updateStatus('error');
+        return false;
+      }
+      const matchesOrientation = preview.profile === 'portrait'
+        ? video.videoHeight > video.videoWidth
+        : video.videoWidth > video.videoHeight;
+      if (!matchesOrientation) {
+        const orientation = preview.profile === 'portrait' ? 'вертикальный' : 'горизонтальный';
+        setError(`Камера Telegram не отдаёт ${orientation} кадр. Можно выбрать готовое видео из галереи.`);
+        updateStatus('error');
+        return false;
+      }
+    }
     source.getTracks().forEach(track => { track.enabled = true; });
     recordingStreamRef.current = source;
 
     let recorder: MediaRecorder | null = null;
     try {
-      let recordingSource = source;
-      if (profile !== 'circle' && preview) {
-        const { width, height } = VIDEO_RECORDING_PROFILES[preview.profile];
-        let oriented: ReturnType<typeof orientedRecordingStream>;
-        try {
-          oriented = orientedRecordingStream(source, preview.video, width, height);
-        } catch {
-          source.getAudioTracks().forEach(track => { track.enabled = false; });
-          recordingStreamRef.current = null;
-          setError('Не удалось записать видео в выбранной ориентации. Дождитесь изображения с камеры и попробуйте снова.');
-          updateStatus('error');
-          return false;
-        }
-        if (oriented) {
-          disposeOrientedStream.current = oriented.dispose;
-          recordingSource = oriented.stream;
-        }
-      }
-      recorder = new MediaRecorder(recordingSource, options);
+      recorder = new MediaRecorder(source, options);
       const settings = source.getVideoTracks()[0]?.getSettings?.() ?? {};
       const activeRecorder = recorder;
       const chunks: Blob[] = [];
@@ -211,7 +202,6 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         if (recorderRef.current !== activeRecorder || epoch !== epochRef.current) return;
         recorderRef.current = null;
         clearTimers();
-        clearOrientedStream();
         recordingStreamRef.current?.getTracks().forEach(track => { track.enabled = false; });
         recordingStreamRef.current = null;
         const recorderMimeType = activeRecorder.mimeType || chunks[0]?.type || '';
@@ -256,7 +246,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('error');
       return false;
     }
-  }, [acquire, clearOrientedStream, clearTimers, liveStream, maxDurationMs, profile, release, stop, updateStatus]);
+  }, [acquire, clearTimers, liveStream, maxDurationMs, profile, release, stop, updateStatus]);
 
   useEffect(() => {
     mountedRef.current = true;
