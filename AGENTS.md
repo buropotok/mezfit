@@ -196,7 +196,7 @@ actions. Inline text links and list rows remain their own existing primitives.
 
 The canonical Konsta theme is **iOS + dark**. Keep `KonstaProvider theme="ios" dark` and the required public `k-ios dark` theme-root classes at the application root unless the user explicitly changes the product-wide theme decision.
 
-Konsta must use the shared Mezfit font family through the supported Tailwind/Konsta `@theme` token `--font-ios: var(--ui-font-family)`. The shared family is Zen Maru Gothic. Do not enforce fonts through `.k-*` selectors or component-internal overrides.
+Konsta must use the shared Mezfit font family through the supported Tailwind/Konsta `@theme` token `--font-ios: var(--ui-font-family)`. The shared family defaults to Zen Maru Gothic, with Inter selectable globally through Settings → Шрифты. Do not enforce fonts through `.k-*` selectors or component-internal overrides.
 
 All Mezfit app-owned text must use one of the seven shared semantic typography presets defined by `typography.md`: Large title, Title, Headline, Chat, Body, Footnote, or Caption. Consume the selected preset through the shared semantic typography API (normally `Text variant=...`) or a component API that delegates to it. Do not reconstruct a preset from individual font tokens and do not create component-local font-size, line-height, weight, or letter-spacing overrides for app-owned text. If the seven presets are insufficient, stop and report the missing typography capability instead of creating a local variant.
 

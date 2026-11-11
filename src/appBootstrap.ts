@@ -1,4 +1,5 @@
 import { applyBackgroundSettings, loadBrowserBackgroundSettings } from './backgroundSettings';
+import { applyFontFamily, loadBrowserFontFamily } from './fontFamilySettings';
 import { applyTheme, loadGlobalTheme } from './theme';
 import { applyTypographySettings, loadBrowserTypographySettings } from './typographySettings';
 
@@ -9,6 +10,7 @@ import { applyTypographySettings, loadBrowserTypographySettings } from './typogr
 export async function startAppBootstrap(mount: () => void | Promise<void>): Promise<void> {
   applyBackgroundSettings(loadBrowserBackgroundSettings());
   applyTypographySettings(loadBrowserTypographySettings());
+  applyFontFamily(loadBrowserFontFamily());
   applyTheme('default');
   void loadGlobalTheme();
 

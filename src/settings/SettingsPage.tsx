@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Range, Toggle } from 'konsta/react';
 import { DEFAULT_BACKGROUND_SETTINGS, type BackgroundSettings } from '../backgroundSettings';
+import { DEFAULT_FONT_FAMILY, type FontFamily } from '../fontFamilySettings';
 import type { NavigationContext } from '../NavigationShell';
 import {
   DEFAULT_GLASS_SETTINGS,
@@ -172,6 +173,8 @@ interface SettingsPageProps {
   onGlassSettingsChange?: (settings: GlassSettings) => void;
   typographySettings?: Readonly<TypographySettings>;
   onTypographySettingsChange?: (settings: TypographySettings) => void;
+  fontFamily?: FontFamily;
+  onFontFamilyChange?: (family: FontFamily) => void;
   onNavigationContextChange: (context: NavigationContext | null) => void;
   initialScreenDiagnosticsOpen?: boolean;
   onScreenDiagnosticsDeepLinkConsumed?: () => void;
@@ -181,6 +184,11 @@ interface SettingsPageProps {
 
 const glassPresetOptions = GLASS_PRESET_NAMES.map((preset) => ({ value: preset, label: preset }));
 const typographyWeightOptions = TYPOGRAPHY_WEIGHTS.map((weight) => ({ value: String(weight), label: String(weight) }));
+const fontFamilyOptions: Array<{ value: FontFamily; label: string }> = [
+  { value: 'zen-maru-gothic', label: 'Zen Maru Gothic' },
+  { value: 'inter', label: 'Inter' },
+];
+
 const typographyFontStyleOptions = [
   { value: 'normal', label: 'Обычное' },
   { value: 'italic', label: 'Курсив' },
@@ -269,6 +277,8 @@ export function SettingsPage({
   onGlassSettingsChange = () => {},
   typographySettings = defaultTypographySettings(),
   onTypographySettingsChange = () => {},
+  fontFamily = DEFAULT_FONT_FAMILY,
+  onFontFamilyChange = () => {},
   onNavigationContextChange,
   initialScreenDiagnosticsOpen = false,
   onScreenDiagnosticsDeepLinkConsumed,
@@ -531,8 +541,25 @@ export function SettingsPage({
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Шрифты</Text>
           <Text variant="footnote" tone="muted">
-            Настройте семь общих типографических пресетов. Изменения сразу применяются ко всему интерфейсу и сохраняются после перезагрузки.
+            Выберите шрифт интерфейса и настройте семь общих типографических пресетов. Изменения применяются сразу и сохраняются после перезагрузки.
           </Text>
+
+          <div className="settings-page__typography-select">
+            <Text variant="footnote">Семейство шрифта</Text>
+            <Dropdown
+              mode="single"
+              value={fontFamily}
+              options={fontFamilyOptions}
+              title="Семейство шрифта"
+              variant="field"
+              triggerProps={{ 'aria-label': 'Семейство шрифта' }}
+              onChange={(value) => {
+                if (value === 'zen-maru-gothic' || value === 'inter') onFontFamilyChange(value);
+              }}
+            />
+          </div>
+
+          <Divider />
 
           <div className="settings-page__typography-list">
             {TYPOGRAPHY_ROLES.map((role, index) => {
@@ -609,7 +636,10 @@ export function SettingsPage({
           <span className="settings-page__action">
             <Button
               variant="secondary"
-              onClick={() => onTypographySettingsChange(defaultTypographySettings())}
+              onClick={() => {
+                onTypographySettingsChange(defaultTypographySettings());
+                onFontFamilyChange(DEFAULT_FONT_FAMILY);
+              }}
             >
               Сбросить шрифты
             </Button>

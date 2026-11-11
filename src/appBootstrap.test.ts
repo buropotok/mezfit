@@ -6,6 +6,8 @@ const spies = vi.hoisted(() => ({
   applyBackgroundSettings: vi.fn(),
   loadBrowserBackgroundSettings: vi.fn(() => ({ hue: 0, saturation: 0, value: 0 })),
   applyTypographySettings: vi.fn(),
+  applyFontFamily: vi.fn(),
+  loadBrowserFontFamily: vi.fn(() => 'inter'),
   loadBrowserTypographySettings: vi.fn(() => ({})),
   applyTheme: vi.fn(),
   loadGlobalTheme: vi.fn(() => new Promise<never>(() => undefined)),
@@ -18,6 +20,10 @@ vi.mock('./backgroundSettings', () => ({
 vi.mock('./typographySettings', () => ({
   applyTypographySettings: spies.applyTypographySettings,
   loadBrowserTypographySettings: spies.loadBrowserTypographySettings,
+}));
+vi.mock('./fontFamilySettings', () => ({
+  applyFontFamily: spies.applyFontFamily,
+  loadBrowserFontFamily: spies.loadBrowserFontFamily,
 }));
 vi.mock('./theme', () => ({
   applyTheme: spies.applyTheme,
@@ -32,6 +38,9 @@ describe('application bootstrap', () => {
 
     expect(spies.applyBackgroundSettings).toHaveBeenCalledOnce();
     expect(spies.applyTypographySettings).toHaveBeenCalledOnce();
+    expect(spies.applyFontFamily).toHaveBeenCalledWith('inter');
+    expect(spies.applyFontFamily.mock.invocationCallOrder[0])
+      .toBeLessThan(mount.mock.invocationCallOrder[0]);
     expect(spies.applyTheme).toHaveBeenCalledWith('default');
     expect(spies.loadGlobalTheme).toHaveBeenCalledOnce();
     expect(mount).toHaveBeenCalledOnce();
