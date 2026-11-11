@@ -145,7 +145,7 @@
   place-items: center;
 }
 .discussion-composer__field {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   display: flex;
   min-width: 0;
   min-height: 3rem;
@@ -328,7 +328,13 @@
   border-radius: 50%;
   background: var(--ui-color-danger, #ff453a);
 }
-.discussion-recording-status__time { flex-shrink: 0; white-space: nowrap; }
+/* Reserve a stable timer slot: proportional digits and minute rollover must
+   not move the cancellation action or participate in composer sizing. */
+.discussion-recording-status__time {
+  flex: 0 0 7ch;
+  inline-size: 7ch;
+  white-space: nowrap;
+}
 .discussion-recording-status__cancel {
   flex: 1;
   min-width: 0;
