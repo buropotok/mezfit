@@ -1,4 +1,4 @@
-.workout-completion-sheet { display: flex; flex-direction: column; gap: 20px; padding: 20px; }
+.workout-completion-sheet { display: flex; flex-direction: column; gap: 20px; padding: 20px var(--page-pad-x); }
 .workout-completion-sheet > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .workout-completion-sheet__list { display: flex; flex-direction: column; gap: 16px; }
 .workout-completion-sheet__card { width: 100%; padding: 16px; text-align: left; }
