@@ -12,6 +12,17 @@ export function hasSessionMicrophone() {
   return stream?.getAudioTracks().some(track => track.readyState === 'live') ?? false;
 }
 
+/** Preserve the microphone grant already obtained by video recording. */
+export function retainSessionMicrophone(camera: MediaStream) {
+  if (hasSessionMicrophone() || pending) return;
+  const tracks = camera.getTracks().filter(track => track.kind === 'audio');
+  if (!tracks.length) return;
+  releaseSession();
+  stream = new MediaStream(tracks.map(track => track.clone()));
+  stream.getTracks().forEach(track => { track.enabled = false; });
+  window.addEventListener('pagehide', releaseSession, { once: true });
+}
+
 export async function acquireSessionMicrophone(constraints: MediaStreamConstraints): Promise<MediaStream> {
   if (!hasSessionMicrophone()) {
     if (!pending) {

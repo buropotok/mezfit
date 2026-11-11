@@ -28,7 +28,7 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const cameraPreview = useRef<HTMLVideoElement>(null);
-  const { start, stop, stream, status, error, elapsedMs } = useVideoNoteRecorder(setClip, profile);
+  const { start, stop, stream, status, error, elapsedMs } = useVideoNoteRecorder(setClip, profile, true);
   const delayTrigger = useRef<HTMLElement>(null);
   const [delayOpen, setDelayOpen] = useState(false);
   const [delayPresented, setDelayPresented] = useState(false);

@@ -32,11 +32,11 @@ function cameraError(error: unknown): string {
  * useVideoNoteCameraSession; this hook owns MediaRecorder and recorded bytes.
  * No recording, permission request, upload or publication occurs on mount.
  */
-export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => void, profile: VideoRecordingProfile = 'circle') {
+export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => void, profile: VideoRecordingProfile = 'circle', session = false) {
   const maxDurationMs = VIDEO_RECORDING_PROFILES[profile].maxDurationMs;
   const onRecordedRef = useRef(onRecorded);
   onRecordedRef.current = onRecorded;
-  const camera = useVideoNoteCameraSession(profile);
+  const camera = useVideoNoteCameraSession(profile, session);
   const { acquire, liveStream, release: releaseCamera } = camera;
   const [status, setStatus] = useState<VideoNoteRecorderStatus>('idle');
   const [error, setError] = useState('');
@@ -273,5 +273,5 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
 
   return { start, stop, cancel, release, status, error, stream, elapsedMs,
     progress: Math.min(1, elapsedMs / maxDurationMs),
-    hasStream: (facing: VideoNoteFacingMode) => liveStream(facing) !== null };
+    hasStream: camera.hasStream };
 }
