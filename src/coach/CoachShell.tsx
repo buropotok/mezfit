@@ -136,6 +136,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   const [clientDiscussionNavigation, setClientDiscussionNavigation] = useState<NavigationContext | null>(null);
   const [clientWorkoutNavigation, setClientWorkoutNavigation] = useState<NavigationContext | null>(null);
   const [clientHistoryCalendar, setClientHistoryCalendar] = useState<NavigationContext['calendar']>();
+  const [clientHistoryCalendarRequested, setClientHistoryCalendarRequested] = useState(false);
   const [clientExerciseNavigation, setClientExerciseNavigation] = useState<NavigationContext | null>(null);
   const selectedClientProgram = clientSelectedProgram && selectedClient
     && clientSelectedProgram.clientUserId === selectedClient.userId
@@ -225,6 +226,10 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   }, [destination, resetBusy]);
 
   useEffect(() => {
+    if (clientTab !== 'history' || destination !== 'clients') setClientHistoryCalendarRequested(false);
+  }, [clientTab, destination]);
+
+  useEffect(() => {
     if (destination !== 'clients' && destination !== 'programs' && selectedClientId) setSelectedClientId(null);
     if (destination !== 'programs') {
       setSelectedProgram(null);
@@ -304,7 +309,10 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         setClientExerciseNavigation(null);
         setClientWorkoutNavigation(null);
       },
-      onCalendarOpen: destination === 'clients' ? () => setClientTab('history') : undefined,
+      onCalendarOpen: destination === 'clients' ? () => {
+        setClientHistoryCalendarRequested(true);
+        setClientTab('history');
+      } : undefined,
       calendar: clientTab === 'history' ? clientHistoryCalendar : undefined,
       onBack: () => setSelectedClientId(null),
     });
@@ -354,7 +362,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
           onNavigationContextChange={setClientWorkoutNavigation} /> : null}
         historyContent={clientTab === 'history' ? <ProfileWorkoutTimeline key={selectedClient.relationshipId + ':history'}
           mode="history" role="coach" contact={selectedClient} actor={actor} initData={initData}
-          onCalendarChange={destination === 'clients' ? setClientHistoryCalendar : undefined}
+          onCalendarChange={clientHistoryCalendarRequested && destination === 'clients' ? setClientHistoryCalendar : undefined}
           onNavigationContextChange={setClientWorkoutNavigation} /> : null}
         exercisesContent={clientTab === 'exercises' ? <ClientPerformedExercisesPage
           key={`${cloudConnections?.actorUserId}:${selectedClient.relationshipId}`} client={selectedClient}

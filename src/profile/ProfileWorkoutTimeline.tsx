@@ -108,7 +108,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const loading = !workouts.data && !workouts.failed;
   const [today, setToday] = useState<LocalDate>(() => localDate(new Date()));
   const { from, to, source } = historyFilter;
-  const calendarDay = onCalendarChange && source === 'calendar' ? from : null;
+  const calendarDay = mode === 'history' && source === 'calendar' ? from : null;
   const [pendingCalendarDay, setPendingCalendarDay] = useState<LocalDate | null>(null);
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
   const [openedOccurrenceId, setOpenedOccurrenceId] = useState<string | null>(null);
@@ -144,7 +144,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     actorUserId: cloud?.actorUserId, contact, mode, today, from, to,
   }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, from, to]);
 
-  const calendarEnabled = Boolean(onCalendarChange);
+  const calendarEnabled = Boolean(onCalendarChange) || calendarDay !== null;
   const clientUserId = contact?.userId;
   const relationshipId = contact?.relationshipId;
   const { rowsByDate, dayStatuses } = useMemo(() => {

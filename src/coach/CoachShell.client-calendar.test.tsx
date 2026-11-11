@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { NavigationContext } from '../NavigationShell';
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
@@ -26,7 +26,10 @@ vi.mock('../schedule/CalendarSessionSheet', () => ({
     sessionId ? <button onClick={onClose}>Закрыть {sessionId}</button> : null,
 }));
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+});
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const pair = {
   realmId: 'pair', owner: 'pair', athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202',
