@@ -3,21 +3,22 @@ import { createPortal } from 'react-dom';
 import type { NavigationContext } from '../NavigationShell';
 import { IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type LiquidPopoverItem } from '../ui';
 import { UnreadCount } from '../ui/UnreadCount';
-import type { EntityDiscussionTarget } from './entity-discussion-target';
+import type { EntityDiscussionTarget, OpenEntityDiscussion } from './entity-discussion-target';
 import { useEntityDiscussions } from './useEntityDiscussions';
 
 /** The workout owns the open discussion; set-row controls never become the conversation owner. */
 export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationContextChange, onDeleteNavigationContextChange, onOpenTarget, onDeleteSet }: {
   target: EntityDiscussionTarget | null;
   setNumber: number;
-  onOpenTarget?: (target: EntityDiscussionTarget) => void;
+  onOpenTarget?: OpenEntityDiscussion;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   /** Separate navigation owner for this confirmation, above any FACT editor. */
   onDeleteNavigationContextChange?: (context: NavigationContext | null) => void;
   onDeleteSet?: () => Promise<void>;
 }) {
-  const discussions = useEntityDiscussions(target, onNavigationContextChange, Boolean(target), { onOpenTarget });
+  const discussions = useEntityDiscussions(target, onNavigationContextChange, Boolean(target));
   const trigger = useRef<HTMLButtonElement>(null);
+  const videoRequested = useRef<EntityDiscussionTarget | null>(null);
   const deleteRequested = useRef(false);
   const deletingRef = useRef(false);
   const [open, setOpen] = useState(false);
@@ -33,7 +34,10 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
     });
     return () => report(null);
   }, [deleteConfirm, onDeleteNavigationContextChange]);
-  const items: LiquidPopoverItem[] = target ? [discussions.menuItem] : [];
+  const items: LiquidPopoverItem[] = target ? [{
+    id: 'record-video', label: 'Видео', icon: 'video', disabled: !discussions.canRecordVideo,
+    onSelect: () => { videoRequested.current = target; },
+  }] : [];
   if (onDeleteSet) items.push({
     id: 'delete-set',
     label: 'Удалить подход',
@@ -43,8 +47,11 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
     onSelect: () => { deleteRequested.current = true; },
   });
   const onPresentationChange = (presented: boolean) => {
-    discussions.onMenuPresentationChange(presented);
-    if (!presented && deleteRequested.current) {
+    if (presented) return;
+    const videoTarget = videoRequested.current;
+    videoRequested.current = null;
+    if (videoTarget && discussions.canRecordVideo) (onOpenTarget ?? discussions.openTarget)(videoTarget, 'record-video');
+    if (deleteRequested.current) {
       deleteRequested.current = false;
       setDeleteError('');
       setDeleteConfirm(true);

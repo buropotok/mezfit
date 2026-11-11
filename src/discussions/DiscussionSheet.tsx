@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
 import { Button, Messages, MessagesTitle } from 'konsta/react';
 import type { MessageAttachment } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
@@ -51,6 +51,8 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   contextUnavailable?: boolean;
   /** Keep one sheet mounted while the entity repository resolves its canonical thread. */
   opening?: { error: string; retry: () => void };
+  /** The set recorder supplies one confirmed take for this exact thread. */
+  takeRecordedVideo?: () => File | undefined;
   glassSettings?: GlassSettings;
   /** Compact direct conversation by default; retain native author presentation for groups. */
   showAvatars?: boolean;
@@ -95,12 +97,20 @@ export function DiscussionSheet(props: DiscussionSheetProps) {
 }
 
 function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose, onBack, resolveAuthor,
-  onNavigationContextChange, parentNavigation, contextLabel, contextUnavailable, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
+  onNavigationContextChange, parentNavigation, contextLabel, contextUnavailable, takeRecordedVideo, glassSettings, showAvatars = false, renderAttachment }: DiscussionSheetProps) {
   const targetKey = JSON.stringify([threadId, anchor]);
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
   const draft = useDiscussionDraft(repository, threadId);
   const media = useDiscussionMedia(repository, draft);
+  const sendRecordedVideo = useEffectEvent((file: File) => {
+    void media.choose(file, { recorded: true, sendToThread: threadId });
+  });
+  useEffect(() => {
+    if (!repository.supportsMedia || !draft.ready || !state.title || state.error || contextUnavailable) return;
+    const file = takeRecordedVideo?.();
+    if (file) sendRecordedVideo(file);
+  }, [takeRecordedVideo, repository.supportsMedia, draft.ready, state.title, state.error, contextUnavailable]);
   const voice = useDiscussionVoice(media.chooseVoice, () => discardVoice());
   const videoNote = useDiscussionVideoNote(media.sendVideoNote, () => discardVoice());
   const [videoPlaybackHost, setVideoPlaybackHost] = useState<HTMLDivElement | null>(null);
@@ -108,10 +118,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const recordingCircle = videoNote.status === 'recording';
   const circleInProgress = recordingCircle || videoNote.status === 'requesting' || videoNote.status === 'processing';
   const voiceInProgress = recordingVoice || voice.status === 'requesting' || voice.status === 'processing';
-  const voiceDraft = media.selection?.metadata.mediaType === 'voice' ? media.selection.metadata
-    : draft.media?.mediaType === 'voice' ? draft.media : undefined;
-  const circleDraft = media.selection?.metadata.mediaType === 'video-note' ? media.selection.metadata
-    : draft.media?.mediaType === 'video-note' ? draft.media : undefined;
+  const activeAttachment = media.selection?.metadata ?? draft.media;
+  const voiceDraft = activeAttachment?.mediaType === 'voice' ? activeAttachment : undefined;
+  const circleDraft = activeAttachment?.mediaType === 'video-note' ? activeAttachment : undefined;
   const addSurface = useRef<HTMLElement>(null);
   const actionSurface = useRef<HTMLElement>(null);
   const recordingGesture = voice.phase !== 'idle' ? voice : videoNote;
@@ -130,7 +139,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [cameraOpen, setCameraOpen] = useState(false);
   const mediaBusy = media.phase !== 'idle' && media.phase !== 'failed';
   const mediaPresent = Boolean(media.selection || draft.media);
-  const previewing = Boolean(media.preview && media.selection && !voiceDraft && !circleDraft);
+  const previewing = Boolean(media.preview && media.selection && !voiceDraft && !circleDraft
+    && !(media.selection.separate && mediaBusy));
   const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
   const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
   const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
@@ -645,7 +655,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {media.error && <Text variant="footnote" role="alert">{media.error}</Text>}
       {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
       {(mediaPresent || media.phase === 'uploading' || media.phase === 'publishing') && <div className="discussion-composer-context__mode">
-        {!previewing && !voiceDraft && !circleDraft && <Text variant="footnote" className="discussion-media-filename">{draft.media?.fileName}</Text>}
+        {!previewing && !voiceDraft && !circleDraft && <Text variant="footnote" className="discussion-media-filename">{activeAttachment?.fileName}</Text>}
         {media.phase === 'uploading' ? <>
           <Text variant="footnote" role="status">Загружаем вложение…</Text>
           <IconButton icon="x" label="Отменить загрузку" onClick={media.cancel} />

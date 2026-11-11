@@ -56,8 +56,8 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
   }
   return {
     text, replyId, ready, error, media,
-    async stageMedia(attachment: DiscussionMediaDraft): Promise<DiscussionMessageInput | null> {
-      const input = { ...(current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
+    async stageMedia(attachment: DiscussionMediaDraft, separate?: DiscussionMessageInput): Promise<DiscussionMessageInput | null> {
+      const input = { ...(separate ?? current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
         draftMedia: attachment };
       try {
         await repository.saveDraft(input);
@@ -78,8 +78,10 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
         else sent(input.id);
         return null;
       }
-      current.current = input;
-      if (alive.current) setMedia(attachment);
+      if (!separate) {
+        current.current = input;
+        if (alive.current) setMedia(attachment);
+      }
       return { ...input, requireUnsentDraft: true };
     },
     async clearMedia() {

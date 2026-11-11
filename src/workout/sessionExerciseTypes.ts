@@ -1,4 +1,4 @@
-import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
+import type { EntityDiscussionTarget, OpenEntityDiscussion } from '../discussions/entity-discussion-target';
 import type { DiscussionAnchor, DiscussionScope } from '../../shared/discussion-anchor';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
@@ -54,7 +54,7 @@ export interface SaveSessionSetInput<Id extends string | number = number> {
 
 interface SessionExerciseSharedProps<Id extends string | number = number> {
   discussionScope?: DiscussionScope;
-  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  onOpenDiscussion?: OpenEntityDiscussion;
   context: SessionExerciseContext<Id>;
   data: SessionExerciseData<Id>;
   collapsed?: boolean;
@@ -112,7 +112,7 @@ export interface ProgramSessionExerciseProps {
   /** Occurrence-only discussion targets; program templates never receive them. */
   discussionTarget?: EntityDiscussionTarget | null;
   discussionTargetForSet?: (setId: string) => EntityDiscussionTarget | null;
-  onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
+  onOpenDiscussion?: OpenEntityDiscussion;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onSetDeletionNavigationContextChange?: (context: NavigationContext | null) => void;
 }
