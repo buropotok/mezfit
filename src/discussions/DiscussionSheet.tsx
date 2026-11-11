@@ -28,6 +28,7 @@ import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVid
 import { DiscussionVoice } from './DiscussionVoice';
 import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
+import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { startPressScale } from '../ui/PressScale';
 import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
@@ -131,9 +132,16 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const mediaPresent = Boolean(media.selection || draft.media);
   const previewing = Boolean(media.preview && media.selection && !voiceDraft && !circleDraft);
   const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
+  const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
   const viewedAttachment = viewing && state.messages.find(row => row.id === viewing.messageId && !row.deleted)
     ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
   const viewer = viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId) : null;
+  const previewVideoUrl = previewing && media.selection?.metadata.mediaType === 'video' ? media.preview : undefined;
+  const videoUrl = viewer ? (viewer.type === 'video' ? viewer.src : undefined) : previewVideoUrl;
+  const videoFullscreen = Boolean(videoUrl && videoUrl === fullscreenVideo);
+  const fullscreenButton = videoUrl && <IconButton icon={videoFullscreen ? 'arrows-minimize' : 'arrows-maximize'}
+    label={videoFullscreen ? 'Выйти из полноэкранного режима' : 'Во весь экран'}
+    onClick={() => setFullscreenVideo(videoFullscreen ? null : videoUrl)} />;
   const mediaSurfaceOpen = previewing || Boolean(viewer) || cameraOpen;
   const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -253,6 +261,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   back.current = () => {
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
+    if (videoFullscreen) { setFullscreenVideo(null); updateNavigation(); return; }
     if (viewer) { setViewing(null); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
     if (previewing || voiceComposer || circleDraft) {
@@ -593,16 +602,23 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         })}
       </Messages>
     </div>
-    {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' && <section className="discussion-media-stage"
-      aria-label="Предпросмотр вложения" style={{ bottom: composerHeight + contextHeight }}>
-      <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
-    </section>}
-    {viewer && <section className="discussion-media-stage discussion-media-stage--viewer" aria-label="Просмотр вложения">
+    {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' &&
+      <DiscussionMediaStage label="Предпросмотр вложения" fullscreen={Boolean(previewVideoUrl && !viewer && videoFullscreen)}
+        style={{ bottom: composerHeight + contextHeight }}>
+        <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
+        {previewVideoUrl && !viewer && <div className="discussion-media-stage__close">{fullscreenButton}</div>}
+      </DiscussionMediaStage>}
+    {viewer && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
+      fullscreen={viewer.type === 'video' && videoFullscreen}>
       <DiscussionMedia key={viewer.src} {...viewer} mode="viewer" />
       <div className="discussion-media-stage__close">
-        <IconButton icon="x" label="Закрыть просмотр" onClick={() => setViewing(null)} />
+        {fullscreenButton}
+        <IconButton icon="x" label="Закрыть просмотр" onClick={() => {
+          setFullscreenVideo(null);
+          setViewing(null);
+        }} />
       </div>
-    </section>}
+    </DiscussionMediaStage>}
     {cameraOpen && <DiscussionVideoRecorder onCancel={() => setCameraOpen(false)}
       onGallery={() => {
         setCameraOpen(false);
@@ -612,7 +628,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         setCameraOpen(false);
         void media.choose(file, { recorded: true });
       }} />}
-    <div className="discussion-composer-context" ref={context} inert={Boolean(viewer) || cameraOpen}
+    <div className="discussion-composer-context" ref={context} inert={Boolean(viewer) || cameraOpen || videoFullscreen}
       data-previewing={previewing || undefined} style={{ bottom: composerHeight }}>
       {receiptError && <><Text variant="footnote" role="alert">Не удалось обновить статусы прочтения</Text>
         <Button rounded onClick={() => setReceiptRetry(value => value + 1)}>Повторить обновление статусов</Button></>}
@@ -665,7 +681,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       <input type="file" hidden ref={photoPicker} accept={DISCUSSION_MEDIA_ACCEPT.split(',').filter(type => type.startsWith('image/')).join(',')}
         onChange={pickAttachment} />
     </>}
-    <div className="discussion-composer" ref={composer} inert={Boolean(viewer) || cameraOpen} data-previewing={previewing || undefined}>
+    <div className="discussion-composer" ref={composer} inert={Boolean(viewer) || cameraOpen || videoFullscreen} data-previewing={previewing || undefined}>
       <GlassSurface ref={addSurface} className="discussion-composer__button discussion-composer__button--add" {...material}
         shape="capsule" wrapContent={false} style={{ visibility: !voiceComposer && attachmentsPresented ? 'hidden' : undefined }}>
         {voiceComposer || circleInProgress || circleDraft

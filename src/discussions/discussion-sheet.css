@@ -168,10 +168,24 @@
   z-index: 5;
 }
 
+.discussion-media-stage__anchor { display: contents; }
+
+.discussion-media-stage--fullscreen {
+  --discussion-media-safe-top: max(env(safe-area-inset-top), calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)));
+  --discussion-media-safe-bottom: max(env(safe-area-inset-bottom), calc(var(--tg-safe-area-inset-bottom, 0px) + var(--tg-content-safe-area-inset-bottom, 0px)));
+  --discussion-media-safe-left: max(env(safe-area-inset-left), calc(var(--tg-safe-area-inset-left, 0px) + var(--tg-content-safe-area-inset-left, 0px)));
+  --discussion-media-safe-right: max(env(safe-area-inset-right), calc(var(--tg-safe-area-inset-right, 0px) + var(--tg-content-safe-area-inset-right, 0px)));
+  position: fixed;
+  z-index: 40;
+  overflow: hidden;
+}
+
 .discussion-media-stage__close {
   position: absolute;
-  top: 8px;
-  inset-inline-end: 12px;
+  display: flex;
+  gap: 8px;
+  top: calc(8px + var(--discussion-media-safe-top, 0px));
+  inset-inline-end: calc(12px + var(--discussion-media-safe-right, 0px));
 }
 
 .discussion-composer-context[data-previewing],
@@ -442,8 +456,8 @@
 
 .discussion-video-recorder__status {
   position: absolute;
-  inset-inline: 5rem 1rem;
-  top: 1rem;
+  inset-inline: calc(5rem + var(--discussion-media-safe-left)) calc(1rem + var(--discussion-media-safe-right));
+  top: calc(1rem + var(--discussion-media-safe-top));
   justify-self: center;
   text-align: center;
   padding: 4px 8px;

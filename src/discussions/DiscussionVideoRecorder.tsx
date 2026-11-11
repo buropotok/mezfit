@@ -4,10 +4,14 @@ import { LiquidPopover } from '../ui/LiquidPopover';
 import { useRecordingCountdown } from '../video-note/useRecordingCountdown';
 import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
+import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
 
-const topControls: CSSProperties = { top: '1rem', bottom: 'auto' };
-const centerControl: CSSProperties = { right: '50%', translate: '50% 0' };
+const topControls: CSSProperties = { top: 'calc(1rem + var(--discussion-media-safe-top))', bottom: 'auto' };
+const bottomControls: CSSProperties = { bottom: 'calc(1rem + var(--discussion-media-safe-bottom))' };
+const leftControl: CSSProperties = { left: 'calc(1rem + var(--discussion-media-safe-left))' };
+const rightControl: CSSProperties = { right: 'calc(1rem + var(--discussion-media-safe-right))' };
+const centerControl: CSSProperties = { ...bottomControls, right: '50%', translate: '50% 0' };
 const recordIconSize = { width: 28, height: 28 };
 
 interface Props {
@@ -67,12 +71,11 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
   const canDelay = useRef(false);
   canDelay.current = !inProgress && !clip && status === 'idle' && Boolean(stream);
 
-  return <section className="discussion-media-stage discussion-media-stage--viewer discussion-video-recorder"
-    aria-label="Запись видео">
+  return <DiscussionMediaStage label="Запись видео" className="discussion-video-recorder" fullscreen>
     {clip
-      ? <video key="preview" src={previewUrl} controls playsInline aria-label="Предпросмотр записи" />
+      ? <video key="preview" src={previewUrl} controls controlsList="nofullscreen" playsInline aria-label="Предпросмотр записи" />
       : <video key="camera" ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры" />}
-    <FloatingActionButton label="Назад" icon="arrow-left" placement="left" style={topControls} onClick={onCancel} />
+    <FloatingActionButton label="Назад" icon="arrow-left" placement="left" style={{ ...topControls, ...leftControl }} onClick={onCancel} />
     {countingDown && <Text variant="headline" role="status" className="discussion-video-recorder__status">
       Запись через {countdown.remaining} сек.
     </Text>}
@@ -93,9 +96,9 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
       } }))}
       trigger={<FloatingActionButton ref={delayTrigger} label="Отложенная запись" icon="history" placement="left"
         isShown={!inProgress && !clip && status === 'idle' && Boolean(stream)}
-        style={{ visibility: delayPresented ? 'hidden' : undefined }} />} />
+        style={{ ...bottomControls, ...leftControl, visibility: delayPresented ? 'hidden' : undefined }} />} />
     {!inProgress && !clip && <>
-      <FloatingActionButton label="Выбрать из галереи" disabled={delayOpen} icon="photo" onClick={onGallery} />
+      <FloatingActionButton label="Выбрать из галереи" disabled={delayOpen} icon="photo" style={{ ...bottomControls, ...rightControl }} onClick={onGallery} />
       {stream && status === 'idle'
         ? <FloatingActionButton label="Начать запись" disabled={delayOpen} style={centerControl} onClick={beginRecording}>
           <Icon name="record-circle" className="discussion-video-recorder__record-icon" style={recordIconSize} />
@@ -103,11 +106,11 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
         : <FloatingActionButton label="Включить камеру" icon="video" style={centerControl} onClick={enableCamera} />}
     </>}
     {clip && <>
-      <FloatingActionButton label="Удалить запись и записать заново" icon="x" style={{ ...topControls, ...centerControl }}
+      <FloatingActionButton label="Удалить запись и записать заново" icon="x" style={{ ...centerControl, ...topControls }}
         onClick={() => { setClip(null); enableCamera(); }} />
-      <FloatingActionButton label="Использовать видео" icon="check" style={topControls} disabled={!previewUrl} onClick={() => {
+      <FloatingActionButton label="Использовать видео" icon="check" style={{ ...topControls, ...rightControl }} disabled={!previewUrl} onClick={() => {
         onUse(new File([clip.blob], 'Видео.mp4', { type: clip.mimeType }));
       }} />
     </>}
-  </section>;
+  </DiscussionMediaStage>;
 }
