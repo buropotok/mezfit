@@ -174,9 +174,10 @@ the current status snapshot until a fresh subscription succeeds; contact snapsho
 are scoped to the repository instance as well as actor, realm and subject.
 
 Telegram ID and username stay outside the editable/published draft; identity is
-read only from existing authenticated/membership sources. Telegram ID, Telegram,
-Birth date and Sex use Headline labels with Body values. Sex is selected through
-LiquidPopover and displayed as “Пол: муж/жен/не указан”. The last-modified
+read only from existing authenticated/membership sources. Telegram ID, Telegram, Birth date, Age and Sex use Caption labels with Headline
+values, stacked vertically within one glass surface alongside the weight input.
+Sex is selected through LiquidPopover without combining its label and value
+in one line. The last-modified
 caption is below Save. Layout wraps within 320px without primitive geometry,
 background or typography overrides.
 
