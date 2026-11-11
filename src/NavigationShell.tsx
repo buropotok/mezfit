@@ -82,10 +82,12 @@ export interface NavigationContext {
   identity?: MezfitNavbarIdentity;
   onIdentityClick?: () => void;
   menuActions?: readonly NavigationMenuAction[];
+  onCalendarOpen?: () => void;
   calendar?: {
     value: LocalDate;
     onChange: (date: LocalDate) => void;
     dayStatuses?: readonly DatePickerDayStatusEntry[];
+    closeOnSelect?: boolean;
   };
   contentMode?: 'default' | 'viewport';
 }
@@ -578,7 +580,10 @@ export function NavigationShell({
             onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && identity.avatar ? () => chooseDestination('profile') : undefined)}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
-            onCalendar={() => setCalendarOpen((open) => !open)}
+            onCalendar={() => {
+              if (!calendarOpen) context?.onCalendarOpen?.();
+              setCalendarOpen(!calendarOpen);
+            }}
             calendarOpen={calendarOpen}
             renderMenuControl={renderMenuControl}
             rightControlRef={menuOriginRef}
@@ -641,7 +646,10 @@ export function NavigationShell({
           opened={calendarOpen}
           surface="top-panel"
           value={calendarValue}
-          onChange={onCalendarDateChange}
+          onChange={(date) => {
+            if (context?.calendar?.closeOnSelect) setCalendarOpen(false);
+            onCalendarDateChange(date);
+          }}
           onClose={() => setCalendarOpen(false)}
           glassPreset={glassPreset}
           glassOptics={glassOptics}

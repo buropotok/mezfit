@@ -4,7 +4,7 @@ import type { NavigationContext } from '../NavigationShell';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
-import { localWorkoutDate as localDate, selectProfileWorkoutRows } from './profile-workout-selection';
+import { localWorkoutDate as localDate, selectProfileWorkoutRows, type CalendarTimelineRow } from './profile-workout-selection';
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { draftFromOccurrence } from '../data/cloud/workout-occurrence-plan';
@@ -13,13 +13,15 @@ import type { ProgramActor } from '../program/ProgramSummary';
 import { useWorkoutPerson } from '../schedule/WorkoutPerson';
 import { OccurrenceDraftSheet } from '../schedule/OccurrenceDraftSheet';
 import { CalendarSessionSheet } from '../schedule/CalendarSessionSheet';
+import { preferredWorkoutDayStatus } from '../schedule/workout-day-statuses';
 import { WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
-import { Avatar, Badge, DatePicker, GlassSurface, Icon, Text, type LocalDate } from '../ui';
+import { Avatar, Badge, DatePicker, GlassSurface, Icon, Text, type DatePickerDayStatus, type LocalDate } from '../ui';
 import { useProfileSnapshot } from './ProfileDataProvider';
 import './profile-workout-timeline.css';
 
 const EMPTY_OCCURRENCES: CloudWorkoutOccurrenceRow[] = [];
 const EMPTY_SESSIONS: CalendarWorkoutSession[] = [];
+const EMPTY_TIMELINE_ROWS: CalendarTimelineRow[] = [];
 
 function dateLabel(date: LocalDate): string {
   return date.split('-').reverse().join('.');
@@ -57,8 +59,9 @@ function SessionRow({ session, programName, actor, onOpen }: {
   session: CalendarWorkoutSession; programName: string; actor?: ProgramActor; onOpen: () => void;
 }) {
   const athlete = useWorkoutPerson(session.athleteUserId, session.realmId, actor);
+  const completed = session.status === 'completed';
   return <GlassSurface component="button" wrapContent={false} shape="capsule" optics={false}
-    className="profile-workout-card" onClick={onOpen} aria-label={`Завершённая тренировка: ${session.name}`}>
+    className="profile-workout-card" onClick={onOpen} aria-label={`${completed ? 'Завершённая тренировка' : 'Тренировка в процессе'}: ${session.name}`}>
     <div className="workout-session-card__header workout-session-card__header--scheduled">
       <span className="workout-session-card__icon">
         <Icon name="barbell" className="workout-session-card__icon-artwork" />
@@ -68,7 +71,7 @@ function SessionRow({ session, programName, actor, onOpen }: {
         <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
           {programName}
         </Text>
-        <Badge color="gray" textVariant="caption">Завершена</Badge>
+        <Badge color="gray" textVariant="caption">{completed ? 'Завершена' : 'В процессе'}</Badge>
       </div>
       <div className="workout-session-card__time">
         <Text variant="footnote">{dateLabel(localDate(session.startedAt))}</Text>
@@ -83,13 +86,14 @@ function SessionRow({ session, programName, actor, onOpen }: {
 }
 
 /** A read-only profile projection over the existing local-first schedule, not a second workout store. */
-export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, onNavigationContextChange }: {
+export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, onNavigationContextChange, onCalendarChange }: {
   mode: 'plan' | 'history';
   role: 'coach' | 'client';
   contact?: CloudContact;
   actor?: ProgramActor;
   initData: string;
   onNavigationContextChange: (context: NavigationContext | null) => void;
+  onCalendarChange?: (calendar: NavigationContext['calendar']) => void;
 }) {
   const cloud = useCloudConnections();
   const repository = useMemo(() => cloud
@@ -103,7 +107,9 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const sessions = workouts.data?.sessions ?? EMPTY_SESSIONS;
   const loading = !workouts.data && !workouts.failed;
   const [today, setToday] = useState<LocalDate>(() => localDate(new Date()));
-  const { from, to } = historyFilter;
+  const { from, to, source } = historyFilter;
+  const calendarDay = mode === 'history' && source === 'calendar' ? from : null;
+  const [pendingCalendarDay, setPendingCalendarDay] = useState<LocalDate | null>(null);
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
   const [openedOccurrenceId, setOpenedOccurrenceId] = useState<string | null>(null);
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null);
@@ -138,7 +144,57 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     actorUserId: cloud?.actorUserId, contact, mode, today, from, to,
   }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, from, to]);
 
+  const calendarEnabled = Boolean(onCalendarChange) || calendarDay !== null;
+  const clientUserId = contact?.userId;
+  const relationshipId = contact?.relationshipId;
+  const { rowsByDate, dayStatuses } = useMemo(() => {
+    const rowsByDate = new Map<LocalDate, CalendarTimelineRow[]>();
+    const statuses = new Map<LocalDate, DatePickerDayStatus>();
+    if (calendarEnabled) {
+      const calendarRows = selectProfileWorkoutRows({ occurrences, sessions, actorUserId: cloud?.actorUserId,
+        contact: clientUserId && relationshipId ? { userId: clientUserId, relationshipId } : undefined,
+        mode: 'calendar', today });
+      for (const row of calendarRows) {
+        const group = rowsByDate.get(row.date);
+        if (group) group.push(row);
+        else rowsByDate.set(row.date, [row]);
+        const status = row.kind === 'completed' || row.kind === 'missed' ? row.kind : 'scheduled';
+        statuses.set(row.date, preferredWorkoutDayStatus(statuses.get(row.date), status));
+      }
+    }
+    return { rowsByDate, dayStatuses: Array.from(statuses, ([date, status]) => ({ date, status })) };
+  }, [calendarEnabled, occurrences, sessions, cloud?.actorUserId, clientUserId, relationshipId, today]);
+  const visibleRows = calendarDay ? rowsByDate.get(calendarDay) ?? EMPTY_TIMELINE_ROWS : rows;
+
+  const openWorkout = useCallback((row: CalendarTimelineRow) => {
+    setNestedNavigation(null);
+    setOpenedSessionId('session' in row ? row.session.id : null);
+    setOpenedOccurrenceId('occurrence' in row ? row.occurrence.id : null);
+  }, []);
   const close = useCallback(() => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); }, []);
+  const selectCalendarDay = useCallback((date: LocalDate) => {
+    close();
+    setHistoryFilter({ from: date, to: date, source: 'calendar' });
+    const group = rowsByDate.get(date);
+    if (workouts.data) {
+      if (group?.length === 1) openWorkout(group[0]);
+    } else {
+      setPendingCalendarDay(date);
+    }
+  }, [close, setHistoryFilter, rowsByDate, workouts.data, openWorkout]);
+
+  useEffect(() => {
+    onCalendarChange?.({ value: calendarDay ?? today, onChange: selectCalendarDay, dayStatuses, closeOnSelect: true });
+    return () => onCalendarChange?.(undefined);
+  }, [onCalendarChange, calendarDay, today, selectCalendarDay, dayStatuses]);
+
+  useEffect(() => {
+    if (!pendingCalendarDay || !workouts.data) return;
+    setPendingCalendarDay(null);
+    const group = rowsByDate.get(pendingCalendarDay);
+    if (pendingCalendarDay === calendarDay && group?.length === 1) openWorkout(group[0]);
+  }, [pendingCalendarDay, calendarDay, workouts.data, rowsByDate, openWorkout]);
+
   useEffect(() => {
     if (picker) {
       onNavigationContextChange({ level: 2, title: 'Период тренировок', onBack: () => setPicker(null) });
@@ -156,7 +212,10 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     {mode === 'history' ? <div className="profile-workout-timeline__filters">
       <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{from ? `С ${dateLabel(from)}` : 'С даты'}</Text></KonstaButton>
       <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">{to ? `По ${dateLabel(to)}` : 'По дату'}</Text></KonstaButton>
-      {from || to ? <KonstaButton rounded clear inline onClick={() => { setHistoryFilter({ from: null, to: null }); }}><Text variant="footnote">Сбросить</Text></KonstaButton> : null}
+      {from || to ? <KonstaButton rounded clear inline onClick={() => {
+        setPendingCalendarDay(null);
+        setHistoryFilter({ from: null, to: null });
+      }}><Text variant="footnote">Сбросить</Text></KonstaButton> : null}
     </div> : null}
     {from && to && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
@@ -165,22 +224,24 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     </Text><KonstaButton rounded tonal onClick={workouts.retry}>
       <Text variant="body">Повторить</Text>
     </KonstaButton></div> : null}
-    {workouts.data && rows.length === 0 ? <Text variant="body" tone="muted">
-      {mode === 'plan' ? 'Запланированных тренировок нет' : 'Тренировок за выбранный период нет'}
+    {workouts.data && visibleRows.length === 0 ? <Text variant="body" tone="muted">
+      {calendarDay ? 'В этот день тренировок нет'
+        : mode === 'plan' ? 'Запланированных тренировок нет' : 'Тренировок за выбранный период нет'}
     </Text> : null}
     <div className="profile-workout-list">
-      {rows.map(row => row.kind === 'completed'
+      {visibleRows.map(row => 'session' in row
         ? <SessionRow key={`session:${row.session.id}`} session={row.session}
           programName={row.session.programName ?? 'Без программы'} actor={actor}
-          onOpen={() => { setNestedNavigation(null); setOpenedSessionId(row.session.id); }} />
+          onOpen={() => openWorkout(row)} />
         : <PlanRow key={`occurrence:${row.occurrence.id}`} occurrence={row.occurrence}
           missed={row.kind === 'missed'} actor={actor}
-          onOpen={() => { setNestedNavigation(null); setOpenedOccurrenceId(row.occurrence.id); }} />)}
+          onOpen={() => openWorkout(row)} />)}
     </div>
     <DatePicker opened={picker !== null} surface="panel"
       value={(picker === 'to' ? to : from) ?? today}
       onClose={() => setPicker(null)} onChange={value => {
-        if (picker) setHistoryFilter(previous => ({ ...previous, [picker]: value }));
+        setPendingCalendarDay(null);
+        if (picker) setHistoryFilter(({ from, to }) => ({ from, to, [picker]: value }));
         setPicker(null);
       }} />
     <CalendarSessionSheet sessionId={openedSessionId} role={role} initData={initData} actor={actor}

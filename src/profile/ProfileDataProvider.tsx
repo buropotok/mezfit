@@ -41,7 +41,7 @@ function useProfileRead<T>(requested: boolean, observe: Observe<T> | null) {
 }
 
 type Workouts = { occurrences: CloudWorkoutOccurrenceRow[]; sessions: CalendarWorkoutSession[] };
-type HistoryFilter = { from: LocalDate | null; to: LocalDate | null };
+type HistoryFilter = { from: LocalDate | null; to: LocalDate | null; source?: 'calendar' };
 type ExerciseFilter = { period: ExercisePeriod; anchor: Date; anchorDay: number; category: string | null };
 type Cloud = NonNullable<ReturnType<typeof useCloudConnections>>;
 

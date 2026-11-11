@@ -25,6 +25,13 @@ const priority: Record<DatePickerDayStatus, number> = {
   missed: 2,
 };
 
+export function preferredWorkoutDayStatus(
+  current: DatePickerDayStatus | undefined,
+  candidate: DatePickerDayStatus,
+): DatePickerDayStatus {
+  return !current || priority[candidate] > priority[current] ? candidate : current;
+}
+
 /** Display-only status. Neither the clock nor these markers mutate workout lifecycle. */
 export function deriveWorkoutDayStatuses(
   occurrences: readonly Occurrence[],
@@ -49,8 +56,7 @@ export function deriveWorkoutDayStatuses(
     const time = Date.parse(instant);
     if (!Number.isFinite(time)) return;
     const date = calendarDate(new Date(time));
-    const current = byDate.get(date);
-    if (!current || priority[status] > priority[current]) byDate.set(date, status);
+    byDate.set(date, preferredWorkoutDayStatus(byDate.get(date), status));
   };
 
   const addBooking = (row: Booking) => {
