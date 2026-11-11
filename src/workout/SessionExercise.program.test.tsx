@@ -171,12 +171,19 @@ describe('calendar PLAN versus reusable template', () => {
   it('renders a compact body line with planned weight in kg before repetitions and caption technique', () => {
     const planItem: typeof item = {
       ...item, sets: [{ ...item.sets[0], plannedReps: 10, plannedWeightKg: 80.75,
-        plannedDurationSeconds: null, plannedDistanceMeters: null }],
+        plannedDurationSeconds: null, plannedDistanceMeters: null },
+        { ...item.sets[0], id: 'program-set-2', position: 1, setType: null,
+          plannedReps: null, plannedWeightKg: null,
+          plannedDurationSeconds: null, plannedDistanceMeters: null }],
     };
     const { container } = render(<SessionExercise mode="program" data={planItem}
       showPlanMetrics defaultCollapsed={false} />);
     const line = container.querySelector('.session-exercise__set-plan-line');
-    expect(line?.textContent?.trim()).toBe('Подход 1. План 80,75 кг × 10');
+    expect(line?.textContent?.trim()).toBe('План 80,75 кг × 10');
+    expect(screen.getByText('План Не заполнено')).toBeTruthy();
+    expect(Array.from(container.querySelectorAll('.session-exercise__set-status'))
+      .map(node => node.textContent?.trim())).toEqual(['1', '2']);
+    expect(screen.queryByText(/^Подход [12]/)).toBeNull();
     expect(line?.classList.contains('ui-text--body')).toBe(true);
     const technique = screen.getByText('Тип подхода: Дропсет');
     expect(technique.classList.contains('ui-text--caption')).toBe(true);
@@ -192,7 +199,7 @@ describe('calendar PLAN versus reusable template', () => {
       onEdit={() => {}} onComment={() => {}} onMove={() => {}}
       onDuplicate={() => {}} onDelete={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Развернуть упражнение' }));
-    const planLine = screen.getByText(/^Подход 1\. План 123 кг × 15 · 1:00 · 0,10 км$/);
+    const planLine = screen.getByText(/^План 123 кг × 15 · 1:00 · 0,10 км$/);
     expect(planLine.classList.contains('ui-text--body')).toBe(true);
     fireEvent.click(planLine);
     expect(open).toHaveBeenCalledWith('program-exercise', 'program-set');
@@ -200,7 +207,8 @@ describe('calendar PLAN versus reusable template', () => {
     expect(screen.queryByRole('button', { name: 'Удалить подход 1' })).toBeNull();
     view.unmount();
     render(<SessionExercise mode="program" data={item} defaultCollapsed={false} />);
-    expect(screen.queryByText(/^Подход 1\. План\b/)).toBeNull();
+    expect(screen.getByText('Подход 1')).toBeTruthy();
+    expect(screen.queryByText(/^План /)).toBeNull();
   });
 });
 
