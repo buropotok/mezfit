@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { StrictMode, type ButtonHTMLAttributes, type ReactNode, type TransitionEventHandler } from 'react';
+import { type ButtonHTMLAttributes, type ReactNode, type TransitionEventHandler } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
@@ -26,12 +26,15 @@ vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSele
   return null;
 } }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
-  WorkoutPlanCard: ({ onAddSet, onOpenSet, onExerciseInformation, programName, hideProgramName, day }: {
+  WorkoutPlanCard: ({ onAddSet, onOpenSet, onExerciseInformation, programName, hideProgramName, day,
+    focusExerciseId, focusSetId, focusReady }: {
     onAddSet?: (id: string) => void; onOpenSet?: (exerciseId: string, setId: string) => void;
     onExerciseInformation?: (id: string) => void;
     programName?: string; hideProgramName?: boolean; day?: CloudProgramDayOutline;
+    focusExerciseId?: string; focusSetId?: string; focusReady?: boolean;
   }) => <>
     <span data-testid="scheduled-program-name">{hideProgramName ? null : programName}</span>
+    <span data-testid="scheduled-navigation-focus">{[focusExerciseId, focusSetId, String(focusReady)].join('/')}</span>
     <span data-testid="scheduled-set-techniques">{day?.exercises.flatMap(exercise =>
       exercise.sets.map(set => set.setType ?? 'ordinary')).join(',') ?? ''}</span>
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
@@ -724,7 +727,7 @@ describe('read-only PLAN execution Start', () => {
   });
 });
 
-it('opens the requested scheduled set read-only without editing PLAN', async () => {
+it('reveals the requested scheduled set inline without opening SetEntry', async () => {
   cloudEnabled.value = true;
   const set = { id: 'focused-set', sourceProgramSetId: 'source-set', position: 0,
     setType: null, setLabel: null, comment: null, materialLinks: [], chatLinks: [],
@@ -733,14 +736,10 @@ it('opens the requested scheduled set read-only without editing PLAN', async () 
   const scheduled: LocalWorkoutOccurrenceDraft = { ...draft, plan: focusedPlan, originalPlan: focusedPlan, saved: true };
   const repository = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
   vi.spyOn(repository, 'pendingEditError').mockReturnValue('');
-  render(<StrictMode><OccurrenceDraftSheet draft={scheduled} drafts={repository} readOnly
-    focusExerciseId="exercise" focusSetId="focused-set" onClose={vi.fn()} onSave={vi.fn()} /></StrictMode>);
-  const detail = await screen.findByRole('dialog', { name: 'План конкретной тренировки' });
-  expect(detail.getAttribute('data-read-only')).toBe('true');
-  expect(screen.getByTestId('occurrence-plan-weight').textContent).toBe('50');
-  expect(screen.getByRole('button', { name: 'Сохранить план подхода' }).hasAttribute('disabled')).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Закрыть план' }));
+  render(<OccurrenceDraftSheet draft={scheduled} drafts={repository} readOnly
+    focusExerciseId="exercise" focusSetId="focused-set" onClose={vi.fn()} onSave={vi.fn()} />);
+  expect(await screen.findByText('Запланированная тренировка')).toBeTruthy();
+  await waitFor(() => expect(screen.getByTestId('scheduled-navigation-focus').textContent)
+    .toBe('exercise/focused-set/true'));
   expect(screen.queryByRole('dialog', { name: 'План конкретной тренировки' })).toBeNull();
-  // Closing the nested detail must not trigger another automatic opening.
-  expect(screen.getByText('Запланированная тренировка')).toBeTruthy();
 });

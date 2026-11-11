@@ -49,8 +49,8 @@ vi.mock('./WorkoutExerciseSelectionSheet', () => ({
   },
 }));
 vi.mock('./WorkoutSessionCard', () => ({
-  WorkoutSessionCard: ({ session, title, onAddSet, onAddExercise, onDeleteExercise }: WorkoutFactCardProps<string>) => (
-    <div data-testid="session-card">
+  WorkoutSessionCard: ({ session, title, onAddSet, onAddExercise, onDeleteExercise, focusExerciseId, focusSetId }: WorkoutFactCardProps<string>) => (
+    <div data-testid="session-card" data-focus-exercise={focusExerciseId} data-focus-set={focusSetId}>
       <span>{title ?? 'Без названия'}</span>
       {onDeleteExercise ? <button onClick={() => onDeleteExercise('exercise-x1')}>Удалить упражнение</button> : null}
       <button onClick={onAddExercise}>Добавить упражнение</button>
@@ -87,7 +87,7 @@ type Observation = {
   error: Parameters<AdHocWorkoutRepository['observe']>[2];
   unsubscribe: () => void;
 };
-function fixture() {
+function fixture(focus?: { exerciseId: string; setId?: string }) {
   const observations: Observation[] = [];
   const observe = vi.fn<AdHocWorkoutRepository['observe']>((_id, next, error) => {
     const observation = { next, error, unsubscribe: vi.fn<() => void>() };
@@ -108,7 +108,8 @@ function fixture() {
     deleteExercise: vi.fn<AdHocWorkoutRepository['deleteExercise']>().mockResolvedValue(undefined),
   } satisfies AdHocSessionRepository;
   const view = render(<AdHocSessionScreen repository={repository} sessionId={session.sessionId}
-    initData="signed" onNavigationContextChange={vi.fn()} />);
+    initData="signed" onNavigationContextChange={vi.fn()}
+    focusExerciseId={focus?.exerciseId} focusSetId={focus?.setId} />);
   return { ...view, observations, observe, addSet, complete, addExercises, repository };
 }
 
@@ -117,6 +118,18 @@ afterEach(() => {
   overlays.review.mockReset();
   overlays.finish = null;
   overlays.select = null;
+});
+
+describe('AdHocSessionScreen discussion focus', () => {
+  it('keeps the canonical editable FACT owner and forwards the exact exercise/set identity', async () => {
+    const { observations, repository } = fixture({ exerciseId: 'exercise-x1', setId: 'set-target' });
+    act(() => observations[0].next(session, row));
+    const card = screen.getByTestId('session-card');
+    expect(card.getAttribute('data-focus-exercise')).toBe('exercise-x1');
+    expect(card.getAttribute('data-focus-set')).toBe('set-target');
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить подход' }));
+    await waitFor(() => expect(repository.addSet).toHaveBeenCalled());
+  });
 });
 
 describe('AdHocSessionScreen mutation and observation ownership', () => {

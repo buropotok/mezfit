@@ -41,9 +41,12 @@ function localSessionTime(instant: string): string {
 }
 
 export function AdHocSessionScreen({ repository, sessionId, initData, actor, previousSets,
-  onNavigationContextChange, onExerciseInformation, readOnly: requestedReadOnly = false, hideActiveStatus = false, sheetLayout = false, headerActionsHost, personalCatalogueRole = 'coach' }: {
+  onNavigationContextChange, onExerciseInformation, focusExerciseId, focusSetId,
+  readOnly: requestedReadOnly = false, hideActiveStatus = false, sheetLayout = false, headerActionsHost, personalCatalogueRole = 'coach' }: {
   repository: AdHocSessionRepository;
   readOnly?: boolean;
+  focusExerciseId?: string;
+  focusSetId?: string;
   personalCatalogueRole?: 'coach' | 'client';
   hideActiveStatus?: boolean;
   /** Render session timing and FACT designation inside a calendar/profile Bottom Sheet. */
@@ -201,7 +204,8 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         </div>
       </>}
       <WorkoutSessionCard showStatus={!sheetLayout && (!hideActiveStatus || displaySession.status !== 'active')}
-        headerActionsHost={sheetLayout ? headerActionsHost : undefined} readOnly={readOnly} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
+        headerActionsHost={sheetLayout ? headerActionsHost : undefined} readOnly={readOnly}
+        focusExerciseId={focusExerciseId} focusSetId={focusSetId} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
         onReorderExerciseIds={ids => { void mutate(() => repository.reorder(sessionId, ids)).catch(report); }}
         onSaveSet={input => mutate(() => repository.saveSet(sessionId, input.sessionSetId, input.fact))}
         onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}

@@ -99,6 +99,8 @@ export type WorkoutSessionCardMode = 'planning' | 'active-program' | 'active-own
 export interface WorkoutFactCardProps<Id extends string | number = number> {
   /** A contextual history destination presents its exact exercise/approach expanded. */
   initiallyExpanded?: boolean;
+  focusExerciseId?: Id;
+  focusSetId?: Id;
   mode?: 'workout';
   /** Viewing a coach-authored FACT must not expose mutation controls to clients. */
   readOnly?: boolean;
@@ -138,6 +140,7 @@ export function WorkoutSessionCard<Id extends string | number = number>(props: W
 
 function WorkoutFactCard<Id extends string | number = number>({
   initiallyExpanded = false,
+  focusExerciseId, focusSetId,
   session,
   readOnly = false,
   showStatus = true,
@@ -204,6 +207,7 @@ function WorkoutFactCard<Id extends string | number = number>({
   const copyPickerDate = [today.getFullYear(), today.getMonth() + 1, today.getDate()]
     .map((part, index) => String(part).padStart(index === 0 ? 4 : 2, '0')).join('-');
   const [collapsedByExerciseId, setCollapsedByExerciseId] = useState<Partial<Record<Id, boolean>>>({});
+  useEffect(() => { setCollapsedByExerciseId({}); }, [session.sessionId, focusExerciseId]);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameDraft, setRenameDraft] = useState(sourceTitle);
   const [renameSaving, setRenameSaving] = useState(false);
@@ -243,7 +247,9 @@ function WorkoutFactCard<Id extends string | number = number>({
         data={exercise}
         surface="transparent"
         editable={active}
-        collapsed={collapsedByExerciseId[exercise.sessionExerciseId] ?? !initiallyExpanded}
+        focusSetId={exercise.sessionExerciseId === focusExerciseId ? focusSetId : undefined}
+        collapsed={collapsedByExerciseId[exercise.sessionExerciseId]
+          ?? (focusExerciseId === exercise.sessionExerciseId ? false : !initiallyExpanded)}
         onCollapsedChange={(collapsed) => {
           setCollapsedByExerciseId((current) => ({
             ...current,

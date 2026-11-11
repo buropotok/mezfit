@@ -1,4 +1,5 @@
 import { ExecutionSetDiscussionMenu } from '../discussions/ExecutionSetDiscussionMenu';
+import { DiscussionSetFocus } from './DiscussionSetFocus';
 import type { EntityDiscussionTarget } from '../discussions/entity-discussion-target';
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { SET_TYPE_LABELS } from '../../shared/set-type';
@@ -303,8 +304,11 @@ function formatProgramPlanMetrics(set: ProgramSessionExerciseProps['data']['sets
 }
 
 function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, discussionTargetForSet, onOpenDiscussion,
-  onNavigationContextChange, onSetDeletionNavigationContextChange, showPlanMetrics = false }: {
+  onNavigationContextChange, onSetDeletionNavigationContextChange, showPlanMetrics = false,
+  focusSetId, focusReady = true }: {
   showPlanMetrics?: boolean;
+  focusSetId?: string;
+  focusReady?: boolean;
   sets: ProgramSessionExerciseProps['data']['sets'];
   onOpenSet?: ProgramSessionExerciseProps['onOpenSet'];
   onDeleteSet?: ProgramSessionExerciseProps['onDeleteSet'];
@@ -317,7 +321,7 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, discussionTargetFor
     <List className="session-exercise__sets" divider="inset">
       {sets.map((set, index) => {
         const target = discussionTargetForSet?.(set.id) ?? null;
-        return <ListItem key={set.id} className="session-exercise__set-row"
+        const item = <ListItem key={set.id} className="session-exercise__set-row"
           onClick={onOpenSet ? () => onOpenSet?.(set.id) : undefined}
           trailing={!target && onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
             onClick={(event) => { event.stopPropagation(); void onDeleteSet(set.id); }} /> : undefined}
@@ -337,6 +341,7 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, discussionTargetFor
             {set.chatLinks?.length ? <Text variant="caption" tone="muted">Обсуждения: {set.chatLinks.length}</Text> : null}
           </span>}
         />;
+        return set.id === focusSetId ? <DiscussionSetFocus key={set.id} ready={focusReady}>{item}</DiscussionSetFocus> : item;
       })}
     </List>
   );
@@ -362,7 +367,7 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
         discussionTargetForSet={props.discussionTargetForSet} onOpenDiscussion={props.onOpenDiscussion}
         onNavigationContextChange={props.onNavigationContextChange}
         onSetDeletionNavigationContextChange={props.onSetDeletionNavigationContextChange}
-        showPlanMetrics={props.showPlanMetrics} />
+        showPlanMetrics={props.showPlanMetrics} focusSetId={props.focusSetId} focusReady={props.focusReady} />
     </SessionExerciseLayout>
   );
 }
@@ -407,7 +412,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             name: `${exerciseDisplayName(data.exercise)} · Подход ${setNumber}` } : null;
         const onDeleteSet = editable ? exercise.onDeleteSet : undefined;
         const deleteSet = !planMode && onDeleteSet ? () => onDeleteSet(set.sessionSetId) : undefined;
-        return (
+        const item = (
           <ListItem
             key={set.sessionSetId}
             className="session-exercise__set-row"
@@ -435,6 +440,9 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             onClick={canOpenSet ? () => onSelectSet(set.sessionSetId) : undefined}
           />
         );
+        return set.sessionSetId === exercise.focusSetId
+          ? <DiscussionSetFocus key={String(set.sessionSetId)} ready={exercise.focusReady ?? true}>{item}</DiscussionSetFocus>
+          : item;
       })}
     </List>
   );

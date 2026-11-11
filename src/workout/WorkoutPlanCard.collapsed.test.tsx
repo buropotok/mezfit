@@ -4,12 +4,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { SortableListProps } from '../ui/SortableList';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
+import type { ProgramSessionExerciseProps } from './sessionExerciseTypes';
 import { WorkoutPlanCard } from './WorkoutPlanCard';
 
 const mounted = vi.hoisted(() => ({ exercises: 0 }));
-vi.mock('./SessionExercise', () => ({ SessionExercise: () => {
+vi.mock('./SessionExercise', () => ({ SessionExercise: ({ data, collapsed, focusSetId }: ProgramSessionExerciseProps) => {
   mounted.exercises += 1;
-  return <div>Упражнение дня</div>;
+  return <div data-testid={data.exercise.id} data-collapsed={collapsed} data-focus-set={focusSetId}>Упражнение дня</div>;
 } }));
 vi.mock('../ui', async importOriginal => ({
   ...await importOriginal<typeof import('../ui')>(),
@@ -55,4 +56,16 @@ describe('optional controlled day collapse', () => {
     expect(screen.getByText('Комментарий дня')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /тренировку/ })).toBeNull();
   });
+});
+
+it('expands only the exact discussion exercise, keeping all others collapsed', () => {
+  const other = structuredClone(day.exercises[0]);
+  other.exercise.id = 'second-exercise';
+  other.exercise.position = 1;
+  const withTwo = { ...day, exercises: [...day.exercises, other] };
+  render(<WorkoutPlanCard {...props} day={withTwo} focusExerciseId="second-exercise" focusSetId="target-set" />);
+  expect(screen.getByTestId('exercise').getAttribute('data-collapsed')).toBe('true');
+  expect(screen.getByTestId('second-exercise').getAttribute('data-collapsed')).toBe('false');
+  expect(screen.getByTestId('second-exercise').getAttribute('data-focus-set')).toBe('target-set');
+  expect(screen.getByTestId('exercise').getAttribute('data-focus-set')).toBeNull();
 });

@@ -62,6 +62,9 @@ interface SessionExerciseSharedProps<Id extends string | number = number> {
   surface?: 'default' | 'transparent';
   onCollapsedChange?: (collapsed: boolean) => void;
   editable?: boolean;
+  /** Exact set identity to emphasize when arriving from an entity discussion. */
+  focusSetId?: Id;
+  focusReady?: boolean;
   onAddSet?: (sessionExerciseId: Id) => void;
   onDeleteSet?: (sessionSetId: Id) => Promise<void>;
   onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
@@ -96,6 +99,8 @@ export interface ProgramSessionExerciseProps {
   surface?: 'default' | 'transparent';
   editable?: boolean;
   busy?: boolean;
+  focusSetId?: string;
+  focusReady?: boolean;
   collapsed?: boolean;
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;

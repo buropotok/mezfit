@@ -1,0 +1,24 @@
+.discussion-set-focus {
+  position: relative;
+  min-width: 0;
+}
+
+.discussion-set-focus__flash {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-primary);
+  pointer-events: none;
+  animation: discussion-set-focus-pulse 1.15s ease-out both;
+}
+
+@keyframes discussion-set-focus-pulse {
+  0% { opacity: 0; }
+  13% { opacity: .16; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discussion-set-focus__flash { animation: none; opacity: 0; }
+}
