@@ -176,8 +176,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const replyId = editId ? null : draft.replyId;
   const text = editId ? editText : draft.text;
   const setText = (value: string) => { if (editId) setEditText(value); else draft.update(value, replyId); };
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const deletingOutgoingVideo = Boolean(deletingId && deletingId === outgoing?.id && outgoingVideo);
+  const [deleting, setDeleting] = useState<{ id: string; kind: 'published' | 'outgoing-video' } | null>(null);
+  const deletingOutgoingVideo = deleting?.kind === 'outgoing-video';
   const [savingVideo, setSavingVideo] = useState<DiscussionVideoSaveTarget | null>(null);
   const [menu, setMenu] = useState<{ id: string; open: boolean } | null>(null);
   const menuRef = useRef(menu);
@@ -303,7 +303,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       updateNavigation();
       return;
     }
-    if (deletingId) { setDeletingId(null); return; }
+    if (deleting) { setDeleting(null); return; }
     if (menu?.open) { closeMenu(); return; }
     if ((replyId || editId) && !outgoing) { cancelMode(); return; }
     (onBack ?? onClose)();
@@ -496,7 +496,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       draft.update(draft.text, id); setEditId(null); setEditText('');
     }
     if (action === 'edit' && row.authorUserId === repository.actorUserId) { setEditId(id); setEditText(row.text); }
-    if (action === 'delete' && row.authorUserId === repository.actorUserId) setDeletingId(id);
+    if (action === 'delete' && row.authorUserId === repository.actorUserId) setDeleting({ id, kind: 'published' });
     if (action === 'copy') void run(async () => {
       const current = await repository.getMessage(threadId, id);
       if (!alive.current || current.deleted) return;
@@ -663,7 +663,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             <DiscussionOutgoingMedia src={media.preview} attachment={media.selection.metadata} createdAt={outgoing.createdAt}
               status={outgoingStatus} error={media.error} onCancel={media.cancel}
               onRetry={() => void media.send()}
-              onRemove={outgoingVideo ? () => setDeletingId(outgoing.id) : () => void media.remove()}
+              onRemove={outgoingVideo ? () => setDeleting({ id: outgoing.id, kind: 'outgoing-video' }) : () => void media.remove()}
               onOpen={outgoingVideo?.metadata.mediaType === 'video' ? () => {
                 closeMenu();
                 setViewing({ messageId: outgoing.id, attachmentId: outgoing.attachmentId });
@@ -831,20 +831,20 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </GlassSurface>
     </div>
     {savingVideo && <DiscussionVideoSaveDialog target={savingVideo} onClose={() => setSavingVideo(null)} />}
-    <MezfitDialog opened={Boolean(deletingId)} aria-hidden={deletingId ? undefined : true} inert={deletingId ? undefined : true}
+    <MezfitDialog opened={Boolean(deleting)} aria-hidden={deleting ? undefined : true} inert={deleting ? undefined : true}
       title={<Text variant="headline">{deletingOutgoingVideo ? 'Убрать неотправленное видео?' : 'Удалить сообщение?'}</Text>}
       content={<Text>{deletingOutgoingVideo
         ? 'Видео исчезнет из чата. Перед удалением можно сохранить копию на устройство.'
-        : 'Сообщение будет удалено из переписки.'}</Text>} onBackdropClick={() => { if (!busy) setDeletingId(null); }}
-      buttons={<><MezfitDialogButton disabled={busy} onClick={() => setDeletingId(null)}><Text>Отмена</Text></MezfitDialogButton>
+        : 'Сообщение будет удалено из переписки.'}</Text>} onBackdropClick={() => { if (!busy) setDeleting(null); }}
+      buttons={<><MezfitDialogButton disabled={busy} onClick={() => setDeleting(null)}><Text>Отмена</Text></MezfitDialogButton>
         <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
-          const id = deletingId; if (!id) return;
-          if (deletingOutgoingVideo) {
-            if (outgoingStatus === 'failed') void media.remove();
-            setDeletingId(null);
+          if (!deleting) return;
+          if (deleting.kind === 'outgoing-video') {
+            if (deleting.id === outgoing?.id && outgoingStatus === 'failed') void media.remove();
+            setDeleting(null);
             return;
           }
-          void run(async () => { await repository.remove(threadId, id); if (alive.current) setDeletingId(null); });
+          void run(async () => { await repository.remove(threadId, deleting.id); if (alive.current) setDeleting(null); });
         }}><Text>Удалить</Text></MezfitDialogButton></>} />
   </div>;
 }
