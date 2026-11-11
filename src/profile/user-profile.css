@@ -5,6 +5,8 @@
   min-width: 0;
 }
 .user-profile__inputs { min-width: 0; }
+.user-profile__details { display: grid; gap: 20px; padding-top: 16px; min-width: 0; }
+.user-profile__field { display: grid; justify-items: start; gap: 8px; padding-inline: 24px; min-width: 0; overflow-wrap: anywhere; }
 .user-profile__date { display: grid; justify-items: start; gap: 8px; }
 .user-profile__status { padding: 24px 16px; display: grid; gap: 16px; }
 

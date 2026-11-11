@@ -40,11 +40,24 @@ it('reads only the supplied relationship projection and renders published defaul
   expect(screen.getByText('Анкета клиента ещё не опубликована.')).toBeTruthy();
   act(() => source.next?.({ firstName: 'Опубликованное имя', lastName: '', email: '', phone: '',
     birthDate: '', sex: 'female', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' }));
-  expect(screen.getByText('Опубликованное имя').getAttribute('data-variant')).toBe('body');
-  expect(screen.getByText('Пол').getAttribute('data-variant')).toBe('headline');
-  expect(screen.getByText('жен').getAttribute('data-variant')).toBe('body');
+  expect(screen.getByText('Опубликованное имя').getAttribute('data-variant')).toBe('headline');
+  expect(screen.getByText('Пол').getAttribute('data-variant')).toBe('caption');
+  expect(screen.getByText('жен').getAttribute('data-variant')).toBe('headline');
+  expect(screen.getByText('Telegram ID').getAttribute('data-variant')).toBe('caption');
+  expect(screen.getByText('202').getAttribute('data-variant')).toBe('headline');
   expect(screen.queryByRole('textbox')).toBeNull();
   expect(screen.queryByText('Сохранить анкету')).toBeNull();
+});
+
+it('uses separate Caption and Headline roles for a published age', () => {
+  const contact: CloudContact = { relationshipId: 'shared-relationship', userId: 'tg:202',
+    telegramUserId: '202', displayName: 'Анна' };
+  render(<PublishedUserProfile contact={contact} />);
+  act(() => source.next?.({ firstName: 'Анна', lastName: '', email: '', phone: '',
+    birthDate: '1990-05-31', sex: 'female', weightKg: null, updatedAt: '2026-11-02T00:00:00Z' }));
+  const label = screen.getByText('Возраст:');
+  expect(label.getAttribute('data-variant')).toBe('caption');
+  expect(label.nextElementSibling?.getAttribute('data-variant')).toBe('headline');
 });
 
 it('keeps the contact screen available when profile storage or identity is not ready', () => {

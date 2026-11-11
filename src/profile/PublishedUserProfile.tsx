@@ -107,14 +107,14 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
         <Button variant="secondary" onClick={() => setRetry(value => value + 1)}>Повторить</Button></>
       : data?.incomplete ? <Text variant="body">Переопределения ещё загружаются. Повторите позже.</Text>
       : !profile ? <><Text variant="body">{contact.displayName}</Text>
-        <Text variant="headline">Telegram ID</Text><Text variant="body">{contact.telegramUserId}</Text>
+        <Text variant="caption">Telegram ID</Text><Text variant="headline">{contact.telegramUserId}</Text>
         <Text variant="body">Анкета клиента ещё не опубликована.</Text></>
       : <>{fields.map(([label, value]) => <div className="stack" key={label}>
-        <Text variant="headline">{label}</Text><Text variant="body">{value}</Text>
+        <Text variant="caption">{label}</Text><Text variant="headline">{value}</Text>
       </div>)}
         {data?.canEdit && repository ? <Button disabled={resetting}
           onClick={() => { setMessage(null); setEditor({ repository, key, profile }); }}>Изменить анкету</Button> : null}
-        {age !== null ? <Text variant="body">Возраст: {age}</Text> : null}
+        {age !== null ? <div><Text variant="caption">Возраст:</Text>{' '}<Text variant="headline">{age}</Text></div> : null}
         <Text variant="caption" tone="muted">Изменено: {new Date(profile.updatedAt).toLocaleString('ru-RU')}</Text>
       </>}
     {notice ? <Text variant="footnote" role={notice.error ? 'alert' : 'status'}>{notice.text}</Text> : null}

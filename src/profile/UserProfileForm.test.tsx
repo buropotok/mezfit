@@ -81,7 +81,9 @@ describe('user profile form', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать дату рождения' }));
     expect(screen.getByRole('dialog').getAttribute('data-surface')).toBe('panel');
     fireEvent.click(screen.getByRole('button', { name: '31 мая 1990' }));
-    expect(screen.getByText(/Возраст:/)).toBeTruthy();
+    const ageLabel = screen.getByText('Возраст');
+    expect(ageLabel.getAttribute('data-variant')).toBe('caption');
+    expect(ageLabel.nextElementSibling?.getAttribute('data-variant')).toBe('headline');
     fireEvent.change(screen.getByLabelText('Вес, кг'), { target: { value: '63.5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить анкету' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
@@ -106,7 +108,7 @@ describe('user profile form', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать дату рождения' }));
     fireEvent.click(screen.getByRole('button', { name: '31 мая 1990' }));
     fireEvent.click(screen.getByRole('button', { name: 'Убрать дату рождения' }));
-    expect(screen.queryByText(/Возраст:/)).toBeNull();
+    expect(screen.queryByText('Возраст')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить анкету' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ birthDate: '' })));
   });
@@ -121,20 +123,35 @@ describe('user profile form', () => {
       expect(surface.hasAttribute('data-blur')).toBe(false);
     });
     expect(view.container.querySelectorAll('[data-list-strong="false"]')).toHaveLength(2);
+    expect(surfaces[0].textContent).not.toContain('Telegram ID');
+    for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол', 'Вес, кг'])
+      expect(surfaces[1].textContent).toContain(label);
+    expect(surfaces[1].contains(screen.getByLabelText('Вес, кг'))).toBe(true);
   });
 
-  it('uses Headline labels, Body values and the compact sex popover', () => {
+  it('keeps the Coach contact editor layout while applying Caption/Headline roles', () => {
+    const view = render(<UserProfileForm purpose="contact" defaults={defaults} {...identity}
+      onSave={async () => {}} />);
+    const surfaces = view.container.querySelectorAll('[data-profile-glass]');
+    expect(surfaces).toHaveLength(2);
+    expect(surfaces[1].textContent).toContain('Вес, кг');
+    expect(surfaces[1].textContent).not.toContain('Telegram ID');
+    expect(screen.getByText('Telegram ID').getAttribute('data-variant')).toBe('caption');
+    expect(screen.getByText('202').getAttribute('data-variant')).toBe('headline');
+  });
+
+  it('uses Caption labels, Headline values and the compact sex popover', () => {
     render(<UserProfileForm defaults={defaults} {...identity} onSave={async () => {}} />);
-    for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол:'])
-      expect(screen.getByText(label).getAttribute('data-variant')).toBe('headline');
-    expect(screen.getByText('@anna_fit').getAttribute('data-variant')).toBe('body');
-    expect(screen.getByText('202').getAttribute('data-variant')).toBe('body');
+    for (const label of ['Telegram ID', 'Telegram', 'Дата рождения', 'Пол'])
+      expect(screen.getByText(label).getAttribute('data-variant')).toBe('caption');
+    expect(screen.getByText('@anna_fit').getAttribute('data-variant')).toBe('headline');
+    expect(screen.getByText('202').getAttribute('data-variant')).toBe('headline');
     expect(screen.queryByText(/для расчёта возраста/)).toBeNull();
     expect(screen.queryByRole('radio')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Пол: не указан' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить пол' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Мужской' }));
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(screen.getByText('муж').getAttribute('data-variant')).toBe('body');
+    expect(screen.getByText('муж').getAttribute('data-variant')).toBe('headline');
   });
 
   it('edits saved values, preserves the draft on save failure, and allows retry', async () => {
