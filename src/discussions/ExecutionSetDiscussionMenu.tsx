@@ -18,8 +18,7 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
 }) {
   const discussions = useEntityDiscussions(target, onNavigationContextChange, Boolean(target));
   const trigger = useRef<HTMLButtonElement>(null);
-  const videoRequested = useRef<EntityDiscussionTarget | null>(null);
-  const deleteRequested = useRef(false);
+  const requestedAction = useRef<EntityDiscussionTarget | 'delete-set' | null>(null);
   const deletingRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -36,7 +35,7 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
   }, [deleteConfirm, onDeleteNavigationContextChange]);
   const items: LiquidPopoverItem[] = target ? [{
     id: 'record-video', label: 'Видео', icon: 'video', disabled: !discussions.canRecordVideo,
-    onSelect: () => { videoRequested.current = target; },
+    onSelect: () => { requestedAction.current = target; },
   }] : [];
   if (onDeleteSet) items.push({
     id: 'delete-set',
@@ -44,18 +43,16 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
     icon: 'trash-outline',
     dividerBefore: items.length > 0,
     disabled: deleting,
-    onSelect: () => { deleteRequested.current = true; },
+    onSelect: () => { requestedAction.current = 'delete-set'; },
   });
   const onPresentationChange = (presented: boolean) => {
     if (presented) return;
-    const videoTarget = videoRequested.current;
-    videoRequested.current = null;
-    if (videoTarget && discussions.canRecordVideo) (onOpenTarget ?? discussions.openTarget)(videoTarget, 'record-video');
-    if (deleteRequested.current) {
-      deleteRequested.current = false;
+    const action = requestedAction.current;
+    requestedAction.current = null;
+    if (action === 'delete-set') {
       setDeleteError('');
       setDeleteConfirm(true);
-    }
+    } else if (action && discussions.canRecordVideo) (onOpenTarget ?? discussions.openTarget)(action, 'record-video');
   };
   const confirmRemoval = async () => {
     if (!onDeleteSet || deletingRef.current) return;

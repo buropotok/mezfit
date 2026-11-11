@@ -274,7 +274,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (videoFullscreen) { setFullscreenVideo(null); updateNavigation(); return; }
     if (viewer) { setViewing(null); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
-    if (previewing || voiceComposer || circleDraft) {
+    if (previewing || voiceComposer || circleDraft || (media.selection?.separate && mediaBusy)) {
       if (removingVoice.current) { updateNavigation(); return; }
       if (voiceInProgress) voice.cancel();
       else closePreview();
