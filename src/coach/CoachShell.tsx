@@ -281,7 +281,9 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     }
 
     if ((clientTab === 'calendar' || clientTab === 'history') && clientWorkoutNavigation && destination === 'clients') {
-      onNavigationContextChange(clientWorkoutNavigation);
+      onNavigationContextChange(clientTab === 'history' && clientHistoryCalendar
+        ? { ...clientWorkoutNavigation, calendar: clientHistoryCalendar }
+        : clientWorkoutNavigation);
       return () => onNavigationContextChange(null);
     }
 

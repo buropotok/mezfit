@@ -87,7 +87,6 @@ export interface NavigationContext {
     value: LocalDate;
     onChange: (date: LocalDate) => void;
     dayStatuses?: readonly DatePickerDayStatusEntry[];
-    closeOnSelect?: boolean;
   };
   contentMode?: 'default' | 'viewport';
 }
@@ -646,10 +645,7 @@ export function NavigationShell({
           opened={calendarOpen}
           surface="top-panel"
           value={calendarValue}
-          onChange={(date) => {
-            if (context?.calendar?.closeOnSelect) setCalendarOpen(false);
-            onCalendarDateChange(date);
-          }}
+          onChange={onCalendarDateChange}
           onClose={() => setCalendarOpen(false)}
           glassPreset={glassPreset}
           glassOptics={glassOptics}
