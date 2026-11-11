@@ -193,6 +193,9 @@ interface SessionExerciseLayoutProps {
   defaultCollapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   onInformation?: () => void;
+  /** Highlight only the media/name header for an exercise discussion deep link. */
+  focusHeader?: boolean;
+  focusReady?: boolean;
   onOpenExerciseMenu?: () => void;
   actions?: ReactNode;
   onAddSet?: () => void;
@@ -206,7 +209,7 @@ interface SessionExerciseLayoutProps {
 function SessionExerciseLayout({
   exerciseId, exerciseName, media, subtitle, badge, notes, surface = 'default',
   collapsed: controlledCollapsed, defaultCollapsed = true, onCollapsedChange,
-  onInformation, onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
+  onInformation, focusHeader = false, focusReady = true, onOpenExerciseMenu, actions, onAddSet, busy = false, summary, editor, children,
 }: SessionExerciseLayoutProps) {
   const bodyId = useId();
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
@@ -222,23 +225,24 @@ function SessionExerciseLayout({
     if (controlledCollapsed === undefined) setInternalCollapsed(nextCollapsed);
     onCollapsedChange?.(nextCollapsed);
   };
+  const header = <ListItem
+    className="session-exercise__header-toggle"
+    leadingShape="square"
+    leading={media}
+    title={exerciseName}
+    subtitle={subtitle}
+    trailing={badge}
+    aria-expanded={!collapsed}
+    aria-controls={bodyId}
+    onClick={toggleCollapsed}
+  />;
   return (
     <article className={`session-exercise${surface === 'default' ? ' session-exercise--surface' : ''}`} data-session-exercise-id={typeof exerciseId === 'number' ? exerciseId : undefined}
       data-program-exercise-id={typeof exerciseId === 'string' ? exerciseId : undefined}>
       <div className="session-exercise__header">
         <div className="session-exercise__header-list">
           <List>
-            <ListItem
-              className="session-exercise__header-toggle"
-              leadingShape="square"
-              leading={media}
-              title={exerciseName}
-              subtitle={subtitle}
-              trailing={badge}
-              aria-expanded={!collapsed}
-              aria-controls={bodyId}
-              onClick={toggleCollapsed}
-            />
+            {focusHeader ? <DiscussionSetFocus ready={focusReady}>{header}</DiscussionSetFocus> : header}
           </List>
           {onInformation ? <button type="button" className="session-exercise__media-action"
             data-no-dnd aria-label={`Информация об упражнении: ${exerciseName}`}
@@ -358,6 +362,7 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
       subtitle={formatSetCount(sets.length)} notes={item.notes}
       surface={props.surface} collapsed={props.collapsed} defaultCollapsed={props.defaultCollapsed}
       onCollapsedChange={props.onCollapsedChange} onInformation={props.busy ? undefined : props.onInformation}
+      focusHeader={props.focusHeader} focusReady={props.focusReady}
       actions={<ExerciseActionsMenu busy={props.busy} discussionTarget={props.discussionTarget}
         onOpenDiscussion={props.onOpenDiscussion} onNavigationContextChange={props.onNavigationContextChange}
         onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
@@ -497,6 +502,7 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
       defaultCollapsed={defaultCollapsed}
       onCollapsedChange={onCollapsedChange}
       onInformation={onInformation}
+      focusHeader={props.focusHeader} focusReady={props.focusReady}
       actions={onDeleteExercise || onInformation || (discussionScope && data.discussionAnchor) ? <ExerciseActionsMenu
         discussionTarget={discussionScope && data.discussionAnchor ? { scope: discussionScope,
           anchor: data.discussionAnchor, name: exerciseName } : null}

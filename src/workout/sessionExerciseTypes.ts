@@ -64,6 +64,8 @@ interface SessionExerciseSharedProps<Id extends string | number = number> {
   editable?: boolean;
   /** Exact set identity to emphasize when arriving from an entity discussion. */
   focusSetId?: Id;
+  /** Exercise links highlight the media/name header; set links highlight the row instead. */
+  focusHeader?: boolean;
   focusReady?: boolean;
   onAddSet?: (sessionExerciseId: Id) => void;
   onDeleteSet?: (sessionSetId: Id) => Promise<void>;
@@ -100,6 +102,7 @@ export interface ProgramSessionExerciseProps {
   editable?: boolean;
   busy?: boolean;
   focusSetId?: string;
+  focusHeader?: boolean;
   focusReady?: boolean;
   collapsed?: boolean;
   defaultCollapsed?: boolean;

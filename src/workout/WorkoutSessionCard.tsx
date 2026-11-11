@@ -248,6 +248,7 @@ function WorkoutFactCard<Id extends string | number = number>({
         surface="transparent"
         editable={active}
         focusSetId={exercise.sessionExerciseId === focusExerciseId ? focusSetId : undefined}
+        focusHeader={exercise.sessionExerciseId === focusExerciseId && focusSetId === undefined}
         collapsed={collapsedByExerciseId[exercise.sessionExerciseId]
           ?? (focusExerciseId === exercise.sessionExerciseId ? false : !initiallyExpanded)}
         onCollapsedChange={(collapsed) => {
