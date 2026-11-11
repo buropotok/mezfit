@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
+const shellCss = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
 const navigationCss = readFileSync(new URL('./navigation.css', import.meta.url), 'utf8');
 const programCss = readFileSync(new URL('./program/cloud-plan-management.css', import.meta.url), 'utf8');
 
@@ -13,6 +14,14 @@ function rule(source, selector) {
 }
 
 describe('glass shadow scroll gutters', () => {
+  it('keeps the screen-edge gutter at 8px through the shared shell token', () => {
+    const root = rule(shellCss, ':root');
+    const shell = rule(shellCss, '.center,\n.app-shell');
+
+    expect(root).toContain('--page-pad-x: 8px;');
+    expect(shell).toContain('padding: var(--space-3) var(--page-pad-x) var(--space-4)');
+  });
+
   it('reserves shell gutters inside the default scroller without changing viewport-mode clipping', () => {
     const content = rule(navigationCss, '.navigation-content');
     const shadowGutters = rule(navigationCss, '.navigation-content:not(.navigation-content--viewport)');
