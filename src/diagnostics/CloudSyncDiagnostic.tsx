@@ -13,6 +13,11 @@ interface Snapshot {
   phase: string;
   status: string;
   stage: 'identity' | 'opening' | 'observing' | 'failed';
+  openBlocked: boolean;
+  readyObserved: boolean;
+  openSlow: boolean;
+  nativeConnection: boolean | null;
+  openFailureCode: string | null;
   persisted: boolean;
   persistedError: boolean;
   syncErrorCode: string | null;
@@ -34,6 +39,11 @@ const initial: Snapshot = {
   phase: 'initial',
   status: 'not-started',
   stage: 'identity',
+  openBlocked: false,
+  readyObserved: false,
+  openSlow: false,
+  nativeConnection: null,
+  openFailureCode: null,
   persisted: false,
   persistedError: false,
   syncErrorCode: null,
@@ -55,6 +65,16 @@ function textCount(count: number | null): string {
   return count === null ? 'ещё не прочитано' : String(count);
 }
 
+/** Never display arbitrary IndexedDB/Dexie exception text or remote request values. */
+function safeOpenFailureCode(reason: unknown): string {
+  const name = reason instanceof Error ? reason.name : '';
+  return [
+    'VersionError', 'UpgradeError', 'OpenFailedError', 'DatabaseClosedError',
+    'AbortError', 'QuotaExceededError', 'SecurityError', 'InvalidStateError',
+    'MissingAPIError', 'UnknownError',
+  ].includes(name) ? name : 'OTHER_OPEN_ERROR';
+}
+
 /** Read-only Telegram-device diagnostic. No tokens, IDs, rows or error bodies are shown. */
 export function CloudSyncDiagnostic({ initData }: { initData: string }) {
   const [snapshot, setSnapshot] = useState<Snapshot>(initial);
@@ -63,6 +83,9 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
     let active = true;
     let db: MezfitCloudDatabase | undefined;
     const subscriptions: Array<{ unsubscribe(): void }> = [];
+    let openWatchdog: ReturnType<typeof setTimeout> | undefined;
+    let openFinished = false;
+    let openStarted = false;
 
     const update = (patch: Partial<Snapshot>) => {
       if (active) setSnapshot((previous) => ({ ...previous, ...patch }));
@@ -93,8 +116,26 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
           update({ sameCloudAccount: user.userId === actorUserId });
         }));
 
+        // Passive events only. Do not override versionchange handling or force
+        // any IndexedDB upgrade; the diagnostic must not influence storage.
+        cloudDb.on('blocked', () => update({ openBlocked: true }));
+        cloudDb.on('ready', () => update({ readyObserved: true }));
         update({ stage: 'opening' });
-        await cloudDb.open();
+        openStarted = true;
+        openWatchdog = setTimeout(() => {
+          if (!active || openFinished) return;
+          // backendDB() is a read-only indication that native IndexedDB opened
+          // even if a Dexie/AddOn ready subscriber keeps db.open() unresolved.
+          update({ openSlow: true, nativeConnection: cloudDb.backendDB() !== null });
+        }, 10000);
+        try {
+          await cloudDb.open();
+        } finally {
+          openFinished = true;
+          if (openWatchdog !== undefined) clearTimeout(openWatchdog);
+          openWatchdog = undefined;
+        }
+        update({ nativeConnection: true });
         if (!active) return;
 
         const localSubscription = liveQuery(async () => {
@@ -141,13 +182,17 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         // Trigger a pull without waiting indefinitely for its completion.
         // Official sync state and synced local tables are observed separately.
         await cloudDb.cloud.sync({ purpose: 'pull', wait: false });
-      } catch {
-        update({ stage: 'failed', setupError: true });
+      } catch (reason: unknown) {
+        update({
+          stage: 'failed', setupError: true,
+          ...(openStarted ? { openFailureCode: safeOpenFailureCode(reason) } : {}),
+        });
       }
     })();
 
     return () => {
       active = false;
+      if (openWatchdog !== undefined) clearTimeout(openWatchdog);
       subscriptions.forEach((subscription) => subscription.unsubscribe());
       db?.close({ disableAutoOpen: false });
     };
@@ -157,6 +202,12 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
     <section aria-label="Диагностика синхронизации Dexie Cloud">
       <Text variant="headline" role="heading" aria-level={2}>Синхронизация и локальная база</Text>
       <p><Text variant="body">Этап: {snapshot.stage}</Text></p>
+      <p><Text variant="body">Открытие IndexedDB дольше 10 секунд: {snapshot.openSlow ? 'да' : 'нет'}</Text></p>
+      <p><Text variant="body">Обновление базы заблокировано (blocked): {snapshot.openBlocked ? 'да' : 'нет'}</Text></p>
+      <p><Text variant="body">Событие Dexie ready: {snapshot.readyObserved ? 'да' : 'нет'}</Text></p>
+      <p><Text variant="body">Физическое соединение IndexedDB: {snapshot.nativeConnection === null
+        ? 'ещё не проверено' : snapshot.nativeConnection ? 'открыто' : 'не открыто'}</Text></p>
+      <p><Text variant="body">Код ошибки открытия: {snapshot.openFailureCode ?? 'не определён'}</Text></p>
       <p><Text variant="body">Dexie: {snapshot.phase} / {snapshot.status}</Text></p>
       <p><Text variant="body">Облачный пользователь подтверждён: {snapshot.sameCloudAccount ? 'да' : 'нет'}</Text></p>
       <p><Text variant="body">Сохранённая синхронизация: {snapshot.persisted ? 'да' : 'нет'}</Text></p>
