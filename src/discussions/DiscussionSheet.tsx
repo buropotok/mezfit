@@ -686,6 +686,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               ref={el => { if (el) rows.current.set(message.id, el); else rows.current.delete(message.id); }}>
               <MezfitMessage type={isOwn ? 'sent' : 'received'} focusPulse={highlight === message.id}
                 bubbleVariant={galleryOnly ? 'media' : undefined}
+                opaqueTextFooter={attachments.some(attachment => attachment.mediaType !== 'voice')}
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
                 text={!mediaOnly && <Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
