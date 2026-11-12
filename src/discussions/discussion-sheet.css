@@ -12,6 +12,11 @@
   flex: 1;
   min-height: 0;
   isolation: isolate;
+  background-color: #000;
+  background-image: url('/discussion-fitness-pattern.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 .discussion-thread__header {
   position: relative;
