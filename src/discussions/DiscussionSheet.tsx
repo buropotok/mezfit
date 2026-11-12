@@ -206,7 +206,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const speedMenu = videoUrl && <LiquidPopover isOpen={speedOpen} onOpenChange={setSpeedOpen}
     triggerRef={speedTrigger} label="Скорость воспроизведения" layout="menu"
     items={[0.25, 0.5, 0.75, 1, 1.5, 2].map(rate => ({
-      id: String(rate), label: `${rate}×`, active: videoSpeed === rate, onSelect: () => setVideoSpeed(rate),
+      id: String(rate), label: `${rate}×`, icon: videoSpeed === rate ? 'check' as const : undefined,
+      active: videoSpeed === rate, onSelect: () => setVideoSpeed(rate),
     }))}
     trigger={<IconButton ref={speedTrigger} icon="gauge" label="Скорость воспроизведения" />} />;
   const videoFullscreen = Boolean(videoUrl && videoUrl === fullscreenVideo);
@@ -342,6 +343,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
+    if (speedOpen) { setSpeedOpen(false); updateNavigation(); return; }
     if (videoFullscreen) { setFullscreenVideo(null); updateNavigation(); return; }
     if (viewer) { setViewing(null); updateNavigation(); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
