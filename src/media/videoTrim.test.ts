@@ -1,3 +1,4 @@
+// @ts-expect-error Vitest runs this test in Node; production tsconfig intentionally omits Node globals.
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import { BlobSource, Input, MP4 } from 'mediabunny';
