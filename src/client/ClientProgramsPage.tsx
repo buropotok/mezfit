@@ -68,12 +68,13 @@ function CloudClientProgramsPage({ activeOnly = false }: { activeOnly?: boolean 
 }
 
 function CloudClientProgramsWorkspace({
-  repository, cloudStatus, cloudError, syncStatus, syncError, onRetry, onRetrySync,
+  repository, personalProgramRole, cloudStatus, cloudError, syncStatus, syncError, onRetry, onRetrySync,
   onNavigationContextChange, actor, coaches, activeOnly = false,
 }: {
   actor?: ProgramActor;
   coaches: readonly CloudContact[];
   activeOnly?: boolean;
+  personalProgramRole: 'coach' | 'client';
   repository: ProgramManagementRepository;
   cloudStatus: 'loading' | 'ready' | 'error';
   cloudError: string;
@@ -95,7 +96,8 @@ function CloudClientProgramsWorkspace({
     return () => onNavigationContextChange?.(null);
   }, [selected?.id, detailNavigation, onNavigationContextChange]);
   if (selected) return <CloudProgramDetailsPage onNavigationContextChange={setDetailNavigation} key={selected.id} repository={repository}
-    planId={selected.id} viewerRole="client" readOnly={selected.coachUserId !== null} actor={actor}
+    planId={selected.id} viewerRole={selected.coachUserId === null ? personalProgramRole : 'client'}
+    readOnly={selected.coachUserId !== null} actor={actor}
     cloudStatus={cloudStatus} cloudError={cloudError} syncStatus={syncStatus} syncError={syncError}
     onRetryCloud={onRetry} onRetrySync={onRetrySync} />;
   return <CloudProgramsPage repository={repository} viewerRole="client" clients={[]} coaches={coaches}
@@ -105,10 +107,11 @@ function CloudClientProgramsWorkspace({
 }
 
 export function ClientProgramsPage({
-  onNavigationContextChange, actor, activeOnly = false,
+  onNavigationContextChange, actor, activeOnly = false, personalProgramRole = 'client',
 }: {
   actor?: ProgramActor;
   activeOnly?: boolean;
+  personalProgramRole?: 'coach' | 'client';
   onNavigationContextChange?: (context: NavigationContext | null) => void;
 } = {}) {
   const cloud = useCloudConnections();
@@ -117,13 +120,14 @@ export function ClientProgramsPage({
   [cloud?.db, cloud?.actorUserId]);
   if (CLOUD_PROGRAM_MANAGEMENT_ENABLED && repository && cloud) {
     return <CloudClientProgramsWorkspace key={cloud.actorUserId} repository={repository} actor={actor} coaches={cloud.coaches} activeOnly={activeOnly}
+      personalProgramRole={personalProgramRole}
       cloudStatus={cloud.status} cloudError={cloud.error}
       syncStatus={cloud.syncStatus} syncError={cloud.syncError}
       onRetry={cloud.refresh} onRetrySync={cloud.retrySync}
       onNavigationContextChange={onNavigationContextChange} />;
   }
   // Compatibility for installations not yet provisioned with Dexie Cloud.
-  if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED) {
+  if (!CLOUD_ASSIGNED_PROGRAMS_ENABLED || personalProgramRole === 'coach') {
     return <List><ListItem interactive={false} title="Программы пока недоступны" subtitle="Для назначения программ необходимо настроить доступ к Mezfit облаку." /></List>;
   }
   return <CloudClientProgramsPage activeOnly={activeOnly} />;

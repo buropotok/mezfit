@@ -50,8 +50,8 @@ and the updated app must be deployed consistently.
 `contact` view and authorized Basics/Program/Exercises/Plan/History content slots.
 CoachShell reuses the full client-scoped program directory with the same
 status/search filters as the Programs screen and the existing relationship-scoped
-discussions inbox. The client self profile reuses the complete client program
-directory, including personal and trainer-assigned programs of every status.
+discussions inbox. Both self profiles reuse the athlete's program directory,
+including personal programs and published assignments from their own coaches.
 The Exercises profile tab uses one shared performed-FACT analytics view for both
 roles: a Coach reads only the chosen approved relationship, while an athlete
 reads their own completed sets across their personal and all authorized Coach
@@ -59,7 +59,6 @@ relationships. Both use the same period/category filters, radar chart, exercise
 list, historical metrics and information sheet. The athlete's repository
 projection checks access to every session and validates matching exercise/set
 realms before exposing data; Coach history queries remain unchanged.
-Coach own-profile sections remain independent.
 Plan and History project authorized local-first workout occurrences and execution
 sessions without combining PLAN and FACT models. Plan shows scheduled workouts
 from the viewer's current local date onward; History shows completed executions

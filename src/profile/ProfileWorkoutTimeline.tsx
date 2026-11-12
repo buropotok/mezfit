@@ -113,6 +113,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
   const [openedOccurrenceId, setOpenedOccurrenceId] = useState<string | null>(null);
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null);
+  const [sessionRole, setSessionRole] = useState(role);
   const [nestedNavigation, setNestedNavigation] = useState<NavigationContext | null>(null);
   const [sourceProgramName, setSourceProgramName] = useState<string | null>(null);
 
@@ -168,9 +169,13 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
 
   const openWorkout = useCallback((row: CalendarTimelineRow) => {
     setNestedNavigation(null);
+    if ('session' in row) {
+      // In their own profile, a coach can also be the athlete in another coach's realm.
+      setSessionRole(!contact && row.session.clientUserId === cloud?.actorUserId ? 'client' : role);
+    }
     setOpenedSessionId('session' in row ? row.session.id : null);
     setOpenedOccurrenceId('occurrence' in row ? row.occurrence.id : null);
-  }, []);
+  }, [contact, cloud?.actorUserId, role]);
   const close = useCallback(() => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); }, []);
   const selectCalendarDay = useCallback((date: LocalDate) => {
     close();
@@ -244,7 +249,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
         if (picker) setHistoryFilter(({ from, to }) => ({ from, to, [picker]: value }));
         setPicker(null);
       }} />
-    <CalendarSessionSheet sessionId={openedSessionId} role={role} initData={initData} actor={actor}
+    <CalendarSessionSheet sessionId={openedSessionId} role={sessionRole} initData={initData} actor={actor}
       onClose={close} onNavigationContextChange={setNestedNavigation} />
     {repository ? <OccurrenceDraftSheet draft={selectedDraft} drafts={repository}
       actor={actor} readOnly onClose={close} onSave={async () => { throw new Error('Редактирование доступно в календаре'); }}
