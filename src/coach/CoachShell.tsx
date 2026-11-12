@@ -7,7 +7,7 @@ import {
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
-import { Button, List, ListItem, Text } from '../ui';
+import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { CoachInviteDialog } from './CoachInviteDialog';
 import { PublishedUserProfile } from '../profile/PublishedUserProfile';
 import { ProfileDataProvider } from '../profile/ProfileDataProvider';
