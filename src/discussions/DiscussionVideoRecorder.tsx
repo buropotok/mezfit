@@ -6,6 +6,7 @@ import { Text } from '../ui/primitives';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { VideoNoteFacingMode } from '../video-note/useVideoNoteCameraSession';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
+import { DiscussionVideoReview } from './DiscussionVideoReview';
 import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
 
 const topControls: CSSProperties = { top: 'calc(1rem + var(--discussion-media-safe-top))', bottom: 'auto' };
@@ -36,7 +37,6 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
   const [profile] = useState(phoneVideoProfile);
   const [selectedFacing, setSelectedFacing] = useState<VideoNoteFacingMode | null>(null);
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>();
   const cameraPreview = useRef<HTMLVideoElement>(null);
   const { start, stop, stream, status, error, elapsedMs } = useVideoNoteRecorder(setClip, profile, true);
   const delayTrigger = useRef<HTMLElement>(null);
@@ -66,13 +66,6 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
     return () => { element.srcObject = null; };
   }, [stream, clip]);
 
-  useEffect(() => {
-    if (!clip) { setPreviewUrl(undefined); return; }
-    const url = URL.createObjectURL(clip.blob);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [clip]);
-
   const seconds = Math.floor(elapsedMs / 1000);
   const time = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const inProgress = status === 'recording' || status === 'processing' || status === 'requesting' || countingDown;
@@ -86,7 +79,9 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
 
   return <DiscussionMediaStage label="Запись видео" className="discussion-video-recorder" fullscreen>
     {clip
-      ? <video key="preview" src={previewUrl} controls controlsList="nofullscreen" playsInline aria-label="Предпросмотр записи" />
+      ? <DiscussionVideoReview key="preview" clip={clip} onUse={onUse}
+        confirmStyle={{ ...topControls, ...rightControl }} retakeStyle={{ ...centerControl, ...topControls }}
+        onRetake={() => { setClip(null); enableCamera(); }} />
       : <video key="camera" ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры" />}
     <FloatingActionButton label="Назад" icon="arrow-left" placement="left" style={{ ...topControls, ...leftControl }} onClick={onCancel} />
     {countingDown && <Text variant="headline" role="status" className="discussion-video-recorder__status">
@@ -121,13 +116,6 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
           <Icon name="record-circle" className="discussion-video-recorder__record-icon" style={recordIconSize} />
         </FloatingActionButton>
         : <FloatingActionButton label="Включить камеру" icon="video" style={centerControl} onClick={enableCamera} />}
-    </>}
-    {clip && <>
-      <FloatingActionButton label="Удалить запись и записать заново" icon="x" style={{ ...centerControl, ...topControls }}
-        onClick={() => { setClip(null); enableCamera(); }} />
-      <FloatingActionButton label="Использовать видео" icon="check" style={{ ...topControls, ...rightControl }} disabled={!previewUrl} onClick={() => {
-        onUse(new File([clip.blob], 'Видео.mp4', { type: clip.mimeType }));
-      }} />
     </>}
   </DiscussionMediaStage>;
 }
