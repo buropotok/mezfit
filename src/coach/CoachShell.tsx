@@ -7,7 +7,8 @@ import {
   type ProgramListItem,
 } from '../api';
 import { useNavigationBackTransition, useNavigationFloatingAction, type AppDestination, type NavigationContext } from '../NavigationShell';
-import { Button, List, ListItem, MezfitDialog, MezfitDialogButton, Text } from '../ui';
+import { Button, List, ListItem, Text } from '../ui';
+import { CoachInviteDialog } from './CoachInviteDialog';
 import { PublishedUserProfile } from '../profile/PublishedUserProfile';
 import { ProfileDataProvider } from '../profile/ProfileDataProvider';
 import { ProfileWorkoutTimeline } from '../profile/ProfileWorkoutTimeline';
@@ -146,7 +147,6 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   const [programDetailNavigation, setProgramDetailNavigation] = useState<NavigationContext | null>(null);
   const [selectedCloudProgram, setSelectedCloudProgram] = useState<CloudTrainingPlanRow | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
-  const [inviteCopyError, setInviteCopyError] = useState('');
   const message = cloudConnections?.status === 'error' ? cloudConnections.error : '';
   const [inviteError, setInviteError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -175,7 +175,6 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
   const createInvite = useCallback(async () => {
     setBusy(true);
     setInviteError('');
-    setInviteCopyError('');
     try {
       const result = await createClientInvite(initData);
       setInviteUrl(result.telegramUrl);
@@ -523,22 +522,6 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     return <GlobalPlaceholder title={placeholder.title} text={placeholder.text} />;
   }
 
-  const closeInvite = () => {
-    setInviteUrl(null);
-    setInviteCopyError('');
-  };
-
-  const copyInvite = async () => {
-    if (!inviteUrl) return;
-    setInviteCopyError('');
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      closeInvite();
-    } catch {
-      setInviteCopyError('Не удалось скопировать ссылку автоматически. Попробуйте ещё раз.');
-    }
-  };
-
   return (
     <section className="coach-directory">
       <header className="coach-directory-header">
@@ -563,19 +546,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         presentation="contacts"
       />
 
-      <MezfitDialog
-        opened={Boolean(inviteUrl)}
-        title="Пригласить клиента"
-        content={<Text variant="body">Отправьте ссылку клиенту в Telegram. Ею могут воспользоваться несколько клиентов в течение 30 дней.</Text>}
-        buttons={<MezfitDialogButton strong onClick={() => void copyInvite()}>Копировать ссылку</MezfitDialogButton>}
-        onBackdropClick={closeInvite}
-        role="alertdialog"
-        aria-modal="true"
-        aria-hidden={!inviteUrl}
-        aria-label="Пригласить клиента"
-      >
-        {inviteCopyError ? <Text variant="footnote" className="invite-copy-error error-text" role="alert">{inviteCopyError}</Text> : null}
-      </MezfitDialog>
+      <CoachInviteDialog url={inviteUrl} onClose={() => setInviteUrl(null)} />
 
       {inviteError ? <p className="inline-message" role="alert">{inviteError}</p> : null}
       {resetError ? <div className="stack">
