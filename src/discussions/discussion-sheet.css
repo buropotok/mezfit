@@ -200,6 +200,13 @@
   z-index: 5;
 }
 
+.discussion-media-stage__viewer {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+.discussion-media-stage__viewer[hidden] { display: none; }
+
 .discussion-media-stage__anchor { display: contents; }
 
 .discussion-media-stage--fullscreen {
@@ -323,6 +330,21 @@
 /* On WebKit, keep the viewer in the app-controlled fullscreen stage. */
 .discussion-media--viewer > video::-webkit-media-controls-fullscreen-button {
   display: none;
+}
+
+.discussion-media__annotate {
+  position: absolute;
+  top: calc(8px + var(--discussion-media-safe-top, 0px));
+  inset-inline-start: calc(12px + var(--discussion-media-safe-left, 0px));
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.discussion-media__annotate [role='alert'] {
+  max-width: 14rem;
+  padding: 4px 8px;
+  background: #111;
 }
 
 .discussion-media__comment {
