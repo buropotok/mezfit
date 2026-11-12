@@ -6,12 +6,15 @@ import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 export function CoachInviteDialog({ url, onClose }: { url: string | null; onClose: () => void }) {
   const inputId = useId();
   const latestUrl = useRef(url);
-  latestUrl.current = url;
   const [actionError, setActionError] = useState('');
   const [copyBusy, setCopyBusy] = useState(false);
   const copyInFlight = useRef(false);
 
-  useEffect(() => setActionError(''), [url]);
+  useEffect(() => {
+    latestUrl.current = url;
+    setActionError('');
+    return () => { latestUrl.current = null; };
+  }, [url]);
 
   const share = () => {
     if (!url) return;
