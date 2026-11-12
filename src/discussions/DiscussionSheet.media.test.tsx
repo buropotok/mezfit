@@ -7,6 +7,7 @@ import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { directMediaUrl, MediaUploadError, uploadDirectMedia, type UploadedMedia } from '../media/directMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import { DiscussionMedia } from './DiscussionMedia';
+import { DiscussionOutgoingMedia } from './DiscussionOutgoingMedia';
 import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
 import { inspectDiscussionMedia } from './discussion-media-file';
@@ -23,6 +24,47 @@ vi.mock('../media/discussionMediaCache', async importOriginal => ({
   storeDiscussionMedia: vi.fn(async () => undefined),
 }));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
+
+it('keeps received and sent photo/video previews fully opaque over the thread wallpaper', async () => {
+  const photo = { ...message('photo', ''), attachments: [{
+    id: 'photo-file', messageId: 'photo', realmId: thread.realmId, owner: 'tg:1', authorUserId: 'tg:1',
+    mediaType: 'photo' as const, mimeType: 'image/jpeg', sizeBytes: 5, durationSeconds: null,
+    storageKey: 'mvp-media/' + 'a'.repeat(64), uploadState: 'ready' as const, confirmedAt: thread.createdAt,
+  }] };
+  const video = { ...message('video', '', 'tg:2', 1), attachments: [{
+    id: 'video-file', messageId: 'video', realmId: thread.realmId, owner: 'tg:2', authorUserId: 'tg:2',
+    mediaType: 'video' as const, mimeType: 'video/mp4', sizeBytes: 5, durationSeconds: 8,
+    storageKey: 'mvp-media/' + 'b'.repeat(64), uploadState: 'ready' as const, confirmedAt: thread.createdAt,
+  }] };
+  const { port } = fixture([photo, video]);
+  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
+    threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}}
+    parentNavigation={null} onNavigationContextChange={() => {}} /></KonstaProvider>);
+  await screen.findByRole('link', { name: 'Открыть фото' });
+  await screen.findByRole('link', { name: 'Открыть видео' });
+  for (const id of ['photo', 'video']) {
+    const thumb = view.container.querySelector(`[data-message-id="${id}"] .discussion-media--thumbnail`);
+    const footer = thumb?.parentElement as HTMLElement | undefined;
+    expect(footer?.style.opacity).toBe('1');
+  }
+});
+
+it('renders outgoing photo and video thumbnails without the native footer fade', () => {
+  for (const mediaType of ['photo', 'video'] as const) {
+    const draft: DiscussionMediaDraft = {
+      id: mediaType, storageKey: 'mvp-media/' + 'a'.repeat(64), mediaType,
+      mimeType: mediaType === 'photo' ? 'image/jpeg' : 'video/mp4',
+      sizeBytes: 12, durationSeconds: mediaType === 'video' ? 6 : null,
+      fileName: `${mediaType}.jpg`, uploadState: 'failed',
+    };
+    const view = render(<KonstaProvider theme="ios" dark><DiscussionOutgoingMedia
+      src="blob:media-preview" attachment={draft} createdAt={thread.createdAt} status="failed"
+      onCancel={() => {}} onRemove={() => {}} onRetry={() => {}} /></KonstaProvider>);
+    const preview = view.container.querySelector('.discussion-outgoing__preview');
+    expect((preview?.parentElement as HTMLElement | undefined)?.style.opacity).toBe('1');
+    view.unmount();
+  }
+});
 
 it('previews a photo and retries an attachment-only send with the same message, attachment and object IDs', async () => {
   const port = { ...fixture().port, supportsMedia: true };
