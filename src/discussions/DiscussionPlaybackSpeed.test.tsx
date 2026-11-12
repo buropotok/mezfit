@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
+import { DiscussionMedia } from './DiscussionMedia';
 import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
 import { inspectDiscussionMedia } from './discussion-media-file';
@@ -95,4 +96,23 @@ it('offers the same speed control for video preview and preserves speed through 
   fireEvent.click(screen.getByRole('button', { name: 'Во весь экран' }));
   expect(screen.getByRole('dialog', { name: 'Предпросмотр вложения' }).contains(video)).toBe(true);
   expect(video.playbackRate).toBe(1.5);
+});
+
+it('reapplies the selected rate after video metadata loads without restarting the player', () => {
+  const view = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:playback-speed" type="video" mode="viewer" playbackRate={0.25} />
+  </KonstaProvider>);
+  const video = view.container.querySelector('video');
+  if (!video) throw new Error('Video player not found');
+  video.currentTime = 3;
+  expect(video.playbackRate).toBe(0.25);
+  video.playbackRate = 1;
+  fireEvent.loadedMetadata(video);
+  expect(video.playbackRate).toBe(0.25);
+  view.rerender(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:playback-speed" type="video" mode="viewer" playbackRate={0.75} />
+  </KonstaProvider>);
+  expect(view.container.querySelector('video')).toBe(video);
+  expect(video.playbackRate).toBe(0.75);
+  expect(video.currentTime).toBe(3);
 });
