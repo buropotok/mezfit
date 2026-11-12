@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
-import type { FocusEventHandler, HTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, FocusEventHandler, HTMLAttributes, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { requestTelegramInviteShare } from '../telegram';
 import { CoachInviteDialog } from './CoachInviteDialog';
@@ -9,7 +9,7 @@ vi.mock('../ui', () => ({
   MezfitDialog: ({ opened, title, content, buttons, children }: {
     opened: boolean; title: string; content: ReactNode; buttons: ReactNode; children: ReactNode;
   }) => opened ? <div role="dialog" aria-label={title}>{content}{children}{buttons}</div> : null,
-  MezfitDialogButton: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) =>
+  MezfitDialogButton: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) =>
     <button type="button" {...props}>{children}</button>,
   Text: ({ children, ...props }: HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>,
 }));
@@ -81,6 +81,20 @@ describe('CoachInviteDialog', () => {
 
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(writeText).toHaveBeenCalledExactlyOnceWith(URL);
+  });
+
+  it('does not close a dismissed dialog after clipboard resolves', async () => {
+    let finishCopy: (() => void) | undefined;
+    const writeText = vi.fn().mockImplementation(() => new Promise<void>((resolve) => { finishCopy = resolve; }));
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const onClose = vi.fn();
+    const view = render(<CoachInviteDialog url={URL} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Копировать ссылку' }));
+    view.unmount();
+    await act(async () => { finishCopy?.(); });
+
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('does not close a newer invitation when an older copy finishes late', async () => {
