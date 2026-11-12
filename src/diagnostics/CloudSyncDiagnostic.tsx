@@ -12,6 +12,14 @@ import { DiscussionReadDiagnostic } from './DiscussionReadDiagnostic';
 type LocalOpenState = 'not-started' | 'waiting' | 'blocked' | 'ready' | 'opened' | 'failed';
 
 const LOCAL_OPEN_WARNING_MS = 12_000;
+const LOCAL_OPEN_LABELS: Record<LocalOpenState, string> = {
+  'not-started': 'не начато',
+  waiting: 'ожидание',
+  blocked: 'заблокировано другим соединением',
+  ready: 'событие ready получено',
+  opened: 'открыта',
+  failed: 'ошибка',
+};
 
 /** Only a bounded error category is displayed; IndexedDB error messages may expose private data. */
 function localOpenErrorCode(reason: unknown): string {
@@ -137,7 +145,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         if (openWarningTimer !== null) clearTimeout(openWarningTimer);
         openWarningTimer = null;
         if (!active) return;
-        update({ localOpen: 'opened' });
+        update({ localOpen: 'opened', localOpenSlow: false });
 
         const localSubscription = liveQuery(async () => {
           const [realms, members, roles] = await Promise.all([
@@ -187,7 +195,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         if (openWarningTimer !== null) clearTimeout(openWarningTimer);
         openWarningTimer = null;
         update({
-          stage: 'failed', setupError: true,
+          stage: 'failed', setupError: true, localOpenSlow: false,
           ...(opening && !opened ? { localOpen: 'failed' as const, localOpenError: localOpenErrorCode(reason) } : {}),
         });
       }
@@ -205,14 +213,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
     <section aria-label="Диагностика синхронизации Dexie Cloud">
       <Text variant="headline" role="heading" aria-level={2}>Синхронизация и локальная база</Text>
       <p><Text variant="body">Этап: {snapshot.stage}</Text></p>
-      <p><Text variant="body">Открытие IndexedDB: {{
-        'not-started': 'не начато',
-        waiting: 'ожидание',
-        blocked: 'заблокировано другим соединением',
-        ready: 'событие ready получено',
-        opened: 'открыта',
-        failed: 'ошибка',
-      }[snapshot.localOpen]}</Text></p>
+      <p><Text variant="body">Открытие IndexedDB: {LOCAL_OPEN_LABELS[snapshot.localOpen]}</Text></p>
       {snapshot.localOpenSlow ? <p role="status"><Text variant="body">
         Открытие занимает более 12 секунд; это ещё не подтверждает причину задержки.
       </Text></p> : null}
