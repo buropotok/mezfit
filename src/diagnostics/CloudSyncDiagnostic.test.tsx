@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { liveQuery } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMe } from '../api';
@@ -100,6 +100,43 @@ describe('read-only cloud sync diagnostic', () => {
     view.unmount();
     expect(unsubscribe).toHaveBeenCalledTimes(4);
     expect(close).toHaveBeenCalledWith({ disableAutoOpen: false });
+  });
+
+  it('identifies another IndexedDB connection blocking the upgrade without claiming a cloud error', async () => {
+    const listeners = new Map<string, () => void>();
+    let completeOpen!: () => void;
+    const pendingOpen = new Promise<void>(resolve => { completeOpen = resolve; });
+    vi.mocked(createCloudDatabase).mockReturnValue({
+      ...database,
+      open: vi.fn(() => pendingOpen),
+      on: vi.fn((event: string, handler: () => void) => { listeners.set(event, handler); }),
+    } as unknown as MezfitCloudDatabase);
+    const view = render(<CloudSyncDiagnostic initData="signed" />);
+    try {
+      await waitFor(() => expect(screen.getByText('Этап: opening')).toBeTruthy());
+      act(() => listeners.get('blocked')?.());
+      expect(screen.getByText('Открытие IndexedDB: заблокировано другим соединением')).toBeTruthy();
+      expect(sync).not.toHaveBeenCalled();
+      await act(async () => { completeOpen(); await pendingOpen; });
+      await waitFor(() => expect(screen.getByText('Открытие IndexedDB: открыта')).toBeTruthy());
+      expect(sync).toHaveBeenCalledWith({ purpose: 'pull', wait: false });
+    } finally {
+      view.unmount();
+      completeOpen();
+    }
+  });
+
+  it('reports a safe IndexedDB error category without disclosing a raw failure message', async () => {
+    const error = Object.assign(new Error('secret database path'), { name: 'VersionError' });
+    vi.mocked(createCloudDatabase).mockReturnValue({
+      ...database,
+      open: vi.fn(async () => { throw error; }),
+    } as unknown as MezfitCloudDatabase);
+    render(<CloudSyncDiagnostic initData="signed" />);
+    await waitFor(() => expect(screen.getByText('Этап: failed')).toBeTruthy());
+    expect(screen.getByText('Код ошибки открытия: VERSION_ERROR')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('secret database path');
+    expect(sync).not.toHaveBeenCalled();
   });
 
   it('opens the new diagnostic only after an explicit tap from the existing Telegram check', async () => {
