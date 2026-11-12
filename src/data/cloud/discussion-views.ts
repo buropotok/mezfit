@@ -1,7 +1,7 @@
 import { discussionId, discussionRecord } from '../../../shared/discussion-anchor';
-import { matchesDiscussionReadStateId, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
+import { isDiscussionVideoPosition, matchesDiscussionReadStateId, type DiscussionMessage, type DiscussionVideoPosition, type MessageAttachment } from './discussion-contracts';
 export interface DiscussionCursor { createdAt: string; id: string }
-export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean }
+export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean; videoPosition?: DiscussionVideoPosition }
 /** Evidence captured by the repository, never inferred from its general sync indicator. */
 export interface DiscussionReceiptSnapshot {
   confirmedIds: readonly string[];
@@ -34,6 +34,7 @@ export function isDiscussionMessage(value: unknown): value is DiscussionMessage 
     && discussionInstant(value.createdAt) && (value.editedAt === undefined || discussionInstant(value.editedAt))
     && (value.deletedAt === undefined || value.deletedAt === '' || discussionInstant(value.deletedAt))
     && (value.replyToMessageId === undefined || (discussionId(value.replyToMessageId) && value.replyToMessageId !== value.id))
+    && (value.replyVideoPosition === undefined || (discussionId(value.replyToMessageId) && isDiscussionVideoPosition(value.replyVideoPosition)))
     && (value.draftForRealmId === undefined || discussionId(value.draftForRealmId));
 }
 /** Mask residual text from an edit/delete merge, including in dynamic quotes. */
@@ -46,6 +47,7 @@ export function discussionMessageView(row: DiscussionMessage, original?: Discuss
     reply: deleted || !row.replyToMessageId ? null : {
       messageId: row.replyToMessageId, authorUserId: source?.authorUserId ?? null,
       text: source && !source.deletedAt ? source.text.split(/\r?\n/, 1)[0].slice(0, 160) : '',
+      ...(row.replyVideoPosition ? { videoPosition: row.replyVideoPosition } : {}),
       unavailable: !source, deleted: Boolean(source?.deletedAt),
     } };
 }

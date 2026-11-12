@@ -44,6 +44,7 @@ import historyUrl from './history-outline.svg';
 import infoCircleUrl from './info-circle.svg';
 import menu2Url from './menu-2.svg';
 import xUrl from './x.svg';
+import messageCircleExclamationUrl from './message-circle-exclamation.svg';
 import messageCircleUrl from './message-circle-outline.svg';
 import pencilUrl from './pencil-outline.svg';
 import tildeUrl from './tilde.svg';
@@ -125,6 +126,7 @@ const uiIconRegistry = {
   paperclip: { outline: paperclipUrl, filled: paperclipUrl },
   photo: { outline: photoUrl, filled: photoUrl },
   video: { outline: videoUrl, filled: videoUrl },
+  'message-circle-exclamation': { outline: messageCircleExclamationUrl, filled: messageCircleExclamationUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },
   tilde: { outline: tildeUrl, filled: tildeUrl },

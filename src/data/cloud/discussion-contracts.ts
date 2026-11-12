@@ -1,4 +1,4 @@
-import { discussionAnchorKey, discussionId, discussionParents, type DiscussionAnchor, type DiscussionScope } from '../../../shared/discussion-anchor';
+import { discussionAnchorKey, discussionId, discussionParents, discussionRecord, type DiscussionAnchor, type DiscussionScope } from '../../../shared/discussion-anchor';
 import type { DiscussionMediaDraft } from './discussion-media';
 export type { DiscussionAnchor, DiscussionScope } from '../../../shared/discussion-anchor';
 export const DISCUSSION_STORES = {
@@ -18,11 +18,26 @@ export interface DiscussionThread extends DiscussionScope {
   createdAt: string;
   lastActivityAt: string;
 }
+export interface DiscussionVideoPosition {
+  attachmentId: string;
+  seconds: number;
+}
+
+export function isDiscussionVideoPosition(value: unknown): value is DiscussionVideoPosition {
+  return discussionRecord(value) && Object.keys(value).length === 2 && discussionId(value.attachmentId)
+    && typeof value.seconds === 'number' && Number.isFinite(value.seconds) && value.seconds >= 0;
+}
+
+export function sameDiscussionVideoPosition(a?: DiscussionVideoPosition, b?: DiscussionVideoPosition): boolean {
+  return a?.attachmentId === b?.attachmentId && a?.seconds === b?.seconds;
+}
+
 export interface DiscussionMessage {
   id: string; realmId: string; owner: string; threadId: string; authorUserId: string;
   /** Present only on private unsent drafts. */
   draftForRealmId?: string;
   draftMedia?: DiscussionMediaDraft;
+  replyVideoPosition?: DiscussionVideoPosition;
   /** Active repository messages use deletedAt: '' for a consistent edit predicate. */
   text: string; replyToMessageId?: string; createdAt: string; editedAt?: string; deletedAt?: string;
 }
@@ -74,7 +89,10 @@ export function assertDiscussionMessageWrite(
   if (previous && (previous.owner !== actor || previous.authorUserId !== actor
     || previous.id !== message.id || previous.realmId !== message.realmId || previous.threadId !== message.threadId
     || previous.createdAt !== message.createdAt || previous.replyToMessageId !== message.replyToMessageId
+    || !sameDiscussionVideoPosition(previous.replyVideoPosition, message.replyVideoPosition)
     || (Boolean(previous.deletedAt) && previous.deletedAt !== message.deletedAt))) invalid();
+  if (message.replyVideoPosition !== undefined
+    && (!discussionId(message.replyToMessageId) || !isDiscussionVideoPosition(message.replyVideoPosition))) invalid();
   if (message.replyToMessageId !== undefined && (!discussionId(message.replyToMessageId)
     || message.replyToMessageId === message.id
     || (reply ? reply.id !== message.replyToMessageId || reply.threadId !== thread.id || reply.realmId !== thread.realmId : !previous))) invalid();

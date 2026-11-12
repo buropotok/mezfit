@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
+import { sameDiscussionVideoPosition, type DiscussionVideoPosition } from '../data/cloud/discussion-contracts';
 import { discussionMediaTextId, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import type { DiscussionPort } from './discussion-session';
 
@@ -7,6 +8,7 @@ import type { DiscussionPort } from './discussion-session';
 export function useDiscussionDraft(repository: DiscussionPort, threadId: string) {
   const [text, setText] = useState('');
   const [replyId, setReplyId] = useState<string | null>(null);
+  const [videoPosition, setVideoPosition] = useState<DiscussionVideoPosition>();
   const [media, setMedia] = useState<DiscussionMediaDraft>();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +23,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
       if (cancelled) return;
       current.current = input;
       setMedia(input?.draftMedia);
+      setVideoPosition(input?.replyVideoPosition);
       setText(input?.text ?? ''); setReplyId(input?.replyToMessageId ?? null);
       setError(null); setReady(true);
     }, () => { if (!cancelled) setError('Не удалось восстановить черновик'); });
@@ -44,7 +47,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     const latest = current.current;
     // A stale save/send failure must not replace a newer draft or lose later typing.
     if (!latest || latest.id !== publishedId) return;
-    const replacement = prepareDiscussionMessage(threadId, latest.text, latest.replyToMessageId);
+    const replacement = prepareDiscussionMessage(threadId, latest.text, latest.replyToMessageId, latest.replyVideoPosition);
     current.current = replacement;
     if (alive.current) { setText(replacement.text); setReplyId(replacement.replyToMessageId ?? null); setMedia(undefined); }
     persist(replacement);
@@ -53,12 +56,12 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     if (current.current?.id !== id) return;
     current.current = null;
     if (alive.current) {
-      setText(''); setReplyId(null); setError(null); setMedia(undefined);
+      setText(''); setReplyId(null); setVideoPosition(undefined); setError(null); setMedia(undefined);
       if (restorePrevious) { setReady(false); setReload(value => value + 1); }
     }
   }
   return {
-    text, replyId, ready, error, media, mediaMessage: media ? current.current : null,
+    text, replyId, videoPosition, ready, error, media, mediaMessage: media ? current.current : null,
     mediaCommand() {
       return current.current ??= prepareDiscussionMessage(threadId, text, replyId ?? undefined);
     },
@@ -80,7 +83,8 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
           ? await repository.getMessage(threadId, discussionMediaTextId(attachment)) : undefined;
         if (separateText && separateText.authorUserId !== repository.actorUserId) throw reason;
         if (latest?.id === input.id && (latest.text.trim() && latest.text !== (separateText?.text ?? published.text)
-          || latest.replyToMessageId !== published.reply?.messageId)) rebase(input.id);
+          || latest.replyToMessageId !== published.reply?.messageId
+          || !sameDiscussionVideoPosition(latest.replyVideoPosition, published.reply?.videoPosition))) rebase(input.id);
         else sent(input.id);
         return null;
       }
@@ -103,11 +107,14 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
       if (current.current?.id === input.id) delete current.current.draftMedia;
       if (alive.current) setMedia(undefined);
     },
-    update(nextText: string, nextReply: string | null) {
+    update(nextText: string, nextReply: string | null, nextPosition?: DiscussionVideoPosition) {
       if (!ready) return;
-      const input = { ...(current.current ?? prepareDiscussionMessage(threadId, '')),
-        text: nextText, replyToMessageId: nextReply ?? undefined };
-      current.current = input; setText(nextText); setReplyId(nextReply); persist(input);
+      const { replyVideoPosition: _position, ...previous } = current.current ?? prepareDiscussionMessage(threadId, '');
+      const input = { ...previous, text: nextText, replyToMessageId: nextReply ?? undefined,
+        ...(nextPosition ? { replyVideoPosition: nextPosition } : {}) };
+      current.current = input;
+      setText(nextText); setReplyId(nextReply); setVideoPosition(nextPosition);
+      persist(input);
     },
     command(): DiscussionMessageInput {
       if (!current.current) current.current = prepareDiscussionMessage(threadId, text, replyId ?? undefined);

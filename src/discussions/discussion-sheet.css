@@ -99,6 +99,13 @@
   border-inline-start: 2px solid currentColor;
   padding: 2px 6px;
 }
+.discussion-quote__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
 .discussion-quote__text {
   display: block;
   min-width: 0;
@@ -151,6 +158,17 @@
   min-width: 0;
   min-height: 3rem;
 }
+.discussion-composer__timecode {
+  flex: none;
+  align-self: center;
+  margin-inline-start: 8px;
+}
+
+.discussion-composer__timecode-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Reserve space below the scroll viewport, not a new composer scroll owner.
    Messages keep moving underneath the three independent glass surfaces. */
 
@@ -286,6 +304,33 @@
   height: 100%;
   min-height: 0;
   object-fit: contain;
+}
+
+/* On WebKit, keep the viewer in the app-controlled fullscreen stage. */
+.discussion-media--viewer > video::-webkit-media-controls-fullscreen-button {
+  display: none;
+}
+
+.discussion-media__comment {
+  position: absolute;
+  top: calc(8px + var(--discussion-media-safe-top, 0px));
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.discussion-media__comment[data-hint] {
+  top: calc(56px + var(--discussion-media-safe-top, 0px));
+}
+
+.discussion-media__comment-hint {
+  padding: 4px 8px;
+  color: white;
+  background: rgb(0 0 0 / 0.75);
+  text-align: center;
 }
 
 .discussion-media__error {
