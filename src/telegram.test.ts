@@ -3,6 +3,7 @@ import {
   getSelectionHapticBackend,
   getTelegramLaunchStartParam,
   prepareTelegramWebApp,
+  requestTelegramInviteShare,
   runHapticProbe,
   triggerTelegramSelectionHaptic,
   triggerTelegramPickerSelectionTick,
@@ -228,5 +229,27 @@ describe('runHapticProbe', () => {
       },
     };
     expect(runHapticProbe('telegram-selection', webApp, null)).toBe('error');
+  });
+});
+
+describe('requestTelegramInviteShare', () => {
+  it('opens the Telegram chat picker with the encoded invitation URL', () => {
+    const webApp = createWebApp();
+    const openTelegramLink = vi.fn();
+    webApp.openTelegramLink = openTelegramLink;
+    const invite = 'https://t.me/mezfit_bot?startapp=invite_token';
+
+    expect(requestTelegramInviteShare(invite, webApp)).toBe(true);
+    expect(openTelegramLink).toHaveBeenCalledExactlyOnceWith(
+      `https://t.me/share/url?url=${encodeURIComponent(invite)}`,
+    );
+  });
+
+  it('reports unavailable and rejecting Telegram clients without throwing', () => {
+    expect(requestTelegramInviteShare('https://t.me/test?startapp=invite', null)).toBe(false);
+    expect(requestTelegramInviteShare('https://t.me/test?startapp=invite', createWebApp())).toBe(false);
+    const webApp = createWebApp();
+    webApp.openTelegramLink = () => { throw new Error('WebView unavailable'); };
+    expect(requestTelegramInviteShare('https://t.me/test?startapp=invite', webApp)).toBe(false);
   });
 });
