@@ -35,6 +35,7 @@ export interface TelegramWebApp {
   requestFullscreen?(): void;
   exitFullscreen?(): void;
   downloadFile?(params: { url: string; file_name: string }, callback?: (accepted: boolean) => void): void;
+  openTelegramLink?(url: string): void;
   addToHomeScreen?(): void;
   checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
   onEvent?(eventType: 'homeScreenAdded', eventHandler: () => void): void;
@@ -53,6 +54,20 @@ export function requestTelegramFileDownload(url: string, fileName: string, onRes
   try {
     if (webApp.isVersionAtLeast?.('8.0') === false) return false;
     webApp.downloadFile({ url, file_name: fileName }, onResult);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Open the native Telegram chat picker without sending any message on the user's behalf. */
+export function requestTelegramInviteShare(
+  inviteUrl: string,
+  webApp: TelegramWebApp | null = getTelegramWebApp(),
+): boolean {
+  if (!webApp?.openTelegramLink) return false;
+  try {
+    webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}`);
     return true;
   } catch {
     return false;
