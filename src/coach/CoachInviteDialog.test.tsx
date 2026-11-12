@@ -9,8 +9,8 @@ vi.mock('../ui', () => ({
   MezfitDialog: ({ opened, title, content, buttons, children }: {
     opened: boolean; title: string; content: ReactNode; buttons: ReactNode; children: ReactNode;
   }) => opened ? <div role="dialog" aria-label={title}>{content}{children}{buttons}</div> : null,
-  MezfitDialogButton: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) =>
-    <button type="button" {...props}>{children}</button>,
+  MezfitDialogButton: ({ children, onClick, disabled }: ButtonHTMLAttributes<HTMLButtonElement>) =>
+    <button type="button" onClick={onClick} disabled={disabled}>{children}</button>,
   Text: ({ children, ...props }: HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>,
 }));
 vi.mock('konsta/react', () => ({
