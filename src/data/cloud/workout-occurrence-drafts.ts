@@ -64,37 +64,6 @@ export class WorkoutOccurrenceDraftRepository {
     if (!await isApprovedAssignedPair(realm, members, row.coachUserId, row.clientUserId)) throw new WorkoutEditRejected('SCHEDULE_FORBIDDEN');
   }
 
-  /** One-time transfer of existing user work from the retired device-only store.
-   * This is a local schema transition, never a replication mechanism. */
-  async importDeviceDrafts(): Promise<void> {
-    await this.db.transaction('rw', ['localWorkoutOccurrenceDrafts', 'workoutOccurrences', 'localWorkoutSync', 'realms', 'members'], async () => {
-      const rows = await this.db.localWorkoutOccurrenceDrafts.toArray();
-      for (const draft of rows.filter(isLocalWorkoutOccurrenceDraft).filter(row => row.actorUserId === this.actorUserId)) {
-        try { await this.authorize(draft); }
-        catch (reason) { if (reason instanceof WorkoutEditRejected) continue; throw reason; }
-        let id = draft.targetOccurrenceId;
-        if (id) {
-          const current = await this.db.workoutOccurrences.get(id);
-          if (!current || current.inactive || current.cancelledAt || current.entryKind === 'personal_event' || current.realmId !== draft.realmId || current.athleteUserId !== draft.athleteUserId
-            || current.coachUserId !== draft.coachUserId || current.clientUserId !== draft.clientUserId
-            || current.format !== draft.format) continue;
-          await this.db.workoutOccurrences.update(id, { plan: draft.plan, originalPlan: draft.originalPlan,
-            publishedPlan: current.plan, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId });
-        } else {
-          id = await this.db.workoutOccurrences.add({ realmId: draft.realmId, owner: draft.realmId,
-            trainingPlanId: draft.trainingPlanId, programDayId: draft.programDayId,
-            athleteUserId: draft.athleteUserId, coachUserId: draft.coachUserId, clientUserId: draft.clientUserId,
-            format: draft.format, startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
-            status: 'scheduled', workoutSessionId: null, publicationStatus: 'draft', draftAuthorUserId: this.actorUserId, plan: draft.plan,
-            originalPlan: draft.originalPlan, publishedPlan: null, createdByUserId: this.actorUserId,
-            createdAt: draft.createdAt, updatedAt: draft.updatedAt });
-        }
-        await markWorkoutChanged(this.db, id);
-        await this.db.localWorkoutOccurrenceDrafts.delete(draft.id);
-      }
-    });
-  }
-
   async create(draft: LocalWorkoutOccurrenceDraft, options: { published?: boolean } = {}): Promise<string> {
     if (!isLocalWorkoutOccurrenceDraft(draft) || draft.actorUserId !== this.actorUserId)
       throw new WorkoutEditRejected('INVALID_OCCURRENCE_DRAFT');
