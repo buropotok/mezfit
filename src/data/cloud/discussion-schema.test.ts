@@ -9,7 +9,9 @@ import { DISCUSSION_STORES } from './discussion-contracts';
 import manifest from '../../../cloud/schema-discussions.json';
 const databases: Dexie[] = [];
 afterEach(async () => {
-  for (const db of databases.splice(0)) { db.close(); await db.delete(); }
+  const tracked = databases.splice(0);
+  for (const db of tracked) db.close();
+  for (const db of tracked) await db.delete();
   vi.unstubAllGlobals();
 });
 
