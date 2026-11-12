@@ -124,7 +124,7 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
           if (!active || openFinished) return;
           // backendDB() is a read-only indication that native IndexedDB opened
           // even if a Dexie/AddOn ready subscriber keeps db.open() unresolved.
-          update({ openSlow: true, nativeConnection: cloudDb.backendDB() !== null });
+          update({ openSlow: true, nativeConnection: Boolean(cloudDb.backendDB()) });
         }, 10000);
         try {
           await cloudDb.open();
