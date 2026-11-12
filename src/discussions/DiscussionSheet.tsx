@@ -196,10 +196,23 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       : viewedMessage?.deleted ? null : viewing?.source ?? null;
   const previewVideoUrl = previewing && media.selection?.metadata.mediaType === 'video' ? media.preview : undefined;
   const videoUrl = viewer ? (viewer.type === 'video' ? viewer.src : undefined) : previewVideoUrl;
+  const videoSpeedKey = viewer?.type === 'video' && viewing
+    ? `viewer:${viewing.messageId}:${viewing.attachmentId}:${viewing.startAt ?? ''}`
+    : previewVideoUrl && media.selection ? `preview:${media.selection.metadata.id}` : '';
+  const [videoSpeed, setVideoSpeed] = useState(1);
+  const [speedOpen, setSpeedOpen] = useState(false);
+  const speedTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => { setVideoSpeed(1); setSpeedOpen(false); }, [videoSpeedKey]);
+  const speedMenu = videoUrl && <LiquidPopover isOpen={speedOpen} onOpenChange={setSpeedOpen}
+    triggerRef={speedTrigger} label="Скорость воспроизведения" layout="menu"
+    items={[0.25, 0.5, 0.75, 1, 1.5, 2].map(rate => ({
+      id: String(rate), label: `${rate}×`, active: videoSpeed === rate, onSelect: () => setVideoSpeed(rate),
+    }))}
+    trigger={<IconButton ref={speedTrigger} icon="gauge" label="Скорость воспроизведения" />} />;
   const videoFullscreen = Boolean(videoUrl && videoUrl === fullscreenVideo);
   const fullscreenButton = videoUrl && <IconButton icon={videoFullscreen ? 'arrows-minimize' : 'arrows-maximize'}
     label={videoFullscreen ? 'Выйти из полноэкранного режима' : 'Во весь экран'}
-    onClick={() => setFullscreenVideo(videoFullscreen ? null : videoUrl)} />;
+    onClick={() => { setSpeedOpen(false); setFullscreenVideo(videoFullscreen ? null : videoUrl); }} />;
   const mediaSurfaceOpen = previewing || Boolean(viewer) || cameraOpen;
   const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -748,14 +761,16 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' &&
       <DiscussionMediaStage label="Предпросмотр вложения" fullscreen={Boolean(previewVideoUrl && !viewer && videoFullscreen)}
         style={{ bottom: composerHeight + contextHeight }}>
-        <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
-        {previewVideoUrl && !viewer && <div className="discussion-media-stage__close">{fullscreenButton}</div>}
+        <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" playbackRate={videoSpeed} />
+        {previewVideoUrl && !viewer && <div className="discussion-media-stage__close">{speedMenu}{fullscreenButton}</div>}
       </DiscussionMediaStage>}
     {viewer && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
       fullscreen={viewer.type === 'video' && videoFullscreen}>
       <DiscussionMedia key={`${viewer.src}:${viewing?.startAt ?? ''}`} {...viewer} mode="viewer"
-        autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame} showCommentHint={!videoCommentUsed} />
+        autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame} showCommentHint={!videoCommentUsed}
+        playbackRate={videoSpeed} />
       <div className="discussion-media-stage__close">
+        {speedMenu}
         {fullscreenButton}
         <IconButton icon="x" label="Закрыть просмотр" onClick={() => {
           setFullscreenVideo(null);
