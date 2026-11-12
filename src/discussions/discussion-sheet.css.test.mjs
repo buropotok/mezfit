@@ -2,13 +2,31 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 const css = readFileSync(new URL('./discussion-sheet.css', import.meta.url), 'utf8');
 describe('discussion-owned composition', () => {
-  it('layers a transparent vector pattern onto the black discussion background', () => {
+  it('isolates the transparent wallpaper below the chat media and keeps media opaque', () => {
     const thread = css.match(/\.discussion-thread\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(thread).toContain('isolation: isolate');
     expect(thread).toContain('background-color: #000');
-    expect(thread).toContain("background-image: url('/discussion-fitness-pattern.svg')");
-    expect(thread).toContain('background-position: center');
-    expect(thread).toContain('background-repeat: no-repeat');
-    expect(thread).toContain('background-size: cover');
+    expect(thread).not.toContain('background-image:');
+
+    const wallpaper = css.match(/\.discussion-thread::before\s*\{([^}]+)\}/)?.[1] ?? '';
+    for (const declaration of [
+      "content: ''",
+      'position: absolute',
+      'inset: 0',
+      'z-index: 0',
+      'pointer-events: none',
+      "background-image: url('/discussion-fitness-pattern.svg')",
+      'background-position: center',
+      'background-repeat: no-repeat',
+      'background-size: cover',
+    ]) expect(wallpaper).toContain(declaration);
+
+    const scroll = css.match(/\.discussion-thread__scroll\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(scroll).toContain('z-index: 1');
+    expect(scroll).toContain('overflow-y: auto');
+
+    const media = css.match(/\.discussion-media--thumbnail\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(media).toContain('background: #111');
 
     const svg = readFileSync(new URL('../../public/discussion-fitness-pattern.svg', import.meta.url), 'utf8');
     expect(svg).toContain('viewBox="0 0 864 1536"');

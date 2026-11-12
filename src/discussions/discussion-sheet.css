@@ -13,6 +13,15 @@
   min-height: 0;
   isolation: isolate;
   background-color: #000;
+}
+/* Keep the decorative wallpaper in its own lower paint layer, behind opaque
+   photo/video thumbnails even in Android Telegram WebView compositing. */
+.discussion-thread::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background-image: url('/discussion-fitness-pattern.svg');
   background-position: center;
   background-repeat: no-repeat;
@@ -52,7 +61,7 @@
 }
 .discussion-thread__scroll {
   position: relative;
-  z-index: 0;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   overflow-x: hidden;
