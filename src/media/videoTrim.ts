@@ -1,3 +1,5 @@
+import { encodeTrimStart, writeTrimWithEncodedStart } from './videoTrimAvc';
+
 export interface VideoTrimRange {
   start: number;
   end: number;
@@ -6,18 +8,12 @@ export interface VideoTrimRange {
 export interface VideoTrimInfo {
   duration: number;
   timelineStart: number;
-  keyframes: number[];
 }
 
 export const MIN_VIDEO_TRIM_SECONDS = 0.2;
 
-export function nearestTrimStart(keyframes: readonly number[], requested: number, end: number) {
-  return keyframes.reduce((nearest, frame) => frame <= end - MIN_VIDEO_TRIM_SECONDS
-    && Math.abs(frame - requested) < Math.abs(nearest - requested) ? frame : nearest, 0);
-}
-
 export async function inspectVideoTrim(blob: Blob, signal: AbortSignal): Promise<VideoTrimInfo> {
-  const { Input, MP4, BlobSource, EncodedPacketSink } = await import('mediabunny');
+  const { Input, MP4, BlobSource } = await import('mediabunny');
   signal.throwIfAborted();
   const input = new Input({ formats: [MP4], source: new BlobSource(blob) });
   try {
@@ -27,17 +23,8 @@ export async function inspectVideoTrim(blob: Blob, signal: AbortSignal): Promise
     const duration = await input.computeDuration() - timelineStart;
     if (!Number.isFinite(duration) || duration <= 0) throw new Error('Invalid video duration');
 
-    const sink = new EncodedPacketSink(track);
-    const keyframes = new Set([0]);
-    const options = { metadataOnly: true };
-    let key = await sink.getFirstKeyPacket(options);
-    while (key) {
-      signal.throwIfAborted();
-      const timestamp = key.timestamp - timelineStart;
-      if (timestamp > 0 && timestamp < duration) keyframes.add(timestamp);
-      key = await sink.getNextKeyPacket(key, options);
-    }
-    return { duration, timelineStart, keyframes: [...keyframes].sort((a, b) => a - b) };
+    signal.throwIfAborted();
+    return { duration, timelineStart };
   } finally {
     input.dispose();
   }
@@ -45,15 +32,36 @@ export async function inspectVideoTrim(blob: Blob, signal: AbortSignal): Promise
 
 export async function trimRecordedMp4(blob: Blob, info: VideoTrimInfo, range: VideoTrimRange, signal: AbortSignal) {
   if (range.start === 0 && range.end === info.duration) return blob;
-  const { Input, MP4, BlobSource, Conversion, Output, Mp4OutputFormat, BufferTarget } = await import('mediabunny');
+  const media = await import('mediabunny');
+  const { Input, MP4, BlobSource, Conversion, Output, Mp4OutputFormat, BufferTarget, EncodedPacketSink } = media;
   signal.throwIfAborted();
   const input = new Input({ formats: [MP4], source: new BlobSource(blob) });
   const target = new BufferTarget();
+  const abortInput = () => input.dispose();
+  signal.addEventListener('abort', abortInput, { once: true });
   try {
+    const video = await input.getPrimaryVideoTrack();
+    if (!video) throw new Error('Video track missing');
+    const packets = new EncodedPacketSink(video);
+    const requestedStart = range.start + info.timelineStart;
+    const end = range.end + info.timelineStart;
+    const verify = { verifyKeyPackets: true };
+    // Choose the frame displayed at the requested time, including exact frame boundaries.
+    const frame = await packets.getPacket(requestedStart + 0.000001, verify) ?? await packets.getFirstPacket(verify);
+    if (!frame || frame.timestamp >= end) throw new Error('No video frame in trim range');
+    const start = range.start === 0 ? requestedStart : frame.timestamp;
+    if (range.start > 0 && frame.type !== 'key') {
+      const previousKey = await packets.getKeyPacket(frame.timestamp, verify);
+      if (!previousKey) throw new Error('No starting keyframe');
+      const nextKey = await packets.getNextKeyPacket(previousKey, verify);
+      const join = nextKey && nextKey.timestamp < end ? nextKey : null;
+      const prefix = await encodeTrimStart(media, video, frame.timestamp, join?.timestamp ?? end, signal);
+      return await writeTrimWithEncodedStart(media, input, video, prefix, { start: frame.timestamp, end }, join, signal);
+    }
     const conversion = await Conversion.init({
       input,
       output: new Output({ format: new Mp4OutputFormat(), target }),
-      trim: { start: range.start + info.timelineStart, end: range.end + info.timelineStart },
+      trim: { start, end },
       copy: { mode: 'forced', boundaryPolicy: 'shrink', boundaryTolerance: 0.05 },
       showWarnings: false,
     });
@@ -70,6 +78,7 @@ export async function trimRecordedMp4(blob: Blob, info: VideoTrimInfo, range: Vi
       signal.removeEventListener('abort', abort);
     }
   } finally {
+    signal.removeEventListener('abort', abortInput);
     input.dispose();
   }
 }

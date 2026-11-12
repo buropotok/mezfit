@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button, FloatingActionButton, Text } from '../ui';
-import { inspectVideoTrim, MIN_VIDEO_TRIM_SECONDS, nearestTrimStart, trimRecordedMp4,
+import { inspectVideoTrim, MIN_VIDEO_TRIM_SECONDS, trimRecordedMp4,
   type VideoTrimInfo, type VideoTrimRange } from '../media/videoTrim';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import { useVideoTrimFilmstrip, VIDEO_TRIM_FRAME_COUNT } from './useVideoTrimFilmstrip';
@@ -123,7 +123,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
             <input type="range" className="discussion-video-trim__start" min={0} max={duration} step="any"
               aria-label="Начало отрезка" aria-valuetext={videoTime(range.start)} disabled={busy} value={range.start}
               onChange={event => {
-                const start = nearestTrimStart(info.keyframes, Number(event.currentTarget.value), range.end);
+                const start = Math.max(0, Math.min(range.end - MIN_VIDEO_TRIM_SECONDS, Number(event.currentTarget.value)));
                 setRange({ start, end: range.end });
                 seek(start);
               }} />
