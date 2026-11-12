@@ -96,7 +96,7 @@ describe('read-only cloud sync diagnostic', () => {
   it('marks blocked IndexedDB opening without waiting for cloud sync or disclosing identity', async () => {
     vi.useFakeTimers();
     // Leave open unresolved to simulate the exact stuck-at-opening device state.
-    vi.mocked(open).mockImplementationOnce(() => new Promise(() => {}));
+    vi.mocked(open).mockImplementationOnce(() => new Promise<void>(() => {}));
     render(<CloudSyncDiagnostic initData="sensitive-init-data" />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(open).toHaveBeenCalledOnce();
