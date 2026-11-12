@@ -2,7 +2,6 @@ import { DISCUSSION_STORES, type DiscussionThread, type DiscussionMessage, type 
 import { CLOUD_DISCUSSIONS_ENABLED } from './discussion-activation';
 import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
 import type { FlexAttributeRow, FlexValueRow } from './flex-attributes';
-import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
@@ -318,7 +317,6 @@ export class MezfitCloudDatabase extends Dexie {
         ...CLOUD_DATABASE_STORES_V17, localProgramSync: 'id', localWorkoutSync: 'id',
       });
     }
-    this.on('ready', () => new WorkoutOccurrenceDraftRepository(this, 'tg:' + telegramUserId).importDeviceDrafts());
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
