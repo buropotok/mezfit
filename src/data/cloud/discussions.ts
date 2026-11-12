@@ -1,6 +1,7 @@
 import Dexie, { liveQuery } from 'dexie';
 import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, assertMessageAttachmentWrite, discussionReadStateId,
+  isDiscussionVideoPosition, sameDiscussionVideoPosition, type DiscussionVideoPosition,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
 import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, discussionInstant, discussionMessageView, isDiscussionMessage,
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
@@ -18,6 +19,7 @@ export type DiscussionDatabase = Pick<MezfitCloudDatabase,
 export interface CreateDiscussionThread { id: string; anchor: DiscussionAnchor; entityName: string; date: string; createdAt: string }
 export interface DiscussionMessageInput {
   id: string; threadId: string; text: string; createdAt: string; replyToMessageId?: string;
+  replyVideoPosition?: DiscussionVideoPosition;
   /** Composer publication must consume a private draft, not acknowledge another device's send. */
   requireUnsentDraft?: true;
   draftMedia?: DiscussionMediaDraft;
@@ -29,8 +31,10 @@ export interface DiscussionFeedRow {
   unread: number;
   hasAttachments: boolean;
 }
-export function prepareDiscussionMessage(threadId: string, text: string, replyToMessageId?: string): DiscussionMessageInput {
-  return { id: crypto.randomUUID(), threadId, text, createdAt: new Date().toISOString(), replyToMessageId };
+export function prepareDiscussionMessage(threadId: string, text: string, replyToMessageId?: string,
+  replyVideoPosition?: DiscussionVideoPosition): DiscussionMessageInput {
+  return { id: crypto.randomUUID(), threadId, text, createdAt: new Date().toISOString(), replyToMessageId,
+    ...(replyVideoPosition ? { replyVideoPosition } : {}) };
 }
 export function prepareDiscussionThread(anchor: DiscussionAnchor, entityName: string, date: string): CreateDiscussionThread {
   return { id: crypto.randomUUID(), anchor, entityName, date, createdAt: new Date().toISOString() };
@@ -252,6 +256,8 @@ export class DiscussionRepository {
   async saveDraft(input: DiscussionMessageInput): Promise<void> {
     input = structuredClone(input);
     if (!discussionId(input.id) || (input.replyToMessageId !== undefined && !discussionId(input.replyToMessageId))
+      || (input.replyVideoPosition !== undefined
+        && (!discussionId(input.replyToMessageId) || !isDiscussionVideoPosition(input.replyVideoPosition)))
       || typeof input.text !== 'string' || input.text.length > 20000 || !discussionInstant(input.createdAt)) fail('INVALID_DISCUSSION_DRAFT');
     if (input.draftMedia !== undefined && (!this.supportsMedia || !isDiscussionMediaDraft(input.draftMedia))) fail('INVALID_DISCUSSION_ATTACHMENT');
     return this.write(async () => {
@@ -266,11 +272,12 @@ export class DiscussionRepository {
         fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       }
       const draft: DiscussionMessage = { id: input.id, threadId: input.threadId, text: input.text,
-        createdAt: input.createdAt, replyToMessageId: input.replyToMessageId, realmId: this.actorUserId,
+        createdAt: input.createdAt, replyToMessageId: input.replyToMessageId, replyVideoPosition: input.replyVideoPosition, realmId: this.actorUserId,
         owner: this.actorUserId, authorUserId: this.actorUserId, draftForRealmId: this.scope.realmId, deletedAt: '' };
       if (input.draftMedia) draft.draftMedia = input.draftMedia;
       if (previous) await this.db.discussionMessages.where({ id: input.id, realmId: this.actorUserId,
         owner: this.actorUserId, draftForRealmId: this.scope.realmId }).modify({ text: input.text, replyToMessageId: input.replyToMessageId,
+          replyVideoPosition: input.replyVideoPosition,
           ...(input.draftMedia ? { draftMedia: input.draftMedia } : {}) });
       else await this.db.discussionMessages.add(draft);
     });
@@ -288,6 +295,7 @@ export class DiscussionRepository {
       return isDiscussionMessage(row) && row.realmId === this.actorUserId && row.owner === this.actorUserId
         && !row.deletedAt && row.threadId === threadId && row.draftForRealmId === this.scope.realmId
         ? { id: row.id, threadId: row.threadId, text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId,
+          ...(row.replyVideoPosition ? { replyVideoPosition: row.replyVideoPosition } : {}),
           ...(isDiscussionMediaDraft(row.draftMedia) ? { draftMedia: row.draftMedia } : {}) } : null;
     });
   }
@@ -317,6 +325,8 @@ export class DiscussionRepository {
   async send(input: DiscussionMessageInput, uploaded?: UploadedMedia): Promise<DiscussionMessageView> {
     input = structuredClone(input);
     if (!discussionId(input.id) || !discussionInstant(input.createdAt)
+      || (input.replyVideoPosition !== undefined
+        && (!discussionId(input.replyToMessageId) || !isDiscussionVideoPosition(input.replyVideoPosition)))
       || (input.requireUnsentDraft !== undefined && input.requireUnsentDraft !== true)) fail('INVALID_DISCUSSION_MESSAGE');
     const media = input.draftMedia;
     const attachments = this.db.messageAttachments;
@@ -329,7 +339,8 @@ export class DiscussionRepository {
       const existing = await this.db.discussionMessages.get(input.id);
       if (existing && !existing.draftForRealmId) {
         if (!this.visible(existing, thread.id) || existing.authorUserId !== this.actorUserId
-          || existing.replyToMessageId !== input.replyToMessageId) fail('DISCUSSION_ID_REUSED');
+          || existing.replyToMessageId !== input.replyToMessageId
+          || !sameDiscussionVideoPosition(existing.replyVideoPosition, input.replyVideoPosition)) fail('DISCUSSION_ID_REUSED');
         if (media) {
           const attachment = await attachments?.get(media.id);
           if (!attachment || attachment.storageKey !== media.storageKey || attachment.uploadState !== 'ready') fail('DISCUSSION_ID_REUSED');
@@ -348,6 +359,9 @@ export class DiscussionRepository {
       if (input.requireUnsentDraft && !existing) fail('DISCUSSION_DRAFT_NOT_SAVED');
       if (existing && (!isDiscussionMessage(existing) || existing.owner !== this.actorUserId
         || existing.realmId !== this.actorUserId || existing.threadId !== thread.id || existing.draftForRealmId !== this.scope.realmId)) fail('DISCUSSION_ID_REUSED');
+      if (existing && !sameDiscussionVideoPosition(existing.replyVideoPosition, input.replyVideoPosition)) {
+        fail('DISCUSSION_DRAFT_CHANGED');
+      }
       if (media && (!existing?.draftMedia || existing.text !== input.text || existing.replyToMessageId !== input.replyToMessageId
         || existing.draftMedia.id !== media.id
         || existing.draftMedia.storageKey !== media.storageKey || existing.draftMedia.mimeType !== media.mimeType
@@ -356,16 +370,24 @@ export class DiscussionRepository {
         || JSON.stringify(existing.draftMedia.waveform) !== JSON.stringify(media.waveform))) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       if (!media && existing?.draftMedia) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
+      const position = input.replyVideoPosition;
+      if (position) {
+        if (!reply || reply.deletedAt) fail('DISCUSSION_VIDEO_NOT_FOUND');
+        const [source] = await this.withAttachments([discussionMessageView(reply)], [reply]);
+        if (!source.attachments?.some(item => item.id === position.attachmentId && item.mediaType === 'video')) {
+          fail('DISCUSSION_VIDEO_NOT_FOUND');
+        }
+      }
       // Draft creation is private, not publication. Freeze the first local send
       // time on the row; retries above return that same row without moving it.
-      const row: DiscussionMessage = { id: input.id, threadId: input.threadId, text: media ? '' : input.text,
+      const row: DiscussionMessage = { id: input.id, threadId: input.threadId, text: media && !position ? '' : input.text,
         createdAt: existing ? new Date().toISOString() : input.createdAt,
-        replyToMessageId: input.replyToMessageId, realmId: this.scope.realmId,
+        replyToMessageId: input.replyToMessageId, replyVideoPosition: position, realmId: this.scope.realmId,
         owner: this.actorUserId, authorUserId: this.actorUserId, deletedAt: '' };
       assertDiscussionMessageWrite(this.actorUserId, thread, row, undefined, reply ? { ...reply, threadId: thread.id } : undefined);
       if (existing) await this.db.discussionMessages.where({ id: row.id, realmId: this.actorUserId,
         owner: this.actorUserId, draftForRealmId: this.scope.realmId }).modify({ realmId: row.realmId, draftForRealmId: undefined,
-        text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId, draftMedia: undefined });
+        text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId, replyVideoPosition: position, draftMedia: undefined });
       else await this.db.discussionMessages.add(row);
       if (media) {
         if (!attachments) fail('INVALID_DISCUSSION_ATTACHMENT');
@@ -378,7 +400,7 @@ export class DiscussionRepository {
         await attachments.add(attachment);
       }
       let lastActivityAt = row.createdAt;
-      if (media && input.text.trim()) {
+      if (media && !position && input.text.trim()) {
         const textRow: DiscussionMessage = { ...row, id: discussionMediaTextId(media), text: input.text,
           replyToMessageId: undefined, createdAt: new Date(Date.parse(row.createdAt) + 1).toISOString() };
         assertDiscussionMessageWrite(this.actorUserId, thread, textRow);
@@ -389,7 +411,7 @@ export class DiscussionRepository {
         .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt });
       const view = await this.view(row);
       return media ? (await this.withAttachments([view], [row]))[0] : view;
-    }, Boolean(media));
+    }, Boolean(media || input.replyVideoPosition));
   }
   async edit(threadId: string, id: string, text: string): Promise<void> {
     if (typeof text !== 'string' || !text.trim() || text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');

@@ -110,3 +110,50 @@ it('publishes gallery media and typed text as two messages in one retryable send
   expect(messages[1].attachments).toBeUndefined();
   expect(await repository.getDraft(thread.id)).toBeNull();
 });
+
+it('round-trips independent video replies with immutable attachment positions through drafts and history', async () => {
+  const actor = 'tg:22';
+  const db = new MezfitCloudDatabase('9987654323', '', { discussions: true });
+  databases.push(db);
+  db.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true, disableWebSocket: false,
+    tryUseServiceWorker: false, unsyncedTables: ['localWorkoutOccurrenceDrafts'] });
+  await db.open();
+  const scope = { realmId: actor, coachClientId: null };
+  const repository = new DiscussionRepository(db, actor, scope);
+  const thread = await repository.createThread(prepareDiscussionThread(
+    { kind: 'program', trainingPlanId: 'plan' }, 'Тест', '2026-11-09',
+  ));
+  const original = { ...prepareDiscussionMessage(thread.id, ''), draftMedia: media };
+  await repository.saveDraft(original);
+  await repository.send(original, uploaded);
+
+  const first = prepareDiscussionMessage(thread.id, 'На нулевой секунде', original.id, { attachmentId: media.id, seconds: 0 });
+  const second = prepareDiscussionMessage(thread.id, 'На другом кадре', original.id, { attachmentId: media.id, seconds: 7.375 });
+  await repository.saveDraft(first);
+  expect(await repository.getDraft(thread.id, first.id)).toMatchObject({ replyVideoPosition: first.replyVideoPosition });
+  await repository.send(first);
+
+  const replyMedia = { ...media, id: 'reply-attachment', storageKey: 'mvp-media/' + 'b'.repeat(64) };
+  const mediaReply = { ...second, draftMedia: replyMedia };
+  await repository.saveDraft(mediaReply);
+  const replyUpload = { ...uploaded, key: replyMedia.storageKey };
+  await repository.send(mediaReply, replyUpload);
+  await repository.send(mediaReply, replyUpload);
+  await expect(repository.send({ ...first, replyVideoPosition: { attachmentId: media.id, seconds: 1 } }))
+    .rejects.toThrow('DISCUSSION_ID_REUSED');
+  await expect(repository.send(prepareDiscussionMessage(thread.id, 'Неверный файл', original.id, {
+    attachmentId: replyMedia.id, seconds: 1,
+  }))).rejects.toThrow('DISCUSSION_VIDEO_NOT_FOUND');
+  await expect(repository.send(prepareDiscussionMessage(thread.id, 'Неверная позиция', original.id, {
+    attachmentId: media.id, seconds: Infinity,
+  }))).rejects.toThrow('INVALID_DISCUSSION_MESSAGE');
+
+  const reopened = new DiscussionRepository(db, actor, scope);
+  const { messages } = await reopened.page(thread.id);
+  expect(messages).toHaveLength(3);
+  expect(messages.find(row => row.id === first.id)?.reply).toMatchObject({ messageId: original.id, videoPosition: first.replyVideoPosition });
+  expect(messages.find(row => row.id === second.id)).toMatchObject({
+    text: second.text, attachments: [{ id: replyMedia.id }],
+    reply: { messageId: original.id, videoPosition: second.replyVideoPosition },
+  });
+});

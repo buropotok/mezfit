@@ -268,3 +268,79 @@ it('seeks only the in-chat thumbnail to a frame within the clip', () => {
   fireEvent.loadedMetadata(player);
   expect(player.currentTime).toBe(0);
 });
+
+it('comments from the fullscreen pause and reopens the exact frame from the composer and a saved quote', async () => {
+  localStorage.removeItem('mezfit.discussion.videoCommentUsed');
+  const original = {
+    ...message('original-video', '', 'tg:2'),
+    attachments: [{
+      id: 'source-attachment', messageId: 'original-video', realmId: thread.realmId, owner: 'tg:2', authorUserId: 'tg:2',
+      mediaType: 'video' as const, mimeType: 'video/mp4', sizeBytes: 3, durationSeconds: 15,
+      storageKey: 'mvp-media/' + 'e'.repeat(64), uploadState: 'ready' as const, confirmedAt: thread.createdAt,
+    }],
+  };
+  const savedReply = {
+    ...message('saved-reply', 'Стоп-кадр', 'tg:1', 1),
+    reply: { messageId: original.id, authorUserId: 'tg:2', text: '', unavailable: false, deleted: false,
+      videoPosition: { attachmentId: original.attachments[0].id, seconds: 4.5 } },
+  };
+  const { port, replace } = fixture([original, savedReply]);
+  vi.mocked(port.getMessage).mockImplementation(async () => original);
+  const discussion = <KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
+    anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
+    onNavigationContextChange={() => {}} /></KonstaProvider>;
+  const view = render(discussion);
+  const label = 'Прокомментировать стопкадр';
+  const hint = 'Нажмите, чтобы прокомментировать стопкадр.';
+  const viewerVideo = () => {
+    const video = screen.getByLabelText('Просмотр вложения').querySelector('video');
+    if (!video) throw new Error('Missing viewer video');
+    Object.defineProperty(video, 'duration', { configurable: true, value: 15 });
+    return video;
+  };
+
+  fireEvent.click(await screen.findByRole('link', { name: 'Открыть видео' }));
+  await waitFor(() => expect(viewerVideo().getAttribute('src')).toBeTruthy());
+  const player = viewerVideo();
+  fireEvent.loadedMetadata(player);
+  expect(screen.getByText(hint)).toBeTruthy();
+  fireEvent.play(player);
+  expect(screen.queryByRole('button', { name: label })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Во весь экран' }));
+  expect(viewerVideo()).toBe(player);
+  player.currentTime = 7.375;
+  fireEvent.pause(player);
+  expect(screen.getByText(hint)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: label }));
+
+  expect(screen.queryByLabelText('Просмотр вложения')).toBeNull();
+  const capsule = screen.getByRole('button', { name: '00:07' });
+  fireEvent.click(capsule);
+  await screen.findByRole('region', { name: 'Просмотр вложения' });
+  const frame = viewerVideo();
+  fireEvent.loadedMetadata(frame);
+  expect(frame.currentTime).toBe(7.375);
+  expect(frame.autoplay).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть просмотр' }));
+  fireEvent.change(screen.getByPlaceholderText('Сообщение'), { target: { value: 'Проверь этот кадр' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+  await waitFor(() => expect(port.send).toHaveBeenCalledWith(expect.objectContaining({
+    text: 'Проверь этот кадр', replyToMessageId: original.id,
+    replyVideoPosition: { attachmentId: original.attachments[0].id, seconds: 7.375 },
+  })));
+  await waitFor(() => expect(screen.queryByRole('button', { name: '00:07' })).toBeNull());
+
+  view.unmount();
+  replace([savedReply]);
+  render(discussion);
+  fireEvent.click(await screen.findByRole('button', { name: 'Открыть видео на 00:04' }));
+  await screen.findByRole('region', { name: 'Просмотр вложения' });
+  const replay = viewerVideo();
+  fireEvent.loadedMetadata(replay);
+  expect(replay.currentTime).toBe(4.5);
+  expect(screen.getByRole('button', { name: label })).toBeTruthy();
+  expect(screen.queryByText(hint)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть просмотр' }));
+  expect(screen.getByText('Стоп-кадр')).toBeTruthy();
+  localStorage.removeItem('mezfit.discussion.videoCommentUsed');
+});

@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
 import { Button, Messages, MessagesTitle, Toast } from 'konsta/react';
-import type { MessageAttachment } from '../data/cloud/discussion-contracts';
+import { sameDiscussionVideoPosition, type DiscussionVideoPosition, type MessageAttachment } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { discussionCursorKey, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 import type { DiscussionSyncState } from '../data/cloud/discussion-sync';
 import type { NavigationContext } from '../NavigationShell';
 import { Avatar, IconButton, Text } from '../ui/primitives';
 import { Icon } from '../ui/Icon';
+import { Badge, BadgeChoice } from '../ui/Badge';
 import { GlassSurface } from '../ui/GlassSurface';
 import { MezfitMessagebar } from '../ui/konsta-mezfit/Messagebar';
 import { DiscussionActionIcon } from './DiscussionActionIcon';
@@ -68,15 +69,31 @@ function galleryMediaSource(attachment: MessageAttachment, accountId: string): D
   return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes } };
 }
 
+const videoCommentHintKey = 'mezfit.discussion.videoCommentUsed';
+
+function hasUsedVideoComment() {
+  try { return localStorage.getItem(videoCommentHintKey) === 'true'; }
+  catch { return false; }
+}
+
+function formatVideoPosition(seconds: number) {
+  const whole = Math.floor(seconds);
+  return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
+}
+
 function Quote({ quote, resolveAuthor, onJump }: {
   quote: DiscussionQuote; resolveAuthor: DiscussionSheetProps['resolveAuthor']; onJump?: () => void;
 }) {
-  return <button type="button" className="discussion-quote" disabled={quote.unavailable} onClick={event => {
+  const author = <Text variant="caption">{quote.authorUserId ? resolveAuthor(quote.authorUserId).name : 'Исходное сообщение'}</Text>;
+  return <button type="button" className="discussion-quote" disabled={quote.unavailable || Boolean(quote.deleted && quote.videoPosition)} onClick={event => {
     event.stopPropagation(); onJump?.();
-  }} aria-label="Перейти к исходному сообщению">
-    <Text variant="caption">{quote.authorUserId ? resolveAuthor(quote.authorUserId).name : 'Исходное сообщение'}</Text>
+  }} aria-label={quote.videoPosition ? `Открыть видео на ${formatVideoPosition(quote.videoPosition.seconds)}` : 'Перейти к исходному сообщению'}>
+    {quote.videoPosition ? <span className="discussion-quote__heading">
+      {author}
+      <Badge color="yellow" textVariant="caption">{formatVideoPosition(quote.videoPosition.seconds)}</Badge>
+    </span> : author}
     <Text variant="footnote" className="discussion-quote__text">{quote.deleted ? 'Сообщение удалено'
-      : quote.unavailable ? 'Сообщение недоступно' : quote.text}</Text>
+      : quote.unavailable ? 'Сообщение недоступно' : quote.text || (quote.videoPosition ? 'Видео' : '')}</Text>
   </button>;
 }
 
@@ -154,16 +171,29 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const mediaPresent = Boolean(activeAttachment);
   const previewing = Boolean(media.preview && media.selection && !voiceDraft && !circleDraft
     && !outgoing);
-  const [viewing, setViewing] = useState<{ messageId: string; attachmentId: string } | null>(null);
+  const [viewing, setViewing] = useState<{
+    messageId: string;
+    attachmentId: string;
+    startAt?: number;
+    source?: DiscussionMediaSource;
+  } | null>(null);
+  const viewerRequest = useRef(0);
+  const openViewer = (messageId: string, attachmentId: string) => {
+    ++viewerRequest.current;
+    setViewing({ messageId, attachmentId });
+  };
+  const [videoCommentUsed, setVideoCommentUsed] = useState(hasUsedVideoComment);
   const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
-  const viewedAttachment = viewing && renderedMessages.find(row => row.id === viewing.messageId && !row.deleted)
-    ?.attachments?.find(attachment => attachment.id === viewing.attachmentId);
+  const viewedMessage = viewing && renderedMessages.find(row => row.id === viewing.messageId);
+  const viewedAttachment = viewing && viewedMessage && !viewedMessage.deleted
+    ? viewedMessage.attachments?.find(attachment => attachment.id === viewing.attachmentId) : undefined;
   const localVideoUrl = viewing && outgoing?.id === viewing.messageId
     && outgoingVideo?.metadata.id === viewing.attachmentId && outgoingVideo.metadata.mediaType === 'video' && media.preview
     ? media.preview : undefined;
   const viewer: DiscussionMediaSource | null = localVideoUrl
     ? { src: localVideoUrl, type: 'video' }
-    : viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId) : null;
+    : viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId)
+      : viewedMessage?.deleted ? null : viewing?.source ?? null;
   const previewVideoUrl = previewing && media.selection?.metadata.mediaType === 'video' ? media.preview : undefined;
   const videoUrl = viewer ? (viewer.type === 'video' ? viewer.src : undefined) : previewVideoUrl;
   const videoFullscreen = Boolean(videoUrl && videoUrl === fullscreenVideo);
@@ -175,7 +205,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [editId, setEditId] = useState<string | null>(null);
   const replyId = editId ? null : draft.replyId;
   const text = editId ? editText : draft.text;
-  const setText = (value: string) => { if (editId) setEditText(value); else draft.update(value, replyId); };
+  const setText = (value: string) => { if (editId) setEditText(value); else draft.update(value, replyId, draft.videoPosition); };
   const [deleting, setDeleting] = useState<{ id: string; kind: 'published' | 'outgoing-video' } | null>(null);
   const deletingOutgoingVideo = deleting?.kind === 'outgoing-video';
   const [savingVideo, setSavingVideo] = useState<DiscussionVideoSaveTarget | null>(null);
@@ -295,6 +325,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const updateNavigation = () => onNavigationContextChange({ ...parentNavigation,
     title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
   back.current = () => {
+    ++viewerRequest.current;
     if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
@@ -465,6 +496,17 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     catch { if (alive.current && version === actionVersion.current) setError('Не удалось выполнить действие. Повторите попытку'); }
     finally { pending.current = false; if (alive.current && version === actionVersion.current) setBusy(false); }
   };
+  const openVideoPosition = (messageId: string, position: DiscussionVideoPosition) => void run(async () => {
+    const request = ++viewerRequest.current;
+    const original = await repository.getMessage(threadId, messageId).catch(() => null);
+    if (!alive.current || request !== viewerRequest.current) return;
+    const attachment = original && !original.deleted && original.attachments?.find(item =>
+      item.id === position.attachmentId && item.mediaType === 'video');
+    const source = attachment && galleryMediaSource(attachment, repository.actorUserId);
+    if (!source) { setError('Исходное видео недоступно'); return; }
+    setFullscreenVideo(null);
+    setViewing({ messageId, attachmentId: position.attachmentId, startAt: position.seconds, source });
+  });
   const submit = () => {
     if (cameraOpen || pending.current || mediaBusy || outgoing) return;
     if (!editId && mediaPresent) { void media.send(); return; }
@@ -474,7 +516,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       else {
         const command = draft.command();
         if (!prepared.current || prepared.current.id !== command.id || prepared.current.text !== text
-          || prepared.current.replyToMessageId !== (replyId ?? undefined)) prepared.current = command;
+          || prepared.current.replyToMessageId !== (replyId ?? undefined)
+          || !sameDiscussionVideoPosition(prepared.current.replyVideoPosition, command.replyVideoPosition)) prepared.current = command;
         const submitted = prepared.current;
         try {
           await repository.send(submitted);
@@ -496,7 +539,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     const id = selected.id; closeMenu();
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
-    if (action === 'reply') {
+    if (action === 'reply' && !draft.videoPosition) {
       // Selecting Reply is an explicit viewing action even away from the end.
       if (row.authorUserId !== repository.actorUserId) markViewed(row.id);
       draft.update(draft.text, id); setEditId(null); setEditText('');
@@ -522,7 +565,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   });
   const items: LiquidPopoverItem[] = outgoingMenu && outgoingVideo
     ? [saveItem(outgoingVideo.metadata.id, { file: outgoingVideo.file })] : [
-    { id: 'reply', label: 'Ответить', icon: 'arrow-back-up', onSelect: () => choose('reply') },
+    ...(!draft.videoPosition ? [{ id: 'reply', label: 'Ответить', icon: 'arrow-back-up' as const, onSelect: () => choose('reply') }] : []),
     ...(own && selected?.text.trim() && !mediaPresent ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
     ...(selected?.text.trim() ? [{ id: 'copy', label: 'Копировать', icon: 'copy' as const, onSelect: () => choose('copy') }] : []),
     ...(selected?.attachments ?? []).flatMap(attachment => {
@@ -545,9 +588,25 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       trigger={<button type="button" ref={trigger} aria-hidden="true" tabIndex={-1} className="discussion-menu-source" />} />
   </span>;
   const replying = replyId ? state.messages.find(row => row.id === replyId) : undefined;
-  const replyQuote: DiscussionQuote | null = replyId ? { messageId: replyId,
+  const replyQuote: DiscussionQuote | null = replyId && !draft.videoPosition ? { messageId: replyId,
     authorUserId: replying?.authorUserId ?? null, deleted: Boolean(replying?.deleted), unavailable: !replying,
     text: replying && !replying.deleted ? replying.text.split(/\r?\n/, 1)[0] : '' } : null;
+
+  const commentOnFrame = viewing && viewer?.type === 'video' && !localVideoUrl && canCompose && !editId
+    && !draft.videoPosition && !voiceComposer && !circleInProgress
+    ? (seconds: number) => {
+      if (pending.current) return;
+      if (!videoCommentUsed) {
+        setVideoCommentUsed(true);
+        try { localStorage.setItem(videoCommentHintKey, 'true'); }
+        catch { /* Browser storage may be unavailable; keep the flag for this open discussion. */ }
+      }
+      draft.update(draft.text, viewing.messageId, { attachmentId: viewing.attachmentId, seconds });
+      setFullscreenVideo(null);
+      setViewing(null);
+    } : undefined;
+  const composerVideoPosition = replyId && draft.videoPosition
+    ? { messageId: replyId, position: draft.videoPosition } : null;
 
   const pickAttachment = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
@@ -630,7 +689,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
                 text={!mediaOnly && <Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
-                textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => { if (message.reply) void jump(message.reply.messageId); }} />}
+                textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => {
+                  const reply = message.reply;
+                  if (!reply) return;
+                  if (reply.videoPosition) openVideoPosition(reply.messageId, reply.videoPosition);
+                  else void jump(reply.messageId);
+                }} />}
                 textFooter={!message.deleted && (message.attachments?.length ? attachments.map((attachment, position) => {
                   const meta = mediaOnly && position === attachments.length - 1 ? metadata : undefined;
                   const onMenu = position === 0 ? openMenu : undefined;
@@ -650,7 +714,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                   }
                   const source = galleryMediaSource(attachment, repository.actorUserId);
                   return source && <DiscussionMedia key={attachment.id} {...source} mode="thumbnail"
-                    onOpen={() => { closeMenu(); setViewing({ messageId: message.id, attachmentId: attachment.id }); }}
+                    onOpen={() => { closeMenu(); openViewer(message.id, attachment.id); }}
                     onMenu={onMenu} meta={meta} />;
                 }) : renderAttachment?.(message))}
                 inlineMeta={mediaOnly ? undefined : metadata}
@@ -673,7 +737,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
               onRemove={outgoingVideo ? () => setDeleting({ id: outgoing.id, kind: 'outgoing-video' }) : () => void media.remove()}
               onOpen={outgoingVideo?.metadata.mediaType === 'video' ? () => {
                 closeMenu();
-                setViewing({ messageId: outgoing.id, attachmentId: outgoing.attachmentId });
+                openViewer(outgoing.id, outgoing.attachmentId);
               } : undefined}
               onMenu={outgoingVideo && outgoingStatus === 'failed' ? () => setMenu({ id: outgoing.id, open: true }) : undefined}
               menu={renderMessageMenu(outgoing.id)} />
@@ -689,7 +753,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </DiscussionMediaStage>}
     {viewer && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
       fullscreen={viewer.type === 'video' && videoFullscreen}>
-      <DiscussionMedia key={viewer.src} {...viewer} mode="viewer" autoPlay={Boolean(localVideoUrl)} />
+      <DiscussionMedia key={`${viewer.src}:${viewing?.startAt ?? ''}`} {...viewer} mode="viewer"
+        autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame} showCommentHint={!videoCommentUsed} />
       <div className="discussion-media-stage__close">
         {fullscreenButton}
         <IconButton icon="x" label="Закрыть просмотр" onClick={() => {
@@ -783,13 +848,18 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         </span>}
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
+        {composerVideoPosition && <BadgeChoice className="discussion-composer__timecode" color="yellow"
+          disabled={busy || voiceInProgress || circleInProgress} onClick={() => openVideoPosition(composerVideoPosition.messageId, composerVideoPosition.position)}>
+          {formatVideoPosition(composerVideoPosition.position.seconds)}
+        </BadgeChoice>}
         {!discardingVoice && (recordingVoice || recordingCircle) ? <DiscussionRecordingStatus locked={lockedRecording} onCancel={discardVoice} />
           : !discardingVoice && voiceDraft && media.preview ? <DiscussionVoice key={media.preview} src={media.preview}
             waveform={voiceDraft.waveform ?? []} durationMs={(voiceDraft.durationSeconds ?? 0) * 1000} />
           : !discardingVoice && voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
             {media.selection ? 'Готовим голосовое сообщение…' : 'Голосовое сообщение'}
           </Text>
-          : <MezfitMessagebar bare textareaId={textareaId} placeholder={circleInProgress || circleDraft ? '' : editId ? 'Редактировать сообщение' : 'Сообщение'}
+          : <MezfitMessagebar bare textareaId={textareaId} className={composerVideoPosition ? 'discussion-composer__timecode-input' : undefined}
+            placeholder={circleInProgress || circleDraft ? '' : editId ? 'Редактировать сообщение' : 'Сообщение'}
             value={text} maxRows={5} disabled={!canCompose || voiceInProgress || circleInProgress || Boolean(circleDraft) || discardingVoice}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />}
       </GlassSurface>
