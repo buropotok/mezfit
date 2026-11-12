@@ -15,6 +15,7 @@ import arrowDownUrl from './arrow-down.svg';
 import arrowUpUrl from './arrow-up.svg';
 import arrowsMaximizeUrl from './arrows-maximize.svg';
 import arrowsMinimizeUrl from './arrows-minimize.svg';
+import gaugeUrl from './gauge.svg';
 import arrowLeftUrl from './arrow-left.svg';
 import arrowBackUpUrl from './arrow-back-up.svg';
 import barbellFilledUrl from './liquid-glass-barbell-filled.svg';
@@ -98,6 +99,7 @@ const uiIconRegistry = {
   'arrow-up': { outline: arrowUpUrl, filled: arrowUpUrl },
   'arrows-maximize': { outline: arrowsMaximizeUrl, filled: arrowsMaximizeUrl },
   'arrows-minimize': { outline: arrowsMinimizeUrl, filled: arrowsMinimizeUrl },
+  gauge: { outline: gaugeUrl, filled: gaugeUrl },
   'arrow-left': { outline: arrowLeftUrl, filled: arrowLeftUrl },
   'arrow-back-up': { outline: arrowBackUpUrl, filled: arrowBackUpUrl },
   barbell: { outline: barbellOutlineUrl, filled: barbellFilledUrl },
