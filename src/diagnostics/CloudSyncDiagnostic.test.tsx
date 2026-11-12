@@ -119,7 +119,7 @@ describe('read-only cloud sync diagnostic', () => {
       expect(sync).not.toHaveBeenCalled();
       await act(async () => { completeOpen(); await pendingOpen; });
       await waitFor(() => expect(screen.getByText('Открытие IndexedDB: открыта')).toBeTruthy());
-      expect(sync).toHaveBeenCalledWith({ purpose: 'pull', wait: false });
+      await waitFor(() => expect(sync).toHaveBeenCalledWith({ purpose: 'pull', wait: false }));
     } finally {
       view.unmount();
       completeOpen();
