@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { liveQuery } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMe } from '../api';
@@ -33,8 +33,13 @@ const observeUser = vi.fn((next: (user: { userId: string }) => void) => {
 const open = vi.fn(async () => undefined);
 const close = vi.fn();
 const sync = vi.fn(async () => undefined);
+const backendDB = vi.fn(() => null);
+const openingHandlers: Partial<Record<'blocked' | 'ready', () => void>> = {};
+const on = vi.fn((event: 'blocked' | 'ready', callback: () => void) => {
+  openingHandlers[event] = callback;
+});
 const database = {
-  open, close,
+  open, close, on, backendDB,
   realms: { toArray: vi.fn(async () => []) },
   members: { toArray: vi.fn(async () => []) },
   cloud: {
@@ -47,6 +52,8 @@ const database = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  delete openingHandlers.blocked;
+  delete openingHandlers.ready;
   vi.mocked(getMe).mockResolvedValue({
     user: { telegramUserId: '42' },
   } as Awaited<ReturnType<typeof getMe>>);
@@ -64,6 +71,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   delete window.Telegram;
 });
 
@@ -83,6 +91,33 @@ describe('read-only cloud sync diagnostic', () => {
     expect(screen.getByText('Подтверждённые связи: тренеры 0, клиенты 1')).toBeTruthy();
     expect(document.body.textContent).not.toContain('signed-secret-init-data');
     expect(document.body.textContent).not.toContain('tg:42');
+  });
+
+  it('marks blocked IndexedDB opening without waiting for cloud sync or disclosing identity', async () => {
+    vi.useFakeTimers();
+    // Leave open unresolved to simulate the exact stuck-at-opening device state.
+    vi.mocked(open).mockImplementationOnce(() => new Promise(() => {}));
+    render(<CloudSyncDiagnostic initData="sensitive-init-data" />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(open).toHaveBeenCalledOnce();
+    act(() => {
+      openingHandlers.blocked?.();
+      vi.advanceTimersByTime(10000);
+    });
+    expect(screen.getByText('Этап: opening')).toBeTruthy();
+    expect(screen.getByText('Открытие IndexedDB дольше 10 секунд: да')).toBeTruthy();
+    expect(screen.getByText('Обновление базы заблокировано (blocked): да')).toBeTruthy();
+    expect(screen.getByText('Физическое соединение IndexedDB: не открыто')).toBeTruthy();
+    expect(sync).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('sensitive-init-data');
+  });
+
+  it('reports a safe error code for failed database open, not raw exception bodies', async () => {
+    vi.mocked(open).mockRejectedValueOnce(new Error('Bearer sensitive-token'));
+    render(<CloudSyncDiagnostic initData="signed" />);
+    await waitFor(() => expect(screen.getByText('Этап: failed')).toBeTruthy());
+    expect(screen.getByText('Код ошибки открытия: OTHER_OPEN_ERROR')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('sensitive-token');
   });
 
   it('does not leak raw Worker error bodies when identity lookup fails', async () => {
