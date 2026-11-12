@@ -615,8 +615,9 @@ manually staging uploads, or using Save as a replication trigger. Save changes
 move and resize preserve it. Client projections hide coach-authored drafts,
 including direct detail reads, even when the records exist in local/cloud storage.
 A draft may be fully synchronized. The sync capsule reports transmission only.
-The previous device-only draft requirement is superseded. The historical local
-table is read only for an atomic one-time transfer of existing user work.
+The previous device-only draft requirement is superseded. No legacy draft
+transfer runs during database startup: pre-MVP has no production data to migrate.
+Current PLAN drafts remain ordinary synchronized occurrence records.
 
 Coach calendar default: coach's own workouts plus coached client workouts.
 Independent planning opens a client context: all that client's workouts, including
