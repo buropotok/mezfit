@@ -4,7 +4,7 @@ import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
-import { CLOUD_DATABASE_STORES_V15, CLOUD_DATABASE_STORES_V16, CLOUD_DATABASE_STORES_V17, MezfitCloudDatabase } from './database';
+import { CLOUD_DATABASE_STORES_V15, CLOUD_DATABASE_STORES_V16, CLOUD_DATABASE_STORES_V17, CLOUD_DISCUSSION_DATABASE_VERSION, MezfitCloudDatabase } from './database';
 import { DiscussionRepository, prepareDiscussionMessage, prepareDiscussionThread, entityDiscussionId } from './discussions';
 import { discussionMessageView } from './discussion-views';
 import { assertMessageAttachmentWrite, type DiscussionMessage, type DiscussionThread, type DiscussionReadState } from './discussion-contracts';
@@ -237,7 +237,7 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     expect(current.discussionReadStates.schema.indexes.map(index => index.name)).toContain('[id+readThrough]');
     expect(current.discussionReadStates.schema.indexes.map(index => index.name)).toContain('[id+lastReadAt]');
     const production = new MezfitCloudDatabase('99881', 'signed'); databases.push(production);
-    expect(production.verno).toBe(17);
+    expect(production.verno).toBe(CLOUD_DISCUSSION_DATABASE_VERSION);
     expect(production.tables.some(table => table.name === 'discussionMessages')).toBe(true);
   });
   it('derives receipt from the recipient watermark, and delivery only from an awaited push for exact IDs', async () => {
