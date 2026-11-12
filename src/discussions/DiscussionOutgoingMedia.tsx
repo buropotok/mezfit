@@ -35,6 +35,7 @@ export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, er
   const playable = status === 'failed' && (Boolean(onOpen) || mediaType === 'video-note');
 
   return <MezfitMessage type="sent" bubbleVariant={mediaType === 'voice' ? undefined : 'media'} bubbleSource={menu}
+    opaqueTextFooter={mediaType !== 'voice'}
     textFooter={<>
       <div className="discussion-outgoing__preview" data-playable={playable || undefined}>
         <div inert={!playable}>
