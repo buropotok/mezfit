@@ -41,7 +41,12 @@ vi.mock('../ui', () => ({
 vi.mock('./UserProfileForm', () => ({ UserProfileForm: () => <span>Анкета</span> }));
 vi.mock('./UserAvatarEditor', () => ({ UserAvatarEditor: () => null }));
 vi.mock('./UserProfilePublicationProvider', () => ({ UserProfileSyncStatus: () => null }));
-vi.mock('./ProfileWorkoutTimeline', () => ({ ProfileWorkoutTimeline: () => null }));
+vi.mock('./ProfileWorkoutTimeline', () => ({
+  ProfileWorkoutTimeline: ({ mode, role, contact }: { mode: string; role: string; contact?: { userId: string } }) =>
+    <section aria-label={mode === 'plan' ? 'План тренировок' : 'История тренировок'}>
+      {role} · {contact?.userId ?? 'Мои тренировки'}
+    </section>,
+}));
 vi.mock('../client/ClientProgramsPage', () => ({
   ClientProgramsPage: (props: { activeOnly?: boolean }) => {
     probes.programs(props);
@@ -89,4 +94,33 @@ it('duplicates the unrestricted Client Programs page and opens the shared self e
   expect(screen.queryByRole('tab', { name: 'Программа' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Назад к упражнениям' }));
   expect(screen.getByRole('tab', { name: 'Упражнения' })).toBeTruthy();
+});
+
+it('opens the coach’s own profile tabs and preserves Back from exercise details and the profile', () => {
+  const returnToCoachScreen = vi.fn();
+  render(<UserProfileNavigationShell me={{ ...me, roles: ['coach'] }} activeRole="coach" destination="profile"
+    context={{ level: 2, title: 'Мой профиль', onBack: returnToCoachScreen }}
+    onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
+    <span>Экран тренера</span>
+  </UserProfileNavigationShell>);
+  expect(screen.getByText('Анкета')).toBeTruthy();
+  expect(screen.queryByRole('tab', { name: 'Обсуждения' })).toBeNull();
+
+  fireEvent.click(screen.getByRole('tab', { name: 'Программа' }));
+  expect(probes.programs).toHaveBeenLastCalledWith(expect.objectContaining({ personalProgramRole: 'coach' }));
+
+  fireEvent.click(screen.getByRole('tab', { name: 'План' }));
+  expect(screen.getByRole('region', { name: 'План тренировок' }).textContent).toBe('coach · Мои тренировки');
+  fireEvent.click(screen.getByRole('tab', { name: 'История' }));
+  expect(screen.getByRole('region', { name: 'История тренировок' }).textContent).toBe('coach · Мои тренировки');
+
+  fireEvent.click(screen.getByRole('tab', { name: 'Упражнения' }));
+  expect(probes.exercises.mock.lastCall?.[0].client).toBeUndefined();
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть статистику' }));
+  expect(screen.queryByRole('tab', { name: 'Упражнения' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Назад к упражнениям' }));
+  expect(screen.getByRole('tab', { name: 'Упражнения' })).toBeTruthy();
+  expect(returnToCoachScreen).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Назад к упражнениям' }));
+  expect(returnToCoachScreen).toHaveBeenCalledOnce();
 });
