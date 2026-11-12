@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from 'konsta/react';
 import { FloatingActionButton, IconButton, Text } from '../ui';
 import { DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
@@ -17,7 +17,7 @@ function seekThumbnail(video: HTMLVideoElement) {
   video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
 }
 
-export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint }: DiscussionMediaSource & {
+export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint, playbackRate = 1 }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
   onMenu?: () => void;
@@ -26,6 +26,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   startAt?: number;
   onComment?: (seconds: number) => void;
   showCommentHint?: boolean;
+  playbackRate?: number;
 }) {
   const player = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
@@ -36,6 +37,9 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const { url: mediaSrc, container } = useDiscussionMediaSource(
     src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
+  useEffect(() => {
+    if (!thumbnail && player.current) player.current.playbackRate = playbackRate;
+  }, [playbackRate, thumbnail, mediaSrc]);
   const label = type === 'photo' ? 'Фото' : 'Видео';
   const duration = Math.floor(durationSeconds ?? 0);
   const content = type === 'photo'
@@ -46,6 +50,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
         onLoadedMetadata={event => {
           const video = event.currentTarget;
           if (thumbnail) { seekThumbnail(video); return; }
+          video.playbackRate = playbackRate;
           if (startAt !== undefined) {
             video.currentTime = Number.isFinite(video.duration) ? Math.min(startAt, video.duration) : startAt;
           }
