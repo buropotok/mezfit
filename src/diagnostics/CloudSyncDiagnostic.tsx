@@ -9,10 +9,36 @@ import { globalCoachPhasePermission } from './cloudPhasePermissions';
 import { readDiscussionDiagnostics, type DiscussionReadDiagnosticReport } from '../data/cloud/discussion-read-diagnostics';
 import { DiscussionReadDiagnostic } from './DiscussionReadDiagnostic';
 
+type LocalOpenState = 'not-started' | 'waiting' | 'blocked' | 'ready' | 'opened' | 'failed';
+
+const LOCAL_OPEN_WARNING_MS = 12_000;
+
+/** Only a bounded error category is displayed; IndexedDB error messages may expose private data. */
+function localOpenErrorCode(reason: unknown): string {
+  const name = reason && typeof reason === 'object' && 'name' in reason
+    ? (reason as { name?: unknown }).name : null;
+  switch (name) {
+    case 'VersionError': return 'VERSION_ERROR';
+    case 'UpgradeError': return 'UPGRADE_ERROR';
+    case 'SchemaError': return 'SCHEMA_ERROR';
+    case 'DatabaseClosedError': return 'DATABASE_CLOSED';
+    case 'OpenFailedError': return 'OPEN_FAILED';
+    case 'InvalidStateError': return 'INVALID_STATE';
+    case 'AbortError': return 'ABORT_ERROR';
+    case 'QuotaExceededError': return 'QUOTA_EXCEEDED';
+    case 'SecurityError': return 'SECURITY_ERROR';
+    case 'UnknownError': return 'UNKNOWN_ERROR';
+    default: return 'OTHER_OPEN_ERROR';
+  }
+}
+
 interface Snapshot {
   phase: string;
   status: string;
   stage: 'identity' | 'opening' | 'observing' | 'failed';
+  localOpen: LocalOpenState;
+  localOpenSlow: boolean;
+  localOpenError: string | null;
   persisted: boolean;
   persistedError: boolean;
   syncErrorCode: string | null;
@@ -34,6 +60,9 @@ const initial: Snapshot = {
   phase: 'initial',
   status: 'not-started',
   stage: 'identity',
+  localOpen: 'not-started',
+  localOpenSlow: false,
+  localOpenError: null,
   persisted: false,
   persistedError: false,
   syncErrorCode: null,
@@ -63,6 +92,9 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
     let active = true;
     let db: MezfitCloudDatabase | undefined;
     const subscriptions: Array<{ unsubscribe(): void }> = [];
+    let openWarningTimer: ReturnType<typeof setTimeout> | null = null;
+    let opening = false;
+    let opened = false;
 
     const update = (patch: Partial<Snapshot>) => {
       if (active) setSnapshot((previous) => ({ ...previous, ...patch }));
@@ -93,9 +125,19 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
           update({ sameCloudAccount: user.userId === actorUserId });
         }));
 
-        update({ stage: 'opening' });
+        // Database-open diagnostics must not await cloud sync. Dexie's blocked
+        // event identifies a native IndexedDB upgrade held by another connection.
+        cloudDb.on?.('blocked', () => update({ localOpen: 'blocked' }));
+        cloudDb.on?.('ready', () => update({ localOpen: 'ready' }));
+        opening = true;
+        update({ stage: 'opening', localOpen: 'waiting' });
+        openWarningTimer = setTimeout(() => update({ localOpenSlow: true }), LOCAL_OPEN_WARNING_MS);
         await cloudDb.open();
+        opened = true;
+        if (openWarningTimer !== null) clearTimeout(openWarningTimer);
+        openWarningTimer = null;
         if (!active) return;
+        update({ localOpen: 'opened' });
 
         const localSubscription = liveQuery(async () => {
           const [realms, members, roles] = await Promise.all([
@@ -141,13 +183,19 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         // Trigger a pull without waiting indefinitely for its completion.
         // Official sync state and synced local tables are observed separately.
         await cloudDb.cloud.sync({ purpose: 'pull', wait: false });
-      } catch {
-        update({ stage: 'failed', setupError: true });
+      } catch (reason: unknown) {
+        if (openWarningTimer !== null) clearTimeout(openWarningTimer);
+        openWarningTimer = null;
+        update({
+          stage: 'failed', setupError: true,
+          ...(opening && !opened ? { localOpen: 'failed' as const, localOpenError: localOpenErrorCode(reason) } : {}),
+        });
       }
     })();
 
     return () => {
       active = false;
+      if (openWarningTimer !== null) clearTimeout(openWarningTimer);
       subscriptions.forEach((subscription) => subscription.unsubscribe());
       db?.close({ disableAutoOpen: false });
     };
@@ -157,6 +205,18 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
     <section aria-label="Диагностика синхронизации Dexie Cloud">
       <Text variant="headline" role="heading" aria-level={2}>Синхронизация и локальная база</Text>
       <p><Text variant="body">Этап: {snapshot.stage}</Text></p>
+      <p><Text variant="body">Открытие IndexedDB: {{
+        'not-started': 'не начато',
+        waiting: 'ожидание',
+        blocked: 'заблокировано другим соединением',
+        ready: 'событие ready получено',
+        opened: 'открыта',
+        failed: 'ошибка',
+      }[snapshot.localOpen]}</Text></p>
+      {snapshot.localOpenSlow ? <p role="status"><Text variant="body">
+        Открытие занимает более 12 секунд; это ещё не подтверждает причину задержки.
+      </Text></p> : null}
+      {snapshot.localOpenError ? <p><Text variant="body">Код ошибки открытия: {snapshot.localOpenError}</Text></p> : null}
       <p><Text variant="body">Dexie: {snapshot.phase} / {snapshot.status}</Text></p>
       <p><Text variant="body">Облачный пользователь подтверждён: {snapshot.sameCloudAccount ? 'да' : 'нет'}</Text></p>
       <p><Text variant="body">Сохранённая синхронизация: {snapshot.persisted ? 'да' : 'нет'}</Text></p>
