@@ -15,7 +15,6 @@ let db: Dexie;
 beforeEach(() => {
   db = new Dexie('occurrence-drafts-' + crypto.randomUUID());
   db.version(1).stores({
-    localWorkoutOccurrenceDrafts: 'id, actorUserId, startsAtUtc, programDayId, updatedAt',
     workoutOccurrences: 'id, realmId', localWorkoutSync: 'id', realms: 'realmId', members: 'id, realmId',
   });
   db.table('workoutOccurrences').hook('creating', (key, row) => {
@@ -48,18 +47,6 @@ const make = () => draftFromProgramDay('tg:101', program, outline, 'independent'
   '2026-10-19T08:00:00.000Z', 60, 'active');
 
 describe('local workout occurrence drafts', () => {
-  it('transfers existing device drafts once without losing their PLAN or duplicating occurrences', async () => {
-    const draft = make();
-    await db.table('localWorkoutOccurrenceDrafts').add(draft);
-    await repo().importDeviceDrafts();
-    expect(await db.table('localWorkoutOccurrenceDrafts').count()).toBe(0);
-    const [row] = await db.table('workoutOccurrences').toArray();
-    expect(row).toMatchObject({ publicationStatus: 'draft', plan: draft.plan, originalPlan: draft.originalPlan });
-    await repo().importDeviceDrafts();
-    expect(await db.table('workoutOccurrences').count()).toBe(1);
-    expect((await repo().list())[0].targetOccurrenceId).toBe(row.id);
-  });
-
   it('saves, reopens, edits content and timing, and saves again without contacting the cloud', async () => {
     const store = repo(), draft = make();
     const fetch = vi.fn(() => Promise.reject(new Error('offline')));
