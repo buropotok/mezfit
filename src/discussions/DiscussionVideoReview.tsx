@@ -97,9 +97,12 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
         }}
         onTimeUpdate={event => {
           const player = event.currentTarget;
-          if (trimReady && !player.paused && player.currentTime >= range.end) {
-            player.pause();
-            player.currentTime = range.end;
+          if (trimReady && !player.paused) {
+            if (player.currentTime < range.start) player.currentTime = range.start;
+            if (player.currentTime >= range.end) {
+              player.pause();
+              player.currentTime = range.end;
+            }
           }
           setCursor(player.currentTime);
         }} />
