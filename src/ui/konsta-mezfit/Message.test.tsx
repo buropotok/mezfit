@@ -34,6 +34,20 @@ describe('approved Konsta 5.4 Message bubble boundary adapter', () => {
     adapted.querySelector('[data-testid="source"]')?.remove();
     expect(normalizedMarkup(adapted)).toBe(normalizedMarkup(roots[0]));
   });
+  it('keeps standard text footers dimmed but renders opted-in media footers at full opacity', () => {
+    const view = render(<KonstaProvider theme="ios" dark>
+      <MezfitMessage type="received" textFooter={<span data-testid="standard-footer">Обычный текст</span>} />
+      <MezfitMessage type="sent" opaqueTextFooter textFooter={<span data-testid="media-footer">Фото</span>} />
+    </KonstaProvider>);
+    const standard = screen.getByTestId('standard-footer').parentElement;
+    const media = screen.getByTestId('media-footer').parentElement;
+    expect(standard?.className).toBe(media?.className);
+    expect(standard?.classList.contains('opacity-80')).toBe(true);
+    expect(standard?.getAttribute('style')).toBeNull();
+    expect((media as HTMLElement).style.opacity).toBe('1');
+    expect(view.container.querySelectorAll('.k-message')).toHaveLength(2);
+  });
+
   it('limits the focus pulse to the existing Konsta bubble without changing its wrapper or content', () => {
     const view = render(<KonstaProvider theme="ios" dark>
       <MezfitMessage type="received" text="Исходное сообщение" focusPulse />

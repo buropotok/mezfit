@@ -17,6 +17,8 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
   bubbleSource?: ReactNode;
   /** Gallery media already paints its own surface. */
   bubbleVariant?: 'media';
+  /** Rich media must not inherit Konsta 5.4's 80%-opaque text footer. */
+  opaqueTextFooter?: boolean;
   /** The owning thread activates a stronger one-second brightness pulse after navigation settles. */
   focusPulse?: boolean;
   /** Semantic time / receipt rendered inside the bubble without depending on Konsta's footer DOM. */
@@ -26,7 +28,7 @@ export type MezfitMessageProps = Omit<ComponentProps<typeof KonstaMessage>, 'nam
 export function MezfitMessage(props: MezfitMessageProps) {
   const { component = 'div', className, colors: colorsProp, ref, id, text, name,
     type = 'sent', header, footer, textHeader, textFooter, avatar,
-    children, bubbleRef, onBubbleClick, bubbleSource, bubbleVariant, focusPulse = false, inlineMeta, ...rest } = props;
+    children, bubbleRef, onBubbleClick, bubbleSource, bubbleVariant, opaqueTextFooter = false, focusPulse = false, inlineMeta, ...rest } = props;
   const theme = useTheme();
   const c = MessageClasses({ ...props, type }, MessageColors(colorsProp, (classes: string) => classes), className);
   const classes = (part: { common?: string; ios?: string; material?: string }) => cls(part.common, part[theme]);
@@ -45,7 +47,7 @@ export function MezfitMessage(props: MezfitMessageProps) {
           {text}<span className="ui-mezfit-message__meta-reserve" aria-hidden="true" />
           <span className="ui-mezfit-message__inline-meta">{inlineMeta}</span>
         </div> : text}</div>}
-        {textFooter && <div className={classes(c.messageTextFooter)}>{textFooter}</div>}
+        {textFooter && <div className={classes(c.messageTextFooter)} style={opaqueTextFooter ? { opacity: 1 } : undefined}>{textFooter}</div>}
         {bubbleSource}
       </div>
       {footer && <div className={classes(c.messageFooter)}>{footer}</div>}
