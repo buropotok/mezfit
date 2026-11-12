@@ -1,6 +1,8 @@
 # Workout scheduling
 
-Status: local-first calendar; private prescription drafts; ordinary Dexie Cloud replication.
+Status: historical design record, superseded by `AGENTS.md` §34 and `docs/architecture/local-first-storage-sync.md`.
+The unsynced device-only draft table described below is retired. Current PLAN drafts
+live in synchronized `workoutOccurrences`; there is no legacy-data import on startup.
 
 ## Local writes and visibility
 
