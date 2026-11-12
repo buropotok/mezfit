@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Button } from 'konsta/react';
 import { FloatingActionButton, IconButton, Text } from '../ui';
 import { DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { copyAnnotationImage } from './discussion-annotation';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 
 export interface DiscussionMediaSource {
@@ -17,7 +18,7 @@ function seekThumbnail(video: HTMLVideoElement) {
   video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
 }
 
-export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint }: DiscussionMediaSource & {
+export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint, onAnnotate }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
   onMenu?: () => void;
@@ -26,7 +27,13 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   startAt?: number;
   onComment?: (seconds: number) => void;
   showCommentHint?: boolean;
+  onAnnotate?: (image: HTMLCanvasElement, seconds?: number) => void;
 }) {
+  const photo = useRef<HTMLImageElement>(null);
+  const [imageReady, setImageReady] = useState(false);
+  const [frameReady, setFrameReady] = useState(false);
+  const [captureError, setCaptureError] = useState(false);
+  const [usePlainSource, setUsePlainSource] = useState(false);
   const player = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -36,13 +43,39 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const { url: mediaSrc, container } = useDiscussionMediaSource(
     src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
+  const crossOrigin = mode === 'viewer' && !autoPlay && !usePlainSource && mediaSrc?.startsWith('https:')
+    ? 'anonymous' : undefined;
+  function handleError() {
+    setImageReady(false);
+    setFrameReady(false);
+    setPaused(false);
+    if (crossOrigin) {
+      // Some hosts support playback but do not allow reading pixels.
+      setUsePlainSource(true);
+    } else setFailed(true);
+  }
+  const annotate = () => {
+    const video = type === 'video' ? player.current : null;
+    const source = type === 'photo' ? photo.current : video;
+    if (!source || !onAnnotate) return;
+    if (video && (!video.paused || video.seeking || video.readyState < 2
+      || !Number.isFinite(video.currentTime) || video.currentTime < 0)) return;
+    const seconds = video?.currentTime;
+    try {
+      setCaptureError(false);
+      onAnnotate(copyAnnotationImage(source), seconds);
+    } catch {
+      setCaptureError(true);
+    }
+  };
   const label = type === 'photo' ? 'Фото' : 'Видео';
   const duration = Math.floor(durationSeconds ?? 0);
   const content = type === 'photo'
-    ? <img src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
-        loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
-    : <video ref={player} src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
-        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail} controlsList="nofullscreen" preload="metadata"
+    ? <img key={String(usePlainSource)} ref={photo} crossOrigin={crossOrigin} src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
+        loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onLoad={() => setImageReady(true)} onError={handleError} />
+    : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
+        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail} controlsList="nofullscreen" preload={mode === 'viewer' ? 'auto' : 'metadata'}
+        onLoadedData={() => setFrameReady(true)} onSeeking={() => setFrameReady(false)} onSeeked={() => setFrameReady(true)}
         onLoadedMetadata={event => {
           const video = event.currentTarget;
           if (thumbnail) { seekThumbnail(video); return; }
@@ -52,7 +85,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
           setPaused(video.paused && !autoPlay);
         }}
         onPlay={() => setPaused(false)} onPause={() => setPaused(true)} onEnded={() => setPaused(true)}
-        onError={() => { setPaused(false); setFailed(true); }} />;
+        onError={handleError} />;
   const comment = () => {
     const video = player.current;
     if (!onComment || !video?.paused || !Number.isFinite(video.currentTime) || video.currentTime < 0) return;
@@ -64,7 +97,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
       <Text variant="footnote" role="status">
         {label} недоступно. Проверьте сеть и поддержку формата на устройстве.
       </Text>
-      <Button rounded onClick={() => { setFailed(false); setRetry(value => value + 1); }}><Text variant="footnote">Повторить</Text></Button>
+      <Button rounded onClick={() => { setFailed(false); setUsePlainSource(false); setRetry(value => value + 1); }}><Text variant="footnote">Повторить</Text></Button>
     </div> : thumbnail ? <a href={src} className="discussion-media__open"
       aria-label={type === 'photo' ? 'Открыть фото' : 'Открыть видео'} onClick={event => {
         event.preventDefault();
@@ -85,6 +118,14 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
       <FloatingActionButton label="Прокомментировать стопкадр" icon="message-circle-exclamation"
         style={{ position: 'static', pointerEvents: 'auto' }} onClick={comment} />
     </div>}
+    {onAnnotate && !failed && (type === 'photo' ? imageReady : paused) &&
+      <div className="discussion-media__annotate">
+        <IconButton icon="chart-dots-3" label="Рисовать на изображении"
+          disabled={type === 'video' && !frameReady} onClick={annotate} />
+        {captureError && <Text variant="footnote" role="alert">{usePlainSource
+          ? 'Источник недоступен для разметки.'
+          : 'Не удалось скопировать изображение. Повторите попытку.'}</Text>}
+      </div>}
     {onMenu && <div className="discussion-media__menu">
       <IconButton icon="dots-vertical" label="Действия сообщения" onClick={onMenu} />
     </div>}

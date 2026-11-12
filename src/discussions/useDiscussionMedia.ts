@@ -71,15 +71,19 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     };
   }, []);
 
-  async function choose(file: File, { sendToThread }: { sendToThread?: string } = {}) {
-    if (active.current) return;
+  async function choose(file: File, { sendToThread, onSelected }: {
+    sendToThread?: string;
+    onSelected?: () => boolean;
+  } = {}) {
+    if (active.current) return false;
     resume.current = null;
     const controller = new AbortController();
     active.current = controller;
     setError(undefined); setPhase('checking');
     try {
       const next = await inspectDiscussionMedia(file, controller.signal);
-      if (active.current !== controller) return;
+      if (active.current !== controller) return false;
+      if (controller.signal.aborted) { setPhase('idle'); return false; }
       const separate = sendToThread ? prepareDiscussionMessage(sendToThread, '') : undefined;
       const saved = separate ? undefined : draft.media;
       if (saved && (saved.fileName !== next.metadata.fileName
@@ -88,16 +92,22 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         throw new Error('Выберите тот же файл или удалите прежнее вложение');
       }
       const selected = { ...next, metadata: saved ?? next.metadata, separate };
+      if (onSelected?.() === false) { setPhase('idle'); return false; }
       setSelection(selected);
       if (separate) {
         active.current = null;
         void send(selected);
       } else setPhase('idle');
+      return true;
     } catch (reason) {
       if (active.current === controller) {
-        setError(reason instanceof Error ? reason.message : 'Не удалось проверить файл');
-        setPhase('failed');
+        if (controller.signal.aborted) setPhase('idle');
+        else {
+          setError(reason instanceof Error ? reason.message : 'Не удалось проверить файл');
+          setPhase('failed');
+        }
       }
+      return false;
     } finally {
       if (active.current === controller) active.current = null;
     }

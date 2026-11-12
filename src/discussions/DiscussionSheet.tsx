@@ -30,6 +30,7 @@ import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVid
 import { DiscussionVoice } from './DiscussionVoice';
 import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
+import { DiscussionAnnotationEditor } from './DiscussionAnnotationEditor';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './DiscussionVideoSaveDialog';
@@ -85,7 +86,7 @@ function Quote({ quote, resolveAuthor, onJump }: {
   quote: DiscussionQuote; resolveAuthor: DiscussionSheetProps['resolveAuthor']; onJump?: () => void;
 }) {
   const author = <Text variant="caption">{quote.authorUserId ? resolveAuthor(quote.authorUserId).name : 'Исходное сообщение'}</Text>;
-  return <button type="button" className="discussion-quote" disabled={quote.unavailable || Boolean(quote.deleted && quote.videoPosition)} onClick={event => {
+  return <button type="button" className="discussion-quote" disabled={quote.videoPosition ? quote.deleted : quote.unavailable} onClick={event => {
     event.stopPropagation(); onJump?.();
   }} aria-label={quote.videoPosition ? `Открыть видео на ${formatVideoPosition(quote.videoPosition.seconds)}` : 'Перейти к исходному сообщению'}>
     {quote.videoPosition ? <span className="discussion-quote__heading">
@@ -176,6 +177,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     attachmentId: string;
     startAt?: number;
     source?: DiscussionMediaSource;
+    original?: DiscussionMessageView;
   } | null>(null);
   const viewerRequest = useRef(0);
   const openViewer = (messageId: string, attachmentId: string) => {
@@ -183,7 +185,15 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     setViewing({ messageId, attachmentId });
   };
   const [videoCommentUsed, setVideoCommentUsed] = useState(hasUsedVideoComment);
-  const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
+  const [fullscreenSource, setFullscreenSource] = useState<string | null>(null);
+  const [annotation, setAnnotation] = useState<{ image: HTMLCanvasElement; seconds?: number } | null>(null);
+  const annotationSession = useRef(annotation);
+  const [annotationReply, setAnnotationReply] = useState<DiscussionMessageView | null>(null);
+  const cancelAnnotation = () => {
+    annotationSession.current = null;
+    if (media.phase === 'checking') media.cancel();
+    setAnnotation(null);
+  };
   const viewedMessage = viewing && renderedMessages.find(row => row.id === viewing.messageId);
   const viewedAttachment = viewing && viewedMessage && !viewedMessage.deleted
     ? viewedMessage.attachments?.find(attachment => attachment.id === viewing.attachmentId) : undefined;
@@ -195,12 +205,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     : viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId)
       : viewedMessage?.deleted ? null : viewing?.source ?? null;
   const previewVideoUrl = previewing && media.selection?.metadata.mediaType === 'video' ? media.preview : undefined;
-  const videoUrl = viewer ? (viewer.type === 'video' ? viewer.src : undefined) : previewVideoUrl;
-  const videoFullscreen = Boolean(videoUrl && videoUrl === fullscreenVideo);
-  const fullscreenButton = videoUrl && <IconButton icon={videoFullscreen ? 'arrows-minimize' : 'arrows-maximize'}
-    label={videoFullscreen ? 'Выйти из полноэкранного режима' : 'Во весь экран'}
-    onClick={() => setFullscreenVideo(videoFullscreen ? null : videoUrl)} />;
-  const mediaSurfaceOpen = previewing || Boolean(viewer) || cameraOpen;
+  const fullscreenUrl = viewer?.src ?? previewVideoUrl;
+  const mediaFullscreen = Boolean(fullscreenUrl && fullscreenUrl === fullscreenSource);
+  const fullscreenButton = fullscreenUrl && <IconButton icon={mediaFullscreen ? 'arrows-minimize' : 'arrows-maximize'}
+    label={mediaFullscreen ? 'Выйти из полноэкранного режима' : 'Во весь экран'}
+    onClick={() => setFullscreenSource(mediaFullscreen ? null : fullscreenUrl)} />;
+  const mediaSurfaceOpen = previewing || Boolean(viewer || annotation) || cameraOpen;
   const [editText, setEditText] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
   const replyId = editId ? null : draft.replyId;
@@ -329,7 +339,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
-    if (videoFullscreen) { setFullscreenVideo(null); updateNavigation(); return; }
+    if (annotation) { cancelAnnotation(); updateNavigation(); return; }
+    if (mediaFullscreen) { setFullscreenSource(null); updateNavigation(); return; }
     if (viewer) { setViewing(null); updateNavigation(); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
     if (previewing || voiceComposer || circleDraft) {
@@ -503,9 +514,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     const attachment = original && !original.deleted && original.attachments?.find(item =>
       item.id === position.attachmentId && item.mediaType === 'video');
     const source = attachment && galleryMediaSource(attachment, repository.actorUserId);
-    if (!source) { setError('Исходное видео недоступно'); return; }
-    setFullscreenVideo(null);
-    setViewing({ messageId, attachmentId: position.attachmentId, startAt: position.seconds, source });
+    if (!source || !original) { setError('Исходное видео недоступно'); return; }
+    setFullscreenSource(null);
+    setViewing({ messageId, attachmentId: position.attachmentId, startAt: position.seconds, source, original });
   });
   const submit = () => {
     if (cameraOpen || pending.current || mediaBusy || outgoing) return;
@@ -587,12 +598,15 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       layout="menu" label="Действия сообщения" items={items} {...material}
       trigger={<button type="button" ref={trigger} aria-hidden="true" tabIndex={-1} className="discussion-menu-source" />} />
   </span>;
-  const replying = replyId ? state.messages.find(row => row.id === replyId) : undefined;
-  const replyQuote: DiscussionQuote | null = replyId && !draft.videoPosition ? { messageId: replyId,
+  const replying = replyId ? state.messages.find(row => row.id === replyId)
+    ?? (annotationReply?.id === replyId ? annotationReply : undefined) : undefined;
+  const photoReply = activeAttachment?.mediaType === 'photo';
+  const replyQuote: DiscussionQuote | null = replyId && (!draft.videoPosition || photoReply) ? { messageId: replyId,
     authorUserId: replying?.authorUserId ?? null, deleted: Boolean(replying?.deleted), unavailable: !replying,
-    text: replying && !replying.deleted ? replying.text.split(/\r?\n/, 1)[0] : '' } : null;
+    text: replying && !replying.deleted ? replying.text.split(/\r?\n/, 1)[0] : '',
+    videoPosition: draft.videoPosition } : null;
 
-  const commentOnFrame = viewing && viewer?.type === 'video' && !localVideoUrl && canCompose && !editId
+  const commentOnFrame = viewing && viewer?.type === 'video' && !localVideoUrl && !annotation && canCompose && !editId
     && !draft.videoPosition && !voiceComposer && !circleInProgress
     ? (seconds: number) => {
       if (pending.current) return;
@@ -602,10 +616,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         catch { /* Browser storage may be unavailable; keep the flag for this open discussion. */ }
       }
       draft.update(draft.text, viewing.messageId, { attachmentId: viewing.attachmentId, seconds });
-      setFullscreenVideo(null);
+      setFullscreenSource(null);
       setViewing(null);
     } : undefined;
-  const composerVideoPosition = replyId && draft.videoPosition
+  const composerVideoPosition = replyId && draft.videoPosition && !photoReply
     ? { messageId: replyId, position: draft.videoPosition } : null;
 
   const pickAttachment = (event: ChangeEvent<HTMLInputElement>) => {
@@ -614,6 +628,31 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (file) void media.choose(file);
   };
   const canAttach = canCompose && !voiceComposer && !circleInProgress && !mediaPresent && !editId;
+  const annotate = canAttach && repository.supportsMedia && viewing && !localVideoUrl && !annotation
+    ? (image: HTMLCanvasElement, seconds?: number) => {
+      if (annotationSession.current) return;
+      const next = { image, seconds };
+      annotationSession.current = next;
+      setAnnotation(next);
+    } : undefined;
+
+  async function prepareAnnotatedPhoto(file: File) {
+    if (!alive.current || !viewing || !annotation || annotationSession.current !== annotation) return false;
+    const { messageId, attachmentId } = viewing;
+    const { seconds } = annotation;
+    return media.choose(file, {
+      onSelected: () => {
+        if (!alive.current || annotationSession.current !== annotation) return false;
+        draft.update(draft.text, messageId, seconds === undefined ? undefined : { attachmentId, seconds });
+        setAnnotationReply(viewedMessage ?? viewing.original ?? null);
+        annotationSession.current = null;
+        setAnnotation(null);
+        setFullscreenSource(null);
+        setViewing(null);
+        return true;
+      },
+    });
+  }
   // LiquidPopover keeps its displayed item snapshot through the animation.
   const canAttachNow = useRef(canAttach);
   canAttachNow.current = canAttach;
@@ -747,22 +786,27 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </Messages>
     </div>
     {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' &&
-      <DiscussionMediaStage label="Предпросмотр вложения" fullscreen={Boolean(previewVideoUrl && !viewer && videoFullscreen)}
+      <DiscussionMediaStage label="Предпросмотр вложения" fullscreen={Boolean(previewVideoUrl && !viewer && mediaFullscreen)}
         style={{ bottom: composerHeight + contextHeight }}>
         <DiscussionMedia key={media.preview} src={media.preview} type={media.selection.metadata.mediaType} mode="preview" />
         {previewVideoUrl && !viewer && <div className="discussion-media-stage__close">{fullscreenButton}</div>}
       </DiscussionMediaStage>}
-    {viewer && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
-      fullscreen={viewer.type === 'video' && videoFullscreen}>
-      <DiscussionMedia key={`${viewer.src}:${viewing?.startAt ?? ''}`} {...viewer} mode="viewer"
-        autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame} showCommentHint={!videoCommentUsed} />
-      <div className="discussion-media-stage__close">
-        {fullscreenButton}
-        <IconButton icon="x" label="Закрыть просмотр" onClick={() => {
-          setFullscreenVideo(null);
-          setViewing(null);
-        }} />
-      </div>
+    {(viewer || annotation) && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
+      fullscreen={mediaFullscreen}>
+      {annotation && <DiscussionAnnotationEditor image={annotation.image} onCancel={cancelAnnotation}
+        onPrepare={prepareAnnotatedPhoto} />}
+      {viewer && <div hidden={Boolean(annotation)} className="discussion-media-stage__viewer">
+        <DiscussionMedia key={`${viewer.src}:${viewing?.startAt ?? ''}`} {...viewer} mode="viewer"
+          autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame}
+          showCommentHint={!videoCommentUsed} onAnnotate={annotate} />
+        <div className="discussion-media-stage__close">
+          {fullscreenButton}
+          <IconButton icon="x" label="Закрыть просмотр" onClick={() => {
+            setFullscreenSource(null);
+            setViewing(null);
+          }} />
+        </div>
+      </div>}
     </DiscussionMediaStage>}
     {cameraOpen && <DiscussionVideoRecorder onCancel={() => setCameraOpen(false)}
       onGallery={() => {
@@ -773,7 +817,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         setCameraOpen(false);
         void media.choose(file);
       }} />}
-    <div className="discussion-composer-context" ref={context} inert={Boolean(viewer) || cameraOpen || videoFullscreen}
+    <div className="discussion-composer-context" ref={context} inert={Boolean(viewer || annotation) || cameraOpen || mediaFullscreen}
       data-previewing={previewing || undefined} style={{ bottom: composerHeight }}>
       {receiptError && <><Text variant="footnote" role="alert">Не удалось обновить статусы прочтения</Text>
         <Button rounded onClick={() => setReceiptRetry(value => value + 1)}>Повторить обновление статусов</Button></>}
@@ -805,7 +849,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
-        {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor} onJump={() => void jump(replyQuote.messageId)} /> : <Text variant="footnote">Редактирование сообщения</Text>}
+        {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor} onJump={() => {
+          if (replyQuote.videoPosition) openVideoPosition(replyQuote.messageId, replyQuote.videoPosition);
+          else void jump(replyQuote.messageId);
+        }} /> : <Text variant="footnote">Редактирование сообщения</Text>}
         <IconButton icon="x" label="Отменить ответ или редактирование" disabled={busy || mediaBusy || Boolean(outgoing)}
           onClick={cancelMode} />
       </div>}
@@ -823,7 +870,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       <input type="file" hidden ref={photoPicker} accept={DISCUSSION_MEDIA_ACCEPT.split(',').filter(type => type.startsWith('image/')).join(',')}
         onChange={pickAttachment} />
     </>}
-    <div className="discussion-composer" ref={composer} inert={Boolean(viewer) || cameraOpen || videoFullscreen} data-previewing={previewing || undefined}>
+    <div className="discussion-composer" ref={composer} inert={Boolean(viewer || annotation) || cameraOpen || mediaFullscreen} data-previewing={previewing || undefined}>
       <GlassSurface ref={addSurface} className="discussion-composer__button discussion-composer__button--add" {...material}
         shape="capsule" wrapContent={false} style={{ visibility: !voiceComposer && attachmentsPresented ? 'hidden' : undefined }}>
         {voiceComposer || circleInProgress || circleDraft

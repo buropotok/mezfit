@@ -17,6 +17,8 @@ import arrowsMaximizeUrl from './arrows-maximize.svg';
 import arrowsMinimizeUrl from './arrows-minimize.svg';
 import arrowLeftUrl from './arrow-left.svg';
 import arrowBackUpUrl from './arrow-back-up.svg';
+import arrowForwardUpUrl from './arrow-forward-up.svg';
+import chartDots3Url from './chart-dots-3.svg';
 import barbellFilledUrl from './liquid-glass-barbell-filled.svg';
 import barbellOutlineUrl from './liquid-glass-barbell-outline.svg';
 import calendarFilledUrl from './calendar-filled.svg';
@@ -100,6 +102,8 @@ const uiIconRegistry = {
   'arrows-minimize': { outline: arrowsMinimizeUrl, filled: arrowsMinimizeUrl },
   'arrow-left': { outline: arrowLeftUrl, filled: arrowLeftUrl },
   'arrow-back-up': { outline: arrowBackUpUrl, filled: arrowBackUpUrl },
+  'arrow-forward-up': { outline: arrowForwardUpUrl, filled: arrowForwardUpUrl },
+  'chart-dots-3': { outline: chartDots3Url, filled: chartDots3Url },
   barbell: { outline: barbellOutlineUrl, filled: barbellFilledUrl },
   calendar: { outline: calendarOutlineUrl, filled: calendarFilledUrl },
   'calendar-event': { outline: calendarEventOutlineUrl, filled: calendarEventFilledUrl },
