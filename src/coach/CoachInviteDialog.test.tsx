@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ButtonHTMLAttributes, FocusEventHandler, HTMLAttributes, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { requestTelegramInviteShare } from '../telegram';
@@ -28,6 +29,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.unstubAllGlobals();
 });
 
