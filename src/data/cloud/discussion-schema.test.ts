@@ -55,6 +55,9 @@ describe('additive opt-in discussion schema', () => {
     const telegramUserId = String(9000000000 + Math.floor(Math.random() * 100000000));
     const name = 'mezfit-cloud:' + telegramUserId;
     const old = offlineDatabase(name);
+    old.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true,
+      disableWebSocket: true, tryUseServiceWorker: false,
+      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync'] });
     old.version(17).stores({ ...CLOUD_DATABASE_STORES_V17, localProgramSync: 'id', localWorkoutSync: 'id' });
     await old.open();
     await new Promise<void>((resolve, reject) => {
