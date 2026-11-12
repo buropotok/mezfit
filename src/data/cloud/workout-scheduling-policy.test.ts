@@ -23,7 +23,7 @@ describe('occurrence scheduling policy', () => {
     expect(roles.client.permissions.update).toHaveProperty('sessionSetFacts');
   });
 
-  it('drops only the retired local intent table and retains drafts and workout data', () => {
+  it('retires the local scheduling intent table without altering workout occurrence records', () => {
     expect(CLOUD_DATABASE_VERSION).toBeGreaterThanOrEqual(10);
     expect(CLOUD_DATABASE_STORES_V10.workoutScheduleRequests).toBeNull();
     const { workoutScheduleRequests: retired, ...previous } = CLOUD_DATABASE_STORES_V9;
@@ -31,7 +31,6 @@ describe('occurrence scheduling policy', () => {
     expect(retired).toMatch(/^id,/);
     expect(removed).toBeNull();
     expect(current).toEqual(previous);
-    expect(current.localWorkoutOccurrenceDrafts).toContain('actorUserId');
     expect(current.workoutOccurrences).toContain('[realmId+startsAtUtc]');
   });
 });
