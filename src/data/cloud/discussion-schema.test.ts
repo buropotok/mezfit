@@ -4,7 +4,7 @@ import Dexie from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CLOUD_DATABASE_STORES_V14, CLOUD_DATABASE_STORES_V15, CLOUD_DATABASE_VERSION,
-  CLOUD_DISCUSSION_DATABASE_VERSION, MezfitCloudDatabase } from './database';
+  CLOUD_DISCUSSION_DATABASE_VERSION, CLOUD_DATABASE_STORES_V18, MezfitCloudDatabase } from './database';
 import { DISCUSSION_STORES } from './discussion-contracts';
 import manifest from '../../../cloud/schema-discussions.json';
 const databases: Dexie[] = [];
@@ -54,6 +54,8 @@ describe('additive opt-in discussion schema', () => {
     const opted = new MezfitCloudDatabase('123457', 'signed', { discussions: false }); databases.push(opted);
     expect(current.verno).toBe(CLOUD_DISCUSSION_DATABASE_VERSION);
     expect(current.tables.some(table => table.name === 'discussionMessages')).toBe(true);
+    expect(current.tables.some(table => table.name === 'localWorkoutOccurrenceDrafts')).toBe(false);
+    expect(CLOUD_DATABASE_STORES_V18.localWorkoutOccurrenceDrafts).toBeNull();
     expect(opted.verno).toBe(CLOUD_DATABASE_VERSION);
     expect(opted.tables.some(table => table.name === 'discussionMessages')).toBe(false);
     for (const [name, spec] of Object.entries(CLOUD_DATABASE_STORES_V14)) expect(CLOUD_DATABASE_STORES_V15[name as keyof typeof CLOUD_DATABASE_STORES_V14]).toBe(spec);
