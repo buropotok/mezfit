@@ -85,7 +85,6 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
     const subscriptions: Array<{ unsubscribe(): void }> = [];
     let openWatchdog: ReturnType<typeof setTimeout> | undefined;
     let openFinished = false;
-    let openStarted = false;
 
     const update = (patch: Partial<Snapshot>) => {
       if (active) setSnapshot((previous) => ({ ...previous, ...patch }));
@@ -121,7 +120,6 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         cloudDb.on('blocked', () => update({ openBlocked: true }));
         cloudDb.on('ready', () => update({ readyObserved: true }));
         update({ stage: 'opening' });
-        openStarted = true;
         openWatchdog = setTimeout(() => {
           if (!active || openFinished) return;
           // backendDB() is a read-only indication that native IndexedDB opened
@@ -130,6 +128,9 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         }, 10000);
         try {
           await cloudDb.open();
+        } catch (reason: unknown) {
+          update({ openFailureCode: safeOpenFailureCode(reason) });
+          throw reason;
         } finally {
           openFinished = true;
           if (openWatchdog !== undefined) clearTimeout(openWatchdog);
@@ -182,11 +183,8 @@ export function CloudSyncDiagnostic({ initData }: { initData: string }) {
         // Trigger a pull without waiting indefinitely for its completion.
         // Official sync state and synced local tables are observed separately.
         await cloudDb.cloud.sync({ purpose: 'pull', wait: false });
-      } catch (reason: unknown) {
-        update({
-          stage: 'failed', setupError: true,
-          ...(openStarted ? { openFailureCode: safeOpenFailureCode(reason) } : {}),
-        });
+      } catch {
+        update({ stage: 'failed', setupError: true });
       }
     })();
 
