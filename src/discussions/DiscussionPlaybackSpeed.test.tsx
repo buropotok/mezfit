@@ -1,19 +1,20 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
-import { DiscussionSheet } from './DiscussionSheet';
+import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
 import { inspectDiscussionMedia } from './discussion-media-file';
 
 vi.mock('./discussion-media-file', () => ({ inspectDiscussionMedia: vi.fn() }));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
 
-function renderDiscussion(port: ReturnType<typeof fixture>['port']) {
+function renderDiscussion(port: ReturnType<typeof fixture>['port'],
+  onNavigationContextChange: DiscussionSheetProps['onNavigationContextChange'] = () => {}) {
   return render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
     anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
-    onNavigationContextChange={() => {}} /></KonstaProvider>);
+    onNavigationContextChange={onNavigationContextChange} /></KonstaProvider>);
 }
 
 function playerIn(label: string) {
@@ -28,7 +29,8 @@ it('changes viewer speed through the gauge menu and retains the same video in fu
     mediaType: 'video' as const, mimeType: 'video/mp4', sizeBytes: 10, durationSeconds: 12,
     storageKey: 'mvp-media/' + 'a'.repeat(64), uploadState: 'ready' as const, confirmedAt: thread.createdAt,
   }] };
-  renderDiscussion(fixture([original]).port);
+  const onNavigationContextChange = vi.fn<DiscussionSheetProps['onNavigationContextChange']>();
+  renderDiscussion(fixture([original]).port, onNavigationContextChange);
   fireEvent.click(await screen.findByRole('link', { name: 'Открыть видео' }));
   const video = playerIn('Просмотр вложения');
   video.currentTime = 4.25;
@@ -53,6 +55,10 @@ it('changes viewer speed through the gauge menu and retains the same video in fu
   expect(selected.className).toContain('ui-menu-item--active');
   fireEvent.click(screen.getByRole('menuitem', { name: '2×' }));
   await waitFor(() => expect(video.playbackRate).toBe(2));
+  fireEvent.click(screen.getByRole('button', { name: 'Скорость воспроизведения' }));
+  act(() => onNavigationContextChange.mock.lastCall?.[0]?.onBack?.());
+  expect(screen.getByRole('button', { name: 'Скорость воспроизведения' }).getAttribute('aria-expanded')).toBe('false');
+  expect(screen.getByRole('dialog', { name: 'Просмотр вложения' }).contains(video)).toBe(true);
 
   fireEvent.click(screen.getByRole('button', { name: 'Выйти из полноэкранного режима' }));
   expect(screen.getByRole('region', { name: 'Просмотр вложения' }).contains(video)).toBe(true);
