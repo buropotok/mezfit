@@ -6,7 +6,6 @@ import Dexie, { type Table } from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import cloudConfig from '../../../dexie-cloud.json';
 import type { ResistanceBandCode, SetLabel } from '../../workout/setEntryTypes';
-import type { LocalWorkoutOccurrenceDraft } from './workout-occurrence-plan';
 import { getDexieCloudTokens } from '../../api';
 import type { PublicExerciseRow, PublicExerciseCatalogueRow, PublicTaxonomyRow } from '../exercises/publicExerciseTypes';
 import type { PublicCategoryArtworkRow } from '../exercises/publicCategoryArtwork';
@@ -22,7 +21,7 @@ import type {
  */
 export const CLOUD_DATABASE_VERSION = 14;
 /** Normal discussion account schema; cloud tables/ACL were installed separately by COMM-03. */
-export const CLOUD_DISCUSSION_DATABASE_VERSION = 17;
+export const CLOUD_DISCUSSION_DATABASE_VERSION = 18;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -187,7 +186,7 @@ export const CLOUD_DATABASE_STORES_V8 = {
   workoutScheduleRequests: 'id, realmId, requestKey, trainingPlanId, programDayId, targetOccurrenceId, startsAtUtc, [realmId+startsAtUtc]',
 } as const;
 
-/** Device-only draft storage; no corresponding Dexie Cloud table or ACL. */
+/** Historical v9 device-only draft store; retired from the current schema in v18. */
 export const CLOUD_DATABASE_STORES_V9 = {
   ...CLOUD_DATABASE_STORES_V8,
   localWorkoutOccurrenceDrafts: 'id, actorUserId, startsAtUtc, programDayId, updatedAt',
@@ -239,6 +238,12 @@ export const CLOUD_DATABASE_STORES_V17 = {
   discussionReadStates: CLOUD_DATABASE_STORES_V16.discussionReadStates + ', [id+lastReadAt]',
 } as const;
 
+/** Local-only retirement of the obsolete unsynced draft store. No record transfer. */
+export const CLOUD_DATABASE_STORES_V18 = {
+  ...CLOUD_DATABASE_STORES_V17,
+  localWorkoutOccurrenceDrafts: null,
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -270,7 +275,6 @@ export class MezfitCloudDatabase extends Dexie {
   adHocSets!: Table<AdHocSetRow, string, Omit<AdHocSetRow, 'id'>>;
   localProgramSync!: Table<LocalProgramSyncRow, string>;
   localWorkoutSync!: Table<LocalProgramSyncRow, string>;
-  localWorkoutOccurrenceDrafts!: Table<LocalWorkoutOccurrenceDraft, string>;
   trainingPlans!: Table<CloudTrainingPlanRow, string, Omit<CloudTrainingPlanRow, 'id'>>;
   programPhases!: Table<CloudProgramPhaseRow, string, Omit<CloudProgramPhaseRow, 'id'>>;
   programDays!: Table<CloudProgramDayRow, string, Omit<CloudProgramDayRow, 'id'>>;
@@ -313,14 +317,17 @@ export class MezfitCloudDatabase extends Dexie {
       this.version(16).stores({
         ...CLOUD_DATABASE_STORES_V16, localProgramSync: 'id', localWorkoutSync: 'id',
       });
-      this.version(CLOUD_DISCUSSION_DATABASE_VERSION).stores({
+      this.version(17).stores({
         ...CLOUD_DATABASE_STORES_V17, localProgramSync: 'id', localWorkoutSync: 'id',
+      });
+      this.version(CLOUD_DISCUSSION_DATABASE_VERSION).stores({
+        ...CLOUD_DATABASE_STORES_V18, localProgramSync: 'id', localWorkoutSync: 'id',
       });
     }
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
-      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync'],
+      unsyncedTables: ['localProgramSync', 'localWorkoutSync'],
       // Disable the email OTP UI: the Worker verifies Telegram initData.
       fetchTokens: (params) => getDexieCloudTokens(initData, params),
     });
