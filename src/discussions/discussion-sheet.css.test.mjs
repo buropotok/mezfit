@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 const css = readFileSync(new URL('./discussion-sheet.css', import.meta.url), 'utf8');
 describe('discussion-owned composition', () => {
   it('layers a transparent vector pattern onto the black discussion background', () => {
-    const thread = css.match(/\\.discussion-thread\\s*\\{([^}]+)\\}/)?.[1] ?? '';
+    const thread = css.match(/\.discussion-thread\s*\{([^}]+)\}/)?.[1] ?? '';
     expect(thread).toContain('background-color: #000');
     expect(thread).toContain("background-image: url('/discussion-fitness-pattern.svg')");
     expect(thread).toContain('background-position: center');
@@ -12,8 +12,8 @@ describe('discussion-owned composition', () => {
 
     const svg = readFileSync(new URL('../../public/discussion-fitness-pattern.svg', import.meta.url), 'utf8');
     expect(svg).toContain('viewBox="0 0 864 1536"');
-    expect(svg).toMatch(/<path\\b/);
-    expect(svg).not.toMatch(/<(?:rect|image)\\b/);
+    expect(svg).toMatch(/<path\b/);
+    expect(svg).not.toMatch(/<(?:rect|image)\b/);
   });
 
   it('keeps a non-visible round source in the bubble center and one-line quote ellipsis without Konsta selectors', () => {
