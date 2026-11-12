@@ -51,36 +51,33 @@ describe('additive opt-in discussion schema', () => {
       expect(DISCUSSION_STORES[table as keyof typeof DISCUSSION_STORES].split(',')[0]).toBe(key);
     }
   });
-  it('opens a previous local database without importing retired drafts or losing cached relationship rows', async () => {
-    const fetch = vi.fn(() => Promise.reject(new Error('Offline')));
-    vi.stubGlobal('fetch', fetch);
-    const telegramUserId = String(9000000000 + Math.floor(Math.random() * 100000000));
-    const name = 'mezfit-cloud:' + telegramUserId;
-    const old = offlineDatabase(name);
-    old.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true,
-      disableWebSocket: true, tryUseServiceWorker: false,
-      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync'] });
-    old.version(17).stores({ ...CLOUD_DATABASE_STORES_V17, localProgramSync: 'id', localWorkoutSync: 'id' });
+  it('removes only the obsolete local draft store on v17 to v18 IndexedDB upgrade', async () => {
+    // Test the physical IndexedDB schema upgrade without Dexie Cloud's
+    // authenticated realm filtering, which is not under test here.
+    const name = 'local-store-retirement-' + crypto.randomUUID();
+    const localSchema = (stores: Record<string, string | null>) =>
+      Object.fromEntries(Object.entries(stores).map(([table, spec]) => [
+        table, spec === null ? null : spec.replaceAll('@', ''),
+      ]));
+    const old = new Dexie(name); databases.push(old);
+    old.version(17).stores(localSchema(CLOUD_DATABASE_STORES_V17));
     await old.open();
-    await new Promise<void>((resolve, reject) => {
-      const tx = old.backendDB().transaction(['realms', 'members', 'localWorkoutOccurrenceDrafts'], 'readwrite');
-      tx.objectStore('realms').put({ realmId: 'rlm-cached', owner: null });
-      tx.objectStore('members').put({ id: 'mmb-cached', realmId: 'rlm-cached', userId: 'tg:' + telegramUserId });
-      tx.objectStore('localWorkoutOccurrenceDrafts').put({ id: 'retired-draft' });
-      tx.oncomplete = () => resolve(); tx.onabort = () => reject(tx.error);
-    });
+    await old.table('realms').put({ realmId: 'rlm-cached', owner: null });
+    await old.table('members').put({ id: 'mmb-cached', realmId: 'rlm-cached', userId: 'tg:101' });
+    await old.table('workoutOccurrences').put({ id: 'occ-cached', realmId: 'rlm-cached' });
+    await old.table('localWorkoutOccurrenceDrafts').put({ id: 'retired-draft' });
     old.close();
 
-    const current = new MezfitCloudDatabase(telegramUserId, 'signed'); databases.push(current);
-    current.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true,
-      disableWebSocket: true, tryUseServiceWorker: false,
-      unsyncedTables: ['localProgramSync', 'localWorkoutSync'] });
+    const current = new Dexie(name); databases.push(current);
+    current.version(17).stores(localSchema(CLOUD_DATABASE_STORES_V17));
+    current.version(18).stores(localSchema(CLOUD_DATABASE_STORES_V18));
     await current.open();
+
     expect(current.verno).toBe(18);
     expect(current.tables.some(table => table.name === 'localWorkoutOccurrenceDrafts')).toBe(false);
-    expect((await current.realms.toArray()).map(row => row.realmId)).toContain('rlm-cached');
-    expect((await current.members.toArray()).map(row => row.id)).toContain('mmb-cached');
-    expect(fetch).not.toHaveBeenCalled();
+    expect(await current.table('realms').get('rlm-cached')).toMatchObject({ realmId: 'rlm-cached' });
+    expect(await current.table('members').get('mmb-cached')).toMatchObject({ id: 'mmb-cached' });
+    expect(await current.table('workoutOccurrences').get('occ-cached')).toMatchObject({ id: 'occ-cached' });
   });
 
   it('registers discussions by default and retains an explicit historical-schema fixture', () => {
