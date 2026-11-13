@@ -9,7 +9,9 @@ const webhookPath = '/api/webhooks/dexie-discussions';
 const realmKey = (value: unknown): value is string => typeof value === 'string' && /^rlm[a-f0-9]{28}$/.test(value);
 const cloudPath = (table: string, id: string) => '/all/' + table + '/' + encodeURIComponent(id);
 
-export async function receiveDiscussionNotifications(request: Request, env: DiscussionNotificationEnv): Promise<Response | null> {
+export async function receiveDiscussionNotifications(
+  request: Request, env: DiscussionNotificationEnv, ctx?: Pick<ExecutionContext, 'waitUntil'>,
+): Promise<Response | null> {
   if (new URL(request.url).pathname !== webhookPath) return null;
   if (request.method !== 'POST') return new Response(null, { status: 405 });
   const configured = env.DEXIE_DISCUSSION_WEBHOOK_SECRET;
@@ -42,6 +44,13 @@ export async function receiveDiscussionNotifications(request: Request, env: Disc
   } catch {
     console.error('DISCUSSION_WEBHOOK_ENQUEUE_FAILED');
     return new Response(null, { status: 503 });
+  }
+  if (statements.length > 0) {
+    const delivery = sendDiscussionNotifications(env).catch(() => {
+      console.error('DISCUSSION_WEBHOOK_DELIVERY_FAILED');
+    });
+    if (ctx) ctx.waitUntil(delivery);
+    else await delivery;
   }
   return new Response(null, { status: 204 });
 }
