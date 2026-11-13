@@ -119,7 +119,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
     }
   };
 
-  const fields = showCoachTelegram ? [...TELEGRAM_FIELDS, ...COACH_FIELDS] : role === 'coach' ? COACH_FIELDS : CLIENT_FIELDS;
+  const fields = showCoachTelegram ? [...TELEGRAM_FIELDS, ...COACH_FIELDS] : CLIENT_FIELDS;
   return (
     <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false}
       blur={glassBlur} shape={{ radius: 16 }} className="workout-reminder-settings__panel">
