@@ -10,9 +10,12 @@ import type { LiquidPopoverItem } from '../ui/LiquidPopover';
 import { DiscussionSheet } from './DiscussionSheet';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { MezfitBottomSheet } from '../ui/konsta-mezfit/BottomSheet';
+import { MezfitPopover } from '../ui/konsta-mezfit/Popover';
 import { IconButton, Text } from '../ui/primitives';
 import type { EntityDiscussionTarget, OpenEntityDiscussion } from './entity-discussion-target';
 import './entity-discussions.css';
+
+type DraftDiscussionGuard = { kind: 'program' } | { kind: 'workout'; onPublish: () => void };
 
 interface OpenedEntity {
   target: EntityDiscussionTarget;
@@ -26,11 +29,14 @@ interface OpenedEntity {
 export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   onNavigationContextChange?: (value: NavigationContext | null) => void, enabled = true,
   options?: { onOpenTarget?: OpenEntityDiscussion;
-    isTargetAvailable?: (target: EntityDiscussionTarget) => boolean }) {
+    isTargetAvailable?: (target: EntityDiscussionTarget) => boolean;
+    draftGuard?: DraftDiscussionGuard }) {
   const cloud = useCloudConnections();
   const sourceNavigation = useNavigationSurfaceContext();
   const account = useMemo(() => ({}), [cloud?.db, cloud?.actorUserId]);
   const [opened, setOpened] = useState<OpenedEntity | null>(null);
+  const [draftPromptOpen, setDraftPromptOpen] = useState(false);
+  const closeDraftPrompt = useCallback(() => setDraftPromptOpen(false), []);
   const current = opened?.account === account && enabled ? opened : null;
   const activeTarget = current?.target ?? target;
   const key = activeTarget ? discussionAnchorKey(activeTarget.scope, activeTarget.anchor) : '';
@@ -54,7 +60,9 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   useEffect(() => {
     if (sourceKey && current && sourceKey !== discussionAnchorKey(current.target.scope, current.target.anchor)) close();
     pending.current = null;
-  }, [sourceKey, account, enabled, close]);
+    closeDraftPrompt();
+  }, [sourceKey, account, enabled, close, closeDraftPrompt]);
+  useEffect(() => { if (!options?.draftGuard) closeDraftPrompt(); }, [options?.draftGuard?.kind, closeDraftPrompt]);
   useEffect(() => {
     if (!repository || !activeTarget) return;
     let active = true;
@@ -85,12 +93,18 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
     onNavigationContextChange?.(navigation);
     return () => onNavigationContextChange?.(null);
   }, [current, navigation, onNavigationContextChange]);
+  useEffect(() => {
+    if (!draftPromptOpen || !options?.draftGuard || !onNavigationContextChange) return;
+    onNavigationContextChange({ ...sourceNavigation, level: 2, title: 'Обсуждение', onBack: closeDraftPrompt });
+    return () => onNavigationContextChange(null);
+  }, [draftPromptOpen, options?.draftGuard?.kind, onNavigationContextChange, sourceNavigation, closeDraftPrompt]);
   const canOpen = Boolean(enabled && cloud && target && onNavigationContextChange);
   const canRecordVideo = canOpen && Boolean(repository?.supportsMedia);
   const openTarget: OpenEntityDiscussion = (nextTarget, action) => {
     if (action === 'record-video' && options?.isTargetAvailable?.(nextTarget) === false) return;
-    if (enabled && cloud && onNavigationContextChange)
-      setOpened({ target: nextTarget, parent: sourceNavigation, account, recording: action === 'record-video' });
+    if (!enabled || !cloud || !onNavigationContextChange) return;
+    if (options?.draftGuard) { setDraftPromptOpen(true); return; }
+    setOpened({ target: nextTarget, parent: sourceNavigation, account, recording: action === 'record-video' });
   };
   const open = () => { if (canOpen && target) openTarget(target); };
   const menuItem: LiquidPopoverItem = { id: 'discussions', label: 'Обсуждения', icon: 'message-circle',
@@ -99,7 +113,8 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
   const onMenuPresentationChange = (presented: boolean) => {
     if (presented || !pending.current) return;
     if (pending.current.account === account) {
-      if (options?.onOpenTarget) options.onOpenTarget(pending.current.target);
+      if (options?.draftGuard) setDraftPromptOpen(true);
+      else if (options?.onOpenTarget) options.onOpenTarget(pending.current.target);
       else setOpened(pending.current);
     }
     pending.current = null;
@@ -134,8 +149,23 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
       <Text role="alert">{connection.error || 'Обсуждение недоступно'}</Text>
       <Button rounded onClick={() => setRetry(value => value + 1)}>Повторить</Button>
     </div></MezfitBottomSheet> : null;
+  const draftPrompt = draftPromptOpen && options?.draftGuard ? <MezfitPopover
+    opened viewportTop={typeof window === 'undefined' ? 120 : Math.max(80, Math.round(window.innerHeight * 0.3))}
+    onBackdropClick={closeDraftPrompt}>
+    <div className="flex flex-col gap-4 p-4">
+      <Text variant="body">Обсуждение в рамках черновика невозможно.</Text>
+      {options.draftGuard.kind === 'workout' ? <>
+        <Text variant="body">Опубликовать тренировку?</Text>
+        <div className="flex justify-end gap-2">
+          <Button rounded tonal onClick={closeDraftPrompt}>Нет</Button>
+          <Button rounded onClick={() => { closeDraftPrompt(); options.draftGuard?.kind === 'workout' && options.draftGuard.onPublish(); }}>Да</Button>
+        </div>
+      </> : <Button rounded onClick={closeDraftPrompt}>Продолжить</Button>}
+    </div>
+  </MezfitPopover> : null;
+  const overlayContent = <>{content}{draftPrompt}</>;
   // GlassSurface owns a clipping/containing block. Mount the feature overlay
   // outside every program row while retaining React context and shell Back ownership.
-  return { menuItem, unread, content: content && typeof document !== 'undefined'
-    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{content}</div>, document.body) : content, onMenuPresentationChange, open, openTarget, canOpen, canRecordVideo };
+  return { menuItem, unread, content: (content || draftPrompt) && typeof document !== 'undefined'
+    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">{overlayContent}</div>, document.body) : null, onMenuPresentationChange, open, openTarget, canOpen, canRecordVideo };
 }
