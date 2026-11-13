@@ -35,7 +35,7 @@ export class WorkoutReminderPreferencesRepository {
     const attributes: string[] = [];
     for (const key in keys) attributes.push(keys[key]);
     const rows = await this.flex.getValues(this.target, attributes);
-    const preferences = { ...defaults };
+    const preferences: Record<Key, boolean> = { ...defaults };
     for (const key in keys) {
       const attribute = keys[key];
       const row = rows.find(item => item.key === attribute);
