@@ -249,6 +249,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [composerHeight, setComposerHeight] = useState(64);
   const [contextHeight, setContextHeight] = useState(0);
   const scroller = useRef<HTMLDivElement>(null), context = useRef<HTMLDivElement>(null);
+  const messageList = useRef<HTMLDivElement>(null);
+  const [, setVideoPlaybackLayoutVersion] = useState(0);
   const composer = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null);
   const rows = useRef(new Map<string, HTMLDivElement>());
   const alive = useRef(false), pending = useRef(false), actionVersion = useRef(0);
@@ -384,6 +386,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (context.current) observer.observe(context.current);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
   }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error, voice.status, voice.error, voice.permissionReady, voiceDraft, videoNote.status, videoNote.error, videoNote.permissionReady, circleDraft]);
+
+  useLayoutEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => setVideoPlaybackLayoutVersion(version => version + 1));
+    if (scroller.current) observer.observe(scroller.current);
+    if (messageList.current) observer.observe(messageList.current);
+    return () => observer.disconnect();
+  }, []);
 
   const jump = async (id: string) => {
     const version = ++focusVersion.current;
@@ -699,7 +709,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         session.loadMore();
       }}>Загрузить ещё</Button>}
       {state.loading && <Text variant="caption" role="status">Загрузка сообщений…</Text>}
-      <Messages>
+      <Messages ref={messageList}>
         {renderedMessages.map((message, index) => {
           const author = showAvatars ? resolveAuthor(message.authorUserId) : null;
           const isOwn = message.authorUserId === repository.actorUserId;
@@ -754,7 +764,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                     const { storageKey, mimeType, sizeBytes, durationSeconds } = attachment;
                     const src = directMediaUrl(storageKey);
                     return src && <DiscussionVideoNote key={attachment.id} src={src}
-                      durationSeconds={durationSeconds ?? 0} playbackHost={videoPlaybackHost} meta={meta} onMenu={onMenu}
+                      durationSeconds={durationSeconds ?? 0} playbackHost={videoPlaybackHost} scrollViewport={scroller}
+                      meta={meta} onMenu={onMenu}
                       cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
                   }
                   const source = galleryMediaSource(attachment, repository.actorUserId);
@@ -862,10 +873,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
-    <div ref={setVideoPlaybackHost} className="discussion-video-note-live discussion-video-note-playback"
+    <div ref={setVideoPlaybackHost} className="discussion-video-note-playback" inert={mediaSurfaceOpen}
       style={{ bottom: composerHeight + contextHeight + 12 }} />
     {circleDraft && media.preview && !mediaBusy && <DiscussionVideoNote key={media.preview} src={media.preview}
-      durationSeconds={circleDraft.durationSeconds ?? 0} playbackHost={videoPlaybackHost} review />}
+      durationSeconds={circleDraft.durationSeconds ?? 0} playbackHost={videoPlaybackHost} scrollViewport={scroller} review />}
     {(recordingCircle || videoNote.status === 'processing') && <div className="discussion-video-note-live"
       style={{ bottom: composerHeight + contextHeight + 12 }}>
       <DiscussionVideoNoteCapture stream={videoNote.stream} progress={videoNote.progress} />
