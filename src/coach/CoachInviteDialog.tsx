@@ -30,12 +30,18 @@ function copyTextUsingSelection(value: string): boolean {
   }
 }
 
-export function CoachInviteDialog({ url, onClose }: { url: string | null; onClose: () => void }) {
+export function CoachInviteDialog({
+  url, onClose, previewManualFallback = false,
+}: { url: string | null; onClose: () => void; previewManualFallback?: boolean }) {
   const inputId = useId();
   const latestUrl = useRef(url);
   const [actionError, setActionError] = useState('');
   const [copyBusy, setCopyBusy] = useState(false);
   const copyInFlight = useRef(false);
+  const fallbackMessage = actionError || (previewManualFallback
+    ? 'Не удалось скопировать ссылку. Попробуйте «Скопировать текст» или выделите её ниже.'
+    : '');
+  const showManualFallback = Boolean(url && fallbackMessage);
 
   useEffect(() => {
     latestUrl.current = url;
@@ -83,9 +89,11 @@ export function CoachInviteDialog({ url, onClose }: { url: string | null; onClos
       title="Пригласить клиента"
       content={<Text variant="body">Отправьте ссылку клиенту в Telegram. Ею могут воспользоваться несколько клиентов в течение 30 дней.</Text>}
       buttons={<>
-        <MezfitDialogButton strong onClick={share}>Отправить в Telegram</MezfitDialogButton>
-        <MezfitDialogButton disabled={copyBusy} onClick={() => { void copy(); }}>Копировать ссылку</MezfitDialogButton>
-        {actionError && url ? <MezfitDialogButton disabled={copyBusy} onClick={copyVisibleText}>Скопировать текст</MezfitDialogButton> : null}
+        {!previewManualFallback ? <>
+          <MezfitDialogButton strong onClick={share}>Отправить в Telegram</MezfitDialogButton>
+          <MezfitDialogButton disabled={copyBusy} onClick={() => { void copy(); }}>Копировать ссылку</MezfitDialogButton>
+        </> : null}
+        {showManualFallback ? <MezfitDialogButton disabled={copyBusy} onClick={copyVisibleText}>Скопировать текст</MezfitDialogButton> : null}
       </>}
       onBackdropClick={onClose}
       role="alertdialog"
@@ -93,8 +101,8 @@ export function CoachInviteDialog({ url, onClose }: { url: string | null; onClos
       aria-hidden={!url}
       aria-label="Пригласить клиента"
     >
-      {actionError && url ? <>
-        <Text variant="footnote" className="invite-copy-error error-text" role="alert">{actionError}</Text>
+      {showManualFallback && url ? <>
+        <Text variant="footnote" className="invite-copy-error error-text" role="alert">{fallbackMessage}</Text>
         <List nested>
           <ListInput
             inputId={inputId}
