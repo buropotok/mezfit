@@ -60,6 +60,21 @@ export async function readDiscussionNotificationThread(db: MezfitCloudDatabase, 
   return thread;
 }
 
+/**
+ * Wait for a Telegram-linked message and its authorized relationship to arrive in IndexedDB.
+ * A missing membership during initial hydration is not proof that access was revoked.
+ * Returning null keeps Dexie's liveQuery subscribed to the missing relationship records.
+ */
+export function observeDiscussionNotificationThread(
+  db: MezfitCloudDatabase, actor: string, messageId: string, allowedRealms: ReadonlySet<string>,
+  next: (thread: DiscussionThread | null) => void, error: (reason: unknown) => void,
+): { unsubscribe(): void } {
+  return liveQuery(() => readDiscussionNotificationThread(db, actor, messageId, allowedRealms).catch((reason: unknown) => {
+    if (reason instanceof Error && reason.message === 'DISCUSSION_ACCESS_DENIED') return null;
+    throw reason;
+  })).subscribe({ next, error });
+}
+
 /** Account lifecycle owns db. No network, PLAN mutation or push in normal operations. */
 export class DiscussionRepository {
   readonly sync: DiscussionSync;

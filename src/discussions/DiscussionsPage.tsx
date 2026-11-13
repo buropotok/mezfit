@@ -4,8 +4,7 @@ import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { liveQuery } from 'dexie';
-import { DiscussionRepository, readDiscussionNotificationThread } from '../data/cloud/discussions';
+import { DiscussionRepository, observeDiscussionNotificationThread } from '../data/cloud/discussions';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Badge, DatePicker, Icon, List, ListItem, Text, type LocalDate } from '../ui';
 import { DiscussionSheet } from './DiscussionSheet';
@@ -57,6 +56,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const cloud = useCloudConnections();
   const inbox = useDiscussions();
   const parent = useNavigationSurfaceContext();
+  const notificationParent = useRef(parent);
+  notificationParent.current = parent;
   const [clientUserIds, setClientUserIds] = useState<string[]>([]);
   const [clientFilter, setClientFilter] = useState<{ parent: NavigationContext | null } | null>(null);
   const clients = useMemo(() => [...new Map((cloud?.clients ?? []).map(contact => [contact.userId, contact])).values()], [cloud?.clients]);
@@ -66,7 +67,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const [picker, setPicker] = useState<{ side: 'from' | 'to'; parent: NavigationContext | null } | null>(null);
   const [limit, setLimit] = useState(50);
   const [openError, setOpenError] = useState('');
+  const [notificationRetry, setNotificationRetry] = useState(0);
+  const notificationSyncPending = useRef(false);
   const request = useRef(0);
+  const cancelPendingOpen = useCallback(() => {
+    ++request.current;
+    // An explicit tap in the inbox takes precedence over an unresolved deep link.
+    if (notificationMessageId) onNotificationOpened?.();
+  }, [notificationMessageId, onNotificationOpened]);
   const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string } | null>(null);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
@@ -99,40 +107,71 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const db = cloud?.db;
   const actorId = cloud?.actorUserId;
   const canResolveNotification = cloud?.status === 'ready';
-  const notificationSynced = cloud?.syncStatus === 'synced';
   useEffect(() => {
     if (!notificationMessageId || !db || !actorId || !canResolveNotification) return;
     const generation = ++request.current;
     const allowed = new Set<string>(JSON.parse(notificationRealmsKey));
-    const subscription = liveQuery(() => readDiscussionNotificationThread(db, actorId, notificationMessageId, allowed))
-      .subscribe({
-        next(thread) {
-          if (generation !== request.current) return;
-          if (!thread) {
-            if (notificationSynced) {
-              setOpenError('Сообщение удалено или недоступно.');
-              onNotificationOpened?.();
-            }
-            return;
-          }
+    let subscription: { unsubscribe(): void } | null = null;
+    let retryTimer: number | undefined;
+    let failures = 0;
+    let cancelled = false;
+    setOpenError('');
+
+    // An Addon "synced" snapshot is not proof that a freshly notified message
+    // has already reached IndexedDB. The observer stays active even after this hint.
+    const pendingTimer = window.setTimeout(() => {
+      if (!cancelled && generation === request.current) {
+        setOpenError('Обсуждение пока не загрузилось. Проверьте соединение и повторите попытку.');
+      }
+    }, 15_000);
+
+    const observe = () => {
+      if (cancelled || generation !== request.current) return;
+      subscription = observeDiscussionNotificationThread(db, actorId, notificationMessageId, allowed,
+        thread => {
+          if (cancelled || generation !== request.current || !thread) return;
           ++request.current;
+          subscription?.unsubscribe();
+          window.clearTimeout(pendingTimer);
           setOpenError('');
           setClosedNotificationChat(false);
           setNotificationChatContext(null);
           setNotificationEntityContext(null);
           setOpened({ row: { thread, contact: null, latest: null, unread: 0, hasAttachments: false },
-            kind: 'notification', parent, messageId: notificationMessageId });
+            kind: 'notification', parent: notificationParent.current, messageId: notificationMessageId });
           onNotificationOpened?.();
         },
-        error() {
-          if (generation !== request.current) return;
-          setOpenError('Не удалось открыть обсуждение.');
-          onNotificationOpened?.();
-        },
-      });
-    return () => subscription.unsubscribe();
+        () => {
+          if (cancelled || generation !== request.current) return;
+          if (failures++ < 2) {
+            // Unexpected local-read errors are terminal for liveQuery. Restore its
+            // subscription after a short backoff, without clearing the deep link.
+            retryTimer = window.setTimeout(observe, 1_000 * failures);
+          } else {
+            window.clearTimeout(pendingTimer);
+            setOpenError('Не удалось загрузить обсуждение. Повторите попытку.');
+          }
+        });
+    };
+    observe();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(pendingTimer);
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+      subscription?.unsubscribe();
+    };
   }, [notificationMessageId, db, actorId, notificationRealmsKey, canResolveNotification,
-    notificationSynced, onNotificationOpened, parent]);
+    notificationRetry, onNotificationOpened]);
+  const retryNotification = useCallback(() => {
+    if (!cloud || notificationSyncPending.current) return;
+    notificationSyncPending.current = true;
+    setOpenError('');
+    setNotificationRetry(value => value + 1);
+    // Connection provider owns the sync error; prevent parallel pull requests.
+    void cloud.retrySync().catch(() => {}).finally(() => {
+      notificationSyncPending.current = false;
+    });
+  }, [cloud]);
   const closeNotificationChat = useCallback(() => setClosedNotificationChat(true), []);
   const chatParent = useMemo<NavigationContext | null>(() => current
     ? { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot,
@@ -161,7 +200,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   }, []);
   const openChat = async (row: DiscussionInboxRow) => {
     if (!cloud) return;
-    const generation = ++request.current;
+    cancelPendingOpen();
+    const generation = request.current;
     setOpenError('');
     try {
       // Entity entry points use the same idempotent operation. Historical headers
@@ -200,32 +240,35 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       {role === 'coach' && !relationshipId ? <div className={`discussion-inbox__client-filter${clientUserIds.length ? '' : ' discussion-inbox__client-filter--all'}`}>
         {!clientUserIds.length ? <Text variant="footnote" className="discussion-inbox__all-clients">Все клиенты</Text> : null}
         <ScheduleFilterBar placement="content" clients={clients} selected={clientUserIds}
-          onOpen={() => { ++request.current; setClientFilter({ parent }); }}
-          onRemove={id => { ++request.current; setClientUserIds(current => current.filter(value => value !== id)); setLimit(50); }} />
+          onOpen={() => { cancelPendingOpen(); setClientFilter({ parent }); }}
+          onRemove={id => { cancelPendingOpen(); setClientUserIds(current => current.filter(value => value !== id)); setLimit(50); }} />
       </div> : null}
       <div className="discussion-inbox__filters">
-        <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
-        <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'to', parent }); }}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
-        {from || to || clientUserIds.length ? <Button rounded clear inline onClick={() => { ++request.current; setFrom(null); setTo(null); setClientUserIds([]); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
+        <Button rounded tonal inline onClick={() => { cancelPendingOpen(); setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
+        <Button rounded tonal inline onClick={() => { cancelPendingOpen(); setPicker({ side: 'to', parent }); }}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
+        {from || to || clientUserIds.length ? <Button rounded clear inline onClick={() => { cancelPendingOpen(); setFrom(null); setTo(null); setClientUserIds([]); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
       </div>
     </div>
     {from && to && from > to ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {cloud?.syncStatus === 'offline' ? <Text variant="caption">Нет соединения. Показаны обсуждения на устройстве.</Text>
       : cloud?.syncStatus === 'pending' ? <Text variant="caption">Синхронизируем обсуждения…</Text> : null}
     {cloud?.syncStatus === 'error' ? <Text variant="caption" role="status">Синхронизация прервана. Локальные обсуждения доступны.</Text> : null}
-    {openError ? <Text role="alert">{openError}</Text> : null}
+    {notificationMessageId && !opened && !openError ? <Text variant="footnote" role="status">Загружаем обсуждение по ссылке…</Text> : null}
+    {openError ? <div className="stack"><Text role="alert">{openError}</Text>
+      {notificationMessageId && !opened ? <Button rounded tonal onClick={retryNotification}><Text>Повторить</Text></Button> : null}
+    </div> : null}
     {inbox.error ? <div className="stack"><Text role="alert">{inbox.error}</Text>
-      <Button rounded tonal onClick={inbox.retry}><Text>Повторить</Text></Button></div> : null}
+      <Button rounded tonal onClick={() => { cancelPendingOpen(); inbox.retry(); }}><Text>Повторить</Text></Button></div> : null}
     {cloud?.status === 'error' && !rows.length ? <Text role="status">{cloud.error}</Text> : null}
     {inbox.loading && !rows.length ? <Text>Загружаем обсуждения…</Text>
       : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
     <DiscussionInboxList rows={rows.slice(0, limit)} onOpen={row => { void openChat(row); }}
-      onEntity={row => { ++request.current; setOpened({ row, kind: 'entity', parent }); }} />
-    {rows.length > limit ? <Button rounded tonal onClick={() => setLimit(value => value + 50)}><Text>Показать ещё</Text></Button> : null}
+      onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
+    {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}
     {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}
       clients={clients} loading={cloud?.status === 'loading'} selected={clientUserIds}
       onClose={closeClientFilter} onApply={ids => {
-        ++request.current; setClientUserIds(ids.filter(id => clients.some(contact => contact.userId === id)));
+        cancelPendingOpen(); setClientUserIds(ids.filter(id => clients.some(contact => contact.userId === id)));
         setLimit(50); closeClientFilter();
       }} /> : null}
     <DatePicker opened={picker !== null} value={(picker?.side === 'to' ? to : from) ?? discussionLocalDate(new Date()) as LocalDate}
