@@ -87,6 +87,13 @@ describe('CoachInviteDialog', () => {
     const writeText = vi.fn().mockRejectedValue(new Error('NotAllowedError'));
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const execCommand = stubLegacyCopy(true);
+    execCommand.mockImplementation(() => {
+      const selected = document.activeElement as HTMLTextAreaElement;
+      expect(selected.value).toBe(URL);
+      expect(selected.selectionStart).toBe(0);
+      expect(selected.selectionEnd).toBe(URL.length);
+      return true;
+    });
     const onClose = vi.fn();
     render(<CoachInviteDialog url={URL} onClose={onClose} />);
 
@@ -95,6 +102,32 @@ describe('CoachInviteDialog', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     expect(writeText).toHaveBeenCalledExactlyOnceWith(URL);
     expect(execCommand).toHaveBeenCalledExactlyOnceWith('copy');
+    expect(document.querySelector('textarea[aria-hidden="true"]')).toBeNull();
+  });
+
+  it('uses the selected-text fallback when Clipboard API is not available', async () => {
+    vi.stubGlobal('navigator', {});
+    const execCommand = stubLegacyCopy(true);
+    const onClose = vi.fn();
+    render(<CoachInviteDialog url={URL} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Копировать ссылку' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(execCommand).toHaveBeenCalledExactlyOnceWith('copy');
+  });
+
+  it('keeps the URL available when legacy copying throws', async () => {
+    vi.stubGlobal('navigator', {});
+    const execCommand = stubLegacyCopy(false);
+    execCommand.mockImplementation(() => { throw new Error('Copy denied'); });
+    const onClose = vi.fn();
+    render(<CoachInviteDialog url={URL} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Копировать ссылку' }));
+
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Ссылка-приглашение' })).toBeTruthy());
+    expect(onClose).not.toHaveBeenCalled();
     expect(document.querySelector('textarea[aria-hidden="true"]')).toBeNull();
   });
 
