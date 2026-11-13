@@ -20,7 +20,7 @@ Cloudflare Cron runs every five minutes, reads only published scheduled occurren
 
 Shared relationship occurrences require the existing deterministic realm and exactly two accepted, server-provisioned members, using the same pure relationship validation as the client projections. Failed lookups or sends for one recipient do not prevent attempting other recipients; the tick reports a sanitized aggregate partial-failure status. Personal occurrences use the athlete's private realm and the single registered Coach/Client role from existing `/api/me` D1 user-role data. Cloud occurrence identity and publication state are re-read immediately before delivery.
 
-Each recipient preference is independently read from its personal `flexValues` record. Switching a toggle affects future cloud-visible decisions, without waiting for a Worker command. Telegram sends via Bot API to the user's own private chat. A user must first press Start in `@mezfit_bot`; the bot cannot initiate a chat uninvited. The button opens the existing Mini App, not an unsupported occurrence-specific route.
+Each recipient preference is independently read from its personal `flexValues` record. Switching a toggle affects future cloud-visible decisions, without waiting for a Worker command. Telegram sends via Bot API to the user's own private chat. A user must first press Start in `@mezfit_bot`; the bot cannot initiate a chat uninvited. Coach reminders use a Rich Message in the client topic (or «Общее» for a personal workout), with an embedded button opening the scheduled occurrence. Client reminders retain their existing delivery. See [Telegram coach notifications](#telegram-coach-notifications).
 
 ### Delivery journal
 
@@ -34,6 +34,17 @@ D1 table `workout_reminder_delivery` holds **only** occurrence ID, recipient ID,
 4. Verify the bot token, actual private-chat activation, one athlete self-workout, one independent assigned workout and one coached workout, for each on/off state; separately exercise schedule change, cancellation, unstarted bot and repeated Cron ticks.
 5. If the service credentials are missing or the cloud is unavailable, delivery fails closed. Do not pretend the toggles were synchronized or Telegram messages were delivered. Avoid logging credentials, token URLs, message contents or personal records.
 
-This MVP is intentionally small: no communication Topics, chat replies, webhook-based bot activation state, configurable offsets, delivery receipts UI or guarantee of catch-up after prolonged outages. The settings surface links to the bot's Start chat but cannot prove whether that action was completed.
+This MVP is intentionally small: no chat replies, webhook-based bot activation state, configurable offsets, delivery receipts UI or guarantee of catch-up after prolonged outages. The settings surface links to the bot's Start chat but cannot prove whether that action was completed.
 
-**Capacity and retention limitations:** this pre-MVP implementation scans the current published scheduled occurrence set and fails closed when it exceeds 25,000 rows. Each due relationship and recipient requires additional authorized REST reads; a future scale-out must respect Dexie Cloud API rate limits without creating a shadow business database. The technical D1 delivery journal does not yet enforce an automatic data-retention period; that and high-volume delivery scheduling need a focused follow-up before broad production rollout. Future Telegram Topics must use per-relationship routing; the current plain private-chat reminder is not a chat feature.
+**Capacity and retention limitations:** this pre-MVP implementation scans the current published scheduled occurrence set and fails closed when it exceeds 25,000 rows. Each due relationship and recipient requires additional authorized REST reads; a future scale-out must respect Dexie Cloud API rate limits without creating a shadow business database. The technical D1 delivery journal does not yet enforce an automatic data-retention period; that and high-volume delivery scheduling need a focused follow-up before broad production rollout.
+
+
+## Telegram coach notifications
+
+The production switch is the Worker secret `DEXIE_DISCUSSION_WEBHOOK_SECRET`. With the secret absent, workout reminders use the previous Bot API message. Before setting it, enable private-chat topics for the bot and verify `getMe.has_topics_enabled`. Apply D1 migration `0031_telegram_coach_notifications.sql` through the normal deploy workflow.
+
+In Dexie Cloud Manager, add a webhook pointing to `/api/webhooks/dexie-discussions` on the Worker host with the same secret. Select the `discussionMessages` table and the upsert/update operations. Publication of a saved draft can arrive as a realm update; ordinary text edits are ignored. Avoid logging webhook bodies, which can contain message text.
+
+The Worker accepts webhook batches into D1 and dispatches them from the existing five-minute Cron, with up to twelve attempts per event. It checks cloud publication, membership, attachment readiness and the coach's personal preferences before delivery. The D1 tables contain delivery metadata and Telegram topic routing only. For topic recreation and sends, an interrupted Telegram request can leave an ambiguous outcome. Telegram offers no exactly-once guarantee for these operations.
+
+Before rollout, validate a fresh private bot chat, multiple clients (including duplicate display names), a renamed client, a personal workout, and deep links on Android/iOS. Test a text message, a finished media upload and an offline send that syncs later.

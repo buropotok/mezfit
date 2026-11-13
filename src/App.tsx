@@ -1,3 +1,4 @@
+import { parseNotificationStartParam } from '../shared/telegram-notification-link';
 import { DiscussionsProvider } from './discussions/DiscussionsProvider';
 import { DiscussionsPage } from './discussions/DiscussionsPage';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useState, type ComponentProps } from 'react';
@@ -221,6 +222,9 @@ function ClientCoachAwareNavigationShell(props: ComponentProps<typeof UserProfil
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
   const [dismissedInviteParam, setDismissedInviteParam] = useState<string | null>(null);
+  const [notificationOccurrenceId, setNotificationOccurrenceId] = useState<string | null>(null);
+  const [notificationMessageId, setNotificationMessageId] = useState<string | null>(null);
+  const clearNotificationMessage = useCallback(() => setNotificationMessageId(null), []);
   const [coachDestination, setCoachDestination] = useState<AppDestination>('today');
   const [clientDestination, setClientDestination] = useState<AppDestination>('today');
   const [initialScreenDiagnosticsOpen, setInitialScreenDiagnosticsOpen] = useState(false);
@@ -294,6 +298,14 @@ export function App() {
 
     prepareTelegramWebApp(webApp);
     const startParam = getTelegramLaunchStartParam(webApp);
+
+    const notification = parseNotificationStartParam(startParam);
+    if (notification?.kind === 'discussion') {
+      setNotificationMessageId(notification.id);
+      setCoachDestination('discussions');
+    } else if (notification?.kind === 'workout') {
+      setNotificationOccurrenceId(notification.id);
+    }
 
     let cancelled = false;
     if (isScreenDiagnosticsStartParam(startParam)) {
@@ -416,6 +428,8 @@ export function App() {
   const destination = state.activeRole === 'coach' ? coachDestination : clientDestination;
   const changeDestination = (next: AppDestination) => {
     if (next !== 'clients') setRequestedAvatarClient(null);
+    if (next !== 'discussions') setNotificationMessageId(null);
+    if (next !== 'today') setNotificationOccurrenceId(null);
     setCompletionNavigation(null);
     setNavigationContext(null);
     if (state.activeRole === 'coach') {
@@ -448,6 +462,8 @@ export function App() {
     setCompletionNavigation(null);
     setNavigationContext(null);
     setRequestedScheduleDraftId(null);
+    setNotificationOccurrenceId(null);
+    setNotificationMessageId(null);
     dispatch({ type: 'switch-role', role });
   };
   const shellContext = destination === 'settings'
@@ -480,6 +496,8 @@ export function App() {
         >
         <SchedulePlanningContext.Provider value={{
           requestedDraftId: requestedScheduleDraftId,
+          notificationOccurrenceId: state.activeRole === 'coach' ? notificationOccurrenceId : null,
+          clearNotificationOccurrence: () => setNotificationOccurrenceId(null),
           requestedClientUserId: requestedScheduleClientId,
           viewResetKey: scheduleViewResetKey,
           openDraft: (id, clientUserId = null) => { setRequestedScheduleClientId(clientUserId); setRequestedScheduleDraftId(id); changeDestination('today'); },
@@ -535,6 +553,8 @@ export function App() {
             initData={state.initData}
             destination={coachDestination}
             requestedAvatarClient={requestedAvatarClient}
+            notificationMessageId={notificationMessageId}
+            onNotificationOpened={clearNotificationMessage}
             onNavigationContextChange={handleNavigationContextChange}
           />
         ) : (

@@ -48,6 +48,18 @@ export async function entityDiscussionId(scope: DiscussionScope, anchor: Discuss
 function fail(code: string): never { throw new Error(code); }
 const tables = ['discussionThreads', 'discussionMessages', 'discussionReadStates', 'realms', 'members'];
 
+/** A Telegram target is a navigation hint. Resolve it within the current account's approved discussion scope. */
+export async function readDiscussionNotificationThread(db: MezfitCloudDatabase, actor: string, messageId: string,
+  allowedRealms: ReadonlySet<string>): Promise<DiscussionThread | null> {
+  const message = await db.discussionMessages.get(messageId);
+  if (!isDiscussionMessage(message) || message.draftForRealmId || !allowedRealms.has(message.realmId)) return null;
+  const thread = await db.discussionThreads.get(message.threadId);
+  if (!thread || thread.realmId !== message.realmId || thread.coachClientId !== message.realmId) return null;
+  const repository = new DiscussionRepository(db, actor, thread);
+  await repository.getMessage(thread.id, messageId);
+  return thread;
+}
+
 /** Account lifecycle owns db. No network, PLAN mutation or push in normal operations. */
 export class DiscussionRepository {
   readonly sync: DiscussionSync;
