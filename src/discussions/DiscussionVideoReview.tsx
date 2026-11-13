@@ -19,6 +19,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
   retakeStyle: CSSProperties;
 }) {
   const video = useRef<HTMLVideoElement>(null);
+  const playAfterSeek = useRef(false);
   const exportRequest = useRef<AbortController | null>(null);
   const submitted = useRef(false);
   const [url, setUrl] = useState<string>();
@@ -49,6 +50,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
 
   const seek = (time: number) => {
     if (!video.current) return;
+    playAfterSeek.current = false;
     video.current.pause();
     video.current.currentTime = time;
     setCursor(time);
@@ -82,6 +84,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
 
   const duration = info?.duration ?? 0;
   const trimReady = info && duration > MIN_VIDEO_TRIM_SECONDS;
+  const trimmedPreview = Boolean(trimReady && (range.start > 0 || range.end < duration));
   const timelineStyle = {
     '--trim-start': `${duration ? range.start / duration * 100 : 0}%`,
     '--trim-end': `${duration ? range.end / duration * 100 : 100}%`,
@@ -92,16 +95,33 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
     <div className="discussion-video-review">
       <video ref={video} src={url} controls controlsList="nofullscreen" playsInline aria-label="Предпросмотр записи"
         onPlay={event => {
+          if (!trimmedPreview) return;
           const player = event.currentTarget;
-          if (trimReady && (player.currentTime < range.start || player.currentTime >= range.end)) player.currentTime = range.start;
+          const outside = player.currentTime < range.start || player.currentTime >= range.end;
+          if (!outside && !player.seeking) return;
+          // Native Play can arrive while the previous frame is still on screen.
+          player.pause();
+          playAfterSeek.current = true;
+          if (outside) player.currentTime = range.start;
         }}
+        onSeeked={event => {
+          const player = event.currentTarget;
+          if (!playAfterSeek.current || player.seeking) return;
+          playAfterSeek.current = false;
+          // If the WebView rejects the resume, the native Play button remains usable.
+          if (player.currentTime >= range.start && player.currentTime < range.end) {
+            void player.play().catch(() => {});
+          }
+        }}
+        onError={() => { playAfterSeek.current = false; }}
         onTimeUpdate={event => {
           const player = event.currentTarget;
-          if (trimReady && !player.paused) {
-            if (player.currentTime < range.start) player.currentTime = range.start;
-            if (player.currentTime >= range.end) {
-              player.pause();
-              player.currentTime = range.end;
+          if (trimmedPreview && !player.paused && !player.seeking) {
+            if (player.currentTime < range.start) {
+              player.currentTime = range.start;
+            } else if (player.currentTime >= range.end) {
+              seek(range.end);
+              return;
             }
           }
           setCursor(player.currentTime);
