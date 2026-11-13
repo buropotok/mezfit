@@ -43,7 +43,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   const circle = useRef<HTMLDivElement>(null);
   const [compactPlacement, setCompactPlacement] = useState<{
     top: number; left: number; right: number; bottom: number;
-    '--note-left': string; '--note-top': string; '--note-width': string;
+    '--note-left': string; '--note-top': string; '--note-width': string; '--note-expanded-height': string;
   }>();
   const [expanded, setExpanded] = useState(review);
   const [error, setError] = useState('');
@@ -64,13 +64,15 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
       '--note-left': `${(anchor?.left ?? viewport.left) - viewport.left}px`,
       '--note-top': `${(anchor?.top ?? viewport.top) - viewport.top}px`,
       '--note-width': `${anchor?.width ?? 0}px`,
+      '--note-expanded-height': `${Math.max(0, host.bottom - viewport.top)}px`,
     };
     setCompactPlacement(previous => previous
       && previous.top === next.top && previous.left === next.left
       && previous.right === next.right && previous.bottom === next.bottom
       && previous['--note-left'] === next['--note-left']
       && previous['--note-top'] === next['--note-top']
-      && previous['--note-width'] === next['--note-width'] ? previous : next);
+      && previous['--note-width'] === next['--note-width']
+      && previous['--note-expanded-height'] === next['--note-expanded-height'] ? previous : next);
   });
 
   useEffect(() => {

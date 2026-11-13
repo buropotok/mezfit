@@ -565,6 +565,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
+  touch-action: manipulation;
 }
 
 .discussion-video-note-playback {
@@ -581,7 +582,6 @@
 
 .discussion-video-note__layer[data-expanded] {
   z-index: 3;
-  container-type: size;
 }
 
 .discussion-video-note__position {
@@ -603,8 +603,7 @@
 }
 
 .discussion-video-note__layer[data-expanded] .discussion-video-note__circle {
-  width: 100%;
-  width: min(100%, 100cqh);
+  width: min(100%, var(--note-expanded-height));
   pointer-events: auto;
 }
 

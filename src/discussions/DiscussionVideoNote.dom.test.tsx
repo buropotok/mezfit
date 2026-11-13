@@ -133,4 +133,5 @@ it('repositions and clips the compact image when the chat scrolls or resizes', (
   expect(layer.style.right).toBe('52px');
   expect(layer.style.getPropertyValue('--note-top')).toBe('-20px');
   expect(layer.style.getPropertyValue('--note-width')).toBe('146px');
+  expect(layer.style.getPropertyValue('--note-expanded-height')).toBe('360px');
 });
