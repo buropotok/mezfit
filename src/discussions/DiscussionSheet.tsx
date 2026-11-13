@@ -37,6 +37,7 @@ import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './Dis
 import { startPressScale } from '../ui/PressScale';
 import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
 import { RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
+import { shouldShowWebViewUpdate, VideoWebViewUpdatePopover } from '../video-note/VideoWebViewUpdatePopover';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -133,6 +134,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   }, [takeRecordedVideo, repository.supportsMedia, draft.ready, state.title, state.error, contextUnavailable]);
   const voice = useDiscussionVoice(media.chooseVoice, () => discardVoice());
   const videoNote = useDiscussionVideoNote(media.sendVideoNote, () => discardVoice());
+  const showWebViewUpdate = shouldShowWebViewUpdate(videoNote.unsupportedFormat);
   const [videoPlaybackHost, setVideoPlaybackHost] = useState<HTMLDivElement | null>(null);
   const [videoReviewHost, setVideoReviewHost] = useState<HTMLDivElement | null>(null);
   const recordingVoice = voice.status === 'recording';
@@ -341,6 +343,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     ++viewerRequest.current;
     if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
+    if (showWebViewUpdate) { videoNote.dismissUnsupportedFormat(); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
     if (annotation) {
       if (annotationExit !== 'preparing') setAnnotationExit(annotationExit === 'confirming' ? 'editing' : 'confirming');
@@ -845,7 +848,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <Button rounded onClick={() => setReadPosition(value => value + 1)}>Повторить отметку прочтения</Button></>}
       {error && <Text variant="footnote" role="alert">{error}</Text>}
       {voice.error && <Text variant="footnote" role="alert">{voice.error}</Text>}
-      {videoNote.error && <Text variant="footnote" role="alert">{videoNote.error}</Text>}
+      {videoNote.error && !showWebViewUpdate && <Text variant="footnote" role="alert">{videoNote.error}</Text>}
       {videoNote.status === 'requesting' && <Text variant="footnote" role="status">Разрешите камеру и микрофон, затем удерживайте кнопку кружка</Text>}
       {videoNote.permissionReady && actionMode === 'camera' && <Text variant="footnote" role="status">Камера доступна. Удерживайте кнопку для записи</Text>}
       {voice.status === 'requesting' && <Text variant="footnote" role="status">Разрешите доступ к микрофону, затем удерживайте кнопку записи</Text>}
@@ -974,6 +977,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         </IconButton>
       </GlassSurface>
     </div>
+    {showWebViewUpdate && <VideoWebViewUpdatePopover portal onClose={videoNote.dismissUnsupportedFormat} />}
     {savingVideo && <DiscussionVideoSaveDialog target={savingVideo} onClose={() => setSavingVideo(null)} onStatus={setVideoSaveNotice} />}
     {videoSaveNotice && <Toast opened position="center" role="status"><Text variant="body">{videoSaveNotice}</Text></Toast>}
     <MezfitDialog opened={Boolean(deleting)} aria-hidden={deleting ? undefined : true} inert={deleting ? undefined : true}
