@@ -125,6 +125,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
         thread => {
           if (cancelled || generation !== request.current || !thread) return;
           ++request.current;
+          subscription?.unsubscribe();
           window.clearTimeout(pendingTimer);
           setOpenError('');
           setClosedNotificationChat(false);
