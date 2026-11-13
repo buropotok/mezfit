@@ -123,7 +123,10 @@ it('renders published video-note metadata in a circular bubble, not a rectangula
   const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
     threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
     parentNavigation={null} onClose={() => {}} onNavigationContextChange={() => {}} /></KonstaProvider>);
-  await screen.findByRole('button', { name: 'Открыть видеокружок' });
-  expect(view.container.querySelector('[data-message-id="circle-message"] .discussion-video-note__circle')).toBeTruthy();
+  const preview = await screen.findByRole('button', { name: 'Открыть видеокружок' });
+  const row = view.container.querySelector('[data-message-id="circle-message"]');
+  expect(row?.contains(preview)).toBe(true);
+  expect(view.container.querySelector('.discussion-video-note-playback .discussion-video-note__circle video'))
+    .toBe(screen.getByLabelText('Записанный видеокружок'));
   expect(screen.queryByRole('link', { name: 'Открыть видео' })).toBeNull();
 });

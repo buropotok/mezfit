@@ -562,17 +562,56 @@
 }
 
 .discussion-video-note__inline {
+  position: relative;
   width: 100%;
   aspect-ratio: 1;
+  touch-action: manipulation;
 }
 
-.discussion-video-note-playback > div {
-  width: 100%;
+.discussion-video-note-playback {
+  position: absolute;
+  inset: 0 12px auto;
+  pointer-events: none;
+}
+
+.discussion-video-note__layer {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.discussion-video-note__layer[data-expanded] {
+  z-index: 3;
+}
+
+.discussion-video-note__position {
+  position: absolute;
+  left: var(--note-left);
+  top: var(--note-top);
+  width: var(--note-width);
+}
+
+.discussion-video-note__position > .discussion-video-note__menu {
   pointer-events: auto;
 }
 
-.discussion-video-note-live .discussion-video-note-capture,
-.discussion-video-note-live .discussion-video-note__circle--expanded {
+.discussion-video-note__position > .discussion-video-note__circle {
+  width: var(--note-width);
+}
+
+.discussion-video-note__layer[data-expanded] .discussion-video-note__position {
+  inset: auto 0 0;
+  width: 100%;
+  display: grid;
+  justify-items: center;
+}
+
+.discussion-video-note__layer[data-expanded] .discussion-video-note__circle {
+  width: min(100%, var(--note-expanded-height));
+  pointer-events: auto;
+}
+
+.discussion-video-note-live .discussion-video-note-capture {
   width: 100%;
   max-width: none;
 }

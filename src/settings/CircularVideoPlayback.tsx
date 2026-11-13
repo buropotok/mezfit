@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { VideoNoteRing, VIDEO_NOTE_RING_RADIUS } from './VideoNoteRing';
 
 function boundedFraction(value: number): number {
@@ -24,6 +25,8 @@ interface CircularVideoPlaybackProps {
   fallbackDuration: number;
   onError: (message: string) => void;
   mode?: VideoNotePlaybackMode;
+  /** Keep the compact tap target in its scroll surface when the video is painted in a portal. */
+  previewControlHost?: HTMLElement | null;
   onExpand?: () => void;
   onReturnToPreview?: () => void;
 }
@@ -34,6 +37,7 @@ export function CircularVideoPlayback({
   fallbackDuration,
   onError,
   mode = 'play',
+  previewControlHost,
   onExpand,
   onReturnToPreview,
 }: CircularVideoPlaybackProps) {
@@ -230,6 +234,19 @@ export function CircularVideoPlayback({
     }
   };
 
+  const tapControl = (
+    <button
+      type="button"
+      className="video-note-playback__tap"
+      onClick={toggle}
+      aria-label={mode === 'preview' ? 'Открыть видеокружок' : playing ? 'Пауза' : 'Воспроизвести'}
+    >
+      {mode !== 'preview' && !playing && !seeking ? (
+        <span className="video-note-playback__play-glyph" aria-hidden="true" />
+      ) : null}
+    </button>
+  );
+
   return (
     <div className={`video-note-playback${mode === 'preview' ? ' video-note-playback--preview' : playing ? '' : ' video-note-playback--paused'}`}>
       <video
@@ -273,16 +290,9 @@ export function CircularVideoPlayback({
         onError={() => onError('Не удалось воспроизвести записанное видео на этом устройстве.')}
         aria-label="Записанный видеокружок"
       />
-      <button
-        type="button"
-        className="video-note-playback__tap"
-        onClick={toggle}
-        aria-label={mode === 'preview' ? 'Открыть видеокружок' : playing ? 'Пауза' : 'Воспроизвести'}
-      >
-        {mode !== 'preview' && !playing && !seeking ? (
-          <span className="video-note-playback__play-glyph" aria-hidden="true" />
-        ) : null}
-      </button>
+      {mode === 'preview' && previewControlHost !== undefined
+        ? previewControlHost && createPortal(tapControl, previewControlHost)
+        : tapControl}
       {mode === 'play' ? <svg
         ref={railRef}
         className="video-note-playback__timeline"

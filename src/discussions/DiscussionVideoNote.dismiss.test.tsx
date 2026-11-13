@@ -24,7 +24,8 @@ it.each([true, false])('collapses an expanded note after outside contact while p
     expect(screen.getByRole('slider', { name: 'Перемотка видеокружка' })).toBeTruthy();
     fireEvent.pointerDown(document.body);
     expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
-    expect(host.contains(video)).toBe(false);
+    expect(screen.queryByRole('slider', { name: 'Перемотка видеокружка' })).toBeNull();
+    expect(host.contains(video)).toBe(true);
     expect(screen.getByLabelText('Записанный видеокружок')).toBe(video);
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
   } finally {
