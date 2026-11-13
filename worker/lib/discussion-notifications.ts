@@ -1,7 +1,7 @@
 import { discussionAnchorKey, discussionId, discussionRecord as record, isDiscussionAnchor } from '../../shared/discussion-anchor';
 import { validatedTelegramId } from '../../shared/approved-relationship';
 import { sendCoachTelegram } from './coach-telegram';
-import { cloudList, cloudRead, cloudToken, enabledByPreference, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
+import { cloudList, cloudRead, cloudToken, enabledByPreference, readNotificationClientName, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 type DiscussionNotificationEnv = WorkoutReminderEnv;
 
@@ -87,9 +87,12 @@ async function deliver(env: DiscussionNotificationEnv, event: PendingDiscussion,
     : kind === 'photo' ? 'Новое фото в обсуждении'
     : kind === 'voice' ? 'Голосовое сообщение в обсуждении'
     : kind === 'video-note' ? 'Видеосообщение в обсуждении' : 'Новое сообщение в обсуждении';
+  const clientName = await readNotificationClientName(
+    event.realm_id, message.authorUserId, relationship.clientName, token, fetchImpl,
+  );
   return sendCoachTelegram(env, {
     coachUserId: coach.userId,
-    client: { userId: message.authorUserId, name: relationship.clientName },
+    client: { userId: message.authorUserId, name: clientName },
     title,
     context: typeof thread.derivedTitleSnapshot === 'string' ? thread.derivedTitleSnapshot.slice(0, 200) : undefined,
     button: 'Открыть обсуждение',
