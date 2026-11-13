@@ -3,9 +3,8 @@ import { flushSync } from 'react-dom';
 import { Button as KonstaButton } from 'konsta/react';
 import { DEFAULT_WEIGHT_REPS_PICKER_MODE, type WeightRepsPickerMode } from '../../../shared/weight-reps-picker-mode';
 import { Icon } from '../Icon';
-import { Text } from '../primitives';
 import { TextInput } from '../FormControls';
-import { IconButton } from '../primitives';
+import { IconButton, Text } from '../primitives';
 import {
   ThreeColumnPicker,
   type ThreeColumnPickerColumn,
@@ -160,7 +159,7 @@ function WeightRepsPickerSession({
   const changeDigits = (digits: string) => {
     // type=text + inputMode=numeric keeps a native Backspace on both platforms;
     // inputMode is a keyboard hint, not a validation boundary.
-    if (!/^\\d*$/.test(digits)) return;
+    if (!/^\d*$/.test(digits)) return;
     updateActiveDraft(() => ({ digits }));
   };
 
@@ -234,7 +233,7 @@ function WeightRepsPickerSession({
   };
 
   return (
-      <ThreeColumnPicker
+    <ThreeColumnPicker
         key={mode}
         geometry={mode === 'wheels' ? 'compact-time' : 'standard'}
         opened={opened}
@@ -307,6 +306,6 @@ function WeightRepsPickerSession({
             </div>
           </div>
         )}
-      />
+    />
   );
 }
