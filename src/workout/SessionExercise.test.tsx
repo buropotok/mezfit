@@ -419,9 +419,9 @@ describe('SessionExercise and SetEntry boundary', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
     const picker = screen.getByRole('dialog', { name: 'Повторения и вес' });
     fireEvent.click(within(picker).getByRole('button', { name: 'Изменить повторения' }));
-    const keypad = screen.getByRole('dialog', { name: 'Ввод повторений' });
-    fireEvent.click(within(keypad).getByRole('button', { name: 'Цифра 9' }));
-    fireEvent.click(within(keypad).getByRole('button', { name: 'Сохранить' }));
+    const input = within(picker).getByRole('textbox', { name: 'Ввести повторения' });
+    fireEvent.change(input, { target: { value: '9' } });
+    fireEvent.click(within(picker).getByRole('button', { name: 'Сохранить' }));
     expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
       .toContain('85 кг × 9');
@@ -556,10 +556,11 @@ describe('planned session with an empty projected FACT object', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Открыть подход 2' }));
     fireEvent.click(screen.getByRole('button', { name: 'Изменить вес и повторения' }));
     fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Цифра 9' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Ввести повторения' }), {
+      target: { value: '9' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('Введите факт');
-    expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть подход' }));
     expect(screen.queryByRole('dialog', { name: 'Подход 2' })).toBeNull();
