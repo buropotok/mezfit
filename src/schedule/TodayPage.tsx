@@ -211,6 +211,20 @@ export function TodayPage({
     planning.clearDraft();
   }, [planning?.requestedDraftId]);
 
+  const notificationOccurrenceId = planning?.notificationOccurrenceId;
+  useEffect(() => {
+    if (!notificationOccurrenceId || !cloud || loading) return;
+    const row = occurrences.find(item => item.id === notificationOccurrenceId && item.entryKind !== 'personal_event');
+    if (row) {
+      setDate(datePart(row.startsAtUtc));
+      setOpenedDraftId('draft:' + row.id);
+      planning?.clearNotificationOccurrence?.();
+    } else if (cloud.syncStatus === 'synced') {
+      setError('Тренировка из уведомления недоступна в расписании.');
+      planning?.clearNotificationOccurrence?.();
+    }
+  }, [notificationOccurrenceId, loading, occurrences, cloud?.actorUserId, cloud?.syncStatus]);
+
   const selectedPersonalEvent = occurrences.find(row => row.id === personalEventId && row.entryKind === 'personal_event') ?? null;
   useEffect(() => {
     if (!loading && personalEventId && !selectedPersonalEvent) setPersonalEventId(null);

@@ -28,6 +28,7 @@ export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coord
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 import { sendWorkoutReminders } from './lib/workout-reminders';
+import { receiveDiscussionNotifications, sendDiscussionNotifications } from './lib/discussion-notifications';
 import { resetTestCloudRelationship } from './lib/test-relationship-reset';
 import { resetLegacyTestRelationship } from './lib/test-legacy-relationship-reset';
 
@@ -676,7 +677,7 @@ export default {
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     try {
-      return await handleApi(request, env);
+      return (await receiveDiscussionNotifications(request, env)) ?? await handleApi(request, env);
     } catch (error) {
       if (error instanceof TelegramAuthError) {
         return json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
@@ -698,11 +699,15 @@ export default {
   async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
     try {
       // Real delivery time, not the nominal Cron timestamp, prevents stale reminders after delays.
-      await sendWorkoutReminders(env, Date.now());
+      const results = await Promise.allSettled([
+        sendWorkoutReminders(env, Date.now()),
+        sendDiscussionNotifications(env),
+      ]);
+      if (results.some(result => result.status === 'rejected')) throw new Error('NOTIFICATIONS_TICK_FAILED');
     } catch {
       // No tokens, personal data, cloud payloads or raw upstream errors in cron logs.
-      console.error('WORKOUT_REMINDERS_TICK_FAILED');
-      throw new Error('WORKOUT_REMINDERS_TICK_FAILED');
+      console.error('NOTIFICATIONS_TICK_FAILED');
+      throw new Error('NOTIFICATIONS_TICK_FAILED');
     }
   },
 } satisfies ExportedHandler<Env>;

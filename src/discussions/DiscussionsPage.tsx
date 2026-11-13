@@ -4,7 +4,8 @@ import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
-import { DiscussionRepository } from '../data/cloud/discussions';
+import { liveQuery } from 'dexie';
+import { DiscussionRepository, readDiscussionNotificationThread } from '../data/cloud/discussions';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Badge, DatePicker, Icon, List, ListItem, Text, type LocalDate } from '../ui';
 import { DiscussionSheet } from './DiscussionSheet';
@@ -48,8 +49,9 @@ export function DiscussionInboxList({ rows, onOpen, onEntity }: {
   </section>)}</>;
 }
 
-export function DiscussionsPage({ role, relationshipId, onNavigationContextChange }: {
+export function DiscussionsPage({ role, relationshipId, notificationMessageId, onNotificationOpened, onNavigationContextChange }: {
   role: 'coach' | 'client'; relationshipId?: string;
+  notificationMessageId?: string | null; onNotificationOpened?: () => void;
   onNavigationContextChange: (value: NavigationContext | null) => void;
 }) {
   const cloud = useCloudConnections();
@@ -65,22 +67,77 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
   const [limit, setLimit] = useState(50);
   const [openError, setOpenError] = useState('');
   const request = useRef(0);
-  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity'; parent: NavigationContext | null } | null>(null);
+  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string } | null>(null);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
-  const current = activeRow ? opened : null;
+  const notificationContact = opened?.kind === 'notification' ? cloud?.clients.find(
+    contact => contact.relationshipId === opened.row.thread.realmId,
+  ) : undefined;
+  const current = (opened?.kind === 'notification' ? notificationContact : activeRow) ? opened : null;
+  const [closedNotificationChat, setClosedNotificationChat] = useState(false);
+  const [notificationEntityContext, setNotificationEntityContext] = useState<NavigationContext | null>(null);
+  const [notificationChatContext, setNotificationChatContext] = useState<NavigationContext | null>(null);
+  const activeNotification = current?.kind === 'notification';
+  useEffect(() => {
+    if (!activeNotification) return;
+    onNavigationContextChange((!closedNotificationChat && notificationChatContext) || notificationEntityContext);
+  }, [activeNotification, closedNotificationChat, notificationChatContext, notificationEntityContext, onNavigationContextChange]);
+  useEffect(() => {
+    if (activeNotification) return () => onNavigationContextChange(null);
+  }, [activeNotification, onNavigationContextChange]);
   const openRef = useRef(false);
   openRef.current = Boolean(current);
   useEffect(() => () => { openRef.current = false; ++request.current; }, []);
   const close = useCallback(() => { ++request.current; openRef.current = false; setOpened(null); }, []);
   const closePicker = useCallback(() => setPicker(null), []);
   const repository = useMemo(() => {
-    if (!cloud || current?.kind !== 'chat') return null;
+    if (!cloud || !current || current.kind === 'entity') return null;
     try { return new DiscussionRepository(cloud.db, cloud.actorUserId, current.row.thread); }
     catch { return null; }
   }, [cloud?.db, cloud?.actorUserId, current]);
+  const notificationRealmsKey = JSON.stringify((cloud?.clients ?? []).map(contact => contact.relationshipId).sort());
+  const db = cloud?.db;
+  const actorId = cloud?.actorUserId;
+  const canResolveNotification = cloud?.status === 'ready';
+  const notificationSynced = cloud?.syncStatus === 'synced';
+  useEffect(() => {
+    if (!notificationMessageId || !db || !actorId || !canResolveNotification) return;
+    const generation = ++request.current;
+    const allowed = new Set<string>(JSON.parse(notificationRealmsKey));
+    const subscription = liveQuery(() => readDiscussionNotificationThread(db, actorId, notificationMessageId, allowed))
+      .subscribe({
+        next(thread) {
+          if (generation !== request.current) return;
+          if (!thread) {
+            if (notificationSynced) {
+              setOpenError('Сообщение удалено или недоступно.');
+              onNotificationOpened?.();
+            }
+            return;
+          }
+          ++request.current;
+          setOpenError('');
+          setClosedNotificationChat(false);
+          setNotificationChatContext(null);
+          setNotificationEntityContext(null);
+          setOpened({ row: { thread, contact: null, latest: null, unread: 0, hasAttachments: false },
+            kind: 'notification', parent, messageId: notificationMessageId });
+          onNotificationOpened?.();
+        },
+        error() {
+          if (generation !== request.current) return;
+          setOpenError('Не удалось открыть обсуждение.');
+          onNotificationOpened?.();
+        },
+      });
+    return () => subscription.unsubscribe();
+  }, [notificationMessageId, db, actorId, notificationRealmsKey, canResolveNotification,
+    notificationSynced, onNotificationOpened, parent]);
+  const closeNotificationChat = useCallback(() => setClosedNotificationChat(true), []);
   const chatParent = useMemo<NavigationContext | null>(() => current
-    ? { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot, onBack: close } : null, [current, close]);
+    ? { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot,
+      onBack: current.kind === 'notification' ? closeNotificationChat : close } : null,
+  [current, close, closeNotificationChat]);
   const chatNavigation = useCallback((value: NavigationContext | null) => {
     onNavigationContextChange(openRef.current ? value : null);
   }, [onNavigationContextChange]);
@@ -125,6 +182,17 @@ export function DiscussionsPage({ role, relationshipId, onNavigationContextChang
     const date = discussionLocalDate(row.latest.createdAt);
     return (!from || date >= from) && (!to || date <= to);
   });
+  if (current?.kind === 'notification') return <>
+    <DiscussionEntity thread={current.row.thread} role={role}
+      onBack={close} onNavigationContextChange={setNotificationEntityContext} />
+    {!closedNotificationChat && repository && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
+      <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
+        focusMessageId={current.messageId} onClose={closeNotificationChat} onBack={closeNotificationChat}
+        contextLabel={current.row.thread.derivedTitleSnapshot}
+        parentNavigation={chatParent} onNavigationContextChange={setNotificationChatContext}
+        resolveAuthor={id => ({ name: id === actorId ? 'Вы' : (notificationContact || activeRow?.contact)?.displayName ?? 'Участник обсуждения' })} />
+    </div>, document.body)}
+  </>;
   if (current?.kind === 'entity') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">

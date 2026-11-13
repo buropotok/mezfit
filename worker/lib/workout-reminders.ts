@@ -2,12 +2,16 @@ import cloudConfig from '../../dexie-cloud.json';
 import { checkApprovedAssignedPair, validatedTelegramId, type RelationshipMemberView } from '../../shared/approved-relationship';
 import { flexAttributeId, flexValueId } from '../../shared/flex-identifiers';
 
+import { COACH_TELEGRAM_PREFERENCES } from '../../shared/telegram-notification-link';
+import { sendCoachTelegram } from './coach-telegram';
+
 type Preference = 'client' | 'coached' | 'own';
 
 export interface WorkoutReminderEnv {
   DB_BINDING: D1Database;
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_BOT_USERNAME: string;
+  DEXIE_DISCUSSION_WEBHOOK_SECRET?: string;
   DEXIE_CLOUD_REMINDER_CLIENT_ID?: string;
   DEXIE_CLOUD_REMINDER_CLIENT_SECRET?: string;
 }
@@ -86,7 +90,7 @@ export function reminderRecipients(
   ];
 }
 
-async function cloudToken(env: WorkoutReminderEnv, fetchImpl: typeof fetch): Promise<string> {
+export async function cloudToken(env: WorkoutReminderEnv, fetchImpl: typeof fetch): Promise<string> {
   if (!env.DEXIE_CLOUD_REMINDER_CLIENT_ID || !env.DEXIE_CLOUD_REMINDER_CLIENT_SECRET) {
     throw new Error('REMINDERS_CLOUD_READ_NOT_CONFIGURED');
   }
@@ -107,7 +111,7 @@ async function cloudToken(env: WorkoutReminderEnv, fetchImpl: typeof fetch): Pro
   return json.accessToken;
 }
 
-async function cloudRead(
+export async function cloudRead(
   path: string, token: string, fetchImpl: typeof fetch, missing = false,
 ): Promise<unknown> {
   const response = await fetchImpl(cloudConfig.dbUrl + path, {
@@ -115,10 +119,11 @@ async function cloudRead(
   });
   if (missing && response.status === 404) return null;
   if (!response.ok) throw new Error('REMINDERS_CLOUD_READ_FAILED');
-  return response.json() as Promise<unknown>;
+  const value: unknown = await response.json();
+  return value;
 }
 
-async function cloudList(path: string, token: string, fetchImpl: typeof fetch): Promise<unknown[]> {
+export async function cloudList(path: string, token: string, fetchImpl: typeof fetch): Promise<unknown[]> {
   const response = await cloudRead(path, token, fetchImpl);
   if (!Array.isArray(response)) throw new Error('REMINDERS_CLOUD_LIST_INVALID');
   return response;
@@ -138,25 +143,29 @@ function restoredMember(value: unknown): RelationshipMemberView | null {
   };
 }
 
-async function verifiedRelationship(
-  row: Occurrence & { coachUserId: string; clientUserId: string },
+export async function readNotificationRelationship(
+  row: { realmId: string; coachUserId: string; clientUserId: string },
   token: string,
   fetchImpl: typeof fetch,
-): Promise<boolean> {
+  existingMembers?: unknown[],
+): Promise<{ clientName: string } | null> {
   const [realm, rawMembers] = await Promise.all([
     cloudRead('/all/realms/' + encodeURIComponent(row.realmId), token, fetchImpl, true),
-    cloudList('/all/members?realmId=' + encodeURIComponent(row.realmId), token, fetchImpl),
+    existingMembers ?? cloudList('/all/members?realmId=' + encodeURIComponent(row.realmId), token, fetchImpl),
   ]);
-  if (!record(realm)) return false;
+  if (!record(realm)) return null;
   const members = rawMembers.map(restoredMember);
-  if (members.some(member => member === null)) return false;
-  return checkApprovedAssignedPair({
+  if (members.some(member => member === null)) return null;
+  const approved = await checkApprovedAssignedPair({
     realm: { realmId: typeof realm.realmId === 'string' ? realm.realmId : '',
       owner: realm.owner, name: typeof realm.name === 'string' ? realm.name : undefined },
     members: members.filter((member): member is RelationshipMemberView => member !== null),
     coachUserId: row.coachUserId,
     clientUserId: row.clientUserId,
   });
+  if (!approved) return null;
+  const client = rawMembers.find(member => record(member) && member.userId === row.clientUserId);
+  return { clientName: record(client) && typeof client.name === 'string' ? client.name : 'Клиент' };
 }
 
 async function personalRole(userId: string, db: D1Database): Promise<'coach' | 'client' | undefined> {
@@ -170,10 +179,11 @@ async function personalRole(userId: string, db: D1Database): Promise<'coach' | '
     ? roles.results[0].role : undefined;
 }
 
-async function enabledByPreference(
-  userId: string, preference: Preference, token: string, fetchImpl: typeof fetch,
+export async function enabledByPreference(
+  userId: string, preference: Preference | 'telegram' | 'discussion', token: string, fetchImpl: typeof fetch,
 ): Promise<boolean> {
-  const key = KEYS[preference];
+  const key = preference === 'telegram' || preference === 'discussion'
+    ? COACH_TELEGRAM_PREFERENCES[preference] : KEYS[preference];
   const target = { entityType: 'user' as const, entityId: userId, realmId: userId };
   const id = flexValueId(target, flexAttributeId(userId, key));
   const value = await cloudRead('/all/flexValues/' + encodeURIComponent(id), token, fetchImpl, true);
@@ -254,11 +264,19 @@ async function sendTelegram(
 
 async function deliver(
   env: WorkoutReminderEnv, occurrence: Occurrence, recipient: Recipient, at: number, fetchImpl: typeof fetch,
+  clientName?: string,
 ): Promise<void> {
   const now = new Date(at).toISOString();
   const key = await deliveryKey(occurrence, recipient);
   if (!await claimDelivery(env.DB_BINDING, key, occurrence, recipient, now)) return;
-  const result = await sendTelegram(env, recipient, fetchImpl);
+  const result = recipient.preference === 'client' || !env.DEXIE_DISCUSSION_WEBHOOK_SECRET ? await sendTelegram(env, recipient, fetchImpl)
+    : await sendCoachTelegram(env, {
+      coachUserId: recipient.userId,
+      client: occurrence.clientUserId ? { userId: occurrence.clientUserId, name: clientName ?? 'Клиент' } : undefined,
+      title: recipient.preference === 'coached' ? 'Совместная тренировка через час' : 'Ваша тренировка через час',
+      button: 'Открыть тренировку',
+      target: { kind: 'workout', id: occurrence.id },
+    }, fetchImpl);
   await env.DB_BINDING.prepare(`
     UPDATE workout_reminder_delivery
        SET status = ?, telegram_message_id = ?, sent_at = ?,
@@ -289,8 +307,14 @@ export async function sendWorkoutReminders(
     const due = Date.parse(raw.startsAtUtc) - REMINDER_LEAD_MS;
     if (due > at || due <= at - REMINDER_GRACE_MS) continue;
     let recipients: Recipient[];
+    let clientName: string | undefined;
     try {
-      if (!isPersonal(raw) && (!isAssigned(raw) || !await verifiedRelationship(raw, token, fetchImpl))) continue;
+      if (!isPersonal(raw)) {
+        if (!isAssigned(raw)) continue;
+        const relationship = await readNotificationRelationship(raw, token, fetchImpl);
+        if (!relationship) continue;
+        clientName = relationship.clientName;
+      }
       const role = isPersonal(raw) ? await personalRole(raw.athleteUserId, env.DB_BINDING) : undefined;
       recipients = reminderRecipients(raw, role);
     } catch {
@@ -300,13 +324,16 @@ export async function sendWorkoutReminders(
     for (const recipient of recipients) {
       try {
         if (!await enabledByPreference(recipient.userId, recipient.preference, token, fetchImpl)) continue;
+        // The master switch belongs to the topic-based delivery rollout.
+        if (recipient.preference !== 'client' && env.DEXIE_DISCUSSION_WEBHOOK_SECRET
+          && !await enabledByPreference(recipient.userId, 'telegram', token, fetchImpl)) continue;
         // A cancellation or reschedule synchronized during this tick must suppress the old reminder.
         const current = await cloudRead('/all/workoutOccurrences/' + encodeURIComponent(raw.id), token, fetchImpl, true);
         if (!validOccurrence(current) || current.id !== raw.id
           || current.startsAtUtc !== raw.startsAtUtc || current.realmId !== raw.realmId
           || current.format !== raw.format || current.athleteUserId !== raw.athleteUserId
           || current.coachUserId !== raw.coachUserId || current.clientUserId !== raw.clientUserId) continue;
-        await deliver(env, raw, recipient, at, fetchImpl);
+        await deliver(env, raw, recipient, at, fetchImpl, clientName);
       } catch {
         // One user's transport or storage failure must not suppress other athletes.
         failedRecipients += 1;

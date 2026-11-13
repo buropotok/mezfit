@@ -28,9 +28,16 @@ export class WorkoutReminderPreferencesRepository {
   }
 
   async read(): Promise<WorkoutReminderPreferences> {
-    const rows = await this.flex.getValues(this.target, Object.values(WORKOUT_REMINDER_KEYS));
-    const preferences = { ...DEFAULT_WORKOUT_REMINDER_PREFERENCES };
-    for (const [key, attribute] of Object.entries(WORKOUT_REMINDER_KEYS) as [WorkoutReminderPreference, string][]) {
+    return this.readKeys(WORKOUT_REMINDER_KEYS, DEFAULT_WORKOUT_REMINDER_PREFERENCES);
+  }
+
+  async readKeys<Key extends string>(keys: Record<Key, string>, defaults: Readonly<Record<Key, boolean>>): Promise<Record<Key, boolean>> {
+    const attributes: string[] = [];
+    for (const key in keys) attributes.push(keys[key]);
+    const rows = await this.flex.getValues(this.target, attributes);
+    const preferences: Record<Key, boolean> = { ...defaults };
+    for (const key in keys) {
+      const attribute = keys[key];
       const row = rows.find(item => item.key === attribute);
       if (!row || row.value === null) continue;
       if (row.valueType !== 'boolean' || typeof row.value !== 'boolean') {
@@ -49,8 +56,10 @@ export class WorkoutReminderPreferencesRepository {
     if (!Object.hasOwn(WORKOUT_REMINDER_KEYS, key) || typeof enabled !== 'boolean') {
       throw new Error('INVALID_REMINDER_PREFERENCE');
     }
-    await this.flex.setValue(this.target, {
-      key: WORKOUT_REMINDER_KEYS[key], valueType: 'boolean', value: enabled,
-    });
+    await this.setBoolean(WORKOUT_REMINDER_KEYS[key], enabled);
+  }
+
+  async setBoolean(key: string, enabled: boolean): Promise<void> {
+    await this.flex.setValue(this.target, { key, valueType: 'boolean', value: enabled });
   }
 }

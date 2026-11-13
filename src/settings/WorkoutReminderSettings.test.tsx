@@ -22,6 +22,8 @@ describe('role-specific reminder controls', () => {
   it('exposes exactly the athlete reminder in Client mode', () => {
     render(<WorkoutReminderSettings role="client" />);
     expect(screen.getByText('Напоминания о тренировках')).toBeTruthy();
+    expect(screen.queryByText('Уведомления в Telegram')).toBeNull();
+    expect(screen.queryByText('Сообщения клиентов')).toBeNull();
     expect(screen.queryByText('Тренировки с клиентами')).toBeNull();
     expect(screen.queryByText('Мои самостоятельные тренировки')).toBeNull();
   });
@@ -33,13 +35,15 @@ describe('role-specific reminder controls', () => {
     expect(screen.queryByText('Напоминания о тренировках')).toBeNull();
   });
 
-  it('exposes two independent controls in Coach mode', () => {
+  it('exposes four Telegram notification controls in Coach mode', () => {
     render(<WorkoutReminderSettings role="coach" />);
+    expect(screen.getByText('Уведомления в Telegram')).toBeTruthy();
+    expect(screen.getByText('Сообщения клиентов')).toBeTruthy();
     expect(screen.getByText('Тренировки с клиентами')).toBeTruthy();
     expect(screen.getByText('Мои самостоятельные тренировки')).toBeTruthy();
     expect(screen.queryByText('Напоминания о тренировках')).toBeNull();
     const toggles = screen.getAllByRole('checkbox');
-    expect(toggles).toHaveLength(2);
+    expect(toggles).toHaveLength(4);
     // Inaccessible personal storage must not allow a speculative settings edit.
     expect(toggles.every(toggle => (toggle as HTMLInputElement).disabled)).toBe(true);
     expect(screen.getByRole('link', { name: 'откройте бота' }).getAttribute('href'))

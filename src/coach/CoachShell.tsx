@@ -110,11 +110,13 @@ interface CoachShellProps {
   actor?: ProgramActor;
   initData: string;
   destination: AppDestination;
+  notificationMessageId?: string | null;
+  onNotificationOpened?: () => void;
   requestedAvatarClient?: { userId: string; requestId: number } | null;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }
 
-export function CoachShell({ initData, actor, destination, requestedAvatarClient, onNavigationContextChange }: CoachShellProps) {
+export function CoachShell({ initData, actor, destination, requestedAvatarClient, notificationMessageId, onNotificationOpened, onNavigationContextChange }: CoachShellProps) {
   const requestBackTransition = useNavigationBackTransition();
   const cloudPrograms = useAssignedPrograms();
   const cloudConnections = useCloudConnections();
@@ -320,7 +322,8 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     return () => onNavigationContextChange(null);
   }, [clientDiscussionNavigation, clientWorkoutNavigation, clientHistoryCalendar, programDetailNavigation, clientProgramDetailNavigation, clientExerciseNavigation, clientTab, cloudConnections?.actorUserId, destination, selectedClient, selectedClientProgram, selectedClientAvatarUrl, selectedProgram, selectedCloudProgram, selectingProgramClient, onNavigationContextChange]);
 
-  if (destination === 'discussions') return <DiscussionsPage role="coach" onNavigationContextChange={onNavigationContextChange} />;
+  if (destination === 'discussions') return <DiscussionsPage role="coach" notificationMessageId={notificationMessageId}
+    onNotificationOpened={onNotificationOpened} onNavigationContextChange={onNavigationContextChange} />;
 
   if (selectedClient) {
     if (selectedClientProgram && destination === 'clients' && programRepository) {
