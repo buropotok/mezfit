@@ -3,7 +3,7 @@ import type { WorkoutScheduleFormat } from '../data/cloud/workout-scheduling-typ
 import type { EntityDiscussionTarget, OpenEntityDiscussion } from '../discussions/entity-discussion-target';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
-import { Avatar, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
+import { Avatar, CompactActionGroup, GlassSurface, Icon, IconButton, LiquidPopover, SortableList, Text, type LiquidPopoverItem } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { StartWorkoutButton } from './StartWorkoutButton';
 import { SessionExercise } from './SessionExercise';
@@ -88,7 +88,7 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
   creatorName, creatorAvatar, athleteName, athleteAvatar, scheduledTiming, status, collapsed = false, onCollapsedChange,
   children, discussionAction,
 }: WorkoutPlanCardHeaderProps) {
-  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}${onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--menu' : ''}${discussionAction ? ' workout-plan-card__header--with-discussion' : ''}${discussionAction && onCollapsedChange && !collapsed && children ? ' workout-plan-card__header--with-discussion-menu' : ''}${discussionAction && scheduledTiming ? ' workout-plan-card__header--scheduled-discussion' : ''}`}>
+  return <div className={`workout-session-card__header${scheduledTiming ? ' workout-session-card__header--scheduled' : ''}`}>
     <span className="workout-session-card__icon">
       <Icon name="barbell" className="workout-session-card__icon-artwork" />
     </span>
@@ -103,15 +103,17 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
       <Text variant="footnote">{scheduledTiming.date}</Text>
       <Text variant="footnote" tone="muted">{scheduledTiming.time}</Text>
     </div> : null}
-    {discussionAction}
-    {onCollapsedChange && !collapsed ? children : null}
-    {onCollapsedChange ? <IconButton
-      label={collapsed ? 'Развернуть тренировку' : 'Свернуть тренировку'}
-      aria-expanded={!collapsed} onClick={onCollapsedChange}>
-      <span className={`workout-plan-card__chevron${collapsed ? '' : ' workout-plan-card__chevron--expanded'}`}>
-        <Icon name="chevron-right" />
-      </span>
-    </IconButton> : children ?? <span className="workout-session-card__menu-placeholder" aria-hidden="true" />}
+    <CompactActionGroup aria-label="Действия дня" data-no-dnd>
+      {discussionAction}
+      {onCollapsedChange ? (!collapsed ? children : null) : children}
+      {onCollapsedChange ? <IconButton size="compact"
+        label={collapsed ? 'Развернуть тренировку' : 'Свернуть тренировку'}
+        aria-expanded={!collapsed} onClick={onCollapsedChange}>
+        <span className={`workout-plan-card__chevron${collapsed ? '' : ' workout-plan-card__chevron--expanded'}`}>
+          <Icon name="chevron-right" />
+        </span>
+      </IconButton> : null}
+    </CompactActionGroup>
     <div className="workout-plan-card__avatar" aria-label={athleteName ? `Атлет: ${athleteName}` : `Автор: ${creatorName}`}>
       {athleteAvatar ?? creatorAvatar ?? <Avatar name={athleteName ?? creatorName} />}
     </div>
@@ -216,7 +218,7 @@ export function WorkoutPlanCard({
             setAfterMenu(null);
             action();
           }}
-          trigger={<IconButton ref={triggerRef} icon="dots-vertical" label={`Меню дня ${day.name}`} />} />
+          trigger={<IconButton size="compact" ref={triggerRef} icon="dots-vertical" label={`Меню дня ${day.name}`} />} />
           : null}
       </WorkoutPlanCardHeader>}
       footer={collapsed ? undefined : <div className="workout-session-card__footer">

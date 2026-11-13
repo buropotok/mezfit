@@ -27,7 +27,7 @@ export function ExerciseActionsMenu({ onDelete, onInformation, busy = false, dis
   };
   return <><span className="entity-discussion-trigger"><LiquidPopover isOpen={open} onOpenChange={setOpen} triggerRef={trigger}
     preset={glass.preset} optics={glass.optics} label="Меню упражнения"
-    trigger={<IconButton ref={trigger} icon="dots-vertical" label="Меню упражнения"
+    trigger={<IconButton size="compact" ref={trigger} icon="dots-vertical" label="Меню упражнения"
       className="session-exercise__menu" data-no-dnd disabled={busy} />}
     items={[
       ...(discussionTarget ? [discussions.menuItem] : []),

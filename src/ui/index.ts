@@ -13,6 +13,7 @@ export { DurationPicker, formatDurationSeconds, type DurationPickerProps } from 
 export { DistancePicker, type DistancePickerProps } from './distance-picker/DistancePicker';
 export { WeightPicker, type WeightPickerProps } from './weight-picker/WeightPicker';
 export { Dropdown, type DropdownOption, type DropdownProps, type MultiDropdownProps, type SingleDropdownProps } from './Dropdown';
+export { CompactActionGroup, type CompactActionGroupProps } from './CompactActionGroup';
 export { IdentityAction, type IdentityActionAvatar, type IdentityActionItem, type IdentityActionProps, type IdentityActionTitleRole } from './IdentityAction';
 export { MezfitNavbar, type MezfitNavbarIdentity, type MezfitNavbarProps } from './MezfitNavbar';
 export { MEZFIT_NAVBAR_GLASS_PRESET } from './mezfitNavbarConfig';

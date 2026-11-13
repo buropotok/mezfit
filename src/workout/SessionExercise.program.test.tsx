@@ -33,11 +33,14 @@ it('reserves header action slots for planned-workout discussion in collapsed and
     date: '08.11.2026', time: '08:00–09:00',
   }} />);
   const header = container.querySelector('.workout-session-card__header');
-  expect(header?.classList.contains('workout-plan-card__header--with-discussion')).toBe(true);
-  expect(header?.classList.contains('workout-plan-card__header--scheduled-discussion')).toBe(true);
+  // Old grid variant classes no longer express layout. The compact group owns each 44px slot.
+  expect(header?.querySelectorAll('.ui-compact-action-group__slot')).toHaveLength(2);
   rerender(<WorkoutPlanCardHeader {...base} collapsed={false}><span>Меню</span></WorkoutPlanCardHeader>);
-  expect(header?.classList.contains('workout-plan-card__header--with-discussion-menu')).toBe(true);
-  expect(screen.getByText('Discussion control')).toBeTruthy();
+  const slots = header?.querySelectorAll('.ui-compact-action-group__slot');
+  expect(slots).toHaveLength(3);
+  expect(slots?.[0].textContent).toContain('Discussion control');
+  expect(slots?.[1].textContent).toContain('Меню');
+  expect(slots?.[2].querySelector('button')?.getAttribute('aria-label')).toBe('Свернуть тренировку');
 });
 
 describe('existing exercise component in program mode', () => {

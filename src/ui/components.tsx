@@ -31,13 +31,17 @@ export type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'title
   trailingAction?: ReactNode;
   /** Give result values their intrinsic width instead of the default 40% cap. */
   trailingWidth?: 'default' | 'content';
+  /** Reduce the passive trailing value gutter while preserving the ListItem layout. */
+  trailingSpacing?: 'default' | 'compact';
+  /** Remove action-slot gutters when the trailingAction supplies its own 44px targets. */
+  trailingActionSpacing?: 'default' | 'flush';
   interactive?: boolean;
 };
 
-export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, trailingAction, trailingWidth = 'default', interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
+export function ListItem({ leading, leadingShape = 'default', title, subtitle, trailing, trailingAction, trailingWidth = 'default', trailingSpacing = 'default', trailingActionSpacing = 'default', interactive = true, className = '', type = 'button', onPointerDown, disabled, ...props }: ListItemProps) {
   const { pressSpot, startPressSpot } = usePressSpot<HTMLButtonElement>(disabled || !interactive);
   const leadingClassName = leadingShape === 'square' ? ' ui-list-item__leading--square' : '';
-  const resultLayout = trailingWidth === 'content' ? ' ui-list-item--content-trailing' : '';
+  const resultLayout = `${trailingWidth === 'content' ? ' ui-list-item--content-trailing' : ''}${trailingSpacing === 'compact' ? ' ui-list-item--compact-trailing' : ''}`;
   const content = <>
     {pressSpot}
     {leading ? <span className={`ui-list-item__leading${leadingClassName}`} aria-hidden="true">{leading}</span> : null}
@@ -47,7 +51,7 @@ export function ListItem({ leading, leadingShape = 'default', title, subtitle, t
     </span>
     {trailing ? <span className={`ui-list-item__trailing ui-text--footnote${trailingWidth === 'content' ? ' ui-list-item__trailing--content' : ''}`}>{trailing}</span> : null}
   </>;
-  const actionClassName = trailingAction ? ' ui-list-item-wrap--with-action' : '';
+  const actionClassName = trailingAction ? ` ui-list-item-wrap--with-action${trailingActionSpacing === 'flush' ? ' ui-list-item-wrap--flush-actions' : ''}` : '';
   return (
     <div className={`ui-list-item-wrap${actionClassName}`} role="listitem">
       {interactive ? <button type={type} className={`ui-list-item${resultLayout} ${className}`.trim()} disabled={disabled} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented) startPressSpot(event); }} {...props}>{content}</button> : <div className={`ui-list-item ui-list-item--static${resultLayout} ${className}`.trim()}>{content}</div>}

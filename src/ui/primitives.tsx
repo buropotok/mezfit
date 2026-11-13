@@ -35,8 +35,8 @@ export function Button({ variant = 'primary', color, size = 'default', selected:
 
 type IconButtonBaseProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> & {
   label: string;
-  /** Match the standard profile avatar without feature-owned geometry overrides. */
-  size?: 'default' | 'avatar';
+  /** Public 40px avatar and 44px compact touch targets; standard remains 48px. */
+  size?: 'default' | 'avatar' | 'compact';
   children?: ReactNode;
   icon?: UiIconSource;
 };
@@ -87,7 +87,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </span>
   ) : children;
 
-  return <button ref={ref} type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${size === 'avatar' ? ' ui-icon-button--avatar' : ''}${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} style={liquidStyle} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{theme === 'liquidGlass' ? <LiquidGlassIconButtonFilter id={liquidGlassFilterId} /> : null}{content}</button>;
+  return <button ref={ref} type={type} aria-label={label} aria-pressed={props['aria-pressed'] ?? (selectedProp === undefined ? undefined : selected)} data-ui-theme={theme} data-selected={selected ? 'true' : undefined} className={`ui-icon-button${size === 'avatar' ? ' ui-icon-button--avatar' : size === 'compact' ? ' ui-icon-button--compact' : ''}${colorClass}${selectedClass}${shadowClass} ${className}`.trim()} disabled={disabled} style={liquidStyle} onPointerDown={(event) => { onPointerDown?.(event); if (!event.defaultPrevented && !disabled) startPressScale(event.currentTarget); }} onKeyDown={(event) => { onKeyDown?.(event); if (!event.defaultPrevented && !disabled && isPressScaleActivationKey(event.key)) startPressScale(event.currentTarget); }} {...props}>{theme === 'liquidGlass' ? <LiquidGlassIconButtonFilter id={liquidGlassFilterId} /> : null}{content}</button>;
 });
 export type AvatarSize = 'default' | 'small';
 type AvatarProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'onError' | 'size'> & {

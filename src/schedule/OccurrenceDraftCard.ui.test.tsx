@@ -105,7 +105,10 @@ describe('shared scheduled occurrence UI', () => {
     expect(probes.exerciseMounts).toBe(0);
     expect(screen.queryByText('План на тренировку')).toBeNull();
     const chevron = screen.getByRole('button', { name: 'Развернуть тренировку' });
-    expect(chevron.nextElementSibling?.getAttribute('aria-label')).toBe('Атлет: Тренер');
+    // Actions now live inside a fixed-width strip immediately before the avatar.
+    const strip = chevron.closest('.ui-compact-action-group');
+    expect(strip?.querySelectorAll('.ui-compact-action-group__slot')).toHaveLength(2);
+    expect(strip?.nextElementSibling?.getAttribute('aria-label')).toBe('Атлет: Тренер');
     fireEvent.click(chevron);
     expect(toggle).toHaveBeenCalledOnce();
     rerender(<OccurrenceDraftCard {...props} collapsed={false} onCollapsedChange={toggle} />);

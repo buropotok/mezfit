@@ -19,7 +19,11 @@ it('shows the athlete in both collapsed and expanded PLAN headers, with the menu
   expect(screen.queryByText('Меню дня')).toBeNull();
   view.rerender(<WorkoutPlanCardHeader {...props} collapsed={false}><button>Меню дня</button></WorkoutPlanCardHeader>);
   const chevron = screen.getByRole('button', { name: 'Свернуть тренировку' });
-  expect(chevron.previousElementSibling).toBe(screen.getByRole('button', { name: 'Меню дня' }));
+  // The legacy direct siblings were replaced by explicit compact action slots.
+  const slots = chevron.closest('.ui-compact-action-group')?.querySelectorAll('.ui-compact-action-group__slot');
+  expect(slots).toHaveLength(2);
+  expect(slots?.[0].querySelector('button')).toBe(screen.getByRole('button', { name: 'Меню дня' }));
+  expect(slots?.[1].querySelector('button')).toBe(chevron);
   fireEvent.click(chevron);
   expect(toggle).toHaveBeenCalledOnce();
   expect(screen.queryByText('Фото тренера')).toBeNull();
