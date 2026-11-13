@@ -147,7 +147,7 @@ export function CloudProgramDetailsPage({
   const [retryKey, setRetryKey] = useState(0);
   const [fabPresented, setFabPresented] = useState(false);
   const discussions = useEntityDiscussions(details ? programDiscussionTarget(details.program, repository.actorUserId) : null,
-    onNavigationContextChange);
+    onNavigationContextChange, true, { draftGuard: details?.program.status === 'draft' ? { kind: 'program' } : undefined });
   const explainSelection = useCallback(() => onSelectionMutationAttempt?.(), [onSelectionMutationAttempt]);
 
   useEffect(() => {
