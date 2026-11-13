@@ -18,12 +18,10 @@ interface Gesture {
   startX: number;
   startY: number;
   original?: AnnotationPoint;
-  timer?: ReturnType<typeof setTimeout>;
-  dragging: boolean;
-  cancelled: boolean;
+  moved: boolean;
 }
 
-const holdMs = 230;
+const nodeDragSlop = 3;
 const tapSlop = 8;
 const nodeHitRadius = 28;
 const exitTitle = 'Сохранить и отправить результат?';
@@ -54,12 +52,10 @@ export function DiscussionAnnotationEditor({ image, exit, onExitChange, onCancel
 
   function clearGesture() {
     const current = gesture.current;
-    if (current?.timer !== undefined) clearTimeout(current.timer);
     gesture.current = null;
     return current;
   }
 
-  useLayoutEffect(() => () => { clearGesture(); }, []);
   useLayoutEffect(() => {
     if (exit !== 'editing') {
       clearGesture();
@@ -156,28 +152,24 @@ export function DiscussionAnnotationEditor({ image, exit, onExitChange, onCancel
     if (index < 0 && !pointerPoint(event)) return;
     const current: Gesture = {
       pointer: event.pointerId, index, startX: event.clientX, startY: event.clientY,
-      original: active[index], dragging: false, cancelled: false,
+      original: active[index], moved: false,
     };
     gesture.current = current;
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    if (current.original) {
-      const point = current.original;
-      current.timer = setTimeout(() => {
-        if (gesture.current !== current || current.cancelled) return;
-        current.dragging = true;
-        setDrag({ index, point });
-      }, holdMs);
-    }
+  }
+
+  function movedBeyondSlop(event: PointerEvent<HTMLCanvasElement>, current: Gesture) {
+    const slop = current.original ? nodeDragSlop : tapSlop;
+    return Math.hypot(event.clientX - current.startX, event.clientY - current.startY) > slop;
   }
 
   function move(event: PointerEvent<HTMLCanvasElement>) {
     const current = gesture.current;
     if (!current || current.pointer !== event.pointerId) return;
-    if (current.dragging) {
+    current.moved ||= movedBeyondSlop(event, current);
+    if (current.moved && current.original) {
       const point = pointerPoint(event, current);
       if (point) setDrag({ index: current.index, point });
-    } else if (Math.hypot(event.clientX - current.startX, event.clientY - current.startY) > tapSlop) {
-      current.cancelled = true;
     }
   }
 
@@ -185,16 +177,16 @@ export function DiscussionAnnotationEditor({ image, exit, onExitChange, onCancel
     if (gesture.current?.pointer !== event.pointerId) return;
     const current = clearGesture();
     setDrag(null);
-    if (!current || cancelled || current.cancelled) return;
-    if (current.dragging) {
-      const point = pointerPoint(event, current);
-      if (point) dispatch({ type: 'move', index: current.index, point });
-    } else if (Math.hypot(event.clientX - current.startX, event.clientY - current.startY) <= tapSlop) {
-      if (current.index >= 0) dispatch({ type: 'remove', index: current.index });
-      else {
-        const point = pointerPoint(event);
-        if (point) dispatch({ type: 'add', point });
-      }
+    if (!current || cancelled) return;
+    const moved = current.moved || movedBeyondSlop(event, current);
+    if (current.original) {
+      if (moved) {
+        const point = pointerPoint(event, current);
+        if (point) dispatch({ type: 'move', index: current.index, point });
+      } else dispatch({ type: 'remove', index: current.index });
+    } else if (!moved) {
+      const point = pointerPoint(event);
+      if (point) dispatch({ type: 'add', point });
     }
   }
 
