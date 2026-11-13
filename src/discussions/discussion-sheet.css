@@ -12,6 +12,8 @@
   flex: 1;
   min-height: 0;
   isolation: isolate;
+  /* Keep the fixed, expanded video note relative to this sheet. */
+  contain: layout;
   background-color: #000;
 }
 /* Keep the decorative wallpaper in its own lower paint layer, behind opaque
@@ -570,18 +572,25 @@
 
 .discussion-video-note-playback {
   position: absolute;
-  inset: 0 12px auto;
+  inset: 0 12px var(--discussion-video-note-bottom);
   pointer-events: none;
 }
 
 .discussion-video-note__layer {
   position: absolute;
   z-index: 1;
-  overflow: hidden;
 }
 
 .discussion-video-note__layer[data-expanded] {
+  inset: 0;
   z-index: 3;
+}
+
+/* The host stays in the scroller. Only the expanded layer is positioned
+   against the thread, whose layout containment lets it escape scroll clipping. */
+.discussion-thread__scroll > .discussion-video-note-playback > .discussion-video-note__layer[data-expanded] {
+  position: fixed;
+  inset: 0 12px var(--discussion-video-note-bottom);
 }
 
 .discussion-video-note__position {

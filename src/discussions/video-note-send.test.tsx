@@ -130,3 +130,48 @@ it('renders published video-note metadata in a circular bubble, not a rectangula
     .toBe(screen.getByLabelText('Записанный видеокружок'));
   expect(screen.queryByRole('link', { name: 'Открыть видео' })).toBeNull();
 });
+
+it('keeps a published video note in the native scroller across playback and scrolling', async () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  const circle = { ...message('circle-scroll', ''), attachments: [{
+    id: 'circle-scroll-attachment', messageId: 'circle-scroll', realmId: thread.realmId,
+    owner: 'tg:1', authorUserId: 'tg:1', mediaType: 'video-note' as const, mimeType: 'video/mp4',
+    sizeBytes: 10, durationSeconds: 5, storageKey: 'mvp-media/' + 'b'.repeat(64),
+    uploadState: 'ready' as const, confirmedAt: thread.createdAt,
+  }] };
+  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={fixture([circle]).port}
+    threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
+    parentNavigation={null} onClose={() => {}} onNavigationContextChange={() => {}} /></KonstaProvider>);
+  const preview = await screen.findByRole('button', { name: 'Открыть видеокружок' });
+  const scroller = view.container.querySelector<HTMLDivElement>('.discussion-thread__scroll');
+  const host = scroller?.querySelector<HTMLDivElement>(':scope > .discussion-video-note-playback');
+  const layer = host?.firstElementChild;
+  const slot = preview.parentElement;
+  const video = screen.getByLabelText('Записанный видеокружок');
+  if (!scroller || !host || !slot || !(layer instanceof HTMLElement)) throw new Error('Missing video note in scroller');
+  expect(host.contains(video)).toBe(true);
+  const parent = video.parentNode;
+
+  vi.spyOn(scroller, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 390, 400));
+  vi.spyOn(scroller, 'scrollHeight', 'get').mockReturnValue(1000);
+  vi.spyOn(scroller, 'clientHeight', 'get').mockReturnValue(400);
+  vi.spyOn(host, 'getBoundingClientRect').mockImplementation(() => new DOMRect(12, 100 - scroller.scrollTop, 366, 320));
+  vi.spyOn(slot, 'getBoundingClientRect').mockImplementation(() => new DOMRect(20, 390 - scroller.scrollTop, 170, 170));
+
+  scroller.scrollTop = 100;
+  fireEvent.scroll(scroller);
+  expect(layer.style.getPropertyValue('--note-top')).toBe('290px');
+  scroller.scrollTop = 210;
+  fireEvent.scroll(scroller);
+  expect(layer.style.getPropertyValue('--note-top')).toBe('290px');
+
+  await act(async () => { fireEvent.click(preview); });
+  expect(screen.getByRole('slider', { name: 'Перемотка видеокружка' })).toBeTruthy();
+  expect(layer.style.top).toBe('');
+  expect(video.parentNode).toBe(parent);
+  fireEvent.pointerDown(document.body);
+  expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
+  expect(layer.parentNode).toBe(host);
+  expect(video.parentNode).toBe(parent);
+});

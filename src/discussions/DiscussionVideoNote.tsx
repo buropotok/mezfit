@@ -49,22 +49,24 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const { url, container } = useDiscussionMediaSource(src, cache, 'video', retry, false);
-  // The sheet rerenders on scroll, viewport resize and message-list resize.
-  // Keep the portal target fixed and project the compact slot into that layer.
+  // Measure in content coordinates so the browser scrolls the frame with the
+  // message, even while native momentum scrolling runs ahead of React.
   useLayoutEffect(() => {
     if (!playbackHost || !url || (!review && !previewAnchor)) return;
     const host = playbackHost.getBoundingClientRect();
-    const viewport = scrollViewport?.current?.getBoundingClientRect() ?? host;
+    const scroller = scrollViewport?.current;
+    const viewport = scroller?.getBoundingClientRect() ?? host;
+    const scrollTop = review ? 0 : scroller?.scrollTop ?? 0;
     const anchor = previewAnchor?.getBoundingClientRect();
     const next = {
-      top: viewport.top - host.top,
+      top: viewport.top - host.top - scrollTop,
       left: viewport.left - host.left,
       right: host.right - viewport.right,
-      bottom: host.bottom - viewport.bottom,
+      bottom: host.bottom - viewport.bottom + scrollTop,
       '--note-left': `${(anchor?.left ?? viewport.left) - viewport.left}px`,
-      '--note-top': `${(anchor?.top ?? viewport.top) - viewport.top}px`,
+      '--note-top': `${(anchor?.top ?? viewport.top) - viewport.top + scrollTop}px`,
       '--note-width': `${anchor?.width ?? 0}px`,
-      '--note-expanded-height': `${Math.max(0, host.bottom - viewport.top)}px`,
+      '--note-expanded-height': `${Math.max(0, host.bottom + scrollTop - viewport.top)}px`,
     };
     setCompactPlacement(previous => previous
       && previous.top === next.top && previous.left === next.left
@@ -106,7 +108,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
       onReturnToPreview={review ? undefined : () => setExpanded(false)} onError={setError} />
   </div>;
   const placement: CSSProperties | undefined = expanded && compactPlacement
-    ? { ...compactPlacement, left: 0, right: 0, bottom: 0 }
+    ? { ...compactPlacement, top: undefined, left: undefined, right: undefined, bottom: undefined }
     : compactPlacement;
 
   return <div ref={container} className={`discussion-video-note${review ? ' discussion-video-note--review' : ''}`} data-expanded={expanded || undefined}
