@@ -35,6 +35,7 @@ import {
 import { Button, DatePicker, Divider, Dropdown, GlassBackgroundColorControls, GlassSurface, MezfitSidePanel, MezfitTopPanel, Text, TextInput, TimePicker, type DatePickerDayStatusEntry, type LocalDate, type LocalTime, type TimePickerLensMode } from '../ui';
 import { hsvToHex } from '../ui/colorMath';
 import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutSession, type SaveSessionSetInput, type SessionExerciseData, type SessionExerciseSetData, type WorkedMuscleId, type WorkoutSessionCardMode } from '../workout';
+import { CoachInviteDialog } from '../coach/CoachInviteDialog';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import { ScreenDiagnostics } from './ScreenDiagnostics';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
@@ -46,6 +47,8 @@ import './settings-page.css';
 
 // Loaded only when Settings → Modules is opened; Recharts stays out of the app startup bundle.
 const ChartsCatalog = lazy(() => import('../ui/ChartsCatalog').then(({ ChartsCatalog }) => ({ default: ChartsCatalog })));
+
+const demoInviteUrl = 'https://example.com/mezfit/demo-invite';
 
 const datePickerStatusPreview: readonly DatePickerDayStatusEntry[] = [
   { date: '2026-09-27', status: 'scheduled' },
@@ -298,6 +301,7 @@ export function SettingsPage({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [emptyDatePickerOpen, setEmptyDatePickerOpen] = useState(false);
   const [topPanelDemoOpen, setTopPanelDemoOpen] = useState(false);
+  const [inviteFallbackDemoOpen, setInviteFallbackDemoOpen] = useState(false);
   const [workoutCardMode, setWorkoutCardMode] = useState<WorkoutSessionCardMode>('active-program');
   const [workoutCardSource, setWorkoutCardSource] = useState<'program' | 'own'>('program');
   const [workoutCardExercises, setWorkoutCardExercises] = useState<SessionExerciseData[]>([workoutCardPreviewExercise]);
@@ -325,6 +329,7 @@ export function SettingsPage({
     setDatePickerOpen(false);
     setEmptyDatePickerOpen(false);
     setTopPanelDemoOpen(false);
+    setInviteFallbackDemoOpen(false);
     setModulesOpen(false);
   }, []);
   const closeGlassSettings = useCallback(() => {
@@ -741,6 +746,24 @@ export function SettingsPage({
           Здесь отображаются реальные React-компоненты приложения на демонстрационных данных.
         </Text>
       </div>
+
+      <section className="modules-gallery__example" aria-labelledby="module-invite-fallback-title">
+        <Text id="module-invite-fallback-title" variant="headline">Ручное копирование приглашения</Text>
+        <Text variant="footnote" tone="muted">
+          Третий фоллбек приглашения: ссылка видна, её можно скопировать кнопкой или выделить вручную.
+          Это демонстрация на вымышленной ссылке — настоящее приглашение не создаётся.
+        </Text>
+        <span className="modules-gallery__trigger">
+          <Button onClick={() => setInviteFallbackDemoOpen(true)}>Показать третий фоллбек</Button>
+        </span>
+        {inviteFallbackDemoOpen ? (
+          <CoachInviteDialog
+            url={demoInviteUrl}
+            onClose={() => setInviteFallbackDemoOpen(false)}
+            previewManualFallback
+          />
+        ) : null}
+      </section>
 
       <section className="modules-gallery__example" aria-labelledby="module-video-note-title">
         <Text id="module-video-note-title" variant="headline">Видеокружок</Text>
