@@ -56,8 +56,9 @@ export async function readDiscussionNotificationThread(db: MezfitCloudDatabase, 
   const thread = await db.discussionThreads.get(message.threadId);
   if (!thread || thread.realmId !== message.realmId || thread.coachClientId !== message.realmId) return null;
   const repository = new DiscussionRepository(db, actor, thread);
-  await repository.getMessage(thread.id, messageId);
-  return thread;
+  // Navigation only needs the authorized header and exact message identity.
+  // Full message/quote/media hydration belongs to the opened DiscussionSheet.
+  return repository.notificationThread(thread.id, messageId);
 }
 
 /**
@@ -272,6 +273,14 @@ export class DiscussionRepository {
         && this.visible(reply, sourceThread.id); } catch { /* An invalid quote stays unavailable. */ }
     }
     return discussionMessageView(row, sameConversation ? { ...reply, threadId: row.threadId } : undefined);
+  }
+  /** Lightweight, authorization-checked navigation lookup, without quote or media projection. */
+  async notificationThread(threadId: string, messageId: string): Promise<DiscussionThread | null> {
+    return this.read(async () => {
+      const thread = await this.thread(threadId);
+      const message = await this.db.discussionMessages.get(messageId);
+      return this.visible(message, thread.id) ? thread : null;
+    });
   }
   async getMessage(threadId: string, id: string): Promise<DiscussionMessageView> {
     return this.read(async () => {
