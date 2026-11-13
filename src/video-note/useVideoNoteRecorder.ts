@@ -11,6 +11,8 @@ export interface VideoNoteRecording {
 }
 
 export type VideoNoteRecorderStatus = 'idle' | 'requesting' | 'recording' | 'processing' | 'error';
+const UNSUPPORTED_AVC = Symbol('unsupported-avc');
+
 type CameraOptions = { requireFacing?: boolean } & (
   { video: HTMLVideoElement | null; profile: Exclude<VideoRecordingProfile, 'circle'> }
   | { video?: never; profile?: never }
@@ -45,7 +47,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const camera = useVideoNoteCameraSession(profile, session);
   const { acquire, liveStream, release: releaseCamera } = camera;
   const [status, setStatus] = useState<VideoNoteRecorderStatus>('idle');
-  const [error, setError] = useState('');
+  const [recordingError, setError] = useState<string | typeof UNSUPPORTED_AVC>('');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const statusRef = useRef<VideoNoteRecorderStatus>('idle');
@@ -130,7 +132,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     }
     const options = avcRecordingOptions();
     if (!options) {
-      setError('Этот Telegram WebView не поддерживает запись H.264 в MP4.');
+      setError(UNSUPPORTED_AVC);
       updateStatus('error');
       return false;
     }
@@ -269,7 +271,13 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     };
   }, [release]);
 
-  return { start, stop, cancel, release, status, error, stream, elapsedMs,
+  const dismissUnsupportedFormat = useCallback(() => {
+    setError(current => current === UNSUPPORTED_AVC ? '' : current);
+  }, []);
+
+  const unsupportedFormat = recordingError === UNSUPPORTED_AVC;
+  const error = unsupportedFormat ? 'Этот Telegram WebView не поддерживает запись H.264 в MP4.' : recordingError;
+  return { start, stop, cancel, release, status, error, unsupportedFormat, dismissUnsupportedFormat, stream, elapsedMs,
     progress: Math.min(1, elapsedMs / maxDurationMs),
     hasStream: camera.hasStream };
 }
