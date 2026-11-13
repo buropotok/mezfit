@@ -49,15 +49,16 @@ function fail(code: string): never { throw new Error(code); }
 const tables = ['discussionThreads', 'discussionMessages', 'discussionReadStates', 'realms', 'members'];
 
 /** A Telegram target is a navigation hint. Resolve it within the current account's approved discussion scope. */
-export async function readDiscussionNotificationThread(db: MezfitCloudDatabase, actor: string, messageId: string,
+export async function readDiscussionNotificationThread(db: DiscussionDatabase, actor: string, messageId: string,
   allowedRealms: ReadonlySet<string>): Promise<DiscussionThread | null> {
   const message = await db.discussionMessages.get(messageId);
   if (!isDiscussionMessage(message) || message.draftForRealmId || !allowedRealms.has(message.realmId)) return null;
   const thread = await db.discussionThreads.get(message.threadId);
   if (!thread || thread.realmId !== message.realmId || thread.coachClientId !== message.realmId) return null;
   const repository = new DiscussionRepository(db, actor, thread);
-  await repository.getMessage(thread.id, messageId);
-  return thread;
+  // Navigation only needs the authorized header and exact message identity.
+  // Full message/quote/media hydration belongs to the opened DiscussionSheet.
+  return repository.notificationThread(thread.id, messageId);
 }
 
 /**
@@ -66,7 +67,7 @@ export async function readDiscussionNotificationThread(db: MezfitCloudDatabase, 
  * Returning null keeps Dexie's liveQuery subscribed to the missing relationship records.
  */
 export function observeDiscussionNotificationThread(
-  db: MezfitCloudDatabase, actor: string, messageId: string, allowedRealms: ReadonlySet<string>,
+  db: DiscussionDatabase, actor: string, messageId: string, allowedRealms: ReadonlySet<string>,
   next: (thread: DiscussionThread | null) => void, error: (reason: unknown) => void,
 ): { unsubscribe(): void } {
   return liveQuery(() => readDiscussionNotificationThread(db, actor, messageId, allowedRealms).catch((reason: unknown) => {
@@ -272,6 +273,14 @@ export class DiscussionRepository {
         && this.visible(reply, sourceThread.id); } catch { /* An invalid quote stays unavailable. */ }
     }
     return discussionMessageView(row, sameConversation ? { ...reply, threadId: row.threadId } : undefined);
+  }
+  /** Lightweight, authorization-checked navigation lookup, without quote or media projection. */
+  async notificationThread(threadId: string, messageId: string): Promise<DiscussionThread | null> {
+    return this.read(async () => {
+      const thread = await this.thread(threadId);
+      const message = await this.db.discussionMessages.get(messageId);
+      return this.visible(message, thread.id) ? thread : null;
+    });
   }
   async getMessage(threadId: string, id: string): Promise<DiscussionMessageView> {
     return this.read(async () => {
