@@ -150,13 +150,13 @@ describe('three-column static lens slots preserve the native fraction wheel', ()
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.75 });
   });
 
-  it('keeps direct fraction taps independent of the numeric sheet actions', () => {
+  it('keeps direct fraction taps independent of native numeric editing', () => {
     const { onChange } = mountControlled();
     fireEvent.click(within(screen.getByRole('listbox', { name: 'Доли килограмма' }))
       .getByRole('option', { name: '0,25' }));
     expect(onChange).not.toHaveBeenCalled();
     expect(triggerTelegramSelectionHaptic).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Ввести повторения' })).toBeNull();
     closePicker();
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ reps: 8, weightKg: 77.25 });
   });
