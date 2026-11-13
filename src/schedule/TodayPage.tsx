@@ -112,7 +112,7 @@ export function TodayPage({
   const [filterOpened, setFilterOpened] = useState(false);
   const [creation, setCreation] = useState<'workout' | 'event' | null>(null);
   const [personalEventId, setPersonalEventId] = useState<string | null>(null);
-  const [creationNotice, setCreationNotice] = useState('');
+  const [creationNotice, setCreationNotice] = useState<{ draftId: string; message: string } | null>(null);
   const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
   const closeCreation = useCallback(() => setCreation(null), []);
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
@@ -179,7 +179,7 @@ export function TodayPage({
     if (!draftRepository) return undefined;
     ++editorGeneration.current;
     activeRepository.current = draftRepository;
-    setProgramUpdateError(''); setTimingOverrides({}); setCollapse(null);
+    setProgramUpdateError(''); setCreationNotice(null); setTimingOverrides({}); setCollapse(null);
     setLoading(true); setSessions([]); setSessionId(null); setOccurrences([]); setCancelledRows([]); setShowCancelled(false); setDrafts([]); setOpenedDraftId(null); setViewed(null);
     const subscription = draftRepository.observeWorkspace(({ occurrences, drafts, cancelled = [], sessions = [] }) => {
       setSessions(sessions); setCancelledRows(cancelled);
@@ -200,7 +200,7 @@ export function TodayPage({
     };
   }, [draftRepository]);
 
-  useEffect(() => { ++editorGeneration.current; setClientUserIds([]); setShowCancelled(false); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setSessionId(null); setPersonalEventId(null); setCreation(null); setCreationNotice(''); }, [planning?.viewResetKey, cloud?.actorUserId]);
+  useEffect(() => { ++editorGeneration.current; setClientUserIds([]); setShowCancelled(false); setFilterOpened(false); setOpenedDraftId(null); setViewed(null); setSessionId(null); setPersonalEventId(null); setCreation(null); setCreationNotice(null); }, [planning?.viewResetKey, cloud?.actorUserId]);
 
   useEffect(() => {
     if (!planning?.requestedDraftId) return;
@@ -235,6 +235,16 @@ export function TodayPage({
     const row = occurrences.find(item => 'draft:' + item.id === openedDraftId);
     return row && cloud ? draftFromOccurrence(cloud.actorUserId, row) : viewed;
   }, [drafts, occurrences, openedDraftId, viewed, cloud?.actorUserId]);
+  useEffect(() => {
+    if (!creationNotice) return;
+    if (openedDraftId !== creationNotice.draftId) {
+      setCreationNotice(null);
+      return;
+    }
+    if (selected?.id !== creationNotice.draftId || plannedStart?.conflictActive) return;
+    const timer = window.setTimeout(() => setCreationNotice(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [creationNotice, openedDraftId, selected?.id, plannedStart?.conflictActive]);
   useEffect(() => {
     const id = selected?.trainingPlanId;
     setSelectedProgramTitle(null);
@@ -515,7 +525,7 @@ export function TodayPage({
       ) : null}
       <ScheduleWorkoutCreator intent={creation === 'workout' ? creation : null} role={role} actor={actor} onClose={closeCreation}
         onNavigationContextChange={onNavigationContextChange} onCreated={(id, client, message) => {
-          setCreation(null); setShowCancelled(false); setCreationNotice(message);
+          setCreation(null); setShowCancelled(false); setCreationNotice(message ? { draftId: id, message } : null);
           setClientUserIds(role === 'coach' && client ? [client] : []);
           setViewed(null); setOpenedDraftId(id);
         }} />
@@ -549,7 +559,8 @@ export function TodayPage({
           pendingCancel.current = draft.targetOccurrenceId ?? draft.id.slice(6); closeEditor();
         } : undefined}
         onClosed={cancelAfterClose}
-        sourceProgramName={sourceProgramName} onClose={closeEditor} onSave={save} saveNotice={programUpdateError || creationNotice}
+        sourceProgramName={sourceProgramName} onClose={closeEditor} onSave={save}
+        saveNotice={programUpdateError || (creationNotice?.draftId === selected?.id ? creationNotice?.message : undefined)}
         onNavigationContextChange={setEditorNavigation} /> : null}
     </section>
   );
