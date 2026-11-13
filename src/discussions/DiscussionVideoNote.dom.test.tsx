@@ -34,7 +34,8 @@ it('keeps the playing video connected to the same DOM ancestors across repeated 
   const parent = video.parentElement;
   const layer = host.firstElementChild;
   const preview = () => screen.getByRole('button', { name: 'Открыть видеокружок' });
-  const changes = new MutationObserver(() => {});
+  const mutations: MutationRecord[] = [];
+  const changes = new MutationObserver(records => { mutations.push(...records); });
   changes.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
 
   try {
@@ -64,7 +65,7 @@ it('keeps the playing video connected to the same DOM ancestors across repeated 
       expect(video.parentNode).toBe(parent);
       expect(video.getAttribute('src')).toBe('blob:circle');
     }
-    const mutations = changes.takeRecords();
+    mutations.push(...changes.takeRecords());
     expect(mutations.some(record => record.type === 'attributes')).toBe(false);
     for (const record of mutations) {
       for (const node of [...record.addedNodes, ...record.removedNodes]) {

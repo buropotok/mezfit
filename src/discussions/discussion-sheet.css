@@ -591,6 +591,10 @@
   width: var(--note-width);
 }
 
+.discussion-video-note__position > .discussion-video-note__menu {
+  pointer-events: auto;
+}
+
 .discussion-video-note__position > .discussion-video-note__circle {
   width: var(--note-width);
 }

@@ -119,9 +119,10 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
         style={placement} hidden={!placement}>
         <div className="discussion-video-note__position">
           {player}
+          {!expanded && menu}
         </div>
       </div>, playbackHost)}
-    {menu}
+    {(!playbackHost || !player || expanded) && menu}
     {error && <div className="discussion-video-note__error">
       <Text variant="footnote" role="alert">{error}</Text>
       <Button rounded onClick={() => { setError(''); setRetry(value => value + 1); }}>
