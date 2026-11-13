@@ -300,7 +300,7 @@ function WeightRepsPickerSession({
               <KonstaButton clear inline small rounded onClick={cancelPicker}>
                 <Text variant="body">Отменить</Text>
               </KonstaButton>
-              <KonstaButton inline small rounded strong disabled={!validDigits} onClick={finishPicker}>
+              <KonstaButton inline small rounded disabled={!validDigits} onClick={finishPicker}>
                 <Text variant="body">Сохранить</Text>
               </KonstaButton>
             </div>
