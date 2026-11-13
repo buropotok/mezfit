@@ -68,6 +68,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const [limit, setLimit] = useState(50);
   const [openError, setOpenError] = useState('');
   const [notificationRetry, setNotificationRetry] = useState(0);
+  const notificationSyncPending = useRef(false);
   const request = useRef(0);
   const cancelPendingOpen = useCallback(() => {
     ++request.current;
@@ -162,10 +163,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   }, [notificationMessageId, db, actorId, notificationRealmsKey, canResolveNotification,
     notificationRetry, onNotificationOpened]);
   const retryNotification = useCallback(() => {
+    if (!cloud || notificationSyncPending.current) return;
+    notificationSyncPending.current = true;
     setOpenError('');
     setNotificationRetry(value => value + 1);
-    // Connection provider owns the sync status/error and triggers a fresh pull.
-    void cloud?.retrySync().catch(() => {});
+    // Connection provider owns the sync error; prevent parallel pull requests.
+    void cloud.retrySync().catch(() => {}).finally(() => {
+      notificationSyncPending.current = false;
+    });
   }, [cloud]);
   const closeNotificationChat = useCallback(() => setClosedNotificationChat(true), []);
   const chatParent = useMemo<NavigationContext | null>(() => current
