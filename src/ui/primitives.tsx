@@ -35,7 +35,7 @@ export function Button({ variant = 'primary', color, size = 'default', selected:
 
 type IconButtonBaseProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> & {
   label: string;
-  /** Match the standard profile avatar without feature-owned geometry overrides. */
+  /** Public 40px avatar and 44px compact touch targets; standard remains 48px. */
   size?: 'default' | 'avatar' | 'compact';
   children?: ReactNode;
   icon?: UiIconSource;
