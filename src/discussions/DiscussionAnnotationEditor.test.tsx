@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import * as annotation from './discussion-annotation';
 import { DiscussionAnnotationEditor, type AnnotationExit } from './DiscussionAnnotationEditor';
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 function Editor({ image, onCancel = () => {}, onPrepare = async () => true }: {
   image: HTMLCanvasElement;
@@ -18,8 +18,7 @@ function Editor({ image, onCancel = () => {}, onPrepare = async () => true }: {
     onExitChange={setExit} onCancel={onCancel} onPrepare={onPrepare} /></KonstaProvider>;
 }
 
-it('drags after a hold, moves the loupe to the opposite corner and commits one undo step', () => {
-  vi.useFakeTimers();
+it('drags immediately from the node hit area and commits one undo step', () => {
   vi.stubGlobal('PointerEvent', MouseEvent);
   const image = document.createElement('canvas');
   image.width = image.height = 200;
@@ -28,14 +27,34 @@ it('drags after a hold, moves the loupe to the opposite corner and commits one u
   vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 200, 200));
 
   fireEvent.pointerDown(canvas, { clientX: 124, clientY: 100 });
-  act(() => vi.advanceTimersByTime(240));
-  fireEvent.pointerMove(canvas, { clientX: 150, clientY: 160 });
+  fireEvent.pointerMove(canvas, { clientX: 128, clientY: 100 });
   const loupe = view.container.querySelector('.discussion-annotation__loupe');
   expect(loupe?.getAttribute('data-horizontal')).toBe('left');
   fireEvent.pointerMove(canvas, { clientX: 60, clientY: 70 });
   expect(loupe?.getAttribute('data-horizontal')).toBe('right');
   fireEvent.pointerUp(canvas, { clientX: 60, clientY: 70 });
   expect(view.container.querySelector('.discussion-annotation__loupe')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }));
+  expect(screen.getByRole('button', { name: 'Завершить линию' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }));
+  expect(screen.getByRole('button', { name: 'Нарисовать линию' })).toBeTruthy();
+});
+
+it('keeps a tap on a node distinct from a cancelled drag', () => {
+  vi.stubGlobal('PointerEvent', MouseEvent);
+  const image = document.createElement('canvas');
+  image.width = image.height = 200;
+  const view = render(<Editor image={image} />);
+  const canvas = screen.getByLabelText('Изображение с линиями');
+  vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 200, 200));
+
+  fireEvent.pointerDown(canvas, { clientX: 124, clientY: 100 });
+  fireEvent.pointerMove(canvas, { clientX: 130, clientY: 100 });
+  fireEvent.pointerCancel(canvas);
+  expect(view.container.querySelector('.discussion-annotation__loupe')).toBeNull();
+
+  fireEvent.pointerDown(canvas, { clientX: 124, clientY: 100 });
+  fireEvent.pointerUp(canvas, { clientX: 125, clientY: 100 });
   fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }));
   expect(screen.getByRole('button', { name: 'Завершить линию' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Отменить действие' }));
