@@ -35,6 +35,7 @@ export interface TelegramWebApp {
   requestFullscreen?(): void;
   exitFullscreen?(): void;
   downloadFile?(params: { url: string; file_name: string }, callback?: (accepted: boolean) => void): void;
+  openLink?(url: string): void;
   openTelegramLink?(url: string): void;
   addToHomeScreen?(): void;
   checkHomeScreenStatus?(callback?: (status: TelegramHomeScreenStatus) => void): void;
@@ -46,6 +47,20 @@ export interface TelegramWebApp {
 
 export function getTelegramWebApp(): TelegramWebApp | null {
   return window.Telegram?.WebApp ?? null;
+}
+
+/** Call from a user gesture so Telegram or the browser can open the URL. */
+export function openExternalLink(url: string): void {
+  const webApp = getTelegramWebApp();
+  if (webApp?.openLink) {
+    try {
+      webApp.openLink(url);
+      return;
+    } catch {
+      // Some Telegram clients expose the API without handling the request.
+    }
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 export function requestTelegramFileDownload(url: string, fileName: string, onResult: (accepted: boolean) => void): boolean {

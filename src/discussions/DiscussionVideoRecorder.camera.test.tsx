@@ -100,3 +100,24 @@ it('reports when the WebView returns the wrong camera and lets the user switch b
   fireEvent.click(screen.getByRole('button', { name: 'Переключить на фронтальную камеру' }));
   await waitFor(() => expect(preview.srcObject).toBe(front.stream));
 });
+
+it('offers the WebView update on Android when recording in H.264 is unavailable', async () => {
+  const { open, getUserMedia } = openRecorder();
+  vi.spyOn(TestRecorder, 'isTypeSupported').mockReturnValue(false);
+  const openLink = vi.fn();
+  vi.stubGlobal('Telegram', { WebApp: { platform: 'android', openLink } });
+
+  try {
+    open();
+    const update = await screen.findByRole('button', { name: 'Обновить' });
+    expect(screen.getByText('Для записи видео обновите Android System WebView.')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(getUserMedia).not.toHaveBeenCalled();
+
+    fireEvent.click(update);
+    expect(openLink).toHaveBeenCalledExactlyOnceWith('https://play.google.com/store/apps/details?id=com.google.android.webview');
+    expect(screen.queryByRole('button', { name: 'Обновить' })).toBeNull();
+  } finally {
+    vi.mocked(TestRecorder.isTypeSupported).mockRestore();
+  }
+});

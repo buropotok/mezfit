@@ -4,6 +4,7 @@ import { CircularVideoPlayback } from './CircularVideoPlayback';
 import { VideoNoteRecordingRing } from './VideoNoteRing';
 import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import { type VideoNoteFacingMode } from '../video-note/useVideoNoteCameraSession';
+import { shouldShowWebViewUpdate, VideoWebViewUpdatePopover } from '../video-note/VideoWebViewUpdatePopover';
 import './video-note-module.css';
 
 type PreviewStage = 'idle' | 'preview' | 'play' | 'error';
@@ -46,7 +47,8 @@ export function VideoNoteModule() {
 
   const recorder = useVideoNoteRecorder(handleRecorded);
   const viewStage = recorder.status === 'idle' ? stage : recorder.status;
-  const error = recorder.error || previewError;
+  const showWebViewUpdate = shouldShowWebViewUpdate(recorder.unsupportedFormat);
+  const error = (showWebViewUpdate ? '' : recorder.error) || previewError;
 
   useEffect(() => () => {
     if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
@@ -147,6 +149,7 @@ export function VideoNoteModule() {
       </Text>}
 
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
+      {showWebViewUpdate && <VideoWebViewUpdatePopover portal onClose={recorder.dismissUnsupportedFormat} />}
 
       <div className="video-note-module__actions">
         {(viewStage === 'idle' || viewStage === 'error') ? (

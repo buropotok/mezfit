@@ -51,7 +51,8 @@ function Gesture({ onRecorded, onClick }: {
   onClick?: () => void;
 }) {
   const video = useDiscussionVideoNote(onRecorded);
-  return <button type="button" onPointerDown={event => video.onPointerDown(event, true)}
+  return <button type="button" data-unsupported-format={video.unsupportedFormat}
+    onPointerDown={event => video.onPointerDown(event, true)}
     onPointerUp={video.onPointerUp} onPointerCancel={video.onPointerCancel}
     onClick={() => { if (!video.consumeClick()) onClick?.(); }}>{video.status}</button>;
 }
@@ -103,4 +104,19 @@ it('pointer cancellation never sends the partially recorded circle', async () =>
   act(() => { fireEvent.pointerCancel(button); });
   expect(button.textContent).toBe('idle');
   expect(onRecorded).not.toHaveBeenCalled();
+});
+
+it('keeps the unsupported format available to the chat after the user releases the button', async () => {
+  const support = vi.spyOn(Recorder, 'isTypeSupported').mockReturnValue(false);
+  try {
+    render(<Gesture onRecorded={vi.fn()} />);
+    const button = screen.getByRole('button');
+    fireEvent.pointerDown(button);
+    await act(async () => { await vi.advanceTimersByTimeAsync(280); });
+    fireEvent.pointerUp(button);
+    expect(getUserMedia).not.toHaveBeenCalled();
+    expect(button.getAttribute('data-unsupported-format')).toBe('true');
+  } finally {
+    support.mockRestore();
+  }
 });

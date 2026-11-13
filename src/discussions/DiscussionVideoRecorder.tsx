@@ -7,6 +7,7 @@ import { useVideoNoteRecorder, type VideoNoteRecording } from '../video-note/use
 import type { VideoNoteFacingMode } from '../video-note/useVideoNoteCameraSession';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoReview } from './DiscussionVideoReview';
+import { shouldShowWebViewUpdate, VideoWebViewUpdatePopover } from '../video-note/VideoWebViewUpdatePopover';
 import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
 
 const topControls: CSSProperties = { top: 'calc(1rem + var(--discussion-media-safe-top))', bottom: 'auto' };
@@ -38,7 +39,8 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
   const [selectedFacing, setSelectedFacing] = useState<VideoNoteFacingMode | null>(null);
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
   const cameraPreview = useRef<HTMLVideoElement>(null);
-  const { start, stop, stream, status, error, elapsedMs } = useVideoNoteRecorder(setClip, profile, true);
+  const { start, stop, stream, status, error, elapsedMs, unsupportedFormat, dismissUnsupportedFormat } = useVideoNoteRecorder(setClip, profile, true);
+  const showWebViewUpdate = shouldShowWebViewUpdate(unsupportedFormat);
   const delayTrigger = useRef<HTMLElement>(null);
   const [delayOpen, setDelayOpen] = useState(false);
   const [delayPresented, setDelayPresented] = useState(false);
@@ -88,7 +90,7 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
       Запись через {countdown.remaining} сек.
     </Text>}
     {countingDown && <FloatingActionButton label="Отменить отсчёт" icon="x" style={centerControl} onClick={countdown.cancel} />}
-    {error && <Text variant="footnote" role="alert" className="discussion-video-recorder__status">{error}</Text>}
+    {error && !showWebViewUpdate && <Text variant="footnote" role="alert" className="discussion-video-recorder__status">{error}</Text>}
     {status === 'requesting' && <Text variant="footnote" role="status" className="discussion-video-recorder__status">Подключаем камеру…</Text>}
     {status === 'processing' && <Text variant="footnote" role="status" className="discussion-video-recorder__status">Готовим видео…</Text>}
     {status === 'recording' && <Text variant="footnote" className="discussion-video-recorder__status">{time} / {Math.floor(maxSeconds / 60)}:00</Text>}
@@ -117,5 +119,6 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
         </FloatingActionButton>
         : <FloatingActionButton label="Включить камеру" icon="video" style={centerControl} onClick={enableCamera} />}
     </>}
+    {showWebViewUpdate && <VideoWebViewUpdatePopover onClose={dismissUnsupportedFormat} />}
   </DiscussionMediaStage>;
 }
