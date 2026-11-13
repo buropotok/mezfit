@@ -69,6 +69,11 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const [openError, setOpenError] = useState('');
   const [notificationRetry, setNotificationRetry] = useState(0);
   const request = useRef(0);
+  const cancelPendingOpen = useCallback(() => {
+    ++request.current;
+    // An explicit tap in the inbox takes precedence over an unresolved deep link.
+    if (notificationMessageId) onNotificationOpened?.();
+  }, [notificationMessageId, onNotificationOpened]);
   const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string } | null>(null);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
@@ -190,8 +195,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   }, []);
   const openChat = async (row: DiscussionInboxRow) => {
     if (!cloud) return;
-    const generation = ++request.current;
-    if (notificationMessageId) onNotificationOpened?.();
+    cancelPendingOpen();
+    const generation = request.current;
     setOpenError('');
     try {
       // Entity entry points use the same idempotent operation. Historical headers
@@ -230,13 +235,13 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       {role === 'coach' && !relationshipId ? <div className={`discussion-inbox__client-filter${clientUserIds.length ? '' : ' discussion-inbox__client-filter--all'}`}>
         {!clientUserIds.length ? <Text variant="footnote" className="discussion-inbox__all-clients">Все клиенты</Text> : null}
         <ScheduleFilterBar placement="content" clients={clients} selected={clientUserIds}
-          onOpen={() => { ++request.current; setClientFilter({ parent }); }}
-          onRemove={id => { ++request.current; setClientUserIds(current => current.filter(value => value !== id)); setLimit(50); }} />
+          onOpen={() => { cancelPendingOpen(); setClientFilter({ parent }); }}
+          onRemove={id => { cancelPendingOpen(); setClientUserIds(current => current.filter(value => value !== id)); setLimit(50); }} />
       </div> : null}
       <div className="discussion-inbox__filters">
-        <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
+        <Button rounded tonal inline onClick={() => { cancelPendingOpen(); setPicker({ side: 'from', parent }); }}><Text variant="footnote">{from ? `С ${discussionDateLabel(from)}` : 'С даты'}</Text></Button>
         <Button rounded tonal inline onClick={() => { ++request.current; setPicker({ side: 'to', parent }); }}><Text variant="footnote">{to ? `По ${discussionDateLabel(to)}` : 'По дату'}</Text></Button>
-        {from || to || clientUserIds.length ? <Button rounded clear inline onClick={() => { ++request.current; setFrom(null); setTo(null); setClientUserIds([]); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
+        {from || to || clientUserIds.length ? <Button rounded clear inline onClick={() => { cancelPendingOpen(); setFrom(null); setTo(null); setClientUserIds([]); setLimit(50); }}><Text variant="footnote">Сбросить</Text></Button> : null}
       </div>
     </div>
     {from && to && from > to ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
@@ -248,17 +253,17 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       {notificationMessageId && !opened ? <Button rounded tonal onClick={retryNotification}><Text>Повторить</Text></Button> : null}
     </div> : null}
     {inbox.error ? <div className="stack"><Text role="alert">{inbox.error}</Text>
-      <Button rounded tonal onClick={inbox.retry}><Text>Повторить</Text></Button></div> : null}
+      <Button rounded tonal onClick={() => { cancelPendingOpen(); inbox.retry(); }}><Text>Повторить</Text></Button></div> : null}
     {cloud?.status === 'error' && !rows.length ? <Text role="status">{cloud.error}</Text> : null}
     {inbox.loading && !rows.length ? <Text>Загружаем обсуждения…</Text>
       : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
     <DiscussionInboxList rows={rows.slice(0, limit)} onOpen={row => { void openChat(row); }}
-      onEntity={row => { ++request.current; if (notificationMessageId) onNotificationOpened?.(); setOpened({ row, kind: 'entity', parent }); }} />
-    {rows.length > limit ? <Button rounded tonal onClick={() => setLimit(value => value + 50)}><Text>Показать ещё</Text></Button> : null}
+      onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
+    {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}
     {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}
       clients={clients} loading={cloud?.status === 'loading'} selected={clientUserIds}
       onClose={closeClientFilter} onApply={ids => {
-        ++request.current; setClientUserIds(ids.filter(id => clients.some(contact => contact.userId === id)));
+        cancelPendingOpen(); setClientUserIds(ids.filter(id => clients.some(contact => contact.userId === id)));
         setLimit(50); closeClientFilter();
       }} /> : null}
     <DatePicker opened={picker !== null} value={(picker?.side === 'to' ? to : from) ?? discussionLocalDate(new Date()) as LocalDate}
