@@ -3,6 +3,33 @@ import { List, ListInput } from 'konsta/react';
 import { requestTelegramInviteShare } from '../telegram';
 import { MezfitDialog, MezfitDialogButton, Text } from '../ui';
 
+// Legacy synchronous clipboard fallback for Telegram WebViews that reject Clipboard API writes.
+function copyTextUsingSelection(value: string): boolean {
+  if (typeof document === 'undefined' || typeof document.execCommand !== 'function') return false;
+
+  const field = document.createElement('textarea');
+  field.value = value;
+  field.readOnly = true;
+  field.tabIndex = -1;
+  field.setAttribute('aria-hidden', 'true');
+  field.style.position = 'fixed';
+  field.style.left = '0';
+  field.style.top = '0';
+  field.style.opacity = '0';
+  document.body.appendChild(field);
+
+  try {
+    field.focus();
+    field.select();
+    field.setSelectionRange(0, field.value.length);
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    field.remove();
+  }
+}
+
 export function CoachInviteDialog({ url, onClose }: { url: string | null; onClose: () => void }) {
   const inputId = useId();
   const latestUrl = useRef(url);
@@ -35,12 +62,19 @@ export function CoachInviteDialog({ url, onClose }: { url: string | null; onClos
       if (latestUrl.current === url) onClose();
     } catch {
       if (latestUrl.current === url) {
-        setActionError('Не удалось скопировать ссылку. Выделите её ниже и скопируйте вручную.');
+        if (copyTextUsingSelection(url)) onClose();
+        else setActionError('Не удалось скопировать ссылку. Попробуйте «Скопировать текст» или выделите её ниже.');
       }
     } finally {
       copyInFlight.current = false;
       setCopyBusy(false);
     }
+  };
+
+  const copyVisibleText = () => {
+    if (!url || copyBusy || latestUrl.current !== url) return;
+    if (copyTextUsingSelection(url)) onClose();
+    else setActionError('Автоматическое копирование недоступно. Выделите ссылку ниже и скопируйте вручную.');
   };
 
   return (
@@ -51,6 +85,7 @@ export function CoachInviteDialog({ url, onClose }: { url: string | null; onClos
       buttons={<>
         <MezfitDialogButton strong onClick={share}>Отправить в Telegram</MezfitDialogButton>
         <MezfitDialogButton disabled={copyBusy} onClick={() => { void copy(); }}>Копировать ссылку</MezfitDialogButton>
+        {actionError && url ? <MezfitDialogButton disabled={copyBusy} onClick={copyVisibleText}>Скопировать текст</MezfitDialogButton> : null}
       </>}
       onBackdropClick={onClose}
       role="alertdialog"
