@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Button as KonstaButton } from 'konsta/react';
 import { DEFAULT_WEIGHT_REPS_PICKER_MODE, type WeightRepsPickerMode } from '../../../shared/weight-reps-picker-mode';
-import { loadBrowserGlassSettings } from '../../glassSettings';
-import { FloatingActionButton } from '../components';
-import { Icon, type UiIconName } from '../Icon';
-import { Button, IconButton, Text } from '../primitives';
-import { MezfitBottomSheet } from '../konsta-mezfit';
+import { Icon } from '../Icon';
+import { TextInput } from '../FormControls';
+import { IconButton, Text } from '../primitives';
 import {
   ThreeColumnPicker,
   type ThreeColumnPickerColumn,
@@ -25,7 +23,7 @@ import './weight-reps-picker.css';
 const REPS_VALUES = Array.from({ length: 101 }, (_, index) => index);
 
 type NumericField = 'reps' | 'kilograms';
-type NumericDraft = { digits: string; hasTyped: boolean };
+type NumericDraft = { digits: string };
 
 const FRACTION_COLUMN: ThreeColumnPickerColumn = {
   ariaLabel: 'Доли килограмма',
@@ -39,18 +37,6 @@ const WHEEL_COLUMNS: Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerCol
   second: { ariaLabel: 'Килограммы', values: KILOGRAM_VALUES, format: String },
   third: FRACTION_COLUMN,
 };
-
-const DIGIT_KEYS: readonly { digit: string; icon: UiIconName }[] = [
-  { digit: '1', icon: 'number-1' },
-  { digit: '2', icon: 'number-2' },
-  { digit: '3', icon: 'number-3' },
-  { digit: '4', icon: 'number-4' },
-  { digit: '5', icon: 'number-5' },
-  { digit: '6', icon: 'number-6' },
-  { digit: '7', icon: 'number-7' },
-  { digit: '8', icon: 'number-8' },
-  { digit: '9', icon: 'number-9' },
-];
 
 const LENS_XS = [80, 176, 240] as const;
 const LENS_SEPARATORS = [{ x: 208, label: ',' }] as const;
@@ -116,14 +102,12 @@ function WeightRepsPickerSession({
   };
   const [editing, setEditing] = useState<NumericField | null>(null);
   const [drafts, setDrafts] = useState<Partial<Record<NumericField, NumericDraft>>>({});
-  const [popover, setPopover] = useState<HTMLElement | null>(null);
-  const [sheetGeometry, setSheetGeometry] = useState<{ height: number; bottom: number } | null>(null);
+  const numberInputRef = useRef<HTMLInputElement>(null);
 
   if (!Number.isSafeInteger(value.reps) || value.reps < 0) {
     throw new Error('WeightRepsPicker reps must be a non-negative safe integer');
   }
   const weight = parseWeightKg(value.weightKg, 'WeightRepsPicker');
-  const glass = loadBrowserGlassSettings();
 
   const columns = useMemo<Readonly<Record<ThreeColumnPickerPart, ThreeColumnPickerColumn>>>(() => {
     if (mode === 'numbers') return {
@@ -149,44 +133,19 @@ function WeightRepsPickerSession({
     setFilled({ reps: !emptyFields?.reps, weightKg: !emptyFields?.weightKg });
   }, [initialValue.reps, initialValue.weightKg, emptyFields?.reps, emptyFields?.weightKg]);
 
-  const measureSheet = useCallback(() => {
-    if (!popover) return;
-    const view = popover.ownerDocument.defaultView ?? window;
-    const viewport = view.visualViewport;
-    const bottom = viewport ? viewport.offsetTop + viewport.height : view.innerHeight;
-    const top = popover.getBoundingClientRect().bottom + 10;
-    const next = {
-      height: Math.max(0, Math.floor(bottom - top)),
-      bottom: Math.max(0, view.innerHeight - bottom),
-    };
-    setSheetGeometry(current => current?.height === next.height && current.bottom === next.bottom ? current : next);
-  }, [popover]);
-
-  useLayoutEffect(() => {
-    if (!opened || editing === null || !popover) return;
-    const view = popover.ownerDocument.defaultView ?? window;
-    const viewport = view.visualViewport;
-    measureSheet();
-    view.addEventListener('resize', measureSheet);
-    viewport?.addEventListener('resize', measureSheet);
-    viewport?.addEventListener('scroll', measureSheet);
-    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measureSheet) : null;
-    observer?.observe(popover);
-    return () => {
-      view.removeEventListener('resize', measureSheet);
-      viewport?.removeEventListener('resize', measureSheet);
-      viewport?.removeEventListener('scroll', measureSheet);
-      observer?.disconnect();
-    };
-  }, [opened, editing, popover, measureSheet]);
-
-  const openNumberSheet = (field: NumericField) => {
-    setDrafts(current => current[field] ? current : {
-      ...current,
-      [field]: { digits: (field === 'reps' ? filled.reps : filled.weightKg)
-        ? String(field === 'reps' ? value.reps : weight.kilograms) : '', hasTyped: false },
+  const openNumberInput = (field: NumericField) => {
+    // Focus in the same trusted tap: iOS WebKit will not reliably open its
+    // software keyboard when focus is deferred to an effect or animation frame.
+    flushSync(() => {
+      setDrafts(current => current[field] ? current : {
+        ...current,
+        [field]: { digits: (field === 'reps' ? filled.reps : filled.weightKg)
+          ? String(field === 'reps' ? value.reps : weight.kilograms) : '' },
+      });
+      setEditing(field);
     });
-    setEditing(field);
+    numberInputRef.current?.focus();
+    numberInputRef.current?.select();
   };
 
   const updateActiveDraft = (update: (draft: NumericDraft) => NumericDraft) => {
@@ -197,17 +156,12 @@ function WeightRepsPickerSession({
     });
   };
 
-  const appendDigit = (digit: string) => {
-    updateActiveDraft(draft => ({
-      digits: !draft.hasTyped || draft.digits === '0' ? digit : draft.digits + digit,
-      hasTyped: true,
-    }));
+  const changeDigits = (digits: string) => {
+    // type=text + inputMode=numeric keeps a native Backspace on both platforms;
+    // inputMode is a keyboard hint, not a validation boundary.
+    if (!/^\d*$/.test(digits)) return;
+    updateActiveDraft(() => ({ digits }));
   };
-
-  const clearDigits = () => updateActiveDraft(() => ({ digits: '', hasTyped: true }));
-  const backspaceDigit = () => updateActiveDraft(draft => ({
-    digits: draft.digits.slice(0, -1), hasTyped: true,
-  }));
 
   const cancelEdit = () => {
     setEditing(null);
@@ -244,13 +198,17 @@ function WeightRepsPickerSession({
       if (emptyFields) onCommit(next, fields);
       else onCommit(next);
     }
+    numberInputRef.current?.blur();
     cancelEdit();
     onDismiss();
   };
 
-  const saveEdit = () => {
-    if (!editing || !validDigits) return;
-    finishPicker();
+  const cancelPicker = () => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    numberInputRef.current?.blur();
+    cancelEdit();
+    onDismiss();
   };
 
   const toggleMode = () => {
@@ -264,7 +222,7 @@ function WeightRepsPickerSession({
   const lensAction = (field: NumericField) => {
     const label = field === 'reps' ? 'Изменить повторения' : 'Изменить целые килограммы';
     return (
-      <IconButton label={label} aria-pressed={editing === field} onClick={() => openNumberSheet(field)}>
+      <IconButton label={label} aria-pressed={editing === field} onClick={() => openNumberInput(field)}>
         {drafts[field] || (field === 'reps' ? filled.reps : filled.weightKg) ? (
           <span className="ui-visually-hidden" aria-live="polite">
             {drafts[field]?.digits ?? String(field === 'reps' ? value.reps : weight.kilograms)}
@@ -274,15 +232,8 @@ function WeightRepsPickerSession({
     );
   };
 
-  const cursor = <Icon name="letter-i" className="ui-weight-reps-picker__input-active" style={{ width: '100%', height: '100%' }} />;
-
-  const portalHost = typeof document !== 'undefined'
-    ? document.getElementById('root') ?? document.body
-    : null;
-
   return (
-    <>
-      <ThreeColumnPicker
+    <ThreeColumnPicker
         key={mode}
         geometry={mode === 'wheels' ? 'compact-time' : 'standard'}
         opened={opened}
@@ -294,8 +245,6 @@ function WeightRepsPickerSession({
         onClose={() => finishPicker()}
         target={target}
         columns={columns}
-        popoverRef={setPopover}
-        onPositioned={editing === null ? undefined : measureSheet}
         lensXs={LENS_XS}
         separators={LENS_SEPARATORS}
         staticLens={mode === 'numbers' ? {
@@ -305,10 +254,6 @@ function WeightRepsPickerSession({
         staticLensValues={mode === 'numbers' ? {
           first: drafts.reps?.digits ?? (filled.reps ? String(value.reps) : undefined),
           second: drafts.kilograms?.digits ?? (filled.weightKg ? String(weight.kilograms) : undefined),
-        } : undefined}
-        staticLensCursors={mode === 'numbers' ? {
-          first: editing === 'reps' ? cursor : undefined,
-          second: editing === 'kilograms' ? cursor : undefined,
         } : undefined}
         footer={(
           <div className="ui-weight-reps-picker__footer">
@@ -322,7 +267,7 @@ function WeightRepsPickerSession({
         popoverClassName="ui-weight-reps-picker__popover"
         pickerClassName={`ui-weight-reps-picker ui-weight-reps-picker--${mode}`}
         columnsClassName="ui-weight-reps-picker__columns"
-        header={(
+        header={editing === null ? (
           <div className="ui-weight-reps-picker__labels">
             <Text variant="footnote" tone="muted" className="ui-weight-reps-picker__label">
               Повторения
@@ -331,89 +276,36 @@ function WeightRepsPickerSession({
               Вес
             </Text>
           </div>
-        )}
-      />
-      {portalHost ? createPortal(
-        <MezfitBottomSheet
-          opened={opened && editing !== null}
-          label={editing === 'reps' ? 'Ввод повторений' : 'Ввод килограммов'}
-          lazyMount
-          layer="abovePopover"
-          className="ui-weight-reps-picker__number-sheet"
-          contentClassName="ui-weight-reps-picker__sheet-content"
-          style={sheetGeometry === null ? undefined : {
-            '--ui-weight-reps-number-sheet-height': `${sheetGeometry.height}px`,
-            bottom: `${sheetGeometry.bottom}px`,
-          } as CSSProperties}
-        >
-          <div className="ui-weight-reps-picker__number-content">
-            <header className="ui-weight-reps-picker__number-header">
-              <KonstaButton
-                clear
-                inline
-                className="ui-weight-reps-picker__cancel"
-                onClick={() => {
-                  if (closingRef.current) return;
-                  closingRef.current = true;
-                  cancelEdit();
-                  onDismiss();
-                }}
-              >
+        ) : (
+          <div className="ui-weight-reps-picker__native-entry">
+            <TextInput
+              ref={numberInputRef}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              enterKeyHint="done"
+              autoComplete="off"
+              textAlign="center"
+              aria-label={editing === 'reps' ? 'Ввести повторения' : 'Ввести целые килограммы'}
+              value={drafts[editing]?.digits ?? ''}
+              onChange={event => changeDigits(event.currentTarget.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  if (validDigits) finishPicker();
+                }
+              }}
+            />
+            <div className="ui-weight-reps-picker__native-actions">
+              <KonstaButton clear inline small rounded onClick={cancelPicker}>
                 <Text variant="body">Отменить</Text>
               </KonstaButton>
-              <Text variant="headline">
-                {editing === 'reps' ? 'Повторения' : 'Килограммы'}
-              </Text>
-              <span className="ui-weight-reps-picker__save-slot">
-                <Button disabled={!validDigits} onClick={saveEdit}>
-                  Сохранить
-                </Button>
-              </span>
-            </header>
-            <div className="ui-weight-reps-picker__number-body">
-              <div className="ui-weight-reps-picker__number-grid-area">
-                <div className="ui-weight-reps-picker__number-grid" aria-label="Цифровая клавиатура">
-                  {DIGIT_KEYS.map(({ digit, icon }) => (
-                    <div key={digit} className="ui-weight-reps-picker__number-cell">
-                      <div className="ui-weight-reps-picker__key-dock">
-                        <FloatingActionButton
-                          label={`Цифра ${digit}`}
-                          icon={icon}
-                          glassPreset={glass.preset}
-                          glassOptics={glass.optics}
-                          onClick={() => appendDigit(digit)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <div className="ui-weight-reps-picker__number-cell">
-                    <div className="ui-weight-reps-picker__key-dock">
-                      <FloatingActionButton label="Очистить ввод" icon="x"
-                        glassPreset={glass.preset} glassOptics={glass.optics}
-                        onClick={clearDigits} />
-                    </div>
-                  </div>
-                  <div className="ui-weight-reps-picker__number-cell ui-weight-reps-picker__number-cell--zero">
-                    <div className="ui-weight-reps-picker__key-dock">
-                      <FloatingActionButton label="Цифра 0" icon="number-0"
-                        glassPreset={glass.preset} glassOptics={glass.optics}
-                        onClick={() => appendDigit('0')} />
-                    </div>
-                  </div>
-                  <div className="ui-weight-reps-picker__number-cell">
-                    <div className="ui-weight-reps-picker__key-dock">
-                      <FloatingActionButton label="Стереть последнюю цифру" icon="arrow-left"
-                        glassPreset={glass.preset} glassOptics={glass.optics}
-                        onClick={backspaceDigit} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <KonstaButton inline small rounded disabled={!validDigits} onClick={finishPicker}>
+                <Text variant="body">Сохранить</Text>
+              </KonstaButton>
             </div>
           </div>
-        </MezfitBottomSheet>,
-        portalHost,
-      ) : null}
-    </>
+        )}
+    />
   );
 }
