@@ -29,5 +29,6 @@ export function useDiscussionVideoNote(onRecorded: (clip: VideoNoteRecording, pr
   });
   const release = () => { gesture.cancel(); recorder.release(); setPermissionReady(false); };
   return { ...gesture, release, status: recorder.status, error: recorder.error,
+    unsupportedFormat: recorder.unsupportedFormat, dismissUnsupportedFormat: recorder.dismissUnsupportedFormat,
     stream: recorder.stream, progress: recorder.progress, permissionReady };
 }
