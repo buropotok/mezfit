@@ -162,8 +162,9 @@ describe('WeightRepsPicker native numeric entry', () => {
     const picker = renderPicker();
     openInput();
     setDigits('12');
-    save();
-    save();
+    const saveButton = screen.getByRole('button', { name: 'Сохранить' });
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
     expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 12, weightKg: 77.5 });
     expect(picker.onClose).toHaveBeenCalledOnce();
   });
