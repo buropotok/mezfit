@@ -39,7 +39,10 @@ describe('optional controlled day collapse', () => {
     expect(screen.getByText('27.10.2026')).toBeTruthy();
     expect(screen.getByText('08:00 – 09:00')).toBeTruthy();
     const chevron = screen.getByRole('button', { name: 'Развернуть тренировку' });
-    expect(chevron.nextElementSibling?.getAttribute('aria-label')).toBe('Автор: Автор');
+    // The right-edge action strip replaces the old direct chevron/avatar sibling layout.
+    const strip = chevron.closest('.ui-compact-action-group');
+    expect(strip?.querySelectorAll('.ui-compact-action-group__slot')).toHaveLength(1);
+    expect(strip?.nextElementSibling?.getAttribute('aria-label')).toBe('Автор: Автор');
     expect(chevron.firstElementChild?.classList.contains('workout-plan-card__chevron--expanded')).toBe(false);
     fireEvent.click(chevron);
     expect(toggle).toHaveBeenCalledOnce();

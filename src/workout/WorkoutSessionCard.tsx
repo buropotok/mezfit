@@ -427,7 +427,7 @@ function WorkoutFactCard<Id extends string | number = number>({
           onReorderExerciseIds(reorderedIds);
         }}
         header={(
-          <div className={`workout-session-card__header${headerActionsHost !== undefined ? ' workout-session-card__header--sheet' : session.discussion ? ' workout-session-card__header--with-discussion' : ''}`}>
+          <div className={`workout-session-card__header${headerActionsHost !== undefined ? ' workout-session-card__header--sheet' : ''}`}>
             <span className="workout-session-card__icon">
               <Icon name="barbell" variant="outline" className="workout-session-card__icon-artwork" />
             </span>

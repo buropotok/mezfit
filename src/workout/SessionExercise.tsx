@@ -427,7 +427,7 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             key={set.sessionSetId}
             className="session-exercise__set-row"
             trailingWidth={planMode ? 'content' : 'default'}
-            trailingSpacing="compact"
+            trailingSpacing={planMode ? 'default' : 'compact'}
             trailingActionSpacing="flush"
             leading={<SetStatus set={set} />}
             title={planMode ? (
