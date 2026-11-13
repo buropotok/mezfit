@@ -145,6 +145,29 @@ describe('WeightRepsPicker native numeric entry', () => {
     expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 1001, weightKg: 77.5 });
   });
 
+  it('blocks saving if an earlier field has an unfinished empty draft', () => {
+    const picker = renderPicker();
+    openInput();
+    setDigits('');
+    openInput('kilograms');
+    setDigits('23');
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toHaveProperty('disabled', true);
+    expect(picker.onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+    expect(picker.onChange).not.toHaveBeenCalled();
+    expect(picker.onClose).toHaveBeenCalledOnce();
+  });
+
+  it('ignores repeat Save after the session has already committed', () => {
+    const picker = renderPicker();
+    openInput();
+    setDigits('12');
+    save();
+    save();
+    expect(picker.onChange).toHaveBeenCalledExactlyOnceWith({ reps: 12, weightKg: 77.5 });
+    expect(picker.onClose).toHaveBeenCalledOnce();
+  });
+
   it('keeps independent drafts when switching from reps to kilograms', () => {
     const picker = renderPicker({ value: { reps: 8, weightKg: 77.75 } });
     openInput();
