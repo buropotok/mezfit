@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import {
   Avatar,
   Badge,
+  CompactActionGroup,
   DatePicker,
   GlassSurface,
   Icon,
@@ -373,9 +374,9 @@ function WorkoutFactCard<Id extends string | number = number>({
 
   // The session owns its existing discussion and menu state. The Bottom Sheet may
   // place those same controls in its header; the inline header remains the default.
-  const headerActions = <>
+  const headerActions = <CompactActionGroup aria-label="Действия тренировки" data-no-dnd>
     {session.discussion ? <span className="entity-discussion-trigger workout-session-card__discussion-action" data-no-dnd>
-      <IconButton icon="message-circle" label="Обсуждения тренировки"
+      <IconButton size="compact" icon="message-circle" label="Обсуждения тренировки"
         disabled={!discussions.canOpen} onClick={discussions.open} />
       <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
     </span> : null}
@@ -396,7 +397,7 @@ function WorkoutFactCard<Id extends string | number = number>({
           <IconButton
             ref={menuTriggerRef}
             className="workout-session-card__menu-trigger"
-            style={{ width: 44, height: 44, minHeight: 44, padding: 10 }}
+            size="compact"
             icon="dots-vertical"
             label="Меню тренировки"
           />
@@ -404,10 +405,8 @@ function WorkoutFactCard<Id extends string | number = number>({
         label="Меню тренировки"
         items={menuItems}
       /></span>
-    ) : headerActionsHost === undefined ? (
-      <span className="workout-session-card__menu-placeholder" aria-hidden="true" />
     ) : null}
-  </>;
+  </CompactActionGroup>;
 
   return (
     <>

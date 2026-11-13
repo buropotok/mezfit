@@ -5,6 +5,7 @@ import playerStopUrl from './player-stop.svg';
 import paperclipUrl from './paperclip.svg';
 import photoUrl from './photo.svg';
 import videoUrl from './video.svg';
+import videoThinUrl from './video-thin.svg';
 import cameraRotateUrl from './camera-rotate.svg';
 import trashThinUrl from './trash-outline.svg';
 import copyThinUrl from './copy-outline.svg';
@@ -130,6 +131,7 @@ const uiIconRegistry = {
   paperclip: { outline: paperclipUrl, filled: paperclipUrl },
   photo: { outline: photoUrl, filled: photoUrl },
   video: { outline: videoUrl, filled: videoUrl },
+  'video-thin': { outline: videoThinUrl, filled: videoThinUrl },
   'message-circle-exclamation': { outline: messageCircleExclamationUrl, filled: messageCircleExclamationUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },

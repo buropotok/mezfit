@@ -6,7 +6,7 @@ import { SET_TYPE_LABELS } from '../../shared/set-type';
 import type { ExerciseCategoryCode, ExerciseEquipmentCode, TrackingType } from '../api';
 import { ExerciseMedia } from '../ExerciseMedia';
 import { exerciseDisplayName } from '../exerciseLocalization';
-import { Badge, GlassSurface, Icon, IconButton, List, ListItem, Text } from '../ui';
+import { Badge, CompactActionGroup, GlassSurface, Icon, IconButton, List, ListItem, Text } from '../ui';
 import { SetEntry } from './SetEntry';
 import { ExerciseActionsMenu } from './ExerciseActionsMenu';
 import type { SetEntryProgramIdentity, SetMetrics } from './setEntryTypes';
@@ -232,6 +232,7 @@ function SessionExerciseLayout({
     title={exerciseName}
     subtitle={subtitle}
     trailing={badge}
+    trailingSpacing="compact"
     aria-expanded={!collapsed}
     aria-controls={bodyId}
     onClick={toggleCollapsed}
@@ -248,18 +249,20 @@ function SessionExerciseLayout({
             data-no-dnd aria-label={`Информация об упражнении: ${exerciseName}`}
             onClick={onInformation} /> : null}
         </div>
-        <IconButton
-          className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
-          data-no-dnd
-          label={collapsed ? 'Развернуть упражнение' : 'Свернуть упражнение'}
-          aria-expanded={!collapsed}
-          aria-controls={bodyId}
-          onClick={toggleCollapsed}
-        >
-          <SharedIcon name="chevron-down" />
-        </IconButton>
-        {actions ?? (onOpenExerciseMenu ? <IconButton className="session-exercise__menu"
-          data-no-dnd icon="dots-vertical" label="Опции упражнения" onClick={onOpenExerciseMenu} /> : null)}
+        <CompactActionGroup aria-label="Действия упражнения" data-no-dnd>
+          <IconButton size="compact"
+            className={`session-exercise__collapse${collapsed ? ' session-exercise__collapse--collapsed' : ''}`}
+            data-no-dnd
+            label={collapsed ? 'Развернуть упражнение' : 'Свернуть упражнение'}
+            aria-expanded={!collapsed}
+            aria-controls={bodyId}
+            onClick={toggleCollapsed}
+          >
+            <SharedIcon name="chevron-down" />
+          </IconButton>
+          {actions ?? (onOpenExerciseMenu ? <IconButton size="compact" className="session-exercise__menu"
+            data-no-dnd icon="dots-vertical" label="Опции упражнения" onClick={onOpenExerciseMenu} /> : null)}
+        </CompactActionGroup>
       </div>
 
       <div id={bodyId} className="session-exercise__body" hidden={collapsed}>
@@ -329,6 +332,8 @@ function ProgramExerciseSets({ sets, onOpenSet, onDeleteSet, discussionTargetFor
           onClick={onOpenSet ? () => onOpenSet?.(set.id) : undefined}
           trailing={!target && onDeleteSet ? <IconButton icon="trash-outline" label={`Удалить подход ${index + 1}`}
             onClick={(event) => { event.stopPropagation(); void onDeleteSet(set.id); }} /> : undefined}
+          trailingActionSpacing="flush"
+          trailingSpacing="compact"
           trailingAction={target ? <ExecutionSetDiscussionMenu target={target} setNumber={index + 1}
             onOpenTarget={onOpenDiscussion} onNavigationContextChange={onNavigationContextChange}
             onDeleteNavigationContextChange={onSetDeletionNavigationContextChange}
@@ -422,6 +427,8 @@ function WorkoutExerciseSets<Id extends string | number>({ exercise, onSelectSet
             key={set.sessionSetId}
             className="session-exercise__set-row"
             trailingWidth={planMode ? 'content' : 'default'}
+            trailingSpacing="compact"
+            trailingActionSpacing="flush"
             leading={<SetStatus set={set} />}
             title={planMode ? (
               <span className="session-exercise__set-title">

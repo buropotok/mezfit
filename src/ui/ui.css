@@ -82,3 +82,6 @@
 }
 
 .ui-icon-button.ui-icon-button--avatar { width: 2.5rem; height: 2.5rem; min-height: 2.5rem; }
+/* Public 44px hit target for the compact action group; standard icon artwork stays unchanged. */
+.ui-icon-button.ui-icon-button--compact { width: 44px; height: 44px; min-height: 44px; }
+

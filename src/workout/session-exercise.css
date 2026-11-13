@@ -52,23 +52,12 @@
   align-items: center;
   flex-shrink: 0;
 }
-.session-exercise__set-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  /* Balance the public ListItem trailing-action gutters against the header action slots. */
-  margin-inline-start: -.375rem;
-  margin-inline-end: -.25rem;
-}
 
 .session-exercise__menu,
 .session-exercise__collapse {
   flex: 0 0 auto;
 }
 
-.session-exercise__menu {
-  margin-inline-end: var(--ui-space-1);
-}
 
 .session-exercise__collapse .session-exercise__icon {
   transition: transform .15s ease;

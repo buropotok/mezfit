@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { NavigationContext } from '../NavigationShell';
-import { IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type LiquidPopoverItem } from '../ui';
+import { CompactActionGroup, IconButton, LiquidPopover, MezfitDialog, MezfitDialogButton, Text, type LiquidPopoverItem } from '../ui';
 import { UnreadCount } from '../ui/UnreadCount';
 import type { EntityDiscussionTarget, OpenEntityDiscussion } from './entity-discussion-target';
 import { useEntityDiscussions } from './useEntityDiscussions';
@@ -34,7 +34,7 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
     return () => report(null);
   }, [deleteConfirm, onDeleteNavigationContextChange]);
   const items: LiquidPopoverItem[] = target ? [{
-    id: 'record-video', label: 'Видео', icon: 'video', disabled: !discussions.canRecordVideo,
+    id: 'record-video', label: 'Видео', icon: 'video-thin', disabled: !discussions.canRecordVideo,
     onSelect: () => { requestedAction.current = target; },
   }] : [];
   if (onDeleteSet) items.push({
@@ -70,18 +70,18 @@ export function ExecutionSetDiscussionMenu({ target, setNumber, onNavigationCont
     }
   };
   return <>
-    <span className="session-exercise__set-actions" data-no-dnd>
+    <CompactActionGroup aria-label={`Действия подхода ${setNumber}`} data-no-dnd>
       {target ? <span className="entity-discussion-trigger">
-        <IconButton icon="message-circle" label={`Обсуждения подхода ${setNumber}`}
+        <IconButton size="compact" icon="message-circle" label={`Обсуждения подхода ${setNumber}`}
           disabled={!discussions.canOpen}
           onClick={() => onOpenTarget ? onOpenTarget(target) : discussions.open()} />
         <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
       </span> : null}
       <LiquidPopover isOpen={open} onOpenChange={setOpen} triggerRef={trigger}
         label={`Меню подхода ${setNumber}`}
-        trigger={<IconButton ref={trigger} icon="dots-vertical" label={`Меню подхода ${setNumber}`} />}
+        trigger={<IconButton size="compact" ref={trigger} icon="dots-vertical" label={`Меню подхода ${setNumber}`} />}
         items={items} onPresentationChange={onPresentationChange} />
-    </span>
+    </CompactActionGroup>
     {deleteConfirm && typeof document !== 'undefined' ? createPortal(
       <div className="navigation-overlay-root k-ios dark safe-areas">
         <MezfitDialog opened role="alertdialog" aria-label="Удалить подход?"

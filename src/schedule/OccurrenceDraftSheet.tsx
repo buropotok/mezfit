@@ -587,12 +587,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     }
   };
   const discussionAction = discussionTarget ? <span className="entity-discussion-trigger occurrence-draft-sheet__discussion-action">
-    <IconButton icon="message-circle" label="Обсуждения" disabled={!discussions.canOpen} onClick={discussions.open} />
+    <IconButton size="compact" icon="message-circle" label="Обсуждения" disabled={!discussions.canOpen} onClick={discussions.open} />
     <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />
   </span> : null;
   const actionsMenu = planner ? <span className="entity-discussion-trigger"><LiquidPopover isOpen={actionsOpen} onOpenChange={setActionsOpen}
             triggerRef={actionsRef} label="Меню тренировки" preset={glass.preset} optics={glass.optics}
-            trigger={<IconButton ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
+            trigger={<IconButton size="compact" ref={actionsRef} icon="dots-vertical" label="Меню тренировки" disabled={busy} />}
             items={[...(discussionTarget ? [discussions.menuItem] : []), { id: 'copy', label: 'Скопировать тренировку', icon: 'copy-plus', disabled: busy || copyBusy
               || (draft?.format === 'coached' && draft.coachUserId !== draft.actorUserId),
               onSelect: () => { setOpenCopyAfterMenu(true); setActionsOpen(false); } },
