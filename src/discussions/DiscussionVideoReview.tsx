@@ -19,12 +19,14 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
   retakeStyle: CSSProperties;
 }) {
   const video = useRef<HTMLVideoElement>(null);
+  const playAfterSeek = useRef(false);
   const exportRequest = useRef<AbortController | null>(null);
   const submitted = useRef(false);
   const [url, setUrl] = useState<string>();
   const [info, setInfo] = useState<VideoTrimInfo>();
   const [range, setRange] = useState<VideoTrimRange>({ start: 0, end: 0 });
   const [cursor, setCursor] = useState(0);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const frames = useVideoTrimFilmstrip(url, info?.duration ?? 0);
@@ -49,9 +51,37 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
 
   const seek = (time: number) => {
     if (!video.current) return;
+    playAfterSeek.current = false;
+    setPreviewPlaying(false);
     video.current.pause();
     video.current.currentTime = time;
     setCursor(time);
+  };
+  const playPreview = (player: HTMLVideoElement) => {
+    void player.play().catch(() => {
+      if (player.paused && !playAfterSeek.current) setPreviewPlaying(false);
+    });
+  };
+  const togglePreview = () => {
+    const player = video.current;
+    if (!player) return;
+    if (playAfterSeek.current || !player.paused) {
+      playAfterSeek.current = false;
+      player.pause();
+      setPreviewPlaying(false);
+      return;
+    }
+
+    setPreviewPlaying(true);
+    if (player.currentTime < range.start || player.currentTime >= range.end) {
+      player.currentTime = range.start;
+    }
+    // The seek target can already be in currentTime while the old frame is still displayed.
+    if (player.seeking) {
+      playAfterSeek.current = true;
+      return;
+    }
+    playPreview(player);
   };
   const deliver = (blob: Blob, mimeType: string) => {
     if (submitted.current) return;
@@ -82,6 +112,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
 
   const duration = info?.duration ?? 0;
   const trimReady = info && duration > MIN_VIDEO_TRIM_SECONDS;
+  const trimmedPreview = Boolean(trimReady && (range.start > 0 || range.end < duration));
   const timelineStyle = {
     '--trim-start': `${duration ? range.start / duration * 100 : 0}%`,
     '--trim-end': `${duration ? range.end / duration * 100 : 100}%`,
@@ -90,19 +121,21 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
 
   return <>
     <div className="discussion-video-review">
-      <video ref={video} src={url} controls controlsList="nofullscreen" playsInline aria-label="Предпросмотр записи"
-        onPlay={event => {
+      <video ref={video} src={url} controls={!trimmedPreview} controlsList="nofullscreen" playsInline aria-label="Предпросмотр записи"
+        onSeeked={event => {
           const player = event.currentTarget;
-          if (trimReady && (player.currentTime < range.start || player.currentTime >= range.end)) player.currentTime = range.start;
+          if (!playAfterSeek.current || player.seeking) return;
+          playAfterSeek.current = false;
+          playPreview(player);
         }}
+        onPause={() => { if (!playAfterSeek.current) setPreviewPlaying(false); }}
+        onEnded={() => setPreviewPlaying(false)}
+        onError={() => { playAfterSeek.current = false; setPreviewPlaying(false); }}
         onTimeUpdate={event => {
           const player = event.currentTarget;
-          if (trimReady && !player.paused) {
-            if (player.currentTime < range.start) player.currentTime = range.start;
-            if (player.currentTime >= range.end) {
-              player.pause();
-              player.currentTime = range.end;
-            }
+          if (trimmedPreview && !player.paused && player.currentTime >= range.end) {
+            seek(range.end);
+            return;
           }
           setCursor(player.currentTime);
         }} />
@@ -137,6 +170,9 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
           </div>
           <Text variant="caption" className="discussion-video-trim__times">{videoTime(range.start)} — {videoTime(range.end)}</Text>
         </>}
+        {trimmedPreview && <Button size="compact" onClick={togglePreview} disabled={busy}>
+          {previewPlaying ? 'Пауза' : 'Воспроизвести отрезок'}
+        </Button>}
         {busy && <Text variant="footnote" role="status">Готовим выбранный отрезок…</Text>}
         {error && <Text variant="footnote" role="alert">{error}</Text>}
         {error && info && <Button size="compact" onClick={useOriginal}>Использовать оригинал</Button>}
