@@ -150,7 +150,8 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
       <Button rounded onClick={() => setRetry(value => value + 1)}>Повторить</Button>
     </div></MezfitBottomSheet> : null;
   const draftPrompt = draftPromptOpen && options?.draftGuard ? <MezfitPopover
-    opened viewportTop={typeof window === 'undefined' ? 120 : Math.max(80, Math.round(window.innerHeight * 0.3))}
+    opened role="dialog" aria-label="Обсуждение черновика"
+    viewportTop={typeof window === 'undefined' ? 120 : Math.max(80, Math.round(window.innerHeight * 0.3))}
     onBackdropClick={closeDraftPrompt}>
     <div className="flex flex-col gap-4 p-4">
       <Text variant="body">Обсуждение в рамках черновика невозможно.</Text>
@@ -158,7 +159,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
         <Text variant="body">Опубликовать тренировку?</Text>
         <div className="flex justify-end gap-2">
           <Button rounded tonal onClick={closeDraftPrompt}>Нет</Button>
-          <Button rounded onClick={() => { closeDraftPrompt(); options.draftGuard?.kind === 'workout' && options.draftGuard.onPublish(); }}>Да</Button>
+          <Button rounded strong onClick={() => { closeDraftPrompt(); options.draftGuard?.kind === 'workout' && options.draftGuard.onPublish(); }}>Да</Button>
         </div>
       </> : <Button rounded onClick={closeDraftPrompt}>Продолжить</Button>}
     </div>
