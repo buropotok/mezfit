@@ -25,96 +25,19 @@
   padding-inline: calc(100% / 18);
 }
 
-.ui-weight-reps-picker__input-active {
-  animation: ui-weight-reps-input-blink 1s steps(2, start) infinite;
-}
-
-@keyframes ui-weight-reps-input-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-weight-reps-picker__input-active { animation: none; }
-}
-
-/* Fill the visual viewport below the input popover, with a 10px gap.
-   The content slot includes the shared bottom safe-area padding. */
-.ui-mezfit-bottom-sheet.ui-weight-reps-picker__number-sheet {
-  height: var(--ui-weight-reps-number-sheet-height, 0px);
-  max-height: var(--ui-weight-reps-number-sheet-height, 0px);
-}
-
-.ui-weight-reps-picker__sheet-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.ui-weight-reps-picker__number-content {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.ui-weight-reps-picker__number-header {
+.ui-weight-reps-picker__native-entry {
   display: grid;
-  flex: 0 0 auto;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
   gap: var(--ui-space-2);
-  padding: var(--ui-space-4);
+  width: min(18rem, calc(100vw - 72px));
+  margin: 0 auto var(--ui-space-2);
+  min-width: 0;
 }
 
-.ui-weight-reps-picker__save-slot {
-  justify-self: end;
-}
-
-.ui-weight-reps-picker__cancel {
-  justify-self: start;
-}
-
-.ui-weight-reps-picker__number-body {
+.ui-weight-reps-picker__native-actions {
   display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 0 var(--ui-space-3) var(--ui-space-2);
-}
-
-.ui-weight-reps-picker__number-grid-area {
-  container-type: size;
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: grid;
-  place-items: center;
-}
-
-.ui-weight-reps-picker__number-grid {
-  --ui-weight-reps-key-cell: min(calc(100cqw / 3), calc(100cqh / 4));
-  display: grid;
-  grid-template-columns: repeat(3, var(--ui-weight-reps-key-cell));
-  grid-template-rows: repeat(4, var(--ui-weight-reps-key-cell));
-  justify-content: center;
-}
-
-.ui-weight-reps-picker__number-cell {
-  display: grid;
-  place-items: center;
-  width: var(--ui-weight-reps-key-cell);
-  height: var(--ui-weight-reps-key-cell);
-}
-
-.ui-weight-reps-picker__number-cell--zero {
-  grid-column: 2;
-}
-
-/* The stock FAB remains 3.5rem with its stock 1rem placement in this dock.
-   Only the surrounding square cell grows or shrinks. */
-.ui-weight-reps-picker__key-dock {
-  position: relative;
-  width: 5.5rem;
-  height: 5.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
 }
 
 .ui-weight-reps-picker__footer {
