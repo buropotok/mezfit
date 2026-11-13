@@ -5,6 +5,8 @@ import { flexAttributeId, flexValueId } from '../../shared/flex-identifiers';
 import { COACH_TELEGRAM_PREFERENCES } from '../../shared/telegram-notification-link';
 import { sendCoachTelegram } from './coach-telegram';
 
+import { stableCloudRelationshipId } from '../../shared/relationship-id';
+
 type Preference = 'client' | 'coached' | 'own';
 
 export interface WorkoutReminderEnv {
@@ -166,6 +168,21 @@ export async function readNotificationRelationship(
   if (!approved) return null;
   const client = rawMembers.find(member => record(member) && member.userId === row.clientUserId);
   return { clientName: record(client) && typeof client.name === 'string' ? client.name : 'Клиент' };
+}
+
+/** Read the same realm-scoped contact name used by the Mezfit client list.
+ * Call only after validating the coach/client relationship.
+ */
+export async function readNotificationClientName(
+  realmId: string, clientUserId: string, membershipName: string, token: string, fetchImpl: typeof fetch,
+): Promise<string> {
+  const id = await stableCloudRelationshipId('prf', realmId + ':' + clientUserId);
+  const profile = await cloudRead('/all/contactProfiles/' + encodeURIComponent(id), token, fetchImpl, true);
+  if (record(profile) && profile.id === id && profile.realmId === realmId
+    && profile.userId === clientUserId && profile.owner === null && typeof profile.name === 'string') {
+    return profile.name.trim() || membershipName;
+  }
+  return membershipName;
 }
 
 async function personalRole(userId: string, db: D1Database): Promise<'coach' | 'client' | undefined> {
@@ -333,7 +350,10 @@ export async function sendWorkoutReminders(
           || current.startsAtUtc !== raw.startsAtUtc || current.realmId !== raw.realmId
           || current.format !== raw.format || current.athleteUserId !== raw.athleteUserId
           || current.coachUserId !== raw.coachUserId || current.clientUserId !== raw.clientUserId) continue;
-        await deliver(env, raw, recipient, at, fetchImpl, clientName);
+        const topicName = recipient.preference === 'coached' && env.DEXIE_DISCUSSION_WEBHOOK_SECRET && isAssigned(raw)
+          ? await readNotificationClientName(raw.realmId, raw.clientUserId, clientName ?? 'Клиент', token, fetchImpl)
+          : clientName;
+        await deliver(env, raw, recipient, at, fetchImpl, topicName);
       } catch {
         // One user's transport or storage failure must not suppress other athletes.
         failedRecipients += 1;
