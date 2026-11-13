@@ -529,8 +529,9 @@ describe('planned session with an empty projected FACT object', () => {
       } else {
         fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
         if (action === 'retype') {
-          fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
-          fireEvent.click(screen.getByRole('button', { name: 'Цифра 5' }));
+          fireEvent.change(screen.getByRole('textbox', { name: 'Ввести повторения' }), {
+            target: { value: '5' },
+          });
         }
         fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
       }
