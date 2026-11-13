@@ -232,7 +232,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     return candidates.some(candidate => candidate && discussionAnchorKey(candidate.scope, candidate.anchor) === key);
   };
   const discussions = useEntityDiscussions(discussionTarget, onNavigationContextChange ? setDiscussionNavigation : undefined,
-    auxiliaryReady && !suspended, { isTargetAvailable });
+    auxiliaryReady && !suspended, { isTargetAvailable,
+      draftGuard: draft && !draft.saved ? { kind: 'workout', onPublish: () => { void save(false); } } : undefined });
   const planner = useMemo(() => cloud ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
     [cloud?.db, cloud?.actorUserId]);
   const [programSheetOpen, setProgramSheetOpen] = useState(false);
