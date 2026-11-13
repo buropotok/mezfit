@@ -5,6 +5,7 @@ import { DiscussionsPage } from './DiscussionsPage';
 import { thread } from './discussion-fixture.test-support';
 
 const state = vi.hoisted(() => ({
+  db: {},
   observe: vi.fn(),
   retrySync: vi.fn(),
   subscriptions: [] as Array<{
@@ -20,7 +21,7 @@ vi.mock('./DiscussionsProvider', () => ({
 vi.mock('../navigation/NavigationSurfaceContext', () => ({ useNavigationSurfaceContext: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    db: {}, actorUserId: 'tg:11', clients: [
+    db: state.db, actorUserId: 'tg:11', clients: [
       { relationshipId: 'pair', userId: 'tg:22', displayName: 'Анна', telegramUserId: '22' },
     ],
     status: 'ready', syncStatus: 'synced', retrySync: state.retrySync,
