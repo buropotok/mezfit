@@ -4,7 +4,7 @@ import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import { uploadDirectMedia } from '../media/directMediaUpload';
-import { copyAnnotationImage } from './discussion-annotation';
+import { copyAnnotationImage, exportAnnotation } from './discussion-annotation';
 import { inspectDiscussionMedia } from './discussion-media-file';
 import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
@@ -12,11 +12,7 @@ import { anchor, fixture, message, thread } from './discussion-fixture.test-supp
 vi.mock('./discussion-annotation', async importOriginal => ({
   ...await importOriginal<typeof import('./discussion-annotation')>(),
   copyAnnotationImage: vi.fn(),
-}));
-vi.mock('./DiscussionAnnotationEditor', () => ({
-  DiscussionAnnotationEditor: ({ onPrepare, onCancel }: { onPrepare: (file: File) => void; onCancel: () => void }) =>
-    <><button onClick={() => onPrepare(new File(['photo'], 'annotation.jpg', { type: 'image/jpeg' }))}>Подготовить фото</button>
-      <button onClick={onCancel}>Отменить разметку</button></>,
+  exportAnnotation: vi.fn(),
 }));
 vi.mock('./discussion-media-file', () => ({ inspectDiscussionMedia: vi.fn() }));
 vi.mock('../media/directMediaUpload', async importOriginal => ({
@@ -47,7 +43,13 @@ it.each(['photo', 'video'] as const)('previews and sends a marked-up %s as an or
   const navigation = vi.fn<DiscussionSheetProps['onNavigationContextChange']>();
   vi.mocked(inspectDiscussionMedia).mockImplementation(async file => ({ file, metadata }));
   vi.mocked(uploadDirectMedia).mockResolvedValue(uploaded);
-  vi.mocked(copyAnnotationImage).mockImplementation(() => document.createElement('canvas'));
+  vi.mocked(copyAnnotationImage).mockImplementation(() => {
+    const image = document.createElement('canvas');
+    image.width = image.height = 200;
+    return image;
+  });
+  vi.mocked(exportAnnotation).mockResolvedValue(new File(['photo'], 'annotation.jpg', { type: 'image/jpeg' }));
+  vi.stubGlobal('PointerEvent', MouseEvent);
   vi.stubGlobal('URL', class extends URL {
     static createObjectURL = vi.fn(() => 'blob:annotation');
     static revokeObjectURL = vi.fn();
@@ -71,13 +73,23 @@ it.each(['photo', 'video'] as const)('previews and sends a marked-up %s as an or
   fireEvent.click(screen.getByRole('button', { name: 'Рисовать на изображении' }));
   expect(copyAnnotationImage).toHaveBeenCalledWith(media);
   act(() => navigation.mock.lastCall?.[0]?.onBack?.());
-  expect(screen.queryByRole('button', { name: 'Подготовить фото' })).toBeNull();
+  expect(screen.getByRole('dialog', { name: 'Сохранить и отправить результат?' })).toBeTruthy();
+  act(() => navigation.mock.lastCall?.[0]?.onBack?.());
+  expect(screen.queryByRole('dialog', { name: 'Сохранить и отправить результат?' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть редактор' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
   expect(screen.getByRole('dialog', { name: 'Просмотр вложения' }).contains(media)).toBe(true);
   expect(port.saveDraft).not.toHaveBeenCalled();
+  expect(exportAnnotation).not.toHaveBeenCalled();
 
   fireEvent.click(screen.getByRole('button', { name: 'Рисовать на изображении' }));
   if (media instanceof HTMLVideoElement) media.currentTime = 9;
-  fireEvent.click(screen.getByRole('button', { name: 'Подготовить фото' }));
+  const canvas = screen.getByLabelText('Изображение с линиями');
+  canvas.getBoundingClientRect = () => new DOMRect(0, 0, 200, 200);
+  fireEvent.pointerDown(canvas, { clientX: 180, clientY: 180 });
+  fireEvent.pointerUp(canvas, { clientX: 180, clientY: 180 });
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть редактор' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Да' }));
   await screen.findByAltText('Предпросмотр фото');
   expect(port.send).not.toHaveBeenCalled();
   expect(uploadDirectMedia).not.toHaveBeenCalled();

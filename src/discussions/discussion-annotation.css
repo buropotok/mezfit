@@ -34,6 +34,7 @@
 
 .discussion-annotation__loupe {
   position: absolute;
+  top: 4px;
   box-sizing: border-box;
   width: min(132px, 36%);
   width: min(132px, 36%, 45cqh);
@@ -47,5 +48,3 @@
 
 .discussion-annotation__loupe[data-horizontal='left'] { left: 4px; }
 .discussion-annotation__loupe[data-horizontal='right'] { right: 4px; }
-.discussion-annotation__loupe[data-vertical='top'] { top: 4px; }
-.discussion-annotation__loupe[data-vertical='bottom'] { bottom: 4px; }

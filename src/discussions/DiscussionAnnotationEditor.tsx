@@ -1,5 +1,6 @@
 import { useLayoutEffect, useReducer, useRef, useState, type PointerEvent } from 'react';
 import { IconButton, Text } from '../ui';
+import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
 import {
   containAnnotationImage, drawAnnotation, editAnnotation, exportAnnotation, initialAnnotationHistory, moveAnnotationPoint,
   type AnnotationPoint,
@@ -24,16 +25,20 @@ interface Gesture {
 
 const holdMs = 230;
 const tapSlop = 8;
-const nodeHitRadius = 18;
+const nodeHitRadius = 28;
+const exitTitle = 'Сохранить и отправить результат?';
 
-export function DiscussionAnnotationEditor({ image, onCancel, onPrepare }: {
+export type AnnotationExit = 'editing' | 'confirming' | 'preparing';
+
+export function DiscussionAnnotationEditor({ image, exit, onExitChange, onCancel, onPrepare }: {
   image: HTMLCanvasElement;
+  exit: AnnotationExit;
+  onExitChange: (exit: AnnotationExit) => void;
   onCancel: () => void;
   onPrepare: (file: File) => Promise<boolean>;
 }) {
   const [history, dispatch] = useReducer(editAnnotation, initialAnnotationHistory);
   const [drag, setDrag] = useState<Drag | null>(null);
-  const [preparing, setPreparing] = useState(false);
   const [failed, setFailed] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -42,7 +47,10 @@ export function DiscussionAnnotationEditor({ image, onCancel, onPrepare }: {
   const exporting = useRef(false);
   const { completed, active } = history.current;
   const activeLine = active && drag ? moveAnnotationPoint(active, drag.index, drag.point) : active;
-  const canPrepare = !active && completed.length > 0;
+  const linesToExport = active && active.length > 1 ? [...completed, active] : completed;
+  const canPrepare = linesToExport.length > 0;
+  const confirming = exit === 'confirming';
+  const preparing = exit === 'preparing';
 
   function clearGesture() {
     const current = gesture.current;
@@ -52,6 +60,12 @@ export function DiscussionAnnotationEditor({ image, onCancel, onPrepare }: {
   }
 
   useLayoutEffect(() => () => { clearGesture(); }, []);
+  useLayoutEffect(() => {
+    if (exit !== 'editing') {
+      clearGesture();
+      setDrag(null);
+    }
+  }, [exit]);
   useLayoutEffect(() => {
     const element = canvas.current;
     if (!element) return;
@@ -128,7 +142,7 @@ export function DiscussionAnnotationEditor({ image, onCancel, onPrepare }: {
   }
 
   function down(event: PointerEvent<HTMLCanvasElement>) {
-    if (!active || gesture.current || event.button !== 0) return;
+    if (exit !== 'editing' || !active || gesture.current || event.button !== 0) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const rect = containAnnotationImage(bounds.width, bounds.height, image);
     const x = event.clientX - bounds.left - rect.x;
@@ -191,42 +205,50 @@ export function DiscussionAnnotationEditor({ image, onCancel, onPrepare }: {
   }
 
   async function prepare() {
-    if (!canPrepare || exporting.current) return;
+    if (!confirming || !canPrepare || exporting.current) return;
     exporting.current = true;
-    setPreparing(true);
+    onExitChange('preparing');
     setFailed(false);
     try {
-      if (await onPrepare(await exportAnnotation(image, completed))) return;
-      setFailed(true);
+      if (await onPrepare(await exportAnnotation(image, linesToExport))) return;
     } catch {
-      setFailed(true);
+      // An encoding failure follows the same recovery path as a rejected attachment.
     } finally {
       exporting.current = false;
-      setPreparing(false);
     }
+    setFailed(true);
+    onExitChange('editing');
   }
 
-  return <section className="discussion-annotation" aria-label="Разметка изображения">
-    <div className="discussion-annotation__toolbar">
-      <IconButton icon={active ? 'check' : 'chart-dots-3'} label={active ? 'Завершить линию' : 'Нарисовать линию'}
-        disabled={preparing} onClick={() => changeLine(active ? 'finish' : 'start')} />
-      <IconButton icon="arrow-back-up" label="Отменить действие" disabled={preparing || !history.past.length}
-        onClick={() => changeLine('undo')} />
-      <IconButton icon="arrow-forward-up" label="Повторить действие" disabled={preparing || !history.future.length}
-        onClick={() => changeLine('redo')} />
-      <IconButton icon="photo" label="Подготовить фото" disabled={preparing || !canPrepare} onClick={() => void prepare()} />
-      <IconButton icon="x" label="Отменить разметку" onClick={onCancel} />
-    </div>
-    <div className="discussion-annotation__viewport">
-      <canvas ref={canvas} className="discussion-annotation__canvas" aria-label="Изображение с линиями"
-        onPointerDown={down} onPointerMove={move} onPointerUp={endPointer => end(endPointer)}
-        onPointerCancel={event => end(event, true)} onLostPointerCapture={event => end(event, true)}
-        onContextMenu={event => event.preventDefault()} />
-      {/* The fitted image is centered, so the opposite sides give the farthest corner. */}
-      {drag && <canvas ref={loupe} width={300} height={300} className="discussion-annotation__loupe" aria-hidden="true"
-        data-horizontal={drag.point.x < 0.5 ? 'right' : 'left'} data-vertical={drag.point.y < 0.5 ? 'bottom' : 'top'} />}
-    </div>
-    {preparing && <Text variant="footnote" role="status">Готовим фото…</Text>}
-    {failed && <Text variant="footnote" role="alert">Не удалось подготовить фото. Повторите попытку.</Text>}
-  </section>;
+  return <>
+    <section className="discussion-annotation" aria-label="Разметка изображения" inert={exit !== 'editing'}>
+      <div className="discussion-annotation__toolbar">
+        <IconButton icon={active ? 'check' : 'chart-dots-3'} label={active ? 'Завершить линию' : 'Нарисовать линию'}
+          disabled={preparing} onClick={() => changeLine(active ? 'finish' : 'start')} />
+        <IconButton icon="arrow-back-up" label="Отменить действие" disabled={preparing || !history.past.length}
+          onClick={() => changeLine('undo')} />
+        <IconButton icon="arrow-forward-up" label="Повторить действие" disabled={preparing || !history.future.length}
+          onClick={() => changeLine('redo')} />
+        <IconButton icon="x" label="Закрыть редактор" onClick={() => onExitChange('confirming')} />
+      </div>
+      <div className="discussion-annotation__viewport">
+        <canvas ref={canvas} className="discussion-annotation__canvas" aria-label="Изображение с линиями"
+          onPointerDown={down} onPointerMove={move} onPointerUp={endPointer => end(endPointer)}
+          onPointerCancel={event => end(event, true)} onLostPointerCapture={event => end(event, true)}
+          onContextMenu={event => event.preventDefault()} />
+        {drag && <canvas ref={loupe} width={300} height={300} className="discussion-annotation__loupe" aria-hidden="true"
+          data-horizontal={drag.point.x < 0.5 ? 'right' : 'left'} />}
+      </div>
+      {failed && <Text variant="footnote" role="alert">Не удалось подготовить фото. Повторите попытку.</Text>}
+    </section>
+    {(confirming || preparing) && <MezfitDialog opened role="dialog" aria-modal="true" aria-label={exitTitle}
+      title={<Text variant="headline">{exitTitle}</Text>}
+      content={preparing ? <Text variant="footnote" role="status">Готовим фото…</Text>
+        : !canPrepare ? <Text variant="footnote">Добавьте хотя бы один отрезок, чтобы сохранить разметку.</Text> : undefined}
+      onBackdropClick={() => { if (!preparing) onExitChange('editing'); }}
+      buttons={<>
+        <MezfitDialogButton disabled={preparing} onClick={onCancel}><Text>Нет</Text></MezfitDialogButton>
+        <MezfitDialogButton strong disabled={preparing || !canPrepare} onClick={() => void prepare()}><Text>Да</Text></MezfitDialogButton>
+      </>} />}
+  </>;
 }
