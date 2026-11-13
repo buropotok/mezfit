@@ -159,7 +159,7 @@ export function useEntityDiscussions(target: EntityDiscussionTarget | null,
         <Text variant="body">Опубликовать тренировку?</Text>
         <div className="flex justify-end gap-2">
           <Button rounded tonal onClick={closeDraftPrompt}>Нет</Button>
-          <Button rounded strong onClick={() => { closeDraftPrompt(); options.draftGuard?.kind === 'workout' && options.draftGuard.onPublish(); }}>Да</Button>
+          <Button rounded onClick={() => { closeDraftPrompt(); if (options.draftGuard?.kind === 'workout') options.draftGuard.onPublish(); }}>Да</Button>
         </div>
       </> : <Button rounded onClick={closeDraftPrompt}>Продолжить</Button>}
     </div>
