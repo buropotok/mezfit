@@ -49,7 +49,8 @@ function ProgramRow({
   onOpen: (plan: CloudTrainingPlanRow) => void;
   onAction: (action: string, plan: CloudTrainingPlanRow) => void;
 }) {
-  const discussions = useEntityDiscussions(programDiscussionTarget(plan, actorUserId), onNavigationContextChange);
+  const discussions = useEntityDiscussions(programDiscussionTarget(plan, actorUserId), onNavigationContextChange,
+    true, { draftGuard: plan.status === 'draft' ? { kind: 'program' } : undefined });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const glass = loadBrowserGlassSettings();
