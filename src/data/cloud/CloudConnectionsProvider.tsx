@@ -430,7 +430,9 @@ export function CloudConnectionsProvider({
         wasHidden = false;
         // A resumed Mini App may have missed new memberships while hidden.
         // Refresh relationships independently of the optional Telegram profile request.
-        void db.cloud.sync({ purpose: 'pull', wait: false }).catch(() => {});
+        void db.realms.toArray()
+          .then(() => db.cloud.sync({ purpose: 'pull', wait: false }))
+          .catch(() => {});
         refreshOwnProfile();
       }
     };
@@ -448,7 +450,9 @@ export function CloudConnectionsProvider({
   const refresh = useCallback(async () => {
     try {
       // Invite acceptance must refresh memberships even when Telegram profile
-      // or avatar requests are slow or unavailable.
+      // or avatar requests are slow or unavailable. Opening IndexedDB is the
+      // only prerequisite; it starts the Addon's worker on a cold launch.
+      await db.realms.toArray();
       await db.cloud.sync({ purpose: 'pull', wait: true });
       const snapshot = await readContactSnapshot(db, actorUserId);
       if (!alive.current) return;
