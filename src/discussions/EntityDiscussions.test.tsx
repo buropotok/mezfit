@@ -44,16 +44,23 @@ beforeEach(() => {
   } as unknown as DiscussionRepository;
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-function mount(initial: EntityDiscussionTarget | null = target) {
+function mount(initial: EntityDiscussionTarget | null = target,
+  draftGuard?: 'program' | 'workout', onPublish = vi.fn()) {
   let navigation: NavigationContext | null = null;
   const onNavigation = vi.fn((value: NavigationContext | null) => { navigation = value; });
   const parent = { level: 1 as const, title: 'Программа', scrollKey: 'exact-program', onBack: vi.fn() };
   function Harness({ source }: { source: EntityDiscussionTarget | null }) {
     const [filter, setFilter] = useState('Активные');
-    const discussion = useEntityDiscussions(source, onNavigation);
+    const discussion = useEntityDiscussions(source, onNavigation, true, {
+      draftGuard: draftGuard === 'program' ? { kind: 'program' }
+        : draftGuard === 'workout' ? { kind: 'workout', onPublish } : undefined,
+    });
     return <><input aria-label="Фильтр" value={filter} onChange={event => setFilter(event.target.value)} />
       <output aria-label="Непрочитанные сущности">{discussion.unread}</output>
       <button onClick={() => { discussion.menuItem.onSelect?.(); discussion.onMenuPresentationChange(false); }}>Обсуждения</button>
+      <button onClick={discussion.open}>Открыть обсуждение напрямую</button>
+      <button onClick={() => discussion.openTarget(target)}>Обсудить подход</button>
+      <button onClick={() => discussion.openTarget(target, 'record-video')}>Видео подхода</button>
       {discussion.content}</>;
   }
   const page = (source: EntityDiscussionTarget | null) => <KonstaProvider theme="ios" dark>
@@ -153,5 +160,49 @@ describe('COMM-06 direct entity conversation', () => {
     await act(async () => { resolve?.(thread); });
     expect(screen.queryByText('Мой текст')).toBeNull();
     expect(view.onNavigation).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe('draft entity discussion guard', () => {
+  it('blocks program draft discussions from the menu and direct entry, without creating a thread', async () => {
+    const view = mount(target, 'program');
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения' }));
+    expect(await screen.findByText('Обсуждение в рамках черновика невозможно.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Продолжить' })).toBeTruthy();
+    expect(ensureThread).not.toHaveBeenCalled();
+    view.back();
+    expect(screen.queryByText('Обсуждение в рамках черновика невозможно.')).toBeNull();
+    expect(view.parent.onBack).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть обсуждение напрямую' }));
+    expect(await screen.findByText('Обсуждение в рамках черновика невозможно.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
+    expect(ensureThread).not.toHaveBeenCalled();
+  });
+
+  it('asks before publishing a draft workout at workout, set and video entry points', async () => {
+    const onPublish = vi.fn();
+    const view = mount(target, 'workout', onPublish);
+    fireEvent.click(screen.getByRole('button', { name: 'Обсудить подход' }));
+    expect(await screen.findByText('Опубликовать тренировку?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Нет' }));
+    expect(onPublish).not.toHaveBeenCalled();
+    expect(ensureThread).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Видео подхода' }));
+    expect(await screen.findByText('Опубликовать тренировку?')).toBeTruthy();
+    view.back();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть обсуждение напрямую' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Да' }));
+    expect(onPublish).toHaveBeenCalledTimes(1);
+    expect(ensureThread).not.toHaveBeenCalled();
+    expect(view.parent.onBack).not.toHaveBeenCalled();
+  });
+
+  it('discards the draft prompt when the source changes', async () => {
+    const view = mount(target, 'program');
+    fireEvent.click(screen.getByRole('button', { name: 'Обсуждения' }));
+    expect(await screen.findByText('Обсуждение в рамках черновика невозможно.')).toBeTruthy();
+    view.source({ ...target, scope: { realmId: 'other', coachClientId: 'other' } });
+    await waitFor(() => expect(screen.queryByText('Обсуждение в рамках черновика невозможно.')).toBeNull());
+    expect(ensureThread).not.toHaveBeenCalled();
   });
 });
