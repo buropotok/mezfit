@@ -11,10 +11,11 @@ import type { MezfitCloudDatabase } from '../data/cloud/database';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { WorkoutOccurrenceDraftRepository as Repository } from '../data/cloud/workout-occurrence-drafts';
+import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import { ProgramManagementRepository } from '../data/cloud/program-management';
 import { TodayPage } from './TodayPage';
-import type { NavigationContext } from '../NavigationShell';
-const state = vi.hoisted(() => ({ clients: [] as CloudContact[], filterAction: null as null | { onClick: () => void }, db: null as MezfitCloudDatabase | null,
+import type { NavigationContext, NavigationFloatingAction } from '../NavigationShell';
+const state = vi.hoisted(() => ({ clients: [] as CloudContact[], filterAction: null as NavigationFloatingAction | null, db: null as MezfitCloudDatabase | null,
   move: null as null | ((value: DayScheduleEventMove) => void),
   resize: null as null | ((value: DayScheduleEventResize) => void),
   remove: null as null | ((value: DayScheduleEventDelete) => void), eventId: '',
@@ -82,6 +83,35 @@ beforeEach(() => {
 });
 afterEach(async () => { cleanup(); await db.delete(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('local-first calendar experience', () => {
+  it('dismisses the automatic-program notice after three seconds while the workout stays open', async () => {
+    const id = await repo().create({ ...draft });
+    vi.spyOn(WorkoutPlanningRepository.prototype, 'createBlank').mockResolvedValue({ id, createdProgram: true });
+    open();
+    const card = await screen.findByRole('button', { name: /День 1/ });
+    const createWorkout = state.filterAction?.popoverItems?.find(item => item.id === 'workout')?.onSelect;
+    expect(createWorkout).toBeTypeOf('function');
+    act(() => { createWorkout?.(); });
+    fireEvent.click(screen.getByText('Моя тренировка'));
+
+    vi.useFakeTimers();
+    try {
+      await act(async () => { fireEvent.click(screen.getByText('Создать с нуля')); });
+      const message = 'Создана программа «Программа тренировок» с фазой и днём «Тренировка».';
+      expect(screen.getByText(message)).toBeTruthy();
+      act(() => { vi.advanceTimersByTime(2999); });
+      expect(screen.getByText(message)).toBeTruthy();
+      act(() => { vi.advanceTimersByTime(1); });
+      expect(screen.queryByText(message)).toBeNull();
+      expect(screen.getByText('Редактируется черновик')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+      fireEvent.click(card);
+      expect(screen.getByText('Редактируется черновик')).toBeTruthy();
+      expect(screen.queryByText(message)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('displays the selected program name and follows local program renames', async () => {
     let notify: ((name: string | null) => void) | null = null;
     const observed = vi.spyOn(ProgramManagementRepository.prototype, 'observeName')
