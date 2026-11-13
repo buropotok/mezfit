@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type ReactNode } from 'react';
+import { Fragment, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent, type CSSProperties, type ReactNode } from 'react';
 import { Button, Messages, MessagesTitle, Toast } from 'konsta/react';
 import { sameDiscussionVideoPosition, type DiscussionVideoPosition, type MessageAttachment } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
@@ -134,6 +134,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const voice = useDiscussionVoice(media.chooseVoice, () => discardVoice());
   const videoNote = useDiscussionVideoNote(media.sendVideoNote, () => discardVoice());
   const [videoPlaybackHost, setVideoPlaybackHost] = useState<HTMLDivElement | null>(null);
+  const [videoReviewHost, setVideoReviewHost] = useState<HTMLDivElement | null>(null);
   const recordingVoice = voice.status === 'recording';
   const recordingCircle = videoNote.status === 'recording';
   const circleInProgress = recordingCircle || videoNote.status === 'requesting' || videoNote.status === 'processing';
@@ -686,7 +687,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     } },
   ];
 
+  const videoNoteBottom = composerHeight + contextHeight + 12;
   return <div className="discussion-thread" data-thread-id={threadId} data-focus-message-id={focusMessageId}
+    style={{ '--discussion-video-note-bottom': `${videoNoteBottom}px` } as CSSProperties}
     data-show-avatars={String(showAvatars)}>
     <header className="discussion-thread__header" inert={mediaSurfaceOpen}>
       <div className="discussion-thread__identity">
@@ -800,6 +803,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           </div>
         </Fragment>}
       </Messages>
+      <div ref={setVideoPlaybackHost} className="discussion-video-note-playback" />
     </div>
     {previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' &&
       <DiscussionMediaStage label="Предпросмотр вложения" fullscreen={Boolean(previewVideoUrl && !viewer && mediaFullscreen)}
@@ -873,12 +877,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           onClick={cancelMode} />
       </div>}
     </div>
-    <div ref={setVideoPlaybackHost} className="discussion-video-note-playback" inert={mediaSurfaceOpen}
-      style={{ bottom: composerHeight + contextHeight + 12 }} />
+    <div ref={setVideoReviewHost} className="discussion-video-note-playback" inert={mediaSurfaceOpen} />
     {circleDraft && media.preview && !mediaBusy && <DiscussionVideoNote key={media.preview} src={media.preview}
-      durationSeconds={circleDraft.durationSeconds ?? 0} playbackHost={videoPlaybackHost} scrollViewport={scroller} review />}
+      durationSeconds={circleDraft.durationSeconds ?? 0} playbackHost={videoReviewHost} scrollViewport={scroller} review />}
     {(recordingCircle || videoNote.status === 'processing') && <div className="discussion-video-note-live"
-      style={{ bottom: composerHeight + contextHeight + 12 }}>
+      style={{ bottom: videoNoteBottom }}>
       <DiscussionVideoNoteCapture stream={videoNote.stream} progress={videoNote.progress} />
     </div>}
     {repository.supportsMedia && <>
