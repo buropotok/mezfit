@@ -30,7 +30,7 @@ import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVid
 import { DiscussionVoice } from './DiscussionVoice';
 import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
-import { DiscussionAnnotationEditor } from './DiscussionAnnotationEditor';
+import { DiscussionAnnotationEditor, type AnnotationExit } from './DiscussionAnnotationEditor';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './DiscussionVideoSaveDialog';
@@ -188,10 +188,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [fullscreenSource, setFullscreenSource] = useState<string | null>(null);
   const [annotation, setAnnotation] = useState<{ image: HTMLCanvasElement; seconds?: number } | null>(null);
   const annotationSession = useRef(annotation);
+  const [annotationExit, setAnnotationExit] = useState<AnnotationExit>('editing');
   const [annotationReply, setAnnotationReply] = useState<DiscussionMessageView | null>(null);
   const cancelAnnotation = () => {
     annotationSession.current = null;
-    if (media.phase === 'checking') media.cancel();
     setAnnotation(null);
   };
   const viewedMessage = viewing && renderedMessages.find(row => row.id === viewing.messageId);
@@ -339,7 +339,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
-    if (annotation) { cancelAnnotation(); updateNavigation(); return; }
+    if (annotation) {
+      if (annotationExit !== 'preparing') setAnnotationExit(annotationExit === 'confirming' ? 'editing' : 'confirming');
+      updateNavigation();
+      return;
+    }
     if (mediaFullscreen) { setFullscreenSource(null); updateNavigation(); return; }
     if (viewer) { setViewing(null); updateNavigation(); return; }
     if (circleInProgress) { videoNote.cancel(); updateNavigation(); return; }
@@ -633,6 +637,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       if (annotationSession.current) return;
       const next = { image, seconds };
       annotationSession.current = next;
+      setAnnotationExit('editing');
       setAnnotation(next);
     } : undefined;
 
@@ -793,8 +798,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </DiscussionMediaStage>}
     {(viewer || annotation) && <DiscussionMediaStage label="Просмотр вложения" className="discussion-media-stage--viewer"
       fullscreen={mediaFullscreen}>
-      {annotation && <DiscussionAnnotationEditor image={annotation.image} onCancel={cancelAnnotation}
-        onPrepare={prepareAnnotatedPhoto} />}
+      {annotation && <DiscussionAnnotationEditor image={annotation.image} exit={annotationExit}
+        onExitChange={setAnnotationExit} onCancel={cancelAnnotation} onPrepare={prepareAnnotatedPhoto} />}
       {viewer && <div hidden={Boolean(annotation)} className="discussion-media-stage__viewer">
         <DiscussionMedia key={`${viewer.src}:${viewing?.startAt ?? ''}`} {...viewer} mode="viewer"
           autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame}
