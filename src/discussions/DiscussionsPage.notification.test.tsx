@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useState } from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscussionsPage } from './DiscussionsPage';
@@ -101,6 +102,21 @@ describe('Telegram discussion deep-link hydration', () => {
     act(() => state.subscriptions[1].next(target));
     expect(screen.getByRole('dialog', { name: target.id })).toBeTruthy();
     expect(consumed).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels a pending notification when the user navigates the inbox instead', () => {
+    function Host() {
+      const [messageId, setMessageId] = useState<string | null>('message-1');
+      return <DiscussionsPage role="coach" notificationMessageId={messageId}
+        onNotificationOpened={() => setMessageId(null)} onNavigationContextChange={vi.fn()} />;
+    }
+    render(<Host />);
+    expect(state.subscriptions).toHaveLength(1);
+    fireEvent.click(screen.getByText('С даты'));
+    expect(state.subscriptions[0].unsubscribe).toHaveBeenCalled();
+    act(() => state.subscriptions[0].next(target));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByText('Загружаем обсуждение по ссылке…')).toBeNull();
   });
 
   it('recovers from temporary observer failures and cancels retries on unmount', () => {
