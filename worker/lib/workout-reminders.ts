@@ -324,7 +324,8 @@ export async function sendWorkoutReminders(
     for (const recipient of recipients) {
       try {
         if (!await enabledByPreference(recipient.userId, recipient.preference, token, fetchImpl)) continue;
-        if (recipient.preference !== 'client'
+        // The master switch belongs to the topic-based delivery rollout.
+        if (recipient.preference !== 'client' && env.DEXIE_DISCUSSION_WEBHOOK_SECRET
           && !await enabledByPreference(recipient.userId, 'telegram', token, fetchImpl)) continue;
         // A cancellation or reschedule synchronized during this tick must suppress the old reminder.
         const current = await cloudRead('/all/workoutOccurrences/' + encodeURIComponent(raw.id), token, fetchImpl, true);
