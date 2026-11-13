@@ -114,14 +114,13 @@ describe('weight and repetitions SetEntry', () => {
       expect(sheet.contains(picker)).toBe(false);
       expect(appRoot.contains(picker)).toBe(true);
       fireEvent.click(within(picker).getByRole('button', { name: 'Изменить повторения' }));
-      const keypad = screen.getByRole('dialog', { name: 'Ввод повторений' });
-      expect(sheet.contains(keypad)).toBe(false);
-      expect(cardHost.contains(keypad)).toBe(false);
-      expect(appRoot.contains(keypad)).toBe(true);
-      fireEvent.click(within(keypad).getByRole('button', { name: 'Цифра 9' }));
-      fireEvent.click(within(keypad).getByRole('button', { name: 'Сохранить' }));
+      const input = within(picker).getByRole('textbox', { name: 'Ввести повторения' });
+      expect(sheet.contains(input)).toBe(false);
+      expect(cardHost.contains(input)).toBe(false);
+      expect(appRoot.contains(input)).toBe(true);
+      fireEvent.change(input, { target: { value: '9' } });
+      fireEvent.click(within(picker).getByRole('button', { name: 'Сохранить' }));
       expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
-      expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent)
         .toContain('80 кг × 9');
       expect(onSave).not.toHaveBeenCalled();
@@ -510,9 +509,9 @@ it.each([false, true])('accepts PLAN as new FACT after saving the numeric form (
   expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('80');
   fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
   if (retyped) {
-    fireEvent.click(screen.getByRole('button', { name: 'Очистить ввод' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Цифра 1' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Цифра 0' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Ввести повторения' }), {
+      target: { value: '10' },
+    });
   }
   fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
   expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
@@ -532,9 +531,10 @@ it('opens the existing FACT as numbers and closes both picker layers on Cancel w
   expect(document.querySelector('[data-ui-picker-static-value="second"] text')?.textContent).toBe('82');
   expect(screen.getByRole('button', { name: 'Изменить повторения' }).querySelector('.ui-icon')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Изменить повторения' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Цифра 9' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Ввести повторения' }), {
+    target: { value: '9' },
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
-  expect(screen.queryByRole('dialog', { name: 'Ввод повторений' })).toBeNull();
   expect(screen.queryByRole('dialog', { name: 'Повторения и вес' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Изменить вес и повторения' }).textContent).toContain('82,75 кг × 12');
   expect(screen.getByRole('dialog', { name: 'Подход 3' })).toBeTruthy();
