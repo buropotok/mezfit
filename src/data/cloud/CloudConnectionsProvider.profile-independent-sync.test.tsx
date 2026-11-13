@@ -12,10 +12,7 @@ vi.mock('./program-sync', () => ({
   confirmProgramSync: vi.fn(async () => {}),
 }));
 vi.mock('./database', () => ({ createCloudDatabase: vi.fn() }));
-vi.mock('../../api', async (importOriginal) => ({
-  ...await importOriginal<typeof import('../../api')>(),
-  syncCloudContactProfile: vi.fn(),
-}));
+vi.mock('../../api', () => ({ syncCloudContactProfile: vi.fn() }));
 vi.mock('dexie', async (importOriginal) => {
   const actual = await importOriginal<typeof import('dexie')>();
   return { ...actual, liveQuery: vi.fn() };
