@@ -832,6 +832,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </div>}
     </DiscussionMediaStage>}
     {cameraOpen && <DiscussionVideoRecorder onCancel={() => setCameraOpen(false)}
+      onTrimFallback={setVideoSaveNotice}
       onGallery={() => {
         setCameraOpen(false);
         gallery.current?.click();

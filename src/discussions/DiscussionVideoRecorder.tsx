@@ -25,6 +25,7 @@ interface Props {
   onCancel: () => void;
   onGallery?: () => void;
   onUse: (file: File) => void;
+  onTrimFallback?: (message: string) => void;
 }
 
 function phoneVideoProfile(): 'portrait' | 'landscape' {
@@ -34,7 +35,7 @@ function phoneVideoProfile(): 'portrait' | 'landscape' {
     ? 'portrait' : 'landscape';
 }
 
-export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
+export function DiscussionVideoRecorder({ onCancel, onGallery, onUse, onTrimFallback }: Props) {
   const [profile] = useState(phoneVideoProfile);
   const [selectedFacing, setSelectedFacing] = useState<VideoNoteFacingMode | null>(null);
   const [clip, setClip] = useState<VideoNoteRecording | null>(null);
@@ -81,7 +82,7 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse }: Props) {
 
   return <DiscussionMediaStage label="Запись видео" className="discussion-video-recorder" fullscreen>
     {clip
-      ? <DiscussionVideoReview key="preview" clip={clip} onUse={onUse}
+      ? <DiscussionVideoReview key="preview" clip={clip} onUse={onUse} onTrimFallback={onTrimFallback} profile={profile}
         confirmStyle={{ ...topControls, ...rightControl }} retakeStyle={{ ...centerControl, ...topControls }}
         onRetake={() => { setClip(null); enableCamera(); }} />
       : <video key="camera" ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры" />}

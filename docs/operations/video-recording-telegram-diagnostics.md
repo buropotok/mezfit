@@ -44,13 +44,53 @@ guarantee. Failure to send the alert never blocks camera or chat UI.
 
 ## Compatibility
 
-Explicit H.264 MIME variants are attempted first. A bare `video/mp4` is used as
-a fallback only when the embedded browser advertises it. Because container
-support does not prove an AVC stream, Mediabunny inspects the recorded video track
-before the existing H.264 trim editor can receive a generic MP4 recording.
-Unsupported non-AVC recordings are rejected with the existing error UI; there
-is no WebM-to-MP4 transcode or relaxation of editor requirements in this change.
+The shared camera recorder probes explicit H.264 variants and generic MP4 first.
+If no MP4 format is usable or a recorder constructor/start attempt fails, it
+tries `video/webm;codecs=vp8,opus`, then VP9/Opus, then generic WebM. Failed
+MIME candidates are skipped for the rest of that recorder session. A generic
+MP4 is checked for actual AVC; all WebM recordings are checked for VP8 or VP9
+through Mediabunny before entering review.
+
+Settings → Modules exposes the unchanged Konsta Range primitive with two
+positions:
+- `MP4 → WebM` (the default, automatic fallback);
+- `WebM` (forced WebM-only for device-specific testing).
+
+This temporary test preference is persisted only in the current device's local
+storage. It is read at the beginning of every recording in both the Settings
+probe and chat. No setting is sent to Dexie Cloud or other participants.
+
+### WebM trim pipeline
+
+The existing exact H.264/MP4 pipeline is preserved unchanged. WebM uses:
+
+1. Mediabunny `WebM` input and `WebMOutputFormat`, attempting an exact selected
+   time range with WebCodecs transcoding into the original WebM family.
+   The exact-encoding attempt has a 10-second deadline; a slow encoder is
+   treated like an unavailable encoder and keyframe copying is attempted.
+2. If exact encoding fails, copy VP8/VP9 and Opus packets using `Conversion`
+   forced-copy mode with `boundaryPolicy: 'shrink'` and relaxed timestamp shift,
+   preserving synchronized streams and trimming only on keyframes.
+3. On successful keyframe fallback, display the existing discussion-level Konsta
+   Toast containing exactly “На вашем устройстве возможна обрезка только по
+   ключевым кадрам”. Because the toast is owned by the discussion view it
+   remains visible even after the recording editor closes.
+4. If neither trim succeeds, keep the original WebM and show the established
+   recoverable trim error. Do not include discarded video before the user's
+   selected start boundary by silently expanding the trim region.
+
+For an untrimmed recording, upload the original file without transcoding.
+All WebM outputs use `video/webm` and the `.webm` extension. Existing direct
+media upload, chat media metadata and round-video attachments accept WebM.
+
+Telemetry includes `WEBM_AUTO_FALLBACK`, `WEBM_RUNTIME_FALLBACK`,
+`WEBM_FORCED_MODE`, `RECORDER_MIME_ATTEMPT_FAILED`,
+`WEBM_EXACT_TRIM_FAILED`, `WEBM_KEYFRAME_FALLBACK`, `WEBM_TRIM_FAILED` and
+`WEBM_TRIM_INSPECTION_FAILED`. The diagnostic payload and Telegram richtext
+remain privacy-filtered and limited in size. Detailed fallback fields are
+prioritized before long browser capability lists.
 
 CI on PR executes typecheck, tests and build. Runtime acceptance still requires
-an Android Telegram WebView that reproduces the original failure and a bot
-private chat that has been started by the recipient.
+an Android Telegram WebView that reproduces the original failure, another
+device for media playback compatibility, and a bot private chat that has
+been started by the recipient.

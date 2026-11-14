@@ -42,6 +42,7 @@ import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
 import { WorkoutReminderSettings } from './WorkoutReminderSettings';
 import { VideoNoteModule } from './VideoNoteModule';
+import { VideoRecordingFormatControl } from './VideoRecordingFormatControl';
 import { VoiceMessageModule } from './VoiceMessageModule';
 import './settings-page.css';
 
@@ -770,6 +771,7 @@ export function SettingsPage({
         <Text variant="footnote" tone="muted">
           Запись до 60 секунд с камеры, просмотр и повторная запись. Тестируется локально, без отправки.
         </Text>
+        <VideoRecordingFormatControl />
         <VideoNoteModule />
       </section>
 
