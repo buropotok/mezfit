@@ -332,6 +332,21 @@ describe('client invite launch', () => {
     expect(window.localStorage.getItem('mezfit.chatActivationPending.100')).toBe('1');
   });
 
+  it('restores the required activation gate after a Mini App restart', async () => {
+    window.localStorage.setItem('mezfit.chatActivationPending.100', '1');
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'Активируйте Mezfit' })).toBeTruthy();
+    expect(screen.queryByText('Client Today')).toBeNull();
+    expect(acceptCurrentInviteMock).not.toHaveBeenCalled();
+
+    cleanup();
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Активируйте Mezfit' })).toBeTruthy();
+    expect(window.localStorage.getItem('mezfit.chatActivationPending.100')).toBe('1');
+    expect(screen.queryByText('Client Today')).toBeNull();
+  });
+
   it('offers a retry when a client with an existing role cannot load the invitation', async () => {
     getCurrentInviteMock.mockRejectedValueOnce(new Error('Нет соединения'));
 
