@@ -13,9 +13,9 @@ export interface VideoTrimInfo {
 export const MIN_VIDEO_TRIM_SECONDS = 0.2;
 
 export async function inspectVideoTrim(blob: Blob, signal: AbortSignal): Promise<VideoTrimInfo> {
-  const { Input, MP4, WebM, BlobSource } = await import('mediabunny');
+  const { Input, MP4, WEBM, BlobSource } = await import('mediabunny');
   signal.throwIfAborted();
-  const input = new Input({ formats: [MP4, WebM], source: new BlobSource(blob) });
+  const input = new Input({ formats: [MP4, WEBM], source: new BlobSource(blob) });
   try {
     const track = await input.getPrimaryVideoTrack();
     if (!track) throw new Error('Video track missing');
