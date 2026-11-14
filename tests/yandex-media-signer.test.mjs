@@ -130,7 +130,7 @@ describe('Yandex media signer', () => {
 
   it.each([
     { field: 'auth_date', value: '1', reason: 'INITDATA_AUTH_DATE_EXPIRED' },
-    { field: 'user', value: '{"id":"123"}', reason: 'INITDATA_HASH_MISMATCH' },
+    { field: 'user', value: '{"id":"123"}', reason: 'INITDATA_USER_INVALID' },
   ])('reports the reason for Telegram authentication failure without a claimed ID', ({ field, value, reason }) => {
     const traces = [];
     const response = signer.handleRequest({
