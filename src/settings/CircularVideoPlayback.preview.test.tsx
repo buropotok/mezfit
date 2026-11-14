@@ -50,6 +50,19 @@ describe('video note first-frame Preview and full-size Play', () => {
     expect(video.currentTime).toBeCloseTo(0.04);
   });
 
+  it('forces a preview decode when WebView reports current data before the video is painted', () => {
+    render(<PlayerHarness />);
+    const video = screen.getByLabelText('Записанный видеокружок') as HTMLVideoElement;
+    const play = vi.spyOn(video, 'play').mockResolvedValue();
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 2 });
+    Object.defineProperty(video, 'duration', { configurable: true, value: 12 });
+
+    fireEvent.loadedMetadata(video);
+    expect(video.currentTime).toBeCloseTo(0.04);
+    expect(play).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Открыть видеокружок' })).toBeTruthy();
+  });
+
   it('returns to compact Preview when the WebView refuses to play', async () => {
     const onError = vi.fn();
     render(<PlayerHarness onError={onError} />);
