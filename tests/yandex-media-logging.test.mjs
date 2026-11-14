@@ -1,4 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { createHmac } from 'node:crypto';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import signer from '../infra/yandex-media-mvp/function/index.js';
+
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 import logging from '../infra/yandex-media-mvp/function/media-log.js';
 
 const env = {
@@ -130,4 +134,34 @@ describe('Yandex media diagnostic log storage', () => {
     expect(JSON.stringify(recorder.events)).not.toContain('secret');
     expect(recorder.events[0].origin).toBe('https://mezfit.example');
   });
+  it('never blocks a valid signature if the private log store is unavailable', async () => {
+    const botToken = '42:testBot';
+    const params = new URLSearchParams({
+      user: '{"id":123}', auth_date: String(Math.floor(Date.now() / 1000)),
+    });
+    params.sort();
+    const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const check = [...params].map(([key, value]) => key + '=' + value).join('\n');
+    params.set('hash', createHmac('sha256', secret).update(check).digest('hex'));
+
+    vi.stubEnv('TELEGRAM_BOT_TOKEN', botToken);
+    vi.stubEnv('MEDIA_S3_ACCESS_KEY_ID', 'testAccess');
+    vi.stubEnv('MEDIA_S3_SECRET_ACCESS_KEY', 'testSecret');
+    vi.stubEnv('MEDIA_ORIGINS', 'https://mezfit.example');
+    for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('storage unavailable')));
+    const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const response = await signer.handler({
+      httpMethod: 'POST', headers: { Origin: 'https://mezfit.example' },
+      body: JSON.stringify({
+        initData: params.toString(), storageKey: 'mvp-media/' + 'a'.repeat(64),
+        contentType: 'audio/ogg', sizeBytes: 100,
+      }),
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toHaveProperty('putUrl');
+    expect(stderr).toHaveBeenCalledWith('[media-log] LOG_WRITE_FAILED');
+  });
+
 });
