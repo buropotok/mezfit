@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
 import { avcRecordingOptions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
+import { reportVideoRecordingFailure } from './video-recording-diagnostics';
+import type { VideoRecordingDiagnostic, VideoRecordingErrorCode } from '../../shared/video-recording-diagnostic';
 
 export interface VideoNoteRecording {
   blob: Blob;
@@ -60,6 +62,20 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const stoppedAtRef = useRef(0);
   const tickRef = useRef<number | null>(null);
   const deadlineRef = useRef<number | null>(null);
+  const cameraSettingsRef = useRef<MediaTrackSettings>({});
+
+  const reportFailure = useCallback((
+    code: VideoRecordingErrorCode, extra: VideoRecordingDiagnostic['device'] = {},
+  ) => {
+    const settings = cameraSettingsRef.current;
+    reportVideoRecordingFailure(code, profile, {
+      cameraWidth: settings.width === undefined ? undefined : String(settings.width),
+      cameraHeight: settings.height === undefined ? undefined : String(settings.height),
+      cameraFrameRate: settings.frameRate === undefined ? undefined : String(settings.frameRate),
+      cameraFacingMode: settings.facingMode,
+      ...extra,
+    });
+  }, [profile]);
 
   const updateStatus = useCallback((next: VideoNoteRecorderStatus) => {
     statusRef.current = next;
@@ -112,12 +128,13 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       catch {
         resolveStopRef.current = null;
         resolve(null);
+        reportFailure('RECORDER_STOP_FAILED');
         release();
         setError('Не удалось завершить запись. Попробуйте ещё раз.');
         updateStatus('error');
       }
     });
-  }, [release, clearTimers, updateStatus]);
+  }, [release, clearTimers, reportFailure, updateStatus]);
 
   const start = useCallback(async (
     facing: VideoNoteFacingMode = 'user',
@@ -126,12 +143,14 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   ): Promise<boolean> => {
     if (statusRef.current !== 'idle' && statusRef.current !== 'error') return false;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      reportFailure('MEDIA_API_UNAVAILABLE');
       setError('Этот Telegram WebView не поддерживает запись видео через камеру.');
       updateStatus('error');
       return false;
     }
     const options = avcRecordingOptions();
     if (!options) {
+      reportFailure('UNSUPPORTED_MP4_AVC');
       setError(UNSUPPORTED_AVC);
       updateStatus('error');
       return false;
@@ -145,6 +164,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       try { source = await acquire(facing, cameraOptions?.requireFacing); }
       catch (cause) {
         if (mountedRef.current && epoch === epochRef.current) {
+          reportFailure('CAMERA_ACCESS_FAILED', { errorName: cause instanceof DOMException ? cause.name : 'unknown' });
           setError(cameraError(cause));
           updateStatus('error');
         }
@@ -155,6 +175,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     // Keep an acquired live session, but never record for a released gesture.
     if (!source) {
       if (mountedRef.current && epoch === epochRef.current) {
+        reportFailure('CAMERA_INTERRUPTED');
         setError('Получение камеры было прервано. Включите её повторно.');
         updateStatus('error');
       }
@@ -164,6 +185,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       source.getTracks().forEach(track => { track.enabled = false; });
       return false;
     }
+    cameraSettingsRef.current = source.getVideoTracks()[0]?.getSettings?.() ?? {};
     setStream(source);
     if (permissionOnly) {
       source.getTracks().forEach(track => { track.enabled = profile !== 'circle' && track.kind === 'video'; });
@@ -173,6 +195,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     if (cameraOptions?.profile) {
       const { video, profile: orientationProfile } = cameraOptions;
       if (!video || video.srcObject !== source || !video.videoWidth || !video.videoHeight || video.readyState < 2) {
+        reportFailure('CAMERA_PREVIEW_NOT_READY');
         setError('Дождитесь изображения с камеры и повторите попытку.');
         updateStatus('error');
         return false;
@@ -182,6 +205,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         : video.videoWidth > video.videoHeight;
       if (!matchesOrientation) {
         const orientation = orientationProfile === 'portrait' ? 'вертикальный' : 'горизонтальный';
+        reportFailure('CAMERA_ORIENTATION');
         setError(`Камера Telegram не отдаёт ${orientation} кадр. Можно выбрать готовое видео из галереи.`);
         updateStatus('error');
         return false;
@@ -204,6 +228,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       };
       activeRecorder.onerror = () => {
         if (recorderRef.current !== activeRecorder) return;
+        reportFailure('RECORDER_RUNTIME_FAILED', { recorderMimeType: activeRecorder.mimeType });
         release();
         setError('Произошла ошибка видеозаписи. Попробуйте ещё раз.');
         updateStatus('error');
@@ -216,26 +241,54 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         recordingStreamRef.current = null;
         const recorderMimeType = activeRecorder.mimeType || chunks[0]?.type || '';
         const reportedTypes = [activeRecorder.mimeType, chunks[0]?.type].filter(Boolean);
-        const validType = reportedTypes.length > 0 && reportedTypes.every(type =>
+        const reportedMp4 = reportedTypes.length > 0 && reportedTypes.every(type =>
           /^video\/mp4(?:;|$)/i.test(type) && (!/codecs=/i.test(type) || /avc[13]/i.test(type)));
         const mimeType = 'video/mp4';
         const blob = new Blob(chunks, { type: mimeType });
         const durationMs = Math.min(maxDurationMs, Math.max(1, stoppedAtRef.current - startedAtRef.current));
         const interrupted = !stoppedAtRef.current;
-        if (interrupted || !validType || blob.size === 0) {
-          release();
-          setError(interrupted ? 'Камера прервала запись. Попробуйте ещё раз.'
-            : !validType ? 'Устройство не вернуло запись H.264 в MP4.'
-            : 'Запись оказалась пустой. Попробуйте ещё раз.');
-          updateStatus('error');
-        } else {
-          const clip = { blob, mimeType, durationMs,
-            capture: { settings, recorderMimeType, videoBitsPerSecond: activeRecorder.videoBitsPerSecond } };
-          updateStatus('idle');
-          resolveStopRef.current?.(clip);
-          onRecordedRef.current?.(clip);
-        }
-        resolveStopRef.current = null;
+
+        const finish = async () => {
+          let validType = reportedMp4;
+          // A bare video/mp4 MIME promises only a container, not H.264. Verify the actual track.
+          if (validType && !interrupted && blob.size > 0 && options.mimeType === 'video/mp4') {
+            try {
+              const { Input, MP4, BlobSource } = await import('mediabunny');
+              if (epoch !== epochRef.current) return;
+              const input = new Input({ formats: [MP4], source: new BlobSource(blob) });
+              try {
+                const track = await input.getPrimaryVideoTrack();
+                validType = (await track?.getCodec()) === 'avc';
+              } finally {
+                input.dispose();
+              }
+            } catch {
+              validType = false;
+            }
+          }
+          if (!mountedRef.current || epoch !== epochRef.current) return;
+          if (interrupted || !validType || blob.size === 0) {
+            reportFailure(interrupted ? 'RECORDER_INTERRUPTED'
+              : blob.size === 0 ? 'RECORDING_EMPTY' : 'RECORDED_FORMAT_INVALID', {
+              recorderMimeType, recordingSizeBytes: String(blob.size),
+              recordingDurationMs: String(durationMs),
+              recorderVideoBitsPerSecond: String(activeRecorder.videoBitsPerSecond),
+            });
+            release();
+            setError(interrupted ? 'Камера прервала запись. Попробуйте ещё раз.'
+              : !validType ? 'Устройство не вернуло запись H.264 в MP4.'
+              : 'Запись оказалась пустой. Попробуйте ещё раз.');
+            updateStatus('error');
+          } else {
+            const clip = { blob, mimeType, durationMs,
+              capture: { settings, recorderMimeType, videoBitsPerSecond: activeRecorder.videoBitsPerSecond } };
+            updateStatus('idle');
+            resolveStopRef.current?.(clip);
+            onRecordedRef.current?.(clip);
+          }
+          resolveStopRef.current = null;
+        };
+        void finish();
       };
       activeRecorder.start(1000);
       setElapsedMs(0);
@@ -244,7 +297,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       tickRef.current = window.setInterval(tick, 250);
       deadlineRef.current = window.setTimeout(() => { void stop(); }, maxDurationMs);
       return true;
-    } catch {
+    } catch (cause) {
+      reportFailure('RECORDER_START_FAILED', { errorName: cause instanceof DOMException ? cause.name : 'unknown' });
       recorderRef.current = null;
       recordingStreamRef.current?.getTracks().forEach(track => { track.enabled = false; });
       recordingStreamRef.current = null;
@@ -256,7 +310,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('error');
       return false;
     }
-  }, [acquire, clearTimers, liveStream, maxDurationMs, profile, release, stop, updateStatus]);
+  }, [acquire, clearTimers, liveStream, maxDurationMs, profile, release, reportFailure, stop, updateStatus]);
 
   useEffect(() => {
     mountedRef.current = true;

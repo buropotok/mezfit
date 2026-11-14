@@ -1,4 +1,5 @@
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
+import type { VideoRecordingDiagnostic } from '../shared/video-recording-diagnostic';
 import { compressTelegramAvatar } from './media/telegram-avatar-compress';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
@@ -443,6 +444,17 @@ async function apiRequest<T>(initData: string, path: string, init?: RequestInit)
     );
   }
   return response.json<T>();
+}
+
+/** One-way, Telegram-authenticated technical error report. Never returns private data. */
+export async function sendVideoRecordingDiagnostic(initData: string, report: VideoRecordingDiagnostic): Promise<void> {
+  const response = await apiRequest<unknown>(initData, '/api/diagnostics/video-recording', {
+    method: 'POST',
+    body: JSON.stringify(report),
+  });
+  if (!isRecord(response) || response.ok !== true) {
+    throw new ApiError(502, 'Не удалось отправить диагностику видеозаписи', 'INVALID_API_RESPONSE');
+  }
 }
 
 type CloudFetchTokens = NonNullable<DexieCloudOptions['fetchTokens']>;
