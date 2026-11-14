@@ -1,5 +1,7 @@
 import type { VideoTrimInfo, VideoTrimRange } from './videoTrim';
 
+const EXACT_WEBM_MAX_MS = 10_000;
+
 export type WebmTrimResult = {
   blob: Blob;
   mode: 'exact' | 'keyframe';
@@ -50,7 +52,26 @@ export async function trimRecordedWebm(
       const abort = () => { void conversion.cancel().catch(() => {}); };
       signal.addEventListener('abort', abort, { once: true });
       try {
-        await conversion.execute();
+        if (copy) {
+          await conversion.execute();
+        } else {
+          // Exact encoding is bounded: an older mobile WebView must not spend minutes
+          // transcoding when fast keyframe copying is available.
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            await Promise.race([
+              conversion.execute(),
+              new Promise<never>((_, reject) => {
+                timer = setTimeout(() => {
+                  void conversion.cancel().catch(() => {});
+                  reject(new Error('WEBM_EXACT_TRIM_TIMEOUT'));
+                }, EXACT_WEBM_MAX_MS);
+              }),
+            ]);
+          } finally {
+            if (timer !== undefined) clearTimeout(timer);
+          }
+        }
         signal.throwIfAborted();
         if (!outputTarget.buffer?.byteLength) throw new Error('Empty WebM result');
         const result = new Blob([outputTarget.buffer], { type: 'video/webm' });
@@ -76,7 +97,11 @@ export async function trimRecordedWebm(
     return { blob: await convert(false), mode: 'exact' };
   } catch (reason) {
     signal.throwIfAborted();
-    onExactFailed?.(reason instanceof Error ? reason.name : 'unknown');
+    const knownReason = reason instanceof Error
+      ? (reason.message === 'WEBM_EXACT_TRIM_TIMEOUT' || reason.message === 'WebM exact encoding unavailable'
+        ? reason.message : reason.name)
+      : 'unknown';
+    onExactFailed?.(knownReason);
   }
 
   // Shrink never exposes video before the user's requested start boundary.
