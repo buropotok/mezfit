@@ -110,6 +110,56 @@ describe('Yandex media signer', () => {
     expect(post(request, { env: { ...env, MEDIA_TELEGRAM_ALLOWLIST: '124,123' } }).statusCode).toBe(200);
   });
 
+  it('traces an authorized sign request through validation with verified Telegram ID', () => {
+    const traces = [];
+    const response = signer.handleRequest({
+      httpMethod: 'POST', headers: { Origin: origin },
+      body: JSON.stringify({ ...upload, initData: initData() }),
+    }, env, now, (...args) => traces.push(args));
+    expect(response.statusCode).toBe(200);
+    const events = traces.map(([event]) => event);
+    expect(events).toEqual([
+      'REQUEST_RECEIVED', 'ORIGIN_CHECKED', 'SIGNER_CONFIG_VALID', 'REQUEST_JSON_PARSED',
+      'TELEGRAM_AUTH_VALID', 'ALLOWLIST_CHECKED', 'UPLOAD_VALIDATED',
+      'SIGNATURE_STARTED', 'SIGNATURE_CREATED', 'RESPONSE_CREATED',
+    ]);
+    expect(traces.find(([event]) => event === 'TELEGRAM_AUTH_VALID')[2].tgId).toBe('123');
+    expect(traces.find(([event]) => event === 'UPLOAD_VALIDATED')[2].storageKeyHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(traces.find(([event]) => event === 'RESPONSE_CREATED')[2].httpStatus).toBe(200);
+  });
+
+  it.each([
+    { field: 'auth_date', value: '1', reason: 'INITDATA_AUTH_DATE_EXPIRED' },
+    { field: 'user', value: '{"id":"123"}', reason: 'INITDATA_HASH_MISMATCH' },
+  ])('reports the reason for Telegram authentication failure without a claimed ID', ({ field, value, reason }) => {
+    const traces = [];
+    const response = signer.handleRequest({
+      httpMethod: 'POST', headers: { Origin: origin },
+      body: JSON.stringify({ ...upload, initData: initData({ [field]: value }) }),
+    }, env, now, (...args) => traces.push(args));
+    expect(response.statusCode).toBe(401);
+    expect(traces.find(([event]) => event === 'TELEGRAM_AUTH_REJECTED')[2].reason).toBe(reason);
+    expect(traces.some(([event]) => event === 'TELEGRAM_AUTH_VALID')).toBe(false);
+  });
+
+  it('traces CORS errors and malformed media without signing', () => {
+    const originTraces = [];
+    const denied = signer.handleRequest({
+      httpMethod: 'POST', headers: { Origin: 'https://other.example' }, body: '{}',
+    }, env, now, (...args) => originTraces.push(args));
+    expect(denied.statusCode).toBe(403);
+    expect(originTraces.map(([event]) => event)).toContain('ORIGIN_REJECTED');
+
+    const uploadTraces = [];
+    const invalid = signer.handleRequest({
+      httpMethod: 'POST', headers: { Origin: origin },
+      body: JSON.stringify({ ...upload, sizeBytes: 0, initData: initData() }),
+    }, env, now, (...args) => uploadTraces.push(args));
+    expect(invalid.statusCode).toBe(400);
+    expect(uploadTraces.find(([event]) => event === 'UPLOAD_VALIDATION_REJECTED')[2].reason).toBe('INVALID_SIZE');
+    expect(uploadTraces.some(([event]) => event === 'SIGNATURE_STARTED')).toBe(false);
+  });
+
   it('keeps public bucket policy grants limited to HTTPS object reads', () => {
     const policy = JSON.parse(readFileSync(new URL('../infra/yandex-media-mvp/policy.fragment.json', import.meta.url), 'utf8'));
     const grants = policy.Statement.filter(rule => rule.Effect === 'Allow');
