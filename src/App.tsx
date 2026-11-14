@@ -192,7 +192,7 @@ function ClientShell({
         <Text variant="body">
           {invite.label || 'После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.'}
         </Text>
-        <KonstaButton rounded strong onClick={() => void accept()} disabled={busy}>
+        <KonstaButton rounded onClick={() => void accept()} disabled={busy}>
           {busy ? 'Подключаем…' : 'Подключиться к тренеру'}
         </KonstaButton>
         {message ? <Text variant="body" role="alert">{message}</Text> : null}
