@@ -81,6 +81,38 @@ it('retains a failed automatic send for explicit retry with the same identity', 
   expect(mockUpload.mock.calls[1][1]?.retryKey).toBe(firstKey);
 });
 
+it.each([
+  { failure: new MediaUploadError('NETWORK', undefined, undefined, undefined, 'signer'), code: 1,
+    message: 'Mezfit облако недоступно. Проверьте сеть и повторите отправку' },
+  { failure: new MediaUploadError('NETWORK', undefined, undefined, undefined, 'put'), code: 2,
+    message: 'Mezfit облако недоступно. Проверьте сеть и повторите отправку' },
+  { failure: new MediaUploadError('NETWORK', undefined, undefined, undefined, 'head'), code: 3,
+    message: 'Mezfit облако недоступно. Проверьте сеть и повторите отправку' },
+  { failure: new MediaUploadError('NETWORK'), code: 4,
+    message: 'Mezfit облако недоступно. Проверьте сеть и повторите отправку' },
+  { failure: new MediaUploadError('TIMEOUT'), code: 5,
+    message: 'Mezfit облако недоступно. Проверьте сеть и повторите отправку' },
+  { failure: new MediaUploadError('SIGNER_AUTH'), code: 6,
+    message: 'Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram' },
+  { failure: new MediaUploadError('SIGNER_UNAVAILABLE'), code: 7,
+    message: 'Не удалось получить ссылку для загрузки. Повторите отправку' },
+  { failure: new MediaUploadError('HTTP', 403), code: 8,
+    message: 'Хранилище не приняло файл. Повторите отправку' },
+])('shows a safe support code $code after a video-note send failure', async ({ failure, code, message }) => {
+  vi.stubGlobal('URL', Object.assign(class extends URL {}, {
+    createObjectURL: vi.fn(() => 'blob:video-note-preview'), revokeObjectURL: vi.fn(),
+  }));
+  const { result, mockUpload } = setup();
+  mockUpload.mockRejectedValueOnce(failure);
+  await waitFor(() => expect(result.current.draft.ready).toBe(true));
+
+  act(() => result.current.media.sendVideoNote({
+    blob: new Blob(['circle bytes'], { type: 'video/webm' }), mimeType: 'video/webm', durationMs: 2000,
+  }));
+  await waitFor(() => expect(result.current.media.phase).toBe('failed'));
+  expect(result.current.media.error).toBe(`${message} (Код ${code})`);
+});
+
 it('renders a media bubble using the existing compact circular player and expands on tap', () => {
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
