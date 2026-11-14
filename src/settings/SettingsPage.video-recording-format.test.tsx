@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 it('exposes the native MP4-WebM range in Modules and persists forced WebM for recorder', () => {
-  render(<SettingsPage />);
+  render(<SettingsPage onNavigationContextChange={vi.fn()} />);
   fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
   const slider = screen.getByRole('slider', { name: /Формат записи/ });
   expect(slider).toHaveProperty('value', '0');
