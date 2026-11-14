@@ -222,7 +222,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     try {
       let chosen: MediaRecorderOptions | null = null;
       let lastStartErrorName = 'unknown';
-      let failedMp4 = false;
+      const startupFailures: string[] = [];
+      let failedMp4 = [...failedMimeTypesRef.current].some(type => type.startsWith('video/mp4'));
       for (const attempt of candidates) {
         let candidateRecorder: MediaRecorder | null = null;
         try {
@@ -235,6 +236,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
           lastStartErrorName = cause instanceof DOMException ? cause.name : 'unknown';
           if (attempt.mimeType?.startsWith('video/mp4')) failedMp4 = true;
           failedMimeTypesRef.current.add(attempt.mimeType ?? '');
+          startupFailures.push((attempt.mimeType ?? 'unknown') + ': ' + lastStartErrorName);
           if (candidateRecorder?.state !== 'inactive' && candidateRecorder) {
             try { candidateRecorder.stop(); } catch { /* Unusable candidate. */ }
           }
@@ -251,6 +253,11 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         return false;
       }
       const options = chosen;
+      if (startupFailures.length) reportFailure('RECORDER_MIME_ATTEMPT_FAILED', {
+        attemptedFormat: startupFailures.join('; '),
+        selectedFormat: options.mimeType,
+        preferredFormat: preference,
+      });
       const activeRecorder = recorder;
       const settings = source.getVideoTracks()[0]?.getSettings?.() ?? {};
       const chunks: Blob[] = [];
