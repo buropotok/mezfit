@@ -138,6 +138,12 @@ function ClientShell({
     let cancelled = false;
     setInvite(undefined);
     setMessage('');
+    // The signed initData can still contain the accepted invite's start_param.
+    // Do not ask the Worker to resolve it again after this launch intent is consumed.
+    if (!isClientInviteStartParam(startParam)) {
+      setInvite(null);
+      return () => { cancelled = true; };
+    }
     getCurrentInvite(initData, startParam)
       .then((result) => {
         if (!cancelled) setInvite(result.invite);
