@@ -5,7 +5,8 @@
   "compatibility_date": "2026-09-09",
   "triggers": { "crons": ["*/5 * * * *"] },
   "vars": {
-    "TELEGRAM_BOT_USERNAME": "mezfit_bot"
+    "TELEGRAM_BOT_USERNAME": "mezfit_bot",
+    "VIDEO_RECORDING_REPORT_CHAT_ID": "208192415"
   },
   "assets": {
     "directory": "./dist",
