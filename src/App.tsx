@@ -53,6 +53,10 @@ import { WorkedMuscleAssetsPrefetch } from './workout/WorkedMuscleAssetsPrefetch
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
 
+function activationPendingKey(telegramUserId: string): string {
+  return `mezfit.chatActivationPending.${telegramUserId}`;
+}
+
 type State =
   | { status: 'loading' }
   | { status: 'outside-telegram' }
@@ -236,7 +240,7 @@ function ClientCoachAwareNavigationShell(props: ComponentProps<typeof UserProfil
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
   const [dismissedInviteParam, setDismissedInviteParam] = useState<string | null>(null);
-  const [showBotStartScreen, setShowBotStartScreen] = useState(false);
+  const [pendingActivationFor, setPendingActivationFor] = useState<string | null>(null);
   const [notificationOccurrenceId, setNotificationOccurrenceId] = useState<string | null>(null);
   const [notificationMessageId, setNotificationMessageId] = useState<string | null>(null);
   const clearNotificationMessage = useCallback(() => setNotificationMessageId(null), []);
@@ -398,7 +402,8 @@ export function App() {
         onAccepted={(roles) => {
           window.localStorage.setItem(ROLE_STORAGE_KEY, 'client');
           setDismissedInviteParam(inviteStartParam);
-          setShowBotStartScreen(true);
+          window.localStorage.setItem(activationPendingKey(me.user.telegramUserId), '1');
+          setPendingActivationFor(me.user.telegramUserId);
           dispatch({
             type: 'loaded', initData, startParam: null,
             me: { ...me, roles }, preferredRole: 'client',
@@ -495,8 +500,13 @@ export function App() {
         telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
       >
-      {showBotStartScreen && state.activeRole === 'client' ? (
-        <BotStartScreen onContinue={() => setShowBotStartScreen(false)} />
+      {state.activeRole === 'client'
+        && (pendingActivationFor === state.me.user.telegramUserId
+          || window.localStorage.getItem(activationPendingKey(state.me.user.telegramUserId)) === '1') ? (
+        <BotStartScreen initData={state.initData} onActivated={() => {
+          window.localStorage.removeItem(activationPendingKey(state.me.user.telegramUserId));
+          setPendingActivationFor(current => current === state.me.user.telegramUserId ? null : current);
+        }} />
       ) : (
       <UserProfilePublicationProvider>
       <PublicCategoryArtworkProvider>
@@ -587,7 +597,8 @@ export function App() {
             onNavigationContextChange={handleNavigationContextChange}
             onInviteAccepted={() => {
               if (isClientInviteStartParam(state.startParam)) setDismissedInviteParam(state.startParam);
-              setShowBotStartScreen(true);
+              window.localStorage.setItem(activationPendingKey(state.me.user.telegramUserId), '1');
+              setPendingActivationFor(state.me.user.telegramUserId);
             }}
           />
           )}
