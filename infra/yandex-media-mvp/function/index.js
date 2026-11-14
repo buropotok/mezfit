@@ -1,6 +1,7 @@
 'use strict';
 
 const { createHash, createHmac, timingSafeEqual } = require('node:crypto');
+const { createRecorder, configured: loggingConfigured, appendEvents } = require('./media-log');
 
 const bucket = 'mezfit-comm-poc-20261106';
 const host = 'storage.yandexcloud.net';
@@ -16,32 +17,36 @@ function hmac(key, value) {
   return createHmac('sha256', key).update(value).digest();
 }
 
-function telegramUserId(initData, botToken, now) {
-  if (typeof initData !== 'string' || !initData || initData.length > 8192) return null;
+function telegramUserId(initData, botToken, now, onReject = () => {}) {
+  const reject = reason => { onReject(reason); return null; };
+  if (typeof initData !== 'string' || !initData) return reject('INITDATA_MISSING');
+  if (initData.length > 8192) return reject('INITDATA_TOO_LARGE');
   const params = new URLSearchParams(initData);
   const seen = new Set();
   for (const [key, value] of params) {
-    if (seen.has(key) || !/^[a-z_][a-z0-9_]*$/.test(key) || /[\r\n]/.test(value)) return null;
+    if (seen.has(key)) return reject('INITDATA_DUPLICATE_FIELD');
+    if (!/^[a-z_][a-z0-9_]*$/.test(key) || /[\r\n]/.test(value)) return reject('INITDATA_INVALID_FIELD');
     seen.add(key);
   }
 
   const hash = params.get('hash');
-  if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) return null;
+  if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) return reject('INITDATA_HASH_INVALID');
   params.delete('hash');
   params.sort();
   const data = [...params].map(([key, value]) => `${key}=${value}`).join('\n');
-  if (!timingSafeEqual(Buffer.from(hash, 'hex'), hmac(hmac('WebAppData', botToken), data))) return null;
+  if (!timingSafeEqual(Buffer.from(hash, 'hex'), hmac(hmac('WebAppData', botToken), data))) return reject('INITDATA_HASH_MISMATCH');
 
   const authDate = params.get('auth_date');
-  if (!authDate || !/^\d{1,12}$/.test(authDate)) return null;
+  if (!authDate || !/^\d{1,12}$/.test(authDate)) return reject('INITDATA_AUTH_DATE_INVALID');
   const age = Math.floor(now.getTime() / 1000) - Number(authDate);
-  if (age < -60 || age > maxAuthAgeSeconds) return null;
+  if (age < -60) return reject('INITDATA_AUTH_DATE_FUTURE');
+  if (age > maxAuthAgeSeconds) return reject('INITDATA_AUTH_DATE_EXPIRED');
 
   try {
     const id = JSON.parse(params.get('user'))?.id;
-    return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
+    return Number.isSafeInteger(id) && id > 0 ? String(id) : reject('INITDATA_USER_INVALID');
   } catch {
-    return null;
+    return reject('INITDATA_USER_JSON_INVALID');
   }
 }
 
@@ -77,12 +82,20 @@ function presignPut({ storageKey, contentType, sizeBytes }, env, now) {
   };
 }
 
-function handleRequest(event, env, now) {
+function handleRequest(event, env, now, trace = () => {}) {
+  const started = Date.now();
   const headers = Object.fromEntries(Object.entries(event.headers ?? {}).map(([key, value]) => [key.toLowerCase(), value]));
   const origins = (env.MEDIA_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean);
   const cors = origins.includes(headers.origin) && headers.origin !== '*' && headers.origin !== 'null'
     ? { 'Access-Control-Allow-Origin': headers.origin } : {};
+  trace('REQUEST_RECEIVED', 'INFO', {
+    method: event.httpMethod, origin: headers.origin, bodyLength: typeof event.body === 'string' ? event.body.length : 0,
+    isBase64Encoded: event.isBase64Encoded === true,
+  });
   function respond(statusCode, payload) {
+    trace('RESPONSE_CREATED', statusCode >= 500 ? 'ERROR' : statusCode >= 400 ? 'WARN' : 'INFO', {
+      httpStatus: statusCode, reason: payload?.code ?? 'SUCCESS', durationMs: Date.now() - started,
+    });
     return {
       statusCode,
       headers: { ...cors, Vary: 'Origin', 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
@@ -90,8 +103,13 @@ function handleRequest(event, env, now) {
       isBase64Encoded: false,
     };
   }
-  if (headers.origin && !cors['Access-Control-Allow-Origin']) return respond(403, { code: 'ORIGIN_DENIED' });
+  if (headers.origin && !cors['Access-Control-Allow-Origin']) {
+    trace('ORIGIN_REJECTED', 'WARN', { reason: 'ORIGIN_NOT_ALLOWED' });
+    return respond(403, { code: 'ORIGIN_DENIED' });
+  }
+  trace('ORIGIN_CHECKED', 'INFO', { reason: headers.origin ? 'ALLOWED' : 'NOT_PROVIDED' });
   if (event.httpMethod === 'OPTIONS') {
+    trace('PREFLIGHT_HANDLED');
     const response = respond(204);
     return {
       ...response,
@@ -103,33 +121,96 @@ function handleRequest(event, env, now) {
       },
     };
   }
-  if (event.httpMethod !== 'POST') return respond(405, { code: 'METHOD_NOT_ALLOWED' });
+  if (event.httpMethod !== 'POST') {
+    trace('METHOD_REJECTED', 'WARN', { method: event.httpMethod });
+    return respond(405, { code: 'METHOD_NOT_ALLOWED' });
+  }
   if (!env.TELEGRAM_BOT_TOKEN || !/^[A-Za-z0-9_-]+$/.test(env.MEDIA_S3_ACCESS_KEY_ID ?? '')
-    || !env.MEDIA_S3_SECRET_ACCESS_KEY || !origins.length) return respond(503, { code: 'NOT_CONFIGURED' });
+    || !env.MEDIA_S3_SECRET_ACCESS_KEY || !origins.length) {
+    trace('SIGNER_CONFIG_INVALID', 'ERROR', { reason: 'MISSING_REQUIRED_CONFIG' });
+    return respond(503, { code: 'NOT_CONFIGURED' });
+  }
+  trace('SIGNER_CONFIG_VALID');
 
   const raw = event.body;
-  if (typeof raw !== 'string' || raw.length > 16384) return respond(400, { code: 'INVALID_REQUEST' });
+  if (typeof raw !== 'string' || raw.length > 16384) {
+    trace('REQUEST_BODY_REJECTED', 'WARN', { reason: typeof raw !== 'string' ? 'BODY_NOT_STRING' : 'BODY_TOO_LARGE' });
+    return respond(400, { code: 'INVALID_REQUEST' });
+  }
   let payload;
   try {
     payload = JSON.parse(event.isBase64Encoded ? Buffer.from(raw, 'base64').toString('utf8') : raw);
   } catch {
+    trace('REQUEST_JSON_REJECTED', 'WARN', { reason: 'INVALID_JSON_OR_BASE64' });
     return respond(400, { code: 'INVALID_REQUEST' });
   }
-  const userId = telegramUserId(payload?.initData, env.TELEGRAM_BOT_TOKEN, now);
+  trace('REQUEST_JSON_PARSED');
+  const userId = telegramUserId(payload?.initData, env.TELEGRAM_BOT_TOKEN, now,
+    reason => trace('TELEGRAM_AUTH_REJECTED', 'WARN', { reason }));
   if (!userId) return respond(401, { code: 'TELEGRAM_AUTH_REQUIRED' });
+  trace('TELEGRAM_AUTH_VALID', 'INFO', { tgId: userId });
   if (env.MEDIA_TELEGRAM_ALLOWLIST && !env.MEDIA_TELEGRAM_ALLOWLIST.split(',').some(id => id.trim() === userId)) {
+    trace('ALLOWLIST_REJECTED', 'WARN', { reason: 'USER_NOT_ALLOWED' });
     return respond(403, { code: 'TELEGRAM_USER_DENIED' });
   }
+  trace('ALLOWLIST_CHECKED', 'INFO', { reason: env.MEDIA_TELEGRAM_ALLOWLIST ? 'ALLOWED' : 'NOT_ENABLED' });
 
   const { storageKey, contentType, sizeBytes } = payload;
   const limit = limits.get(contentType);
-  if (typeof storageKey !== 'string' || storageKey.length !== 74 || !/^mvp-media\/[a-f0-9]{64}$/.test(storageKey)
-    || !limit || !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || sizeBytes > limit * 1024 * 1024) {
+  const invalidKey = typeof storageKey !== 'string' || storageKey.length !== 74
+    || !/^mvp-media\/[a-f0-9]{64}$/.test(storageKey);
+  const invalidSize = !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || (limit && sizeBytes > limit * 1024 * 1024);
+  if (invalidKey || !limit || invalidSize) {
+    trace('UPLOAD_VALIDATION_REJECTED', 'WARN', {
+      reason: invalidKey ? 'INVALID_KEY' : !limit ? 'INVALID_CONTENT_TYPE' : 'INVALID_SIZE',
+      contentType, sizeBytes,
+    });
     return respond(400, { code: 'INVALID_UPLOAD' });
   }
-
-  return respond(200, presignPut({ storageKey, contentType, sizeBytes }, env, now));
+  trace('UPLOAD_VALIDATED', 'INFO', {
+    contentType, sizeBytes, storageKeyHash: createHash('sha256').update(storageKey).digest('hex'),
+  });
+  trace('SIGNATURE_STARTED');
+  try {
+    const signature = presignPut({ storageKey, contentType, sizeBytes }, env, now);
+    trace('SIGNATURE_CREATED', 'INFO', { signatureExpiresAt: signature.expiresAt });
+    return respond(200, signature);
+  } catch (error) {
+    trace('SIGNATURE_FAILED', 'ERROR', { stage: 'SIGNING', errorName: error?.name ?? 'Error' });
+    throw error;
+  }
 }
 
 exports.handleRequest = handleRequest;
-exports.handler = async event => handleRequest(event, process.env, new Date());
+exports.handler = async event => {
+  const recorder = createRecorder();
+  let response;
+  try {
+    response = handleRequest(event, process.env, new Date(), recorder.record);
+  } catch (error) {
+    recorder.record('UNHANDLED_EXCEPTION', 'ERROR', { stage: 'HANDLER', errorName: error?.name ?? 'Error' });
+    const origin = event?.headers?.origin ?? event?.headers?.Origin;
+    const origins = (process.env.MEDIA_ORIGINS ?? '').split(',').map(value => value.trim());
+    const cors = origins.includes(origin) && origin !== '*' && origin !== 'null'
+      ? { 'Access-Control-Allow-Origin': origin } : {};
+    response = {
+      statusCode: 500,
+      headers: { ...cors, Vary: 'Origin', 'Cache-Control': 'no-store', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'INTERNAL_ERROR' }),
+      isBase64Encoded: false,
+    };
+    recorder.record('RESPONSE_CREATED', 'ERROR', { httpStatus: 500, reason: 'INTERNAL_ERROR' });
+  }
+  try {
+    if (loggingConfigured(process.env)) {
+      await appendEvents(recorder.events, process.env);
+    } else {
+      console.error('[media-log] LOGGING_NOT_CONFIGURED');
+    }
+  } catch (error) {
+    // Logging is strictly best-effort. Never fail signing because the log bucket is down.
+    const code = /^LOG_[A-Z0-9_]+$/.test(error?.message ?? '') ? error.message : 'LOG_WRITE_FAILED';
+    console.error('[media-log] ' + code);
+  }
+  return response;
+};
