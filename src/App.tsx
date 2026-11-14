@@ -506,6 +506,9 @@ export function App() {
         <BotStartScreen initData={state.initData} onActivated={() => {
           window.localStorage.removeItem(activationPendingKey(state.me.user.telegramUserId));
           setPendingActivationFor(current => current === state.me.user.telegramUserId ? null : current);
+          // The Telegram deep link can survive a WebView restart. Do not
+          // reopen an already accepted invite when activation is confirmed.
+          if (isClientInviteStartParam(state.startParam)) setDismissedInviteParam(state.startParam);
         }} />
       ) : (
       <UserProfilePublicationProvider>
