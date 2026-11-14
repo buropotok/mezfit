@@ -106,7 +106,8 @@ export async function handleVideoRecordingDiagnostic(
 
   const now = Date.now();
   const actor = telegram.user.id;
-  if (now - (lastReportByActor.get(actor) ?? 0) < MIN_INTERVAL_MS) {
+  const previous = lastReportByActor.get(actor);
+  if (previous !== undefined && now - previous < MIN_INTERVAL_MS) {
     return Response.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   }
   if (lastReportByActor.size > 512) lastReportByActor.clear();
