@@ -87,12 +87,14 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, onTrimFallback, p
             trimFallbackCause: reason, trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
             selectedFormat: 'video/webm',
           });
-          onTrimFallback?.('На вашем устройстве возможна обрезка только по ключевым кадрам');
         });
         if (!controller.signal.aborted) {
-          if (result.mode === 'keyframe') reportVideoRecordingFailure('WEBM_KEYFRAME_FALLBACK', profile, {
-            selectedFormat: 'video/webm', trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
-          });
+          if (result.mode === 'keyframe') {
+            reportVideoRecordingFailure('WEBM_KEYFRAME_FALLBACK', profile, {
+              selectedFormat: 'video/webm', trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
+            });
+            onTrimFallback?.('На вашем устройстве возможна обрезка только по ключевым кадрам');
+          }
           deliver(result.blob, 'video/webm');
         }
       } else {
