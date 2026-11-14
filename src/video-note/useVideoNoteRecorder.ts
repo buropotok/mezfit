@@ -308,9 +308,10 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
           if (validType && !interrupted && blob.size > 0 &&
             (options.mimeType === 'video/mp4' || isWebm)) {
             try {
-              const { Input, MP4, WebM, BlobSource } = await import('mediabunny');
+              const media = await import('mediabunny');
+              const { Input, BlobSource } = media;
               if (epoch !== epochRef.current) return;
-              const input = new Input({ formats: [isWebm ? WebM : MP4], source: new BlobSource(blob) });
+              const input = new Input({ formats: [isWebm ? media.WEBM : media.MP4], source: new BlobSource(blob) });
               try {
                 const track = await input.getPrimaryVideoTrack();
                 const codec = await track?.getCodec();
@@ -333,7 +334,9 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
             });
             release();
             setError(interrupted ? 'Камера прервала запись. Попробуйте ещё раз.'
-              : !validType ? 'Устройство вернуло несовместимый формат видеозаписи.'
+              : !validType ? (isWebm
+                ? 'Устройство вернуло несовместимый формат видеозаписи.'
+                : 'Устройство не вернуло запись H.264 в MP4.')
               : 'Запись оказалась пустой. Попробуйте ещё раз.');
             updateStatus('error');
           } else {
