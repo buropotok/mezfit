@@ -17,7 +17,7 @@ vi.mock('mediabunny', () => {
     dispose() {}
   }
   return {
-    Input, BlobSource, WebM: {},
+    Input, BlobSource, WEBM: {},
     WebMOutputFormat: class {},
     BufferTarget,
     Output: class {
