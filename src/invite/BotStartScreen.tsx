@@ -50,7 +50,7 @@ export function BotStartScreen({ initData, onActivated }: {
         <Text variant="body">
           Чтобы получать сообщения от тренера и уведомления о тренировках, откройте чат Mezfit и нажмите «Старт».
         </Text>
-        <KonstaButton rounded strong onClick={openMezfitBotChat}>Открыть чат Mezfit</KonstaButton>
+        <KonstaButton rounded onClick={openMezfitBotChat}>Открыть чат Mezfit</KonstaButton>
         <Text variant="footnote">После нажатия «Старт» вернитесь в Mezfit.</Text>
         <KonstaButton rounded tonal disabled={status === 'checking'}
           onClick={() => setCheckRevision(value => value + 1)}>
