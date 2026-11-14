@@ -56,6 +56,7 @@ function createRecorder(clock = () => new Date()) {
     const safe = {};
     for (const [name, value] of Object.entries(details)) {
       if (!LOG_FIELDS.has(name) || value === undefined) continue;
+      if (name === 'origin') { safe.origin = redactOrigin(value); continue; }
       if (typeof value === 'number' && Number.isFinite(value)) safe[name] = value;
       else if (typeof value === 'boolean') safe[name] = value;
       else if (typeof value === 'string' && value.length <= 120 && /^[\x20-\x7e]*$/.test(value)) {
