@@ -25,6 +25,7 @@ afterEach(() => {
 });
 
 function mount() {
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   vi.stubGlobal('URL', Object.assign(class extends URL {}, {
     createObjectURL: () => 'blob:webm-preview',
     revokeObjectURL: () => {},
