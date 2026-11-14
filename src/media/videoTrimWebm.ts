@@ -39,7 +39,7 @@ export async function trimRecordedWebm(
         input,
         output,
         trim: { start, end },
-        copy: copy ? { mode: 'forced', boundaryPolicy: policy, boundaryTolerance: Infinity } : false,
+        copy: copy ? { mode: 'forced', boundaryPolicy: policy, boundaryTolerance: Infinity, shiftTolerance: Infinity } : false,
         ...(!copy ? { video: { codec }, audio: { codec: 'opus' as const } } : {}),
         showWarnings: false,
       });
