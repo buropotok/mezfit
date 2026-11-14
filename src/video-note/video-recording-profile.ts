@@ -19,8 +19,12 @@ export function videoRecordingConstraints(profile: VideoRecordingProfile): Media
 }
 
 export function avcRecordingOptions(): MediaRecorderOptions | null {
+  const supports = (mimeType: string): boolean => {
+    try { return MediaRecorder.isTypeSupported?.(mimeType) === true; }
+    catch { return false; } // Some embedded implementations throw for unknown codec parameters.
+  };
   // Explicit H.264 profiles first; a generic MP4 requires post-recording codec inspection.
-  const mimeType = AVC_MP4_MIME_TYPES.find(type => MediaRecorder.isTypeSupported?.(type))
-    ?? (MediaRecorder.isTypeSupported?.('video/mp4') ? 'video/mp4' : null);
+  const mimeType = AVC_MP4_MIME_TYPES.find(supports)
+    ?? (supports('video/mp4') ? 'video/mp4' : null);
   return mimeType ? { mimeType, videoBitsPerSecond: 1_000_000 } : null;
 }
