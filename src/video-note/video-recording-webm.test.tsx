@@ -6,7 +6,7 @@ import { reportVideoRecordingFailure } from './video-recording-diagnostics';
 
 vi.mock('./video-recording-diagnostics', () => ({ reportVideoRecordingFailure: vi.fn() }));
 vi.mock('mediabunny', () => ({
-  MP4: {}, WebM: {},
+  MP4: {}, WEBM: {},
   BlobSource: class { constructor(_blob: Blob) {} },
   Input: class {
     constructor(_options: unknown) {}
