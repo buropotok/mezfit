@@ -13,6 +13,26 @@ type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { separate
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
 type OutgoingMedia = Pick<DiscussionMessageInput, 'id' | 'createdAt'> & { attachmentId: string };
 
+// Stable, non-sensitive support codes for failures in the media send flow.
+// 1/2/3 identify the failed network request: signer, PUT, or retry HEAD.
+function describeSendError(reason: unknown, savingFile: boolean, aborted: boolean): string {
+  if (aborted) return 'Загрузка отменена. Можно повторить отправку (Код 12)';
+  if (reason instanceof MediaUploadError) {
+    if (reason.code === 'NETWORK') {
+      const code = reason.stage === 'signer' ? 1 : reason.stage === 'put' ? 2
+        : reason.stage === 'head' ? 3 : 4;
+      return `Mezfit облако недоступно. Проверьте сеть и повторите отправку (Код ${code})`;
+    }
+    if (reason.code === 'TIMEOUT') return 'Mezfit облако недоступно. Проверьте сеть и повторите отправку (Код 5)';
+    if (reason.code === 'SIGNER_AUTH') return 'Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram (Код 6)';
+    if (reason.code === 'SIGNER_UNAVAILABLE') return 'Не удалось получить ссылку для загрузки. Повторите отправку (Код 7)';
+    if (reason.code === 'HTTP') return 'Хранилище не приняло файл. Повторите отправку (Код 8)';
+    return 'Хранилище не приняло файл. Повторите отправку (Код 9)';
+  }
+  if (savingFile) return 'Не удалось сохранить файл на устройстве. Освободите место и попробуйте ещё раз (Код 10)';
+  return 'Не удалось сохранить сообщение. Повторите отправку (Код 11)';
+}
+
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
   const [selection, setSelection] = useState<Selection>();
   const [preview, setPreview] = useState<string>();
@@ -192,22 +212,14 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         }
         resume.current = () => { void send(selected, false); };
       }
-      setError(controller.signal.aborted ? 'Загрузка отменена. Можно повторить отправку'
-        : network ? 'Mezfit облако недоступно. Проверьте сеть и повторите отправку'
-        : reason instanceof MediaUploadError && reason.code === 'SIGNER_AUTH'
-          ? 'Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram'
-        : reason instanceof MediaUploadError && reason.code === 'SIGNER_UNAVAILABLE'
-          ? 'Не удалось получить ссылку для загрузки. Повторите отправку'
-        : reason instanceof MediaUploadError ? 'Хранилище не приняло файл. Повторите отправку'
-        : savingFile ? 'Не удалось сохранить файл на устройстве. Освободите место и попробуйте ещё раз'
-        : 'Не удалось сохранить сообщение. Повторите отправку');
+      setError(describeSendError(reason, savingFile, controller.signal.aborted));
       setPhase('failed');
     } finally {
       if (active.current === controller) {
         publishing.current = false;
         active.current = null;
         if (controller.signal.aborted) {
-          setError('Загрузка отменена. Можно повторить отправку');
+          setError(describeSendError(new MediaUploadError('CANCELLED'), false, true));
           setPhase('failed');
         }
       }
