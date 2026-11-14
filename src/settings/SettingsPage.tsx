@@ -782,6 +782,10 @@ export function SettingsPage({
           <label htmlFor="video-recording-format-preference">
             <Text variant="body">Формат записи: {recordingFormat === 'webm' ? 'WebM (принудительно)' : 'MP4 → WebM (автоматически)'}</Text>
           </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Text variant="caption" tone="muted">MP4</Text>
+            <Text variant="caption" tone="muted">WebM</Text>
+          </div>
           <Range
             inputId="video-recording-format-preference"
             min={0}
