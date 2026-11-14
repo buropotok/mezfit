@@ -20,6 +20,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   if (originalVisibility) Object.defineProperty(document, 'visibilityState', originalVisibility);
+  else Reflect.deleteProperty(document, 'visibilityState');
 });
 
 describe('mandatory Mezfit chat activation', () => {
