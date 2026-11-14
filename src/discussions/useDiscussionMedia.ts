@@ -16,7 +16,9 @@ type OutgoingMedia = Pick<DiscussionMessageInput, 'id' | 'createdAt'> & { attach
 // Stable, non-sensitive support codes for failures in the media send flow.
 // 1/2/3 identify the failed network request: signer, PUT, or retry HEAD.
 function describeSendError(reason: unknown, savingFile: boolean, aborted: boolean): string {
-  if (aborted) return 'Загрузка отменена. Можно повторить отправку (Код 12)';
+  if (aborted || (reason instanceof MediaUploadError && reason.code === 'CANCELLED')) {
+    return 'Загрузка отменена. Можно повторить отправку (Код 12)';
+  }
   if (reason instanceof MediaUploadError) {
     if (reason.code === 'NETWORK') {
       const code = reason.stage === 'signer' ? 1 : reason.stage === 'put' ? 2
