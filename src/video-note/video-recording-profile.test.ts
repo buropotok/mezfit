@@ -34,3 +34,13 @@ it('does not mistake an unavailable capability method for supported H.264', () =
   vi.stubGlobal('MediaRecorder', {});
   expect(avcRecordingOptions()).toBeNull();
 });
+
+it('continues checking after an embedded WebView throws for an H.264 profile', () => {
+  vi.stubGlobal('MediaRecorder', {
+    isTypeSupported: (type: string) => {
+      if (type.includes('42001F')) throw new TypeError('Unknown parameter');
+      return type === 'video/mp4';
+    },
+  });
+  expect(avcRecordingOptions()?.mimeType).toBe('video/mp4');
+});
