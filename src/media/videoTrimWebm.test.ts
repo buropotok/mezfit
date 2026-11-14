@@ -72,7 +72,7 @@ it('notifies once and falls back to keyframe copying when WebCodecs encode fails
   expect(notify).toHaveBeenCalledOnce();
   expect(state.conversions[0].copy).toBe(false);
   expect(state.conversions[1].copy).toEqual({
-    mode: 'forced', boundaryPolicy: 'shrink', boundaryTolerance: Infinity,
+    mode: 'forced', boundaryPolicy: 'shrink', boundaryTolerance: Infinity, shiftTolerance: Infinity,
   });
 });
 
