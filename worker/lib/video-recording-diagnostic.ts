@@ -22,6 +22,7 @@ const errorLabels: Record<VideoRecordingDiagnostic['errorCode'], string> = {
   RECORDER_INTERRUPTED: 'Запись была прервана',
   RECORDING_EMPTY: 'Получен пустой видеофайл',
   RECORDED_FORMAT_INVALID: 'Фактический формат записи не подходит редактору',
+  RECORDER_MIME_ATTEMPT_FAILED: 'Один или несколько кодеков MediaRecorder не запустились',
   WEBM_AUTO_FALLBACK: 'MP4 недоступен — выбран WebM',
   WEBM_RUNTIME_FALLBACK: 'MP4 не запустился — выбран WebM',
   WEBM_FORCED_MODE: 'Принудительно выбран WebM для тестирования',
