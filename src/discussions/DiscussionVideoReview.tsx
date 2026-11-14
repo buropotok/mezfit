@@ -54,7 +54,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, onTrimFallback, p
       exportRequest.current?.abort();
       URL.revokeObjectURL(src);
     };
-  }, [clip]);
+  }, [clip, profile]);
 
   const seek = (time: number) => {
     if (!video.current) return;
