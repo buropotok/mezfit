@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
-import { avcRecordingOptions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
+import { recordingOptionsCandidates, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
+import { getVideoRecordingFormatPreference } from './video-recording-format-preference';
 import { reportVideoRecordingFailure } from './video-recording-diagnostics';
 import type { VideoRecordingDiagnostic, VideoRecordingErrorCode } from '../../shared/video-recording-diagnostic';
 
@@ -63,6 +64,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const tickRef = useRef<number | null>(null);
   const deadlineRef = useRef<number | null>(null);
   const cameraSettingsRef = useRef<MediaTrackSettings>({});
+  const failedMimeTypesRef = useRef(new Set<string>());
 
   const reportFailure = useCallback((
     code: VideoRecordingErrorCode, extra: VideoRecordingDiagnostic['device'] = {},
@@ -148,9 +150,11 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('error');
       return false;
     }
-    const options = avcRecordingOptions();
-    if (!options) {
-      reportFailure('UNSUPPORTED_MP4_AVC');
+    const preference = getVideoRecordingFormatPreference();
+    const candidates = recordingOptionsCandidates(preference)
+      .filter(option => !failedMimeTypesRef.current.has(option.mimeType ?? ''));
+    if (!candidates.length) {
+      reportFailure('UNSUPPORTED_MP4_AVC', { preferredFormat: preference });
       setError(UNSUPPORTED_AVC);
       updateStatus('error');
       return false;
@@ -216,19 +220,58 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
 
     let recorder: MediaRecorder | null = null;
     try {
-      recorder = new MediaRecorder(source, options);
-      const settings = source.getVideoTracks()[0]?.getSettings?.() ?? {};
+      let chosen: MediaRecorderOptions | null = null;
+      let lastStartErrorName = 'unknown';
+      let failedMp4 = false;
+      for (const attempt of candidates) {
+        let candidateRecorder: MediaRecorder | null = null;
+        try {
+          candidateRecorder = new MediaRecorder(source, attempt);
+          candidateRecorder.start(1000);
+          recorder = candidateRecorder;
+          chosen = attempt;
+          break;
+        } catch (cause) {
+          lastStartErrorName = cause instanceof DOMException ? cause.name : 'unknown';
+          if (attempt.mimeType?.startsWith('video/mp4')) failedMp4 = true;
+          failedMimeTypesRef.current.add(attempt.mimeType ?? '');
+          if (candidateRecorder?.state !== 'inactive' && candidateRecorder) {
+            try { candidateRecorder.stop(); } catch { /* Unusable candidate. */ }
+          }
+        }
+      }
+      if (!recorder || !chosen) {
+        reportFailure('RECORDER_START_FAILED', {
+          preferredFormat: preference, errorName: lastStartErrorName,
+          attemptedFormat: candidates.map(item => item.mimeType).join(', '),
+        });
+        release();
+        setError('Ни один доступный формат видеозаписи не удалось запустить.');
+        updateStatus('error');
+        return false;
+      }
+      const options = chosen;
       const activeRecorder = recorder;
+      const settings = source.getVideoTracks()[0]?.getSettings?.() ?? {};
       const chunks: Blob[] = [];
       recorderRef.current = activeRecorder;
       startedAtRef.current = Date.now();
       stoppedAtRef.current = 0;
+      if (options.mimeType?.startsWith('video/webm')) {
+        reportFailure(preference === 'webm' ? 'WEBM_FORCED_MODE'
+          : failedMp4 ? 'WEBM_RUNTIME_FALLBACK' : 'WEBM_AUTO_FALLBACK', {
+          preferredFormat: preference, selectedFormat: options.mimeType,
+          attemptedFormat: failedMp4 ? 'mp4-start-failed' : 'mp4-not-supported',
+        });
+      }
       activeRecorder.ondataavailable = event => {
         if (recorderRef.current === activeRecorder && event.data.size > 0) chunks.push(event.data);
       };
       activeRecorder.onerror = () => {
         if (recorderRef.current !== activeRecorder) return;
-        reportFailure('RECORDER_RUNTIME_FAILED', { recorderMimeType: activeRecorder.mimeType });
+        failedMimeTypesRef.current.add(options.mimeType ?? '');
+        reportFailure('RECORDER_RUNTIME_FAILED', { recorderMimeType: activeRecorder.mimeType,
+          selectedFormat: options.mimeType });
         release();
         setError('Произошла ошибка видеозаписи. Попробуйте ещё раз.');
         updateStatus('error');
@@ -241,24 +284,28 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         recordingStreamRef.current = null;
         const recorderMimeType = activeRecorder.mimeType || chunks[0]?.type || '';
         const reportedTypes = [activeRecorder.mimeType, chunks[0]?.type].filter(Boolean);
-        const reportedMp4 = reportedTypes.length > 0 && reportedTypes.every(type =>
-          /^video\/mp4(?:;|$)/i.test(type) && (!/codecs=/i.test(type) || /avc[13]/i.test(type)));
-        const mimeType = 'video/mp4';
+        const isWebm = options.mimeType?.startsWith('video/webm') ?? false;
+        const validReportedType = reportedTypes.length > 0 && reportedTypes.every(type => isWebm
+          ? /^video\/webm(?:;|$)/i.test(type) && (!/codecs=/i.test(type) || /vp[89]/i.test(type))
+          : /^video\/mp4(?:;|$)/i.test(type) && (!/codecs=/i.test(type) || /avc[13]/i.test(type)));
+        const mimeType = isWebm ? 'video/webm' : 'video/mp4';
         const blob = new Blob(chunks, { type: mimeType });
         const durationMs = Math.min(maxDurationMs, Math.max(1, stoppedAtRef.current - startedAtRef.current));
         const interrupted = !stoppedAtRef.current;
 
         const finish = async () => {
-          let validType = reportedMp4;
-          // A bare video/mp4 MIME promises only a container, not H.264. Verify the actual track.
-          if (validType && !interrupted && blob.size > 0 && options.mimeType === 'video/mp4') {
+          let validType = validReportedType;
+          // A generic container MIME cannot guarantee an editor-compatible codec.
+          if (validType && !interrupted && blob.size > 0 &&
+            (options.mimeType === 'video/mp4' || options.mimeType === 'video/webm')) {
             try {
-              const { Input, MP4, BlobSource } = await import('mediabunny');
+              const { Input, MP4, WebM, BlobSource } = await import('mediabunny');
               if (epoch !== epochRef.current) return;
-              const input = new Input({ formats: [MP4], source: new BlobSource(blob) });
+              const input = new Input({ formats: [isWebm ? WebM : MP4], source: new BlobSource(blob) });
               try {
                 const track = await input.getPrimaryVideoTrack();
-                validType = (await track?.getCodec()) === 'avc';
+                const codec = await track?.getCodec();
+                validType = isWebm ? codec === 'vp8' || codec === 'vp9' : codec === 'avc';
               } finally {
                 input.dispose();
               }
@@ -270,13 +317,14 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
           if (interrupted || !validType || blob.size === 0) {
             reportFailure(interrupted ? 'RECORDER_INTERRUPTED'
               : blob.size === 0 ? 'RECORDING_EMPTY' : 'RECORDED_FORMAT_INVALID', {
-              recorderMimeType, recordingSizeBytes: String(blob.size),
+              recorderMimeType, selectedFormat: options.mimeType,
+              recordingSizeBytes: String(blob.size),
               recordingDurationMs: String(durationMs),
               recorderVideoBitsPerSecond: String(activeRecorder.videoBitsPerSecond),
             });
             release();
             setError(interrupted ? 'Камера прервала запись. Попробуйте ещё раз.'
-              : !validType ? 'Устройство не вернуло запись H.264 в MP4.'
+              : !validType ? 'Устройство вернуло несовместимый формат видеозаписи.'
               : 'Запись оказалась пустой. Попробуйте ещё раз.');
             updateStatus('error');
           } else {
@@ -290,7 +338,6 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         };
         void finish();
       };
-      activeRecorder.start(1000);
       setElapsedMs(0);
       updateStatus('recording');
       const tick = () => setElapsedMs(Math.min(maxDurationMs, Math.max(0, Date.now() - startedAtRef.current)));
@@ -330,7 +377,9 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   }, []);
 
   const unsupportedFormat = recordingError === UNSUPPORTED_AVC;
-  const error = unsupportedFormat ? 'Этот Telegram WebView не поддерживает запись H.264 в MP4.' : recordingError;
+  const error = unsupportedFormat
+    ? 'Этот Telegram WebView не поддерживает запись H.264 в MP4 или VP8/VP9 в WebM.'
+    : recordingError;
   return { start, stop, cancel, release, status, error, unsupportedFormat, dismissUnsupportedFormat, stream, elapsedMs,
     progress: Math.min(1, elapsedMs / maxDurationMs),
     hasStream: camera.hasStream };
