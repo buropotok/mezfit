@@ -1,4 +1,5 @@
 import { AVC_MP4_MIME_TYPES } from '../../shared/video-recording-diagnostic';
+import type { VideoRecordingFormatPreference } from './video-recording-format-preference';
 
 export const VIDEO_RECORDING_PROFILES = {
   circle: { width: 480, height: 480, maxDurationMs: 60_000 },
@@ -18,13 +19,28 @@ export function videoRecordingConstraints(profile: VideoRecordingProfile): Media
   };
 }
 
+const WEBM_RECORDING_TYPES = [
+  'video/webm;codecs=vp8,opus',
+  'video/webm;codecs=vp9,opus',
+  'video/webm',
+] as const;
+
+function supported(mimeType: string): boolean {
+  try { return MediaRecorder.isTypeSupported?.(mimeType) === true; }
+  catch { return false; } // Some embedded WebViews throw for unfamiliar MIME parameters.
+}
+
+/** Keep the legacy MP4 contract intact for the existing AVC editor and tests. */
 export function avcRecordingOptions(): MediaRecorderOptions | null {
-  const supports = (mimeType: string): boolean => {
-    try { return MediaRecorder.isTypeSupported?.(mimeType) === true; }
-    catch { return false; } // Some embedded implementations throw for unknown codec parameters.
-  };
-  // Explicit H.264 profiles first; a generic MP4 requires post-recording codec inspection.
-  const mimeType = AVC_MP4_MIME_TYPES.find(supports)
-    ?? (supports('video/mp4') ? 'video/mp4' : null);
+  const mimeType = AVC_MP4_MIME_TYPES.find(supported)
+    ?? (supported('video/mp4') ? 'video/mp4' : null);
   return mimeType ? { mimeType, videoBitsPerSecond: 1_000_000 } : null;
+}
+
+/** Ordered attempts include constructor/start failures, not only MIME capability responses. */
+export function recordingOptionsCandidates(preference: VideoRecordingFormatPreference): MediaRecorderOptions[] {
+  const mp4 = [...AVC_MP4_MIME_TYPES, 'video/mp4'].filter(supported);
+  const webm = WEBM_RECORDING_TYPES.filter(supported);
+  return (preference === 'webm' ? webm : [...mp4, ...webm])
+    .map(mimeType => ({ mimeType, videoBitsPerSecond: 1_000_000 }));
 }
