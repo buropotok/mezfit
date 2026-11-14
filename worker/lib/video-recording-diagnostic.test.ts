@@ -44,8 +44,8 @@ beforeEach(() => {
 });
 
 it('sends one rich HTML message with collapsed technical details to the configured chat', async () => {
-  const fetchTelegram = vi.fn(async (_url: string, _init?: RequestInit) => Response.json({ ok: true }));
-  const result = await handleVideoRecordingDiagnostic(request(diagnostic()), env, fetchTelegram as typeof fetch);
+  const fetchTelegram = vi.fn<typeof fetch>(async () => Response.json({ ok: true }));
+  const result = await handleVideoRecordingDiagnostic(request(diagnostic()), env, fetchTelegram);
   expect(result.status).toBe(200);
   expect(await result.json()).toEqual({ ok: true });
   expect(fetchTelegram).toHaveBeenCalledOnce();
@@ -61,14 +61,14 @@ it('sends one rich HTML message with collapsed technical details to the configur
 });
 
 it('drops unapproved private fields instead of forwarding arbitrary client data', async () => {
-  const fetchTelegram = vi.fn(async () => Response.json({ ok: true }));
+  const fetchTelegram = vi.fn<typeof fetch>(async () => Response.json({ ok: true }));
   const report = {
     ...diagnostic(),
     telegramUserId: '999',
     chatMessage: 'do not forward',
     device: { ...diagnostic().device, userId: '999', chatText: 'private text' },
   };
-  await handleVideoRecordingDiagnostic(request(report), env, fetchTelegram as typeof fetch);
+  await handleVideoRecordingDiagnostic(request(report), env, fetchTelegram);
   const body = JSON.parse(String(fetchTelegram.mock.calls[0][1]?.body));
   expect(body.text).not.toContain('private text');
   expect(body.text).not.toContain('999');
@@ -76,24 +76,24 @@ it('drops unapproved private fields instead of forwarding arbitrary client data'
 });
 
 it('rejects malformed diagnostics without contacting Telegram', async () => {
-  const fetchTelegram = vi.fn(async () => Response.json({ ok: true }));
-  const response = await handleVideoRecordingDiagnostic(request({ errorCode: 'unknown', profile: 'circle' }), env, fetchTelegram as typeof fetch);
+  const fetchTelegram = vi.fn<typeof fetch>(async () => Response.json({ ok: true }));
+  const response = await handleVideoRecordingDiagnostic(request({ errorCode: 'unknown', profile: 'circle' }), env, fetchTelegram);
   expect(response.status).toBe(400);
   expect(fetchTelegram).not.toHaveBeenCalled();
 });
 
 it('rejects requests that do not verify Telegram initData', async () => {
   auth.allowed = false;
-  const fetchTelegram = vi.fn(async () => Response.json({ ok: true }));
-  await expect(handleVideoRecordingDiagnostic(request(diagnostic(), ''), env, fetchTelegram as typeof fetch))
+  const fetchTelegram = vi.fn<typeof fetch>(async () => Response.json({ ok: true }));
+  await expect(handleVideoRecordingDiagnostic(request(diagnostic(), ''), env, fetchTelegram))
     .rejects.toThrow('UNAUTHORIZED');
   expect(fetchTelegram).not.toHaveBeenCalled();
 });
 
 it('limits repeated errors from the same authenticated device', async () => {
-  const fetchTelegram = vi.fn(async () => Response.json({ ok: true }));
-  expect((await handleVideoRecordingDiagnostic(request(diagnostic()), env, fetchTelegram as typeof fetch)).status).toBe(200);
-  expect((await handleVideoRecordingDiagnostic(request(diagnostic()), env, fetchTelegram as typeof fetch)).status).toBe(200);
+  const fetchTelegram = vi.fn<typeof fetch>(async () => Response.json({ ok: true }));
+  expect((await handleVideoRecordingDiagnostic(request(diagnostic()), env, fetchTelegram)).status).toBe(200);
+  expect((await handleVideoRecordingDiagnostic(request(diagnostic()), env, fetchTelegram)).status).toBe(200);
   expect(fetchTelegram).toHaveBeenCalledOnce();
 });
 
