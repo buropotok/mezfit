@@ -42,7 +42,7 @@ export function collectVideoRecordingDiagnostic(
     platform: device.platform,
     telegramPlatform: telegram?.platform ?? 'unknown',
     telegramVersion: telegram?.version ?? 'unknown',
-    androidWebView: /\\bwv\\b/i.test(device.userAgent) ? 'yes' : 'not identified in UA',
+    androidWebView: /\bwv\b/i.test(device.userAgent) ? 'yes' : 'not identified in UA',
     browserBrands: device.userAgentData?.brands?.map(item => item.brand + ' ' + item.version).join(', '),
     language: device.language,
     screen: `${screen.width}x${screen.height}, available ${screen.availWidth}x${screen.availHeight}`,
@@ -79,7 +79,8 @@ export function reportVideoRecordingFailure(
     if (!initData) return;
     const key = profile + ':' + errorCode;
     const now = Date.now();
-    if (now - (lastReported.get(key) ?? 0) < MIN_REPEAT_MS) return;
+    const previous = lastReported.get(key);
+    if (previous !== undefined && now - previous < MIN_REPEAT_MS) return;
     lastReported.set(key, now);
     const report = collectVideoRecordingDiagnostic(errorCode, profile, extra);
     void sendVideoRecordingDiagnostic(initData, report).catch(() => {
