@@ -41,6 +41,7 @@ import { applyTypographySettings, loadBrowserTypographySettings, saveBrowserTypo
 import { HomeScreenInstallToast } from './homeScreen/HomeScreenInstallToast';
 import { getTelegramLaunchStartParam, getTelegramWebApp, prepareTelegramWebApp } from './telegram';
 import { ClientInviteEntry, isClientInviteStartParam } from './invite/ClientInviteEntry';
+import { BotStartScreen } from './invite/BotStartScreen';
 import { Button as KonstaButton } from 'konsta/react';
 import { Button, GlassSurfaceProvider, Text } from './ui';
 import { ClientWorkoutProvider } from './workout/ClientWorkoutContext';
@@ -51,6 +52,10 @@ import { ClientSharedWorkoutScreen } from './workout/ClientSharedWorkoutScreen';
 import { WorkedMuscleAssetsPrefetch } from './workout/WorkedMuscleAssetsPrefetch';
 
 const ROLE_STORAGE_KEY = 'mezfit.activeRole';
+
+function activationPendingKey(telegramUserId: string): string {
+  return `mezfit.chatActivationPending.${telegramUserId}`;
+}
 
 type State =
   | { status: 'loading' }
@@ -117,6 +122,7 @@ function ClientShell({
   startParam,
   destination,
   onNavigationContextChange,
+  onInviteAccepted,
 }: {
   initData: string;
   currentUserId: number;
@@ -124,6 +130,7 @@ function ClientShell({
   startParam: string | null;
   destination: AppDestination;
   onNavigationContextChange: (context: NavigationContext | null) => void;
+  onInviteAccepted: () => void;
 }) {
   const { refreshCoaches, selectedCoach } = useClientCoach();
   const [invite, setInvite] = useState<ClientInvitePreview | null | undefined>(undefined);
@@ -135,6 +142,12 @@ function ClientShell({
     let cancelled = false;
     setInvite(undefined);
     setMessage('');
+    // The signed initData can still contain the accepted invite's start_param.
+    // Do not ask the Worker to resolve it again after this launch intent is consumed.
+    if (!isClientInviteStartParam(startParam)) {
+      setInvite(null);
+      return () => { cancelled = true; };
+    }
     getCurrentInvite(initData, startParam)
       .then((result) => {
         if (!cancelled) setInvite(result.invite);
@@ -152,6 +165,7 @@ function ClientShell({
       await acceptCurrentInvite(initData, startParam);
       setInvite(null);
       refreshCoaches();
+      onInviteAccepted();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Не удалось принять приглашение');
     } finally {
@@ -172,12 +186,16 @@ function ClientShell({
   if (invite) {
     const coachName = [invite.coach.firstName, invite.coach.lastName].filter(Boolean).join(' ');
     return (
-      <section className="card">
-        <div className="eyebrow">Приглашение</div>
-        <h2>{coachName} приглашает вас в Mezfit</h2>
-        {invite.label ? <p>{invite.label}</p> : <p>После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.</p>}
-        <Button className="primary-button full-width" onClick={accept} disabled={busy}>{busy ? 'Подключаем…' : 'Подключиться к тренеру'}</Button>
-        {message ? <p className="inline-message">{message}</p> : null}
+      <section className="card stack">
+        <Text variant="footnote">Приглашение</Text>
+        <Text variant="title" role="heading" aria-level={2}>{coachName} приглашает вас в Mezfit</Text>
+        <Text variant="body">
+          {invite.label || 'После подтверждения тренер сможет назначать вам программу и видеть результаты тренировок.'}
+        </Text>
+        <KonstaButton rounded onClick={() => void accept()} disabled={busy}>
+          {busy ? 'Подключаем…' : 'Подключиться к тренеру'}
+        </KonstaButton>
+        {message ? <Text variant="body" role="alert">{message}</Text> : null}
       </section>
     );
   }
@@ -222,6 +240,7 @@ function ClientCoachAwareNavigationShell(props: ComponentProps<typeof UserProfil
 export function App() {
   const [state, dispatch] = useReducer(reducer, { status: 'loading' });
   const [dismissedInviteParam, setDismissedInviteParam] = useState<string | null>(null);
+  const [pendingActivationFor, setPendingActivationFor] = useState<string | null>(null);
   const [notificationOccurrenceId, setNotificationOccurrenceId] = useState<string | null>(null);
   const [notificationMessageId, setNotificationMessageId] = useState<string | null>(null);
   const clearNotificationMessage = useCallback(() => setNotificationMessageId(null), []);
@@ -383,6 +402,10 @@ export function App() {
         onAccepted={(roles) => {
           window.localStorage.setItem(ROLE_STORAGE_KEY, 'client');
           setDismissedInviteParam(inviteStartParam);
+          window.localStorage.setItem(activationPendingKey(me.user.telegramUserId), '1');
+          setPendingActivationFor(me.user.telegramUserId);
+          // Acceptance is Worker-confirmed: keep warm-start role metadata current.
+          saveConfirmedAccount(initData, { ...me, roles });
           dispatch({
             type: 'loaded', initData, startParam: null,
             me: { ...me, roles }, preferredRole: 'client',
@@ -479,6 +502,17 @@ export function App() {
         telegramUserId={state.me.user.telegramUserId}
         initData={state.initData}
       >
+      {state.activeRole === 'client'
+        && (pendingActivationFor === state.me.user.telegramUserId
+          || window.localStorage.getItem(activationPendingKey(state.me.user.telegramUserId)) === '1') ? (
+        <BotStartScreen initData={state.initData} onActivated={() => {
+          window.localStorage.removeItem(activationPendingKey(state.me.user.telegramUserId));
+          setPendingActivationFor(current => current === state.me.user.telegramUserId ? null : current);
+          // The Telegram deep link can survive a WebView restart. Do not
+          // reopen an already accepted invite when activation is confirmed.
+          if (isClientInviteStartParam(state.startParam)) setDismissedInviteParam(state.startParam);
+        }} />
+      ) : (
       <UserProfilePublicationProvider>
       <PublicCategoryArtworkProvider>
       <ClientWorkoutProvider enabled={state.activeRole === 'client'}>
@@ -562,9 +596,15 @@ export function App() {
             initData={state.initData}
             currentUserId={state.me.user.id}
             actor={{ name: [state.me.user.firstName, state.me.user.lastName].filter(Boolean).join(' '), photoUrl: state.me.user.photoUrl }}
-            startParam={isScreenDiagnosticsStartParam(state.startParam) ? null : state.startParam}
+            startParam={isScreenDiagnosticsStartParam(state.startParam)
+              || dismissedInviteParam === state.startParam ? null : state.startParam}
             destination={clientDestination}
             onNavigationContextChange={handleNavigationContextChange}
+            onInviteAccepted={() => {
+              if (isClientInviteStartParam(state.startParam)) setDismissedInviteParam(state.startParam);
+              window.localStorage.setItem(activationPendingKey(state.me.user.telegramUserId), '1');
+              setPendingActivationFor(state.me.user.telegramUserId);
+            }}
           />
           )}
         </ClientCoachAwareNavigationShell>
@@ -577,6 +617,7 @@ export function App() {
       </ClientWorkoutProvider>
       </PublicCategoryArtworkProvider>
       </UserProfilePublicationProvider>
+      )}
       </CloudConnectionsProvider>
     </GlassSurfaceProvider>
   );

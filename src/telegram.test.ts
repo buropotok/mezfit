@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getSelectionHapticBackend,
   getTelegramLaunchStartParam,
+  openMezfitBotChat,
   prepareTelegramWebApp,
   requestTelegramInviteShare,
   runHapticProbe,
@@ -251,5 +252,30 @@ describe('requestTelegramInviteShare', () => {
     const webApp = createWebApp();
     webApp.openTelegramLink = () => { throw new Error('WebView unavailable'); };
     expect(requestTelegramInviteShare('https://t.me/test?startapp=invite', webApp)).toBe(false);
+  });
+});
+
+describe('openMezfitBotChat', () => {
+  it('opens the private bot chat with the native Telegram Mini App API', () => {
+    const webApp = createWebApp();
+    webApp.openTelegramLink = vi.fn();
+    const fallback = vi.fn();
+    vi.stubGlobal('window', { Telegram: { WebApp: webApp }, open: fallback });
+
+    openMezfitBotChat();
+
+    expect(webApp.openTelegramLink).toHaveBeenCalledWith('https://t.me/mezfit_bot');
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  it('falls back to a regular link if the host cannot open the native Telegram chat', () => {
+    const webApp = createWebApp();
+    webApp.openTelegramLink = vi.fn(() => { throw new Error('Unsupported link'); });
+    webApp.openLink = vi.fn();
+    vi.stubGlobal('window', { Telegram: { WebApp: webApp }, open: vi.fn() });
+
+    openMezfitBotChat();
+
+    expect(webApp.openLink).toHaveBeenCalledWith('https://t.me/mezfit_bot');
   });
 });

@@ -20,6 +20,7 @@ import { handleCoachProgramSetRoute } from './lib/program-set-api';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
+import { telegramChatIsActivated } from './lib/telegram-chat-activation';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
 import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
@@ -519,6 +520,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (url.pathname === '/api/me' && request.method === 'GET') {
     const auth = await requireUser(request, env);
     return json({ user: userView(auth.row), roles: auth.roles });
+  }
+
+  if (url.pathname === '/api/telegram/chat-activation' && request.method === 'GET') {
+    const auth = await requireUser(request, env);
+    try {
+      const activated = await telegramChatIsActivated(auth.row.telegram_user_id, env.TELEGRAM_BOT_TOKEN);
+      return json({ activated });
+    } catch {
+      throw new HttpError(503, 'TELEGRAM_CHAT_CHECK_UNAVAILABLE', 'Не удалось проверить активацию Mezfit. Повторите попытку.');
+    }
   }
 
   if (url.pathname === '/api/me/roles' && request.method === 'POST') {

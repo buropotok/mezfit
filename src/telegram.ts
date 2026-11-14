@@ -63,6 +63,21 @@ export function openExternalLink(url: string): void {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+/** Open the bot's private chat so the user can press Telegram's native Start button. */
+export function openMezfitBotChat(): void {
+  const url = 'https://t.me/mezfit_bot';
+  const webApp = getTelegramWebApp();
+  if (webApp?.openTelegramLink) {
+    try {
+      webApp.openTelegramLink(url);
+      return;
+    } catch {
+      // Older/incomplete Telegram hosts can still use a normal Telegram link.
+    }
+  }
+  openExternalLink(url);
+}
+
 export function requestTelegramFileDownload(url: string, fileName: string, onResult: (accepted: boolean) => void): boolean {
   const webApp = getTelegramWebApp();
   if (!webApp?.downloadFile) return false;
