@@ -1,3 +1,5 @@
+import { AVC_MP4_MIME_TYPES } from '../../shared/video-recording-diagnostic';
+
 export const VIDEO_RECORDING_PROFILES = {
   circle: { width: 480, height: 480, maxDurationMs: 60_000 },
   landscape: { width: 1280, height: 720, maxDurationMs: 180_000 },
@@ -16,13 +18,9 @@ export function videoRecordingConstraints(profile: VideoRecordingProfile): Media
   };
 }
 
-const AVC_MP4_TYPES = [
-  'video/mp4;codecs=avc1,mp4a.40.2',
-  'video/mp4;codecs=avc1.42001F,mp4a.40.2',
-  'video/mp4;codecs=avc1',
-];
-
 export function avcRecordingOptions(): MediaRecorderOptions | null {
-  const mimeType = AVC_MP4_TYPES.find(type => MediaRecorder.isTypeSupported?.(type));
+  // Explicit H.264 profiles first; a generic MP4 requires post-recording codec inspection.
+  const mimeType = AVC_MP4_MIME_TYPES.find(type => MediaRecorder.isTypeSupported?.(type))
+    ?? (MediaRecorder.isTypeSupported?.('video/mp4') ? 'video/mp4' : null);
   return mimeType ? { mimeType, videoBitsPerSecond: 1_000_000 } : null;
 }
