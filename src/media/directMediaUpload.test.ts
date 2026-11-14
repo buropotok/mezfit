@@ -170,6 +170,25 @@ describe('signed direct media upload', () => {
     });
   });
 
+  it('identifies whether a network failure occurred at signer, PUT, or retry HEAD', async () => {
+    const file = photo();
+    const put = vi.fn<typeof fetch>();
+
+    mockSignedMediaTransport(put, vi.fn<typeof fetch>().mockRejectedValue(new TypeError('network')));
+    await expect(uploadDirectMedia(file)).rejects.toMatchObject({ code: 'NETWORK', stage: 'signer' });
+    expect(put).not.toHaveBeenCalled();
+
+    mockSignedMediaTransport(vi.fn<typeof fetch>().mockRejectedValue(new TypeError('network')));
+    await expect(uploadDirectMedia(file)).rejects.toMatchObject({ code: 'NETWORK', stage: 'put' });
+
+    const storage = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(null, { status: 412 }))
+      .mockRejectedValueOnce(new TypeError('network'));
+    mockSignedMediaTransport(storage);
+    await expect(uploadDirectMedia(file, { retryKey: 'mvp-media/' + 'a'.repeat(64) }))
+      .rejects.toMatchObject({ code: 'NETWORK', stage: 'head' });
+    expect(storage.mock.calls.map(([, init]) => init?.method)).toEqual(['PUT', 'HEAD']);
+  });
+
   it('aborts an active PUT on cancellation and distinguishes timeout', async () => {
     vi.useFakeTimers();
     const put = vi.fn<typeof fetch>().mockImplementation((_url, init) => new Promise((_resolve, reject) => {
