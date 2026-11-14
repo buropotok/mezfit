@@ -404,6 +404,8 @@ export function App() {
           setDismissedInviteParam(inviteStartParam);
           window.localStorage.setItem(activationPendingKey(me.user.telegramUserId), '1');
           setPendingActivationFor(me.user.telegramUserId);
+          // Acceptance is Worker-confirmed: keep warm-start role metadata current.
+          saveConfirmedAccount(initData, { ...me, roles });
           dispatch({
             type: 'loaded', initData, startParam: null,
             me: { ...me, roles }, preferredRole: 'client',
