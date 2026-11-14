@@ -5,8 +5,6 @@ export type WebmTrimResult = {
   mode: 'exact' | 'keyframe';
 };
 
-type TrimFailure = 'exact_failed' | 'keyframe_failed';
-
 /**
  * WebM's exact path requires VP8/VP9 and Opus WebCodecs decode/encode.
  * If unavailable, copy the encoded packets on keyframe boundaries instead.
