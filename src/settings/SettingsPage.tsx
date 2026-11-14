@@ -42,6 +42,10 @@ import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
 import { WorkoutReminderSettings } from './WorkoutReminderSettings';
 import { VideoNoteModule } from './VideoNoteModule';
+import {
+  getVideoRecordingFormatPreference, setVideoRecordingFormatPreference,
+  type VideoRecordingFormatPreference,
+} from '../video-note/video-recording-format-preference';
 import { VoiceMessageModule } from './VoiceMessageModule';
 import './settings-page.css';
 
@@ -290,6 +294,10 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [recordingFormat, setRecordingFormat] = useState<VideoRecordingFormatPreference>(
+    getVideoRecordingFormatPreference,
+  );
+  const [recordingPreferenceError, setRecordingPreferenceError] = useState(false);
   const [syncHistoryOpen, setSyncHistoryOpen] = useState(false);
   const [resistanceBandsOpen, setResistanceBandsOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
@@ -770,6 +778,29 @@ export function SettingsPage({
         <Text variant="footnote" tone="muted">
           Запись до 60 секунд с камеры, просмотр и повторная запись. Тестируется локально, без отправки.
         </Text>
+        <div className="settings-page__glass-field">
+          <label htmlFor="video-recording-format-preference">
+            <Text variant="body">Формат записи: {recordingFormat === 'webm' ? 'WebM (принудительно)' : 'MP4 → WebM (автоматически)'}</Text>
+          </label>
+          <Range
+            inputId="video-recording-format-preference"
+            min={0}
+            max={1}
+            step={1}
+            value={recordingFormat === 'webm' ? 1 : 0}
+            onChange={event => {
+              const next: VideoRecordingFormatPreference = Number(event.target.value) === 1 ? 'webm' : 'mp4';
+              if (setVideoRecordingFormatPreference(next)) {
+                setRecordingFormat(next);
+                setRecordingPreferenceError(false);
+              } else {
+                setRecordingPreferenceError(true);
+              }
+            }}
+          />
+          <Text variant="footnote" tone="muted">MP4 — с автоматическим запасным WebM. WebM — только WebM для проверки на этом устройстве. Применяется и в чате.</Text>
+          {recordingPreferenceError && <Text variant="footnote" role="alert">Не удалось сохранить выбранный формат на устройстве.</Text>}
+        </div>
         <VideoNoteModule />
       </section>
 
