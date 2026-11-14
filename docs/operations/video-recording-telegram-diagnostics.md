@@ -66,6 +66,8 @@ The existing exact H.264/MP4 pipeline is preserved unchanged. WebM uses:
 
 1. Mediabunny `WebM` input and `WebMOutputFormat`, attempting an exact selected
    time range with WebCodecs transcoding into the original WebM family.
+   The exact-encoding attempt has a 10-second deadline; a slow encoder is
+   treated like an unavailable encoder and keyframe copying is attempted.
 2. If exact encoding fails, copy VP8/VP9 and Opus packets using `Conversion`
    forced-copy mode with `boundaryPolicy: 'shrink'` and relaxed timestamp shift,
    preserving synchronized streams and trimming only on keyframes.
