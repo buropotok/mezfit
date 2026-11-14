@@ -6,13 +6,13 @@ import { Text } from '../ui';
 export function BotStartScreen({ onContinue }: { onContinue: () => void }) {
   return (
     <main className="center">
-      <section className="card stack" aria-label="Запуск бота Mezfit">
+      <section className="card stack" aria-label="Активация Mezfit">
         <Text variant="footnote">Подключение к тренеру завершено</Text>
-        <Text variant="title" role="heading" aria-level={1}>Запустите бота Mezfit</Text>
+        <Text variant="title" role="heading" aria-level={1}>Активируйте Mezfit</Text>
         <Text variant="body">
-          Откройте чат с @mezfit_bot и нажмите кнопку «Старт», чтобы получать уведомления от бота.
+          Чтобы получать сообщения от тренера и уведомления о тренировках, откройте чат Mezfit и нажмите «Старт».
         </Text>
-        <KonstaButton rounded strong onClick={openMezfitBotChat}>Открыть чат с ботом</KonstaButton>
+        <KonstaButton rounded strong onClick={openMezfitBotChat}>Открыть чат Mezfit</KonstaButton>
         <Text variant="footnote">После нажатия «Старт» вернитесь в Mezfit.</Text>
         <KonstaButton rounded tonal onClick={onContinue}>Продолжить в Mezfit</KonstaButton>
         <Text variant="footnote">Этот шаг можно пропустить: тренировки и синхронизация доступны уже сейчас.</Text>
