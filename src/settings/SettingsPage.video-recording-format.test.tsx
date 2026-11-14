@@ -33,6 +33,13 @@ it('shows the actual format control in the Settings Modules gallery', () => {
 });
 
 it('uses the native Konsta Range to persist a forced WebM preference and restore automatic MP4', () => {
+  // Konsta 5.4.0 Range calculates thumbWidth / trackWidth using offsetWidth.
+  // jsdom has no layout (both default to 0), which leads to NaN and
+  // calc(NaN%) after value changes. Supply only physical layout dimensions;
+  // do not mock, replace or change Konsta's input/event/visual mechanics.
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+    return this.classList.contains('pointer-events-none') ? 20 : 200;
+  });
   const view = render(<VideoRecordingFormatControl />);
   const slider = view.container.querySelector<HTMLInputElement>('#video-recording-format-preference');
   expect(slider).toBeInstanceOf(HTMLInputElement);
@@ -44,7 +51,7 @@ it('uses the native Konsta Range to persist a forced WebM preference and restore
 
   fireEvent.change(slider, { target: { value: '1' } });
   expect(getVideoRecordingFormatPreference()).toBe('webm');
-  expect(view.getByText('Формат записи: WebM (принудительно)')).toBeTruthy();
+  expect(slider.labels?.[0]?.textContent).toContain('Формат записи: WebM (принудительно)');
   expect(slider.value).toBe('1');
 
   fireEvent.change(slider, { target: { value: '0' } });
