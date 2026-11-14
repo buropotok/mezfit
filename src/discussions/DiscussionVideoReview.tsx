@@ -3,6 +3,9 @@ import { Button, FloatingActionButton, Text } from '../ui';
 import { inspectVideoTrim, MIN_VIDEO_TRIM_SECONDS, trimRecordedMp4,
   type VideoTrimInfo, type VideoTrimRange } from '../media/videoTrim';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
+import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
+import type { VideoRecordingProfile } from '../video-note/video-recording-profile';
+import { trimRecordedWebm } from '../media/videoTrimWebm';
 import { useVideoTrimFilmstrip, VIDEO_TRIM_FRAME_COUNT } from './useVideoTrimFilmstrip';
 import './discussion-video-review.css';
 
@@ -11,10 +14,12 @@ function videoTime(seconds: number) {
   return `${Math.floor(tenths / 600)}:${String(Math.floor(tenths / 10) % 60).padStart(2, '0')},${tenths % 10}`;
 }
 
-export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, retakeStyle }: {
+export function DiscussionVideoReview({ clip, onUse, onRetake, onTrimFallback, profile = 'portrait', confirmStyle, retakeStyle }: {
   clip: VideoNoteRecording;
   onUse: (file: File) => void;
   onRetake: () => void;
+  onTrimFallback?: (message: string) => void;
+  profile?: VideoRecordingProfile;
   confirmStyle: CSSProperties;
   retakeStyle: CSSProperties;
 }) {
@@ -39,7 +44,10 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
       setInfo(result);
       setRange({ start: 0, end: result.duration });
     }, () => {
-      if (!controller.signal.aborted) setError('Обрезка этой записи недоступна. Можно использовать исходное видео.');
+      if (!controller.signal.aborted) {
+        if (clip.mimeType === 'video/webm') reportVideoRecordingFailure('WEBM_TRIM_INSPECTION_FAILED', profile);
+        setError('Обрезка этой записи недоступна. Можно использовать исходное видео.');
+      }
     });
     return () => {
       controller.abort();
@@ -58,7 +66,7 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
   const deliver = (blob: Blob, mimeType: string) => {
     if (submitted.current) return;
     submitted.current = true;
-    onUse(new File([blob], 'Видео.mp4', { type: mimeType }));
+    onUse(new File([blob], mimeType === 'video/webm' ? 'Видео.webm' : 'Видео.mp4', { type: mimeType }));
   };
   const useOriginal = () => { if (!exportRequest.current) deliver(clip.blob, clip.mimeType); };
   const confirm = async () => {
@@ -72,10 +80,32 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, confirmStyle, ret
     setBusy(true);
     setError('');
     try {
-      const blob = await trimRecordedMp4(clip.blob, info, range, controller.signal);
-      if (!controller.signal.aborted) deliver(blob, 'video/mp4');
+      if (clip.mimeType === 'video/webm') {
+        const result = await trimRecordedWebm(clip.blob, info, range, controller.signal, reason => {
+          if (controller.signal.aborted) return;
+          reportVideoRecordingFailure('WEBM_EXACT_TRIM_FAILED', profile, {
+            trimFallbackCause: reason, trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
+            selectedFormat: 'video/webm',
+          });
+          onTrimFallback?.('На вашем устройстве возможна обрезка только по ключевым кадрам');
+        });
+        if (!controller.signal.aborted) {
+          if (result.mode === 'keyframe') reportVideoRecordingFailure('WEBM_KEYFRAME_FALLBACK', profile, {
+            selectedFormat: 'video/webm', trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
+          });
+          deliver(result.blob, 'video/webm');
+        }
+      } else {
+        const blob = await trimRecordedMp4(clip.blob, info, range, controller.signal);
+        if (!controller.signal.aborted) deliver(blob, 'video/mp4');
+      }
     } catch {
-      if (!controller.signal.aborted) setError('Не удалось обрезать видео. Исходная запись доступна.');
+      if (!controller.signal.aborted) {
+        if (clip.mimeType === 'video/webm') reportVideoRecordingFailure('WEBM_TRIM_FAILED', profile, {
+          selectedFormat: 'video/webm', trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
+        });
+        setError('Не удалось обрезать видео. Исходная запись доступна.');
+      }
     } finally {
       if (exportRequest.current === controller) exportRequest.current = null;
       if (!controller.signal.aborted) setBusy(false);
