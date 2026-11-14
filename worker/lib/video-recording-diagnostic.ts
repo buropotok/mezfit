@@ -5,7 +5,7 @@ import {
 } from '../../shared/video-recording-diagnostic';
 
 type DiagnosticEnv = Pick<Env, 'TELEGRAM_BOT_TOKEN' | 'VIDEO_RECORDING_REPORT_CHAT_ID'>;
-const lastReportByActor = new Map<number, number>();
+const lastReportByActorAndEvent = new Map<string, number>();
 const MIN_INTERVAL_MS = 15_000;
 const MAX_BODY_CHARS = 8_000;
 
@@ -22,6 +22,13 @@ const errorLabels: Record<VideoRecordingDiagnostic['errorCode'], string> = {
   RECORDER_INTERRUPTED: 'Запись была прервана',
   RECORDING_EMPTY: 'Получен пустой видеофайл',
   RECORDED_FORMAT_INVALID: 'Фактический формат записи не подходит редактору',
+  WEBM_AUTO_FALLBACK: 'MP4 недоступен — выбран WebM',
+  WEBM_RUNTIME_FALLBACK: 'MP4 не запустился — выбран WebM',
+  WEBM_FORCED_MODE: 'Принудительно выбран WebM для тестирования',
+  WEBM_EXACT_TRIM_FAILED: 'Точная обрезка WebM недоступна',
+  WEBM_KEYFRAME_FALLBACK: 'WebM обрезан по ключевым кадрам вместо точного режима',
+  WEBM_TRIM_FAILED: 'Все способы обрезки WebM завершились ошибкой',
+  WEBM_TRIM_INSPECTION_FAILED: 'Не удалось прочитать WebM в редакторе',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -106,12 +113,13 @@ export async function handleVideoRecordingDiagnostic(
 
   const now = Date.now();
   const actor = telegram.user.id;
-  const previous = lastReportByActor.get(actor);
+  const eventKey = actor + ':' + diagnostic.errorCode;
+  const previous = lastReportByActorAndEvent.get(eventKey);
   if (previous !== undefined && now - previous < MIN_INTERVAL_MS) {
     return Response.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   }
-  if (lastReportByActor.size > 512) lastReportByActor.clear();
-  lastReportByActor.set(actor, now);
+  if (lastReportByActorAndEvent.size > 512) lastReportByActorAndEvent.clear();
+  lastReportByActorAndEvent.set(eventKey, now);
 
   try {
     const response = await fetchImpl('https://api.telegram.org/bot' + env.TELEGRAM_BOT_TOKEN + '/sendMessage', {
