@@ -20,14 +20,14 @@ export async function trimRecordedWebm(
   signal.throwIfAborted();
 
   const media = await import('mediabunny');
-  const { Input, WebM, BlobSource, Conversion, Output, WebMOutputFormat, BufferTarget } = media;
+  const { Input, WEBM, BlobSource, Conversion, Output, WebMOutputFormat, BufferTarget } = media;
   const start = range.start + info.timelineStart;
   const end = range.end + info.timelineStart;
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) throw new Error('Invalid WebM trim range');
 
   async function convert(copy: boolean, policy: 'shrink' | 'expand' = 'shrink'): Promise<Blob> {
     signal.throwIfAborted();
-    const input = new Input({ formats: [WebM], source: new BlobSource(blob) });
+    const input = new Input({ formats: [WEBM], source: new BlobSource(blob) });
     const outputTarget = new BufferTarget();
     const output = new Output({ format: new WebMOutputFormat(), target: outputTarget });
     const cancelInput = () => input.dispose();
@@ -76,7 +76,7 @@ export async function trimRecordedWebm(
         if (!outputTarget.buffer?.byteLength) throw new Error('Empty WebM result');
         const result = new Blob([outputTarget.buffer], { type: 'video/webm' });
         // Do not silently accept an audio-only output or a corrupt WebM.
-        const check = new Input({ formats: [WebM], source: new BlobSource(result) });
+        const check = new Input({ formats: [WEBM], source: new BlobSource(result) });
         try {
           if (!(await check.getPrimaryVideoTrack())) throw new Error('Trimmed WebM lacks video');
           if (!(await check.computeDuration() > 0)) throw new Error('Trimmed WebM has no duration');
