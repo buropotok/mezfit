@@ -159,6 +159,10 @@ function retryable(status) {
   return status === 409 || status === 412;
 }
 
+async function release(response) {
+  try { await response.body?.cancel(); } catch { /* Disposing a response is best-effort. */ }
+}
+
 async function appendEvents(events, env, { fetchImpl, now = new Date(), timeoutMs = 1800 } = {}) {
   if (!events.length) return null;
   assertConfig(env);
@@ -172,12 +176,13 @@ async function appendEvents(events, env, { fetchImpl, now = new Date(), timeoutM
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
       const last = await lastFile(env, prefix, opts);
       const create = !last || last.size > LIMIT_BYTES;
-      const key = create ? prefix + String((last?.sequence ?? 0) + 1).padStart(4, '0') : last.key;
+      const key = create ? fileName(now, (last?.sequence ?? 0) + 1) : last.key;
       if (create) {
         const response = await request(env, 'PUT', key, {
           ...opts, body: data,
           headers: { 'content-type': 'application/x-ndjson', 'content-length': String(data.length), 'if-none-match': '*' },
         });
+        await release(response);
         if (response.ok) return key;
         if (retryable(response.status)) continue;
         throw new Error('LOG_CREATE_HTTP_' + response.status);
@@ -199,6 +204,7 @@ async function appendEvents(events, env, { fetchImpl, now = new Date(), timeoutM
           'if-match': etag,
         },
       });
+      await release(response);
       if (response.ok) return key;
       if (retryable(response.status)) continue;
       throw new Error('LOG_PATCH_HTTP_' + response.status);
