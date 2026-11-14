@@ -78,7 +78,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string } | null>(null);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
-  const notificationContact = opened?.kind === 'notification' ? cloud?.clients.find(
+  const notificationPeers = role === 'coach' ? cloud?.clients : cloud?.coaches;
+  const notificationContact = opened?.kind === 'notification' ? notificationPeers?.find(
     contact => contact.relationshipId === opened.row.thread.realmId,
   ) : undefined;
   const current = (opened?.kind === 'notification' ? notificationContact : activeRow) ? opened : null;
@@ -103,7 +104,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     try { return new DiscussionRepository(cloud.db, cloud.actorUserId, current.row.thread); }
     catch { return null; }
   }, [cloud?.db, cloud?.actorUserId, current]);
-  const notificationRealmsKey = JSON.stringify((cloud?.clients ?? []).map(contact => contact.relationshipId).sort());
+  const notificationRealmsKey = JSON.stringify((notificationPeers ?? []).map(contact => contact.relationshipId).sort());
   const db = cloud?.db;
   const actorId = cloud?.actorUserId;
   const canResolveNotification = cloud?.status === 'ready';

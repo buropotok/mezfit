@@ -3,7 +3,7 @@ import { checkApprovedAssignedPair, validatedTelegramId, type RelationshipMember
 import { flexAttributeId, flexValueId } from '../../shared/flex-identifiers';
 
 import { COACH_TELEGRAM_PREFERENCES } from '../../shared/telegram-notification-link';
-import { sendCoachTelegram } from './coach-telegram';
+import { sendTopicTelegram } from './coach-telegram';
 
 import { stableCloudRelationshipId } from '../../shared/relationship-id';
 
@@ -167,7 +167,7 @@ export async function readNotificationRelationship(
   });
   if (!approved) return null;
   const client = rawMembers.find(member => record(member) && member.userId === row.clientUserId);
-  return { clientName: record(client) && typeof client.name === 'string' ? client.name : 'Клиент' };
+  return { clientName: record(client) && typeof client.name === 'string' && client.name.trim() ? client.name.trim() : 'Клиент' };
 }
 
 /** Read the same realm-scoped contact name used by the Mezfit client list.
@@ -287,9 +287,9 @@ async function deliver(
   const key = await deliveryKey(occurrence, recipient);
   if (!await claimDelivery(env.DB_BINDING, key, occurrence, recipient, now)) return;
   const result = recipient.preference === 'client' || !env.DEXIE_DISCUSSION_WEBHOOK_SECRET ? await sendTelegram(env, recipient, fetchImpl)
-    : await sendCoachTelegram(env, {
-      coachUserId: recipient.userId,
-      client: occurrence.clientUserId ? { userId: occurrence.clientUserId, name: clientName ?? 'Клиент' } : undefined,
+    : await sendTopicTelegram(env, {
+      recipientUserId: recipient.userId,
+      peer: occurrence.clientUserId ? { userId: occurrence.clientUserId, name: clientName ?? 'Клиент' } : undefined,
       title: recipient.preference === 'coached' ? 'Совместная тренировка через час' : 'Ваша тренировка через час',
       button: 'Открыть тренировку',
       target: { kind: 'workout', id: occurrence.id },

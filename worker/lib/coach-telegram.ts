@@ -15,8 +15,8 @@ export type TelegramDelivery = {
 };
 
 interface TelegramNotification {
-  coachUserId: string;
-  client?: { userId: string; name: string };
+  recipientUserId: string;
+  peer?: { userId: string; name: string };
   title: string;
   context?: string;
   button: string;
@@ -87,14 +87,19 @@ async function resolveTopic(env: CoachTelegramEnv, chatId: string, key: string, 
   return { threadId };
 }
 
-export async function sendCoachTelegram(
+export async function sendTopicTelegram(
   env: CoachTelegramEnv, notification: TelegramNotification, fetchImpl: typeof fetch = fetch,
 ): Promise<TelegramDelivery> {
-  const chatId = validatedTelegramId(notification.coachUserId);
+  const chatId = validatedTelegramId(notification.recipientUserId);
   if (!chatId || !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(env.TELEGRAM_BOT_USERNAME)) return blocked;
-  const key = notification.client?.userId ?? 'general';
-  const name = Array.from(notification.client?.name.trim() || (notification.client ? 'Клиент' : 'Общее')).slice(0, 128).join('');
-  const url = 'https://t.me/' + env.TELEGRAM_BOT_USERNAME + '?startapp=' + notificationStartParam(notification.target);
+  const key = notification.peer?.userId ?? 'general';
+  const name = Array.from(notification.peer ? notification.peer.name.trim() : 'Общее').slice(0, 128).join('');
+  const receipt = crypto.randomUUID().replaceAll('-', '');
+  const legacyParam = notificationStartParam(notification.target);
+  // Preserve the link for older records whose IDs nearly fill Telegram's limit.
+  const param = legacyParam.length + 30 <= 512
+    ? notificationStartParam({ ...notification.target, receipt }) : legacyParam;
+  const url = 'https://t.me/' + env.TELEGRAM_BOT_USERNAME + '?startapp=' + param;
   const topic = await resolveTopic(env, chatId, key, name, fetchImpl);
   if ('delivery' in topic) return topic.delivery;
   const rich = '<p><b>' + escape(notification.title) + '</b></p>'
@@ -106,6 +111,15 @@ export async function sendCoachTelegram(
   }, fetchImpl);
   const messageId = record(response.result) ? response.result.message_id : null;
   if (typeof messageId === 'number' && Number.isSafeInteger(messageId) && messageId > 0) {
+    try {
+      if (param !== legacyParam) await env.DB_BINDING.prepare(`
+        INSERT INTO telegram_notification_receipts (id, chat_id, message_id, expires_at)
+        VALUES (?, ?, ?, ?)
+      `).bind(receipt, chatId, messageId, Date.now() + 48 * 60 * 60 * 1000).run();
+    } catch {
+      // Telegram already accepted the notification. Retrying delivery would duplicate it.
+      console.error('TELEGRAM_NOTIFICATION_RECEIPT_WRITE_FAILED');
+    }
     return { status: 'sent', messageId, waitSeconds: 0 };
   }
   if (missingTopic(response)) {
@@ -116,4 +130,18 @@ export async function sendCoachTelegram(
     return retry();
   }
   return response.status === 403 || /chat not found/i.test(response.description) ? blocked : retry(response.wait);
+}
+
+export async function dismissTelegramNotification(
+  env: CoachTelegramEnv, chatId: string, receipt: string, fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const row = await env.DB_BINDING.prepare(`
+    SELECT message_id FROM telegram_notification_receipts WHERE id = ? AND chat_id = ? AND expires_at > ?
+  `).bind(receipt, chatId, Date.now()).first<{ message_id: number }>();
+  if (!row || !Number.isSafeInteger(row.message_id) || row.message_id < 1) return;
+  const response = await telegram(env, 'deleteMessage', { chat_id: chatId, message_id: row.message_id }, fetchImpl);
+  if (response.result === true || (response.status === 400 && /message to delete not found/i.test(response.description))) {
+    await env.DB_BINDING.prepare('DELETE FROM telegram_notification_receipts WHERE id = ? AND chat_id = ?')
+      .bind(receipt, chatId).run();
+  }
 }

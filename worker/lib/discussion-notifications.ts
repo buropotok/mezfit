@@ -1,6 +1,6 @@
 import { discussionAnchorKey, discussionId, discussionRecord as record, isDiscussionAnchor } from '../../shared/discussion-anchor';
 import { validatedTelegramId } from '../../shared/approved-relationship';
-import { sendCoachTelegram } from './coach-telegram';
+import { sendTopicTelegram } from './coach-telegram';
 import { cloudList, cloudRead, cloudToken, enabledByPreference, readNotificationClientName, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 type DiscussionNotificationEnv = WorkoutReminderEnv;
@@ -66,12 +66,17 @@ async function deliver(env: DiscussionNotificationEnv, event: PendingDiscussion,
     || message.owner !== message.authorUserId || typeof message.text !== 'string') return null;
   const members = await cloudList('/all/members?realmId=' + encodeURIComponent(event.realm_id), token, fetchImpl);
   const coach = members.find(member => record(member) && Array.isArray(member.roles) && member.roles.includes('coach'));
-  if (!record(coach) || typeof coach.userId !== 'string') return null;
+  const client = members.find(member => record(member) && Array.isArray(member.roles) && member.roles.includes('client'));
+  if (!record(coach) || typeof coach.userId !== 'string'
+    || !record(client) || typeof client.userId !== 'string') return null;
   const relationship = await readNotificationRelationship({
-    realmId: event.realm_id, coachUserId: coach.userId, clientUserId: message.authorUserId,
+    realmId: event.realm_id, coachUserId: coach.userId, clientUserId: client.userId,
   }, token, fetchImpl, members);
-  if (!relationship || !await enabledByPreference(coach.userId, 'telegram', token, fetchImpl)
-    || !await enabledByPreference(coach.userId, 'discussion', token, fetchImpl)) return null;
+  if (!relationship || (message.authorUserId !== client.userId && message.authorUserId !== coach.userId)) return null;
+  const toCoach = message.authorUserId === client.userId;
+  const recipientUserId = toCoach ? coach.userId : client.userId;
+  if (toCoach && (!await enabledByPreference(recipientUserId, 'telegram', token, fetchImpl)
+    || !await enabledByPreference(recipientUserId, 'discussion', token, fetchImpl))) return null;
   const thread = await cloudRead(cloudPath('discussionThreads', message.threadId), token, fetchImpl, true);
   if (thread === null) throw new Error('DISCUSSION_THREAD_PENDING');
   if (!record(thread) || thread.id !== message.threadId || thread.realmId !== event.realm_id
@@ -87,12 +92,14 @@ async function deliver(env: DiscussionNotificationEnv, event: PendingDiscussion,
     : kind === 'photo' ? 'Новое фото в обсуждении'
     : kind === 'voice' ? 'Голосовое сообщение в обсуждении'
     : kind === 'video-note' ? 'Видеосообщение в обсуждении' : 'Новое сообщение в обсуждении';
-  const clientName = await readNotificationClientName(
-    event.realm_id, message.authorUserId, relationship.clientName, token, fetchImpl,
+  const membershipName = toCoach ? relationship.clientName
+    : typeof coach.name === 'string' && coach.name.trim() ? coach.name : 'Тренер';
+  const peerName = await readNotificationClientName(
+    event.realm_id, message.authorUserId, membershipName, token, fetchImpl,
   );
-  return sendCoachTelegram(env, {
-    coachUserId: coach.userId,
-    client: { userId: message.authorUserId, name: clientName },
+  return sendTopicTelegram(env, {
+    recipientUserId,
+    peer: { userId: message.authorUserId, name: peerName },
     title,
     context: typeof thread.derivedTitleSnapshot === 'string' ? thread.derivedTitleSnapshot.slice(0, 200) : undefined,
     button: 'Открыть обсуждение',
