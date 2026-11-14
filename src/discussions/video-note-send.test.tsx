@@ -98,6 +98,10 @@ it.each([
     message: 'Не удалось получить ссылку для загрузки. Повторите отправку' },
   { failure: new MediaUploadError('HTTP', 403), code: 8,
     message: 'Хранилище не приняло файл. Повторите отправку' },
+  { failure: new MediaUploadError('INVALID_KEY'), code: 9,
+    message: 'Хранилище не приняло файл. Повторите отправку' },
+  { failure: new MediaUploadError('CANCELLED'), code: 12,
+    message: 'Загрузка отменена. Можно повторить отправку' },
 ])('shows a safe support code $code after a video-note send failure', async ({ failure, code, message }) => {
   vi.stubGlobal('URL', Object.assign(class extends URL {}, {
     createObjectURL: vi.fn(() => 'blob:video-note-preview'), revokeObjectURL: vi.fn(),
