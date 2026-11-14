@@ -21,12 +21,15 @@ export function createDirectMediaKey(): string {
 
 type UploadErrorCode = 'INVALID_KEY' | 'INVALID_TYPE' | 'INVALID_SIZE' | 'CANCELLED' | 'TIMEOUT' | 'NETWORK' | 'HTTP'
   | 'SIGNER_AUTH' | 'SIGNER_UNAVAILABLE';
+export type MediaUploadStage = 'signer' | 'put' | 'head';
+
 export class MediaUploadError extends Error {
   constructor(
     readonly code: UploadErrorCode,
     readonly status?: number,
     readonly s3Code?: string,
     readonly s3Message?: string,
+    readonly stage?: MediaUploadStage,
   ) {
     super(code);
     this.name = 'MediaUploadError';
@@ -139,6 +142,7 @@ export async function uploadDirectMedia(
   const cancel = () => controller.abort();
   signal?.addEventListener('abort', cancel, { once: true });
   let timedOut = false;
+  let stage: MediaUploadStage = 'signer';
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   try {
     const request = {
@@ -148,11 +152,13 @@ export async function uploadDirectMedia(
       signal: controller.signal,
     } satisfies RequestInit;
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      stage = 'signer';
       const signature = await requestPutSignature(key, url, contentType, file.size, request);
       if (signature.expiresAt <= Date.now()) {
         if (attempt === 0) continue;
         throw new MediaUploadError('SIGNER_UNAVAILABLE');
       }
+      stage = 'put';
       const response = await fetch(signature.putUrl, {
         ...request,
         method: 'PUT',
@@ -163,6 +169,7 @@ export async function uploadDirectMedia(
         void response.body?.cancel().catch(() => undefined);
         if (response.status === 412) {
           // A previous PUT may have committed before its response was lost.
+          stage = 'head';
           const stored = await fetch(url, { ...request, method: 'HEAD', cache: 'no-store' });
           if (!stored.ok || stored.headers.get('content-type') !== contentType
             || stored.headers.get('content-length') !== String(file.size)) throw new MediaUploadError('HTTP', 412);
@@ -179,9 +186,9 @@ export async function uploadDirectMedia(
     return { key, url, contentType, sizeBytes: file.size, fileName: file.name };
   } catch (error) {
     if (signal?.aborted) throw new MediaUploadError('CANCELLED');
-    if (timedOut) throw new MediaUploadError('TIMEOUT');
+    if (timedOut) throw new MediaUploadError('TIMEOUT', undefined, undefined, undefined, stage);
     if (error instanceof MediaUploadError) throw error;
-    throw new MediaUploadError('NETWORK');
+    throw new MediaUploadError('NETWORK', undefined, undefined, undefined, stage);
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener('abort', cancel);
