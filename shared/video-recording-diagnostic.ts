@@ -23,12 +23,17 @@ export const VIDEO_RECORDING_ERROR_CODES = [
   'CAMERA_INTERRUPTED', 'CAMERA_PREVIEW_NOT_READY', 'CAMERA_ORIENTATION',
   'RECORDER_START_FAILED', 'RECORDER_RUNTIME_FAILED', 'RECORDER_STOP_FAILED',
   'RECORDER_INTERRUPTED', 'RECORDING_EMPTY', 'RECORDED_FORMAT_INVALID',
+  'RECORDER_MIME_ATTEMPT_FAILED',
   'WEBM_AUTO_FALLBACK', 'WEBM_RUNTIME_FALLBACK', 'WEBM_FORCED_MODE',
   'WEBM_EXACT_TRIM_FAILED', 'WEBM_KEYFRAME_FALLBACK', 'WEBM_TRIM_FAILED',
   'WEBM_TRIM_INSPECTION_FAILED',
 ] as const;
 
 export const VIDEO_RECORDING_DEVICE_FIELDS = [
+  'preferredFormat', 'selectedFormat', 'selectedCodec', 'videoCodec', 'audioCodec',
+  'attemptedFormat', 'failingMimeType', 'trimFallbackCause', 'trimRequested', 'trimActual',
+  'errorName', 'recorderMimeType', 'recordingSizeBytes', 'recordingDurationMs',
+  'recorderVideoBitsPerSecond',
   'userAgent', 'platform', 'telegramPlatform', 'telegramVersion',
   'androidWebView', 'browserBrands', 'language', 'screen', 'viewport',
   'pixelRatio', 'colorDepth', 'touchPoints', 'deviceMemory', 'cpuThreads',
@@ -36,11 +41,6 @@ export const VIDEO_RECORDING_DEVICE_FIELDS = [
   'mediaRecorder', 'isTypeSupported', 'getUserMedia', 'mediaDevices',
   'videoEncoder', 'mediaCapabilities', 'supportedConstraints',
   'cameraWidth', 'cameraHeight', 'cameraFrameRate', 'cameraFacingMode',
-  'errorName', 'recorderMimeType', 'recordingSizeBytes', 'recordingDurationMs',
-  'recorderVideoBitsPerSecond',
-  'preferredFormat', 'selectedFormat', 'selectedCodec', 'videoCodec',
-  'audioCodec', 'trimFallbackCause', 'trimRequested', 'trimActual',
-  'attemptedFormat', 'failingMimeType',
 ] as const;
 
 export type VideoRecordingErrorCode = typeof VIDEO_RECORDING_ERROR_CODES[number];
