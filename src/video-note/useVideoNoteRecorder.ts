@@ -155,7 +155,9 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       .filter(option => !failedMimeTypesRef.current.has(option.mimeType ?? ''));
     if (!candidates.length) {
       reportFailure('UNSUPPORTED_MP4_AVC', { preferredFormat: preference });
-      setError(UNSUPPORTED_AVC);
+      setError(preference === 'webm'
+        ? 'Этот Telegram WebView не поддерживает выбранную запись VP8/VP9 в WebM.'
+        : UNSUPPORTED_AVC);
       updateStatus('error');
       return false;
     }
@@ -304,7 +306,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
           let validType = validReportedType;
           // A generic container MIME cannot guarantee an editor-compatible codec.
           if (validType && !interrupted && blob.size > 0 &&
-            (options.mimeType === 'video/mp4' || options.mimeType === 'video/webm')) {
+            (options.mimeType === 'video/mp4' || isWebm)) {
             try {
               const { Input, MP4, WebM, BlobSource } = await import('mediabunny');
               if (epoch !== epochRef.current) return;
