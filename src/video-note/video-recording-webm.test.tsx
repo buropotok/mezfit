@@ -5,6 +5,15 @@ import { useVideoNoteRecorder } from './useVideoNoteRecorder';
 import { reportVideoRecordingFailure } from './video-recording-diagnostics';
 
 vi.mock('./video-recording-diagnostics', () => ({ reportVideoRecordingFailure: vi.fn() }));
+vi.mock('mediabunny', () => ({
+  MP4: {}, WebM: {},
+  BlobSource: class { constructor(_blob: Blob) {} },
+  Input: class {
+    constructor(_options: unknown) {}
+    async getPrimaryVideoTrack() { return { getCodec: async () => 'vp8' }; }
+    dispose() {}
+  },
+}));
 
 const optionsSeen: MediaRecorderOptions[] = [];
 const capabilities = { mp4: false };
