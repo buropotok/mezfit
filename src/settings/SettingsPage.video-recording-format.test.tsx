@@ -22,8 +22,15 @@ afterEach(() => {
 it('exposes the native MP4-WebM range in Modules and persists forced WebM for recorder', () => {
   render(<SettingsPage onNavigationContextChange={vi.fn()} />);
   fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
-  const slider = screen.getByRole('slider', { name: /Формат записи/ });
-  expect(slider).toHaveProperty('value', '0');
+  // Query the native Konsta input directly: jsdom's accessible-role CSS walk
+  // can throw while parsing complex styles elsewhere in the Modules gallery.
+  // Keep the real slider, its label association, and its change handler under test.
+  const slider = document.getElementById('video-recording-format-preference');
+  expect(slider).toBeInstanceOf(HTMLInputElement);
+  if (!(slider instanceof HTMLInputElement)) throw new Error('Native recording format slider is missing');
+  expect(slider.type).toBe('range');
+  expect(slider.labels?.[0]?.textContent).toContain('Формат записи');
+  expect(slider.value).toBe('0');
   expect(getVideoRecordingFormatPreference()).toBe('mp4');
 
   fireEvent.change(slider, { target: { value: '1' } });
