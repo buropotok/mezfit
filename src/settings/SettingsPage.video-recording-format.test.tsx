@@ -2,12 +2,16 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
+import { VideoRecordingFormatControl } from './VideoRecordingFormatControl';
 import { getVideoRecordingFormatPreference } from '../video-note/video-recording-format-preference';
 
 beforeEach(() => {
   localStorage.clear();
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
-  vi.stubGlobal('requestAnimationFrame', (_cb: FrameRequestCallback) => 1);
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0);
+    return 1;
+  });
   vi.stubGlobal('cancelAnimationFrame', vi.fn());
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 });
@@ -19,15 +23,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('exposes the native MP4-WebM range in Modules and persists forced WebM for recorder', () => {
+it('shows the actual format control in the Settings Modules gallery', () => {
   render(<SettingsPage onNavigationContextChange={vi.fn()} />);
   fireEvent.click(screen.getByRole('button', { name: 'Модули' }));
-  // Query the native Konsta input directly: jsdom's accessible-role CSS walk
-  // can throw while parsing complex styles elsewhere in the Modules gallery.
-  // Keep the real slider, its label association, and its change handler under test.
   const slider = document.getElementById('video-recording-format-preference');
   expect(slider).toBeInstanceOf(HTMLInputElement);
-  if (!(slider instanceof HTMLInputElement)) throw new Error('Native recording format slider is missing');
+  expect((slider as HTMLInputElement).type).toBe('range');
+  expect(screen.getByText('Формат записи: MP4 → WebM (автоматически)')).toBeTruthy();
+});
+
+it('uses the native Konsta Range to persist a forced WebM preference and restore automatic MP4', () => {
+  const view = render(<VideoRecordingFormatControl />);
+  const slider = view.container.querySelector<HTMLInputElement>('#video-recording-format-preference');
+  expect(slider).toBeInstanceOf(HTMLInputElement);
+  if (!slider) throw new Error('Video recording format Range not mounted');
   expect(slider.type).toBe('range');
   expect(slider.labels?.[0]?.textContent).toContain('Формат записи');
   expect(slider.value).toBe('0');
@@ -35,8 +44,10 @@ it('exposes the native MP4-WebM range in Modules and persists forced WebM for re
 
   fireEvent.change(slider, { target: { value: '1' } });
   expect(getVideoRecordingFormatPreference()).toBe('webm');
-  expect(screen.getByText('Формат записи: WebM (принудительно)')).toBeTruthy();
+  expect(view.getByText('Формат записи: WebM (принудительно)')).toBeTruthy();
+  expect(slider.value).toBe('1');
 
   fireEvent.change(slider, { target: { value: '0' } });
   expect(getVideoRecordingFormatPreference()).toBe('mp4');
+  expect(slider.value).toBe('0');
 });
