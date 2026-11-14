@@ -10,7 +10,7 @@ const MIN_INTERVAL_MS = 15_000;
 const MAX_BODY_CHARS = 8_000;
 
 const errorLabels: Record<VideoRecordingDiagnostic['errorCode'], string> = {
-  UNSUPPORTED_MP4_AVC: 'Не найден поддерживаемый MP4/H.264',
+  UNSUPPORTED_MP4_AVC: 'Не найден поддерживаемый MP4/H.264 или WebM',
   MEDIA_API_UNAVAILABLE: 'Недоступны MediaRecorder или getUserMedia',
   CAMERA_ACCESS_FAILED: 'Ошибка доступа к камере/микрофону',
   CAMERA_INTERRUPTED: 'Получение видеопотока прервано',
