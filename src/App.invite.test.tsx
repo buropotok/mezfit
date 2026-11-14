@@ -287,7 +287,8 @@ describe('client invite launch', () => {
     expect(await screen.findByRole('heading', { name: 'Запустите бота Mezfit' })).toBeTruthy();
     await waitFor(() => expect(cloudRefresh).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByRole('button', { name: 'Открыть чат с ботом' }));
-    expect(openTelegramLink).toHaveBeenCalledExactlyOnceWith('https://t.me/mezfit_bot');
+    expect(openTelegramLink).toHaveBeenCalledTimes(1);
+    expect(openTelegramLink).toHaveBeenCalledWith('https://t.me/mezfit_bot');
 
     fireEvent.click(screen.getByRole('button', { name: 'Продолжить в Mezfit' }));
     expect(await screen.findByText('Client Today')).toBeTruthy();
