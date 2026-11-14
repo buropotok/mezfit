@@ -33,6 +33,8 @@ export const VIDEO_RECORDING_DEVICE_FIELDS = [
   'mediaRecorder', 'isTypeSupported', 'getUserMedia', 'mediaDevices',
   'videoEncoder', 'mediaCapabilities', 'supportedConstraints',
   'cameraWidth', 'cameraHeight', 'cameraFrameRate', 'cameraFacingMode',
+  'errorName', 'recorderMimeType', 'recordingSizeBytes', 'recordingDurationMs',
+  'recorderVideoBitsPerSecond',
 ] as const;
 
 export type VideoRecordingErrorCode = typeof VIDEO_RECORDING_ERROR_CODES[number];
