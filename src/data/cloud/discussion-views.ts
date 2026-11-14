@@ -1,6 +1,7 @@
 import { discussionId, discussionRecord } from '../../../shared/discussion-anchor';
-import { isDiscussionVideoPosition, matchesDiscussionReadStateId, type DiscussionMessage, type DiscussionVideoPosition, type MessageAttachment } from './discussion-contracts';
-export interface DiscussionCursor { createdAt: string; id: string }
+import { isDiscussionVideoPosition, type DiscussionMessage, type DiscussionVideoPosition, type MessageAttachment } from './discussion-contracts';
+import { discussionInstant, type DiscussionCursor } from '../../../shared/discussion-read-state';
+export { discussionInstant, discussionCursorKey, discussionCursorFromKey, discussionReadCursor, type DiscussionCursor } from '../../../shared/discussion-read-state';
 export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean; videoPosition?: DiscussionVideoPosition }
 /** Evidence captured by the repository, never inferred from its general sync indicator. */
 export interface DiscussionReceiptSnapshot {
@@ -11,21 +12,6 @@ export interface DiscussionMessageView {
   id: string; threadId: string; authorUserId: string; createdAt: string;
   attachments?: readonly MessageAttachment[];
   text: string; deleted: boolean; editedAt?: string; reply: DiscussionQuote | null;
-}
-export const discussionInstant = (value: unknown): value is string => typeof value === 'string'
-  && value.length === 24 && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
-export const discussionCursorKey = (cursor: DiscussionCursor): string => cursor.createdAt + '/' + cursor.id;
-export function discussionCursorFromKey(value: unknown): DiscussionCursor | null {
-  if (typeof value !== 'string' || value[24] !== '/' || !discussionInstant(value.slice(0, 24)) || !discussionId(value.slice(25))) return null;
-  return { createdAt: value.slice(0, 24), id: value.slice(25) };
-}
-/** Validate received records, including old keys decoded by the Addon; never relax owner/scope/cursor checks. */
-export function discussionReadCursor(value: unknown, realmId: string, threadId: string, userId: string): DiscussionCursor | null {
-  if (!discussionRecord(value) || value.realmId !== realmId || value.threadId !== threadId
-    || value.userId !== userId || value.owner !== userId
-    || !matchesDiscussionReadStateId(value.id, realmId, threadId, userId)) return null;
-  const cursor = discussionCursorFromKey(value.readThrough);
-  return cursor && cursor.id === value.lastReadMessageId ? cursor : null;
 }
 export function isDiscussionMessage(value: unknown): value is DiscussionMessage {
   return discussionRecord(value) && discussionId(value.id) && discussionId(value.realmId)

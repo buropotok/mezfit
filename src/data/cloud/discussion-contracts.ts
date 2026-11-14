@@ -1,4 +1,6 @@
 import { discussionAnchorKey, discussionId, discussionParents, discussionRecord, type DiscussionAnchor, type DiscussionScope } from '../../../shared/discussion-anchor';
+import { discussionReadStateId } from '../../../shared/discussion-read-state';
+export { discussionReadStateId, matchesDiscussionReadStateId } from '../../../shared/discussion-read-state';
 import type { DiscussionMediaDraft } from './discussion-media';
 export type { DiscussionAnchor, DiscussionScope } from '../../../shared/discussion-anchor';
 export const DISCUSSION_STORES = {
@@ -53,19 +55,6 @@ export { assertMessageAttachmentWrite, applyAttachmentUploadConfirmation, isAtta
 const instant = (value: string) => Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 const actorId = (value: string) => /^tg:[1-9]\d*$/.test(value);
 const invalid = (): never => { throw new Error('INVALID_DISCUSSION_WRITE'); };
-export function discussionReadStateId(realmId: string, threadId: string, userId: string): string {
-  if (!discussionId(realmId) || !discussionId(threadId) || !actorId(userId)) invalid();
-  // Addon 4.4.15 decodes server keys starting with '[' as compound-key arrays.
-  // A non-reserved prefix keeps this string stable across push/pull.
-  return 'discussion-read:' + JSON.stringify([realmId, threadId, userId]);
-}
-/** Exact compatibility for old JSON-string IDs and the Addon's decoded array form. */
-export function matchesDiscussionReadStateId(value: unknown, realmId: string, threadId: string, userId: string): boolean {
-  if (!discussionId(realmId) || !discussionId(threadId) || !actorId(userId)) return false;
-  const legacy = ['discussion-read', realmId, threadId, userId];
-  return value === discussionReadStateId(realmId, threadId, userId) || value === JSON.stringify(legacy)
-    || (Array.isArray(value) && value.length === legacy.length && legacy.every((part, index) => value[index] === part));
-}
 /** Domain contract, not a claim that owner provenance is frozen by the cloud. */
 export function assertDiscussionThread(thread: DiscussionThread): void {
   if (!Array.isArray(thread.contextPath) || typeof thread.derivedTitleSnapshot !== 'string'
