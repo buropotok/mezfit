@@ -3,13 +3,13 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useVideoNoteRecorder } from './useVideoNoteRecorder';
 
-const media = vi.hoisted(() => ({ codec: 'avc' }));
+const media = vi.hoisted(() => ({ codec: 'avc', deferredCodec: null as Promise<string> | null }));
 vi.mock('mediabunny', () => ({
   MP4: {},
   BlobSource: class { constructor(_blob: Blob) {} },
   Input: class {
     constructor(_options: unknown) {}
-    async getPrimaryVideoTrack() { return { getCodec: async () => media.codec }; }
+    async getPrimaryVideoTrack() { return { getCodec: async () => media.deferredCodec ?? media.codec }; }
     dispose() {}
   },
 }));
@@ -37,6 +37,7 @@ const getUserMedia = vi.fn();
 
 beforeEach(() => {
   media.codec = 'avc';
+  media.deferredCodec = null;
   vi.stubGlobal('MediaRecorder', GenericMp4Recorder);
   getUserMedia.mockReset();
   const video = { kind: 'video', enabled: true, readyState: 'live', stop: vi.fn(),
@@ -72,5 +73,22 @@ it('rejects a bare MP4 containing another video codec before entering the trim e
   await act(async () => { expect(await result.current.start()).toBe(true); });
   await act(async () => { expect(await result.current.stop()).toBeNull(); });
   expect(result.current.error).toContain('H.264');
+  expect(onRecorded).not.toHaveBeenCalled();
+});
+
+it('discards an asynchronous format check after the recorder is released', async () => {
+  let finishCodec: ((codec: string) => void) | undefined;
+  media.deferredCodec = new Promise<string>(resolve => { finishCodec = resolve; });
+  const onRecorded = vi.fn();
+  const { result } = renderHook(() => useVideoNoteRecorder(onRecorded));
+  await act(async () => { expect(await result.current.start()).toBe(true); });
+
+  let pendingStop!: Promise<unknown>;
+  act(() => { pendingStop = result.current.stop(); });
+  act(() => { result.current.release(); });
+  await act(async () => {
+    finishCodec?.('avc');
+    expect(await pendingStop).toBeNull();
+  });
   expect(onRecorded).not.toHaveBeenCalled();
 });
