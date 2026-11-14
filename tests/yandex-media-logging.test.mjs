@@ -1,9 +1,9 @@
 import { createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import signer from '../infra/yandex-media-mvp/function/index.js';
+import logging from '../infra/yandex-media-mvp/function/media-log.js';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
-import logging from '../infra/yandex-media-mvp/function/media-log.js';
 
 const env = {
   MEDIA_LOG_BUCKET: 'mezfit-private-logs',
@@ -89,6 +89,20 @@ describe('Yandex media diagnostic log storage', () => {
       now: new Date('2026-11-15T21:01:00Z'), fetchImpl: storage.fetchImpl,
     });
     expect([...storage.objects.keys()]).toEqual(['logs_20261115_0001', 'logs_20261116_0001']);
+  });
+
+  it('keeps both concurrent first-day log writes without overwriting either one', async () => {
+    const storage = fakeStorage();
+    const now = new Date('2026-11-15T12:00:00Z');
+    const keys = await Promise.all([
+      logging.appendEvents([event('FIRST_REQUEST')], env, { now, fetchImpl: storage.fetchImpl }),
+      logging.appendEvents([event('SECOND_REQUEST')], env, { now, fetchImpl: storage.fetchImpl }),
+    ]);
+    expect(keys).toEqual(['logs_20261115_0001', 'logs_20261115_0001']);
+    const saved = storage.objects.get('logs_20261115_0001').toString('utf8');
+    expect(saved).toContain('FIRST_REQUEST');
+    expect(saved).toContain('SECOND_REQUEST');
+    expect(saved.trim().split('\n')).toHaveLength(2);
   });
 
   it('rolls to the next sequence once the latest object exceeds 1 MiB', async () => {
