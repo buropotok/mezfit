@@ -284,15 +284,17 @@ describe('client invite launch', () => {
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: 'Подключиться к тренеру' }));
 
-    expect(await screen.findByRole('heading', { name: 'Запустите бота Mezfit' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Активируйте Mezfit' })).toBeTruthy();
+    expect(screen.getByText('Чтобы получать сообщения от тренера и уведомления о тренировках, откройте чат Mezfit и нажмите «Старт».')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Активация Mezfit' })).toBeTruthy();
     await waitFor(() => expect(cloudRefresh).toHaveBeenCalledTimes(1));
-    fireEvent.click(screen.getByRole('button', { name: 'Открыть чат с ботом' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть чат Mezfit' }));
     expect(openTelegramLink).toHaveBeenCalledTimes(1);
     expect(openTelegramLink).toHaveBeenCalledWith('https://t.me/mezfit_bot');
 
     fireEvent.click(screen.getByRole('button', { name: 'Продолжить в Mezfit' }));
     expect(await screen.findByText('Client Today')).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: 'Запустите бота Mezfit' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Активируйте Mezfit' })).toBeNull();
     expect(window.localStorage.getItem('mezfit.selectedCloudCoachUserId.100')).toBe(oldCoach.userId);
   });
 
@@ -312,11 +314,11 @@ describe('client invite launch', () => {
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: 'Подключиться к тренеру' }));
 
-    expect(await screen.findByRole('heading', { name: 'Запустите бота Mezfit' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Активируйте Mezfit' })).toBeTruthy();
     expect(window.localStorage.getItem('mezfit.activeRole')).toBe('client');
     fireEvent.click(screen.getByRole('button', { name: 'Продолжить в Mezfit' }));
     expect(await screen.findByText('Client Today')).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: 'Запустите бота Mezfit' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Активируйте Mezfit' })).toBeNull();
   });
 
   it('offers a retry when a client with an existing role cannot load the invitation', async () => {
