@@ -8,6 +8,7 @@ import {
   addRole,
   getCurrentInvite,
   getMe,
+  dismissOpenedTelegramNotification,
   type ClientInvitePreview,
   type MeResponse,
   type Role,
@@ -121,11 +122,15 @@ function ClientShell({
   actor,
   startParam,
   destination,
+  notificationMessageId,
+  onNotificationOpened,
   onNavigationContextChange,
   onInviteAccepted,
 }: {
   initData: string;
   currentUserId: number;
+  notificationMessageId?: string | null;
+  onNotificationOpened: () => void;
   actor?: ProgramActor;
   startParam: string | null;
   destination: AppDestination;
@@ -213,7 +218,8 @@ function ClientShell({
     );
   }
 
-  if (destination === 'discussions') return <DiscussionsPage role="client" onNavigationContextChange={onNavigationContextChange} />;
+  if (destination === 'discussions') return <DiscussionsPage role="client" notificationMessageId={notificationMessageId}
+    onNotificationOpened={onNotificationOpened} onNavigationContextChange={onNavigationContextChange} />;
   if (destination === 'programs') return (
     <ClientProgramsPage actor={actor} onNavigationContextChange={onNavigationContextChange} />
   );
@@ -322,9 +328,14 @@ export function App() {
     if (notification?.kind === 'discussion') {
       setNotificationMessageId(notification.id);
       setCoachDestination('discussions');
+      setClientDestination('discussions');
     } else if (notification?.kind === 'workout') {
       setNotificationOccurrenceId(notification.id);
     }
+
+    if (notification?.receipt) void dismissOpenedTelegramNotification(webApp.initData).catch(() => {
+      // The notification link remains usable if the bot or network is unavailable.
+    });
 
     let cancelled = false;
     if (isScreenDiagnosticsStartParam(startParam)) {
@@ -599,6 +610,8 @@ export function App() {
             startParam={isScreenDiagnosticsStartParam(state.startParam)
               || dismissedInviteParam === state.startParam ? null : state.startParam}
             destination={clientDestination}
+            notificationMessageId={notificationMessageId}
+            onNotificationOpened={clearNotificationMessage}
             onNavigationContextChange={handleNavigationContextChange}
             onInviteAccepted={() => {
               if (isClientInviteStartParam(state.startParam)) setDismissedInviteParam(state.startParam);

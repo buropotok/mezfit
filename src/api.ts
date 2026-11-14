@@ -632,6 +632,10 @@ export async function uploadPersonalExerciseMedia(initData: string, image: Blob,
   return value.url;
 }
 
+export async function dismissOpenedTelegramNotification(initData: string): Promise<void> {
+  await apiRequest<unknown>(initData, '/api/telegram/notification-opened', { method: 'POST' });
+}
+
 export function getMe(initData: string): Promise<MeResponse> {
   return apiRequest(initData, '/api/me');
 }

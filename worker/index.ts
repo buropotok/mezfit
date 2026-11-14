@@ -29,6 +29,8 @@ export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coord
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 import { sendWorkoutReminders } from './lib/workout-reminders';
+import { parseNotificationStartParam } from '../shared/telegram-notification-link';
+import { dismissTelegramNotification } from './lib/coach-telegram';
 import { receiveDiscussionNotifications, sendDiscussionNotifications } from './lib/discussion-notifications';
 import { resetTestCloudRelationship } from './lib/test-relationship-reset';
 import { resetLegacyTestRelationship } from './lib/test-legacy-relationship-reset';
@@ -297,7 +299,7 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
   throw new HttpError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
 }
 
-async function handleApi(request: Request, env: Env): Promise<Response> {
+async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
 
   if (url.pathname === '/api/dexie-cloud/tokens') {
@@ -517,6 +519,20 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     });
   }
 
+  if (url.pathname === '/api/telegram/notification-opened' && request.method === 'POST') {
+    const initData = request.headers.get('x-telegram-init-data') ?? '';
+    const auth = await validateTelegramInitData(initData, env.TELEGRAM_BOT_TOKEN);
+    const receipt = parseNotificationStartParam(auth.startParam ?? null)?.receipt;
+    if (receipt) {
+      const dismissal = dismissTelegramNotification(env, String(auth.user.id), receipt).catch(() => {
+        console.error('TELEGRAM_NOTIFICATION_DISMISS_FAILED');
+      });
+      if (ctx) ctx.waitUntil(dismissal);
+      else await dismissal;
+    }
+    return json({ ok: true });
+  }
+
   if (url.pathname === '/api/me' && request.method === 'GET') {
     const auth = await requireUser(request, env);
     return json({ user: userView(auth.row), roles: auth.roles });
@@ -688,7 +704,7 @@ export default {
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     try {
-      return (await receiveDiscussionNotifications(request, env, ctx)) ?? await handleApi(request, env);
+      return (await receiveDiscussionNotifications(request, env, ctx)) ?? await handleApi(request, env, ctx);
     } catch (error) {
       if (error instanceof TelegramAuthError) {
         return json({ error: { code: 'UNAUTHORIZED', message: error.message } }, { status: 401 });
@@ -713,6 +729,9 @@ export default {
       const results = await Promise.allSettled([
         sendWorkoutReminders(env, Date.now()),
         sendDiscussionNotifications(env),
+        Promise.resolve().then(() => env.DB_BINDING.prepare(
+          'DELETE FROM telegram_notification_receipts WHERE expires_at <= ?',
+        ).bind(Date.now()).run()),
       ]);
       if (results.some(result => result.status === 'rejected')) throw new Error('NOTIFICATIONS_TICK_FAILED');
     } catch {
