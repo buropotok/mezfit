@@ -29,6 +29,7 @@ export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coord
 import { CloudMembershipError, provisionInviteMembership, requireCloudMembershipConfiguration } from './lib/dexie-cloud-membership';
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 import { sendWorkoutReminders } from './lib/workout-reminders';
+import { handleVideoRecordingDiagnostic } from './lib/video-recording-diagnostic';
 import { parseNotificationStartParam } from '../shared/telegram-notification-link';
 import { dismissTelegramNotification } from './lib/coach-telegram';
 import { receiveDiscussionNotifications, sendDiscussionNotifications } from './lib/discussion-notifications';
@@ -301,6 +302,10 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
 
 async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
+
+  if (url.pathname === '/api/diagnostics/video-recording') {
+    return handleVideoRecordingDiagnostic(request, env);
+  }
 
   if (url.pathname === '/api/dexie-cloud/tokens') {
     return handleDexieCloudTokenRoute(request, env);
