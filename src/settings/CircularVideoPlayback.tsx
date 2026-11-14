@@ -224,14 +224,12 @@ export function CircularVideoPlayback({
   const progress = boundedFraction(currentTime / duration);
 
   const showPreviewFrame = (video: HTMLVideoElement) => {
-    // iOS WebKit may show a black video until seeking just past time zero.
-    // Keep the clip paused: this is only a first-frame decode workaround.
-    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const frameTime = Number.isFinite(video.duration) && video.duration > 0
-        ? Math.min(0.04, video.duration / 2)
-        : 0.04;
-      try { video.currentTime = frameTime; } catch { /* Still waiting for decodable data. */ }
-    }
+    // A paused video can remain unpainted in Telegram WebView even when
+    // readyState reports a decoded frame. Force a nonzero seek on iOS/Android.
+    const frameTime = Number.isFinite(video.duration) && video.duration > 0
+      ? Math.min(0.04, video.duration / 2)
+      : 0.04;
+    try { video.currentTime = frameTime; } catch { /* Still waiting for decodable data. */ }
   };
 
   const tapControl = (
