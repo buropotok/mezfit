@@ -754,6 +754,15 @@ function decodeClientInvitePreview(value: unknown): ClientInvitePreview | null {
   };
 }
 
+/** Server checks the signed Telegram actor's private chat, not a caller-supplied user ID. */
+export async function getMezfitChatActivation(initData: string): Promise<boolean> {
+  const result = await apiRequest<unknown>(initData, '/api/telegram/chat-activation');
+  if (!isRecord(result) || typeof result.activated !== 'boolean') {
+    throw new ApiError(502, 'Некорректный ответ проверки активации', 'INVALID_API_RESPONSE');
+  }
+  return result.activated;
+}
+
 export async function getCurrentInvite(
   initData: string,
   startParam?: string | null,
