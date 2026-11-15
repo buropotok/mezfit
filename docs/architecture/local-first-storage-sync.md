@@ -37,7 +37,10 @@ discussions. Text, anchors, messages and media metadata remain in typed local
 repositories and Dexie Cloud Addon under personal/relationship realms. The
 existing Yandex Cloud Function continues to authenticate Telegram initData
 and issue write-once signed PUT URLs for the canonical Yandex media object;
-readers still use permanent public random-key Yandex GET URLs. In the
+readers prefer permanent public random-key Yandex GET URLs and, after
+the 2026-11-16 second iteration, request a private short-lived R2 GET on
+Yandex read failure, authorized by live Dexie Cloud realm membership and
+published attachment identity. In the
 owner-approved first dual-upload iteration, the same file/key is also uploaded
 directly by the device to a dedicated private Cloudflare R2 bucket
 `mezfit-discussion-media`, using a short-lived Worker-issued PUT signature.
@@ -48,10 +51,12 @@ is introduced. This is an explicit, *media transport only* exception to the
 previous prohibition on Worker/R2 discussion uploads. The owner confirmed
 all current MVP users are testers and removed the per-user allowlist. The
 Worker permits sign/verify only after valid Telegram initData authentication
-and strict upload-parameter validation. If R2 is the only confirmed upload,
-the Yandex playback link may remain unreadable until Yandex retry succeeds
-or R2 read fallback is implemented; this temporary MVP failure mode is
-accepted and must be tested. Existing `mezfit` GIF bucket, category artwork,
+and strict upload-parameter validation. For R2-only uploads the Yandex playback link remains invalid,
+but authorized recipients can request a signed R2 GET (native Range for
+video/audio) without exposing a public R2 read endpoint. The Worker uses
+the existing read-only Dexie Cloud service account and independently checks
+Telegram identity, relationship membership and the exact ready attachment;
+denied/unsynced cloud access fails closed. Existing `mezfit` GIF bucket, category artwork,
 Dexie avatars and Yandex Function remain unchanged. Cold Mini App/bootstrap/auth without VPN
 and Telegram iOS/Android video Range behavior remain unverified gates.
 
