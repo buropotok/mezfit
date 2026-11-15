@@ -82,6 +82,7 @@ describe('Cloudflare R2 upload signer', () => {
     }
     const invalid = { initData: 'user=200600&hash=bad', storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
     expect((await handleDiscussionR2MediaRoute(request('sign', invalid), env())).status).toBe(401);
+    expect((await handleDiscussionR2MediaRoute(request('verify', invalid), env())).status).toBe(401);
   });
 
   it('verifies the stored object MIME and length after a conditional PUT collision', async () => {
