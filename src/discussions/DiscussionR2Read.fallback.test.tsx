@@ -13,7 +13,7 @@ import { DiscussionVoice } from './DiscussionVoice';
 const accountId = 'tg:12001';
 const key = 'mvp-media/' + 'd'.repeat(64);
 const entry = { accountId, storageKey: key, mimeType: 'image/jpeg', sizeBytes: 5,
-  realmId: 'rlm' + 'a'.repeat(28), messageId: 'message-123', attachmentId: 'attachment-456' };
+  realmId: 'rlm' + 'a'.repeat(28), messageId: '22222222-2222-4222-8222-222222222222', attachmentId: '33333333-3333-4333-8333-333333333333' };
 const readHost = 'mezfit-discussion-media.' + 'a'.repeat(32) + '.r2.cloudflarestorage.com';
 const getUrl = `https://${readHost}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=${'b'.repeat(64)}`;
 const yandexUrl = directMediaUrl(key) ?? '';
