@@ -139,7 +139,8 @@ const downloads = new Map<string, Promise<Blob | null>>();
 export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promise<Blob | null> {
   const url = mediaUrl(entry);
   if (!url) return Promise.resolve(null);
-  const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes]);
+  const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
+    entry.realmId, entry.messageId, entry.attachmentId]);
   const active = downloads.get(key);
   if (active) return active;
   const controller = new AbortController();
