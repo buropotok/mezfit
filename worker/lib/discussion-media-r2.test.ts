@@ -17,9 +17,9 @@ async function hmac(bytes: Uint8Array, data: string): Promise<Uint8Array> {
   const imported = await crypto.subtle.importKey('raw', buffer(bytes), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   return new Uint8Array(await crypto.subtle.sign('HMAC', imported, encoder.encode(data)));
 }
-async function initData(): Promise<string> {
+async function initData(userId = 100500): Promise<string> {
   const params = new URLSearchParams({
-    auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: 100500, first_name: 'Athlete' }),
+    auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({ id: userId, first_name: 'Athlete' }),
   });
   const check = [...params.entries()].sort(([a], [b]) => a.localeCompare(b))
     .map(([a, b]) => `${a}=${b}`).join('\n');
@@ -31,7 +31,7 @@ async function initData(): Promise<string> {
 const head = vi.fn(async () => ({ size: 6, httpMetadata: { contentType: 'image/jpeg' } }));
 function env() {
   return { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_DISCUSSION_MEDIA: { head } as unknown as R2Bucket,
-    R2_MEDIA_TELEGRAM_ALLOWLIST: '100500', ...credentials };
+    ...credentials };
 }
 function request(path: string, body: object): Request {
   return new Request(`https://mezfit.example/api/discussion-media/${path}`, {
@@ -67,19 +67,21 @@ describe('Cloudflare R2 upload signer', () => {
   it('fails closed without R2 credentials and refuses cross-origin/browser-less forgery', async () => {
     const good = { initData: await initData(), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
     expect((await handleDiscussionR2MediaRoute(request('sign', good),
-      { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_DISCUSSION_MEDIA: { head } as unknown as R2Bucket,
-        R2_MEDIA_TELEGRAM_ALLOWLIST: '100500' })).status).toBe(503);
+      { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_DISCUSSION_MEDIA: { head } as unknown as R2Bucket })).status).toBe(503);
     const foreign = new Request('https://mezfit.example/api/discussion-media/sign', {
       method: 'POST', headers: { Origin: 'https://evil.example' }, body: JSON.stringify(good),
     });
     expect((await handleDiscussionR2MediaRoute(foreign, env())).status).toBe(403);
   });
 
-  it('denies all R2 signing when the test allowlist is not configured', async () => {
-    const good = { initData: await initData(), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
-    const response = await handleDiscussionR2MediaRoute(request('sign', good),
-      { ...env(), R2_MEDIA_TELEGRAM_ALLOWLIST: undefined });
-    expect(response.status).toBe(403);
+  it('allows any authenticated Telegram user without a separate user-ID allowlist', async () => {
+    for (const userId of [100500, 200600]) {
+      const valid = { initData: await initData(userId), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
+      expect((await handleDiscussionR2MediaRoute(request('sign', valid), env())).status).toBe(200);
+      expect((await handleDiscussionR2MediaRoute(request('verify', valid), env())).status).toBe(200);
+    }
+    const invalid = { initData: 'user=200600&hash=bad', storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
+    expect((await handleDiscussionR2MediaRoute(request('sign', invalid), env())).status).toBe(401);
   });
 
   it('verifies the stored object MIME and length after a conditional PUT collision', async () => {
