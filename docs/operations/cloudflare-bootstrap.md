@@ -60,10 +60,9 @@ in `mezfit-discussion-media`, not in the original `mezfit` bucket.
      `DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET`,
      `DEXIE_CLOUD_REMINDER_CLIENT_ID`,
      `DEXIE_CLOUD_REMINDER_CLIENT_SECRET`,
-     `DEXIE_DISCUSSION_WEBHOOK_SECRET` and the test-only
-     `R2_MEDIA_TELEGRAM_ALLOWLIST` for closed testing of the current
-     R2 upload-only phase. Never broaden the allowlist until read fallback
-     is implemented and approved.
+     `DEXIE_DISCUSSION_WEBHOOK_SECRET` as needed for the application.
+     R2 discussion media no longer needs a Telegram-user-ID allowlist;
+     every valid Telegram-authenticated MVP user can request R2 signing.
      Missing optional values are not uploaded and do not delete existing
      Worker secrets. Any functionality depending on them remains unavailable
      until restored. Set these repository secrets through trusted GitHub
