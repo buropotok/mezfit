@@ -37,13 +37,19 @@ export async function uploadMirroredDiscussionMedia(
   const entry = { accountId, storageKey: retryKey, mimeType: file.type, sizeBytes: file.size };
   await rememberMediaReplica(entry, file.name).catch(() => undefined);
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
+  // External cancellation applies only until the first provider confirms success.
+  // Once publication is allowed, the remaining transfer is owned by the replica service.
+  const transfer = new AbortController();
+  let delivered = false;
+  const cancel = () => { if (!delivered) transfer.abort(); };
+  signal?.addEventListener('abort', cancel, { once: true });
 
   const yandexIdentity = `${accountId}:${retryKey}:yandex`;
   const r2Identity = `${accountId}:${retryKey}:r2`;
   inFlightReplicas.add(yandexIdentity);
   let yandexSettled: () => void = () => undefined;
   const yandexDone = new Promise<void>(resolve => { yandexSettled = resolve; });
-  const yandex = uploadDirectMedia(file, { retryKey, signal }).then(async uploaded => {
+  const yandex = uploadDirectMedia(file, { retryKey, signal: transfer.signal }).then(async uploaded => {
     await confirmMediaReplica(accountId, retryKey, 'yandex').catch(() => undefined);
     return uploaded;
   }).finally(() => {
@@ -56,10 +62,10 @@ export async function uploadMirroredDiscussionMedia(
   const r2 = (async () => {
     await Promise.race([yandexDone, hedge]);
     if (hedgeTimer) clearTimeout(hedgeTimer);
-    if (signal?.aborted) throw new MediaUploadError('CANCELLED');
+    if (transfer.signal.aborted) throw new MediaUploadError('CANCELLED');
     inFlightReplicas.add(r2Identity);
     try {
-      const uploaded = await uploadCloudflareMedia(file, { retryKey, signal });
+      const uploaded = await uploadCloudflareMedia(file, { retryKey, signal: transfer.signal });
       await confirmMediaReplica(accountId, retryKey, 'r2').catch(() => undefined);
       return uploaded;
     } finally {
@@ -68,9 +74,12 @@ export async function uploadMirroredDiscussionMedia(
   })();
 
   try {
-    return await Promise.any([yandex, r2]);
+    const first = await Promise.any([yandex, r2]);
+    delivered = true;
+    signal?.removeEventListener('abort', cancel);
+    return first;
   } catch {
-    if (signal?.aborted) throw new MediaUploadError('CANCELLED');
+    if (transfer.signal.aborted) throw new MediaUploadError('CANCELLED');
     // Both providers failed. Keep the primary error when the R2 signer is not configured.
     const reasons = await Promise.allSettled([yandex, r2]);
     const yandexError = reasons[0].status === 'rejected' ? reasons[0].reason : undefined;
@@ -79,6 +88,7 @@ export async function uploadMirroredDiscussionMedia(
     throw r2Error ?? yandexError ?? new MediaUploadError('NETWORK');
   } finally {
     if (hedgeTimer) clearTimeout(hedgeTimer);
+    signal?.removeEventListener('abort', cancel);
   }
 }
 
