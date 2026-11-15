@@ -88,13 +88,18 @@ export class CloudflareApi {
 
   async pages(suffix) {
     const result = [];
+    // Account-token list accepts at most 50 results/page; D1 also accepts 50.
+    const pageSize = 50;
     for (let page = 1; page <= 20; page++) {
       const separator = suffix.includes('?') ? '&' : '?';
-      const response = await this.request(this.path(suffix + separator + 'per_page=100&page=' + page));
+      const response = await this.request(this.path(suffix + separator + 'per_page=' + pageSize + '&page=' + page));
       if (!Array.isArray(response.result)) throw new Error('CLOUDFLARE_API_EXPECTED_LIST');
       result.push(...response.result);
-      const total = response.result_info?.total_pages;
-      if (typeof total === 'number' ? page >= total : response.result.length < 100) return result;
+      const totalPages = response.result_info?.total_pages;
+      const totalCount = response.result_info?.total_count;
+      if (typeof totalPages === 'number' ? page >= totalPages
+        : typeof totalCount === 'number' ? result.length >= totalCount
+          : response.result.length < pageSize) return result;
     }
     throw new Error('CLOUDFLARE_LIST_PAGINATION_LIMIT');
   }
