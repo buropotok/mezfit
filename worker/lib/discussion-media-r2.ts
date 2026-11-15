@@ -127,9 +127,10 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
     throw error;
   }
 
-  // Optional closed-test allowlist; never trust a user ID from the request body.
-  if (env.R2_MEDIA_TELEGRAM_ALLOWLIST && !env.R2_MEDIA_TELEGRAM_ALLOWLIST.split(',')
-    .map(value => value.trim()).includes(String(authenticatedUserId))) return jsonError(403, 'MEDIA_FORBIDDEN');
+  // Required during the upload-only iteration: R2-only media cannot yet be read.
+  // Never trust a user ID from the request body; deny all when the list is unset.
+  if (!env.R2_MEDIA_TELEGRAM_ALLOWLIST?.split(',').map(value => value.trim())
+    .includes(String(authenticatedUserId))) return jsonError(403, 'MEDIA_FORBIDDEN');
 
   if (path.endsWith('/verify')) {
     const object = await env.R2_BINDING_MEZFIT.head(input.storageKey);
