@@ -164,6 +164,8 @@ describe('Private R2 discussion media reads', () => {
       storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
     expect((await handleDiscussionR2MediaRoute(request({ ...good, initData: 'bad' }), env())).status).toBe(401);
     expect((await handleDiscussionR2MediaRoute(request({ ...good, realmId: 'rlm-fake' }), env())).status).toBe(400);
+    expect((await handleDiscussionR2MediaRoute(request({ ...good, messageId: '../members' }), env())).status).toBe(400);
+    expect((await handleDiscussionR2MediaRoute(request({ ...good, attachmentId: '..' }), env())).status).toBe(400);
     expect((await handleDiscussionR2MediaRoute(request(good), {
       ...env(), DEXIE_CLOUD_REMINDER_CLIENT_ID: undefined,
     })).status).toBe(503);
