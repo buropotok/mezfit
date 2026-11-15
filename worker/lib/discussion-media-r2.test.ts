@@ -54,6 +54,10 @@ describe('Cloudflare R2 upload signer', () => {
     const good = { initData: await initData(), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
     expect((await handleDiscussionR2MediaRoute(request('sign', { ...good, initData: '' }), env())).status).toBe(401);
     expect((await handleDiscussionR2MediaRoute(request('sign', { ...good, contentType: 'text/html' }), env())).status).toBe(400);
+    for (const inheritedMime of ['constructor', 'toString', '__proto__']) {
+      expect((await handleDiscussionR2MediaRoute(request('sign', { ...good, contentType: inheritedMime }), env())).status)
+        .toBe(400);
+    }
     expect((await handleDiscussionR2MediaRoute(request('sign', { ...good, sizeBytes: 250 * 1024 * 1024 }), env())).status).toBe(400);
     expect((await handleDiscussionR2MediaRoute(request('sign', { ...good, storageKey: '../other' }), env())).status).toBe(400);
     const signed = await handleDiscussionR2MediaRoute(request('sign', good), env());
