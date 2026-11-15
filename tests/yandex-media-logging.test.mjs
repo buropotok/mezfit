@@ -106,7 +106,7 @@ describe('Yandex media diagnostic log storage', () => {
 
   it('rolls to the next sequence once the latest object exceeds 1 MiB', async () => {
     const old = Buffer.alloc(logging.LIMIT_BYTES + 1, 0x61);
-    const storage = fakeStorage({ prefill: { logs/logs_20261115_0001: old } });
+    const storage = fakeStorage({ prefill: { 'logs/logs_20261115_0001': old } });
     const key = await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
@@ -116,7 +116,7 @@ describe('Yandex media diagnostic log storage', () => {
   });
 
   it('retries on an ETag conflict without overwriting another writer', async () => {
-    const storage = fakeStorage({ prefill: { logs/logs_20261115_0001: '{"before":true}\n' }, conflictOnce: true });
+    const storage = fakeStorage({ prefill: { 'logs/logs_20261115_0001': '{"before":true}\n' }, conflictOnce: true });
     const key = await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
