@@ -1,4 +1,7 @@
 import { discussionId, discussionRecord } from '../../shared/discussion-anchor';
+
+const mediaRowId = (value: unknown): value is string => typeof value === 'string'
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 import { cloudList, cloudRead, cloudToken, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 /** Only the dedicated read-only Dexie service account may verify a media viewer. */
@@ -17,7 +20,7 @@ export interface DiscussionR2ReadIdentity {
 export function validDiscussionR2ReadIdentity(value: unknown): value is DiscussionR2ReadIdentity {
   if (!discussionRecord(value)) return false;
   return typeof value.realmId === 'string' && /^rlm[a-f0-9]{28}$/.test(value.realmId)
-    && discussionId(value.messageId) && discussionId(value.attachmentId)
+    && mediaRowId(value.messageId) && mediaRowId(value.attachmentId)
     && typeof value.storageKey === 'string' && typeof value.contentType === 'string'
     && typeof value.sizeBytes === 'number' && Number.isSafeInteger(value.sizeBytes);
 }
