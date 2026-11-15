@@ -106,7 +106,6 @@ jobs:
           DEXIE_CLOUD_REMINDER_CLIENT_ID: ${{ secrets.DEXIE_CLOUD_REMINDER_CLIENT_ID }}
           DEXIE_CLOUD_REMINDER_CLIENT_SECRET: ${{ secrets.DEXIE_CLOUD_REMINDER_CLIENT_SECRET }}
           DEXIE_DISCUSSION_WEBHOOK_SECRET: ${{ secrets.DEXIE_DISCUSSION_WEBHOOK_SECRET }}
-          R2_MEDIA_TELEGRAM_ALLOWLIST: ${{ secrets.R2_MEDIA_TELEGRAM_ALLOWLIST }}
 
       - name: Bind provisioned D1 database ID
         if: inputs.operation == 'apply'
