@@ -11,6 +11,11 @@ export function useDiscussionMediaSource(
   const [resolved, setResolved] = useState<{ identity: string; url: string }>();
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const fallbackSelected = useRef<string | null>(null);
   const fallbackInFlight = useRef<{ identity: string; promise: Promise<boolean> } | null>(null);
 
@@ -23,7 +28,7 @@ export function useDiscussionMediaSource(
       || fallbackSelected.current === identity) return Promise.resolve(false);
     if (fallbackInFlight.current?.identity === identity) return fallbackInFlight.current.promise;
     const promise = signedDiscussionR2ReadUrl(cache).then(url => {
-      if (latestIdentity.current !== identity) return false;
+      if (!mounted.current || latestIdentity.current !== identity) return false;
       fallbackSelected.current = identity;
       setResolved({ identity, url });
       return true;
