@@ -75,10 +75,24 @@ describe('Yandex media diagnostic log storage', () => {
     const now = new Date('2026-11-15T12:00:00Z');
     const first = await logging.appendEvents([event()], env, { now, fetchImpl: storage.fetchImpl });
     const next = await logging.appendEvents([event('RESPONSE_CREATED')], env, { now, fetchImpl: storage.fetchImpl });
-    expect(first).toBe('logs/logs_20261115_0001');
+    expect(first).toBe('logs/logs_20261115_0001.jsonl');
     expect(next).toBe(first);
     expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT', 'GET', 'HEAD', 'PATCH']);
     expect(storage.objects.get(first).toString('utf8').trim().split('\n')).toHaveLength(2);
+  });
+
+  it('starts a .jsonl file after a legacy extensionless file without modifying its contents', async () => {
+    const legacyKey = 'logs/logs_20261115_0001';
+    const legacyData = '{"previous":true}\\n';
+    const storage = fakeStorage({ prefill: { [legacyKey]: legacyData } });
+    const now = new Date('2026-11-15T12:00:00Z');
+    const first = await logging.appendEvents([event()], env, { now, fetchImpl: storage.fetchImpl });
+    const next = await logging.appendEvents([event('RESPONSE_CREATED')], env, { now, fetchImpl: storage.fetchImpl });
+    expect(first).toBe('logs/logs_20261115_0002.jsonl');
+    expect(next).toBe(first);
+    expect(storage.objects.get(legacyKey).toString('utf8')).toBe(legacyData);
+    expect(storage.objects.get(first).toString('utf8').trim().split('\\n')).toHaveLength(2);
+    expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT', 'GET', 'HEAD', 'PATCH']);
   });
 
   it('starts a new file whenever the Moscow date changes, even below 1 MiB', async () => {
@@ -89,7 +103,7 @@ describe('Yandex media diagnostic log storage', () => {
     await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T21:01:00Z'), fetchImpl: storage.fetchImpl,
     });
-    expect([...storage.objects.keys()]).toEqual(['logs/logs_20261115_0001', 'logs/logs_20261116_0001']);
+    expect([...storage.objects.keys()]).toEqual(['logs/logs_20261115_0001.jsonl', 'logs/logs_20261116_0001.jsonl']);
   });
 
   it('keeps both concurrent first-day log writes without overwriting either one', async () => {
@@ -99,8 +113,8 @@ describe('Yandex media diagnostic log storage', () => {
       logging.appendEvents([event('FIRST_REQUEST')], env, { now, fetchImpl: storage.fetchImpl }),
       logging.appendEvents([event('SECOND_REQUEST')], env, { now, fetchImpl: storage.fetchImpl }),
     ]);
-    expect(keys).toEqual(['logs/logs_20261115_0001', 'logs/logs_20261115_0001']);
-    const saved = storage.objects.get('logs/logs_20261115_0001').toString('utf8');
+    expect(keys).toEqual(['logs/logs_20261115_0001.jsonl', 'logs/logs_20261115_0001.jsonl']);
+    const saved = storage.objects.get('logs/logs_20261115_0001.jsonl').toString('utf8');
     expect(saved).toContain('FIRST_REQUEST');
     expect(saved).toContain('SECOND_REQUEST');
     expect(saved.trim().split('\n')).toHaveLength(2);
@@ -108,17 +122,17 @@ describe('Yandex media diagnostic log storage', () => {
 
   it('rolls to the next sequence once the latest object exceeds 1 MiB', async () => {
     const old = Buffer.alloc(logging.LIMIT_BYTES + 1, 0x61);
-    const storage = fakeStorage({ prefill: { 'logs/logs_20261115_0001': old } });
+    const storage = fakeStorage({ prefill: { 'logs/logs_20261115_0001.jsonl': old } });
     const key = await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
-    expect(key).toBe('logs/logs_20261115_0002');
-    expect(storage.objects.get('logs/logs_20261115_0001')).toEqual(old);
+    expect(key).toBe('logs/logs_20261115_0002.jsonl');
+    expect(storage.objects.get('logs/logs_20261115_0001.jsonl')).toEqual(old);
     expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT']);
   });
 
   it('retries on an ETag conflict without overwriting another writer', async () => {
-    const storage = fakeStorage({ prefill: { 'logs/logs_20261115_0001': '{"before":true}\n' }, conflictOnce: true });
+    const storage = fakeStorage({ prefill: { 'logs/logs_20261115_0001.jsonl': '{"before":true}\n' }, conflictOnce: true });
     const key = await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
