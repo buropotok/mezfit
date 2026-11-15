@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { directMediaSizeLimit, directMediaUrl } from './directMediaUpload';
+import { signedDiscussionR2ReadUrl } from './cloudflareMediaRead';
 
 /** Do not download very large clips merely because their thumbnail became visible. */
 export const DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES = 8 * 1024 * 1024;
@@ -9,6 +10,10 @@ export interface DiscussionMediaCacheEntry {
   storageKey: string;
   mimeType: string;
   sizeBytes: number;
+  /** Only published, realm-authorized attachments carry a remote read identity. */
+  realmId?: string;
+  messageId?: string;
+  attachmentId?: string;
 }
 
 export interface MediaReplicaTask extends DiscussionMediaCacheEntry {
@@ -134,25 +139,50 @@ const downloads = new Map<string, Promise<Blob | null>>();
 export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promise<Blob | null> {
   const url = mediaUrl(entry);
   if (!url) return Promise.resolve(null);
-  const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes]);
+  const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
+    entry.realmId, entry.messageId, entry.attachmentId]);
   const active = downloads.get(key);
   if (active) return active;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 300_000);
-  const task = (async () => {
+  const fetchComplete = async (source: string, signal: AbortSignal): Promise<Blob | null> => {
     try {
-      const response = await fetch(url, { signal: controller.signal, credentials: 'omit' });
+      const response = await fetch(source, {
+        signal, credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
+      });
       const length = response.headers.get('content-length');
       if (response.status !== 200 || (length !== null && Number(length) !== entry.sizeBytes)) {
         void response.body?.cancel().catch(() => undefined);
         return null;
       }
       const blob = await response.blob();
-      if (!matches(entry, blob)) return null;
-      await storeDiscussionMedia(entry, blob);
-      return blob;
+      return matches(entry, blob) ? blob : null;
     } catch {
       return null;
+    }
+  };
+  const task = (async () => {
+    try {
+      // An unreachable Yandex connection must not monopolize the full media timeout.
+      const primary = new AbortController();
+      const cancel = () => primary.abort();
+      controller.signal.addEventListener('abort', cancel, { once: true });
+      const primaryTimeout = setTimeout(() => primary.abort(), 8_000);
+      let blob: Blob | null = null;
+      try { blob = await fetchComplete(url, primary.signal); }
+      finally {
+        clearTimeout(primaryTimeout);
+        controller.signal.removeEventListener('abort', cancel);
+      }
+      if (!blob && !controller.signal.aborted && entry.realmId && entry.messageId && entry.attachmentId) {
+        try {
+          const fallbackUrl = await signedDiscussionR2ReadUrl(entry, controller.signal);
+          blob = await fetchComplete(fallbackUrl, controller.signal);
+        } catch { /* R2 may be unreachable or this user may no longer have realm access. */ }
+      }
+      if (!blob) return null;
+      await storeDiscussionMedia(entry, blob);
+      return blob;
     } finally {
       clearTimeout(timer);
     }

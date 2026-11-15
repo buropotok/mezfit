@@ -38,9 +38,11 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const [paused, setPaused] = useState(false);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
+  const currentRetry = useRef(retry);
+  currentRetry.current = retry;
   const thumbnail = mode === 'thumbnail';
   const autoCacheVideo = !thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES);
-  const { url: mediaSrc, container } = useDiscussionMediaSource(
+  const { url: mediaSrc, container, tryR2Fallback } = useDiscussionMediaSource(
     src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
   const crossOrigin = mode === 'viewer' && !autoPlay && !usePlainSource && mediaSrc?.startsWith('https:')
@@ -52,7 +54,12 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     if (crossOrigin) {
       // Some hosts support playback but do not allow reading pixels.
       setUsePlainSource(true);
-    } else setFailed(true);
+    } else {
+      const attempt = retry;
+      void tryR2Fallback().then(switched => {
+        if (!switched && currentRetry.current === attempt) setFailed(true);
+      });
+    }
   }
   const annotate = () => {
     const video = type === 'video' ? player.current : null;

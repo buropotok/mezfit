@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Button } from 'konsta/react';
 import { IconButton, Text } from '../ui/primitives';
 import { VoiceMessagePlayer } from '../voice-note/VoiceMessagePlayer';
@@ -15,9 +15,17 @@ export function DiscussionVoice({ src, waveform, durationMs, cache, onMenu, meta
 }) {
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
-  const { url, container } = useDiscussionMediaSource(src, cache, 'cache-only', retry, false);
+  const currentRetry = useRef(retry);
+  currentRetry.current = retry;
+  const { url, container, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'cache-only', retry, false);
   return <div className="discussion-voice" ref={container}>
-    {url && <VoiceMessagePlayer key={retry} src={url} waveform={waveform} durationMs={durationMs} onError={setError} />}
+    {url && <VoiceMessagePlayer key={retry} src={url} waveform={waveform} durationMs={durationMs}
+      onError={message => {
+        if (message.includes('загрузить')) {
+          const attempt = retry;
+          void tryR2Fallback().then(switched => { if (!switched && currentRetry.current === attempt) setError(message); });
+        } else setError(message);
+      }} />}
     {onMenu && <IconButton icon="dots-vertical" label="Действия сообщения" onClick={event => {
       event.stopPropagation(); onMenu();
     }} />}

@@ -459,11 +459,23 @@ export interface DiscussionR2SignedPut {
   expiresAt: number;
 }
 
+export interface DiscussionR2ReadInput extends DiscussionR2MediaInput {
+  realmId: string;
+  messageId: string;
+  attachmentId: string;
+}
+
+export interface DiscussionR2SignedGet {
+  storageKey: string;
+  getUrl: string;
+  expiresAt: number;
+}
+
 /** Typed API boundary for privileged Worker media signing and verification.
  * File bytes never transit through the Worker; only upload metadata does.
  */
 async function discussionR2Request(
-  action: 'sign' | 'verify', input: DiscussionR2MediaInput, signal?: AbortSignal,
+  action: 'sign' | 'verify' | 'read', input: DiscussionR2MediaInput, signal?: AbortSignal,
 ): Promise<Record<string, unknown>> {
   const response = await fetch('/api/discussion-media/' + action, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -490,6 +502,20 @@ export async function requestDiscussionR2Signature(
     throw new ApiError(502, 'Некорректная подпись загрузки медиа', 'INVALID_API_RESPONSE');
   }
   return { storageKey: result.storageKey, putUrl: result.putUrl, expiresAt: result.expiresAt };
+}
+
+/** The Worker checks Telegram identity, realm membership and the exact attachment
+ * before issuing a short-lived private GET URL. The response never carries a token.
+ */
+export async function requestDiscussionR2ReadUrl(
+  input: DiscussionR2ReadInput, signal?: AbortSignal,
+): Promise<DiscussionR2SignedGet> {
+  const result = await discussionR2Request('read', input, signal);
+  if (result.storageKey !== input.storageKey || typeof result.getUrl !== 'string'
+    || typeof result.expiresAt !== 'number' || !Number.isSafeInteger(result.expiresAt)) {
+    throw new ApiError(502, 'Некорректная ссылка чтения медиа', 'INVALID_API_RESPONSE');
+  }
+  return { storageKey: input.storageKey, getUrl: result.getUrl, expiresAt: result.expiresAt };
 }
 
 export async function verifyDiscussionR2Upload(

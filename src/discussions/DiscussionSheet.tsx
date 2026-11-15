@@ -68,7 +68,8 @@ function galleryMediaSource(attachment: MessageAttachment, accountId: string): D
   const { storageKey, mediaType, mimeType, sizeBytes, durationSeconds } = attachment;
   const src = storageKey && directMediaUrl(storageKey);
   if (!storageKey || !src || mediaType === 'voice' || mediaType === 'video-note') return null;
-  return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes } };
+  return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes,
+    realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id } };
 }
 
 const videoCommentHintKey = 'mezfit.discussion.videoCommentUsed';
@@ -602,7 +603,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       const { storageKey, mimeType, sizeBytes } = attachment;
       const url = storageKey && directMediaUrl(storageKey);
       if (!url || !storageKey) return [];
-      return [saveItem(attachment.id, { url, cache: { accountId: repository.actorUserId, storageKey, mimeType, sizeBytes } })];
+      return [saveItem(attachment.id, { url, cache: { accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
+          realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id } })];
     }),
     ...(own ? [{ id: 'delete', label: 'Удалить', icon: 'trash' as const, onSelect: () => choose('delete') }] : []),
   ];
@@ -764,7 +766,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                     const src = directMediaUrl(storageKey);
                     return src && <DiscussionVoice key={attachment.id} src={src} waveform={waveform ?? []}
                       durationMs={(durationSeconds ?? 0) * 1000} meta={meta} onMenu={onMenu}
-                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
+                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
+                         realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id }} />;
                   }
                   if (attachment.mediaType === 'video-note' && attachment.storageKey) {
                     const { storageKey, mimeType, sizeBytes, durationSeconds } = attachment;
@@ -772,7 +775,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                     return src && <DiscussionVideoNote key={attachment.id} src={src}
                       durationSeconds={durationSeconds ?? 0} playbackHost={videoPlaybackHost} scrollViewport={scroller}
                       meta={meta} onMenu={onMenu}
-                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }} />;
+                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
+                         realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id }} />;
                   }
                   const source = galleryMediaSource(attachment, repository.actorUserId);
                   return source && <DiscussionMedia key={attachment.id} {...source} mode="thumbnail"
