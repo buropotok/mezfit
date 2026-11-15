@@ -25,6 +25,23 @@ it('survives a fresh Dexie handle with one pending replica and the same bytes', 
   expect(await listIncompleteMediaReplicas(entry.accountId)).toEqual([]);
 });
 
+it('upgrades a legacy v1 media cache without deleting the previously stored file', async () => {
+  const legacy = new Dexie('mezfit-discussion-media:' + entry.accountId);
+  legacy.version(1).stores({ files: '&key' });
+  try {
+    await legacy.table('files').put({
+      key: entry.storageKey, blob: new Blob(['sample'], { type: entry.mimeType }),
+    });
+  } finally {
+    legacy.close();
+  }
+  await rememberMediaReplica(entry, 'movie.mp4');
+  expect(await (await readDiscussionMedia(entry))?.text()).toBe('sample');
+  expect(await getMediaReplica(entry.accountId, entry.storageKey)).toMatchObject({
+    fileName: 'movie.mp4', published: false,
+  });
+});
+
 it('refuses to reuse a replica key for different file metadata', async () => {
   await rememberMediaReplica(entry, 'movie.mp4');
   await expect(rememberMediaReplica({ ...entry, sizeBytes: 7 }, 'movie.mp4'))
