@@ -1,12 +1,13 @@
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
 import { TelegramAuthError, validateTelegramInitData } from './telegram';
+import { authorizeDiscussionR2Read, validDiscussionR2ReadIdentity, type DiscussionMediaReadEnv } from './discussion-media-read-auth';
 
 /** Dedicated private discussion-media bucket, provisioned by Cloudflare bootstrap. */
 const BUCKET = 'mezfit-discussion-media';
 const EXPIRES_SECONDS = 600;
 const encoder = new TextEncoder();
 
-export interface DiscussionR2MediaEnv {
+export interface DiscussionR2MediaEnv extends DiscussionMediaReadEnv {
   TELEGRAM_BOT_TOKEN: string;
   R2_BINDING_DISCUSSION_MEDIA: R2Bucket;
   R2_ACCOUNT_ID?: string;
@@ -98,9 +99,45 @@ export async function signDiscussionR2Put(input: Omit<R2MediaRequest, 'initData'
   };
 }
 
+/** A short-lived private GET capability; Range is deliberately not signed so WebView
+ * playback can request byte ranges without downloading the complete video. */
+export async function signDiscussionR2Get(
+  storageKey: string,
+  env: Required<Pick<DiscussionR2MediaEnv, 'R2_ACCOUNT_ID' | 'R2_MEDIA_ACCESS_KEY_ID' | 'R2_MEDIA_SECRET_ACCESS_KEY'>>,
+  now = new Date(),
+): Promise<{ storageKey: string; getUrl: string; expiresAt: number }> {
+  if (!DISCUSSION_MEDIA_KEY_PATTERN.test(storageKey)) throw new Error('INVALID_MEDIA_KEY');
+  const date = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const day = date.slice(0, 8);
+  const host = `${BUCKET}.${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  const scope = `${day}/auto/s3/aws4_request`;
+  const parameters: [string, string][] = [
+    ['X-Amz-Algorithm', 'AWS4-HMAC-SHA256'],
+    ['X-Amz-Content-Sha256', 'UNSIGNED-PAYLOAD'],
+    ['X-Amz-Credential', `${env.R2_MEDIA_ACCESS_KEY_ID}/${scope}`],
+    ['X-Amz-Date', date],
+    ['X-Amz-Expires', String(EXPIRES_SECONDS)],
+    ['X-Amz-SignedHeaders', 'host'],
+  ];
+  const query = parameters.sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${encodeAws(key)}=${encodeAws(value)}`).join('&');
+  const path = '/' + storageKey.split('/').map(encodeAws).join('/');
+  const canonicalRequest = `GET\n${path}\n${query}\nhost:${host}\n\nhost\nUNSIGNED-PAYLOAD`;
+  const toSign = `AWS4-HMAC-SHA256\n${date}\n${scope}\n${await sha256Hex(canonicalRequest)}`;
+  const keyDate = await hmac(encoder.encode('AWS4' + env.R2_MEDIA_SECRET_ACCESS_KEY), day);
+  const keyRegion = await hmac(keyDate, 'auto');
+  const keyService = await hmac(keyRegion, 's3');
+  const signature = hex(await hmac(await hmac(keyService, 'aws4_request'), toSign));
+  return {
+    storageKey, getUrl: `https://${host}${path}?${query}&X-Amz-Signature=${signature}`,
+    expiresAt: now.getTime() + EXPIRES_SECONDS * 1000,
+  };
+}
+
 export async function handleDiscussionR2MediaRoute(request: Request, env: DiscussionR2MediaEnv): Promise<Response> {
   const path = new URL(request.url).pathname;
-  if (path !== '/api/discussion-media/sign' && path !== '/api/discussion-media/verify') {
+  if (path !== '/api/discussion-media/sign' && path !== '/api/discussion-media/verify'
+    && path !== '/api/discussion-media/read') {
     return jsonError(404, 'NOT_FOUND');
   }
   if (request.method !== 'POST') return jsonError(405, 'METHOD_NOT_ALLOWED');
@@ -117,12 +154,40 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
     return jsonError(400, 'INVALID_JSON');
   }
   const input = parseMediaRequest(raw);
-  if (!input) return jsonError(400, 'INVALID_MEDIA_REQUEST');
+  if (!input || (path.endsWith('/read') && !validDiscussionR2ReadIdentity(raw))) {
+    return jsonError(400, 'INVALID_MEDIA_REQUEST');
+  }
+  let actorId: string;
   try {
-    await validateTelegramInitData(input.initData, env.TELEGRAM_BOT_TOKEN);
+    actorId = 'tg:' + (await validateTelegramInitData(input.initData, env.TELEGRAM_BOT_TOKEN)).user.id;
   } catch (error) {
     if (error instanceof TelegramAuthError) return jsonError(401, 'UNAUTHORIZED');
     throw error;
+  }
+
+  if (path.endsWith('/read')) {
+    if (!validDiscussionR2ReadIdentity(raw)) return jsonError(400, 'INVALID_MEDIA_REQUEST');
+    let approved: boolean;
+    try {
+      approved = await authorizeDiscussionR2Read(env, actorId, raw);
+    } catch {
+      return jsonError(503, 'MEDIA_AUTHORIZATION_UNAVAILABLE');
+    }
+    if (!approved) return jsonError(403, 'MEDIA_FORBIDDEN');
+    const object = await env.R2_BINDING_DISCUSSION_MEDIA.head(input.storageKey);
+    if (!object) return jsonError(404, 'MEDIA_NOT_FOUND');
+    if (object.size !== input.sizeBytes || object.httpMetadata?.contentType !== input.contentType) {
+      return jsonError(409, 'MEDIA_MISMATCH');
+    }
+    const { R2_ACCOUNT_ID: accountId, R2_MEDIA_ACCESS_KEY_ID: accessKeyId,
+      R2_MEDIA_SECRET_ACCESS_KEY: secretAccessKey } = env;
+    if (!accountId || !/^[a-f0-9]{32}$/i.test(accountId)
+      || !accessKeyId || !/^[A-Za-z0-9]{12,128}$/.test(accessKeyId) || !secretAccessKey) {
+      return jsonError(503, 'R2_SIGNER_UNAVAILABLE');
+    }
+    return Response.json(await signDiscussionR2Get(input.storageKey, {
+      R2_ACCOUNT_ID: accountId, R2_MEDIA_ACCESS_KEY_ID: accessKeyId, R2_MEDIA_SECRET_ACCESS_KEY: secretAccessKey,
+    }), { headers: { 'Cache-Control': 'no-store' } });
   }
 
   if (path.endsWith('/verify')) {
