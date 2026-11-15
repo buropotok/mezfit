@@ -47,10 +47,23 @@ it('falls back to R2 when Yandex cannot be reached, without generating a second 
   vi.mocked(uploadDirectMedia).mockRejectedValue(new MediaUploadError('NETWORK', undefined, undefined, undefined, 'signer'));
   vi.mocked(uploadCloudflareMedia).mockResolvedValue(uploaded);
   await expect(uploadMirroredDiscussionMedia(file(), { accountId, retryKey: key })).resolves.toEqual(uploaded);
-  expect(uploadCloudflareMedia).toHaveBeenCalledWith(expect.any(File), { retryKey: key, signal: undefined });
+  expect(uploadCloudflareMedia).toHaveBeenCalledWith(expect.any(File), { retryKey: key, signal: expect.any(AbortSignal) });
   expect(confirmMediaReplica).toHaveBeenCalledWith(accountId, key, 'r2');
   expect(confirmMediaReplica).not.toHaveBeenCalledWith(accountId, key, 'yandex');
 });
+
+it.each(['SIGNER_AUTH', 'SIGNER_UNAVAILABLE'] as const)(
+  'keeps Yandex diagnostics when the R2 signer fails with %s',
+  async r2Code => {
+    const primaryError = new MediaUploadError('NETWORK', undefined, undefined, undefined, 'put');
+    vi.mocked(uploadDirectMedia).mockRejectedValue(primaryError);
+    vi.mocked(uploadCloudflareMedia).mockRejectedValue(new MediaUploadError(r2Code));
+    await expect(uploadMirroredDiscussionMedia(file(), { accountId, retryKey: key }))
+      .rejects.toBe(primaryError);
+    expect(uploadCloudflareMedia).toHaveBeenCalledOnce();
+    expect(confirmMediaReplica).not.toHaveBeenCalled();
+  },
+);
 
 it('keeps a failed upload retryable when both providers reject it', async () => {
   vi.mocked(uploadDirectMedia).mockRejectedValue(new MediaUploadError('NETWORK'));
