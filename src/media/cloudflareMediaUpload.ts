@@ -1,5 +1,5 @@
 import { getTelegramWebApp } from '../telegram';
-import { ApiError, requestDiscussionR2Signature, verifyDiscussionR2Upload } from '../api';
+import { ApiError, requestDiscussionR2Signature, verifyDiscussionR2Upload, type DiscussionR2SignedPut } from '../api';
 import { directMediaUrl, MediaUploadError, validateDirectMedia, type UploadedMedia, type MediaUploadStage } from './directMediaUpload';
 
 const signedHeaders = 'content-length;content-type;host;if-none-match';
@@ -43,7 +43,7 @@ export async function uploadCloudflareMedia(
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       stage = 'signer';
-      let payload;
+      let payload: DiscussionR2SignedPut;
       try {
         payload = await requestDiscussionR2Signature(parameters, controller.signal);
       } catch (error) {
