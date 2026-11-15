@@ -15,9 +15,14 @@ export function DiscussionVoice({ src, waveform, durationMs, cache, onMenu, meta
 }) {
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
-  const { url, container } = useDiscussionMediaSource(src, cache, 'cache-only', retry, false);
+  const { url, container, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'cache-only', retry, false);
   return <div className="discussion-voice" ref={container}>
-    {url && <VoiceMessagePlayer key={retry} src={url} waveform={waveform} durationMs={durationMs} onError={setError} />}
+    {url && <VoiceMessagePlayer key={retry} src={url} waveform={waveform} durationMs={durationMs}
+      onError={message => {
+        if (message.includes('загрузить')) {
+          void tryR2Fallback().then(switched => { if (!switched) setError(message); });
+        } else setError(message);
+      }} />}
     {onMenu && <IconButton icon="dots-vertical" label="Действия сообщения" onClick={event => {
       event.stopPropagation(); onMenu();
     }} />}
