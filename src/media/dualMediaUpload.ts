@@ -1,4 +1,4 @@
-import { uploadDirectMedia, directMediaUrl, MediaUploadError, type UploadedMedia } from './directMediaUpload';
+import { uploadDirectMedia, directMediaUrl, validateDirectMedia, MediaUploadError, type UploadedMedia } from './directMediaUpload';
 import { uploadCloudflareMedia } from './cloudflareMediaUpload';
 import {
   rememberMediaReplica, confirmMediaReplica, publishMediaReplica, listIncompleteMediaReplicas,
@@ -34,7 +34,7 @@ export async function uploadMirroredDiscussionMedia(
   file: File,
   { accountId, retryKey, signal }: { accountId: string; retryKey: string; signal?: AbortSignal },
 ): Promise<UploadedMedia> {
-  const entry = { accountId, storageKey: retryKey, mimeType: file.type, sizeBytes: file.size };
+  const entry = { accountId, storageKey: retryKey, mimeType: validateDirectMedia(file), sizeBytes: file.size };
   await rememberMediaReplica(entry, file.name).catch(() => undefined);
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
   // External cancellation applies only until the first provider confirms success.
