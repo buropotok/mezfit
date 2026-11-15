@@ -1,14 +1,14 @@
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
 import { TelegramAuthError, validateTelegramInitData } from './telegram';
 
-/** Existing R2 bucket is reused under the isolated mvp-media/ namespace. */
-const BUCKET = 'mezfit';
+/** Dedicated private discussion-media bucket, provisioned by Cloudflare bootstrap. */
+const BUCKET = 'mezfit-discussion-media';
 const EXPIRES_SECONDS = 600;
 const encoder = new TextEncoder();
 
 export interface DiscussionR2MediaEnv {
   TELEGRAM_BOT_TOKEN: string;
-  R2_BINDING_MEZFIT: R2Bucket;
+  R2_BINDING_DISCUSSION_MEDIA: R2Bucket;
   R2_ACCOUNT_ID?: string;
   R2_MEDIA_ACCESS_KEY_ID?: string;
   R2_MEDIA_SECRET_ACCESS_KEY?: string;
@@ -133,7 +133,7 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
     .includes(String(authenticatedUserId))) return jsonError(403, 'MEDIA_FORBIDDEN');
 
   if (path.endsWith('/verify')) {
-    const object = await env.R2_BINDING_MEZFIT.head(input.storageKey);
+    const object = await env.R2_BINDING_DISCUSSION_MEDIA.head(input.storageKey);
     if (!object) return jsonError(404, 'MEDIA_NOT_FOUND');
     if (object.size !== input.sizeBytes || object.httpMetadata?.contentType !== input.contentType) {
       return jsonError(409, 'MEDIA_MISMATCH');
