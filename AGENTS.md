@@ -115,12 +115,17 @@ Telegram-authenticated user may request an R2 sign/verify operation, subject
 to strict key/MIME/size checks, short expiry, write-once PUT semantics and
 bucket-scoped credentials. Do not bypass Telegram validation or grant
 anonymous/public bucket writes, reads, LIST, DELETE or cross-account access.
-R2-only uploads can be published, but media reading still uses Yandex. As a
-known temporary MVP limitation, recipients cannot read an attachment stored
-only in R2 until a separate read-fallback iteration is delivered. Test with
-non-sensitive media. The bootstrap and Cloudflare resource creation were
-separately approved and completed; no new cloud administration permissions
-are implied.
+The upload-only MVP initially left R2-only media unreadable; the next
+owner-approved read-fallback iteration adds private signed R2 GET after
+Telegram identity, live Dexie Cloud coach/client realm membership, and exact
+published message/attachment authorization. Yandex remains first, with R2 as
+a backup for read failures. Do not expose the R2 bucket publicly, grant R2
+read based solely on a random storage key, or weaken realm authorization.
+The Worker must use an existing read-only Dexie Cloud service account; no
+new cloud administration permissions are implied. Browser-native media Range
+requests use a short-lived GET capability with only the Host header signed.
+Test with non-sensitive media and verify real Android/iOS Telegram WebView
+compatibility before claiming production readiness.
 
 ## 10. Validation and error contracts
 
