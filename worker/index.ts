@@ -30,6 +30,7 @@ import { CloudMembershipError, provisionInviteMembership, requireCloudMembership
 import { currentTelegramAvatarSource, syncOwnContactProfile } from './lib/cloud-contact-profiles';
 import { sendWorkoutReminders } from './lib/workout-reminders';
 import { handleVideoRecordingDiagnostic } from './lib/video-recording-diagnostic';
+import { handleDiscussionR2MediaRoute } from './lib/discussion-media-r2';
 import { parseNotificationStartParam } from '../shared/telegram-notification-link';
 import { dismissTelegramNotification } from './lib/coach-telegram';
 import { receiveDiscussionNotifications, sendDiscussionNotifications } from './lib/discussion-notifications';
@@ -302,6 +303,10 @@ async function handleExerciseRoute(request: Request, env: Env, clientUserId: num
 
 async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
+
+  if (url.pathname.startsWith('/api/discussion-media/')) {
+    return handleDiscussionR2MediaRoute(request, env);
+  }
 
   if (url.pathname === '/api/diagnostics/video-recording') {
     return handleVideoRecordingDiagnostic(request, env);
