@@ -167,7 +167,7 @@ export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promi
       const cancel = () => primary.abort();
       controller.signal.addEventListener('abort', cancel, { once: true });
       const primaryTimeout = setTimeout(() => primary.abort(), 8_000);
-      let blob: Blob | null;
+      let blob: Blob | null = null;
       try { blob = await fetchComplete(url, primary.signal); }
       finally {
         clearTimeout(primaryTimeout);
