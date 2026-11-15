@@ -80,11 +80,14 @@ export async function uploadMirroredDiscussionMedia(
     return first;
   } catch {
     if (transfer.signal.aborted) throw new MediaUploadError('CANCELLED');
-    // Both providers failed. Keep the primary error when the R2 signer is not configured.
+    // Preserve the primary Yandex failure when R2 cannot authenticate or sign:
+    // the fallback must not replace an actionable Yandex error with a secondary failure.
     const reasons = await Promise.allSettled([yandex, r2]);
     const yandexError = reasons[0].status === 'rejected' ? reasons[0].reason : undefined;
     const r2Error = reasons[1].status === 'rejected' ? reasons[1].reason : undefined;
-    if (r2Error instanceof MediaUploadError && r2Error.code === 'SIGNER_UNAVAILABLE' && yandexError) throw yandexError;
+    if (r2Error instanceof MediaUploadError
+      && (r2Error.code === 'SIGNER_UNAVAILABLE' || r2Error.code === 'SIGNER_AUTH')
+      && yandexError) throw yandexError;
     throw r2Error ?? yandexError ?? new MediaUploadError('NETWORK');
   } finally {
     if (hedgeTimer) clearTimeout(hedgeTimer);
