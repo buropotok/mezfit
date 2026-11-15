@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
 import { uploadCloudflareMedia } from './cloudflareMediaUpload';
-import { mediaFunctionUrl, rawInitData } from './mediaUploadTestFixtures';
+import { rawInitData } from './mediaUploadTestFixtures';
 
 const key = 'mvp-media/' + 'a'.repeat(64);
 const host = 'mezfit.' + 'a'.repeat(32) + '.r2.cloudflarestorage.com';
