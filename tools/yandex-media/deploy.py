@@ -87,7 +87,7 @@ def runtime_settings(version):
 def package_source():
     archive = io.BytesIO()
     with ZipFile(archive, "w", compression=ZIP_DEFLATED) as bundle:
-        for filename in ("index.js", "package.json"):
+        for filename in ("index.js", "media-log.js", "package.json"):
             bundle.write(SOURCE / filename, filename)
     return base64.b64encode(archive.getvalue()).decode("ascii")
 
