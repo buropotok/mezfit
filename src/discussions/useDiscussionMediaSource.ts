@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { downloadDiscussionMedia, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { signedDiscussionR2ReadUrl } from '../media/cloudflareMediaRead';
 
 export function useDiscussionMediaSource(
   src: string, cache: DiscussionMediaCacheEntry | undefined, mode: 'cache-only' | 'photo' | 'video', retry: number, lazy: boolean,
@@ -8,6 +9,30 @@ export function useDiscussionMediaSource(
   const container = useRef<HTMLDivElement>(null);
   const identity = JSON.stringify([src, accountId, storageKey, mimeType, sizeBytes, mode, retry]);
   const [resolved, setResolved] = useState<{ identity: string; url: string }>();
+  const latestIdentity = useRef(identity);
+  latestIdentity.current = identity;
+  const fallbackSelected = useRef<string | null>(null);
+  const fallbackInFlight = useRef<{ identity: string; promise: Promise<boolean> } | null>(null);
+
+  /** Called after the browser media element fails; no R2 GET is issued merely
+   * because a message appeared in the viewport.
+   */
+  const tryR2Fallback = (): Promise<boolean> => {
+    if (!cache?.realmId || !cache.messageId || !cache.attachmentId || !src.startsWith('https:')
+      || resolved?.identity === identity && resolved.url.startsWith('blob:')
+      || fallbackSelected.current === identity) return Promise.resolve(false);
+    if (fallbackInFlight.current?.identity === identity) return fallbackInFlight.current.promise;
+    const promise = signedDiscussionR2ReadUrl(cache).then(url => {
+      if (latestIdentity.current !== identity) return false;
+      fallbackSelected.current = identity;
+      setResolved({ identity, url });
+      return true;
+    }).catch(() => false).finally(() => {
+      if (fallbackInFlight.current?.identity === identity) fallbackInFlight.current = null;
+    });
+    fallbackInFlight.current = { identity, promise };
+    return promise;
+  };
 
   useEffect(() => {
     if (!accountId || !storageKey || !mimeType || sizeBytes === undefined) return;
@@ -21,7 +46,8 @@ export function useDiscussionMediaSource(
       const blob = cached ?? (mode === 'photo' ? await downloadDiscussionMedia(entry) : null);
       if (!active) return;
       if (blob && typeof URL.createObjectURL === 'function') objectUrl = URL.createObjectURL(blob);
-      setResolved({ identity, url: objectUrl ?? src });
+      // A late Yandex cache lookup must not overwrite an already-selected R2 URL.
+      if (fallbackSelected.current !== identity) setResolved({ identity, url: objectUrl ?? src });
     };
     let observer: IntersectionObserver | undefined;
     if (lazy && container.current && typeof IntersectionObserver === 'function') {
@@ -40,5 +66,5 @@ export function useDiscussionMediaSource(
   }, [src, accountId, storageKey, mimeType, sizeBytes, mode, identity, lazy]);
 
   const url = !accountId ? src : resolved?.identity === identity ? resolved.url : undefined;
-  return { url, container };
+  return { url, container, tryR2Fallback };
 }
