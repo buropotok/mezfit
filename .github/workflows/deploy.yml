@@ -2,6 +2,12 @@ name: Deploy Mezfit
 
 on:
   workflow_dispatch:
+    inputs:
+      r2_only_media_test:
+        description: Disable new Yandex media uploads for a temporary R2 fallback smoke test
+        type: boolean
+        default: false
+        required: true
   push:
     branches: [main]
 
@@ -38,7 +44,10 @@ jobs:
           # Enable only after discussions Apply and real Coach/Client ACL checks.
           # Keep enabled once account databases have upgraded to v16.
           VITE_CLOUD_DISCUSSIONS_ENABLED: ${{ vars.VITE_CLOUD_DISCUSSIONS_ENABLED }}
-          VITE_YANDEX_MEDIA_FUNCTION_URL: ${{ vars.VITE_YANDEX_MEDIA_FUNCTION_URL }}
+          # A manual test deploy builds with an invalid Yandex signer URL.
+          # The existing client then falls back to R2; normal push/manual deploys restore Yandex.
+          # Existing Yandex public GET URLs and objects remain untouched.
+          VITE_YANDEX_MEDIA_FUNCTION_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.r2_only_media_test && '__R2_ONLY_UPLOAD_TEST__' || vars.VITE_YANDEX_MEDIA_FUNCTION_URL }}
       - name: Resolve D1 database id
         shell: bash
         run: |
