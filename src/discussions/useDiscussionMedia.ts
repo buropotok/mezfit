@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { MediaUploadError, uploadDirectMedia } from '../media/directMediaUpload';
+import { MediaUploadError } from '../media/directMediaUpload';
+import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from '../media/dualMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionMessageView } from '../data/cloud/discussion-views';
@@ -188,11 +189,16 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         if (active.current === controller) { setSelection(undefined); setOutgoing(undefined); setPhase('idle'); }
         return;
       }
-      const result = await uploadDirectMedia(selected.file, { signal: controller.signal, retryKey: selected.metadata.storageKey });
+      const result = await uploadMirroredDiscussionMedia(selected.file, {
+        accountId: repository.actorUserId, signal: controller.signal, retryKey: selected.metadata.storageKey,
+      });
       if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
       setPhase('publishing');
       const sent = await repository.send(command, result);
+      // Upload replication state is operational; a cache failure must not undo publication.
+      await acceptMediaReplica(repository.actorUserId, result.key).catch(() => undefined);
+      void resumeMediaReplicaUploads(repository.actorUserId);
       draft.sent(command.id, selected.restored);
       if (active.current === controller) {
         if (sent.attachments?.length) setPublished(sent);
