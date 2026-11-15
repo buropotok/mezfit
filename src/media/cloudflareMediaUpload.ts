@@ -1,8 +1,7 @@
 import { getTelegramWebApp } from '../telegram';
+import { ApiError, requestDiscussionR2Signature, verifyDiscussionR2Upload } from '../api';
 import { directMediaUrl, MediaUploadError, validateDirectMedia, type UploadedMedia, type MediaUploadStage } from './directMediaUpload';
 
-const SIGN_ROUTE = '/api/discussion-media/sign';
-const VERIFY_ROUTE = '/api/discussion-media/verify';
 const signedHeaders = 'content-length;content-type;host;if-none-match';
 const R2_UPLOAD_HOST = /^mezfit-discussion-media\.[a-f0-9]{32}\.r2\.cloudflarestorage\.com$/i;
 
@@ -32,7 +31,7 @@ export async function uploadCloudflareMedia(
   if (!publicUrl) throw new MediaUploadError('INVALID_KEY');
   const initData = getTelegramWebApp()?.initData;
   if (!initData) throw new MediaUploadError('SIGNER_AUTH');
-  const parameters = JSON.stringify({ initData, storageKey: retryKey, contentType, sizeBytes: file.size });
+  const parameters = { initData, storageKey: retryKey, contentType, sizeBytes: file.size };
   const controller = new AbortController();
   const cancel = () => controller.abort();
   signal?.addEventListener('abort', cancel, { once: true });
@@ -44,13 +43,16 @@ export async function uploadCloudflareMedia(
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       stage = 'signer';
-      const signature = await fetch(SIGN_ROUTE, { ...request, method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: parameters });
-      if (!signature.ok) {
-        void signature.body?.cancel().catch(() => undefined);
-        throw new MediaUploadError(signature.status === 401 ? 'SIGNER_AUTH' : 'SIGNER_UNAVAILABLE', signature.status, undefined, undefined, stage);
+      let payload;
+      try {
+        payload = await requestDiscussionR2Signature(parameters, controller.signal);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          throw new MediaUploadError(error.status === 401 ? 'SIGNER_AUTH' : 'SIGNER_UNAVAILABLE',
+            error.status, undefined, undefined, stage);
+        }
+        throw error;
       }
-      const payload: unknown = await signature.json().catch(() => null);
       if (!validSignedPut(payload, retryKey)) throw new MediaUploadError('SIGNER_UNAVAILABLE', undefined, undefined, undefined, stage);
       stage = 'put';
       const response = await fetch(payload.putUrl, { ...request, method: 'PUT', body: file,
@@ -63,13 +65,15 @@ export async function uploadCloudflareMedia(
         void response.body?.cancel().catch(() => undefined);
         if (!retryKey) throw new MediaUploadError('HTTP', 412, undefined, undefined, stage);
         stage = 'head';
-        const verification = await fetch(VERIFY_ROUTE, { ...request, method: 'POST',
-          headers: { 'Content-Type': 'application/json' }, body: parameters });
-        const confirmed: unknown = verification.ok ? await verification.json().catch(() => null) : null;
-        if (verified(confirmed)) {
+        try {
+          await verifyDiscussionR2Upload(parameters, controller.signal);
           return { key: retryKey, url: publicUrl, fileName: file.name, contentType, sizeBytes: file.size };
+        } catch (error) {
+          if (error instanceof ApiError) {
+            throw new MediaUploadError('HTTP', error.status, undefined, undefined, stage);
+          }
+          throw error;
         }
-        throw new MediaUploadError('HTTP', verification.status, undefined, undefined, stage);
       }
       const expired = response.status === 403 && Date.now() >= payload.expiresAt;
       void response.body?.cancel().catch(() => undefined);
@@ -88,7 +92,3 @@ export async function uploadCloudflareMedia(
   }
 }
 
-function verified(value: unknown): value is { present: true } {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    && 'present' in value && value.present === true;
-}
