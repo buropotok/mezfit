@@ -81,6 +81,19 @@ it('does not treat a mismatched 412 object as successful', async () => {
   await expect(uploadCloudflareMedia(file(), { retryKey: key })).rejects.toMatchObject({ code: 'HTTP', status: 409 });
 });
 
+it('does not accept malformed successful Worker verification after an R2 collision', async () => {
+  const transport = vi.fn<typeof fetch>((url) => Promise.resolve(
+    url === '/api/discussion-media/sign' ? response()
+      : url === putUrl ? new Response(null, { status: 412 })
+        : Response.json({ present: false }),
+  ));
+  vi.stubGlobal('Telegram', { WebApp: { initData: rawInitData } });
+  vi.stubGlobal('fetch', transport);
+  await expect(uploadCloudflareMedia(file(), { retryKey: key }))
+    .rejects.toMatchObject({ code: 'HTTP', status: 502 });
+  expect(transport.mock.calls[2][0]).toBe('/api/discussion-media/verify');
+});
+
 it('refuses unauthenticated and unsupported uploads before any network request', async () => {
   const transport = vi.fn<typeof fetch>();
   vi.stubGlobal('Telegram', { WebApp: { initData: '' } });
