@@ -145,6 +145,16 @@ describe('Private R2 discussion media reads', () => {
     expect(head).not.toHaveBeenCalled();
   });
 
+  it('denies an attachment that has not synchronized to Dexie Cloud', async () => {
+    const { realmId } = await mockCloud({ attachment: null });
+    const response = await handleDiscussionR2MediaRoute(request({
+      initData: await telegramInitData(200600), realmId, messageId,
+      attachmentId, storageKey: key, contentType: 'image/jpeg', sizeBytes: 6,
+    }), env());
+    expect(response.status).toBe(403);
+    expect(head).not.toHaveBeenCalled();
+  });
+
   it('denies a revoked relationship even when the actor still knows the R2 object key', async () => {
     const pair = await relationshipMembership('100500', '200600');
     const members = pair.members.map(member => member.userId === 'tg:200600'
