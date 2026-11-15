@@ -83,7 +83,7 @@ describe('Yandex media diagnostic log storage', () => {
 
   it('starts a .jsonl file after a legacy extensionless file without modifying its contents', async () => {
     const legacyKey = 'logs/logs_20261115_0001';
-    const legacyData = '{"previous":true}\\n';
+    const legacyData = '{"previous":true}\n';
     const storage = fakeStorage({ prefill: { [legacyKey]: legacyData } });
     const now = new Date('2026-11-15T12:00:00Z');
     const first = await logging.appendEvents([event()], env, { now, fetchImpl: storage.fetchImpl });
@@ -91,7 +91,7 @@ describe('Yandex media diagnostic log storage', () => {
     expect(first).toBe('logs/logs_20261115_0002.jsonl');
     expect(next).toBe(first);
     expect(storage.objects.get(legacyKey).toString('utf8')).toBe(legacyData);
-    expect(storage.objects.get(first).toString('utf8').trim().split('\\n')).toHaveLength(2);
+    expect(storage.objects.get(first).toString('utf8').trim().split('\n')).toHaveLength(2);
     expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT', 'GET', 'HEAD', 'PATCH']);
   });
 
