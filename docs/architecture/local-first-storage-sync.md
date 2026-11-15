@@ -45,11 +45,14 @@ The Worker verifies Telegram identity, validates upload parameters and checks
 retries by HEAD via `R2_BINDING_DISCUSSION_MEDIA`. Signed credentials stay
 server-side; no extra business database, sync engine, Dexie Cloud ACL or schema
 is introduced. This is an explicit, *media transport only* exception to the
-previous prohibition on Worker/R2 discussion uploads. R2-only messages are
-not generally enabled until R2 read fallback exists; signing is denied by
-default and restricted by `R2_MEDIA_TELEGRAM_ALLOWLIST` in this first
-iteration. Existing `mezfit` GIF bucket, category artwork, Dexie avatars and
-Yandex Function remain unchanged. Cold Mini App/bootstrap/auth without VPN
+previous prohibition on Worker/R2 discussion uploads. The owner confirmed
+all current MVP users are testers and removed the per-user allowlist. The
+Worker permits sign/verify only after valid Telegram initData authentication
+and strict upload-parameter validation. If R2 is the only confirmed upload,
+the Yandex playback link may remain unreadable until Yandex retry succeeds
+or R2 read fallback is implemented; this temporary MVP failure mode is
+accepted and must be tested. Existing `mezfit` GIF bucket, category artwork,
+Dexie avatars and Yandex Function remain unchanged. Cold Mini App/bootstrap/auth without VPN
 and Telegram iOS/Android video Range behavior remain unverified gates.
 
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
