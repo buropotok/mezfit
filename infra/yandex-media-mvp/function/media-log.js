@@ -21,7 +21,7 @@ function fileDate(date) {
 }
 
 function fileName(date, sequence) {
-  return LOG_PREFIX + 'logs_' + fileDate(date) + '_' + String(sequence).padStart(4, '0');
+  return LOG_PREFIX + 'logs_' + fileDate(date) + '_' + String(sequence).padStart(4, '0') + '.jsonl';
 }
 
 function hash(value) {
@@ -143,9 +143,13 @@ async function lastFile(env, prefix, opts) {
       const key = xmlValue(match[1], 'Key');
       const size = Number(xmlValue(match[1], 'Size'));
       const suffix = key?.slice(prefix.length);
-      if (!key?.startsWith(prefix) || !/^\d{4,}$/.test(suffix) || !Number.isSafeInteger(size) || size < 0) continue;
-      const sequence = Number(suffix);
-      if (Number.isSafeInteger(sequence) && sequence > 0 && (!last || sequence > last.sequence)) {
+      // Keep old extensionless filenames in sequence numbering during the .jsonl transition.
+      const matchSuffix = suffix?.match(/^(\d{4,})(\.jsonl)?$/);
+      if (!key?.startsWith(prefix) || !matchSuffix || !Number.isSafeInteger(size) || size < 0) continue;
+      const sequence = Number(matchSuffix[1]);
+      if (Number.isSafeInteger(sequence) && sequence > 0
+        && (!last || sequence > last.sequence
+          || (sequence === last.sequence && !!matchSuffix[2] && !last.key.endsWith('.jsonl')))) {
         last = { key, size, sequence };
       }
     }
@@ -177,7 +181,7 @@ async function appendEvents(events, env, { fetchImpl, now = new Date(), timeoutM
   try {
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
       const last = await lastFile(env, prefix, opts);
-      const create = !last || last.size > LIMIT_BYTES;
+      const create = !last || last.size > LIMIT_BYTES || !last.key.endsWith('.jsonl');
       const key = create ? fileName(now, (last?.sequence ?? 0) + 1) : last.key;
       if (create) {
         const response = await request(env, 'PUT', key, {
