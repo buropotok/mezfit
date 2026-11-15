@@ -41,10 +41,14 @@ jobs:
       BOOTSTRAP_MODE: ${{ inputs.operation }}
       REPLACE_EXISTING_CORS: ${{ inputs.replace_existing_cors }}
       GENERATE_R2_TOKEN: ${{ inputs.generate_r2_token }}
-      R2_CREDENTIALS_FILE: ${{ runner.temp }}/mezfit-generated-r2.json
-      WORKER_SECRETS_FILE: ${{ runner.temp }}/mezfit-worker-secrets.json
     steps:
       - uses: actions/checkout@v4
+      - name: Set runner-local temporary credential paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "R2_CREDENTIALS_FILE=$RUNNER_TEMP/mezfit-generated-r2.json" >> "$GITHUB_ENV"
+          echo "WORKER_SECRETS_FILE=$RUNNER_TEMP/mezfit-worker-secrets.json" >> "$GITHUB_ENV"
       - name: Verify deliberate owner-only apply
         shell: bash
         env:
