@@ -20,6 +20,8 @@ function fakeStorage({ prefill = {}, conflictOnce = false } = {}) {
     const method = init.method;
     const key = parsed.pathname.replace('/mezfit-comm-poc-20261106/', '');
     calls.push({ method, key, headers: init.headers });
+    if (method !== 'GET') expect(key.startsWith('logs/logs_')).toBe(true);
+    else expect(parsed.searchParams.get('prefix')?.startsWith('logs/logs_')).toBe(true);
     expect(init.headers.authorization).toMatch(/^AWS4-HMAC-SHA256 Credential=logAccess\//);
     expect(init.headers.authorization).not.toContain(env.MEDIA_LOG_S3_SECRET_ACCESS_KEY);
     if (method === 'GET') {
@@ -126,7 +128,7 @@ describe('Yandex media diagnostic log storage', () => {
     expect(data.match(/"SIGNATURE_CREATED"/g)).toHaveLength(1);
   });
 
-  it('does not try writing without a separately configured private bucket and credentials', async () => {
+  it('does not try writing without separate log-specific credentials', async () => {
     const storage = fakeStorage();
     await expect(logging.appendEvents([event()], {}, {
       fetchImpl: storage.fetchImpl,
