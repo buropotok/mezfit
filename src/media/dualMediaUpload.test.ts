@@ -26,6 +26,7 @@ const uploaded = { key, url: 'https://storage.yandexcloud.net/bucket/' + key, fi
   contentType: 'image/jpeg', sizeBytes: 6 };
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.clearAllMocks();
 });
 
@@ -79,4 +80,18 @@ it('recovers only missing providers for accepted attachments in later sessions',
   expect(uploadDirectMedia).toHaveBeenCalledWith(expect.any(File), { retryKey: key });
   expect(uploadCloudflareMedia).not.toHaveBeenCalled();
   expect(confirmMediaReplica).toHaveBeenCalledWith(accountId, key, 'yandex');
+});
+
+
+it('starts R2 after eight seconds when Yandex is still waiting and accepts the first success', async () => {
+  vi.useFakeTimers();
+  vi.mocked(uploadDirectMedia).mockImplementation(() => new Promise(() => undefined));
+  vi.mocked(uploadCloudflareMedia).mockResolvedValue(uploaded);
+  const result = uploadMirroredDiscussionMedia(file(), { accountId, retryKey: key });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(uploadCloudflareMedia).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(8_000);
+  await expect(result).resolves.toMatchObject({ key });
+  expect(uploadDirectMedia).toHaveBeenCalledOnce();
+  expect(uploadCloudflareMedia).toHaveBeenCalledOnce();
 });
