@@ -76,12 +76,12 @@ function createRecorder(clock = () => new Date()) {
 }
 
 function configured(env) {
-  return !!(env.MEDIA_LOG_S3_ACCESS_KEY_ID && env.MEDIA_LOG_S3_SECRET_ACCESS_KEY);
+  return !!(env.MEDIA_S3_ACCESS_KEY_ID && env.MEDIA_S3_SECRET_ACCESS_KEY);
 }
 
 function assertConfig(env) {
-  if (typeof env.MEDIA_LOG_S3_ACCESS_KEY_ID !== 'string' || !/^[A-Za-z0-9_-]+$/.test(env.MEDIA_LOG_S3_ACCESS_KEY_ID)
-    || typeof env.MEDIA_LOG_S3_SECRET_ACCESS_KEY !== 'string' || !env.MEDIA_LOG_S3_SECRET_ACCESS_KEY) {
+  if (typeof env.MEDIA_S3_ACCESS_KEY_ID !== 'string' || !/^[A-Za-z0-9_-]+$/.test(env.MEDIA_S3_ACCESS_KEY_ID)
+    || typeof env.MEDIA_S3_SECRET_ACCESS_KEY !== 'string' || !env.MEDIA_S3_SECRET_ACCESS_KEY) {
     throw new Error('LOG_CONFIG_INVALID');
   }
 }
@@ -108,9 +108,9 @@ async function request(env, method, key, { query = {}, headers = {}, body, fetch
   const canonicalHeaders = signedNames.map(name => name + ':' + String(signed[name]).trim() + '\n').join('');
   const canonical = [method, uri, queryString, canonicalHeaders, signedNames.join(';'), bodyHash].join('\n');
   const stringToSign = ['AWS4-HMAC-SHA256', timestamp, scope, hash(canonical)].join('\n');
-  const signingKey = hmac(hmac(hmac(hmac('AWS4' + env.MEDIA_LOG_S3_SECRET_ACCESS_KEY, day), 'ru-central1'), 's3'), 'aws4_request');
+  const signingKey = hmac(hmac(hmac(hmac('AWS4' + env.MEDIA_S3_SECRET_ACCESS_KEY, day), 'ru-central1'), 's3'), 'aws4_request');
   const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
-  const authorization = 'AWS4-HMAC-SHA256 Credential=' + env.MEDIA_LOG_S3_ACCESS_KEY_ID + '/' + scope
+  const authorization = 'AWS4-HMAC-SHA256 Credential=' + env.MEDIA_S3_ACCESS_KEY_ID + '/' + scope
     + ', SignedHeaders=' + signedNames.join(';') + ', Signature=' + signature;
   const outgoing = { ...signed, authorization };
   delete outgoing.host; // Fetch supplies the same Host; keep it in the signature.
