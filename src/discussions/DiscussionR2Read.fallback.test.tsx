@@ -8,6 +8,7 @@ import { directMediaUrl } from '../media/directMediaUpload';
 import { readDiscussionMedia, downloadDiscussionMedia } from '../media/discussionMediaCache';
 import { rawInitData } from '../media/mediaUploadTestFixtures';
 import { DiscussionMedia } from './DiscussionMedia';
+import { DiscussionVoice } from './DiscussionVoice';
 
 const accountId = 'tg:12001';
 const key = 'mvp-media/' + 'd'.repeat(64);
@@ -76,5 +77,26 @@ it('switches native video Range playback to the signed R2 URL without a full-vid
   if (!video) throw new Error('video not rendered');
   fireEvent.error(video);
   await waitFor(() => expect(view.container.querySelector('video')?.getAttribute('src')).toBe(getUrl));
+  expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it('switches a failed voice message to the private R2 source', async () => {
+  await browserBlob();
+  const transport = vi.fn<typeof fetch>(async url => {
+    if (url === '/api/discussion-media/read') return Response.json({
+      storageKey: key, getUrl, expiresAt: Date.now() + 600_000,
+    });
+    throw new Error('An audio player must use native streaming rather than a full-file fetch: ' + url);
+  });
+  vi.stubGlobal('fetch', transport);
+  const voiceEntry = { ...entry, mimeType: 'audio/ogg', sizeBytes: 5 };
+  const view = render(<KonstaProvider theme="ios" dark>
+    <DiscussionVoice src={yandexUrl} cache={voiceEntry} waveform={[]} durationMs={1_000} />
+  </KonstaProvider>);
+  await waitFor(() => expect(view.container.querySelector('audio')?.getAttribute('src')).toBe(yandexUrl));
+  const audio = view.container.querySelector('audio');
+  if (!audio) throw new Error('voice audio not rendered');
+  fireEvent.error(audio);
+  await waitFor(() => expect(view.container.querySelector('audio')?.getAttribute('src')).toBe(getUrl));
   expect(transport).toHaveBeenCalledTimes(1);
 });
