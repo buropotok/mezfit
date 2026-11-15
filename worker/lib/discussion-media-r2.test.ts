@@ -30,7 +30,8 @@ async function initData(): Promise<string> {
 }
 const head = vi.fn(async () => ({ size: 6, httpMetadata: { contentType: 'image/jpeg' } }));
 function env() {
-  return { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_MEZFIT: { head } as unknown as R2Bucket, ...credentials };
+  return { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_MEZFIT: { head } as unknown as R2Bucket,
+    R2_MEDIA_TELEGRAM_ALLOWLIST: '100500', ...credentials };
 }
 function request(path: string, body: object): Request {
   return new Request(`https://mezfit.example/api/discussion-media/${path}`, {
@@ -66,11 +67,19 @@ describe('Cloudflare R2 upload signer', () => {
   it('fails closed without R2 credentials and refuses cross-origin/browser-less forgery', async () => {
     const good = { initData: await initData(), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
     expect((await handleDiscussionR2MediaRoute(request('sign', good),
-      { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_MEZFIT: { head } as unknown as R2Bucket })).status).toBe(503);
+      { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_MEZFIT: { head } as unknown as R2Bucket,
+        R2_MEDIA_TELEGRAM_ALLOWLIST: '100500' })).status).toBe(503);
     const foreign = new Request('https://mezfit.example/api/discussion-media/sign', {
       method: 'POST', headers: { Origin: 'https://evil.example' }, body: JSON.stringify(good),
     });
     expect((await handleDiscussionR2MediaRoute(foreign, env())).status).toBe(403);
+  });
+
+  it('denies all R2 signing when the test allowlist is not configured', async () => {
+    const good = { initData: await initData(), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
+    const response = await handleDiscussionR2MediaRoute(request('sign', good),
+      { ...env(), R2_MEDIA_TELEGRAM_ALLOWLIST: undefined });
+    expect(response.status).toBe(403);
   });
 
   it('verifies the stored object MIME and length after a conditional PUT collision', async () => {
