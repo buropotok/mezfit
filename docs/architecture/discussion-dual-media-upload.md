@@ -1,11 +1,13 @@
 # COMM media: dual-upload iteration (Yandex + Cloudflare R2)
 
-**Scope / proposed contract:** 2026-11-15 owner request for the first iteration of uploads to
-both object stores. This document is an additive exception to the original
-COMM-09 Yandex-only transport. The root AGENTS.md media boundary must be
-formally revised before a PR can be opened. **No cloud configuration is applied by this work.**
-The owner must separately approve changes after a read-only inventory of existing
-Cloudflare R2 resources, credentials and bucket CORS.
+**Scope / approved contract:** 2026-11-15 owner-approved first
+iteration of dual uploads to Yandex Object Storage and the dedicated Cloudflare
+R2 media bucket. Cloudflare infrastructure bootstrap has already created
+`mezfit-discussion-media`, configured CORS and generated bucket-scoped credentials;
+this code PR only adds the Worker binding and signer/client upload path.
+The root AGENTS.md media exception and COMM-09 documentation are updated in this
+same PR. No GitHub Environments, D1/Dexie Cloud migrations, ACL edits or new
+Cloudflare resources are required.
 
 ## Transport and user-visible delivery
 
@@ -21,12 +23,12 @@ Cloudflare R2 resources, credentials and bucket CORS.
 - The Cloudflare Worker `POST /api/discussion-media/sign` authenticates the
   Telegram `initData`, validates the exact key, MIME and max byte length, and
   returns a short-lived (600s) SigV4 PUT for
-  `mezfit.<R2_ACCOUNT_ID>.r2.cloudflarestorage.com/mvp-media/...`.
+  `mezfit-discussion-media.<R2_ACCOUNT_ID>.r2.cloudflarestorage.com/mvp-media/...`.
   Signed headers: `content-length;content-type;host;if-none-match`. The File
   bytes go straight to the R2 S3 endpoint, **never through the Worker**.
 - The PUT is write-once (`If-None-Match: *`). If the response is lost and a
   retry returns 412, the client requests
-  `POST /api/discussion-media/verify`. The Worker uses its existing R2 binding
+  `POST /api/discussion-media/verify`. The Worker uses its dedicated `R2_BINDING_DISCUSSION_MEDIA` binding
   to check size and MIME by HEAD. A collision with different metadata is a
   failure, not a success. Both endpoints require fresh Telegram `initData`.
   No client credentials, shared secrets or R2 write tokens are shipped to a browser.
@@ -62,28 +64,31 @@ and verification request, and denies all users when unset. Test
 with disposable files/accounts. A green test suite does not replace an Android
 and iOS Telegram WebView acceptance test (including VPN and video Range).
 
-## Cloudflare configuration to apply only after separate owner approval
+## Provisioned Cloudflare infrastructure and testing gates
 
-1. Inventory existing `mezfit` R2 bucket, binding `R2_BINDING_MEZFIT`, public
-   access, existing objects and CORS. The first iteration uses only the
-   `mvp-media/` key prefix inside this **existing bucket**. A dedicated media
-   bucket/token is preferable for production isolation but is not provisioned here.
-2. Create a restricted R2 S3 API token scoped to that bucket and use Worker
-   secrets `R2_MEDIA_ACCESS_KEY_ID` and `R2_MEDIA_SECRET_ACCESS_KEY`.
-   Set `R2_ACCOUNT_ID` (32 hexadecimal characters). Token scopes must not
-   include account administration or other buckets. The Worker signs only
-   validated `mvp-media/` keys; S3 credentials themselves are bucket-scoped.
-3. **Required:** set `R2_MEDIA_TELEGRAM_ALLOWLIST` to comma-separated
-   numeric Telegram IDs. Deny requests from other identities.
-4. Set the existing bucket's CORS origin to the exact deployed HTTPS Mini App
-   origin, and permit PUT with `Content-Type` and `If-None-Match`; read
-   `ETag` where useful. A browser sets `Content-Length`/Host automatically,
-   not via JavaScript. Read/Range CORS is a later phase. Never enable public
-   PUT, LIST, DELETE or ACL modification.
-5. Verify signed conditional PUT, 412 recovery, permission boundaries,
-   full-size supported videos, mobile headers, VPN connection behavior and
-   no exposure of credentials. Inspect the old bucket policies before
-   making any change to shared `mezfit` configuration.
+1. **Already provisioned:** R2 bucket `mezfit-discussion-media`, scoped R2 S3
+   token and Worker secrets `R2_MEDIA_ACCESS_KEY_ID`,
+   `R2_MEDIA_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`. The GitHub bootstrap
+   completed successfully on 2026-11-15. This PR adds the
+   `R2_BINDING_DISCUSSION_MEDIA` Worker binding and does not modify the
+   unrelated GIF bucket `mezfit` / `R2_BINDING_MEZFIT`.
+2. CORS for the dedicated bucket is configured for the Mini App HTTPS origin,
+   including PUT with `Content-Type` and `If-None-Match`, plus GET/HEAD and
+   Range in preparation for a separate read fallback. The browser sets
+   Content-Length and Host itself; they are bound to SigV4.
+3. **Required for closed test:** set repository secret
+   `R2_MEDIA_TELEGRAM_ALLOWLIST` to comma-separated test Telegram user IDs
+   and apply Worker secrets through the protected manual Cloudflare bootstrap
+   (or an equivalently authorized server-side secret operation) before testing.
+   No allowlist means **all R2 sign/verify requests return 403**, while the
+   Yandex-only upload continues. Do not enable for ordinary accounts until
+   there is an approved R2 read fallback.
+4. Verify signed conditional PUT, a 412 retry/HEAD against the dedicated
+   bucket, permission and key boundaries, full-size videos, WebView CORS,
+   VPN routing and lack of credential exposure. The CI tests cover only
+   simulated transports, not live R2 S3/WebView behavior.
+5. Existing Yandex Function, Yandex bucket and public GET reading remain
+   unchanged. No public R2 WRITE/LIST/DELETE and no public R2 READ is enabled.
 
 ### Intentionally outside the first iteration
 
