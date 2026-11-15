@@ -100,14 +100,19 @@ export async function acceptMediaReplica(accountId: string, storageKey: string):
   await publishMediaReplica(accountId, storageKey);
 }
 
+/** Re-check volatile browser state on every recovery iteration. */
+function canResumeMediaReplicas(): boolean {
+  return navigator.onLine !== false && document.visibilityState !== 'hidden';
+}
+
 /** Called from the authenticated application lifecycle; never waits on React components. */
 export async function resumeMediaReplicaUploads(accountId: string): Promise<void> {
-  if (inFlightRecovery.has(accountId) || navigator.onLine === false || document.visibilityState === 'hidden') return;
+  if (inFlightRecovery.has(accountId) || !canResumeMediaReplicas()) return;
   inFlightRecovery.add(accountId);
   try {
     const pending = await listIncompleteMediaReplicas(accountId);
     for (const task of pending) {
-      if (navigator.onLine === false || document.visibilityState === 'hidden') break;
+      if (!canResumeMediaReplicas()) break;
       if (!directMediaUrl(task.storageKey)) continue;
       const blob = await readDiscussionMedia(task);
       if (!blob) continue; // Evicted cache: do not claim replication is complete.
