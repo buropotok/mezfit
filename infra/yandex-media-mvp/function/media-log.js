@@ -1,11 +1,14 @@
 'use strict';
 
-// Dedicated, private Object Storage logger. Does not use the public media bucket.
+// Private logger uses a restricted logs/ prefix in the existing media bucket.
+// Existing public reads apply only to mvp-media/*; logs/ must remain private.
 // Yandex PATCH requires bucket versioning to be DISABLED:
 // https://yandex.cloud/en/docs/storage/s3/api-ref/object/patch
 const { createHash, createHmac, randomUUID } = require('node:crypto');
 
 const HOST = 'storage.yandexcloud.net';
+const BUCKET = 'mezfit-comm-poc-20261106';
+const LOG_PREFIX = 'logs/';
 const LIMIT_BYTES = 1024 * 1024;
 const MAX_ATTEMPTS = 8;
 const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', {
@@ -18,7 +21,7 @@ function fileDate(date) {
 }
 
 function fileName(date, sequence) {
-  return 'logs_' + fileDate(date) + '_' + String(sequence).padStart(4, '0');
+  return LOG_PREFIX + 'logs_' + fileDate(date) + '_' + String(sequence).padStart(4, '0');
 }
 
 function hash(value) {
@@ -73,13 +76,11 @@ function createRecorder(clock = () => new Date()) {
 }
 
 function configured(env) {
-  return !!(env.MEDIA_LOG_BUCKET && env.MEDIA_LOG_S3_ACCESS_KEY_ID && env.MEDIA_LOG_S3_SECRET_ACCESS_KEY);
+  return !!(env.MEDIA_LOG_S3_ACCESS_KEY_ID && env.MEDIA_LOG_S3_SECRET_ACCESS_KEY);
 }
 
 function assertConfig(env) {
-  const bucket = env.MEDIA_LOG_BUCKET;
-  if (typeof bucket !== 'string' || !/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket) || bucket.includes('..')
-    || typeof env.MEDIA_LOG_S3_ACCESS_KEY_ID !== 'string' || !/^[A-Za-z0-9_-]+$/.test(env.MEDIA_LOG_S3_ACCESS_KEY_ID)
+  if (typeof env.MEDIA_LOG_S3_ACCESS_KEY_ID !== 'string' || !/^[A-Za-z0-9_-]+$/.test(env.MEDIA_LOG_S3_ACCESS_KEY_ID)
     || typeof env.MEDIA_LOG_S3_SECRET_ACCESS_KEY !== 'string' || !env.MEDIA_LOG_S3_SECRET_ACCESS_KEY) {
     throw new Error('LOG_CONFIG_INVALID');
   }
@@ -92,7 +93,8 @@ function encode(value) {
 // AWS Signature V4 for the four required operations: LIST, HEAD, PUT, PATCH.
 // All object names are generated internally; credentials remain only on the server.
 async function request(env, method, key, { query = {}, headers = {}, body, fetchImpl, signal, now = new Date() } = {}) {
-  const uri = '/' + env.MEDIA_LOG_BUCKET + (key ? '/' + key : '');
+  if (key && !key.startsWith(LOG_PREFIX)) throw new Error('LOG_KEY_OUTSIDE_PREFIX');
+  const uri = '/' + BUCKET + (key ? '/' + key : '');
   const queryString = Object.entries(query).sort(([a], [b]) => a.localeCompare(b))
     .map(([name, value]) => encode(name) + '=' + encode(value)).join('&');
   const bodyHash = hash(body ?? '');
@@ -168,7 +170,7 @@ async function appendEvents(events, env, { fetchImpl, now = new Date(), timeoutM
   assertConfig(env);
   const data = Buffer.from(events.map(event => JSON.stringify(event)).join('\n') + '\n', 'utf8');
   if (data.length > LIMIT_BYTES) throw new Error('LOG_ENTRY_TOO_LARGE');
-  const prefix = 'logs_' + fileDate(now) + '_';
+  const prefix = LOG_PREFIX + 'logs_' + fileDate(now) + '_';
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const opts = { fetchImpl, signal: controller.signal };
