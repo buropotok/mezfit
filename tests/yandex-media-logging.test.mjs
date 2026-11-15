@@ -6,8 +6,8 @@ import logging from '../infra/yandex-media-mvp/function/media-log.js';
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
 const env = {
-  MEDIA_LOG_S3_ACCESS_KEY_ID: 'logAccess',
-  MEDIA_LOG_S3_SECRET_ACCESS_KEY: 'logSecret',
+  MEDIA_S3_ACCESS_KEY_ID: 'testAccess',
+  MEDIA_S3_SECRET_ACCESS_KEY: 'testSecret',
 };
 
 function fakeStorage({ prefill = {}, conflictOnce = false } = {}) {
@@ -22,8 +22,8 @@ function fakeStorage({ prefill = {}, conflictOnce = false } = {}) {
     calls.push({ method, key, headers: init.headers });
     if (method !== 'GET') expect(key.startsWith('logs/logs_')).toBe(true);
     else expect(parsed.searchParams.get('prefix')?.startsWith('logs/logs_')).toBe(true);
-    expect(init.headers.authorization).toMatch(/^AWS4-HMAC-SHA256 Credential=logAccess\//);
-    expect(init.headers.authorization).not.toContain(env.MEDIA_LOG_S3_SECRET_ACCESS_KEY);
+    expect(init.headers.authorization).toMatch(/^AWS4-HMAC-SHA256 Credential=testAccess\//);
+    expect(init.headers.authorization).not.toContain(env.MEDIA_S3_SECRET_ACCESS_KEY);
     if (method === 'GET') {
       const prefix = parsed.searchParams.get('prefix') ?? '';
       const items = [...objects].filter(([name]) => name.startsWith(prefix)).sort(([a], [b]) => a.localeCompare(b));
@@ -128,7 +128,15 @@ describe('Yandex media diagnostic log storage', () => {
     expect(data.match(/"SIGNATURE_CREATED"/g)).toHaveLength(1);
   });
 
-  it('does not try writing without separate log-specific credentials', async () => {
+  it('uses the same Object Storage keys already configured for the signer', () => {
+    expect(logging.configured(env)).toBe(true);
+    expect(logging.configured({
+      MEDIA_S3_ACCESS_KEY_ID: env.MEDIA_S3_ACCESS_KEY_ID,
+      MEDIA_S3_SECRET_ACCESS_KEY: env.MEDIA_S3_SECRET_ACCESS_KEY,
+    })).toBe(true);
+  });
+
+  it('does not try writing without existing signer S3 credentials', async () => {
     const storage = fakeStorage();
     await expect(logging.appendEvents([event()], {}, {
       fetchImpl: storage.fetchImpl,
