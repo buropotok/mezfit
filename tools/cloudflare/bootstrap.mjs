@@ -159,7 +159,8 @@ export async function provisionInfrastructure(api, {
   // token-management privilege does not leave a partially provisioned account.
   let bucketWriteGroup;
   if (generateR2Token && !state.tokenPresent) {
-    const groups = await api.request(api.path('/tokens/permission_groups'));
+    const groups = await api.request(api.path('/tokens/permission_groups?name='
+      + encodeURIComponent(R2_WRITE_GROUP) + '&scope=' + encodeURIComponent('com.cloudflare.edge.r2.bucket')));
     if (!Array.isArray(groups.result)) throw new Error('R2_TOKEN_GROUPS_INVALID');
     bucketWriteGroup = groups.result.find(item => item.name === R2_WRITE_GROUP
       && Array.isArray(item.scopes) && item.scopes.includes('com.cloudflare.edge.r2.bucket'));
