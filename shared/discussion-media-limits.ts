@@ -8,5 +8,8 @@ export const DISCUSSION_MEDIA_LIMITS_MIB: Readonly<Record<string, number>> = {
 export const DISCUSSION_MEDIA_KEY_PATTERN = /^mvp-media\/[a-f0-9]{64}$/;
 
 export function discussionMediaSizeLimit(mimeType: string): number {
-  return (DISCUSSION_MEDIA_LIMITS_MIB[mimeType] ?? 0) * 1024 * 1024;
+  // Only explicitly supported MIME keys are valid. Prototype properties like
+  // "constructor" and "toString" must never count as supported file types.
+  const own = Object.prototype.hasOwnProperty.call(DISCUSSION_MEDIA_LIMITS_MIB, mimeType);
+  return own ? DISCUSSION_MEDIA_LIMITS_MIB[mimeType] * 1024 * 1024 : 0;
 }
