@@ -26,9 +26,9 @@ async function attemptReplica(file: File, entry: DiscussionMediaCacheEntry, prov
 }
 
 /**
- * A single success permits publication. Yandex is attempted first; once it succeeds
- * the R2 copy is independently attempted without blocking the outgoing message.
- * If Yandex fails, R2 becomes the publication path.
+ * Try Yandex first, but hedge via R2 if it remains unresponsive for eight seconds.
+ * The first confirmed provider permits publication; the other keeps uploading
+ * independently. The source File has already been saved in IndexedDB by the caller.
  */
 export async function uploadMirroredDiscussionMedia(
   file: File,
@@ -37,26 +37,48 @@ export async function uploadMirroredDiscussionMedia(
   const entry = { accountId, storageKey: retryKey, mimeType: file.type, sizeBytes: file.size };
   await rememberMediaReplica(entry, file.name).catch(() => undefined);
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
-  let yandexError: unknown;
-  try {
-    const uploaded = await uploadDirectMedia(file, { retryKey, signal });
+
+  const yandexIdentity = `${accountId}:${retryKey}:yandex`;
+  const r2Identity = `${accountId}:${retryKey}:r2`;
+  inFlightReplicas.add(yandexIdentity);
+  let yandexSettled: () => void = () => undefined;
+  const yandexDone = new Promise<void>(resolve => { yandexSettled = resolve; });
+  const yandex = uploadDirectMedia(file, { retryKey, signal }).then(async uploaded => {
     await confirmMediaReplica(accountId, retryKey, 'yandex').catch(() => undefined);
-    // The upload owner may close/unmount; replica upload is independent.
-    void attemptReplica(file, entry, 'r2');
     return uploaded;
-  } catch (error) {
-    if (signal?.aborted || (error instanceof MediaUploadError && error.code === 'CANCELLED')) throw error;
-    yandexError = error;
-  }
+  }).finally(() => {
+    inFlightReplicas.delete(yandexIdentity);
+    yandexSettled();
+  });
+
+  let hedgeTimer: ReturnType<typeof setTimeout> | undefined;
+  const hedge = new Promise<void>(resolve => { hedgeTimer = setTimeout(resolve, 8_000); });
+  const r2 = (async () => {
+    await Promise.race([yandexDone, hedge]);
+    if (hedgeTimer) clearTimeout(hedgeTimer);
+    if (signal?.aborted) throw new MediaUploadError('CANCELLED');
+    inFlightReplicas.add(r2Identity);
+    try {
+      const uploaded = await uploadCloudflareMedia(file, { retryKey, signal });
+      await confirmMediaReplica(accountId, retryKey, 'r2').catch(() => undefined);
+      return uploaded;
+    } finally {
+      inFlightReplicas.delete(r2Identity);
+    }
+  })();
+
   try {
-    const uploaded = await uploadCloudflareMedia(file, { retryKey, signal });
-    await confirmMediaReplica(accountId, retryKey, 'r2').catch(() => undefined);
-    return uploaded;
-  } catch (error) {
-    if (signal?.aborted || (error instanceof MediaUploadError && error.code === 'CANCELLED')) throw error;
-    // The old Yandex error is more useful if the fallback has not been configured yet.
-    if (error instanceof MediaUploadError && error.code === 'SIGNER_UNAVAILABLE') throw yandexError;
-    throw error;
+    return await Promise.any([yandex, r2]);
+  } catch {
+    if (signal?.aborted) throw new MediaUploadError('CANCELLED');
+    // Both providers failed. Keep the primary error when the R2 signer is not configured.
+    const reasons = await Promise.allSettled([yandex, r2]);
+    const yandexError = reasons[0].status === 'rejected' ? reasons[0].reason : undefined;
+    const r2Error = reasons[1].status === 'rejected' ? reasons[1].reason : undefined;
+    if (r2Error instanceof MediaUploadError && r2Error.code === 'SIGNER_UNAVAILABLE' && yandexError) throw yandexError;
+    throw r2Error ?? yandexError ?? new MediaUploadError('NETWORK');
+  } finally {
+    if (hedgeTimer) clearTimeout(hedgeTimer);
   }
 }
 
