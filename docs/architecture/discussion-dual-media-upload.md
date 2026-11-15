@@ -1,8 +1,9 @@
 # COMM media: dual-upload iteration (Yandex + Cloudflare R2)
 
-**Scope / approval:** 2026-11-15 owner request for the first iteration of uploads to
+**Scope / proposed contract:** 2026-11-15 owner request for the first iteration of uploads to
 both object stores. This document is an additive exception to the original
-COMM-09 Yandex-only transport. **No cloud configuration is applied by this PR.**
+COMM-09 Yandex-only transport. The root AGENTS.md media boundary must be
+formally revised before a PR can be opened. **No cloud configuration is applied by this work.**
 The owner must separately approve changes after a read-only inventory of existing
 Cloudflare R2 resources, credentials and bucket CORS.
 
@@ -56,7 +57,8 @@ point to Yandex. If the first and only successful upload is to R2, the message
 will be marked sent but the recipient cannot open the media until a subsequent
 read-fallback change is enabled. Therefore **do not activate R2-only publication
 for general users until the paired read-fallback iteration is complete.**
-Restrict initial Cloudflare testing using `R2_MEDIA_TELEGRAM_ALLOWLIST` and test
+The Worker requires `R2_MEDIA_TELEGRAM_ALLOWLIST` for every R2 signature
+and verification request, and denies all users when unset. Test
 with disposable files/accounts. A green test suite does not replace an Android
 and iOS Telegram WebView acceptance test (including VPN and video Range).
 
@@ -71,7 +73,7 @@ and iOS Telegram WebView acceptance test (including VPN and video Range).
    Set `R2_ACCOUNT_ID` (32 hexadecimal characters). Token scopes must not
    include account administration or other buckets. The Worker signs only
    validated `mvp-media/` keys; S3 credentials themselves are bucket-scoped.
-3. During closed testing set `R2_MEDIA_TELEGRAM_ALLOWLIST` to comma-separated
+3. **Required:** set `R2_MEDIA_TELEGRAM_ALLOWLIST` to comma-separated
    numeric Telegram IDs. Deny requests from other identities.
 4. Set the existing bucket's CORS origin to the exact deployed HTTPS Mini App
    origin, and permit PUT with `Content-Type` and `If-None-Match`; read
