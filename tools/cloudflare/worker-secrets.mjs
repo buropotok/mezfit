@@ -9,7 +9,6 @@ const OPTIONAL_KEYS = [
   'DEXIE_CLOUD_REMINDER_CLIENT_ID',
   'DEXIE_CLOUD_REMINDER_CLIENT_SECRET',
   'DEXIE_DISCUSSION_WEBHOOK_SECRET',
-  'R2_MEDIA_TELEGRAM_ALLOWLIST',
 ];
 
 export function collectWorkerSecrets(env, generated = {}) {

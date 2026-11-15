@@ -1,10 +1,12 @@
 # Cloudflare infrastructure bootstrap (no GitHub Environments)
 
-Status: proposed; no live Cloudflare resources, tokens, secrets or domains are
-changed by preparing this pull request. Run the owner-only
-`.github/workflows/bootstrap-cloudflare.yml` workflow manually **from main**
-after review/merge. It uses GitHub **repository** secrets and variables only.
-No new GitHub Environment is created or required.
+Status: bootstrapped successfully in the Mezfit Cloudflare account on
+2026-11-15 (D1 unchanged, R2 `mezfit-discussion-media` created, CORS and
+scoped token configured, Worker deployed). The owner-only
+`.github/workflows/bootstrap-cloudflare.yml` remains available for
+idempotent replay in the existing account or a fresh account. It runs
+manually **from main**, uses GitHub **repository** secrets and variables
+only, and does not require a new GitHub Environment.
 
 ## Goal and existing boundaries
 
@@ -14,15 +16,20 @@ R2 `mezfit-discussion-media`, its browser CORS policy, scoped R2 S3 upload
 credentials, D1 migrations and the existing Worker deployment (assets,
 scheduled cron, Durable Object binding/migration, Images binding).
 
-The discussion R2 bucket and token are **preparation only**. COMM-09 currently
-allows Yandex only. This bootstrap does not modify the Yandex signer, switch
-media transport, publish media, or change any Dexie Cloud ACL/schema.
-Any discussion media R2 transport requires a separate reviewed exception to
-COMM-09 and a matching Worker binding/route implementation. The existing Worker
-`wrangler.jsonc` continues to bind `R2_BINDING_MEZFIT` to bucket `mezfit`.
-The extra media bucket is intentionally not bound or exposed until that PR.
-The token has **object** rights only in `mezfit-discussion-media`, not the
-existing `mezfit` bucket.
+The owner-approved first dual-upload iteration is defined in
+[discussion-dual-media-upload.md](../architecture/discussion-dual-media-upload.md).
+Cloudflare bootstrap provisions the dedicated R2 bucket
+`mezfit-discussion-media`, its browser CORS and bucket-scoped R2 S3 token.
+The Worker configuration now binds this bucket as
+`R2_BINDING_DISCUSSION_MEDIA` exclusively for the authenticated discussion
+media signer/HEAD verification path. Existing exercise GIF media still uses
+`R2_BINDING_MEZFIT` and the unrelated `mezfit` bucket.
+
+The bootstrap itself does not migrate Yandex discussion bytes or enable
+R2 public read/fallback. In the current all-test-users MVP, the owner removed
+the per-user Telegram allowlist. R2 sign/verify still require valid Telegram
+initData and exact key/MIME/size validation; the token has object rights only
+in `mezfit-discussion-media`, not in the original `mezfit` bucket.
 
 ## One-time setup for a new Cloudflare account
 
@@ -53,8 +60,9 @@ existing `mezfit` bucket.
      `DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET`,
      `DEXIE_CLOUD_REMINDER_CLIENT_ID`,
      `DEXIE_CLOUD_REMINDER_CLIENT_SECRET`,
-     `DEXIE_DISCUSSION_WEBHOOK_SECRET` and the test-only
-     `R2_MEDIA_TELEGRAM_ALLOWLIST` if using a later R2 upload feature.
+     `DEXIE_DISCUSSION_WEBHOOK_SECRET` as needed for the application.
+     R2 discussion media no longer needs a Telegram-user-ID allowlist;
+     every valid Telegram-authenticated MVP user can request R2 signing.
      Missing optional values are not uploaded and do not delete existing
      Worker secrets. Any functionality depending on them remains unavailable
      until restored. Set these repository secrets through trusted GitHub

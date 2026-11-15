@@ -446,6 +446,61 @@ async function apiRequest<T>(initData: string, path: string, init?: RequestInit)
   return response.json<T>();
 }
 
+export interface DiscussionR2MediaInput {
+  initData: string;
+  storageKey: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export interface DiscussionR2SignedPut {
+  storageKey: string;
+  putUrl: string;
+  expiresAt: number;
+}
+
+/** Typed API boundary for privileged Worker media signing and verification.
+ * File bytes never transit through the Worker; only upload metadata does.
+ */
+async function discussionR2Request(
+  action: 'sign' | 'verify', input: DiscussionR2MediaInput, signal?: AbortSignal,
+): Promise<Record<string, unknown>> {
+  const response = await fetch('/api/discussion-media/' + action, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input), signal, credentials: 'omit', redirect: 'error',
+    referrerPolicy: 'no-referrer',
+  });
+  if (!response.ok) {
+    void response.body?.cancel().catch(() => undefined);
+    throw new ApiError(response.status, 'Не удалось подтвердить загрузку медиа', 'DISCUSSION_R2_HTTP');
+  }
+  const payload: unknown = await response.json().catch(() => null);
+  if (!isRecord(payload)) {
+    throw new ApiError(502, 'Некорректный ответ загрузки медиа', 'INVALID_API_RESPONSE');
+  }
+  return payload;
+}
+
+export async function requestDiscussionR2Signature(
+  input: DiscussionR2MediaInput, signal?: AbortSignal,
+): Promise<DiscussionR2SignedPut> {
+  const result = await discussionR2Request('sign', input, signal);
+  if (typeof result.storageKey !== 'string' || typeof result.putUrl !== 'string'
+    || typeof result.expiresAt !== 'number' || !Number.isSafeInteger(result.expiresAt)) {
+    throw new ApiError(502, 'Некорректная подпись загрузки медиа', 'INVALID_API_RESPONSE');
+  }
+  return { storageKey: result.storageKey, putUrl: result.putUrl, expiresAt: result.expiresAt };
+}
+
+export async function verifyDiscussionR2Upload(
+  input: DiscussionR2MediaInput, signal?: AbortSignal,
+): Promise<void> {
+  const result = await discussionR2Request('verify', input, signal);
+  if (result.present !== true) {
+    throw new ApiError(502, 'Некорректное подтверждение файла', 'INVALID_API_RESPONSE');
+  }
+}
+
 /** One-way, Telegram-authenticated technical error report. Never returns private data. */
 export async function sendVideoRecordingDiagnostic(initData: string, report: VideoRecordingDiagnostic): Promise<void> {
   const response = await apiRequest<unknown>(initData, '/api/diagnostics/video-recording', {

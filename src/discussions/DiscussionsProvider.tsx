@@ -3,6 +3,7 @@ import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConne
 import type { DiscussionFeedRow } from '../data/cloud/discussions';
 import { observeDiscussionFeed } from '../data/cloud/discussion-feed';
 import { sortDiscussionFeed } from './feed-presentation';
+import { resumeMediaReplicaUploads } from '../media/dualMediaUpload';
 
 export interface DiscussionInboxRow extends DiscussionFeedRow { contact: CloudContact | null }
 interface Inbox { rows: DiscussionInboxRow[]; unread: number; loading: boolean; error: string; retry: () => void }
@@ -11,6 +12,19 @@ const Context = createContext<Inbox>({ rows: [], unread: 0, loading: true, error
 export function DiscussionsProvider({ role, details = true, children }: { role: 'coach' | 'client'; details?: boolean; children: ReactNode }) {
   const cloud = useCloudConnections();
   const contacts = role === 'coach' ? cloud?.clients : cloud?.coaches;
+  // Recover pending R2/Yandex copies across sessions, independently of DiscussionSheet.
+  useEffect(() => {
+    const accountId = cloud?.actorUserId;
+    if (!accountId) return;
+    const recover = () => { if (document.visibilityState !== 'hidden') void resumeMediaReplicaUploads(accountId); };
+    recover();
+    window.addEventListener('online', recover);
+    document.addEventListener('visibilitychange', recover);
+    return () => {
+      window.removeEventListener('online', recover);
+      document.removeEventListener('visibilitychange', recover);
+    };
+  }, [cloud?.actorUserId]);
   const [revision, setRevision] = useState(0);
   const realmKey = JSON.stringify([...new Set((contacts ?? []).map(contact => contact.relationshipId))].sort());
   const realmIds = useMemo<string[]>(() => JSON.parse(realmKey), [realmKey]);

@@ -90,17 +90,37 @@ A coach may mutate a client only when server-side authorization proves that rela
 
 Keep authorization logic auditable and avoid subtly different duplicated checks.
 
-**Owner-approved COMM-09 media boundary.** The typed media transport calls
-Yandex Cloud Function directly. The Function verifies Telegram initData and
-issues a short-lived signed PUT for the designated `mvp-media/` prefix.
-The device sends bytes directly to Object Storage with signed
-`If-None-Match: *`. The permanent HTTPS GET URL uses a cryptographically
-random object key and is readable by anyone with the link. Bucket access
-must exclude public PUT, LIST, DELETE and ACL changes. Dexie authorizes
-message and attachment metadata visibility via realms. The Function has
-no Dexie or Cloudflare dependency and checks only Telegram identity and
-upload parameters. Applying cloud configuration requires separate owner
-approval after inspecting the existing resources.
+**Owner-approved COMM-09 media boundary (2026-11-15, upload-only extension).**
+The typed transport retains the primary Yandex Cloud Function: the Function
+verifies Telegram initData and signs one conditional PUT under the designated
+`mvp-media/` prefix. The phone uploads bytes directly to Yandex Object Storage;
+public GET remains a permanent cryptographically random-key Yandex URL with no
+public PUT, LIST, DELETE or ACL changes. The Function has no dependency on
+Cloudflare or Dexie and does not authorize conversation membership.
+
+For the separately approved **first dual-upload iteration**, the device may
+independently upload the same bytes/key to the dedicated private Cloudflare R2
+bucket `mezfit-discussion-media`. The Cloudflare Worker authenticates Telegram
+initData, enforces key/MIME/size limits, and signs short-lived write-once S3
+PUT URLs using private credentials issued for that bucket only; the device
+transfers bytes directly to R2 and the Worker verifies ambiguous 412 retries
+using `R2_BINDING_DISCUSSION_MEDIA`. The existing exercise media bucket
+`mezfit` / `R2_BINDING_MEZFIT` must never be reused for discussion media.
+Dexie Cloud remains the sole authoritative owner of discussion metadata,
+authorized by realms; no new business database, schema, ACL or sync engine.
+
+**MVP rollout decision (2026-11-15):** All current Mezfit users are test users.
+The owner explicitly removed the Telegram-user-ID allowlist. Every valid
+Telegram-authenticated user may request an R2 sign/verify operation, subject
+to strict key/MIME/size checks, short expiry, write-once PUT semantics and
+bucket-scoped credentials. Do not bypass Telegram validation or grant
+anonymous/public bucket writes, reads, LIST, DELETE or cross-account access.
+R2-only uploads can be published, but media reading still uses Yandex. As a
+known temporary MVP limitation, recipients cannot read an attachment stored
+only in R2 until a separate read-fallback iteration is delivered. Test with
+non-sensitive media. The bootstrap and Cloudflare resource creation were
+separately approved and completed; no new cloud administration permissions
+are implied.
 
 ## 10. Validation and error contracts
 

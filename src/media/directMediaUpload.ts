@@ -1,17 +1,12 @@
 import { getTelegramWebApp } from '../telegram';
+import { DISCUSSION_MEDIA_LIMITS_MIB, DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
 
 export const MEDIA_BUCKET = 'mezfit-comm-poc-20261106';
 const endpoint = 'https://storage.yandexcloud.net';
-const MiB = 1024 * 1024;
-const limits = new Map<string, number>([
-  ['image/jpeg', 20], ['image/png', 20], ['image/webp', 20], ['image/gif', 20], ['image/heic', 20],
-  ['video/mp4', 250], ['video/webm', 250], ['video/quicktime', 250],
-  ['audio/ogg', 25], ['audio/webm', 25], ['audio/mp4', 25], ['audio/mpeg', 25], ['audio/wav', 25],
-]);
-export const MEDIA_FILE_ACCEPT = [...limits.keys()].join(',');
+export const MEDIA_FILE_ACCEPT = Object.keys(DISCUSSION_MEDIA_LIMITS_MIB).join(',');
 
 export function directMediaUrl(key: string): string | null {
-  return key.length === 74 && /^mvp-media\/[a-f0-9]{64}$/.test(key) ? `${endpoint}/${MEDIA_BUCKET}/${key}` : null;
+  return DISCUSSION_MEDIA_KEY_PATTERN.test(key) ? `${endpoint}/${MEDIA_BUCKET}/${key}` : null;
 }
 
 export function createDirectMediaKey(): string {
@@ -73,7 +68,7 @@ export interface UploadedMedia {
 }
 
 export function directMediaSizeLimit(contentType: string): number {
-  return (limits.get(contentType) ?? 0) * MiB;
+  return discussionMediaSizeLimit(contentType);
 }
 
 export function validateDirectMedia(file: File): string {

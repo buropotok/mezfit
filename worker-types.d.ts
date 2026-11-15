@@ -2,6 +2,10 @@ interface Env {
   ASSETS: Fetcher;
   DB_BINDING: D1Database;
   R2_BINDING_MEZFIT: R2Bucket;
+  R2_BINDING_DISCUSSION_MEDIA: R2Bucket;
+  R2_ACCOUNT_ID?: string;
+  R2_MEDIA_ACCESS_KEY_ID?: string;
+  R2_MEDIA_SECRET_ACCESS_KEY?: string;
   IMAGES: ImagesBinding;
   SCHEDULE_RESERVATIONS: DurableObjectNamespace;
   TELEGRAM_BOT_TOKEN: string;

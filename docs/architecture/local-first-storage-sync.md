@@ -30,7 +30,30 @@ The app never receives privileged Dexie Cloud credentials or Telegram bot secret
 
 Cloudflare may still host the application and store exercise GIF media in R2. The eight public exercise-category WebP/SVG illustrations are a separate exception: publish them once through the protected Dexie Cloud Blob operator into a public realm table, and render only locally synchronized Blob values from IndexedDB, never Cloudflare media URLs. **Telegram contact avatars are the explicit exception:** the two optimized JPEG versions reside in the authenticated Dexie Cloud blob service, referenced by relationship-scoped `contactProfiles` along with version metadata and resolved by the Addon into authorized IndexedDB subsets; avatar reads do not depend on R2 or D1. Cloudflare D1 is not a second business database. There is one Dexie Cloud environment for pre-MVP; staging and migration of test users are not required.
 
-**Communications target (2026-11-06):** [communications.md](communications.md), based on [issue #636](https://github.com/buropotok/mezfit/issues/636), governs planned contextual discussions. Text, anchors, messages and media metadata use typed local repositories and Dexie Cloud Addon in the appropriate personal/relationship realm. The COMM-09 media transport gets a short-lived signed conditional PUT from Yandex Cloud Function after Telegram initData validation. The device uploads directly to the dedicated Yandex Object Storage prefix and reads via permanent public random-key HTTPS URLs. Dexie Cloud stores only message and attachment metadata. Public PUT, LIST, DELETE and ACL changes are excluded. Client requests to R2/Cloudflare Worker are forbidden for this media path. This does not change the existing exercise GIF/category/avatar contracts above or authorize new schema, ACL, resources or credentials. Cold Mini App resource bootstrap and Telegram/Dexie authentication refresh without VPN remain unverified gates, independent of warm-session Dexie connectivity.
+**Communications target (COMM-09 dual-upload exception, 2026-11-15):**
+[communications.md](communications.md), based on
+[issue #636](https://github.com/buropotok/mezfit/issues/636), governs contextual
+discussions. Text, anchors, messages and media metadata remain in typed local
+repositories and Dexie Cloud Addon under personal/relationship realms. The
+existing Yandex Cloud Function continues to authenticate Telegram initData
+and issue write-once signed PUT URLs for the canonical Yandex media object;
+readers still use permanent public random-key Yandex GET URLs. In the
+owner-approved first dual-upload iteration, the same file/key is also uploaded
+directly by the device to a dedicated private Cloudflare R2 bucket
+`mezfit-discussion-media`, using a short-lived Worker-issued PUT signature.
+The Worker verifies Telegram identity, validates upload parameters and checks
+retries by HEAD via `R2_BINDING_DISCUSSION_MEDIA`. Signed credentials stay
+server-side; no extra business database, sync engine, Dexie Cloud ACL or schema
+is introduced. This is an explicit, *media transport only* exception to the
+previous prohibition on Worker/R2 discussion uploads. The owner confirmed
+all current MVP users are testers and removed the per-user allowlist. The
+Worker permits sign/verify only after valid Telegram initData authentication
+and strict upload-parameter validation. If R2 is the only confirmed upload,
+the Yandex playback link may remain unreadable until Yandex retry succeeds
+or R2 read fallback is implemented; this temporary MVP failure mode is
+accepted and must be tested. Existing `mezfit` GIF bucket, category artwork,
+Dexie avatars and Yandex Function remain unchanged. Cold Mini App/bootstrap/auth without VPN
+and Telegram iOS/Android video Range behavior remain unverified gates.
 
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
 defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.
