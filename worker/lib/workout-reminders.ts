@@ -92,7 +92,10 @@ export function reminderRecipients(
   ];
 }
 
-export async function cloudToken(env: WorkoutReminderEnv, fetchImpl: typeof fetch): Promise<string> {
+export async function cloudToken(
+  env: Pick<WorkoutReminderEnv, 'DEXIE_CLOUD_REMINDER_CLIENT_ID' | 'DEXIE_CLOUD_REMINDER_CLIENT_SECRET'>,
+  fetchImpl: typeof fetch,
+): Promise<string> {
   if (!env.DEXIE_CLOUD_REMINDER_CLIENT_ID || !env.DEXIE_CLOUD_REMINDER_CLIENT_SECRET) {
     throw new Error('REMINDERS_CLOUD_READ_NOT_CONFIGURED');
   }
