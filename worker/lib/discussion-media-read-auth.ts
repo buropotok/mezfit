@@ -1,8 +1,8 @@
 import { discussionId, discussionRecord } from '../../shared/discussion-anchor';
+import { cloudList, cloudRead, cloudToken, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 const mediaRowId = (value: unknown): value is string => typeof value === 'string'
   && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-import { cloudList, cloudRead, cloudToken, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 /** Only the dedicated read-only Dexie service account may verify a media viewer. */
 export type DiscussionMediaReadEnv = Pick<WorkoutReminderEnv,
