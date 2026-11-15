@@ -36,8 +36,6 @@ jobs:
     permissions:
       contents: read
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
       BOOTSTRAP_MODE: ${{ inputs.operation }}
@@ -51,6 +49,7 @@ jobs:
         shell: bash
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
           if [[ "$BOOTSTRAP_MODE" == "apply" && "$CONFIRMATION" != "BOOTSTRAP_CLOUDFLARE_INFRASTRUCTURE" ]]; then
@@ -61,12 +60,15 @@ jobs:
             echo 'Repository variables CLOUDFLARE_ACCOUNT_ID and MEZFIT_APP_ORIGIN are required.' >&2
             exit 1
           fi
-          if [[ -z "$CLOUDFLARE_BOOTSTRAP_API_TOKEN" && -z "$CLOUDFLARE_API_TOKEN" ]]; then
-            echo 'Cloudflare bootstrap/repository API token is required.' >&2
+          if [[ "$BOOTSTRAP_MODE" == "apply" && -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            echo 'CLOUDFLARE_API_TOKEN repository secret is required for Wrangler deployment.' >&2
             exit 1
           fi
       - name: Preview or provision the Cloudflare resources
         id: bootstrap
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
         run: node tools/cloudflare/bootstrap.mjs
 
       - uses: actions/setup-node@v4
@@ -114,10 +116,14 @@ jobs:
 
       - name: Apply existing D1 migrations
         if: inputs.operation == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npx wrangler d1 migrations apply DB_BINDING --remote
 
       - name: Deploy Worker with available secrets
         if: inputs.operation == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npx wrangler deploy --secrets-file "$WORKER_SECRETS_FILE"
 
       - name: Remove staged credentials from runner
