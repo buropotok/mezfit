@@ -133,6 +133,22 @@ describe('Cloudflare infrastructure bootstrap', () => {
     expect(sameCors(received, expected)).toBe(false);
   });
 
+  it('uses Cloudflare token-list page size of 50 and reads the remaining pages', async () => {
+    const fetchApi = vi.fn(async url => {
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get('per_page')).toBe('50');
+      const page = Number(parsed.searchParams.get('page'));
+      const count = page === 1 ? 50 : 2;
+      return Response.json({ success: true,
+        result: Array.from({ length: count }, (_, index) => ({ name: 'token-' + (index + (page - 1) * 50) })),
+        result_info: { page, per_page: 50, total_count: 52 },
+      });
+    });
+    const api = new CloudflareApi(accountId, 'test', fetchApi);
+    expect((await api.pages('/tokens')).length).toBe(52);
+    expect(fetchApi).toHaveBeenCalledTimes(2);
+  });
+
   it('fails closed for unexpected Cloudflare HTTP and response envelopes', async () => {
     const fetchApi = vi.fn().mockResolvedValueOnce(new Response(null, { status: 403 }))
       .mockResolvedValueOnce(Response.json({ success: false, errors: [{ message: 'secret data' }] }));
