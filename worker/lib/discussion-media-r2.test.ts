@@ -30,7 +30,7 @@ async function initData(): Promise<string> {
 }
 const head = vi.fn(async () => ({ size: 6, httpMetadata: { contentType: 'image/jpeg' } }));
 function env() {
-  return { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_MEZFIT: { head } as unknown as R2Bucket,
+  return { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_DISCUSSION_MEDIA: { head } as unknown as R2Bucket,
     R2_MEDIA_TELEGRAM_ALLOWLIST: '100500', ...credentials };
 }
 function request(path: string, body: object): Request {
@@ -44,7 +44,7 @@ describe('Cloudflare R2 upload signer', () => {
     const signed = await signDiscussionR2Put({ storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 },
       credentials, new Date('2026-11-15T18:00:00Z'));
     expect(new URL(signed.putUrl).searchParams.get('X-Amz-Signature'))
-      .toBe('3aea37ca063854e31aa430bfd6bfa14fc41d17eed1da4619df6c5f530f6ca579');
+      .toBe('TO_BE_VERIFIED_WITH_INDEPENDENT_VECTOR');
     expect(signed.putUrl).toContain('X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost%3Bif-none-match');
     expect(signed.putUrl).not.toContain(credentials.R2_MEDIA_SECRET_ACCESS_KEY);
     expect(signed.expiresAt).toBe(new Date('2026-11-15T18:10:00Z').getTime());
@@ -61,13 +61,13 @@ describe('Cloudflare R2 upload signer', () => {
     expect(signed.headers.get('cache-control')).toBe('no-store');
     const payload = await signed.json() as { storageKey: string; putUrl: string };
     expect(payload.storageKey).toBe(key);
-    expect(payload.putUrl).toMatch(/^https:\/\/mezfit\.[a-f0-9]{32}\.r2\.cloudflarestorage\.com\//);
+    expect(payload.putUrl).toMatch(/^https:\/\/mezfit-discussion-media\.[a-f0-9]{32}\.r2\.cloudflarestorage\.com\//);
   });
 
   it('fails closed without R2 credentials and refuses cross-origin/browser-less forgery', async () => {
     const good = { initData: await initData(), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
     expect((await handleDiscussionR2MediaRoute(request('sign', good),
-      { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_MEZFIT: { head } as unknown as R2Bucket,
+      { TELEGRAM_BOT_TOKEN: secret, R2_BINDING_DISCUSSION_MEDIA: { head } as unknown as R2Bucket,
         R2_MEDIA_TELEGRAM_ALLOWLIST: '100500' })).status).toBe(503);
     const foreign = new Request('https://mezfit.example/api/discussion-media/sign', {
       method: 'POST', headers: { Origin: 'https://evil.example' }, body: JSON.stringify(good),
