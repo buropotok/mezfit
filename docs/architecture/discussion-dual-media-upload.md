@@ -1,5 +1,10 @@
 # COMM media: dual-upload iteration (Yandex + Cloudflare R2)
 
+> Historical first upload-only iteration. Its R2-only read limitation is addressed
+> by the subsequent [private R2 read fallback](discussion-r2-read-fallback.md).
+> The limitations below describe the original upload-only rollout, not the
+> current target architecture after the second PR is deployed.
+
 **Scope / approved contract:** 2026-11-15 owner-approved first
 iteration of dual uploads to Yandex Object Storage and the dedicated Cloudflare
 R2 media bucket. Cloudflare infrastructure bootstrap has already created
