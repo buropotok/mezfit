@@ -27,7 +27,7 @@ function fixture({ db = false, buckets = [], cors, token = false } = {}) {
     async request(route, options = {}) {
       const method = options.method ?? 'GET';
       if (method !== 'GET') state.changes.push([method, route, options.body]);
-      if (route.endsWith('/tokens/permission_groups')) return {
+      if (route.includes('/tokens/permission_groups?')) return {
         result: [{ name: 'Workers R2 Storage Bucket Item Write', id: 'c'.repeat(32),
           scopes: ['com.cloudflare.edge.r2.bucket'] }],
       };
