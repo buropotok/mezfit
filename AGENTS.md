@@ -109,13 +109,18 @@ using `R2_BINDING_DISCUSSION_MEDIA`. The existing exercise media bucket
 Dexie Cloud remains the sole authoritative owner of discussion metadata,
 authorized by realms; no new business database, schema, ACL or sync engine.
 
-**Rollout safety:** R2-only uploads cannot yet be read by recipients, because
-read paths still use Yandex. The R2 sign/verify endpoints MUST deny by default
-and require the explicit `R2_MEDIA_TELEGRAM_ALLOWLIST` for testing until a
-separate approved read-fallback iteration. Do not enable unrestricted R2-only
-publication, public bucket writes/reads, or cross-account access in this
-iteration. The bootstrap and Cloudflare resource creation were separately
-approved and completed; no new cloud administration permissions are implied.
+**MVP rollout decision (2026-11-15):** All current Mezfit users are test users.
+The owner explicitly removed the Telegram-user-ID allowlist. Every valid
+Telegram-authenticated user may request an R2 sign/verify operation, subject
+to strict key/MIME/size checks, short expiry, write-once PUT semantics and
+bucket-scoped credentials. Do not bypass Telegram validation or grant
+anonymous/public bucket writes, reads, LIST, DELETE or cross-account access.
+R2-only uploads can be published, but media reading still uses Yandex. As a
+known temporary MVP limitation, recipients cannot read an attachment stored
+only in R2 until a separate read-fallback iteration is delivered. Test with
+non-sensitive media. The bootstrap and Cloudflare resource creation were
+separately approved and completed; no new cloud administration permissions
+are implied.
 
 ## 10. Validation and error contracts
 
