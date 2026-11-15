@@ -52,17 +52,21 @@ same key and verifies a 412. There is no independent message-sync engine.
 Remote replica timestamps in `flexAttributes/flexValues` and cross-device
 retry coordination are **not part of the first upload iteration**.
 
-## Important rollout limitation
+## Important MVP limitation
 
 **This iteration does not change media reading.** Existing playback URLs still
-point to Yandex. If the first and only successful upload is to R2, the message
-will be marked sent but the recipient cannot open the media until a subsequent
-read-fallback change is enabled. Therefore **do not activate R2-only publication
-for general users until the paired read-fallback iteration is complete.**
-The Worker requires `R2_MEDIA_TELEGRAM_ALLOWLIST` for every R2 signature
-and verification request, and denies all users when unset. Test
-with disposable files/accounts. A green test suite does not replace an Android
-and iOS Telegram WebView acceptance test (including VPN and video Range).
+point to Yandex. The owner confirmed that all current users are test users
+and explicitly removed the Telegram ID allowlist. Any user with verified
+Telegram `initData` can request a signed R2 upload or object verification;
+invalid/expired Telegram authentication, invalid upload parameters and
+cross-origin calls remain forbidden.
+
+**Known MVP failure mode:** If the first and only successful upload is to R2,
+the message is marked sent but its Yandex playback URL does not resolve.
+The recipient will be unable to view the media until Yandex upload recovery
+succeeds or a separate R2 read-fallback iteration is implemented.
+Use non-sensitive disposable files for testing; a green test suite does not
+replace Android/iOS Telegram WebView acceptance (VPN and video Range included).
 
 ## Provisioned Cloudflare infrastructure and testing gates
 
@@ -76,13 +80,12 @@ and iOS Telegram WebView acceptance test (including VPN and video Range).
    including PUT with `Content-Type` and `If-None-Match`, plus GET/HEAD and
    Range in preparation for a separate read fallback. The browser sets
    Content-Length and Host itself; they are bound to SigV4.
-3. **Required for closed test:** set repository secret
-   `R2_MEDIA_TELEGRAM_ALLOWLIST` to comma-separated test Telegram user IDs
-   and apply Worker secrets through the protected manual Cloudflare bootstrap
-   (or an equivalently authorized server-side secret operation) before testing.
-   No allowlist means **all R2 sign/verify requests return 403**, while the
-   Yandex-only upload continues. Do not enable for ordinary accounts until
-   there is an approved R2 read fallback.
+3. **MVP without allowlist:** R2 sign/verify is available to every user
+   who passes Telegram `initData` verification. No Telegram ID repository
+   secret or additional Cloudflare bootstrap is required. Retain server-side
+   request validation, write-once conditional PUT and bucket-scoped credentials.
+   Users should test with disposable media because R2 read fallback is not
+   implemented yet.
 4. Verify signed conditional PUT, a 412 retry/HEAD against the dedicated
    bucket, permission and key boundaries, full-size videos, WebView CORS,
    VPN routing and lack of credential exposure. The CI tests cover only
