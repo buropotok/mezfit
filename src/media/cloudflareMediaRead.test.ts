@@ -7,7 +7,7 @@ const key = 'mvp-media/' + 'a'.repeat(64);
 const host = 'mezfit-discussion-media.' + 'a'.repeat(32) + '.r2.cloudflarestorage.com';
 const getUrl = `https://${host}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=${'b'.repeat(64)}`;
 const entry = { accountId: 'tg:100500', storageKey: key, mimeType: 'video/mp4', sizeBytes: 100,
-  realmId: 'rlm' + 'b'.repeat(28), messageId: 'message-123', attachmentId: 'attachment-456' };
+  realmId: 'rlm' + 'b'.repeat(28), messageId: '22222222-2222-4222-8222-222222222222', attachmentId: '33333333-3333-4333-8333-333333333333' };
 const response = () => Response.json({ storageKey: key, getUrl, expiresAt: Date.now() + 600_000 });
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
