@@ -24,7 +24,7 @@ The Worker independently verifies:
 
 No membership, incorrect attachment, missing read-only service credentials,
 stale/unsynchronized cloud data or provider failure: **deny the R2 capability**.
-The client never receives the Dexie read-only token, R2 access key or secret.
+The client never receives the Dexie read-only token or R2 signing secret. A presigned URL necessarily contains the non-secret R2 access-key identifier.
 This mechanism never grants broader permissions in Dexie Cloud and does not
 create any D1 or independent business metadata.
 
