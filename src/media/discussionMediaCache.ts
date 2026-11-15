@@ -113,7 +113,7 @@ export async function listIncompleteMediaReplicas(accountId: string): Promise<Me
   try {
     const rows = await db.replicas.toArray();
     return rows.filter(row => row.published && (!row.r2ConfirmedAt || !row.yandexConfirmedAt))
-      .slice(0, 12).map(row => ({ accountId, storageKey: row.key, mimeType: row.mimeType,
+      .map(row => ({ accountId, storageKey: row.key, mimeType: row.mimeType,
         sizeBytes: row.sizeBytes, fileName: row.fileName,
         yandexConfirmedAt: row.yandexConfirmedAt, r2ConfirmedAt: row.r2ConfirmedAt, published: true }));
   } finally { db.close(); }
