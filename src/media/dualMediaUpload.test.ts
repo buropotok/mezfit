@@ -96,6 +96,26 @@ it('recovers only missing providers for accepted attachments in later sessions',
 });
 
 
+it('recovers the R2 replica immediately even while Yandex recovery is stalled', async () => {
+  const pending = { accountId, storageKey: key, mimeType: 'image/jpeg', sizeBytes: 6,
+    fileName: 'photo.jpg', published: true };
+  vi.mocked(listIncompleteMediaReplicas).mockResolvedValue([pending]);
+  vi.mocked(readDiscussionMedia).mockResolvedValue(new Blob(['sample'], { type: 'image/jpeg' }));
+  let resolveYandex: ((value: typeof uploaded) => void) | undefined;
+  vi.mocked(uploadDirectMedia).mockImplementation(() => new Promise(resolve => { resolveYandex = resolve; }));
+  vi.mocked(uploadCloudflareMedia).mockResolvedValue(uploaded);
+  const recovery = resumeMediaReplicaUploads(accountId);
+  try {
+    await vi.waitFor(() => expect(uploadCloudflareMedia).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(confirmMediaReplica).toHaveBeenCalledWith(accountId, key, 'r2'));
+    expect(confirmMediaReplica).not.toHaveBeenCalledWith(accountId, key, 'yandex');
+  } finally {
+    resolveYandex?.(uploaded);
+    await recovery;
+  }
+  expect(confirmMediaReplica).toHaveBeenCalledWith(accountId, key, 'yandex');
+});
+
 it('starts R2 after eight seconds when Yandex is still waiting and accepts the first success', async () => {
   vi.useFakeTimers();
   vi.mocked(uploadDirectMedia).mockImplementation(() => new Promise<Awaited<ReturnType<typeof uploadDirectMedia>>>(() => undefined));
