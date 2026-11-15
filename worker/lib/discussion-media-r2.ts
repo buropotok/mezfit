@@ -51,7 +51,7 @@ export interface R2MediaRequest {
 function parseMediaRequest(raw: unknown): R2MediaRequest | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const input = raw as Record<string, unknown>;
-  if (typeof input.initData !== 'string' || input.initData.length < 1 || input.initData.length > 4096
+  if (typeof input.initData !== 'string' || input.initData.length > 4096
     || typeof input.storageKey !== 'string' || !DISCUSSION_MEDIA_KEY_PATTERN.test(input.storageKey)
     || typeof input.contentType !== 'string'
     || typeof input.sizeBytes !== 'number' || !Number.isSafeInteger(input.sizeBytes)
