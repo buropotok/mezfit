@@ -31,6 +31,9 @@ Cloudflare resources are required.
   `POST /api/discussion-media/verify`. The Worker uses its dedicated `R2_BINDING_DISCUSSION_MEDIA` binding
   to check size and MIME by HEAD. A collision with different metadata is a
   failure, not a success. Both endpoints require fresh Telegram `initData`.
+  The typed `src/api.ts` transport owns privileged Worker route construction,
+  request serialization and response validation; the R2 upload adapter checks
+  the signed URL's bucket/key/headers again before sending bytes.
   No client credentials, shared secrets or R2 write tokens are shipped to a browser.
 - Yandex's existing signer, bucket ACL and public-read URL contract remain
   unchanged; Cloudflare does not proxy or rewrite those requests.
@@ -43,8 +46,10 @@ timestamps and `published`. It is marked published only after the existing
 Dexie discussion repository has committed the attachment. The actor's
 `DiscussionsProvider` retries missing providers after a fresh app session,
 `online` or `visibilitychange`, using the locally cached File. Uploads do
-not require a DiscussionSheet to remain open. A partial or evicted local cache
-cannot reconstruct the source bytes; it is not silently treated as successful.
+not require a DiscussionSheet to remain open. Missing provider replicas are
+attempted independently so a stalled Yandex recovery does not delay R2.
+A partial or evicted local cache cannot reconstruct the source bytes; it
+is not silently treated as successful.
 
 These local timestamps are **hints of earlier successful writes**, not claims
 that the cloud object still exists. Retry after an ambiguous outcome uses the
