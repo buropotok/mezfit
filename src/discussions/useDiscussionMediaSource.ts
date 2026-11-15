@@ -5,9 +5,9 @@ import { signedDiscussionR2ReadUrl } from '../media/cloudflareMediaRead';
 export function useDiscussionMediaSource(
   src: string, cache: DiscussionMediaCacheEntry | undefined, mode: 'cache-only' | 'photo' | 'video', retry: number, lazy: boolean,
 ) {
-  const { accountId, storageKey, mimeType, sizeBytes } = cache ?? {};
+  const { accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId } = cache ?? {};
   const container = useRef<HTMLDivElement>(null);
-  const identity = JSON.stringify([src, accountId, storageKey, mimeType, sizeBytes, mode, retry]);
+  const identity = JSON.stringify([src, accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId, mode, retry]);
   const [resolved, setResolved] = useState<{ identity: string; url: string }>();
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;
@@ -36,7 +36,7 @@ export function useDiscussionMediaSource(
 
   useEffect(() => {
     if (!accountId || !storageKey || !mimeType || sizeBytes === undefined) return;
-    const entry = { accountId, storageKey, mimeType, sizeBytes };
+    const entry = { accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId };
     let active = true;
     let objectUrl: string | undefined;
     const load = async () => {
@@ -63,7 +63,7 @@ export function useDiscussionMediaSource(
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [src, accountId, storageKey, mimeType, sizeBytes, mode, identity, lazy]);
+  }, [src, accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId, mode, identity, lazy]);
 
   const url = !accountId ? src : resolved?.identity === identity ? resolved.url : undefined;
   return { url, container, tryR2Fallback };
