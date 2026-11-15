@@ -4,7 +4,7 @@ import { directMediaUrl, MediaUploadError, validateDirectMedia, type UploadedMed
 const SIGN_ROUTE = '/api/discussion-media/sign';
 const VERIFY_ROUTE = '/api/discussion-media/verify';
 const signedHeaders = 'content-length;content-type;host;if-none-match';
-const R2_UPLOAD_HOST = /^mezfit\.[a-f0-9]{32}\.r2\.cloudflarestorage\.com$/i;
+const R2_UPLOAD_HOST = /^mezfit-discussion-media\.[a-f0-9]{32}\.r2\.cloudflarestorage\.com$/i;
 
 function validSignedPut(value: unknown, key: string): value is { putUrl: string; expiresAt: number; storageKey: string } {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
