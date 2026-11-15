@@ -85,7 +85,7 @@ it('recovers only missing providers for accepted attachments in later sessions',
 
 it('starts R2 after eight seconds when Yandex is still waiting and accepts the first success', async () => {
   vi.useFakeTimers();
-  vi.mocked(uploadDirectMedia).mockImplementation(() => new Promise(() => undefined));
+  vi.mocked(uploadDirectMedia).mockImplementation(() => new Promise<Awaited<ReturnType<typeof uploadDirectMedia>>>(() => undefined));
   vi.mocked(uploadCloudflareMedia).mockResolvedValue(uploaded);
   const result = uploadMirroredDiscussionMedia(file(), { accountId, retryKey: key });
   await vi.advanceTimersByTimeAsync(0);
