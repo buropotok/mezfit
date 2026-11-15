@@ -12,7 +12,6 @@ export interface DiscussionR2MediaEnv {
   R2_ACCOUNT_ID?: string;
   R2_MEDIA_ACCESS_KEY_ID?: string;
   R2_MEDIA_SECRET_ACCESS_KEY?: string;
-  R2_MEDIA_TELEGRAM_ALLOWLIST?: string;
 }
 
 function jsonError(status: number, code: string): Response {
@@ -119,18 +118,12 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
   }
   const input = parseMediaRequest(raw);
   if (!input) return jsonError(400, 'INVALID_MEDIA_REQUEST');
-  let authenticatedUserId: number;
   try {
-    authenticatedUserId = (await validateTelegramInitData(input.initData, env.TELEGRAM_BOT_TOKEN)).user.id;
+    await validateTelegramInitData(input.initData, env.TELEGRAM_BOT_TOKEN);
   } catch (error) {
     if (error instanceof TelegramAuthError) return jsonError(401, 'UNAUTHORIZED');
     throw error;
   }
-
-  // Required during the upload-only iteration: R2-only media cannot yet be read.
-  // Never trust a user ID from the request body; deny all when the list is unset.
-  if (!env.R2_MEDIA_TELEGRAM_ALLOWLIST?.split(',').map(value => value.trim())
-    .includes(String(authenticatedUserId))) return jsonError(403, 'MEDIA_FORBIDDEN');
 
   if (path.endsWith('/verify')) {
     const object = await env.R2_BINDING_DISCUSSION_MEDIA.head(input.storageKey);
