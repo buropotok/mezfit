@@ -18,10 +18,11 @@ it('gets a private signed GET URL only through the typed same-origin Worker API'
   vi.stubGlobal('fetch', transport);
   expect(await signedDiscussionR2ReadUrl(entry)).toBe(getUrl);
   expect(transport).toHaveBeenCalledWith('/api/discussion-media/read',
-    expect.objectContaining({ method: 'POST', credentials: 'omit',
-      body: JSON.stringify({ initData: rawInitData, storageKey: key,
-        contentType: 'video/mp4', sizeBytes: 100,
-        realmId: entry.realmId, messageId: entry.messageId, attachmentId: entry.attachmentId }) }));
+    expect.objectContaining({ method: 'POST', credentials: 'omit' }));
+  expect(JSON.parse(String(transport.mock.calls[0]?.[1]?.body))).toEqual({
+    initData: rawInitData, storageKey: key, contentType: 'video/mp4', sizeBytes: 100,
+    realmId: entry.realmId, messageId: entry.messageId, attachmentId: entry.attachmentId,
+  });
 });
 
 it('rejects unsigned/foreign/mismatched/expired capabilities instead of fetching arbitrary URLs', async () => {
