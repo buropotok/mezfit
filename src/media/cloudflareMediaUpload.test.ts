@@ -44,6 +44,20 @@ it('rejects foreign signed origins and mismatched keys without sending file byte
   expect(transport).toHaveBeenCalledTimes(2);
 });
 
+it('never uploads discussion media to the legacy exercise GIF bucket', async () => {
+  const gifHost = 'mezfit.' + 'a'.repeat(32) + '.r2.cloudflarestorage.com';
+  const transport = vi.fn<typeof fetch>(async () => Response.json({
+    storageKey: key,
+    putUrl: putUrl.replace(host, gifHost),
+    expiresAt: Date.now() + 600_000,
+  }));
+  vi.stubGlobal('Telegram', { WebApp: { initData: rawInitData } });
+  vi.stubGlobal('fetch', transport);
+  await expect(uploadCloudflareMedia(file(), { retryKey: key }))
+    .rejects.toMatchObject({ code: 'SIGNER_UNAVAILABLE' });
+  expect(transport).toHaveBeenCalledOnce();
+});
+
 it('confirms a retry collision through authenticated Worker HEAD before reporting success', async () => {
   const transport = vi.fn<typeof fetch>((url) => Promise.resolve(
     url === '/api/discussion-media/sign' ? response()
