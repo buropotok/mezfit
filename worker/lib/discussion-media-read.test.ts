@@ -129,6 +129,8 @@ describe('Private R2 discussion media reads', () => {
   it.each([
     { attachment: { storageKey: 'mvp-media/' + 'b'.repeat(64) } },
     { attachment: { uploadState: 'pending' } },
+    { attachment: { messageId: 'different-message' } },
+    { attachment: { realmId: 'rlm' + 'f'.repeat(28) } },
     { attachment: { deletedAt: '2026-11-16T00:00:00.000Z' } },
     { message: { deletedAt: '2026-11-16T00:00:00.000Z' } },
   ])('refuses an absent, unpublished, deleted or mismatched attachment', async overrides => {
@@ -138,6 +140,19 @@ describe('Private R2 discussion media reads', () => {
     const response = await handleDiscussionR2MediaRoute(request({
       initData: await telegramInitData(200600), realmId, messageId, attachmentId,
       storageKey: key, contentType: 'image/jpeg', sizeBytes: 6,
+    }), env());
+    expect(response.status).toBe(403);
+    expect(head).not.toHaveBeenCalled();
+  });
+
+  it('denies a revoked relationship even when the actor still knows the R2 object key', async () => {
+    const pair = await relationshipMembership('100500', '200600');
+    const members = pair.members.map(member => member.userId === 'tg:200600'
+      ? { ...member, accepted: false } : member);
+    const { realmId } = await mockCloud({ members });
+    const response = await handleDiscussionR2MediaRoute(request({
+      initData: await telegramInitData(200600), realmId, messageId,
+      attachmentId, storageKey: key, contentType: 'image/jpeg', sizeBytes: 6,
     }), env());
     expect(response.status).toBe(403);
     expect(head).not.toHaveBeenCalled();
