@@ -1,10 +1,12 @@
 # Cloudflare infrastructure bootstrap (no GitHub Environments)
 
-Status: proposed; no live Cloudflare resources, tokens, secrets or domains are
-changed by preparing this pull request. Run the owner-only
-`.github/workflows/bootstrap-cloudflare.yml` workflow manually **from main**
-after review/merge. It uses GitHub **repository** secrets and variables only.
-No new GitHub Environment is created or required.
+Status: bootstrapped successfully in the Mezfit Cloudflare account on
+2026-11-15 (D1 unchanged, R2 `mezfit-discussion-media` created, CORS and
+scoped token configured, Worker deployed). The owner-only
+`.github/workflows/bootstrap-cloudflare.yml` remains available for
+idempotent replay in the existing account or a fresh account. It runs
+manually **from main**, uses GitHub **repository** secrets and variables
+only, and does not require a new GitHub Environment.
 
 ## Goal and existing boundaries
 
@@ -59,7 +61,9 @@ test Telegram users. The token has object rights only in
      `DEXIE_CLOUD_REMINDER_CLIENT_ID`,
      `DEXIE_CLOUD_REMINDER_CLIENT_SECRET`,
      `DEXIE_DISCUSSION_WEBHOOK_SECRET` and the test-only
-     `R2_MEDIA_TELEGRAM_ALLOWLIST` if using a later R2 upload feature.
+     `R2_MEDIA_TELEGRAM_ALLOWLIST` for closed testing of the current
+     R2 upload-only phase. Never broaden the allowlist until read fallback
+     is implemented and approved.
      Missing optional values are not uploaded and do not delete existing
      Worker secrets. Any functionality depending on them remains unavailable
      until restored. Set these repository secrets through trusted GitHub
