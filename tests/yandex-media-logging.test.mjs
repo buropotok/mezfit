@@ -6,7 +6,6 @@ import logging from '../infra/yandex-media-mvp/function/media-log.js';
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
 const env = {
-  MEDIA_LOG_BUCKET: 'mezfit-private-logs',
   MEDIA_LOG_S3_ACCESS_KEY_ID: 'logAccess',
   MEDIA_LOG_S3_SECRET_ACCESS_KEY: 'logSecret',
 };
@@ -19,7 +18,7 @@ function fakeStorage({ prefill = {}, conflictOnce = false } = {}) {
   const fetchImpl = vi.fn(async (url, init) => {
     const parsed = new URL(url);
     const method = init.method;
-    const key = parsed.pathname.replace('/' + env.MEDIA_LOG_BUCKET + '/', '');
+    const key = parsed.pathname.replace('/mezfit-comm-poc-20261106/', '');
     calls.push({ method, key, headers: init.headers });
     expect(init.headers.authorization).toMatch(/^AWS4-HMAC-SHA256 Credential=logAccess\//);
     expect(init.headers.authorization).not.toContain(env.MEDIA_LOG_S3_SECRET_ACCESS_KEY);
@@ -74,7 +73,7 @@ describe('Yandex media diagnostic log storage', () => {
     const now = new Date('2026-11-15T12:00:00Z');
     const first = await logging.appendEvents([event()], env, { now, fetchImpl: storage.fetchImpl });
     const next = await logging.appendEvents([event('RESPONSE_CREATED')], env, { now, fetchImpl: storage.fetchImpl });
-    expect(first).toBe('logs_20261115_0001');
+    expect(first).toBe('logs/logs_20261115_0001');
     expect(next).toBe(first);
     expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT', 'GET', 'HEAD', 'PATCH']);
     expect(storage.objects.get(first).toString('utf8').trim().split('\n')).toHaveLength(2);
@@ -88,7 +87,7 @@ describe('Yandex media diagnostic log storage', () => {
     await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T21:01:00Z'), fetchImpl: storage.fetchImpl,
     });
-    expect([...storage.objects.keys()]).toEqual(['logs_20261115_0001', 'logs_20261116_0001']);
+    expect([...storage.objects.keys()]).toEqual(['logs/logs_20261115_0001', 'logs/logs_20261116_0001']);
   });
 
   it('keeps both concurrent first-day log writes without overwriting either one', async () => {
@@ -98,8 +97,8 @@ describe('Yandex media diagnostic log storage', () => {
       logging.appendEvents([event('FIRST_REQUEST')], env, { now, fetchImpl: storage.fetchImpl }),
       logging.appendEvents([event('SECOND_REQUEST')], env, { now, fetchImpl: storage.fetchImpl }),
     ]);
-    expect(keys).toEqual(['logs_20261115_0001', 'logs_20261115_0001']);
-    const saved = storage.objects.get('logs_20261115_0001').toString('utf8');
+    expect(keys).toEqual(['logs/logs_20261115_0001', 'logs/logs_20261115_0001']);
+    const saved = storage.objects.get('logs/logs_20261115_0001').toString('utf8');
     expect(saved).toContain('FIRST_REQUEST');
     expect(saved).toContain('SECOND_REQUEST');
     expect(saved.trim().split('\n')).toHaveLength(2);
@@ -107,17 +106,17 @@ describe('Yandex media diagnostic log storage', () => {
 
   it('rolls to the next sequence once the latest object exceeds 1 MiB', async () => {
     const old = Buffer.alloc(logging.LIMIT_BYTES + 1, 0x61);
-    const storage = fakeStorage({ prefill: { logs_20261115_0001: old } });
+    const storage = fakeStorage({ prefill: { logs/logs_20261115_0001: old } });
     const key = await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
-    expect(key).toBe('logs_20261115_0002');
-    expect(storage.objects.get('logs_20261115_0001')).toEqual(old);
+    expect(key).toBe('logs/logs_20261115_0002');
+    expect(storage.objects.get('logs/logs_20261115_0001')).toEqual(old);
     expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT']);
   });
 
   it('retries on an ETag conflict without overwriting another writer', async () => {
-    const storage = fakeStorage({ prefill: { logs_20261115_0001: '{"before":true}\n' }, conflictOnce: true });
+    const storage = fakeStorage({ prefill: { logs/logs_20261115_0001: '{"before":true}\n' }, conflictOnce: true });
     const key = await logging.appendEvents([event()], env, {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
@@ -129,7 +128,7 @@ describe('Yandex media diagnostic log storage', () => {
 
   it('does not try writing without a separately configured private bucket and credentials', async () => {
     const storage = fakeStorage();
-    await expect(logging.appendEvents([event()], { MEDIA_LOG_BUCKET: env.MEDIA_LOG_BUCKET }, {
+    await expect(logging.appendEvents([event()], {}, {
       fetchImpl: storage.fetchImpl,
     })).rejects.toThrow('LOG_CONFIG_INVALID');
     expect(storage.fetchImpl).not.toHaveBeenCalled();
