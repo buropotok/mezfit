@@ -1,0 +1,132 @@
+name: Bootstrap Cloudflare infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Read-only preview or explicitly confirmed infrastructure apply
+        type: choice
+        options: [preview, apply]
+        default: preview
+        required: true
+      confirmation:
+        description: For apply enter BOOTSTRAP_CLOUDFLARE_INFRASTRUCTURE
+        type: string
+        required: false
+      replace_existing_cors:
+        description: Explicitly allow replacing a different existing discussion-bucket CORS policy
+        type: boolean
+        default: false
+        required: true
+      generate_r2_token:
+        description: Create bucket-scoped R2 S3 credentials on a fresh Cloudflare account
+        type: boolean
+        default: true
+        required: true
+
+# Serialize against the existing production workflow; no GitHub Environment is created.
+concurrency:
+  group: mezfit-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+      BOOTSTRAP_MODE: ${{ inputs.operation }}
+      REPLACE_EXISTING_CORS: ${{ inputs.replace_existing_cors }}
+      GENERATE_R2_TOKEN: ${{ inputs.generate_r2_token }}
+      R2_CREDENTIALS_FILE: ${{ runner.temp }}/mezfit-generated-r2.json
+      WORKER_SECRETS_FILE: ${{ runner.temp }}/mezfit-worker-secrets.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify deliberate owner-only apply
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "$BOOTSTRAP_MODE" == "apply" && "$CONFIRMATION" != "BOOTSTRAP_CLOUDFLARE_INFRASTRUCTURE" ]]; then
+            echo 'Explicit apply confirmation is required.' >&2
+            exit 1
+          fi
+          if [[ -z "$CLOUDFLARE_ACCOUNT_ID" || -z "$MEZFIT_APP_ORIGIN" ]]; then
+            echo 'Repository variables CLOUDFLARE_ACCOUNT_ID and MEZFIT_APP_ORIGIN are required.' >&2
+            exit 1
+          fi
+          if [[ "$BOOTSTRAP_MODE" == "apply" && -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            echo 'CLOUDFLARE_API_TOKEN repository secret is required for Wrangler deployment.' >&2
+            exit 1
+          fi
+      - name: Preview or provision the Cloudflare resources
+        id: bootstrap
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
+        run: node tools/cloudflare/bootstrap.mjs
+
+      - uses: actions/setup-node@v4
+        if: inputs.operation == 'apply'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install pinned application dependencies
+        if: inputs.operation == 'apply'
+        run: npm ci
+
+      - name: Build current application
+        if: inputs.operation == 'apply'
+        run: npm run build
+        env:
+          VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED: ${{ vars.VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED }}
+          VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED: ${{ vars.VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED }}
+          VITE_CLOUD_DISCUSSIONS_ENABLED: ${{ vars.VITE_CLOUD_DISCUSSIONS_ENABLED }}
+          VITE_YANDEX_MEDIA_FUNCTION_URL: ${{ vars.VITE_YANDEX_MEDIA_FUNCTION_URL }}
+
+      - name: Prepare Worker secrets for a single secure deploy
+        if: inputs.operation == 'apply'
+        run: node tools/cloudflare/worker-secrets.mjs
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DEXIE_CLOUD_CLIENT_ID: ${{ secrets.DEXIE_CLOUD_CLIENT_ID }}
+          DEXIE_CLOUD_CLIENT_SECRET: ${{ secrets.DEXIE_CLOUD_CLIENT_SECRET }}
+          DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID: ${{ secrets.DEXIE_CLOUD_MEMBERSHIP_CLIENT_ID }}
+          DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET: ${{ secrets.DEXIE_CLOUD_MEMBERSHIP_CLIENT_SECRET }}
+          DEXIE_CLOUD_REMINDER_CLIENT_ID: ${{ secrets.DEXIE_CLOUD_REMINDER_CLIENT_ID }}
+          DEXIE_CLOUD_REMINDER_CLIENT_SECRET: ${{ secrets.DEXIE_CLOUD_REMINDER_CLIENT_SECRET }}
+          DEXIE_DISCUSSION_WEBHOOK_SECRET: ${{ secrets.DEXIE_DISCUSSION_WEBHOOK_SECRET }}
+          R2_MEDIA_TELEGRAM_ALLOWLIST: ${{ secrets.R2_MEDIA_TELEGRAM_ALLOWLIST }}
+
+      - name: Bind provisioned D1 database ID
+        if: inputs.operation == 'apply'
+        shell: bash
+        env:
+          DB_ID: ${{ steps.bootstrap.outputs.database_id }}
+        run: |
+          set -euo pipefail
+          [[ "$DB_ID" =~ ^[a-fA-F0-9-]{36}$ ]] || { echo 'Invalid provisioned D1 id' >&2; exit 1; }
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
+
+      - name: Apply existing D1 migrations
+        if: inputs.operation == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler d1 migrations apply DB_BINDING --remote
+
+      - name: Deploy Worker with available secrets
+        if: inputs.operation == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy --secrets-file "$WORKER_SECRETS_FILE"
+
+      - name: Remove staged credentials from runner
+        if: always()
+        shell: bash
+        run: rm -f "$R2_CREDENTIALS_FILE" "$WORKER_SECRETS_FILE"
