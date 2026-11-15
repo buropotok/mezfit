@@ -44,7 +44,7 @@ describe('Cloudflare R2 upload signer', () => {
     const signed = await signDiscussionR2Put({ storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 },
       credentials, new Date('2026-11-15T18:00:00Z'));
     expect(new URL(signed.putUrl).searchParams.get('X-Amz-Signature'))
-      .toBe('TO_BE_VERIFIED_WITH_INDEPENDENT_VECTOR');
+      .toBe('4603e7c69b7dfef4c66a62052746249615f8a92a99ab13dceca103cc6df0164b');
     expect(signed.putUrl).toContain('X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost%3Bif-none-match');
     expect(signed.putUrl).not.toContain(credentials.R2_MEDIA_SECRET_ACCESS_KEY);
     expect(signed.expiresAt).toBe(new Date('2026-11-15T18:10:00Z').getTime());
