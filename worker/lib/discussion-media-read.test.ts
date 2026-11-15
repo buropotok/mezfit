@@ -190,5 +190,7 @@ describe('Private R2 discussion media reads', () => {
     expect((await handleDiscussionR2MediaRoute(request(good), env())).status).toBe(404);
     head.mockResolvedValueOnce({ size: 7, httpMetadata: { contentType: 'image/jpeg' } });
     expect((await handleDiscussionR2MediaRoute(request(good), env())).status).toBe(409);
+    head.mockResolvedValueOnce({ size: 6, httpMetadata: { contentType: 'image/png' } });
+    expect((await handleDiscussionR2MediaRoute(request(good), env())).status).toBe(409);
   });
 });
