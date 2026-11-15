@@ -26,10 +26,10 @@ media signer/HEAD verification path. Existing exercise GIF media still uses
 `R2_BINDING_MEZFIT` and the unrelated `mezfit` bucket.
 
 The bootstrap itself does not migrate Yandex discussion bytes or enable
-R2 public read/fallback. R2 signing remains deny-by-default until the
-`R2_MEDIA_TELEGRAM_ALLOWLIST` Worker secret is explicitly set for approved
-test Telegram users. The token has object rights only in
-`mezfit-discussion-media`, not in the original `mezfit` bucket.
+R2 public read/fallback. In the current all-test-users MVP, the owner removed
+the per-user Telegram allowlist. R2 sign/verify still require valid Telegram
+initData and exact key/MIME/size validation; the token has object rights only
+in `mezfit-discussion-media`, not in the original `mezfit` bucket.
 
 ## One-time setup for a new Cloudflare account
 
