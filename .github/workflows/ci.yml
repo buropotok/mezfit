@@ -18,6 +18,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
-      - run: npm test
+      # Limit competing Vitest workers on shared CI runners without changing test timeouts or assertions.
+      - run: npm test -- --maxWorkers=2 --minWorkers=1
       - run: npm run typecheck
       - run: npm run build
