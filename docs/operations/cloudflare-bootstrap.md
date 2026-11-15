@@ -40,7 +40,7 @@ existing `mezfit` bucket.
    - `CLOUDFLARE_API_TOKEN`: deploy-capable token for Workers scripts/bindings,
      D1 migration operations and other resources actually used by deployment.
    - `CLOUDFLARE_BOOTSTRAP_API_TOKEN` (recommended separately): account-scoped
-     provisioning token with **D1 Edit**, **Workers R2 Storage Edit** (for
+     provisioning token with **D1 Edit**, **Workers R2 Storage Write** (for
      bucket/CORS management), and **Account API Tokens Read + Write** (to
      create scoped R2 S3 credentials). It is never passed to npm/build or
      application deployment steps. Without this second secret the bootstrap
