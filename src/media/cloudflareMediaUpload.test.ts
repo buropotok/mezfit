@@ -4,7 +4,7 @@ import { uploadCloudflareMedia } from './cloudflareMediaUpload';
 import { rawInitData } from './mediaUploadTestFixtures';
 
 const key = 'mvp-media/' + 'a'.repeat(64);
-const host = 'mezfit.' + 'a'.repeat(32) + '.r2.cloudflarestorage.com';
+const host = 'mezfit-discussion-media.' + 'a'.repeat(32) + '.r2.cloudflarestorage.com';
 const putUrl = `https://${host}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost%3Bif-none-match&X-Amz-Signature=${'b'.repeat(64)}`;
 const file = () => new File(['sample'], 'sample.jpg', { type: 'image/jpeg' });
 const response = () => Response.json({ storageKey: key, putUrl, expiresAt: Date.now() + 600_000 });
