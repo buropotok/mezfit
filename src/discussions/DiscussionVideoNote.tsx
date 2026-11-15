@@ -48,6 +48,8 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   const [expanded, setExpanded] = useState(review);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
+  const currentRetry = useRef(retry);
+  currentRetry.current = retry;
   const { url, container, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'video', retry, false);
   // Measure in content coordinates so the browser scrolls the frame with the
   // message, even while native momentum scrolling runs ahead of React.
@@ -107,7 +109,8 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
       onExpand={() => setExpanded(true)}
       onReturnToPreview={review ? undefined : () => setExpanded(false)} onError={message => {
         if (message === 'Не удалось воспроизвести записанное видео на этом устройстве.') {
-          void tryR2Fallback().then(switched => { if (!switched) setError(message); });
+          const attempt = retry;
+          void tryR2Fallback().then(switched => { if (!switched && currentRetry.current === attempt) setError(message); });
         } else setError(message);
       }} />
   </div>;
