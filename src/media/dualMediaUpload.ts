@@ -112,10 +112,11 @@ export async function resumeMediaReplicaUploads(accountId: string): Promise<void
       const blob = await readDiscussionMedia(task);
       if (!blob) continue; // Evicted cache: do not claim replication is complete.
       const file = new File([blob], task.fileName, { type: task.mimeType });
-      if (!task.yandexConfirmedAt) await attemptReplica(file, task, 'yandex');
-      if (!task.r2ConfirmedAt && navigator.onLine !== false && document.visibilityState !== 'hidden') {
-        await attemptReplica(file, task, 'r2');
-      }
+      // A stalled primary transfer must not delay recovery of the independent R2 copy.
+      const providers: MediaReplicaProvider[] = [];
+      if (!task.yandexConfirmedAt) providers.push('yandex');
+      if (!task.r2ConfirmedAt) providers.push('r2');
+      await Promise.all(providers.map(provider => attemptReplica(file, task, provider)));
     }
   } catch {
     // No background retry failure may block the Mini App shell.
