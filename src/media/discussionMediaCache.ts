@@ -92,7 +92,7 @@ export async function rememberMediaReplica(entry: DiscussionMediaCacheEntry, fil
 }
 
 export async function confirmMediaReplica(accountId: string, storageKey: string, provider: MediaReplicaProvider): Promise<void> {
-  if (!/^tg:[1-9]\\d*$/.test(accountId) || !directMediaUrl(storageKey)) throw new Error('INVALID_MEDIA_REPLICA');
+  if (!/^tg:[1-9]\d*$/.test(accountId) || !directMediaUrl(storageKey)) throw new Error('INVALID_MEDIA_REPLICA');
   const db = new DiscussionMediaDatabase(accountId);
   try {
     await db.replicas.update(storageKey,
@@ -101,14 +101,14 @@ export async function confirmMediaReplica(accountId: string, storageKey: string,
 }
 
 export async function publishMediaReplica(accountId: string, storageKey: string): Promise<void> {
-  if (!/^tg:[1-9]\\d*$/.test(accountId) || !directMediaUrl(storageKey)) throw new Error('INVALID_MEDIA_REPLICA');
+  if (!/^tg:[1-9]\d*$/.test(accountId) || !directMediaUrl(storageKey)) throw new Error('INVALID_MEDIA_REPLICA');
   const db = new DiscussionMediaDatabase(accountId);
   try { await db.replicas.update(storageKey, { published: true }); }
   finally { db.close(); }
 }
 
 export async function listIncompleteMediaReplicas(accountId: string): Promise<MediaReplicaTask[]> {
-  if (!/^tg:[1-9]\\d*$/.test(accountId)) return [];
+  if (!/^tg:[1-9]\d*$/.test(accountId)) return [];
   const db = new DiscussionMediaDatabase(accountId);
   try {
     const rows = await db.replicas.toArray();
@@ -120,7 +120,7 @@ export async function listIncompleteMediaReplicas(accountId: string): Promise<Me
 }
 
 export async function getMediaReplica(accountId: string, storageKey: string): Promise<MediaReplicaTask | null> {
-  if (!/^tg:[1-9]\\d*$/.test(accountId) || !directMediaUrl(storageKey)) return null;
+  if (!/^tg:[1-9]\d*$/.test(accountId) || !directMediaUrl(storageKey)) return null;
   const db = new DiscussionMediaDatabase(accountId);
   try {
     const row = await db.replicas.get(storageKey);
