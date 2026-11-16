@@ -125,7 +125,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
   const draft = useDiscussionDraft(repository, threadId);
-  const media = useDiscussionMedia(repository, draft);
+  const media = useDiscussionMedia(repository, draft, threadId);
   const sendRecordedVideo = useEffectEvent((file: File) => {
     void media.choose(file, { sendToThread: threadId });
   });
@@ -202,9 +202,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const viewedMessage = viewing && renderedMessages.find(row => row.id === viewing.messageId);
   const viewedAttachment = viewing && viewedMessage && !viewedMessage.deleted
     ? viewedMessage.attachments?.find(attachment => attachment.id === viewing.attachmentId) : undefined;
-  const localVideoUrl = viewing && outgoing?.id === viewing.messageId
+  const pendingLocalVideo = media.pendingMedia.find(item => item.command.id === viewing?.messageId
+    && item.command.draftMedia?.id === viewing?.attachmentId
+    && item.command.draftMedia.mediaType === 'video');
+  const localVideoUrl = (viewing && outgoing?.id === viewing.messageId
     && outgoingVideo?.metadata.id === viewing.attachmentId && outgoingVideo.metadata.mediaType === 'video' && media.preview
-    ? media.preview : undefined;
+    ? media.preview : undefined) ?? pendingLocalVideo?.preview;
   const viewer: DiscussionMediaSource | null = localVideoUrl
     ? { src: localVideoUrl, type: 'video' }
     : viewedAttachment ? galleryMediaSource(viewedAttachment, repository.actorUserId)
@@ -585,7 +588,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     });
   };
   const own = selected?.authorUserId === repository.actorUserId;
-  const outgoingMenu = Boolean(menu && outgoing?.id === menu.id && outgoingStatus === 'failed' && outgoingVideo);
+  const pendingOutgoingVideo = menu && media.pendingMedia.find(item => item.command.id === menu.id
+    && (item.command.draftMedia?.mediaType === 'video' || item.command.draftMedia?.mediaType === 'video-note'))?.selected;
+  const outgoingMenu = Boolean(pendingOutgoingVideo);
   const saveItem = (attachmentId: string, target: DiscussionVideoSaveTarget): LiquidPopoverItem => ({
     id: 'save-video-' + attachmentId, label: 'Сохранить', icon: 'arrow-down', onSelect: () => {
       if (!menuRef.current?.open || menuRef.current.id !== menu?.id) return;
@@ -594,8 +599,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       setSavingVideo(target);
     },
   });
-  const items: LiquidPopoverItem[] = outgoingMenu && outgoingVideo
-    ? [saveItem(outgoingVideo.metadata.id, { file: outgoingVideo.file })] : [
+  const items: LiquidPopoverItem[] = outgoingMenu && pendingOutgoingVideo
+    ? [saveItem(pendingOutgoingVideo.metadata.id, { file: pendingOutgoingVideo.file })] : [
     ...(!draft.videoPosition ? [{ id: 'reply', label: 'Ответить', icon: 'arrow-back-up' as const, onSelect: () => choose('reply') }] : []),
     ...(own && selected?.text.trim() && !mediaPresent ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
     ...(selected?.text.trim() ? [{ id: 'copy', label: 'Копировать', icon: 'copy' as const, onSelect: () => choose('copy') }] : []),
@@ -790,13 +795,31 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             </div>
           </Fragment>;
         })}
+        {media.pendingMedia.map(pending => {
+          const { command, selected, preview, error: pendingError } = pending;
+          const attachment = command.draftMedia;
+          if (!attachment || renderedMessages.some(message => message.id === command.id)) return null;
+          const video = attachment.mediaType === 'video' || attachment.mediaType === 'video-note';
+          return <Fragment key={command.id}>
+            <div className="discussion-message-target discussion-message-target--outgoing" data-own="true" data-message-id={command.id}>
+              <DiscussionOutgoingMedia src={preview} attachment={attachment} createdAt={command.createdAt}
+                status="failed" error={pendingError} onCancel={() => {}}
+                onRetry={() => media.retryPending(command.id)}
+                onRemove={video && attachment.mediaType === 'video' ? () => setDeleting({ id: command.id, kind: 'outgoing-video' })
+                  : () => void media.removePending(command.id)}
+                onOpen={video && attachment.mediaType === 'video' && preview ? () => openViewer(command.id, attachment.id) : undefined}
+                onMenu={video && selected ? () => setMenu({ id: command.id, open: true }) : undefined}
+                menu={renderMessageMenu(command.id)} />
+            </div>
+          </Fragment>;
+        })}
         {outgoing && outgoingStatus && media.selection && media.preview
           && !renderedMessages.some(message => message.id === outgoing.id) && <Fragment key={outgoing.id}>
           {new Date(renderedMessages.at(-1)?.createdAt ?? 0).toLocaleDateString('ru-RU') !==
             new Date(outgoing.createdAt).toLocaleDateString('ru-RU') && <MessagesTitle>
             {new Date(outgoing.createdAt).toLocaleDateString('ru-RU')}
           </MessagesTitle>}
-          <div className="discussion-message-target" data-own="true" data-message-id={outgoing.id}>
+          <div className="discussion-message-target discussion-message-target--outgoing" data-own="true" data-message-id={outgoing.id}>
             <DiscussionOutgoingMedia src={media.preview} attachment={media.selection.metadata} createdAt={outgoing.createdAt}
               status={outgoingStatus} error={media.error} onCancel={media.cancel}
               onRetry={() => void media.send()}
@@ -994,7 +1017,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
           if (!deleting) return;
           if (deleting.kind === 'outgoing-video') {
-            if (deleting.id === outgoing?.id && outgoingStatus === 'failed') void media.remove();
+            if (media.pendingMedia.some(item => item.command.id === deleting.id)) void media.removePending(deleting.id);
+            else if (deleting.id === outgoing?.id && outgoingStatus === 'failed') void media.remove();
             setDeleting(null);
             return;
           }
