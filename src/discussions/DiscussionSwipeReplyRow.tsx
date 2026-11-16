@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type PointerEvent, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react';
+import { Icon } from '../ui/Icon';
 
 export const DISCUSSION_REPLY_SWIPE_MAX_PX = 100;
 export const DISCUSSION_REPLY_SWIPE_TRIGGER_PX = 50;
@@ -9,9 +10,26 @@ type SwipePresentation = SwipeVisual & { enabled: boolean };
 const idleVisual: SwipeVisual = { offsetX: 0, dragging: false };
 const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false });
 
-/** Only a portaled video-note needs this: ordinary media follows its message row. */
+/** Portaled video-note and the reply indicator share the row-owned swipe offset. */
 export function useDiscussionSwipeVisual(): SwipePresentation {
   return useContext(SwipeVisualContext);
+}
+
+/** A presentation-only affordance anchored to the bubble's existing content slot.
+ * Its positive local translation counteracts the row's negative translation:
+ * the arrow stays in the uncovered space while the message follows the finger. */
+export function DiscussionSwipeReplyIndicator() {
+  const { offsetX, dragging, enabled } = useDiscussionSwipeVisual();
+  const distance = enabled ? Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -offsetX)) : 0;
+  const progress = Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
+  const opacity = Math.max(0, Math.min(1, (distance - AXIS_SLOP_PX) / (DISCUSSION_REPLY_SWIPE_TRIGGER_PX - AXIS_SLOP_PX)));
+  const scale = 0.65 + progress * 0.35;
+  return <span className="discussion-reply-swipe-indicator" aria-hidden="true"
+    data-armed={distance >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX || undefined}
+    data-dragging={dragging || undefined}
+    style={{ opacity, transform: `translate3d(${distance}px, -50%, 0) scale(${scale})` }}>
+    <Icon name="arrow-back-up" className="discussion-reply-swipe-indicator__icon" />
+  </span>;
 }
 
 type Gesture = { pointerId: number; startX: number; startY: number; axis: 'pending' | 'horizontal' };
