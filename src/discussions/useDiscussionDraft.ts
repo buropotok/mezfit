@@ -61,7 +61,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     }
   }
   return {
-    text, replyId, videoPosition, ready, error, media, mediaMessage: media ? current.current : null,
+    threadId, text, replyId, videoPosition, ready, error, media, mediaMessage: media ? current.current : null,
     mediaCommand() {
       return current.current ??= prepareDiscussionMessage(threadId, text, replyId ?? undefined);
     },
