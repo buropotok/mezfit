@@ -52,6 +52,8 @@ export type IdentityActionTitleRole = 'body' | 'headline';
 
 type IdentityActionBaseProps = {
   surfaceRef?: Ref<HTMLElement>;
+  /** Position-only hook for shared-avatar motion. */
+  avatarSlotRef?: Ref<HTMLSpanElement>;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
   glass?: GlassMaterialOverrides;
@@ -112,6 +114,12 @@ export function IdentityAction(props: IdentityActionProps) {
   const [iconSwapIndex, setIconSwapIndex] = useState<number | null>(null);
   const [hideDecorativeIcon, setHideDecorativeIcon] = useState(false);
   const iconVisualRef = useRef<HTMLSpanElement>(null);
+  const avatarSlotRef = props.avatarSlotRef;
+  const setVisualRef = useCallback((node: HTMLSpanElement | null) => {
+    iconVisualRef.current = node;
+    if (typeof avatarSlotRef === 'function') avatarSlotRef(node);
+    else if (avatarSlotRef) avatarSlotRef.current = node;
+  }, [avatarSlotRef]);
   const textMeasureRef = useRef<HTMLSpanElement>(null);
   const canHideIcon = props.variant !== 'double'
     && props.autoHideIcon === true
@@ -350,7 +358,7 @@ export function IdentityAction(props: IdentityActionProps) {
       onClick={handleClick}
     >
       {(icon || avatar) && <span
-        ref={iconVisualRef}
+        ref={setVisualRef}
         className="ui-identity-action__visual"
         aria-hidden="true"
         style={canHideIcon && hideDecorativeIcon ? { display: 'none' } : undefined}

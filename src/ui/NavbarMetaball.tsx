@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type Ref,
 } from 'react';
 import { GlassContourBezel, GlassSurface } from './GlassSurface';
 import { IdentityAction, type IdentityActionAvatar } from './IdentityAction';
@@ -33,6 +34,8 @@ type NavbarMetaballProps = {
   identity: NavbarMetaballIdentity;
   onBack: () => void;
   onIdentityClick?: () => void;
+  avatarSlotRef?: Ref<HTMLSpanElement>;
+  onLevelSettled?: (level: 1 | 2) => void;
   glassPreset?: GlassPresetName;
   glassOptics?: boolean;
 };
@@ -84,6 +87,8 @@ export function NavbarMetaball({
   identity,
   onBack,
   onIdentityClick,
+  avatarSlotRef,
+  onLevelSettled,
   glassPreset,
   glassOptics = false,
 }: NavbarMetaballProps) {
@@ -198,6 +203,10 @@ export function NavbarMetaball({
     return () => cancelFrame(revealFrame);
   }, [moving]);
 
+  useEffect(() => {
+    if (!moving) onLevelSettled?.(level);
+  }, [moving, level, onLevelSettled]);
+
   const movingGlass = moving ? TRANSPARENT_GLASS : undefined;
   const movingIdentityGlass = moving ? TRANSPARENT_GLASS_WITH_BEZEL : undefined;
   const identityBezelHighlights = { topLeft: bezelReveal, bottomRight: 1 } as const;
@@ -256,6 +265,7 @@ export function NavbarMetaball({
           <IdentityAction
             variant="labeled"
             avatar={identity.avatar}
+            avatarSlotRef={avatarSlotRef}
             title={identity.title}
             titleRole="headline"
             width="100%"

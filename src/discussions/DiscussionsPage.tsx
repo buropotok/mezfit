@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
+import { useDiscussionAvatarFlight, type AvatarFlightOrigin, discussionAvatarFlightKey } from '../navigation/DiscussionAvatarFlightContext';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { syncStatusLabel } from '../data/cloud/sync-status';
@@ -21,31 +22,70 @@ const entityActionLabels = {
   program: 'К программе', workout: 'К тренировке', exercise: 'К упражнению', set: 'К подходу',
 } satisfies Record<DiscussionAnchor['kind'], string>;
 
+function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey }: {
+  row: DiscussionInboxRow;
+  onOpen: (row: DiscussionInboxRow) => void;
+  onEntity: (row: DiscussionInboxRow) => void;
+  onOpenOrigin?: (row: DiscussionInboxRow, origin: AvatarFlightOrigin) => void;
+  onAvatarSourceChange?: (row: DiscussionInboxRow, src: string | undefined) => void;
+  hiddenAvatarKey?: string;
+}) {
+  const avatarRef = useRef<HTMLSpanElement>(null);
+  const avatarSrc = useRef<string | undefined>(undefined);
+  const onSourceChange = useCallback((src: string | undefined) => {
+    avatarSrc.current = src;
+    onAvatarSourceChange?.(row, src);
+  }, [onAvatarSourceChange, row]);
+  const key = discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey);
+
+  return <ListItem
+    leading={<span ref={avatarRef} className="discussion-inbox__avatar-source"
+      style={hiddenAvatarKey === key ? { visibility: 'hidden' } : undefined}>
+      {row.contact ? <CloudContactAvatar contact={row.contact} onSourceChange={onSourceChange} /> : <Avatar name="Вы" />}
+    </span>}
+    title={<Text>{row.contact?.displayName ?? 'Личное обсуждение'}</Text>}
+    subtitle={<span className="discussion-inbox__copy">
+      <Text variant="caption" className="discussion-inbox__ellipsis">{row.thread.derivedTitleSnapshot}</Text>
+      <Text variant="footnote" className="discussion-inbox__ellipsis">{row.latest?.text || (row.latest ? 'Вложение' : 'Сообщений пока нет')}</Text>
+      {row.latest ? <Text variant="caption"><time dateTime={row.latest.createdAt}>{new Date(row.latest.createdAt).toLocaleString('ru-RU', {
+        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+      })}</time></Text> : null}
+    </span>}
+    trailing={<span className="discussion-inbox__indicators">
+      {row.hasAttachments ? <span role="img" aria-label="Есть вложения" style={{ width: 16, height: 16 }}><Icon name="paperclip" /></span> : null}
+      {row.unread > 0 ? <Badge color="blue" textVariant="caption" aria-label={`Непрочитанных: ${row.unread}`}>{row.unread}</Badge> : null}
+    </span>}
+    aria-label={`Обсуждение: ${row.contact?.displayName ?? 'Вы'}, ${row.thread.derivedTitleSnapshot}`}
+    onClick={() => {
+      const rect = avatarRef.current?.getBoundingClientRect();
+      if (rect && rect.width > 0 && rect.height > 0) {
+        onOpenOrigin?.(row, {
+          key, avatar: { name: row.contact?.displayName ?? 'Вы', src: avatarSrc.current },
+          source: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+        });
+      }
+      onOpen(row);
+    }}
+    trailingAction={<Button rounded tonal inline
+      aria-label={`${entityActionLabels[row.thread.anchor.kind]}: ${row.thread.derivedTitleSnapshot}`}
+      onClick={() => onEntity(row)}><Text variant="caption">{entityActionLabels[row.thread.anchor.kind]}</Text></Button>}
+  />;
+}
+
 /** List actions are siblings through ListItem.trailingAction, never nested buttons. */
-export function DiscussionInboxList({ rows, onOpen, onEntity }: {
-  rows: readonly DiscussionInboxRow[]; onOpen: (row: DiscussionInboxRow) => void; onEntity: (row: DiscussionInboxRow) => void;
+export function DiscussionInboxList({ rows, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey }: {
+  rows: readonly DiscussionInboxRow[];
+  onOpen: (row: DiscussionInboxRow) => void;
+  onEntity: (row: DiscussionInboxRow) => void;
+  onOpenOrigin?: (row: DiscussionInboxRow, origin: AvatarFlightOrigin) => void;
+  onAvatarSourceChange?: (row: DiscussionInboxRow, src: string | undefined) => void;
+  hiddenAvatarKey?: string;
 }) {
   return <>{groupDiscussionFeed(rows).map(group => <section className="discussion-inbox__group" key={group.date} aria-label={group.date || 'Без сообщений'}>
     <Text variant="footnote">{group.date ? discussionDateLabel(group.date) : 'Без сообщений'}</Text>
-    <List divider="full">{group.rows.map(row => <ListItem key={row.thread.id}
-      leading={row.contact ? <CloudContactAvatar contact={row.contact} /> : <Avatar name="Вы" />}
-      title={<Text>{row.contact?.displayName ?? 'Личное обсуждение'}</Text>}
-      subtitle={<span className="discussion-inbox__copy">
-        <Text variant="caption" className="discussion-inbox__ellipsis">{row.thread.derivedTitleSnapshot}</Text>
-        <Text variant="footnote" className="discussion-inbox__ellipsis">{row.latest?.text || (row.latest ? 'Вложение' : 'Сообщений пока нет')}</Text>
-        {row.latest ? <Text variant="caption"><time dateTime={row.latest.createdAt}>{new Date(row.latest.createdAt).toLocaleString('ru-RU', {
-          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-        })}</time></Text> : null}
-      </span>}
-      trailing={<span className="discussion-inbox__indicators">
-        {row.hasAttachments ? <span role="img" aria-label="Есть вложения" style={{ width: 16, height: 16 }}><Icon name="paperclip" /></span> : null}
-        {row.unread > 0 ? <Badge color="blue" textVariant="caption" aria-label={`Непрочитанных: ${row.unread}`}>{row.unread}</Badge> : null}
-      </span>}
-      aria-label={`Обсуждение: ${row.contact?.displayName ?? 'Вы'}, ${row.thread.derivedTitleSnapshot}`}
-      onClick={() => onOpen(row)}
-      trailingAction={<Button rounded tonal inline
-        aria-label={`${entityActionLabels[row.thread.anchor.kind]}: ${row.thread.derivedTitleSnapshot}`}
-        onClick={() => onEntity(row)}><Text variant="caption">{entityActionLabels[row.thread.anchor.kind]}</Text></Button>} />)}</List>
+    <List divider="full">{group.rows.map(row => <DiscussionInboxItem key={row.thread.id}
+      row={row} onOpen={onOpen} onEntity={onEntity} onOpenOrigin={onOpenOrigin}
+      onAvatarSourceChange={onAvatarSourceChange} hiddenAvatarKey={hiddenAvatarKey} />)}</List>
   </section>)}</>;
 }
 
@@ -56,6 +96,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
 }) {
   const cloud = useCloudConnections();
   const inbox = useDiscussions();
+  const avatarFlight = useDiscussionAvatarFlight();
+  const capturedOrigin = useRef<AvatarFlightOrigin | null>(null);
   const parent = useNavigationSurfaceContext();
   const notificationParent = useRef(parent);
   notificationParent.current = parent;
@@ -72,11 +114,13 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const notificationSyncPending = useRef(false);
   const request = useRef(0);
   const cancelPendingOpen = useCallback(() => {
+    avatarFlight.cancel();
+    capturedOrigin.current = null;
     ++request.current;
     // An explicit tap in the inbox takes precedence over an unresolved deep link.
     if (notificationMessageId) onNotificationOpened?.();
-  }, [notificationMessageId, onNotificationOpened]);
-  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string } | null>(null);
+  }, [avatarFlight, notificationMessageId, onNotificationOpened]);
+  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string; avatarSrc?: string } | null>(null);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
   const notificationPeers = role === 'coach' ? cloud?.clients : cloud?.coaches;
@@ -97,8 +141,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   }, [activeNotification, onNavigationContextChange]);
   const openRef = useRef(false);
   openRef.current = Boolean(current);
-  useEffect(() => () => { openRef.current = false; ++request.current; }, []);
-  const close = useCallback(() => { ++request.current; openRef.current = false; setOpened(null); }, []);
+  useEffect(() => () => { avatarFlight.cancel(); openRef.current = false; ++request.current; }, [avatarFlight]);
+  const close = useCallback(() => { avatarFlight.cancel(); ++request.current; openRef.current = false; setOpened(null); }, [avatarFlight]);
   const closePicker = useCallback(() => setPicker(null), []);
   const repository = useMemo(() => {
     if (!cloud || !current || current.kind === 'entity') return null;
@@ -175,10 +219,16 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     });
   }, [cloud]);
   const closeNotificationChat = useCallback(() => setClosedNotificationChat(true), []);
-  const chatParent = useMemo<NavigationContext | null>(() => current
-    ? { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot,
-      onBack: current.kind === 'notification' ? closeNotificationChat : close } : null,
-  [current, close, closeNotificationChat]);
+  const chatParent = useMemo<NavigationContext | null>(() => {
+    if (!current) return null;
+    const displayName = current.row.contact?.displayName ?? 'Вы';
+    return { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot,
+      ...(current.kind === 'chat' ? {
+        avatarTransitionKey: discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey),
+        identity: { title: displayName, avatar: { name: displayName, src: current.avatarSrc } },
+      } : {}),
+      onBack: current.kind === 'notification' ? closeNotificationChat : close };
+  }, [current, close, closeNotificationChat]);
   const chatNavigation = useCallback((value: NavigationContext | null) => {
     onNavigationContextChange(openRef.current ? value : null);
   }, [onNavigationContextChange]);
@@ -202,6 +252,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   }, []);
   const openChat = async (row: DiscussionInboxRow) => {
     if (!cloud) return;
+    const origin = capturedOrigin.current;
     cancelPendingOpen();
     const generation = request.current;
     setOpenError('');
@@ -210,7 +261,10 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       // stay intact; the canonical sheet projects them as one conversation.
       const repository = new DiscussionRepository(cloud.db, cloud.actorUserId, row.thread);
       const thread = await repository.ensureEntityThread(row.thread.anchor, row.thread.derivedTitleSnapshot);
-      if (generation === request.current) setOpened({ row: { ...row, thread }, kind: 'chat', parent });
+      if (generation === request.current) {
+        if (origin?.key === discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey)) avatarFlight.begin(origin);
+        setOpened({ row: { ...row, thread }, kind: 'chat', parent, avatarSrc: origin?.avatar.src });
+      }
     } catch {
       if (generation === request.current) setOpenError('Не удалось открыть обсуждение. Повторите нажатие.');
     }
@@ -263,6 +317,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     {inbox.loading && !rows.length ? <Text>Загружаем обсуждения…</Text>
       : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
     <DiscussionInboxList rows={rows.slice(0, limit)} onOpen={row => { void openChat(row); }}
+      onOpenOrigin={(_row, origin) => { capturedOrigin.current = origin; }}
+      onAvatarSourceChange={(row, src) => {
+        const key = discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey);
+        setOpened(current => current?.kind === 'chat'
+          && discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) === key
+          && current.avatarSrc !== src ? { ...current, avatarSrc: src } : current);
+      }}
+      hiddenAvatarKey={current?.kind === 'chat' ? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) : undefined}
       onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
     {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}
     {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}

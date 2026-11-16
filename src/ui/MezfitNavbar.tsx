@@ -14,6 +14,8 @@ export type MezfitNavbarProps = {
   onMenu: () => void;
   onCalendar: () => void;
   onIdentityClick?: () => void;
+  avatarSlotRef?: Ref<HTMLSpanElement>;
+  onLevelSettled?: (level: 1 | 2) => void;
   rightControlRef?: Ref<HTMLElement>;
   rightControlHidden?: boolean;
   renderMenuControl?: (control: ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>) => ReactNode;
@@ -31,6 +33,8 @@ export function MezfitNavbar({
   onMenu,
   onCalendar,
   onIdentityClick,
+  avatarSlotRef,
+  onLevelSettled,
   renderMenuControl,
   rightControlRef,
   rightControlHidden = false,
@@ -74,6 +78,8 @@ export function MezfitNavbar({
             identity={identity}
             onBack={onBack}
             onIdentityClick={onIdentityClick}
+            avatarSlotRef={avatarSlotRef}
+            onLevelSettled={onLevelSettled}
             glassPreset={glassPreset}
             glassOptics={glassOptics}
           />

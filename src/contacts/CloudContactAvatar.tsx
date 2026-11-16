@@ -57,12 +57,15 @@ export function useCloudContactAvatarUrl(contact: CloudContact | null, variant: 
 }
 
 /** Presentation adapter only: the UIkit Avatar retains all existing mechanics and styling. */
-export function CloudContactAvatar({ contact, className, variant = 'small', size }: {
+export function CloudContactAvatar({ contact, className, variant = 'small', size, onSourceChange }: {
   contact: CloudContact;
   className?: string;
   variant?: 'small' | 'large';
   size?: AvatarSize;
+  /** Optional source disclosure for transitions; no primitive DOM inspection. */
+  onSourceChange?: (src: string | undefined) => void;
 }) {
   const src = useCloudContactAvatarUrl(contact, variant);
+  useEffect(() => { onSourceChange?.(src); }, [onSourceChange, src]);
   return <Avatar name={contact.displayName} src={src} className={className} size={size} />;
 }
