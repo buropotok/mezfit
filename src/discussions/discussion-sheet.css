@@ -94,10 +94,8 @@
   top: 50%;
   left: 100%;
   z-index: 2;
-  height: 34px;
+  height: 52px;
   transform: translateY(-50%);
-  display: grid;
-  place-items: center;
   pointer-events: none;
   overflow: hidden;
   transition: width 180ms ease-out, opacity 180ms ease-out;
@@ -107,9 +105,12 @@
   will-change: width;
 }
 .discussion-reply-swipe-indicator__circle {
-  grid-area: 1 / 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: max(0px, min(34px, calc(100% - 8px)));
   aspect-ratio: 1;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgb(42 37 68 / 0.58);
   color: #fff;
@@ -121,17 +122,19 @@
   background: rgb(66 49 114 / 0.58);
 }
 .discussion-reply-swipe-indicator__icon {
-  width: min(24px, max(0px, calc(100% - 6px)));
-  height: min(24px, max(0px, calc(100% - 6px)));
+  width: min(15px, max(0px, calc(100% - 12px)));
+  height: min(15px, max(0px, calc(100% - 12px)));
 }
 .discussion-reply-swipe-indicator__progress {
-  grid-area: 1 / 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: max(0px, min(34px, calc(100% - 8px)));
   height: auto;
   aspect-ratio: 1;
   fill: none;
   stroke-width: 2.5;
-  transform: rotate(-90deg);
+  transform: translate(-50%, -50%) rotate(-90deg);
   pointer-events: none;
 }
 .discussion-reply-swipe-indicator__track {
