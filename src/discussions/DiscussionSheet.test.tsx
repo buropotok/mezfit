@@ -35,7 +35,7 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
   it('renders synchronization beneath the sheet title, not above the composer', async () => {
     const f = fixture();
     vi.mocked(f.port.sync.observe).mockImplementation(onState => {
-      onState({ status: 'synced', offline: false, error: null });
+      onState({ status: 'synced', error: null });
       return { unsubscribe: vi.fn() };
     });
     const view = mount({}, f);
@@ -45,6 +45,26 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     expect(status.closest('.discussion-thread__identity')).not.toBeNull();
     expect(status.closest('.discussion-thread__header')).not.toBeNull();
     expect(view.container.querySelector('.discussion-composer-context')?.querySelector('[role="status"]')).toBeNull();
+  });
+
+  it('confirms delivery per message even while the global phase is local', async () => {
+    const f = fixture();
+    const confirm = vi.fn(async () => {});
+    f.port.confirmDelivery = confirm;
+    mount({}, f);
+    await waitFor(() => expect(confirm).toHaveBeenCalledWith('thread', ['own']));
+    // Only the authoritative receipt observer may enable one check.
+    expect(screen.queryByRole('img', { name: 'Отправка подтверждена Dexie Cloud' })).toBeNull();
+  });
+
+  it('shows active synchronization without inferring a message receipt', async () => {
+    const f = fixture();
+    vi.mocked(f.port.sync.observe).mockImplementation(onState => {
+      onState({ status: 'syncing', error: null });
+      return { unsubscribe: vi.fn() };
+    });
+    mount({}, f);
+    expect((await screen.findByText('Синхронизация')).closest('.discussion-thread__header')).not.toBeNull();
   });
 
   it('opens the ordered own/foreign tap menus, reuses Tabler icons and material settings', async () => {

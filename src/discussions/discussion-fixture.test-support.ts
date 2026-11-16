@@ -40,7 +40,7 @@ export function fixture(initial: DiscussionMessageView[] = [message('own', 'Мо
     remove: vi.fn(async (_thread: string, _id: string) => {}),
     markRead: vi.fn(async (_thread: string, _id: string) => {}),
     sync: { retry: vi.fn(async () => {}), observe: vi.fn((next: (state: DiscussionSyncState) => void) => {
-      next({ status: 'local', offline: true, error: null }); return { unsubscribe: vi.fn() };
+      next({ status: 'local', error: null }); return { unsubscribe: vi.fn() };
     }) },
   };
   return { port, observers, replace(next: DiscussionMessageView[]) {
