@@ -86,6 +86,39 @@
 @media (prefers-reduced-motion: reduce) {
   .discussion-message-target--reply-swipe { transition: none; }
 }
+/* A noninteractive reply affordance, drawn in the bubble's public content slot.
+   The bubble and portal circle retain their existing UI Kit appearance. */
+.discussion-reply-swipe-indicator {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(162 140 227 / 0.4);
+  border-radius: 50%;
+  background: rgb(42 37 68 / 0.94);
+  color: #fff;
+  box-shadow: 0 2px 9px rgb(0 0 0 / 0.24);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+.discussion-reply-swipe-indicator[data-dragging] {
+  transition: none;
+}
+.discussion-reply-swipe-indicator[data-armed] {
+  border-color: rgb(190 169 253 / 0.75);
+  background: rgb(66 49 114 / 0.96);
+}
+.discussion-reply-swipe-indicator__icon {
+  width: 24px;
+  height: 24px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .discussion-reply-swipe-indicator { transition: none; }
+}
 .discussion-message-target[data-own="false"] { --ui-message-meta-reserve: 3.5rem; }
 .discussion-message-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .discussion-message-meta {
