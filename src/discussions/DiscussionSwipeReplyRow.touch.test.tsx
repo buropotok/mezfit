@@ -102,6 +102,22 @@ describe('native touch swipe inside Telegram WebView-style dialog', () => {
     expect(reply).not.toHaveBeenCalled();
   });
 
+  it('cancels the swipe when a second finger appears', () => {
+    const { row, reply } = setup();
+    touchStart(row, 200, 1);
+    documentTouch('touchmove', 130, 20, 1);
+    expect(row.style.transform).toBe('translate3d(-70px, 0, 0)');
+    fireEvent.touchStart(row, {
+      touches: [finger(1, 130), finger(2, 130, 35)],
+      changedTouches: [finger(2, 130, 35)],
+    });
+    expect(row.style.transform).toBe('');
+    const noHijack = documentTouch('touchmove', 70, 20, 1);
+    expect(noHijack.defaultPrevented).toBe(false);
+    documentTouch('touchend', 70, 20, 1);
+    expect(reply).not.toHaveBeenCalled();
+  });
+
   it('removes native handlers when the owner unmounts during a gesture', () => {
     const view = setup();
     touchStart(view.row, 200);
