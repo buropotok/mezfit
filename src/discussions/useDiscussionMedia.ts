@@ -42,7 +42,7 @@ function describeSendError(reason: unknown, savingFile: boolean, aborted: boolea
   return 'Не удалось сохранить сообщение. Повторите отправку (Код 11)';
 }
 
-export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>, threadId: string) {
+export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
   const [selection, setSelection] = useState<Selection>();
   const [preview, setPreview] = useState<string>();
   const [phase, setPhase] = useState<Phase>('idle');
@@ -71,7 +71,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   useEffect(() => {
     if (!repository.listPendingMediaDrafts) return;
     let alive = true;
-    void repository.listPendingMediaDrafts(threadId).then(async commands => {
+    void repository.listPendingMediaDrafts(draft.threadId).then(async commands => {
       for (const command of commands) {
         const metadata = command.draftMedia;
         if (!metadata) continue;
@@ -87,7 +87,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       }
     }).catch(() => undefined);
     return () => { alive = false; };
-  }, [repository, repository.actorUserId, threadId]);
+  }, [repository, repository.actorUserId, draft.threadId]);
   useEffect(() => {
     if (!selection) { setPreview(undefined); return; }
     const url = URL.createObjectURL(selection.file);
@@ -256,7 +256,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
           void send(selected, false);
           return;
         }
-        resume.current = () => { void send(selected, false); };
+        resume.current = () => { retryPending(message.id); };
       }
       const message = describeSendError(reason, savingFile, controller.signal.aborted);
       if (command) {
@@ -304,7 +304,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
 
   function retryPending(id: string) {
     const entry = pendingRef.current.find(row => row.command.id === id);
-    if (!entry?.selected || active.current) return;
+    if (!entry?.selected || active.current || selection) return;
     updatePending(pendingRef.current.filter(row => row.command.id !== id));
     if (entry.preview) URL.revokeObjectURL(entry.preview);
     setSelection(entry.selected);
@@ -313,7 +313,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
 
   async function removePending(id: string) {
     const entry = pendingRef.current.find(row => row.command.id === id);
-    if (!entry || active.current || !repository.discardDraft) return;
+    if (!entry || !repository.discardDraft) return;
     try {
       await repository.discardDraft(entry.command.threadId, entry.command.id);
       updatePending(pendingRef.current.filter(row => row.command.id !== id));
