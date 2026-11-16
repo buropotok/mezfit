@@ -104,7 +104,7 @@ export function UserProfileSyncStatus() {
   const status = useContext(Context);
   const [opened, setOpened] = useState(false);
   const trigger = useRef<HTMLSpanElement>(null);
-  const explanation = status?.error || (status?.label === 'Синхронизирована'
+  const explanation = status?.error || (status?.label === 'Синхронизировано'
     ? 'Личная анкета и опубликованные значения отправлены в Mezfit облако.'
     : status?.label === 'Не сохранена' ? 'Анкета ещё не сохранена. Все поля необязательны.'
     : status?.label === 'Загрузка' ? 'Проверяем состояние анкеты.'
