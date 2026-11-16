@@ -46,7 +46,9 @@ it.each([
     target={{ mediaType: mediaType as MessageAttachment['mediaType'], url: 'https://media.example.com/safe', cache }}
     onClose={onClose} onStatus={onStatus} /></KonstaProvider>);
   expect(screen.getByText(title)).toBeTruthy();
-  fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+  const save = await screen.findByRole('button', { name: 'Сохранить' });
+  await waitFor(() => expect(save).toHaveProperty('disabled', false));
+  fireEvent.click(save);
   await waitFor(() => expect(share).toHaveBeenCalledExactlyOnceWith({ files: [
     expect.objectContaining({ name: expectedName, type: mimeType, size: blob.size }),
   ] }));
@@ -70,7 +72,9 @@ it('can retrieve a received attachment through the existing authenticated fallba
   render(<KonstaProvider theme="ios" dark><DiscussionAttachmentSaveDialog
     target={{ mediaType: 'voice', url: 'https://media.example.com/source', cache }}
     onClose={onClose} onStatus={() => {}} /></KonstaProvider>);
-  fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+  const save = await screen.findByRole('button', { name: 'Сохранить' });
+  await waitFor(() => expect(save).toHaveProperty('disabled', false));
+  fireEvent.click(save);
   await waitFor(() => expect(downloadDiscussionMedia).toHaveBeenCalledExactlyOnceWith(cache));
   expect(share).toHaveBeenCalledExactlyOnceWith({ files: [
     expect.objectContaining({ name: 'Голосовое Mezfit.ogg', type: 'audio/ogg' }),
