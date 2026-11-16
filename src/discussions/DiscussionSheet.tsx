@@ -28,6 +28,7 @@ import { useDiscussionMedia } from './useDiscussionMedia';
 import { useDiscussionVoice } from './useDiscussionVoice';
 import { useDiscussionVideoNote } from './useDiscussionVideoNote';
 import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVideoNote';
+import { DiscussionSwipeReplyRow } from './DiscussionSwipeReplyRow';
 import { DiscussionVoice } from './DiscussionVoice';
 import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
@@ -569,16 +570,23 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     });
   };
   const selected = menu ? state.messages.find(row => row.id === menu.id && !row.deleted) : undefined;
-  const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
-    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy || voiceComposer || circleInProgress) return;
-    const id = selected.id; closeMenu();
+  // The menu action and swipe share one reply path: identical draft, edit and read semantics.
+  const replyToMessage = (id: string) => {
+    if (pending.current || mediaBusy || voiceComposer || circleInProgress || draft.videoPosition) return;
     const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
     if (!row) return;
-    if (action === 'reply' && !draft.videoPosition) {
-      // Selecting Reply is an explicit viewing action even away from the end.
-      if (row.authorUserId !== repository.actorUserId) markViewed(row.id);
-      draft.update(draft.text, id); setEditId(null); setEditText('');
-    }
+    closeMenu();
+    // Reply is an explicit viewing action even away from the end of the list.
+    if (row.authorUserId !== repository.actorUserId) markViewed(row.id);
+    draft.update(draft.text, id); setEditId(null); setEditText('');
+  };
+  const choose = (action: 'reply' | 'edit' | 'copy' | 'delete') => {
+    if (!selected || !menuRef.current?.open || menuRef.current.id !== selected.id || pending.current || mediaBusy || voiceComposer || circleInProgress) return;
+    const id = selected.id;
+    if (action === 'reply') { replyToMessage(id); return; }
+    closeMenu();
+    const row = session.snapshot().messages.find(message => message.id === id && !message.deleted);
+    if (!row) return;
     if (action === 'edit' && row.authorUserId === repository.actorUserId) { setEditId(id); setEditText(row.text); }
     if (action === 'delete' && row.authorUserId === repository.actorUserId) setDeleting({ id, kind: 'published' });
     if (action === 'copy') void run(async () => {
@@ -756,9 +764,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           };
           return <Fragment key={message.id}>
             {(index === 0 || new Date(renderedMessages[index - 1].createdAt).toLocaleDateString('ru-RU') !== day) && <MessagesTitle>{day}</MessagesTitle>}
-            <div className="discussion-message-target" data-message-id={message.id} data-own={String(isOwn)}
-              data-highlighted={highlight === message.id || undefined}
-              ref={el => { if (el) rows.current.set(message.id, el); else rows.current.delete(message.id); }}>
+            <DiscussionSwipeReplyRow messageId={message.id} own={isOwn} highlighted={highlight === message.id}
+              enabled={!message.deleted && !draft.videoPosition && !outgoing && !mediaBusy && !voiceComposer
+                && !circleInProgress && !mediaSurfaceOpen && !menu?.open}
+              onReply={() => replyToMessage(message.id)}
+              rowRef={el => { if (el) rows.current.set(message.id, el); else rows.current.delete(message.id); }}>
               <MezfitMessage type={isOwn ? 'sent' : 'received'} focusPulse={highlight === message.id}
                 bubbleVariant={galleryOnly ? 'media' : undefined}
                 opaqueTextFooter={attachments.some(attachment => attachment.mediaType !== 'voice')}
@@ -800,7 +810,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 onBubbleClick={openMenu}
                 bubbleSource={renderMessageMenu(message.id)}
               />
-            </div>
+            </DiscussionSwipeReplyRow>
           </Fragment>;
         })}
         {media.pendingMedia.map(pending => {
