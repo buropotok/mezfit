@@ -86,6 +86,65 @@
 @media (prefers-reduced-motion: reduce) {
   .discussion-message-target--reply-swipe { transition: none; }
 }
+/* The hint is feature-owned composition inside MezfitMessage's bubbleSource;
+   it never changes Konsta geometry or consumes pointer events. */
+.discussion-reply-swipe-indicator {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgb(42 37 68 / 0.94);
+  color: #fff;
+  box-shadow: 0 2px 9px rgb(0 0 0 / 0.24);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+.discussion-reply-swipe-indicator[data-dragging] {
+  transition: none;
+  will-change: transform;
+}
+.discussion-reply-swipe-indicator[data-armed] {
+  background: rgb(66 49 114 / 0.96);
+}
+.discussion-reply-swipe-indicator__progress {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke-width: 2.5;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.discussion-reply-swipe-indicator__track {
+  stroke: rgb(209 196 249 / 0.25);
+}
+.discussion-reply-swipe-indicator__fill {
+  stroke: #fff;
+  stroke-linecap: round;
+}
+.discussion-reply-swipe-indicator__icon {
+  width: 24px;
+  height: 24px;
+}
+.discussion-reply-swipe-indicator[data-completing] {
+  transition: none;
+  animation: discussion-reply-swipe-complete 240ms ease-out both;
+}
+@keyframes discussion-reply-swipe-complete {
+  from { opacity: 1; transform: translate3d(0, -50%, 0) scale(1); }
+  to { opacity: 0; transform: translate3d(0, -50%, 0) scale(1.55); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .discussion-reply-swipe-indicator { transition: none; }
+  .discussion-reply-swipe-indicator[data-completing] { animation-duration: 1ms; }
+}
 .discussion-message-target[data-own="false"] { --ui-message-meta-reserve: 3.5rem; }
 .discussion-message-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .discussion-message-meta {

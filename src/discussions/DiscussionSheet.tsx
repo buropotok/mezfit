@@ -28,7 +28,7 @@ import { useDiscussionMedia } from './useDiscussionMedia';
 import { useDiscussionVoice } from './useDiscussionVoice';
 import { useDiscussionVideoNote } from './useDiscussionVideoNote';
 import { DiscussionVideoNote, DiscussionVideoNoteCapture } from './DiscussionVideoNote';
-import { DiscussionSwipeReplyRow } from './DiscussionSwipeReplyRow';
+import { DiscussionSwipeReplyIndicator, DiscussionSwipeReplyRow } from './DiscussionSwipeReplyRow';
 import { DiscussionVoice } from './DiscussionVoice';
 import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
@@ -808,7 +808,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 }) : renderAttachment?.(message))}
                 inlineMeta={mediaOnly ? undefined : metadata}
                 onBubbleClick={openMenu}
-                bubbleSource={renderMessageMenu(message.id)}
+                bubbleSource={<>{renderMessageMenu(message.id)}<DiscussionSwipeReplyIndicator /></>}
               />
             </DiscussionSwipeReplyRow>
           </Fragment>;
