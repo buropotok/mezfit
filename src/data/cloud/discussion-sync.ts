@@ -1,5 +1,5 @@
 import type { MezfitCloudDatabase } from './database';
-import { itemSyncStatus, projectDexieSyncState, type CloudSyncStatus } from './sync-status';
+import { projectDexieSyncState, type CloudSyncStatus } from './sync-status';
 export interface DiscussionSyncState { status: CloudSyncStatus; error: string | null }
 /** Session-local acknowledgement, not a second queue or a per-message receipt. */
 export class DiscussionSync {
@@ -12,9 +12,12 @@ export class DiscussionSync {
   constructor(private readonly db: Pick<MezfitCloudDatabase, 'cloud'>) {}
   state(): DiscussionSyncState {
     const phase = projectDexieSyncState(this.db.cloud.syncState.value);
-    // This thread's unconfirmed local writes must not inherit the global green phase.
-    const status = itemSyncStatus(this.confirmed >= this.revision, this.failed, phase.status);
-    return { status, error: status === 'error' ? 'DISCUSSION_SYNC_FAILED' : null };
+    const failed = this.failed || phase.status === 'error';
+    // Both a completed global phase and this thread's latest push receipt are required.
+    const pendingReceipt = this.confirmed < this.revision;
+    const status: CloudSyncStatus = failed ? 'error'
+      : phase.status === 'synced' && pendingReceipt ? 'local' : phase.status;
+    return { status, error: failed ? 'DISCUSSION_SYNC_FAILED' : null };
   }
   changed(): void { ++this.revision; this.emit(); this.acknowledge(); }
   private emit(): void { for (const listener of this.listeners) listener(this.state()); }
