@@ -92,7 +92,8 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
 
   const shareData = file ? { files: [file] } : null;
   const canShare = !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
-  const cancelled = `Сохранение отменено. ${label} осталось в чате.`;
+  const retained = mediaType === 'video-note' ? 'Видеокружок остался в чате.' : `${label} осталось в чате.`;
+  const cancelled = `Сохранение отменено. ${retained}`;
   const finish = (message: string) => {
     if (!active.current) return;
     onStatus(message);
@@ -113,7 +114,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       if (!active.current) return;
       if (reason instanceof DOMException && reason.name === 'AbortError') {
         setShareFailed(true);
-        setNotice(`Сохранение не завершилось. ${label} осталось в чате.`);
+        setNotice(`Сохранение не завершилось. ${retained}`);
         return;
       }
       setShareFailed(true);
@@ -146,7 +147,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       downloadLocalFile(file);
       finish(`Запрос на скачивание отправлен. Ищите «${file.name}» в «Файлах» или «Загрузках».`);
     } catch {
-      setError(`Не удалось начать скачивание. ${label} осталось в чате.`);
+      setError(`Не удалось начать скачивание. ${retained}`);
     }
   };
 

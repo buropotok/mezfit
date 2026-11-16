@@ -54,6 +54,29 @@ it.each([
   expect(downloadDiscussionMedia).not.toHaveBeenCalled();
 });
 
+it('can retrieve a received attachment through the existing authenticated fallback on a cache miss', async () => {
+  const blob = new Blob(['file'], { type: 'audio/ogg' });
+  vi.mocked(readDiscussionMedia).mockResolvedValue(null);
+  vi.mocked(downloadDiscussionMedia).mockResolvedValue(blob);
+  const share = vi.fn(async (_data: ShareData) => {});
+  Object.defineProperties(navigator, {
+    canShare: { configurable: true, value: () => true },
+    share: { configurable: true, value: share },
+  });
+  const cache = { accountId: 'tg:1', storageKey: 'mvp-media/' + 'd'.repeat(64),
+    mimeType: 'audio/ogg', sizeBytes: blob.size, realmId: 'pair',
+    messageId: 'foreign-message', attachmentId: 'foreign-attachment' };
+  const onClose = vi.fn();
+  render(<KonstaProvider theme="ios" dark><DiscussionAttachmentSaveDialog
+    target={{ mediaType: 'voice', url: 'https://media.example.com/source', cache }}
+    onClose={onClose} onStatus={() => {}} /></KonstaProvider>);
+  fireEvent.click(await screen.findByRole('button', { name: 'Сохранить' }));
+  await waitFor(() => expect(downloadDiscussionMedia).toHaveBeenCalledExactlyOnceWith(cache));
+  expect(share).toHaveBeenCalledExactlyOnceWith({ files: [
+    expect.objectContaining({ name: 'Голосовое Mezfit.ogg', type: 'audio/ogg' }),
+  ] });
+});
+
 it('does not claim a download succeeded when a received attachment is unavailable', async () => {
   vi.mocked(readDiscussionMedia).mockResolvedValue(null);
   vi.mocked(downloadDiscussionMedia).mockResolvedValue(null);

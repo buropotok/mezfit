@@ -601,7 +601,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     },
   });
   const items: LiquidPopoverItem[] = outgoingMenu && pendingOutgoingVideo
-    ? [saveItem(pendingOutgoingVideo.metadata.id, { file: pendingOutgoingVideo.file })] : [
+    ? [saveItem(pendingOutgoingVideo.metadata.id, {
+      file: pendingOutgoingVideo.file, mediaType: pendingOutgoingVideo.metadata.mediaType,
+    })] : [
     ...(!draft.videoPosition ? [{ id: 'reply', label: 'Ответить', icon: 'arrow-back-up' as const, onSelect: () => choose('reply') }] : []),
     ...(own && selected?.text.trim() && !mediaPresent ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
     ...(selected?.text.trim() ? [{ id: 'copy', label: 'Копировать', icon: 'copy' as const, onSelect: () => choose('copy') }] : []),

@@ -60,6 +60,7 @@ it('offers Save for all received attachment kinds, passing authorized identity t
     fireEvent.click(within(row).getByRole('button', { name: 'Действия сообщения' }));
     const menu = await screen.findByRole('menu', { name: 'Действия сообщения' });
     expect(within(menu).getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ответить', 'Сохранить']);
+    expect(within(menu).queryByRole('menuitem', { name: 'Удалить' })).toBeNull();
     fireEvent.click(within(menu).getByRole('menuitem', { name: 'Сохранить' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Сохранение вложения' });
@@ -74,7 +75,6 @@ it('offers Save for all received attachment kinds, passing authorized identity t
         messageId: 'incoming-' + kind, attachmentId: 'attachment-' + kind,
       },
     });
-    expect(within(menu).queryByRole('menuitem', { name: 'Удалить' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Закрыть сохранение' }));
   }
 });
