@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { LocalProgramSyncRow } from '../data/cloud/database';
 import type { PersonalEventRepository } from '../data/cloud/personal-events';
 import { workoutHasDelta } from '../data/cloud/workout-sync';
+import { itemSyncStatus, syncStatusLabel, syncStatusColor } from '../data/cloud/sync-status';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { Badge, LiquidPopover } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -34,23 +35,17 @@ export function PersonalEventStatuses({ eventId, repository }: {
   if (!cloud) return null;
 
   const pending = workoutHasDelta(row);
-  const label = !eventId ? 'Не сохранено'
-    : failed ? 'Ошибка'
-    : !pending ? 'Синхронизирована'
-    : cloud.syncStatus === 'offline' ? 'Нет соединения'
-    : cloud.syncStatus === 'error' ? 'Ошибка' : 'В ожидании';
-  const color = !eventId ? 'gray'
-    : failed ? 'red'
-    : !pending ? 'green'
-    : cloud.syncStatus === 'offline' ? 'gray'
-    : cloud.syncStatus === 'error' ? 'red' : 'yellow';
+  const sync = itemSyncStatus(!pending, failed, cloud.syncStatus);
+  const label = !eventId ? 'Не сохранено' : syncStatusLabel(sync);
+  const color = !eventId ? 'gray' : syncStatusColor(sync);
   const explanation = !eventId
     ? 'Новое событие ещё не сохранено на устройстве. Нажмите «Создать событие», чтобы запланировать его.'
-    : label === 'Синхронизирована' ? 'Изменения сохранены в Mezfit облаке.'
-    : label === 'Нет соединения' ? 'Событие сохранено на устройстве и отправится в облако при восстановлении соединения.'
-    : label === 'Ошибка' ? 'Не удалось синхронизировать событие с облаком. Оно сохранено на устройстве.'
-    : 'Событие сохранено на устройстве и ожидает синхронизации с облаком.';
-
+    : ({
+      synced: 'Изменения этого события подтверждены в Mezfit облаке.',
+      syncing: 'Идёт синхронизация события с Mezfit облаком.',
+      local: 'Событие сохранено на устройстве, но его отправка ещё не подтверждена.',
+      error: 'Не удалось синхронизировать событие с облаком. Оно сохранено на устройстве.',
+    }[sync]);
   return <div className="personal-event-sheet__statuses" aria-label="Статусы личного события">
     <div className="personal-event-sheet__sync" role="status" aria-label="Статус синхронизации события">
       {eventId

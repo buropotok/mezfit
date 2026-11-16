@@ -6,6 +6,8 @@ import { observeWorkoutSyncConfirmation } from './workout-sync';
 import { confirmProgramSync, observeProgramSyncConfirmation } from './program-sync';
 import { createSyncNotificationBudget, SyncNotificationBudgetContext } from './sync-notification-budget';
 import { SessionSyncHistory } from './session-sync-history';
+import { projectDexieSyncState, type CloudSyncStatus } from './sync-status';
+export type { CloudSyncStatus } from './sync-status';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { liveQuery } from 'dexie';
 import { isApprovedAssignedPair } from './assigned-programs';
@@ -25,23 +27,12 @@ export interface CloudContact {
   userAvatar?: boolean;
 }
 
-export type CloudSyncStatus = 'pending' | 'synced' | 'offline' | 'error';
-
-/** Dexie Addon sync is independent from whether a cached contacts list is readable. */
+/** One phase-only projection shared by every Mezfit surface. */
 export function projectCloudSyncState(state: MezfitCloudDatabase['cloud']['syncState']['value']): {
   status: CloudSyncStatus;
   error: string;
 } {
-  if (state.phase === 'error' || state.status === 'error') {
-    return { status: 'error', error: state.error?.message || 'Синхронизация с Mezfit облаком завершилась ошибкой.' };
-  }
-  if (state.phase === 'offline' || state.status === 'offline') {
-    return { status: 'offline', error: 'Облако недоступно. Изменения остаются на этом устройстве до синхронизации.' };
-  }
-  if (state.phase === 'in-sync' && state.status === 'connected') {
-    return { status: 'synced', error: '' };
-  }
-  return { status: 'pending', error: '' };
+  return projectDexieSyncState(state);
 }
 
 interface CloudConnectionsValue {
@@ -53,7 +44,7 @@ interface CloudConnectionsValue {
   selfAvatars?: CloudContact[];
   status: 'loading' | 'ready' | 'error';
   error: string;
-  /** Real Dexie Cloud upload/download state; contacts can be ready while sync is offline. */
+  /** Phase-derived Dexie Cloud state; contacts can be available from the local cache. */
   syncStatus: CloudSyncStatus;
   syncError: string;
   /** Session-local technical state changes; never part of Dexie Cloud. */
@@ -244,7 +235,7 @@ export function CloudConnectionsProvider({
   const [selfAvatars, setSelfAvatars] = useState<CloudContact[]>([]);
   const [status, setStatus] = useState<CloudConnectionsValue['status']>('loading');
   const [error, setError] = useState('');
-  const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('pending');
+  const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('local');
   const [syncError, setSyncError] = useState('');
   const [avatarLoadRevision, setAvatarLoadRevision] = useState(0);
   useEffect(() => { userAvatarSources.refresh(); }, [userAvatarSources, avatarLoadRevision]);
@@ -347,7 +338,7 @@ export function CloudConnectionsProvider({
   // Observe actual Addon push/pull state, not cached-contact hydration.
   // This subscription does not affect the lifetime of the memoized Dexie instance.
   useEffect(() => {
-    setSyncStatus('pending');
+    setSyncStatus('local');
     setSyncError('');
     const subscription = db.cloud.syncState?.subscribe({
       next: (state) => {
@@ -478,7 +469,7 @@ export function CloudConnectionsProvider({
   }, [db, actorUserId, reconcileAvatarPermissions, userAvatarSources]);
 
   const retrySync = useCallback(async () => {
-    setSyncStatus('pending');
+    setSyncStatus('local');
     setSyncError('');
     try {
       // Contacts-only pull does not retry queued PLAN writes.

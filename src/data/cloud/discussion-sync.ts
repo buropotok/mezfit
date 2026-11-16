@@ -1,5 +1,6 @@
 import type { MezfitCloudDatabase } from './database';
-export interface DiscussionSyncState { status: 'local' | 'synced' | 'error'; offline: boolean; error: string | null }
+import { projectDexieSyncState, type CloudSyncStatus } from './sync-status';
+export interface DiscussionSyncState { status: CloudSyncStatus; error: string | null }
 /** Session-local acknowledgement, not a second queue or a per-message receipt. */
 export class DiscussionSync {
   private revision = 0;
@@ -10,18 +11,20 @@ export class DiscussionSync {
   private readonly listeners = new Set<(state: DiscussionSyncState) => void>();
   constructor(private readonly db: Pick<MezfitCloudDatabase, 'cloud'>) {}
   state(): DiscussionSyncState {
-    const sync = this.db.cloud.syncState.value;
-    const offline = sync.phase === 'offline' || sync.status === 'offline';
-    const failed = this.failed || sync.phase === 'error' || sync.status === 'error';
-    return { status: failed ? 'error' : !offline && this.confirmed >= this.revision ? 'synced' : 'local',
-      offline, error: failed ? 'DISCUSSION_SYNC_FAILED' : null };
+    const phase = projectDexieSyncState(this.db.cloud.syncState.value);
+    const failed = this.failed || phase.status === 'error';
+    // Both a completed global phase and this thread's latest push receipt are required.
+    const pendingReceipt = this.confirmed < this.revision;
+    const status: CloudSyncStatus = failed ? 'error'
+      : phase.status === 'synced' && pendingReceipt ? 'local' : phase.status;
+    return { status, error: failed ? 'DISCUSSION_SYNC_FAILED' : null };
   }
   changed(): void { ++this.revision; this.emit(); this.acknowledge(); }
   private emit(): void { for (const listener of this.listeners) listener(this.state()); }
   private acknowledge(): void {
     const state = this.db.cloud.syncState.value;
     if (!this.listeners.size || this.checking || this.failed || this.confirmed >= this.revision
-      || state.phase !== 'in-sync' || state.status !== 'connected') return;
+      || state.phase !== 'in-sync') return;
     this.checking = true;
     // Errors are exposed through state(); Addon still owns transport/retries.
     void this.retry().catch(() => undefined).finally(() => {

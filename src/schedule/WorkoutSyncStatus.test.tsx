@@ -6,7 +6,7 @@ import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurren
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import type { LocalProgramSyncRow, MezfitCloudDatabase } from '../data/cloud/database';
 import { WorkoutSyncStatus } from './WorkoutSyncStatus';
-const state = vi.hoisted(() => ({ status: 'offline' }));
+const state = vi.hoisted(() => ({ status: 'local' }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ syncStatus: state.status }) }));
 vi.mock('../ui', () => ({ Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   LiquidPopover: ({ trigger, text }: { trigger: ReactNode; text: string }) => <>{trigger}<p>{text}</p></> }));
@@ -15,11 +15,12 @@ afterEach(cleanup);
 const draft = { saved: true, targetOccurrenceId: 'one' } as LocalWorkoutOccurrenceDraft;
 describe('workout synchronization capsule', () => {
   it.each([
-    [true, 'offline', false, 'Нет соединения'],
+    [true, 'local', false, 'Локально'],
     [true, 'error', false, 'Ошибка'],
-    [true, 'pending', false, 'В ожидании'],
-    [true, 'synced', true, 'Синхронизирована'],
-    [false, 'synced', true, 'Синхронизирована'],
+    [true, 'syncing', false, 'Синхронизация'],
+    [true, 'synced', false, 'Локально'],
+    [true, 'synced', true, 'Синхронизировано'],
+    [false, 'synced', true, 'Синхронизировано'],
   ] as const)('projects saved=%s and sync=%s without adding a sync action', (saved, status, confirmed, label) => {
     state.status = status;
     const repository = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');

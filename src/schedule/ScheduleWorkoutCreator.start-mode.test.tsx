@@ -15,7 +15,7 @@ vi.mock('../NavigationShell', () => ({
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({ db: state.db, actorUserId: 'coach', clients: [], coaches: [],
-    status: 'ready', error: '', syncStatus: 'offline', syncError: '', refresh: vi.fn(), retrySync: vi.fn() }),
+    status: 'ready', error: '', syncStatus: 'local', syncError: '', refresh: vi.fn(), retrySync: vi.fn() }),
 }));
 vi.mock('../data/cloud/workout-planning', () => ({
   WorkoutPlanningRepository: class {

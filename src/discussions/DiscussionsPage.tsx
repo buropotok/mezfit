@@ -4,6 +4,7 @@ import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import { syncStatusLabel } from '../data/cloud/sync-status';
 import { DiscussionRepository, observeDiscussionNotificationThread } from '../data/cloud/discussions';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Badge, DatePicker, Icon, List, ListItem, Text, type LocalDate } from '../ui';
@@ -251,9 +252,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       </div>
     </div>
     {from && to && from > to ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
-    {cloud?.syncStatus === 'offline' ? <Text variant="caption">Нет соединения. Показаны обсуждения на устройстве.</Text>
-      : cloud?.syncStatus === 'pending' ? <Text variant="caption">Синхронизируем обсуждения…</Text> : null}
-    {cloud?.syncStatus === 'error' ? <Text variant="caption" role="status">Синхронизация прервана. Локальные обсуждения доступны.</Text> : null}
+    {cloud ? <Text variant="caption" role="status">{syncStatusLabel(cloud.syncStatus)}</Text> : null}
     {notificationMessageId && !opened && !openError ? <Text variant="footnote" role="status">Загружаем обсуждение по ссылке…</Text> : null}
     {openError ? <div className="stack"><Text role="alert">{openError}</Text>
       {notificationMessageId && !opened ? <Button rounded tonal onClick={retryNotification}><Text>Повторить</Text></Button> : null}

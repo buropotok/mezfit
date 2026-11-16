@@ -89,14 +89,14 @@ describe('real Dexie Cloud PLAN sync state', () => {
     await act(async () => { await retrySync?.(); });
     expect(budget!.claim()).toBe(false);
     act(() => emitSync?.({ phase: 'in-sync', status: 'disconnected' }));
-    expect(budget!.claim()).toBe(false);
+    expect(budget!.claim()).toBe(true);
     act(() => emitSync?.({ phase: 'in-sync', status: 'connected' }));
     expect(budget!.claim()).toBe(true);
   });
   it('distinguishes pending, disconnected, rejected and confirmed uploads', () => {
-    expect(projectCloudSyncState({ phase: 'pushing', status: 'connected' }).status).toBe('pending');
-    expect(projectCloudSyncState({ phase: 'in-sync', status: 'disconnected' }).status).toBe('pending');
-    expect(projectCloudSyncState({ phase: 'offline', status: 'offline' }).status).toBe('offline');
+    expect(projectCloudSyncState({ phase: 'pushing', status: 'connected' }).status).toBe('syncing');
+    expect(projectCloudSyncState({ phase: 'in-sync', status: 'disconnected' }).status).toBe('synced');
+    expect(projectCloudSyncState({ phase: 'offline', status: 'offline' }).status).toBe('local');
     expect(projectCloudSyncState({
       phase: 'error', status: 'error', error: new Error('PLAN_WRITE_DENIED'),
     })).toEqual({ status: 'error', error: 'PLAN_WRITE_DENIED' });
@@ -117,10 +117,10 @@ describe('real Dexie Cloud PLAN sync state', () => {
     act(() => emitContacts?.({
       contacts: { clients: [], coaches: [cached] }, hasRelationshipMembership: true,
     }));
-    await waitFor(() => expect(screen.getByTestId('sync-status').textContent).toContain('ready|pending|'));
+    await waitFor(() => expect(screen.getByTestId('sync-status').textContent).toContain('ready|local|'));
 
     act(() => emitSync?.({ phase: 'offline', status: 'offline' }));
-    expect(screen.getByTestId('sync-status').textContent).toContain('ready|offline|');
+    expect(screen.getByTestId('sync-status').textContent).toContain('ready|local|');
 
     act(() => emitSync?.({
       phase: 'error', status: 'error', error: new Error('PLAN_WRITE_DENIED'),
@@ -132,7 +132,7 @@ describe('real Dexie Cloud PLAN sync state', () => {
     expect(sync).toHaveBeenNthCalledWith(1, { purpose: 'push', wait: true });
     expect(sync).toHaveBeenNthCalledWith(2, { purpose: 'pull', wait: true });
     // A successful retry call alone does not promise cloud persistence.
-    expect(screen.getByTestId('sync-status').textContent).toContain('ready|pending|');
+    expect(screen.getByTestId('sync-status').textContent).toContain('ready|local|');
     act(() => emitSync?.({ phase: 'in-sync', status: 'connected' }));
     expect(screen.getByTestId('sync-status').textContent).toContain('ready|synced|');
 

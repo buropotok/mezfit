@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
+import { syncStatusLabel, syncStatusColor } from '../data/cloud/sync-status';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { Badge, LiquidPopover, type BadgeColor } from '../ui';
@@ -7,25 +8,18 @@ import './fact-cloud-sync-status.css';
 
 /** FACT uses the app-wide Dexie Cloud state; it has no per-session revision receipt. */
 export function factCloudSyncPresentation(status: CloudSyncStatus): { label: string; color: BadgeColor; explanation: string } {
-  switch (status) {
-    case 'synced':
-      return { label: 'Синхронизировано', color: 'green',
-        explanation: 'Синхронизация с облаком Mezfit завершена.' };
-    case 'offline':
-      return { label: 'Нет соединения', color: 'gray',
-        explanation: 'Нет соединения с облаком Mezfit. Изменения сохраняются на устройстве и синхронизируются после подключения к интернету.' };
-    case 'error':
-      return { label: 'Ошибка', color: 'red',
-        explanation: 'Не удалось синхронизировать данные с облаком Mezfit. Изменения сохранены на устройстве.' };
-    case 'pending':
-      return { label: 'В ожидании', color: 'yellow',
-        explanation: 'Ожидается синхронизация с облаком Mezfit.' };
-  }
+  const explanations: Record<CloudSyncStatus, string> = {
+    local: 'Изменения хранятся на устройстве. Облачная синхронизация ещё не подтверждена.',
+    syncing: 'Идёт отправка или получение изменений из Mezfit облака.',
+    synced: 'Синхронизация с облаком Mezfit завершена.',
+    error: 'Не удалось синхронизировать данные с облаком Mezfit. Изменения сохранены на устройстве.',
+  };
+  return { label: syncStatusLabel(status), color: syncStatusColor(status), explanation: explanations[status] };
 }
 
 export function FactCloudSyncStatus() {
   const cloud = useCloudConnections();
-  const status = cloud?.syncStatus ?? 'pending';
+  const status = cloud?.syncStatus ?? 'local';
   const { label, color, explanation } = factCloudSyncPresentation(status);
   const [opened, setOpened] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);

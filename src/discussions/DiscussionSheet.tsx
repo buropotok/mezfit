@@ -4,6 +4,7 @@ import { sameDiscussionVideoPosition, type DiscussionVideoPosition, type Message
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { discussionCursorKey, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 import type { DiscussionSyncState } from '../data/cloud/discussion-sync';
+import { syncStatusLabel } from '../data/cloud/sync-status';
 import type { NavigationContext } from '../NavigationShell';
 import { Avatar, IconButton, Text } from '../ui/primitives';
 import { Icon } from '../ui/Icon';
@@ -297,7 +298,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   useEffect(() => {
     // A general Addon in-sync flag never becomes a receipt. Ask the repository
     // to await a push for exactly the currently visible own message IDs.
-    if (!repository.confirmDelivery || !syncState || syncState.offline || syncState.status === 'error') return;
+    if (!repository.confirmDelivery || !syncState || syncState.status === 'error') return;
     const ids = state.messages.filter(message => message.authorUserId === repository.actorUserId
       && !message.deleted && !receipts.confirmedIds.includes(message.id)
       && !confirmationAttempts.current.has(message.id)).map(message => message.id);
@@ -307,7 +308,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       for (const id of ids) confirmationAttempts.current.delete(id);
       // Offline/failure remains unconfirmed until the next observed sync state change.
     });
-  }, [repository, threadId, state.messages, receipts.confirmedIds, syncState?.offline, syncState?.status]);
+  }, [repository, threadId, state.messages, receipts.confirmedIds, syncState?.status]);
   const closeMenu = () => {
     if (!menuRef.current?.open) return;
     menuRef.current = { ...menuRef.current, open: false };
@@ -390,7 +391,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (composer.current) observer.observe(composer.current);
     if (context.current) observer.observe(context.current);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  }, [replyId, editId, error, draft.error, syncState?.status, syncState?.offline, previewing, media.phase, media.error, voice.status, voice.error, voice.permissionReady, voiceDraft, videoNote.status, videoNote.error, videoNote.permissionReady, circleDraft]);
+  }, [replyId, editId, error, draft.error, syncState?.status, previewing, media.phase, media.error, voice.status, voice.error, voice.permissionReady, voiceDraft, videoNote.status, videoNote.error, videoNote.permissionReady, circleDraft]);
 
   useLayoutEffect(() => {
     if (typeof ResizeObserver === 'undefined') return;
@@ -509,7 +510,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     });
     if (!newest || lastRead.current === newest.id) return;
     markViewed(newest.id);
-  }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, mediaSurfaceOpen, repository, threadId, composerHeight, contextHeight, syncState?.status, syncState?.offline]);
+  }, [atEnd, visible, readPosition, state.messages, state.loading, state.error, requestedFocus, mediaSurfaceOpen, repository, threadId, composerHeight, contextHeight, syncState?.status]);
 
   useEffect(() => {
     if (menu && !(menu.id === outgoing?.id && outgoingStatus === 'failed' && outgoingVideo)
@@ -703,8 +704,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           {repository.sourceKind === 'demo' && <Text variant="caption" tone="muted" className="discussion-thread__demo">Демо</Text>}
         </div>
         {contextUnavailable && <Text variant="footnote" role="status">Объект недоступен. История обсуждения сохранена.</Text>}
-        {syncState && repository.sourceKind !== 'demo' && <Text variant="caption" role="status">{syncState.status === 'synced' ? 'Синхронизировано'
-          : syncState.status === 'error' ? 'Ошибка синхронизации' : syncState.offline ? 'Локально · нет сети' : 'Сохранено локально'}</Text>}
+        {syncState && repository.sourceKind !== 'demo' && <Text variant="caption" role="status">{syncStatusLabel(syncState.status)}</Text>}
       </div>
       <IconButton icon="x" label="Закрыть обсуждение" onClick={onClose} />
     </header>

@@ -88,7 +88,7 @@ describe('COMM-06 production surface wiring', () => {
     const observe = vi.fn((_id: string, next: (value: typeof details) => void) => { next(details); return { unsubscribe: vi.fn() }; });
     const repository = { actorUserId: role === 'coach' ? 'tg:11' : 'tg:22', observeDetails: observe, observeAthleteDetails: observe };
     render(<CloudProgramDetailsPage repository={repository as unknown as ProgramManagementRepository} planId="program"
-      viewerRole={role} readOnly={role === 'client'} cloudStatus="ready" cloudError="" syncStatus="offline" syncError=""
+      viewerRole={role} readOnly={role === 'client'} cloudStatus="ready" cloudError="" syncStatus="local" syncError=""
       onRetryCloud={async () => {}} onRetrySync={async () => {}} onNavigationContextChange={vi.fn()} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Обсуждения' }));
     expect(screen.queryByRole('button', { name: 'Меню программы' })).toBeNull();
@@ -102,7 +102,7 @@ describe('COMM-06 production surface wiring', () => {
     const repository = { actorUserId: role === 'coach' ? 'tg:11' : 'tg:22', observeAuthored: observe, observeForAthlete: observe };
     render(<CloudProgramsPage repository={repository as unknown as ProgramManagementRepository}
       clients={[]} coaches={[]} onOpen={vi.fn()} viewerRole={role} cloudStatus="ready" cloudError=""
-      syncStatus="offline" syncError="" onRetryCloud={async () => {}} onRetrySync={async () => {}}
+      syncStatus="local" syncError="" onRetryCloud={async () => {}} onRetrySync={async () => {}}
       onNavigationContextChange={vi.fn()} />);
     expect(await screen.findByLabelText('Непрочитанных: 4')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Меню программы Силовая' }));

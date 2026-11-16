@@ -22,7 +22,7 @@ const state = vi.hoisted(() => ({ clients: [] as CloudContact[], filterAction: n
   planning: null as null | { requestedDraftId: string | null; requestedClientUserId: string | null; viewResetKey?: number; clearDraft: () => void; openDraft: () => void },
 }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
-  db: state.db, actorUserId: 'tg:101', clients: state.clients, coaches: [], syncStatus: 'offline',
+  db: state.db, actorUserId: 'tg:101', clients: state.clients, coaches: [], syncStatus: 'local',
 }) }));
 vi.mock('../NavigationShell', async original => ({
   ...await original<typeof import('../NavigationShell')>(),

@@ -104,12 +104,18 @@ Legacy read-state без readThrough проверяется по исходно�
 `observeAnchor` возвращает derived unread/unreadByThread; persistent cache не вводится.
 
 DiscussionSync хранит только session-local acknowledgement, без второй очереди.
-После локального commit — local; Addon владеет фоновой передачей. Наблюдение in-sync
-инициирует публичный push barrier и подтверждает только captured revision. Новая
-правка во время ожидания остаётся local. Ошибка видна как error, sync.retry вызывает
-тот же публичный push без повторного создания сообщения. Нет своих таймеров/transport/
-replay; после перезапуска прежнее acknowledgement не выдумывается. Synced — подтверждение
-push account database, не индивидуальная доставка и не прочтение адресатом.
+Для заголовка переписки отображается phase Dexie Cloud: pushing/pulling —
+«Синхронизация», in-sync — «Синхронизировано», explicit error — «Ошибка»,
+прочие неподтверждённые фазы — «Локально». Отдельный transport status offline
+не определяет пользовательский статус и не блокирует push acknowledgement.
+Addon владеет передачей; наблюдение in-sync инициирует публичный push barrier
+и подтверждает только captured revision. Новая правка во время ожидания
+остаётся неподтверждённой на уровне отдельного сообщения, даже если общий
+phase уже in-sync. Ошибка push retryable, sync.retry использует тот же
+публичный push без повторного создания сообщения. Нет своих таймеров/transport/
+replay; после перезапуска прежнее acknowledgement не выдумывается.
+Одна галочка означает подтверждение push конкретного сообщения, две —
+реплицированный курсор прочтения адресата; общий in-sync их не заменяет.
 
 ## Исторические проверки COMM-04 и приёмка
 

@@ -141,7 +141,7 @@ export function WorkoutReminderSettings({ role, glassBlur }: { role: Role; glass
         Чтобы получать сообщения, <a href="https://t.me/mezfit_bot?start=workout_reminders" target="_blank" rel="noopener noreferrer">откройте бота</a>
         {' '}и нажмите Start. Настройки сохраняются на устройстве и синхронизируются с Dexie Cloud.
       </Text>
-      {cloud?.syncStatus === 'offline' || cloud?.syncStatus === 'error'
+      {cloud?.syncStatus === 'local' || cloud?.syncStatus === 'error'
         ? <Text variant="footnote" tone="muted">Облачная синхронизация не подтверждена. Изменения вступят в силу после синхронизации.</Text>
         : null}
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}

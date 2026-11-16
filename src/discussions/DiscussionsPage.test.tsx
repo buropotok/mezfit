@@ -4,11 +4,12 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DiscussionAnchor } from '../../shared/discussion-anchor';
 import type { NavigationContext } from '../NavigationShell';
+import { projectDexieSyncState } from '../data/cloud/sync-status';
 import { DiscussionsPage, DiscussionInboxList } from './DiscussionsPage';
 import type { DiscussionInboxRow } from './DiscussionsProvider';
 import { thread, message } from './discussion-fixture.test-support';
 
-const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), cloudStatus: 'ready', syncStatus: 'offline' }));
+const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), cloudStatus: 'ready', syncStatus: 'local' }));
 vi.mock('./DiscussionsProvider', () => ({ useDiscussions: () => ({ rows: state.rows, unread: 0, loading: false, error: '', retry: vi.fn() }) }));
 vi.mock('../navigation/NavigationSurfaceContext', () => ({ useNavigationSurfaceContext: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: {}, actorUserId: 'tg:11',
@@ -44,9 +45,23 @@ function selectClients(...names: string[]) {
   for (const name of names) fireEvent.click(screen.getByRole('button', { name: `Выбрать клиента ${name}` }));
   fireEvent.click(screen.getByRole('button', { name: 'Применить фильтр' }));
 }
-afterEach(() => { cleanup(); state.rows = []; state.ensure.mockReset(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); state.rows = []; state.syncStatus = 'local'; state.ensure.mockReset(); vi.restoreAllMocks(); });
 
 describe('COMM-08 shared inbox surfaces', () => {
+  it.each([
+    ['initial', 'offline', 'Локально'],
+    ['pushing', 'offline', 'Синхронизация'],
+    ['pulling', 'offline', 'Синхронизация'],
+    ['in-sync', 'offline', 'Синхронизировано'],
+    ['in-sync', 'connected', 'Синхронизировано'],
+    ['error', 'connected', 'Ошибка'],
+  ] as const)('shows global %s / %s on the inbox as %s', (phase, transport, label) => {
+    state.syncStatus = projectDexieSyncState({ phase, status: transport } as Parameters<typeof projectDexieSyncState>[0]).status;
+    render(<DiscussionsPage role="client" onNavigationContextChange={vi.fn()} />);
+    expect(screen.getByRole('status').textContent).toBe(label);
+    expect(screen.queryByText(/Нет соединения/)).toBeNull();
+  });
+
   it.each(['period', 'client'] as const)('cancels a pending conversation opening when changing the %s filter', async filter => {
     state.rows = [row('first')];
     let resolve: ((value: typeof thread) => void) | undefined;
@@ -75,11 +90,11 @@ describe('COMM-08 shared inbox surfaces', () => {
     expect(document.querySelector('time')?.dateTime).toBe(first.latest?.createdAt);
     expect(document.querySelector('button button')).toBeNull();
   });
-  it('opens the existing sheet, routes Back to the same offline list, and returns from the exact entity', async () => {
+  it('opens the existing sheet, routes Back to the same local list, and returns from the exact entity', async () => {
     state.rows = [row('first')]; state.ensure.mockResolvedValue(state.rows[0].thread);
     const navigation = vi.fn();
     render(<DiscussionsPage role="client" onNavigationContextChange={navigation} />);
-    expect(screen.getByText('Нет соединения. Показаны обсуждения на устройстве.')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('Локально');
     fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Контекст first' }));
     await screen.findByRole('dialog', { name: 'first' });
     expect(state.ensure).toHaveBeenCalledTimes(1);

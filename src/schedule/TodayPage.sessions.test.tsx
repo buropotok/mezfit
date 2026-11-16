@@ -14,7 +14,7 @@ import { eventGeometry, FULL_EVENT_CARD_HEIGHT } from '../ui/day-schedule/DayPan
 
 const state = vi.hoisted(() => ({ db: null as MezfitCloudDatabase | null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({
-  db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'offline',
+  db: state.db, actorUserId: 'tg:101', clients: [], coaches: [], syncStatus: 'local',
 }) }));
 vi.mock('../NavigationShell', async original => ({ ...await original<typeof import('../NavigationShell')>(), useNavigationSurfaceFloatingAction: () => {} }));
 vi.mock('../workout/PlannedWorkoutStartContext', () => ({ usePlannedWorkoutStart: () => null }));

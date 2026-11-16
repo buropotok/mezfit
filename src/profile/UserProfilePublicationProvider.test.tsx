@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { UserProfilePublicationProvider, UserProfileSyncStatus } from './UserProfilePublicationProvider';
 
 const state = vi.hoisted(() => ({
-  actor: 'tg:202', db: {}, status: 'offline' as string, version: 'profile-v1' as string | null,
+  actor: 'tg:202', db: {}, status: 'local' as string, version: 'profile-v1' as string | null,
   listeners: new Map<string, (version: string | null) => void>(),
   errors: new Map<string, (reason: unknown) => void>(),
   publish: vi.fn<() => Promise<string | null>>(),
@@ -33,34 +33,50 @@ vi.mock('../ui', () => ({
 }));
 const ui = () => <UserProfilePublicationProvider><UserProfileSyncStatus /></UserProfilePublicationProvider>;
 beforeEach(() => {
-  state.actor = 'tg:202'; state.status = 'offline'; state.version = 'profile-v1'; state.listeners.clear(); state.errors.clear();
+  state.actor = 'tg:202'; state.status = 'local'; state.version = 'profile-v1'; state.listeners.clear(); state.errors.clear();
   state.publish.mockReset().mockImplementation(async () => state.version);
   state.confirm.mockReset().mockResolvedValue(true);
 });
 afterEach(cleanup);
 
-it('publishes offline locally and becomes green only after the awaited cloud acknowledgement', async () => {
+it('publishes locally and becomes green only after the awaited cloud acknowledgement', async () => {
   let finish: ((ok: boolean) => void) | undefined;
   state.confirm.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
   const view = render(ui());
   await waitFor(() => expect(state.publish).toHaveBeenCalledOnce());
-  expect(screen.getByText('Нет соединения').getAttribute('data-color')).toBe('gray');
+  expect(screen.getByText('Локально').getAttribute('data-color')).toBe('gray');
   expect(state.confirm).not.toHaveBeenCalled();
   state.status = 'synced'; view.rerender(ui());
   await waitFor(() => expect(state.confirm).toHaveBeenCalledWith('profile-v1'));
-  expect(screen.getByText('В ожидании').getAttribute('data-color')).toBe('yellow');
+  expect(screen.getByText('Локально').getAttribute('data-color')).toBe('gray');
   await act(async () => { finish?.(true); });
-  expect(screen.getByText('Синхронизирована').getAttribute('data-color')).toBe('green');
+  expect(screen.getByText('Синхронизировано').getAttribute('data-color')).toBe('green');
+});
+
+it('explains an acknowledged profile as saved in Mezfit cloud', async () => {
+  state.status = 'synced';
+  render(ui());
+  fireEvent.click(await screen.findByText('Синхронизировано'));
+  expect(screen.getByRole('dialog').textContent)
+    .toBe('Личная анкета и опубликованные значения отправлены в Mezfit облако.');
+});
+
+it('shows active cloud synchronization without a premature profile receipt', async () => {
+  state.status = 'syncing';
+  render(ui());
+  await waitFor(() => expect(state.publish).toHaveBeenCalledOnce());
+  expect(screen.getByText('Синхронизация').getAttribute('data-color')).toBe('yellow');
+  expect(state.confirm).not.toHaveBeenCalled();
 });
 
 it('invalidates green status and republishes when profile data or its link set changes', async () => {
   state.status = 'synced';
   render(ui());
-  await screen.findByText('Синхронизирована');
-  state.status = 'offline'; state.version = 'profile-v2-with-new-link';
+  await screen.findByText('Синхронизировано');
+  state.status = 'local'; state.version = 'profile-v2-with-new-link';
   act(() => state.listeners.get('tg:202')?.(state.version));
   await waitFor(() => expect(state.publish).toHaveBeenCalledTimes(2));
-  expect(screen.getByText('Нет соединения')).toBeTruthy();
+  expect(screen.getByText('Локально')).toBeTruthy();
 });
 
 it('exposes a retryable publication error without starting a render/retry loop', async () => {
@@ -69,7 +85,7 @@ it('exposes a retryable publication error without starting a render/retry loop',
   expect((await screen.findByText('Ошибка')).getAttribute('data-color')).toBe('red');
   expect(state.publish).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
-  await screen.findByText('Нет соединения');
+  await screen.findByText('Локально');
   expect(state.publish).toHaveBeenCalledTimes(2);
 });
 
@@ -79,10 +95,10 @@ it('does not acknowledge the next account with a previous account push completio
   state.confirm.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
   const view = render(ui());
   await waitFor(() => expect(state.confirm).toHaveBeenCalledOnce());
-  state.actor = 'tg:303'; state.status = 'offline'; view.rerender(ui());
-  await screen.findByText('Нет соединения');
+  state.actor = 'tg:303'; state.status = 'local'; view.rerender(ui());
+  await screen.findByText('Локально');
   await act(async () => { finish?.(true); });
-  expect(screen.queryByText('Синхронизирована')).toBeNull();
+  expect(screen.queryByText('Синхронизировано')).toBeNull();
 });
 
 it('does not mark an unsaved questionnaire as synchronized', async () => {
@@ -94,23 +110,23 @@ it('does not mark an unsaved questionnaire as synchronized', async () => {
 
 it('does not spin on failed cloud confirmation and permits an explicit retry', async () => {
   state.status = 'synced';
-  state.confirm.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(true);
+  state.confirm.mockRejectedValueOnce(new Error('local')).mockResolvedValueOnce(true);
   render(ui());
   await screen.findByText('Ошибка');
   expect(state.confirm).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
-  await screen.findByText('Синхронизирована');
+  await screen.findByText('Синхронизировано');
   expect(state.confirm).toHaveBeenCalledTimes(2);
 });
 
 it('invalidates an acknowledged status when observation fails and recovers through a fresh read', async () => {
   state.status = 'synced';
   render(ui());
-  await screen.findByText('Синхронизирована');
+  await screen.findByText('Синхронизировано');
   act(() => state.errors.get('tg:202')?.(new Error('IndexedDB unavailable')));
   expect(screen.getByText('Ошибка')).toBeTruthy();
-  expect(screen.queryByText('Синхронизирована')).toBeNull();
+  expect(screen.queryByText('Синхронизировано')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
-  await screen.findByText('Синхронизирована');
+  await screen.findByText('Синхронизировано');
   expect(state.publish).toHaveBeenCalledTimes(2);
 });
