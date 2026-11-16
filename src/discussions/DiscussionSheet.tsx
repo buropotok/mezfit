@@ -517,11 +517,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
 
   useEffect(() => {
     if (menu && !(menu.id === outgoing?.id && outgoingStatus === 'failed' && outgoingVideo)
+      && !media.pendingMedia.some(row => row.command.id === menu.id && row.selected)
       && !state.messages.some(row => row.id === menu.id && !row.deleted)) setMenu(null);
     if (editId && state.messages.some(row => row.id === editId && row.deleted)) {
       setEditId(null); setEditText(''); setError('Сообщение уже удалено');
     }
-  }, [state.messages, menu?.id, editId, outgoing?.id, outgoingStatus, outgoingVideo]);
+  }, [state.messages, media.pendingMedia, menu?.id, editId, outgoing?.id, outgoingStatus, outgoingVideo]);
   const run = async (operation: () => Promise<void>) => {
     if (pending.current) return;
     pending.current = true; setBusy(true); setError(null);
