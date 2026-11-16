@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DiscussionAnchor } from '../../shared/discussion-anchor';
 import type { NavigationContext } from '../NavigationShell';
+import { projectDexieSyncState } from '../data/cloud/sync-status';
 import { DiscussionsPage, DiscussionInboxList } from './DiscussionsPage';
 import type { DiscussionInboxRow } from './DiscussionsProvider';
 import { thread, message } from './discussion-fixture.test-support';
@@ -44,9 +45,23 @@ function selectClients(...names: string[]) {
   for (const name of names) fireEvent.click(screen.getByRole('button', { name: `Выбрать клиента ${name}` }));
   fireEvent.click(screen.getByRole('button', { name: 'Применить фильтр' }));
 }
-afterEach(() => { cleanup(); state.rows = []; state.ensure.mockReset(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); state.rows = []; state.syncStatus = 'local'; state.ensure.mockReset(); vi.restoreAllMocks(); });
 
 describe('COMM-08 shared inbox surfaces', () => {
+  it.each([
+    ['initial', 'offline', 'Локально'],
+    ['pushing', 'offline', 'Синхронизация'],
+    ['pulling', 'offline', 'Синхронизация'],
+    ['in-sync', 'offline', 'Синхронизировано'],
+    ['in-sync', 'connected', 'Синхронизировано'],
+    ['error', 'connected', 'Ошибка'],
+  ] as const)('shows global %s / %s on the inbox as %s', (phase, transport, label) => {
+    state.syncStatus = projectDexieSyncState({ phase, status: transport } as Parameters<typeof projectDexieSyncState>[0]).status;
+    render(<DiscussionsPage role="client" onNavigationContextChange={vi.fn()} />);
+    expect(screen.getByRole('status').textContent).toBe(label);
+    expect(screen.queryByText(/Нет соединения/)).toBeNull();
+  });
+
   it.each(['period', 'client'] as const)('cancels a pending conversation opening when changing the %s filter', async filter => {
     state.rows = [row('first')];
     let resolve: ((value: typeof thread) => void) | undefined;
@@ -79,7 +94,7 @@ describe('COMM-08 shared inbox surfaces', () => {
     state.rows = [row('first')]; state.ensure.mockResolvedValue(state.rows[0].thread);
     const navigation = vi.fn();
     render(<DiscussionsPage role="client" onNavigationContextChange={navigation} />);
-    expect(screen.getByText('Локально. Обсуждения доступны на устройстве.')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('Локально');
     fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Контекст first' }));
     await screen.findByRole('dialog', { name: 'first' });
     expect(state.ensure).toHaveBeenCalledTimes(1);
