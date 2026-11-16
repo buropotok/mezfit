@@ -91,9 +91,14 @@ it('previews a photo and retries an attachment-only send with the same message, 
   await screen.findByAltText('Предпросмотр фото');
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
   const retry = await screen.findByRole('button', { name: 'Ещё раз' });
+  const messagebar = screen.getByPlaceholderText('Сообщение') as HTMLTextAreaElement;
+  expect(messagebar.disabled).toBe(false);
+  fireEvent.change(messagebar, { target: { value: 'Новое сообщение после сетевой ошибки' } });
+  expect(messagebar.value).toBe('Новое сообщение после сетевой ошибки');
   expect(port.send).not.toHaveBeenCalled();
   fireEvent.click(retry);
   await waitFor(() => expect(port.send).toHaveBeenCalledOnce());
+  expect(messagebar.value).toBe('Новое сообщение после сетевой ошибки');
   const first = vi.mocked(port.saveDraft).mock.calls[0][0];
   expect(port.send).toHaveBeenCalledWith(expect.objectContaining({ id: first.id, text: '', draftMedia: metadata }), uploaded);
   expect(vi.mocked(uploadDirectMedia).mock.calls.map(([, options]) => options?.retryKey)).toEqual([
@@ -144,7 +149,8 @@ it('shows the local video during upload, cancels on tap and retries the same fil
   const uploaded: UploadedMedia = { key: metadata.storageKey, url: directMediaUrl(metadata.storageKey) ?? '',
     contentType: file.type, sizeBytes: file.size, fileName: file.name };
   let saved: DiscussionMessageInput | null = null;
-  const port = { ...fixture().port, supportsMedia: true, getDraft: async () => saved,
+  const port = { ...fixture().port, supportsMedia: true, getDraft: async () => null,
+    listPendingMediaDrafts: async () => saved?.draftMedia ? [saved] : [],
     send: vi.fn(async (input: DiscussionMessageInput, _media?: UploadedMedia) => {
       saved = null;
       return message(input.id, input.text);
@@ -193,7 +199,8 @@ it('plays and exports a failed local video offline without removing its retry dr
   const discardDraft = vi.fn(async () => {});
   const updateDraftMedia = vi.fn(async () => {});
   const port = { ...fixture().port, supportsMedia: true, discardDraft, updateDraftMedia,
-    getDraft: async () => ({ id: 'offline-draft', threadId: thread.id, text: '', createdAt: thread.createdAt, draftMedia }) };
+    getDraft: async () => null,
+    listPendingMediaDrafts: async () => [{ id: 'offline-draft', threadId: thread.id, text: '', createdAt: thread.createdAt, draftMedia }] };
   vi.mocked(readDiscussionMedia).mockResolvedValueOnce(file);
   vi.stubGlobal('URL', class extends URL {
     static createObjectURL = vi.fn(() => 'blob:offline-video');
@@ -226,7 +233,7 @@ it('plays and exports a failed local video offline without removing its retry dr
     ] }));
     await waitFor(() => expect(screen.queryByText('Сохранить видео')).toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Убрать вложение' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(screen.getByText('Убрать неотправленное видео?')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Отмена' }));
     expect(screen.getByRole('button', { name: 'Ещё раз' })).toBeTruthy();

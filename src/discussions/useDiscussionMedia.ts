@@ -13,6 +13,12 @@ import type { useDiscussionDraft } from './useDiscussionDraft';
 type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { separate?: DiscussionMessageInput; restored?: boolean };
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
 type OutgoingMedia = Pick<DiscussionMessageInput, 'id' | 'createdAt'> & { attachmentId: string };
+interface PendingMedia {
+  command: DiscussionMessageInput;
+  selected?: Selection;
+  preview?: string;
+  error: string;
+}
 
 // Stable, non-sensitive support codes for failures in the media send flow.
 // 1/2/3 identify the failed network request: signer, PUT, or retry HEAD.
@@ -38,18 +44,52 @@ function describeSendError(reason: unknown, savingFile: boolean, aborted: boolea
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
   const [selection, setSelection] = useState<Selection>();
+  const selectionRef = useRef<Selection | undefined>(selection);
+  selectionRef.current = selection;
   const [preview, setPreview] = useState<string>();
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string>();
   const [outgoing, setOutgoing] = useState<OutgoingMedia>();
   const [published, setPublished] = useState<DiscussionMessageView>();
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
+  const pendingRef = useRef<PendingMedia[]>([]);
+  const updatePending = (next: PendingMedia[]) => { pendingRef.current = next; setPendingMedia(next); };
+  const enqueuePending = (entry: PendingMedia) => {
+    const existing = pendingRef.current.find(row => row.command.id === entry.command.id);
+    if (existing?.preview) URL.revokeObjectURL(existing.preview);
+    updatePending([...pendingRef.current.filter(row => row.command.id !== entry.command.id), entry]);
+  };
   const active = useRef<AbortController | null>(null);
   const publishing = useRef(false);
   const interrupted = useRef(false);
   const storedKey = useRef<string | undefined>(undefined);
   const resume = useRef<(() => void) | null>(null);
 
-  useEffect(() => () => { active.current?.abort(); active.current = null; resume.current = null; }, []);
+  useEffect(() => () => {
+    active.current?.abort(); active.current = null; resume.current = null;
+    for (const entry of pendingRef.current) if (entry.preview) URL.revokeObjectURL(entry.preview);
+  }, []);
+  // Recover private, unsent media independently of the editable text composer.
+  useEffect(() => {
+    if (!repository.listPendingMediaDrafts) return;
+    let alive = true;
+    void repository.listPendingMediaDrafts(draft.threadId).then(async commands => {
+      for (const command of commands) {
+        const metadata = command.draftMedia;
+        if (!metadata) continue;
+        const { storageKey, mimeType, sizeBytes, fileName } = metadata;
+        const blob = await readDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes })
+          .catch(() => undefined);
+        if (!alive) return;
+        const file = blob ? new File([blob], fileName, { type: mimeType }) : undefined;
+        if (pendingRef.current.some(row => row.command.id === command.id)) continue;
+        enqueuePending({ command, selected: file ? { file, metadata, separate: command, restored: true } : undefined,
+          preview: file ? URL.createObjectURL(file) : undefined,
+          error: file ? 'Файл сохранён на устройстве. Отправка не завершена.' : 'Локальный файл недоступен. Отмените отправку.' });
+      }
+    }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [repository, repository.actorUserId, draft.threadId]);
   useEffect(() => {
     if (!selection) { setPreview(undefined); return; }
     const url = URL.createObjectURL(selection.file);
@@ -218,17 +258,29 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
           void send(selected, false);
           return;
         }
-        resume.current = () => { void send(selected, false); };
+        resume.current = () => { retryPending(message.id); };
       }
-      setError(describeSendError(reason, savingFile, controller.signal.aborted));
-      setPhase('failed');
+      const errorText = describeSendError(reason, savingFile, controller.signal.aborted);
+      if (command) {
+        // Network failure is not a failed local save. Keep the private draft and
+        // cached bytes for independent retry; free Messagebar for the next message.
+        const detached = { ...selected, separate: command, restored: true };
+        enqueuePending({ command, selected: detached, preview: URL.createObjectURL(selected.file), error: errorText });
+        draft.detachMedia(command.id);
+        setSelection(undefined); setOutgoing(undefined); setError(undefined); setPhase('idle');
+      } else {
+        setError(errorText);
+        setPhase('failed');
+      }
     } finally {
       if (active.current === controller) {
         publishing.current = false;
         active.current = null;
         if (controller.signal.aborted) {
-          setError(describeSendError(new MediaUploadError('CANCELLED'), false, true));
-          setPhase('failed');
+          if (!command) {
+            setError(describeSendError(new MediaUploadError('CANCELLED'), false, true));
+            setPhase('failed');
+          }
         }
       }
     }
@@ -252,6 +304,28 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
-  return { selection, preview, outgoing, published, setPublished, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
-    cancel: () => { resume.current = null; if (!publishing.current) active.current?.abort(); } };
+  function retryPending(id: string) {
+    const entry = pendingRef.current.find(row => row.command.id === id);
+    if (!entry?.selected || active.current || selectionRef.current) return;
+    updatePending(pendingRef.current.filter(row => row.command.id !== id));
+    if (entry.preview) URL.revokeObjectURL(entry.preview);
+    setSelection(entry.selected);
+    void send(entry.selected);
+  }
+
+  async function removePending(id: string) {
+    const entry = pendingRef.current.find(row => row.command.id === id);
+    if (!entry || !repository.discardDraft) return;
+    try {
+      await repository.discardDraft(entry.command.threadId, entry.command.id);
+      updatePending(pendingRef.current.filter(row => row.command.id !== id));
+      if (entry.preview) URL.revokeObjectURL(entry.preview);
+    } catch {
+      updatePending(pendingRef.current.map(row => row.command.id === id
+        ? { ...row, error: 'Не удалось отменить отправку. Повторите попытку.' } : row));
+    }
+  }
+
+  return { selection, preview, outgoing, pendingMedia, published, setPublished, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
+    retryPending, removePending, cancel: () => { resume.current = null; if (!publishing.current) active.current?.abort(); } };
 }

@@ -5,13 +5,14 @@ import { VoiceMessagePlayer } from '../voice-note/VoiceMessagePlayer';
 import type { DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 
-export function DiscussionVoice({ src, waveform, durationMs, cache, onMenu, meta }: {
+export function DiscussionVoice({ src, waveform, durationMs, cache, onMenu, meta, leadingControl }: {
   src: string;
   waveform: number[];
   durationMs: number;
   cache?: DiscussionMediaCacheEntry;
   onMenu?: () => void;
   meta?: ReactNode;
+  leadingControl?: ReactNode;
 }) {
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -20,6 +21,7 @@ export function DiscussionVoice({ src, waveform, durationMs, cache, onMenu, meta
   const { url, container, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'cache-only', retry, false);
   return <div className="discussion-voice" ref={container}>
     {url && <VoiceMessagePlayer key={retry} src={url} waveform={waveform} durationMs={durationMs}
+      leadingControl={leadingControl}
       onError={message => {
         if (message.includes('загрузить')) {
           const attempt = retry;
