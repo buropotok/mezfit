@@ -5,11 +5,12 @@ export const DISCUSSION_REPLY_SWIPE_TRIGGER_PX = 50;
 const AXIS_SLOP_PX = 8;
 
 type SwipeVisual = { offsetX: number; dragging: boolean };
+type SwipePresentation = SwipeVisual & { enabled: boolean };
 const idleVisual: SwipeVisual = { offsetX: 0, dragging: false };
-const SwipeVisualContext = createContext<SwipeVisual>(idleVisual);
+const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false });
 
 /** Only a portaled video-note needs this: ordinary media follows its message row. */
-export function useDiscussionSwipeVisual(): SwipeVisual {
+export function useDiscussionSwipeVisual(): SwipePresentation {
   return useContext(SwipeVisualContext);
 }
 
@@ -73,7 +74,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     if (confirmed) onReply();
   };
 
-  return <SwipeVisualContext.Provider value={visual}>
+  return <SwipeVisualContext.Provider value={{ ...visual, enabled }}>
     <div className="discussion-message-target discussion-message-target--reply-swipe"
       data-message-id={messageId} data-own={String(own)}
       data-highlighted={highlighted || undefined}
