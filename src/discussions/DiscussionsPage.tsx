@@ -120,7 +120,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     // An explicit tap in the inbox takes precedence over an unresolved deep link.
     if (notificationMessageId) onNotificationOpened?.();
   }, [avatarFlight, notificationMessageId, onNotificationOpened]);
-  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string; avatarSrc?: string } | null>(null);
+  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string; avatarSrc?: string; flightKey?: string } | null>(null);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
   const notificationPeers = role === 'coach' ? cloud?.clients : cloud?.coaches;
@@ -148,7 +148,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     if (!cloud || !current || current.kind === 'entity') return null;
     try { return new DiscussionRepository(cloud.db, cloud.actorUserId, current.row.thread); }
     catch { return null; }
-  }, [cloud?.db, cloud?.actorUserId, current]);
+  }, [cloud?.db, cloud?.actorUserId, current?.kind, current?.row.thread]);
   const notificationRealmsKey = JSON.stringify((notificationPeers ?? []).map(contact => contact.relationshipId).sort());
   const db = cloud?.db;
   const actorId = cloud?.actorUserId;
@@ -224,7 +224,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     const displayName = current.row.contact?.displayName ?? 'Вы';
     return { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot,
       ...(current.kind === 'chat' ? {
-        avatarTransitionKey: discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey),
+        avatarTransitionKey: current.flightKey ?? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey),
         identity: { title: displayName, avatar: { name: displayName, src: current.avatarSrc } },
       } : {}),
       onBack: current.kind === 'notification' ? closeNotificationChat : close };
@@ -263,7 +263,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       const thread = await repository.ensureEntityThread(row.thread.anchor, row.thread.derivedTitleSnapshot);
       if (generation === request.current) {
         if (origin?.key === discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey)) avatarFlight.begin(origin);
-        setOpened({ row: { ...row, thread }, kind: 'chat', parent, avatarSrc: origin?.avatar.src });
+        setOpened({ row: { ...row, thread }, kind: 'chat', parent, avatarSrc: origin?.avatar.src, flightKey: origin?.key });
       }
     } catch {
       if (generation === request.current) setOpenError('Не удалось открыть обсуждение. Повторите нажатие.');
