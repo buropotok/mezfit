@@ -29,7 +29,7 @@ it('rechecks publication after Addon hydrates an avatar without another business
   const ui = () => <UserProfilePublicationProvider><UserProfileSyncStatus /></UserProfilePublicationProvider>;
   const view = render(ui());
   await waitFor(() => expect(state.publish).toHaveBeenCalledOnce());
-  expect(screen.getByText('Локально').getAttribute('data-color')).toBe('yellow');
+  expect(screen.getByText('Локально').getAttribute('data-color')).toBe('gray');
   expect(state.confirm).not.toHaveBeenCalled();
   state.revision = 1; view.rerender(ui());
   await screen.findByText('Синхронизировано');
