@@ -19,7 +19,7 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     alive.current = true;
     let cancelled = false;
     setReady(false);
-    void repository.getDraft(threadId).then(input => {
+    void repository.getDraft(threadId, undefined, 'composer').then(input => {
       if (cancelled) return;
       current.current = input;
       setMedia(input?.draftMedia);
