@@ -69,6 +69,10 @@ describe('gallery attachments', () => {
     await client.saveDraft(command);
     await client.updateDraftMedia(thread.id, command.id, key, 'failed');
     expect(await client.getDraft(thread.id)).toMatchObject({ draftMedia: { storageKey: key, uploadState: 'failed' } });
+    expect(await client.getDraft(thread.id, undefined, 'composer')).toBeNull();
+    expect(await client.listPendingMediaDrafts(thread.id)).toMatchObject([
+      { id: command.id, draftMedia: { storageKey: key, uploadState: 'failed' } },
+    ]);
     expect(await coach.getDraft(thread.id)).toBeNull();
     expect((await coach.page(thread.id)).messages).toEqual([]);
     await expect(client.send(command)).rejects.toThrow('INVALID_DISCUSSION_ATTACHMENT');
