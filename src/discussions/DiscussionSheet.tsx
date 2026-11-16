@@ -804,7 +804,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           return <Fragment key={command.id}>
             <div className="discussion-message-target discussion-message-target--outgoing" data-own="true" data-message-id={command.id}>
               <DiscussionOutgoingMedia src={preview} attachment={attachment} createdAt={command.createdAt}
-                status="failed" error={pendingError} retryDisabled={mediaBusy || Boolean(media.selection)} onCancel={() => {}}
+                status="failed" error={pendingError} retryDisabled={mediaBusy || Boolean(media.selection)}
+                playbackHost={videoPlaybackHost} scrollViewport={scroller} onCancel={() => {}}
                 onRetry={() => media.retryPending(command.id)}
                 onRemove={video && attachment.mediaType === 'video' ? () => setDeleting({ id: command.id, kind: 'outgoing-video' })
                   : () => void media.removePending(command.id)}
@@ -822,7 +823,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           </MessagesTitle>}
           <div className="discussion-message-target discussion-message-target--outgoing" data-own="true" data-message-id={outgoing.id}>
             <DiscussionOutgoingMedia src={media.preview} attachment={media.selection.metadata} createdAt={outgoing.createdAt}
-              status={outgoingStatus} error={media.error} onCancel={media.cancel}
+              status={outgoingStatus} error={media.error} playbackHost={videoPlaybackHost} scrollViewport={scroller} onCancel={media.cancel}
               onRetry={() => void media.send()}
               onRemove={outgoingVideo ? () => setDeleting({ id: outgoing.id, kind: 'outgoing-video' }) : () => void media.remove()}
               onOpen={outgoingVideo?.metadata.mediaType === 'video' ? () => {

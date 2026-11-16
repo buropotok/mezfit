@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import { Icon } from '../ui/Icon';
 import { Button, IconButton, Text } from '../ui/primitives';
@@ -9,13 +9,15 @@ import { DiscussionVoice } from './DiscussionVoice';
 import clock from './assets/upload-clock.svg';
 import paperplane from './assets/upload-paperplane.svg';
 
-export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, error, retryDisabled = false, onCancel, onRemove, onRetry, onOpen, onMenu, menu }: {
+export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, error, retryDisabled = false, playbackHost, scrollViewport, onCancel, onRemove, onRetry, onOpen, onMenu, menu }: {
   src?: string;
   attachment: DiscussionMediaDraft;
   createdAt: string;
   status: 'uploading' | 'publishing' | 'failed' | 'clearing';
   error?: string;
   retryDisabled?: boolean;
+  playbackHost?: HTMLElement | null;
+  scrollViewport?: RefObject<HTMLDivElement | null>;
   onCancel: () => void;
   onRemove: () => void;
   onRetry: () => void;
@@ -38,15 +40,16 @@ export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, er
   return <MezfitMessage type="sent" bubbleVariant={mediaType === 'voice' ? undefined : 'media'} bubbleSource={menu}
     opaqueTextFooter={mediaType !== 'voice'}
     textFooter={<>
-      <div className="discussion-outgoing__preview" data-playable={playable || undefined}>
+      <div className={`discussion-outgoing__preview${mediaType === 'video-note' ? ' discussion-outgoing__preview--circle' : ''}`} data-playable={playable || undefined}>
         <div inert={!playable && mediaType !== 'voice'}>
           {!src ? <Text variant="caption">Файл на устройстве недоступен</Text>
             : mediaType === 'voice'
               ? <DiscussionVoice src={src} durationMs={(durationSeconds ?? 0) * 1000} waveform={waveform ?? []}
-                  leadingControl={sending ? <IconButton icon="x" color="red" label="Отменить загрузку"
+                  leadingControl={sending ? <IconButton icon="x" color="gray" selected label="Отменить загрузку"
                     disabled={status === 'publishing'} onClick={onCancel} /> : undefined} />
               : mediaType === 'video-note'
-                ? <DiscussionVideoNote src={src} durationSeconds={durationSeconds ?? 0} />
+                ? <DiscussionVideoNote src={src} durationSeconds={durationSeconds ?? 0}
+                    playbackHost={playable ? playbackHost : undefined} scrollViewport={playable ? scrollViewport : undefined} />
                 : <DiscussionMedia src={src} type={mediaType} durationSeconds={durationSeconds} mode="thumbnail" onOpen={onOpen} />}
         </div>
         <div className="discussion-media__meta">{meta}</div>

@@ -635,6 +635,10 @@
   max-width: 100%;
 }
 
+/* A failed circular take shares a wide message footer with its error actions:
+   pin the circle to the outgoing edge, independently of the error text width. */
+.discussion-outgoing__preview--circle { margin-inline-start: auto; }
+
 .discussion-outgoing__preview:not([data-playable]) .discussion-media__play {
   display: none;
 }
