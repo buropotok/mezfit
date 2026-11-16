@@ -65,6 +65,15 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     mediaCommand() {
       return current.current ??= prepareDiscussionMessage(threadId, text, replyId ?? undefined);
     },
+    detachMedia(id: string) {
+      // Leave the media-bearing private draft in Dexie and free the text composer.
+      // A retry holds its original command; never rewrite it with the next message.
+      if (current.current?.id !== id) return;
+      current.current = null;
+      if (alive.current) {
+        setText(''); setReplyId(null); setVideoPosition(undefined); setMedia(undefined); setError(null);
+      }
+    },
     async stageMedia(attachment: DiscussionMediaDraft, separate?: DiscussionMessageInput): Promise<DiscussionMessageInput | null> {
       const input = { ...(separate ?? current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
         draftMedia: attachment };
