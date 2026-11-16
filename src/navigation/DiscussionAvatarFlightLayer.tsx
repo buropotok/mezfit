@@ -29,8 +29,14 @@ export function DiscussionAvatarFlightLayer({ flight, target, onArrived }: {
       onArrived(flight.id);
       return undefined;
     }
-    const frame = window.requestAnimationFrame(() => setMoving(true));
-    return () => window.cancelAnimationFrame(frame);
+    const hasFrame = typeof window.requestAnimationFrame === 'function';
+    const frame = hasFrame
+      ? window.requestAnimationFrame(() => setMoving(true))
+      : window.setTimeout(() => setMoving(true), 16);
+    return () => {
+      if (hasFrame) window.cancelAnimationFrame(frame);
+      else window.clearTimeout(frame);
+    };
   }, [target, flight.id, onArrived]);
   useEffect(() => {
     if (!moving || !target) return undefined;

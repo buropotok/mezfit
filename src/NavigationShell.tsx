@@ -391,6 +391,14 @@ export function NavigationShell({
       window.visualViewport?.removeEventListener('resize', cancel);
     };
   }, [avatarFlight?.id, cancelAvatarFlight]);
+
+  useEffect(() => {
+    if (!avatarFlight || avatarTarget) return undefined;
+    // A failed/missing destination must not strand a visual copy on screen.
+    const timer = window.setTimeout(cancelAvatarFlight, 2_000);
+    return () => window.clearTimeout(timer);
+  }, [avatarFlight?.id, avatarTarget, cancelAvatarFlight]);
+
   const calendarValue = context?.calendar?.value ?? selectedDate;
   const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
   const calendarDayStatuses = context?.calendar?.dayStatuses;

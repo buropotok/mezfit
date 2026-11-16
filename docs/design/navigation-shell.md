@@ -47,6 +47,28 @@ The central identity displays the contextual entity. A selected client uses the 
 
 Browser Back, Telegram BackButton and the in-app Back `IdentityAction` must resolve through the same `NavigationContext.onBack` path.
 
+### Shared avatar transition for discussion inbox
+
+When an already authorized discussion opens from its inbox row, `DiscussionsPage`
+passes the clicked contact Avatar's viewport rectangle and resolved image URL
+through the public `DiscussionAvatarFlightContext` to `NavigationShell`.
+The shell owns a temporary, non-interactive UI Kit Avatar in a body portal;
+the native navbar switches to its existing labeled Avatar + title identity.
+`IdentityAction.avatarSlotRef` exposes target geometry without scraping
+the primitive's internal DOM or changing its visuals. The actual navbar avatar
+uses an invisible image in its reserved slot until handoff.
+
+The clone moves on a straight CSS-transform path for 600 ms; the native
+`NavbarMetaball` motion still completes independently (currently 450 ms).
+The shell swaps to the native avatar only when both motion and navbar
+settling are complete for the same discussion key. This is UI presentation
+state, never a second navigation stack or any persistence operation.
+Opening a thread remains local-first and asynchronous: the flight starts
+after `ensureEntityThread` succeeds; the chat never waits for the flight.
+Back, role/destination changes, unmount, resize, stale opens and missing
+target geometry cancel the temporary clone. Reduced-motion users skip the flight.
+Direct entity/push entry points retain their existing navigation behavior.
+
 ### Navbar entrance motion
 
 On initial mount, side action regions originate beneath the central identity region and move to their resolved positions. On level changes the left Back region moves between its hidden level-1 position and visible level-2 position.
