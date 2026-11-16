@@ -83,8 +83,9 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
     : !synced && version && cloud?.syncStatus === 'error'
       ? cloud.syncError || 'Не удалось синхронизировать анкету с Mezfit облаком.' : '';
   const sync = itemSyncStatus(synced, Boolean(error), cloud?.syncStatus ?? 'local');
-  const label = !current ? 'Загрузка' : !version ? 'Не сохранена' : syncStatusLabel(sync);
-  const color = !current || !version ? 'gray' : syncStatusColor(sync);
+  // A failed read must remain visible even after it clears the current profile snapshot.
+  const label = error ? 'Ошибка' : !current ? 'Загрузка' : !version ? 'Не сохранена' : syncStatusLabel(sync);
+  const color = error ? 'red' : !current || !version ? 'gray' : syncStatusColor(sync);
   const retryDelivery = () => {
     setFailure(null);
     setRetry(value => value + 1);
