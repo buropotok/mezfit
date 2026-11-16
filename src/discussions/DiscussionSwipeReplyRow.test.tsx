@@ -36,7 +36,7 @@ describe('swipe left to reply', () => {
     expect(gesture.reply).not.toHaveBeenCalled();
     gesture.up(80);
     expect(gesture.reply).toHaveBeenCalledOnce();
-    expect(gesture.row.style.transform).toBe('translate3d(0px, 0, 0)');
+    expect(gesture.row.style.transform).toBe('');
     // A synthesized click after swipe must not open the bubble's existing menu.
     fireEvent.click(screen.getByRole('button', { name: 'Сообщение' }));
     expect(gesture.click).not.toHaveBeenCalled();
@@ -55,12 +55,12 @@ describe('swipe left to reply', () => {
   it('preserves vertical scrolling, rightward gestures and pointer cancellation', () => {
     const gesture = mount();
     gesture.down(200); gesture.move(135, 125); gesture.up(135, 125);
-    expect(gesture.row.style.transform).toBe('translate3d(0px, 0, 0)');
+    expect(gesture.row.style.transform).toBe('');
     gesture.down(100, 20, 3); gesture.move(170, 20, 3); gesture.up(170, 20, 3);
-    expect(gesture.row.style.transform).toBe('translate3d(0px, 0, 0)');
+    expect(gesture.row.style.transform).toBe('');
     gesture.down(200, 20, 4); gesture.move(120, 20, 4);
     fireEvent.pointerCancel(gesture.row, { pointerId: 4, pointerType: 'touch', clientX: 120, clientY: 20 });
-    expect(gesture.row.style.transform).toBe('translate3d(0px, 0, 0)');
+    expect(gesture.row.style.transform).toBe('');
     expect(gesture.reply).not.toHaveBeenCalled();
   });
 
