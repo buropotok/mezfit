@@ -163,6 +163,7 @@ async function deliver(env: DiscussionNotificationEnv, event: PendingDiscussion,
     peer: { userId: message.authorUserId, name: peerName },
     title,
     context: typeof thread.derivedTitleSnapshot === 'string' ? thread.derivedTitleSnapshot.slice(0, 200) : undefined,
+    messageText: message.text,
     button: 'Открыть обсуждение',
     target: { kind: 'discussion', id: event.message_id },
   }, fetchImpl);
