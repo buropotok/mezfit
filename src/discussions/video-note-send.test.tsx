@@ -173,7 +173,7 @@ it('recovers a failed video note in the thread while keeping Messagebar availabl
   const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
     threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
     parentNavigation={null} onClose={() => {}} onNavigationContextChange={() => {}} /></KonstaProvider>);
-  await screen.findByRole('button', { name: 'Отправить' });
+  await screen.findByPlaceholderText('Сообщение');
   await waitFor(() => expect(screen.getByText('Локальный файл недоступен. Отмените отправку.')).toBeTruthy());
   expect(view.container.querySelector('.discussion-composer__field textarea')).toHaveProperty('disabled', false);
   expect(screen.getByPlaceholderText('Сообщение')).toBeTruthy();
