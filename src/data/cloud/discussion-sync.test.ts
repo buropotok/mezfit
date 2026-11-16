@@ -55,6 +55,20 @@ describe('discussion sync acknowledgements, independent from local acceptance', 
     sub.unsubscribe(); listener.mockClear();
     sync.changed(); expect(listener).not.toHaveBeenCalled();
   });
+  it('keeps a thread local until its latest revision is acknowledged even during in-sync / offline', async () => {
+    const { db, sync, phase } = fixture();
+    phase('in-sync', 'offline');
+    sync.changed();
+    expect(sync.state().status).toBe('local');
+    let release: () => void = () => {};
+    vi.spyOn(db.cloud, 'sync').mockImplementation(() => new Promise<void>(resolve => { release = resolve; }));
+    const push = sync.retry();
+    expect(sync.state().status).toBe('local');
+    release(); await push;
+    expect(sync.state().status).toBe('synced');
+    sync.changed();
+    expect(sync.state().status).toBe('local');
+  });
   it('requests confirmation even if Dexie reports in-sync / offline', async () => {
     const { db, sync, phase } = fixture();
     const push = vi.spyOn(db.cloud, 'sync').mockResolvedValue(undefined);
