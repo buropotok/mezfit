@@ -36,7 +36,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
   }, [enabled]);
 
   const start = (event: PointerEvent<HTMLDivElement>) => {
-    if (!enabled || event.button !== 0 || event.isPrimary === false) return;
+    if (!enabled || gesture.current || event.button !== 0 || event.isPrimary === false) return;
     // Explicit controls for text editing, menus and seeking own their pointer gestures.
     const target = event.target;
     if (target instanceof Element && target.closest('input, textarea, [role="slider"], [role="menu"], [role="dialog"]')) return;
@@ -44,6 +44,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
   };
 
   const move = (event: PointerEvent<HTMLDivElement>) => {
+    if (!enabled) return;
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
     const dx = event.clientX - current.startX;
@@ -63,7 +64,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     if (!current || current.pointerId !== event.pointerId) return;
     gesture.current = null;
     const left = current.startX - event.clientX;
-    const confirmed = !cancelled && current.axis === 'horizontal' && left >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX;
+    const confirmed = enabled && !cancelled && current.axis === 'horizontal' && left >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX;
     if (current.axis === 'horizontal') ignoreClickUntil.current = Date.now() + 700;
     setVisual(idleVisual);
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
@@ -78,7 +79,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       data-highlighted={highlighted || undefined}
       data-swipe-dragging={visual.dragging || undefined}
       ref={rowRef}
-      style={{ transform: `translate3d(${visual.offsetX}px, 0, 0)` }}
+      style={visual.offsetX ? { transform: `translate3d(${visual.offsetX}px, 0, 0)` } : undefined}
       onPointerDown={start}
       onPointerMove={move}
       onPointerUp={event => end(event, false)}
