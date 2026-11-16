@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CoachAdHocWorkoutsScreen } from './CoachAdHocWorkoutsScreen';
 
 const state = vi.hoisted(() => ({
-  syncStatus: 'synced' as 'synced' | 'offline' | 'error',
+  syncStatus: 'synced' as 'synced' | 'local' | 'error',
   rows: [] as Array<{ id: string; name: string; status: 'active' | 'completed' }>,
 }));
 const db = {};
@@ -44,8 +44,8 @@ vi.mock('./AdHocSessionScreen', () => ({
 afterEach(() => { cleanup(); state.rows = []; });
 
 describe('Coach training sync feedback', () => {
-  it('does not claim changes are waiting when Dexie reports offline without an error', () => {
-    state.syncStatus = 'offline';
+  it('does not claim cloud errors when changes remain local', () => {
+    state.syncStatus = 'local';
     state.rows = [{ id: 'shared', name: 'День 1', status: 'active' }];
     render(<CoachAdHocWorkoutsScreen initData="signed" onNavigationContextChange={() => {}} />);
     expect(screen.getByText('Сессия shared')).toBeTruthy();

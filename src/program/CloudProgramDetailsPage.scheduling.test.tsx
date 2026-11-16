@@ -27,7 +27,7 @@ function setup(fail = false, selectionMode = false) {
     },
   } as unknown as ProgramManagementRepository;
   render(<CloudProgramDetailsPage selectionMode={selectionMode} repository={repository} planId="plan" cloudStatus="ready" cloudError=""
-    syncStatus="offline" syncError="" onRetryCloud={async () => {}} onRetrySync={async () => {}} />);
+    syncStatus="local" syncError="" onRetryCloud={async () => {}} onRetrySync={async () => {}} />);
   return activate;
 }
 

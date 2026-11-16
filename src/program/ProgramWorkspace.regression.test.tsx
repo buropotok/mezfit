@@ -160,7 +160,7 @@ describe('program workspace regressions', () => {
   it('shows a failed local phase write alongside an unconfirmed cloud sync', async () => {
     const repo = { ...repository([plan('Программа')]), createPhase: vi.fn(async () => { throw new Error('Фаза не сохранена'); }) };
     render(<CloudProgramDetailsPage repository={repo as unknown as ProgramManagementRepository}
-      planId="Программа" {...connection} syncStatus="pending" />);
+      planId="Программа" {...connection} syncStatus="syncing" />);
     await screen.findByText('Описание программы');
     act(() => actions.addPhase?.());
     const prompt = screen.getByRole('dialog', { name: 'Добавить фазу' });

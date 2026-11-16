@@ -24,7 +24,7 @@ const cloud = {
   coaches: [],
   status: 'error' as const,
   error: 'Нет соединения с облаком',
-  syncStatus: 'offline' as const,
+  syncStatus: 'local' as const,
   syncError: 'Облако недоступно',
   refresh: vi.fn(async () => undefined),
   retrySync: vi.fn(async () => undefined),

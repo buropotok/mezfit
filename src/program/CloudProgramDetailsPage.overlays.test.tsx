@@ -82,7 +82,7 @@ function setup(onSync = vi.fn(async () => {})) {
       <CloudProgramDetailsPage repository={repository as unknown as ProgramManagementRepository}
         planId="plan" selectionMode onSelectionMutationAttempt={blockedEdit}
         selectionFeedbackVisible={selectionFeedbackVisible}
-        cloudStatus="ready" cloudError="" syncStatus="offline" syncError=""
+        cloudStatus="ready" cloudError="" syncStatus="local" syncError=""
         onRetryCloud={async () => {}} onRetrySync={onSync} />
     </NavigationShell>
   );

@@ -48,7 +48,7 @@ it('publishes locally and becomes green only after the awaited cloud acknowledge
   expect(state.confirm).not.toHaveBeenCalled();
   state.status = 'synced'; view.rerender(ui());
   await waitFor(() => expect(state.confirm).toHaveBeenCalledWith('profile-v1'));
-  expect(screen.getByText('Локально').getAttribute('data-color')).toBe('yellow');
+  expect(screen.getByText('Локально').getAttribute('data-color')).toBe('gray');
   await act(async () => { finish?.(true); });
   expect(screen.getByText('Синхронизировано').getAttribute('data-color')).toBe('green');
 });

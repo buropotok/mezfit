@@ -62,7 +62,7 @@ function setup(readOnly = false, programStatus: 'active' | 'finished' = 'active'
   };
   render(<CloudProgramDetailsPage selectionMode onSelectionMutationAttempt={blockedSelectionEdit}
     readOnly={readOnly} repository={repository as unknown as ProgramManagementRepository}
-    planId="plan" cloudStatus="ready" cloudError="" syncStatus="offline" syncError=""
+    planId="plan" cloudStatus="ready" cloudError="" syncStatus="local" syncError=""
     onRetryCloud={async () => {}} onRetrySync={async () => {}} />);
   return repository;
 }
