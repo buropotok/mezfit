@@ -86,37 +86,49 @@
 @media (prefers-reduced-motion: reduce) {
   .discussion-message-target--reply-swipe { transition: none; }
 }
-/* The hint is feature-owned composition inside MezfitMessage's bubbleSource;
-   it never changes Konsta geometry or consumes pointer events. */
+/* BubbleSource's gap opens to the RIGHT of the shifted bubble. As the row
+   translates left by d, the gap widens by d and its centre travels left d/2.
+   Both sides retain at least 4px clearance, including during the return. */
 .discussion-reply-swipe-indicator {
   position: absolute;
   top: 50%;
-  right: 18px;
+  left: 100%;
   z-index: 2;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgb(42 37 68 / 0.94);
-  color: #fff;
-  box-shadow: 0 2px 9px rgb(0 0 0 / 0.24);
+  height: 34px;
+  transform: translateY(-50%);
   display: grid;
   place-items: center;
   pointer-events: none;
-  transition: opacity 180ms ease-out, transform 180ms ease-out;
+  overflow: hidden;
+  transition: width 180ms ease-out, opacity 180ms ease-out;
 }
 .discussion-reply-swipe-indicator[data-dragging] {
   transition: none;
-  will-change: transform;
+  will-change: width;
 }
-.discussion-reply-swipe-indicator[data-armed] {
-  background: rgb(66 49 114 / 0.96);
+.discussion-reply-swipe-indicator__circle {
+  grid-area: 1 / 1;
+  width: max(0px, min(34px, calc(100% - 8px)));
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgb(42 37 68 / 0.58);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.discussion-reply-swipe-indicator[data-armed] .discussion-reply-swipe-indicator__circle {
+  background: rgb(66 49 114 / 0.58);
+}
+.discussion-reply-swipe-indicator__icon {
+  width: min(24px, max(0px, calc(100% - 6px)));
+  height: min(24px, max(0px, calc(100% - 6px)));
 }
 .discussion-reply-swipe-indicator__progress {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  grid-area: 1 / 1;
+  width: max(0px, min(34px, calc(100% - 8px)));
+  height: auto;
+  aspect-ratio: 1;
   fill: none;
   stroke-width: 2.5;
   transform: rotate(-90deg);
@@ -128,22 +140,24 @@
 .discussion-reply-swipe-indicator__fill {
   stroke: #fff;
   stroke-linecap: round;
+  transition: stroke-dashoffset 180ms ease-out;
 }
-.discussion-reply-swipe-indicator__icon {
-  width: 24px;
-  height: 24px;
-}
-.discussion-reply-swipe-indicator[data-completing] {
+.discussion-reply-swipe-indicator[data-dragging] .discussion-reply-swipe-indicator__fill {
   transition: none;
-  animation: discussion-reply-swipe-complete 240ms ease-out both;
 }
-@keyframes discussion-reply-swipe-complete {
-  from { opacity: 1; transform: translate3d(0, -50%, 0) scale(1); }
-  to { opacity: 0; transform: translate3d(0, -50%, 0) scale(1.55); }
+/* A single 50ms outward-and-back ring pulse, triggered on first crossing 60px.
+   The SVG's width is clamped to gap width minus 8px on every frame. */
+.discussion-reply-swipe-indicator[data-pulsing] .discussion-reply-swipe-indicator__progress {
+  animation: discussion-reply-ring-pulse 50ms ease-out 1;
+}
+@keyframes discussion-reply-ring-pulse {
+  0%, 100% { width: max(0px, min(34px, calc(100% - 8px))); }
+  50% { width: max(0px, min(51.68px, calc(100% - 8px))); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .discussion-reply-swipe-indicator { transition: none; }
-  .discussion-reply-swipe-indicator[data-completing] { animation-duration: 1ms; }
+  .discussion-reply-swipe-indicator,
+  .discussion-reply-swipe-indicator__fill { transition: none; }
+  .discussion-reply-swipe-indicator[data-pulsing] .discussion-reply-swipe-indicator__progress { animation-duration: 1ms; }
 }
 .discussion-message-target[data-own="false"] { --ui-message-meta-reserve: 3.5rem; }
 .discussion-message-text { white-space: pre-wrap; overflow-wrap: anywhere; }
