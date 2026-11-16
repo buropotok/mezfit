@@ -74,6 +74,18 @@
   padding-inline: 8px;
 }
 .discussion-message-target { display: flex; flex-direction: column; min-width: 0; }
+/* Feature-owned row moves; Konsta/MezfitMessage geometry and mechanics stay intact. */
+.discussion-message-target--reply-swipe {
+  touch-action: pan-y;
+  transition: transform 180ms ease-out;
+}
+.discussion-message-target--reply-swipe[data-swipe-dragging] {
+  transition: none;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .discussion-message-target--reply-swipe { transition: none; }
+}
 .discussion-message-target[data-own="false"] { --ui-message-meta-reserve: 3.5rem; }
 .discussion-message-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .discussion-message-meta {
@@ -598,6 +610,17 @@
   left: var(--note-left);
   top: var(--note-top);
   width: var(--note-width);
+}
+/* Portaled circles follow the same swipe offset as their in-chat message row. */
+.discussion-video-note__position[data-reply-swipe] {
+  touch-action: pan-y;
+  transition: transform 180ms ease-out;
+}
+.discussion-video-note__position[data-swipe-dragging] {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .discussion-video-note__position[data-reply-swipe] { transition: none; }
 }
 
 .discussion-video-note__position > .discussion-video-note__menu {

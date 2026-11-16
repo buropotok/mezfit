@@ -6,6 +6,7 @@ import { CircularVideoPlayback } from '../settings/CircularVideoPlayback';
 import { VideoNoteRecordingRing } from '../settings/VideoNoteRing';
 import type { DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
+import { useDiscussionSwipeVisual } from './DiscussionSwipeReplyRow';
 import '../settings/video-note-module.css';
 
 /** Live circular camera viewport. The existing Settings ring is reused unchanged. */
@@ -51,6 +52,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   const currentRetry = useRef(retry);
   currentRetry.current = retry;
   const { url, container, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'video', retry, false);
+  const swipeVisual = useDiscussionSwipeVisual();
   // Measure in content coordinates so the browser scrolls the frame with the
   // message, even while native momentum scrolling runs ahead of React.
   useLayoutEffect(() => {
@@ -125,8 +127,11 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     {playbackHost === undefined && player}
     {playbackHost && player && createPortal(
       <div className="discussion-video-note__layer" data-expanded={expanded || undefined}
-        style={placement} hidden={!placement}>
-        <div className="discussion-video-note__position">
+        style={placement} hidden={!placement}
+        onPointerDown={expanded ? event => event.stopPropagation() : undefined}>
+        <div className="discussion-video-note__position" data-reply-swipe={Boolean(onMenu) || undefined}
+          data-swipe-dragging={!expanded && swipeVisual.dragging || undefined}
+          style={!expanded && swipeVisual.offsetX ? { transform: `translate3d(${swipeVisual.offsetX}px, 0, 0)` } : undefined}>
           {player}
           {!expanded && menu}
         </div>
