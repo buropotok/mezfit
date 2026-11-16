@@ -5,9 +5,9 @@ export const DISCUSSION_REPLY_SWIPE_MAX_PX = 100;
 export const DISCUSSION_REPLY_SWIPE_TRIGGER_PX = 50;
 const AXIS_SLOP_PX = 8;
 
-type SwipeVisual = { offsetX: number; dragging: boolean };
+type SwipeVisual = { offsetX: number; dragging: boolean; firing: boolean };
 type SwipePresentation = SwipeVisual & { enabled: boolean };
-const idleVisual: SwipeVisual = { offsetX: 0, dragging: false };
+const idleVisual: SwipeVisual = { offsetX: 0, dragging: false, firing: false };
 const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false });
 
 /** Portaled video-note and the reply indicator share the row-owned swipe offset. */
@@ -19,16 +19,23 @@ export function useDiscussionSwipeVisual(): SwipePresentation {
  * Its positive local translation counteracts the row's negative translation:
  * the arrow stays in the uncovered space while the message follows the finger. */
 export function DiscussionSwipeReplyIndicator() {
-  const { offsetX, dragging, enabled } = useDiscussionSwipeVisual();
+  const { offsetX, dragging, enabled, firing } = useDiscussionSwipeVisual();
   const distance = enabled ? Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -offsetX)) : 0;
-  const progress = Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
-  const opacity = Math.max(0, Math.min(1, (distance - AXIS_SLOP_PX) / (DISCUSSION_REPLY_SWIPE_TRIGGER_PX - AXIS_SLOP_PX)));
+  const progress = firing ? 1 : Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
+  const opacity = firing ? 1 : Math.max(0, Math.min(1, (distance - AXIS_SLOP_PX) / (DISCUSSION_REPLY_SWIPE_TRIGGER_PX - AXIS_SLOP_PX)));
   const scale = 0.65 + progress * 0.35;
+  const circumference = 2 * Math.PI * 19;
   return <span className="discussion-reply-swipe-indicator" aria-hidden="true"
-    data-armed={distance >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX || undefined}
+    data-armed={progress >= 1 || undefined}
     data-dragging={dragging || undefined}
+    data-completing={firing || undefined}
     style={{ opacity, transform: `translate3d(${distance}px, -50%, 0) scale(${scale})` }}>
-    <Icon name="arrow-back-up" className="discussion-reply-swipe-indicator__icon" />
+    <svg className="discussion-reply-swipe-indicator__progress" viewBox="0 0 44 44" aria-hidden="true">
+      <circle className="discussion-reply-swipe-indicator__track" cx="22" cy="22" r="19" />
+      <circle className="discussion-reply-swipe-indicator__fill" cx="22" cy="22" r="19"
+        strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress)} />
+    </svg>
+    <Icon name="reply-solid" className="discussion-reply-swipe-indicator__icon" />
   </span>;
 }
 
@@ -68,6 +75,13 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     }
   }, [enabled]);
   useEffect(() => () => removeTouchListeners.current?.(), []);
+  // The success burst persists briefly after the row returns to its resting
+  // position. No document listeners or reply logic depend on this timer.
+  useEffect(() => {
+    if (!visual.firing) return;
+    const timeout = window.setTimeout(() => setVisual(idleVisual), 260);
+    return () => window.clearTimeout(timeout);
+  }, [visual.firing]);
 
   const startTouch = (event: ReactTouchEvent<HTMLDivElement>) => {
     if (touchGesture.current && event.touches.length > 1) {
@@ -83,6 +97,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     // PointerDown fires before TouchStart on phones. The native touch stream
     // owns this gesture from now on, including a circle rendered via a portal.
     gesture.current = null;
+    if (visual.firing) setVisual(idleVisual);
     touchGesture.current = { identifier: finger.identifier, startX: finger.clientX,
       startY: finger.clientY, axis: 'pending' };
 
@@ -114,7 +129,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
         active.axis = 'horizontal';
       }
       if (moveEvent.cancelable) moveEvent.preventDefault();
-      setVisual({ offsetX: -Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx)), dragging: true });
+      setVisual({ offsetX: -Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx)), dragging: true, firing: false });
     };
 
     const finishTouch = (endEvent: TouchEvent, cancelled: boolean) => {
@@ -128,7 +143,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       const confirmed = enabledRef.current && !cancelled && active.axis === 'horizontal'
         && left >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX;
       if (active.axis === 'horizontal') ignoreClickUntil.current = Date.now() + 700;
-      setVisual(idleVisual);
+      setVisual(confirmed ? { ...idleVisual, firing: true } : idleVisual);
       if (confirmed) onReplyRef.current();
     };
     const endTouch = (endEvent: TouchEvent) => finishTouch(endEvent, false);
@@ -148,6 +163,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     if (!enabled || touchGesture.current || gesture.current || event.button !== 0 || event.isPrimary === false) return;
     // Pointer fallback is retained for mouse/pen and synthetic pointer tests.
     if (ignoresSwipe(event.target)) return;
+    if (visual.firing) setVisual(idleVisual);
     gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, axis: 'pending' };
   };
 
@@ -164,7 +180,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       current.axis = 'horizontal';
       try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* Portal/WebView may disallow capture. */ }
     }
-    setVisual({ offsetX: -Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx)), dragging: true });
+    setVisual({ offsetX: -Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx)), dragging: true, firing: false });
   };
 
   const end = (event: PointerEvent<HTMLDivElement>, cancelled: boolean) => {
@@ -175,7 +191,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     const left = current.startX - event.clientX;
     const confirmed = enabled && !cancelled && current.axis === 'horizontal' && left >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX;
     if (current.axis === 'horizontal') ignoreClickUntil.current = Date.now() + 700;
-    setVisual(idleVisual);
+    setVisual(confirmed ? { ...idleVisual, firing: true } : idleVisual);
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
