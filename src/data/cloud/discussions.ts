@@ -319,14 +319,15 @@ export class DiscussionRepository {
     });
   }
   /** Omit id to recover the newest private draft after closing/restarting the UI. */
-  async getDraft(threadId: string, id?: string): Promise<DiscussionMessageInput | null> {
+  async getDraft(threadId: string, id?: string, scope: 'any' | 'composer' = 'any'): Promise<DiscussionMessageInput | null> {
     if (id !== undefined && !discussionId(id)) fail('INVALID_DISCUSSION_ID');
     return this.read(async () => {
       await this.thread(threadId);
       const row = id !== undefined ? await this.db.discussionMessages.get(id)
         : (await this.db.discussionMessages.where('[realmId+threadId]').equals([this.actorUserId, threadId])
           .filter(candidate => isDiscussionMessage(candidate) && candidate.owner === this.actorUserId
-            && !candidate.deletedAt && candidate.draftForRealmId === this.scope.realmId && !candidate.draftMedia)
+            && !candidate.deletedAt && candidate.draftForRealmId === this.scope.realmId
+            && (scope !== 'composer' || !candidate.draftMedia))
           .sortBy('createdAt')).at(-1);
       return isDiscussionMessage(row) && row.realmId === this.actorUserId && row.owner === this.actorUserId
         && !row.deletedAt && row.threadId === threadId && row.draftForRealmId === this.scope.realmId
