@@ -19,6 +19,7 @@ interface TelegramNotification {
   peer?: { userId: string; name: string };
   title: string;
   context?: string;
+  messageText?: string;
   button: string;
   target: TelegramNotificationTarget;
 }
@@ -104,6 +105,7 @@ export async function sendTopicTelegram(
   if ('delivery' in topic) return topic.delivery;
   const rich = '<p><b>' + escape(notification.title) + '</b></p>'
     + (notification.context ? '<p>' + escape(notification.context) + '</p>' : '')
+    + (notification.messageText ? '<p>' + escape(Array.from(notification.messageText).slice(0, 200).join('')) + '</p>' : '')
     + '<tg-button-row><tg-button type="url" url="' + escape(url) + '">'
     + escape(notification.button) + '</tg-button></tg-button-row>';
   const response = await telegram(env, 'sendRichMessage', {
