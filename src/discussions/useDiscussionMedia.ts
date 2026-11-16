@@ -258,16 +258,16 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         }
         resume.current = () => { retryPending(message.id); };
       }
-      const message = describeSendError(reason, savingFile, controller.signal.aborted);
+      const errorText = describeSendError(reason, savingFile, controller.signal.aborted);
       if (command) {
         // Network failure is not a failed local save. Keep the private draft and
         // cached bytes for independent retry; free Messagebar for the next message.
         const detached = { ...selected, separate: command, restored: true };
-        enqueuePending({ command, selected: detached, preview: URL.createObjectURL(selected.file), error: message });
+        enqueuePending({ command, selected: detached, preview: URL.createObjectURL(selected.file), error: errorText });
         draft.detachMedia(command.id);
         setSelection(undefined); setOutgoing(undefined); setError(undefined); setPhase('idle');
       } else {
-        setError(message);
+        setError(errorText);
         setPhase('failed');
       }
     } finally {
