@@ -77,8 +77,11 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
     async stageMedia(attachment: DiscussionMediaDraft, separate?: DiscussionMessageInput): Promise<DiscussionMessageInput | null> {
       const input = { ...(separate ?? current.current ?? prepareDiscussionMessage(threadId, text, replyId ?? undefined)),
         draftMedia: attachment };
+      // requireUnsentDraft is a publication guard, not persistent draft data.
+      // A retry must save the exact same private command as the first attempt.
+      const { requireUnsentDraft: _publicationGuard, ...privateDraft } = input;
       try {
-        await repository.saveDraft(input);
+        await repository.saveDraft(privateDraft);
       } catch (reason) {
         if (!(reason instanceof Error) || reason.message !== 'DISCUSSION_ID_REUSED') throw reason;
         // Dexie can receive the message before its attachment. Keep the draft
