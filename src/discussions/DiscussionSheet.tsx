@@ -803,7 +803,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           return <Fragment key={command.id}>
             <div className="discussion-message-target discussion-message-target--outgoing" data-own="true" data-message-id={command.id}>
               <DiscussionOutgoingMedia src={preview} attachment={attachment} createdAt={command.createdAt}
-                status="failed" error={pendingError} onCancel={() => {}}
+                status="failed" error={pendingError} retryDisabled={mediaBusy || Boolean(media.selection)} onCancel={() => {}}
                 onRetry={() => media.retryPending(command.id)}
                 onRemove={video && attachment.mediaType === 'video' ? () => setDeleting({ id: command.id, kind: 'outgoing-video' })
                   : () => void media.removePending(command.id)}
