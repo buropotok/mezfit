@@ -130,7 +130,8 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     {playbackHost && player && createPortal(
       <div className="discussion-video-note__layer" data-expanded={expanded || undefined}
         style={placement} hidden={!placement}
-        onPointerDown={expanded ? event => event.stopPropagation() : undefined}>
+        onPointerDown={expanded ? event => event.stopPropagation() : undefined}
+        onTouchStart={expanded ? event => event.stopPropagation() : undefined}>
         <div className="discussion-video-note__position" data-reply-swipe={swipeVisual.enabled && !expanded || undefined}
           data-swipe-dragging={!expanded && swipeVisual.dragging || undefined}
           style={!expanded && swipeVisual.offsetX ? { transform: `translate3d(${swipeVisual.offsetX}px, 0, 0)` } : undefined}>
