@@ -91,9 +91,14 @@ it('previews a photo and retries an attachment-only send with the same message, 
   await screen.findByAltText('Предпросмотр фото');
   fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
   const retry = await screen.findByRole('button', { name: 'Ещё раз' });
+  const messagebar = screen.getByPlaceholderText('Сообщение') as HTMLTextAreaElement;
+  expect(messagebar.disabled).toBe(false);
+  fireEvent.change(messagebar, { target: { value: 'Новое сообщение после сетевой ошибки' } });
+  expect(messagebar.value).toBe('Новое сообщение после сетевой ошибки');
   expect(port.send).not.toHaveBeenCalled();
   fireEvent.click(retry);
   await waitFor(() => expect(port.send).toHaveBeenCalledOnce());
+  expect(messagebar.value).toBe('Новое сообщение после сетевой ошибки');
   const first = vi.mocked(port.saveDraft).mock.calls[0][0];
   expect(port.send).toHaveBeenCalledWith(expect.objectContaining({ id: first.id, text: '', draftMedia: metadata }), uploaded);
   expect(vi.mocked(uploadDirectMedia).mock.calls.map(([, options]) => options?.retryKey)).toEqual([
