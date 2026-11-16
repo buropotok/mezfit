@@ -45,19 +45,22 @@ it('offers Save for all received attachment kinds, passing authorized identity t
       uploadState: 'ready' as const, confirmedAt: thread.createdAt,
     }],
   }));
-  const { port } = fixture(rows);
-  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
-    threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
-    onClose={() => {}} parentNavigation={null} onNavigationContextChange={() => {}} />
-  </KonstaProvider>);
-
   for (const { kind, mime } of cases) {
-    const row = await waitFor(() => {
-      const found = view.container.querySelector<HTMLElement>(`[data-message-id="incoming-${kind}"]`);
-      if (!found) throw new Error('Missing received message ' + kind);
-      return found;
+    // Each message is mounted independently: video-note controls are portaled into
+    // the sheet-owned playback host, not rendered below its message-row element.
+    const currentMessage = rows.find(row => row.id === 'incoming-' + kind);
+    if (!currentMessage) throw new Error('Missing fixture message ' + kind);
+    const { port } = fixture([currentMessage]);
+    const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
+      threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
+      onClose={() => {}} parentNavigation={null} onNavigationContextChange={() => {}} />
+    </KonstaProvider>);
+    await waitFor(() => {
+      if (!view.container.querySelector(`[data-message-id="incoming-${kind}"]`)) {
+        throw new Error('Missing received message ' + kind);
+      }
     });
-    fireEvent.click(within(row).getByRole('button', { name: 'Действия сообщения' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Действия сообщения' }));
     const menu = await screen.findByRole('menu', { name: 'Действия сообщения' });
     expect(within(menu).getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Ответить', 'Сохранить']);
     expect(within(menu).queryByRole('menuitem', { name: 'Удалить' })).toBeNull();
@@ -76,6 +79,7 @@ it('offers Save for all received attachment kinds, passing authorized identity t
       },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Закрыть сохранение' }));
+    view.unmount();
   }
 });
 
