@@ -32,7 +32,7 @@ export function DiscussionSwipeReplyIndicator() {
     data-pulsing={pulsing || undefined}
     style={{ width: `${distance}px`, opacity }}>
     <span className="discussion-reply-swipe-indicator__circle">
-      <Icon name="reply-solid" className="discussion-reply-swipe-indicator__icon" />
+      <span className="discussion-reply-swipe-indicator__icon"><Icon name="reply-solid" /></span>
     </span>
     <svg className="discussion-reply-swipe-indicator__progress" viewBox="0 0 34 34" aria-hidden="true">
       <circle className="discussion-reply-swipe-indicator__track" cx="17" cy="17" r="15.5" />
