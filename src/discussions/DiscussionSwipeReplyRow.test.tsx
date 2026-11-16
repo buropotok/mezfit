@@ -76,6 +76,30 @@ describe('swipe left to reply', () => {
     expect(reply).not.toHaveBeenCalled();
   });
 
+  it('accepts a swipe inside the DiscussionSheet dialog while respecting nested controls', () => {
+    const reply = vi.fn();
+    const view = render(<div role="dialog" aria-label="Обсуждение">
+      <DiscussionSwipeReplyRow messageId="inside-sheet" own={false} highlighted={false}
+        enabled onReply={reply} rowRef={() => {}}>
+        <button type="button">Сообщение</button>
+        <input aria-label="Ввод" />
+      </DiscussionSwipeReplyRow>
+    </div>);
+    const row = view.container.querySelector<HTMLElement>('[data-message-id="inside-sheet"]');
+    if (!row) throw new Error('Missing dialog row');
+    fireEvent.pointerDown(row, { pointerId: 5, pointerType: 'touch', button: 0, isPrimary: true, clientX: 200, clientY: 20 });
+    fireEvent.pointerMove(row, { pointerId: 5, pointerType: 'touch', isPrimary: true, clientX: 140, clientY: 20 });
+    expect(row.style.transform).toBe('translate3d(-60px, 0, 0)');
+    fireEvent.pointerUp(row, { pointerId: 5, pointerType: 'touch', isPrimary: true, clientX: 140, clientY: 20 });
+    expect(reply).toHaveBeenCalledOnce();
+
+    const input = screen.getByRole('textbox', { name: 'Ввод' });
+    fireEvent.pointerDown(input, { pointerId: 6, pointerType: 'touch', button: 0, isPrimary: true, clientX: 200, clientY: 20 });
+    fireEvent.pointerMove(input, { pointerId: 6, pointerType: 'touch', isPrimary: true, clientX: 140, clientY: 20 });
+    fireEvent.pointerUp(input, { pointerId: 6, pointerType: 'touch', isPrimary: true, clientX: 140, clientY: 20 });
+    expect(reply).toHaveBeenCalledOnce();
+  });
+
   it('synchronizes motion with media portaled outside the message row', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -90,11 +114,11 @@ describe('swipe left to reply', () => {
       const row = view.container.querySelector<HTMLElement>('[data-message-id="circle"]');
       if (!row) throw new Error('Missing circle row');
       const circle = screen.getByRole('button', { name: 'Видеокружок' });
-      fireEvent.pointerDown(circle, { pointerId: 9, pointerType: 'touch', button: 0, clientX: 200, clientY: 20 });
-      fireEvent.pointerMove(circle, { pointerId: 9, pointerType: 'touch', clientX: 135, clientY: 20 });
+      fireEvent.pointerDown(circle, { pointerId: 9, pointerType: 'touch', button: 0, isPrimary: true, clientX: 200, clientY: 20 });
+      fireEvent.pointerMove(circle, { pointerId: 9, pointerType: 'touch', isPrimary: true, clientX: 135, clientY: 20 });
       expect(row.style.transform).toBe('translate3d(-65px, 0, 0)');
       expect(circle.getAttribute('data-offset')).toBe('-65');
-      fireEvent.pointerUp(circle, { pointerId: 9, pointerType: 'touch', clientX: 135, clientY: 20 });
+      fireEvent.pointerUp(circle, { pointerId: 9, pointerType: 'touch', isPrimary: true, clientX: 135, clientY: 20 });
       expect(reply).toHaveBeenCalledOnce();
       expect(circle.getAttribute('data-offset')).toBe('0');
     } finally {
