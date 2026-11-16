@@ -642,7 +642,7 @@ export function NavigationShell({
             identity={navbarIdentity}
             avatarSlotRef={navbarAvatarSlot}
             onLevelSettled={setNavbarSettledLevel}
-            onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && !nestedContext && identity.avatar ? () => chooseDestination('profile') : undefined)}
+            onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && identity.avatar && !context?.avatarTransitionKey ? () => chooseDestination('profile') : undefined)}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => {
