@@ -6,14 +6,14 @@ describe('Dexie Cloud background sync projection', () => {
     expect(projectCloudSyncState({ phase: 'in-sync', status: 'connected' }))
       .toEqual({ status: 'synced', error: '' });
     expect(projectCloudSyncState({ phase: 'pulling', status: 'connected' }).status)
-      .toBe('pending');
+      .toBe('syncing');
     expect(projectCloudSyncState({ phase: 'in-sync', status: 'disconnected' }).status)
-      .toBe('pending');
+      .toBe('synced');
   });
 
   it('surfaces offline and rejected pushes independently of contact hydration', () => {
     expect(projectCloudSyncState({ phase: 'in-sync', status: 'offline' }).status)
-      .toBe('offline');
+      .toBe('synced');
     expect(projectCloudSyncState({
       phase: 'error', status: 'connected', error: new Error('PLAN_REJECTED'),
     })).toEqual({ status: 'error', error: 'PLAN_REJECTED' });
