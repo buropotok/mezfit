@@ -326,13 +326,29 @@ export class DiscussionRepository {
       const row = id !== undefined ? await this.db.discussionMessages.get(id)
         : (await this.db.discussionMessages.where('[realmId+threadId]').equals([this.actorUserId, threadId])
           .filter(candidate => isDiscussionMessage(candidate) && candidate.owner === this.actorUserId
-            && !candidate.deletedAt && candidate.draftForRealmId === this.scope.realmId)
+            && !candidate.deletedAt && candidate.draftForRealmId === this.scope.realmId && !candidate.draftMedia)
           .sortBy('createdAt')).at(-1);
       return isDiscussionMessage(row) && row.realmId === this.actorUserId && row.owner === this.actorUserId
         && !row.deletedAt && row.threadId === threadId && row.draftForRealmId === this.scope.realmId
         ? { id: row.id, threadId: row.threadId, text: row.text, createdAt: row.createdAt, replyToMessageId: row.replyToMessageId,
           ...(row.replyVideoPosition ? { replyVideoPosition: row.replyVideoPosition } : {}),
           ...(isDiscussionMediaDraft(row.draftMedia) ? { draftMedia: row.draftMedia } : {}) } : null;
+    });
+  }
+  /** Recover every private media draft, independently of the current text composer. */
+  async listPendingMediaDrafts(threadId: string): Promise<DiscussionMessageInput[]> {
+    return this.read(async () => {
+      await this.thread(threadId);
+      const rows = await this.db.discussionMessages.where('[realmId+threadId]')
+        .equals([this.actorUserId, threadId])
+        .filter(row => isDiscussionMessage(row) && row.owner === this.actorUserId
+          && !row.deletedAt && row.draftForRealmId === this.scope.realmId
+          && isDiscussionMediaDraft(row.draftMedia)).sortBy('createdAt');
+      return rows.filter(row => isDiscussionMediaDraft(row.draftMedia)).map(row => ({
+        id: row.id, threadId: row.threadId, createdAt: row.createdAt, text: row.text,
+        replyToMessageId: row.replyToMessageId, replyVideoPosition: row.replyVideoPosition,
+        draftMedia: row.draftMedia!,
+      }));
     });
   }
   async updateDraftMedia(threadId: string, id: string, key: string, action: 'failed' | 'clear'): Promise<void> {
