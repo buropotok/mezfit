@@ -85,6 +85,34 @@ it('retains a failed automatic send for explicit retry with the same identity', 
   expect(mockUpload.mock.calls[1][1]?.retryKey).toBe(firstKey);
 });
 
+it('keeps multiple failed circles as independent local drafts while allowing new text', async () => {
+  vi.stubGlobal('URL', Object.assign(class extends URL {}, {
+    createObjectURL: vi.fn(() => 'blob:video-note-preview'), revokeObjectURL: vi.fn(),
+  }));
+  const { result, port, mockUpload } = setup();
+  mockUpload.mockRejectedValue(new MediaUploadError('NETWORK'));
+  await waitFor(() => expect(result.current.draft.ready).toBe(true));
+
+  act(() => result.current.media.sendVideoNote({
+    blob: new Blob(['first take'], { type: 'video/webm' }), mimeType: 'video/webm', durationMs: 2000,
+  }));
+  await waitFor(() => expect(result.current.media.pendingMedia).toHaveLength(1));
+  act(() => result.current.media.sendVideoNote({
+    blob: new Blob(['second take'], { type: 'video/webm' }), mimeType: 'video/webm', durationMs: 2200,
+  }));
+  await waitFor(() => expect(result.current.media.pendingMedia).toHaveLength(2));
+  const pendingIds = result.current.media.pendingMedia.map(row => row.command.id);
+  expect(new Set(pendingIds).size).toBe(2);
+  expect(result.current.media.selection).toBeUndefined();
+
+  act(() => result.current.draft.update('Новый текст без интернета', null));
+  expect(result.current.draft.text).toBe('Новый текст без интернета');
+  const textDraft = vi.mocked(port.saveDraft).mock.calls.at(-1)?.[0];
+  expect(textDraft?.draftMedia).toBeUndefined();
+  expect(pendingIds).not.toContain(textDraft?.id);
+  expect(port.send).not.toHaveBeenCalled();
+});
+
 it.each([
   { failure: new MediaUploadError('NETWORK', undefined, undefined, undefined, 'signer'), code: 1,
     message: 'Mezfit облако недоступно. Проверьте сеть и повторите отправку' },
