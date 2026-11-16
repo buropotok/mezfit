@@ -125,7 +125,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const session = useMemo(() => new DiscussionSession(repository, { threadId, anchor }), [repository, targetKey]);
   const state = useSyncExternalStore(session.subscribe, session.snapshot, session.snapshot);
   const draft = useDiscussionDraft(repository, threadId);
-  const media = useDiscussionMedia(repository, draft, threadId);
+  const media = useDiscussionMedia(repository, draft);
   const sendRecordedVideo = useEffectEvent((file: File) => {
     void media.choose(file, { sendToThread: threadId });
   });
