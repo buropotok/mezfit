@@ -70,12 +70,16 @@ it('retains a failed automatic send for explicit retry with the same identity', 
   act(() => result.current.media.sendVideoNote({
     blob: new Blob(['circle bytes'], { type: 'video/webm' }), mimeType: 'video/webm', durationMs: 2000,
   }));
-  await waitFor(() => expect(result.current.media.phase).toBe('failed'));
-  const firstKey = result.current.media.selection?.metadata.storageKey;
+  await waitFor(() => expect(result.current.media.pendingMedia).toHaveLength(1));
+  const pending = result.current.media.pendingMedia[0];
+  const firstKey = pending.selected?.metadata.storageKey;
   expect(firstKey).toMatch(/^mvp-media\/[a-f0-9]{64}$/);
+  expect(result.current.media.selection).toBeUndefined();
+  expect(result.current.draft.media).toBeUndefined();
   expect(port.send).not.toHaveBeenCalled();
 
-  await act(async () => { await result.current.media.send(); });
+  act(() => result.current.media.retryPending(pending.command.id));
+  await waitFor(() => expect(port.send).toHaveBeenCalledOnce());
   expect(port.send).toHaveBeenCalledOnce();
   expect(mockUpload).toHaveBeenCalledTimes(2);
   expect(mockUpload.mock.calls[1][1]?.retryKey).toBe(firstKey);
@@ -113,8 +117,8 @@ it.each([
   act(() => result.current.media.sendVideoNote({
     blob: new Blob(['circle bytes'], { type: 'video/webm' }), mimeType: 'video/webm', durationMs: 2000,
   }));
-  await waitFor(() => expect(result.current.media.phase).toBe('failed'));
-  expect(result.current.media.error).toBe(`${message} (Код ${code})`);
+  await waitFor(() => expect(result.current.media.pendingMedia).toHaveLength(1));
+  expect(result.current.media.pendingMedia[0].error).toBe(`${message} (Код ${code})`);
 });
 
 it('renders a media bubble using the existing compact circular player and expands on tap', () => {
@@ -130,21 +134,22 @@ it('renders a media bubble using the existing compact circular player and expand
   expect(screen.getByRole('slider', { name: 'Перемотка видеокружка' })).toBeTruthy();
 });
 
-it('keeps MessageBar empty for a restored video note and shows no attachment preview', async () => {
+it('recovers a failed video note in the thread while keeping Messagebar available', async () => {
   const draft = { ...prepareDiscussionMessage(thread.id, ''), draftMedia: {
     id: 'circle', storageKey: 'mvp-media/' + 'a'.repeat(64), mediaType: 'video-note' as const,
     mimeType: 'video/mp4', sizeBytes: 10, durationSeconds: 5,
     fileName: 'Видеокружок.mp4', uploadState: 'failed' as const,
   } };
-  const port = { ...fixture().port, supportsMedia: true, getDraft: vi.fn(async () => draft) };
+  const port = { ...fixture().port, supportsMedia: true, getDraft: vi.fn(async () => null),
+    listPendingMediaDrafts: vi.fn(async () => [draft]) };
   const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port}
     threadId={thread.id} anchor={anchor} resolveAuthor={id => ({ name: id })}
     parentNavigation={null} onClose={() => {}} onNavigationContextChange={() => {}} /></KonstaProvider>);
   await screen.findByRole('button', { name: 'Отправить' });
-  await waitFor(() => expect(view.container.querySelector('.discussion-composer__field textarea')).toHaveProperty('disabled', true));
-  const field = view.container.querySelector('.discussion-composer__field');
-  expect(field?.querySelector('textarea')?.placeholder).toBe('');
-  expect(field?.querySelector('.video-note-playback')).toBeNull();
+  await waitFor(() => expect(screen.getByText('Локальный файл недоступен. Отмените отправку.')).toBeTruthy());
+  expect(view.container.querySelector('.discussion-composer__field textarea')).toHaveProperty('disabled', false);
+  expect(screen.getByPlaceholderText('Сообщение')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Отменить' })).toBeTruthy();
   expect(screen.queryByRole('region', { name: 'Предпросмотр вложения' })).toBeNull();
 });
 
