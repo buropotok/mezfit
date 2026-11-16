@@ -344,11 +344,14 @@ export class DiscussionRepository {
         .filter(row => isDiscussionMessage(row) && row.owner === this.actorUserId
           && !row.deletedAt && row.draftForRealmId === this.scope.realmId
           && isDiscussionMediaDraft(row.draftMedia)).sortBy('createdAt');
-      return rows.filter(row => isDiscussionMediaDraft(row.draftMedia)).map(row => ({
-        id: row.id, threadId: row.threadId, createdAt: row.createdAt, text: row.text,
-        replyToMessageId: row.replyToMessageId, replyVideoPosition: row.replyVideoPosition,
-        draftMedia: row.draftMedia!,
-      }));
+      return rows.flatMap(row => {
+        if (!isDiscussionMediaDraft(row.draftMedia)) return [];
+        return [{
+          id: row.id, threadId: row.threadId, createdAt: row.createdAt, text: row.text,
+          replyToMessageId: row.replyToMessageId, replyVideoPosition: row.replyVideoPosition,
+          draftMedia: row.draftMedia,
+        }];
+      });
     });
   }
   async updateDraftMedia(threadId: string, id: string, key: string, action: 'failed' | 'clear'): Promise<void> {
