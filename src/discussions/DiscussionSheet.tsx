@@ -34,7 +34,7 @@ import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
 import { DiscussionAnnotationEditor, type AnnotationExit } from './DiscussionAnnotationEditor';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
-import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './DiscussionVideoSaveDialog';
+import { DiscussionAttachmentSaveDialog, type DiscussionAttachmentSaveTarget } from './DiscussionVideoSaveDialog';
 import { startPressScale } from '../ui/PressScale';
 import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
 import { RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
@@ -226,13 +226,13 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const setText = (value: string) => { if (editId) setEditText(value); else draft.update(value, replyId, draft.videoPosition); };
   const [deleting, setDeleting] = useState<{ id: string; kind: 'published' | 'outgoing-video' } | null>(null);
   const deletingOutgoingVideo = deleting?.kind === 'outgoing-video';
-  const [savingVideo, setSavingVideo] = useState<DiscussionVideoSaveTarget | null>(null);
-  const [videoSaveNotice, setVideoSaveNotice] = useState('');
+  const [savingAttachment, setSavingAttachment] = useState<DiscussionAttachmentSaveTarget | null>(null);
+  const [attachmentSaveNotice, setAttachmentSaveNotice] = useState('');
   useEffect(() => {
-    if (!videoSaveNotice) return;
-    const timer = window.setTimeout(() => setVideoSaveNotice(''), 8_000);
+    if (!attachmentSaveNotice) return;
+    const timer = window.setTimeout(() => setAttachmentSaveNotice(''), 8_000);
     return () => window.clearTimeout(timer);
-  }, [videoSaveNotice]);
+  }, [attachmentSaveNotice]);
   const [menu, setMenu] = useState<{ id: string; open: boolean } | null>(null);
   const menuRef = useRef(menu);
   menuRef.current = menu;
@@ -346,7 +346,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     title: parentNavigation?.title ?? 'Обсуждение', onBack: () => back.current() });
   back.current = () => {
     ++viewerRequest.current;
-    if (savingVideo) { setSavingVideo(null); updateNavigation(); return; }
+    if (savingAttachment) { setSavingAttachment(null); updateNavigation(); return; }
     if (cameraOpen) { setCameraOpen(false); updateNavigation(); return; }
     if (showWebViewUpdate) { videoNote.dismissUnsupportedFormat(); updateNavigation(); return; }
     if (attachmentsOpen) { setAttachmentsOpen(false); updateNavigation(); return; }
@@ -375,7 +375,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     // Preserve the underlying entity and its scroll identity; no independent history/Back listeners.
     updateNavigation();
     return () => onNavigationContextChange(parentNavigation);
-  }, [onNavigationContextChange, parentNavigation, session, mediaSurfaceOpen, savingVideo]);
+  }, [onNavigationContextChange, parentNavigation, session, mediaSurfaceOpen, savingAttachment]);
   useEffect(() => {
     const update = () => setVisible(document.visibilityState !== 'hidden');
     document.addEventListener('visibilitychange', update);
@@ -592,12 +592,12 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const pendingOutgoingVideo = menu && media.pendingMedia.find(item => item.command.id === menu.id
     && (item.command.draftMedia?.mediaType === 'video' || item.command.draftMedia?.mediaType === 'video-note'))?.selected;
   const outgoingMenu = Boolean(pendingOutgoingVideo);
-  const saveItem = (attachmentId: string, target: DiscussionVideoSaveTarget): LiquidPopoverItem => ({
-    id: 'save-video-' + attachmentId, label: 'Сохранить', icon: 'arrow-down', onSelect: () => {
+  const saveItem = (attachmentId: string, target: DiscussionAttachmentSaveTarget, title = 'Сохранить'): LiquidPopoverItem => ({
+    id: 'save-attachment-' + attachmentId, label: title, icon: 'arrow-down', onSelect: () => {
       if (!menuRef.current?.open || menuRef.current.id !== menu?.id) return;
       closeMenu();
-      setVideoSaveNotice('');
-      setSavingVideo(target);
+      setAttachmentSaveNotice('');
+      setSavingAttachment(target);
     },
   });
   const items: LiquidPopoverItem[] = outgoingMenu && pendingOutgoingVideo
@@ -605,13 +605,18 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     ...(!draft.videoPosition ? [{ id: 'reply', label: 'Ответить', icon: 'arrow-back-up' as const, onSelect: () => choose('reply') }] : []),
     ...(own && selected?.text.trim() && !mediaPresent ? [{ id: 'edit', label: 'Редактировать', icon: 'edit' as const, onSelect: () => choose('edit') }] : []),
     ...(selected?.text.trim() ? [{ id: 'copy', label: 'Копировать', icon: 'copy' as const, onSelect: () => choose('copy') }] : []),
-    ...(selected?.attachments ?? []).flatMap(attachment => {
-      if (attachment.mediaType !== 'video' && attachment.mediaType !== 'video-note') return [];
+    ...(selected?.attachments ?? []).flatMap((attachment, index, list) => {
+      if (attachment.uploadState !== 'ready' || attachment.deletedAt) return [];
       const { storageKey, mimeType, sizeBytes } = attachment;
       const url = storageKey && directMediaUrl(storageKey);
       if (!url || !storageKey) return [];
-      return [saveItem(attachment.id, { url, cache: { accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
-          realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id } })];
+      const kind = attachment.mediaType === 'photo' ? 'фото'
+        : attachment.mediaType === 'voice' ? 'голосовое'
+          : attachment.mediaType === 'video-note' ? 'видеокружок' : 'видео';
+      return [saveItem(attachment.id, { url, mediaType: attachment.mediaType,
+        cache: { accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
+          realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id } },
+        list.length > 1 ? `Сохранить ${kind} ${index + 1}` : 'Сохранить')];
     }),
     ...(own ? [{ id: 'delete', label: 'Удалить', icon: 'trash' as const, onSelect: () => choose('delete') }] : []),
   ];
@@ -861,7 +866,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </div>}
     </DiscussionMediaStage>}
     {cameraOpen && <DiscussionVideoRecorder onCancel={() => setCameraOpen(false)}
-      onTrimFallback={setVideoSaveNotice}
+      onTrimFallback={setAttachmentSaveNotice}
       onGallery={() => {
         setCameraOpen(false);
         gallery.current?.click();
@@ -1008,8 +1013,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </GlassSurface>
     </div>
     {showWebViewUpdate && <VideoWebViewUpdatePopover portal onClose={videoNote.dismissUnsupportedFormat} />}
-    {savingVideo && <DiscussionVideoSaveDialog target={savingVideo} onClose={() => setSavingVideo(null)} onStatus={setVideoSaveNotice} />}
-    {videoSaveNotice && <Toast opened position="center" role="status"><Text variant="body">{videoSaveNotice}</Text></Toast>}
+    {savingAttachment && <DiscussionAttachmentSaveDialog target={savingAttachment} onClose={() => setSavingAttachment(null)} onStatus={setAttachmentSaveNotice} />}
+    {attachmentSaveNotice && <Toast opened position="center" role="status"><Text variant="body">{attachmentSaveNotice}</Text></Toast>}
     <MezfitDialog opened={Boolean(deleting)} aria-hidden={deleting ? undefined : true} inert={deleting ? undefined : true}
       title={<Text variant="headline">{deletingOutgoingVideo ? 'Убрать неотправленное видео?' : 'Удалить сообщение?'}</Text>}
       content={<Text>{deletingOutgoingVideo
