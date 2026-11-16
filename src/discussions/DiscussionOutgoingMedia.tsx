@@ -32,7 +32,7 @@ export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, er
           role="img" aria-label="Отправка не удалась"><Icon name="x" /></span>}
   </Text>;
   const { mediaType, durationSeconds, waveform } = attachment;
-  const playable = status === 'failed' && (Boolean(onOpen) || mediaType === 'video-note');
+  const playable = status === 'failed' && Boolean(src);
 
   return <MezfitMessage type="sent" bubbleVariant={mediaType === 'voice' ? undefined : 'media'} bubbleSource={menu}
     opaqueTextFooter={mediaType !== 'voice'}
