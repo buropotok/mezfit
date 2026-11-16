@@ -121,6 +121,13 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     if (notificationMessageId) onNotificationOpened?.();
   }, [avatarFlight, notificationMessageId, onNotificationOpened]);
   const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string; avatarSrc?: string; flightKey?: string } | null>(null);
+  // Keep avatar publication from the feed stable as messages and filters rerender.
+  const syncOpenedAvatarSource = useCallback((row: DiscussionInboxRow, src: string | undefined) => {
+    const key = discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey);
+    setOpened(opened => opened?.kind === 'chat'
+      && (opened.flightKey ?? discussionAvatarFlightKey(opened.row.thread.realmId, opened.row.thread.anchorKey)) === key
+      && opened.avatarSrc !== src ? { ...opened, avatarSrc: src } : opened);
+  }, []);
   const activeRow = opened ? inbox.rows.find(row => row.thread.anchorKey === opened.row.thread.anchorKey
     && row.thread.realmId === opened.row.thread.realmId) : undefined;
   const notificationPeers = role === 'coach' ? cloud?.clients : cloud?.coaches;
@@ -318,12 +325,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
     <DiscussionInboxList rows={rows.slice(0, limit)} onOpen={row => { void openChat(row); }}
       onOpenOrigin={(_row, origin) => { capturedOrigin.current = origin; }}
-      onAvatarSourceChange={(row, src) => {
-        const key = discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey);
-        setOpened(current => current?.kind === 'chat'
-          && discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) === key
-          && current.avatarSrc !== src ? { ...current, avatarSrc: src } : current);
-      }}
+      onAvatarSourceChange={syncOpenedAvatarSource}
       hiddenAvatarKey={current?.kind === 'chat' ? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) : undefined}
       onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
     {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}

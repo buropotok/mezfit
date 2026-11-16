@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscussionAvatarFlightLayer, DISCUSSION_AVATAR_FLIGHT_DURATION, canHandoffDiscussionAvatar,
   type PendingDiscussionAvatarFlight } from './DiscussionAvatarFlightLayer';
 import { discussionAvatarFlightKey } from './DiscussionAvatarFlightContext';
+import { NAVBAR_METABALL } from '../ui/navbarMetaballGeometry';
 
 const flight: PendingDiscussionAvatarFlight = {
   id: 7,
@@ -12,13 +13,13 @@ const flight: PendingDiscussionAvatarFlight = {
   avatar: { name: 'Анна', src: 'blob:anna' },
   arrived: false,
 };
-const target = { left: 125, top: 188, width: 40, height: 40 };
+const target = { left: 125, top: 188, width: 32, height: 32 };
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('shared discussion avatar -> navbar', () => {
   it('never hands off until both flight and navbar have finished for the exact chat', () => {
-    expect(DISCUSSION_AVATAR_FLIGHT_DURATION).toBeGreaterThan(340);
+    expect(DISCUSSION_AVATAR_FLIGHT_DURATION).toBeGreaterThan(NAVBAR_METABALL.duration);
     expect(canHandoffDiscussionAvatar(flight, 2, 2, flight.key)).toBe(false);
     const landed = { ...flight, arrived: true };
     expect(canHandoffDiscussionAvatar(landed, 2, 1, flight.key)).toBe(false);
@@ -42,7 +43,7 @@ describe('shared discussion avatar -> navbar', () => {
 
     view.rerender(<DiscussionAvatarFlightLayer flight={flight} target={target} onArrived={arrived} />);
     act(() => { advance?.(0); });
-    expect(movingAvatar.style.transform).toBe('translate3d(101px, -322px, 0) scale(1)');
+    expect(movingAvatar.style.transform).toBe('translate3d(97px, -326px, 0) scale(0.8)');
     fireEvent.transitionEnd(movingAvatar, { propertyName: 'transform' });
     expect(arrived).toHaveBeenCalledWith(7);
   });
