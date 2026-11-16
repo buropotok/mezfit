@@ -38,9 +38,10 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
 
   const start = (event: PointerEvent<HTMLDivElement>) => {
     if (!enabled || gesture.current || event.button !== 0 || event.isPrimary === false) return;
-    // Explicit controls for text editing, menus and seeking own their pointer gestures.
+    // Input, seek and menu controls own their gestures. Do not exclude
+    // [role="dialog"]: the entire DiscussionSheet lives inside a dialog.
     const target = event.target;
-    if (target instanceof Element && target.closest('input, textarea, [role="slider"], [role="menu"], [role="dialog"]')) return;
+    if (target instanceof Element && target.closest('input, textarea, [role="slider"], [role="menu"]')) return;
     gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, axis: 'pending' };
   };
 
