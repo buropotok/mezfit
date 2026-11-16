@@ -30,7 +30,7 @@ it('labels unsaved events as drafts without falsely claiming cloud synchronizati
   expect(screen.queryByText('Синхронизировано')).toBeNull();
 });
 
-it('keeps published state separate from pending, offline and confirmed sync', () => {
+it('keeps published state separate from unconfirmed and confirmed cloud sync', () => {
   const subscription = { emit: null as ((row: LocalProgramSyncRow | undefined) => void) | null };
   const repository = {
     observeSync: (_id: string, onChange: (row: LocalProgramSyncRow | undefined) => void) => {

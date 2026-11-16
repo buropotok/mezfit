@@ -11,7 +11,7 @@ describe('Dexie Cloud background sync projection', () => {
       .toBe('synced');
   });
 
-  it('surfaces offline and rejected pushes independently of contact hydration', () => {
+  it('ignores transport offline while surfacing explicit rejected pushes', () => {
     expect(projectCloudSyncState({ phase: 'in-sync', status: 'offline' }).status)
       .toBe('synced');
     expect(projectCloudSyncState({

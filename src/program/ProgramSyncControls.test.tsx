@@ -27,7 +27,7 @@ function fixture(row: LocalProgramSyncRow) {
   return { repository, emit: (next: LocalProgramSyncRow) => emit(next), unsubscribe };
 }
 describe('program cloud status pills', () => {
-  it('keeps a confirmed program green while global sync is offline or failing', () => {
+  it('keeps a confirmed program green when global cloud sync is local or failing', () => {
     const f = fixture({ id: 'a', revision: 2, confirmedRevision: 2, confirmed: true });
     const page = (syncStatus: 'local' | 'error') => <ProgramSyncControls repository={f.repository}
       planId="a" syncStatus={syncStatus} onSync={async () => {}} />;
@@ -53,6 +53,13 @@ describe('program cloud status pills', () => {
     expect(screen.queryByText('Синхронизироваться с облаком?')).toBeNull();
     expect(navigation.mock.lastCall?.[0]).toBeNull();
   });
+});
+
+it('shows active push/pull without fabricating a program receipt', () => {
+  const f = fixture({ id: 'a', revision: 2, confirmedRevision: 1, confirmed: true });
+  render(<ProgramSyncControls repository={f.repository} planId="a" syncStatus="syncing"
+    onSync={async () => {}} />);
+  expect(screen.getByText('Синхронизация').className).toContain('ui-badge--yellow');
 });
 
 it('explains the status from the badge without technical errors or a separate info button', () => {

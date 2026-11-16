@@ -53,6 +53,14 @@ it('publishes locally and becomes green only after the awaited cloud acknowledge
   expect(screen.getByText('Синхронизировано').getAttribute('data-color')).toBe('green');
 });
 
+it('shows active cloud synchronization without a premature profile receipt', async () => {
+  state.status = 'syncing';
+  render(ui());
+  await waitFor(() => expect(state.publish).toHaveBeenCalledOnce());
+  expect(screen.getByText('Синхронизация').getAttribute('data-color')).toBe('yellow');
+  expect(state.confirm).not.toHaveBeenCalled();
+});
+
 it('invalidates green status and republishes when profile data or its link set changes', async () => {
   state.status = 'synced';
   render(ui());
