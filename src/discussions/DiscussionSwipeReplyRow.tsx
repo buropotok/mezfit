@@ -52,6 +52,13 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
   useEffect(() => () => removeTouchListeners.current?.(), []);
 
   const startTouch = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (touchGesture.current && event.touches.length > 1) {
+      // A second finger turns this into a native multi-touch interaction.
+      touchGesture.current = null;
+      removeTouchListeners.current?.();
+      setVisual(idleVisual);
+      return;
+    }
     if (!enabled || touchGesture.current || event.touches.length !== 1 || ignoresSwipe(event.target)) return;
     const finger = event.changedTouches[0];
     if (!finger) return;
@@ -67,6 +74,12 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     const moveTouch = (moveEvent: TouchEvent) => {
       const active = touchGesture.current;
       if (!active || !enabledRef.current) return;
+      if (moveEvent.touches.length !== 1) {
+        touchGesture.current = null;
+        removeTouchListeners.current?.();
+        setVisual(idleVisual);
+        return;
+      }
       const touch = Array.from(moveEvent.touches).find(item => item.identifier === active.identifier);
       if (!touch) return;
       const dx = touch.clientX - active.startX;
