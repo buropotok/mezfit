@@ -53,6 +53,14 @@ it('publishes locally and becomes green only after the awaited cloud acknowledge
   expect(screen.getByText('Синхронизировано').getAttribute('data-color')).toBe('green');
 });
 
+it('explains an acknowledged profile as saved in Mezfit cloud', async () => {
+  state.status = 'synced';
+  render(ui());
+  fireEvent.click(await screen.findByText('Синхронизировано'));
+  expect(screen.getByRole('dialog').textContent)
+    .toBe('Личная анкета и опубликованные значения отправлены в Mezfit облако.');
+});
+
 it('shows active cloud synchronization without a premature profile receipt', async () => {
   state.status = 'syncing';
   render(ui());
