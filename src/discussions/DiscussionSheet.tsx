@@ -202,9 +202,9 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const viewedMessage = viewing && renderedMessages.find(row => row.id === viewing.messageId);
   const viewedAttachment = viewing && viewedMessage && !viewedMessage.deleted
     ? viewedMessage.attachments?.find(attachment => attachment.id === viewing.attachmentId) : undefined;
-  const pendingLocalVideo = media.pendingMedia.find(item => item.command.id === viewing?.messageId
-    && item.command.draftMedia?.id === viewing?.attachmentId
-    && item.command.draftMedia.mediaType === 'video');
+  const pendingLocalVideo = viewing ? media.pendingMedia.find(item => item.command.id === viewing.messageId
+    && item.command.draftMedia?.id === viewing.attachmentId
+    && item.command.draftMedia?.mediaType === 'video') : undefined;
   const localVideoUrl = (viewing && outgoing?.id === viewing.messageId
     && outgoingVideo?.metadata.id === viewing.attachmentId && outgoingVideo.metadata.mediaType === 'video' && media.preview
     ? media.preview : undefined) ?? pendingLocalVideo?.preview;
