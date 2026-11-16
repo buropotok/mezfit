@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { IconButton, Text } from '../ui';
 import type { VoiceRecording } from './useVoiceRecorder';
 import './voice-message-player.css';
@@ -13,13 +13,14 @@ export interface VoiceMessagePlayerProps {
   waveform: VoiceRecording['waveform'];
   durationMs: VoiceRecording['durationMs'];
   onError?: (message: string) => void;
+  leadingControl?: ReactNode;
 }
 
 /**
  * Bubble content only: Message owns bubble color, timestamp and delivery status.
  * This player can be reused in sent and received MezfitMessage instances.
  */
-export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: VoiceMessagePlayerProps) {
+export function VoiceMessagePlayer({ src, waveform, durationMs, onError, leadingControl }: VoiceMessagePlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekRef = useRef<SVGSVGElement>(null);
   const activePointerRef = useRef<number | null>(null);
@@ -158,7 +159,7 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
         onError={() => onError?.('Не удалось загрузить голосовое сообщение.')}
         aria-label="Аудиозапись"
       />
-      <IconButton
+      {leadingControl ?? <IconButton
         label={playing ? 'Приостановить голосовое сообщение' : 'Воспроизвести голосовое сообщение'}
         color="gray"
         selected
@@ -175,7 +176,7 @@ export function VoiceMessagePlayer({ src, waveform, durationMs, onError }: Voice
             <path d="M7 3.8a1.4 1.4 0 0 1 2.1-1.2l12 8.2a1.4 1.4 0 0 1 0 2.4l-12 8.2A1.4 1.4 0 0 1 7 20.2Z" />
           </svg>
         )}
-      </IconButton>
+      </IconButton>}
       <div className="voice-message-player__body">
         <svg
           ref={seekRef}
