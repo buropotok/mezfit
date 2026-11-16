@@ -1,4 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ButtonHTMLAttributes, type Dispatch, type ReactElement, type ReactNode, type SetStateAction } from 'react';
+import { createPortal } from 'react-dom';
+import { AVATAR_LOADING_SRC } from './contacts/CloudContactAvatar';
+import { DiscussionAvatarFlightContext, type AvatarFlightOrigin, type AvatarFlightRect } from './navigation/DiscussionAvatarFlightContext';
+import { DiscussionAvatarFlightLayer, canHandoffDiscussionAvatar, type PendingDiscussionAvatarFlight } from './navigation/DiscussionAvatarFlightLayer';
 import { useDiscussions } from './discussions/DiscussionsProvider';
 import { Icon, Text } from './ui';
 import type { MeResponse, Role } from './api';
@@ -80,6 +84,8 @@ export interface NavigationContext {
   restoreScroll?: boolean;
   onBack?: () => void;
   identity?: MezfitNavbarIdentity;
+  /** Presentation-only key for a shared avatar transition to the active chat. */
+  avatarTransitionKey?: string;
   onIdentityClick?: () => void;
   menuActions?: readonly NavigationMenuAction[];
   onCalendarOpen?: () => void;
@@ -304,6 +310,26 @@ export function NavigationShell({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<LocalDate>(todayLocalDate);
   const [registeredFloatingAction, setRegisteredFloatingAction] = useState<RegisteredFloatingAction | null>(null);
+  const nextAvatarFlightId = useRef(0);
+  const navbarAvatarSlot = useRef<HTMLSpanElement | null>(null);
+  const [avatarFlight, setAvatarFlight] = useState<PendingDiscussionAvatarFlight | null>(null);
+  const [avatarTarget, setAvatarTarget] = useState<AvatarFlightRect | null>(null);
+  const [navbarSettledLevel, setNavbarSettledLevel] = useState<NavigationLevel | null>(null);
+  const beginAvatarFlight = useCallback((origin: AvatarFlightOrigin) => {
+    setAvatarTarget(null);
+    setNavbarSettledLevel(null);
+    setAvatarFlight({ ...origin, id: ++nextAvatarFlightId.current, arrived: false });
+  }, []);
+  const cancelAvatarFlight = useCallback(() => {
+    setAvatarFlight(null);
+    setAvatarTarget(null);
+  }, []);
+  const avatarFlightController = useMemo(() => ({
+    begin: beginAvatarFlight, cancel: cancelAvatarFlight,
+  }), [beginAvatarFlight, cancelAvatarFlight]);
+  const markAvatarArrived = useCallback((id: number) => {
+    setAvatarFlight(current => current?.id === id && !current.arrived ? { ...current, arrived: true } : current);
+  }, []);
   const nestedContext = context && (context.level ?? 2) === 2 ? context : null;
   const contextRef = useRef(nestedContext);
   const historyEntryRef = useRef<{ context: NavigationContext; token: string } | null>(null);
@@ -332,6 +358,47 @@ export function NavigationShell({
     title: context?.title ?? currentItem.label,
     icon: currentItem.icon,
   };
+  const activeFlightKey = context?.avatarTransitionKey;
+  const flightIsTargeted = avatarFlight !== null && level === 2
+    && activeFlightKey === avatarFlight.key && Boolean(identity.avatar);
+  // A transparent image occupies the normal avatar slot until the moving copy lands.
+  // IdentityAction geometry and appearance are not patched.
+  const navbarIdentity: MezfitNavbarIdentity = flightIsTargeted && identity.avatar
+    ? { title: identity.title, avatar: { ...identity.avatar, src: AVATAR_LOADING_SRC } }
+    : identity;
+
+  useLayoutEffect(() => {
+    if (!avatarFlight || !flightIsTargeted || avatarTarget) return;
+    const rect = navbarAvatarSlot.current?.getBoundingClientRect();
+    if (rect && rect.width > 0 && rect.height > 0) {
+      setAvatarTarget({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+    }
+  }, [avatarFlight?.id, flightIsTargeted, avatarTarget, identity.avatar]);
+
+  useLayoutEffect(() => {
+    if (canHandoffDiscussionAvatar(avatarFlight, level, navbarSettledLevel, activeFlightKey)) {
+      cancelAvatarFlight();
+    }
+  }, [avatarFlight, level, navbarSettledLevel, activeFlightKey, cancelAvatarFlight]);
+
+  useEffect(() => {
+    if (!avatarFlight) return undefined;
+    const cancel = () => cancelAvatarFlight();
+    window.addEventListener('resize', cancel);
+    window.visualViewport?.addEventListener('resize', cancel);
+    return () => {
+      window.removeEventListener('resize', cancel);
+      window.visualViewport?.removeEventListener('resize', cancel);
+    };
+  }, [avatarFlight?.id, cancelAvatarFlight]);
+
+  useEffect(() => {
+    if (!avatarFlight || avatarTarget) return undefined;
+    // A failed/missing destination must not strand a visual copy on screen.
+    const timer = window.setTimeout(cancelAvatarFlight, 2_000);
+    return () => window.clearTimeout(timer);
+  }, [avatarFlight?.id, avatarTarget, cancelAvatarFlight]);
+
   const calendarValue = context?.calendar?.value ?? selectedDate;
   const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
   const calendarDayStatuses = context?.calendar?.dayStatuses;
@@ -414,6 +481,7 @@ export function NavigationShell({
   }, []);
 
   const requestBack = useCallback(() => {
+    cancelAvatarFlight();
     const currentContext = contextRef.current;
     if (!currentContext) return;
     setCalendarOpen(false);
@@ -425,10 +493,11 @@ export function NavigationShell({
     }
     historyEntryRef.current = null;
     if (currentContext.onBack) requestBackTransition(currentContext.onBack);
-  }, [requestBackTransition]);
+  }, [requestBackTransition, cancelAvatarFlight]);
 
   useEffect(() => {
     const onPopState = () => {
+      cancelAvatarFlight();
       const currentContext = contextRef.current;
       if (!currentContext?.onBack) return;
       setCalendarOpen(false);
@@ -437,7 +506,7 @@ export function NavigationShell({
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [requestBackTransition]);
+  }, [requestBackTransition, cancelAvatarFlight]);
 
   useEffect(() => {
     const existingEntry = historyEntryRef.current;
@@ -474,12 +543,14 @@ export function NavigationShell({
   }, []);
 
   const chooseDestination = (next: AppDestination) => {
+    cancelAvatarFlight();
     setCalendarOpen(false);
     onDestinationChange(next);
     setMenuOpen(false);
   };
 
   const switchRole = (role: Role) => {
+    cancelAvatarFlight();
     setCalendarOpen(false);
     onRoleSwitch(role);
     setMenuOpen(false);
@@ -564,6 +635,7 @@ export function NavigationShell({
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
       <NavigationLevelContext.Provider value={level}>
       <AvatarProfileNavigationContext.Provider value={onAvatarProfileNavigate ?? null}>
+      <DiscussionAvatarFlightContext.Provider value={avatarFlightController}>
         <main
           ref={shellRef}
           className={previewWidth === 320
@@ -575,8 +647,10 @@ export function NavigationShell({
         <div className="navigation-navbar-frame">
           <MezfitNavbar
             level={level}
-            identity={identity}
-            onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && identity.avatar ? () => chooseDestination('profile') : undefined)}
+            identity={navbarIdentity}
+            avatarSlotRef={navbarAvatarSlot}
+            onLevelSettled={setNavbarSettledLevel}
+            onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && identity.avatar && !context?.avatarTransitionKey ? () => chooseDestination('profile') : undefined)}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
             onCalendar={() => {
@@ -652,6 +726,12 @@ export function NavigationShell({
           dayStatuses={calendarDayStatuses}
         />
         </main>
+        {avatarFlight && createPortal(
+          <DiscussionAvatarFlightLayer key={avatarFlight.id} flight={avatarFlight}
+            target={avatarTarget} onArrived={markAvatarArrived} />,
+          document.body,
+        )}
+      </DiscussionAvatarFlightContext.Provider>
       </AvatarProfileNavigationContext.Provider>
       </NavigationLevelContext.Provider>
     </NavigationFloatingActionContext.Provider>
