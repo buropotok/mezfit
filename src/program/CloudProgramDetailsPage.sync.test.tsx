@@ -24,7 +24,7 @@ describe('PLAN details cloud connection status', () => {
       next(details); return { unsubscribe: vi.fn() };
     } } as unknown as ProgramManagementRepository;
     const retry = vi.fn(async () => {});
-    const page = (syncStatus: 'synced' | 'pending' | 'offline' | 'error') =>
+    const page = (syncStatus: 'synced' | 'syncing' | 'local' | 'error') =>
       <CloudProgramDetailsPage repository={repository} planId="tra-1"
         cloudStatus="ready" cloudError="" syncStatus={syncStatus}
         syncError={syncStatus === 'error' ? 'Изменение отклонено сервером' : ''}
@@ -36,9 +36,9 @@ describe('PLAN details cloud connection status', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть уведомление' }));
     fireEvent.click(screen.getByRole('button', { name: 'Да' }));
     await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
-    view.rerender(page('offline'));
+    view.rerender(page('local'));
     expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
-    view.rerender(page('pending'));
+    view.rerender(page('syncing'));
     expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();
     view.rerender(page('synced'));
     expect(screen.queryByRole('button', { name: 'Закрыть уведомление' })).toBeNull();

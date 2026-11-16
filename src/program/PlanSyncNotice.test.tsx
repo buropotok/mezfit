@@ -16,7 +16,7 @@ const defaults = { cloudStatus: 'ready' as const, cloudError: '', syncStatus: 's
   syncError: '', onRetryCloud: async () => {}, onRetrySync: async () => {} };
 
 describe('PLAN notification cloud recovery', () => {
-  it.each(['pending', 'offline', 'synced'] as const)('does not notify or spend the error budget for %s', syncStatus => {
+  it.each(['local', 'syncing', 'synced'] as const)('does not notify or spend the error budget for %s', syncStatus => {
     const budget = createSyncNotificationBudget();
     render(<SyncNotificationBudgetContext.Provider value={budget}>
       <PlanSyncNotice {...defaults} syncStatus={syncStatus} />

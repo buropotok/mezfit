@@ -5,12 +5,10 @@ import { factCloudSyncPresentation } from './FactCloudSyncStatus';
 
 describe('FACT global cloud synchronization indicator', () => {
   it.each([
-    ['pending', 'В ожидании', 'yellow', 'Ожидается синхронизация с облаком Mezfit.'],
+    ['local', 'Локально', 'gray', 'Изменения хранятся на устройстве. Облачная синхронизация ещё не подтверждена.'],
+    ['syncing', 'Синхронизация', 'yellow', 'Идёт отправка или получение изменений из Mezfit облака.'],
     ['synced', 'Синхронизировано', 'green', 'Синхронизация с облаком Mezfit завершена.'],
-    ['offline', 'Нет соединения', 'gray',
-      'Нет соединения с облаком Mezfit. Изменения сохраняются на устройстве и синхронизируются после подключения к интернету.'],
-    ['error', 'Ошибка', 'red',
-      'Не удалось синхронизировать данные с облаком Mezfit. Изменения сохранены на устройстве.'],
+    ['error', 'Ошибка', 'red', 'Не удалось синхронизировать данные с облаком Mezfit. Изменения сохранены на устройстве.'],
   ] as const)('shows %s with clear, user-facing Mezfit cloud wording',
     (status: CloudSyncStatus, label, color, explanation) => {
       const view = factCloudSyncPresentation(status);

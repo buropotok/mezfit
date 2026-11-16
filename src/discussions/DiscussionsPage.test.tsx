@@ -8,7 +8,7 @@ import { DiscussionsPage, DiscussionInboxList } from './DiscussionsPage';
 import type { DiscussionInboxRow } from './DiscussionsProvider';
 import { thread, message } from './discussion-fixture.test-support';
 
-const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), cloudStatus: 'ready', syncStatus: 'offline' }));
+const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), cloudStatus: 'ready', syncStatus: 'local' }));
 vi.mock('./DiscussionsProvider', () => ({ useDiscussions: () => ({ rows: state.rows, unread: 0, loading: false, error: '', retry: vi.fn() }) }));
 vi.mock('../navigation/NavigationSurfaceContext', () => ({ useNavigationSurfaceContext: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: {}, actorUserId: 'tg:11',
@@ -75,11 +75,11 @@ describe('COMM-08 shared inbox surfaces', () => {
     expect(document.querySelector('time')?.dateTime).toBe(first.latest?.createdAt);
     expect(document.querySelector('button button')).toBeNull();
   });
-  it('opens the existing sheet, routes Back to the same offline list, and returns from the exact entity', async () => {
+  it('opens the existing sheet, routes Back to the same local list, and returns from the exact entity', async () => {
     state.rows = [row('first')]; state.ensure.mockResolvedValue(state.rows[0].thread);
     const navigation = vi.fn();
     render(<DiscussionsPage role="client" onNavigationContextChange={navigation} />);
-    expect(screen.getByText('Нет соединения. Показаны обсуждения на устройстве.')).toBeTruthy();
+    expect(screen.getByText('Локально. Обсуждения доступны на устройстве.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Контекст first' }));
     await screen.findByRole('dialog', { name: 'first' });
     expect(state.ensure).toHaveBeenCalledTimes(1);
