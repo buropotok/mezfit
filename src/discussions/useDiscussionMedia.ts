@@ -44,6 +44,8 @@ function describeSendError(reason: unknown, savingFile: boolean, aborted: boolea
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
   const [selection, setSelection] = useState<Selection>();
+  const selectionRef = useRef<Selection | undefined>(selection);
+  selectionRef.current = selection;
   const [preview, setPreview] = useState<string>();
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string>();
@@ -304,7 +306,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
 
   function retryPending(id: string) {
     const entry = pendingRef.current.find(row => row.command.id === id);
-    if (!entry?.selected || active.current || selection) return;
+    if (!entry?.selected || active.current || selectionRef.current) return;
     updatePending(pendingRef.current.filter(row => row.command.id !== id));
     if (entry.preview) URL.revokeObjectURL(entry.preview);
     setSelection(entry.selected);
