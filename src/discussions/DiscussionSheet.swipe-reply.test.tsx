@@ -2,7 +2,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { readDiscussionMedia } from '../media/discussionMediaCache';
 import { DiscussionSheet } from './DiscussionSheet';
 import { anchor, fixture, message, thread } from './discussion-fixture.test-support';
 
