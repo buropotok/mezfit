@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { UserProfileRepository } from '../data/cloud/user-profile';
+import { itemSyncStatus, syncStatusLabel, syncStatusColor } from '../data/cloud/sync-status';
 import { BadgeChoice, Button, LiquidPopover } from '../ui';
 
 interface ProfileDelivery {
@@ -81,11 +82,9 @@ export function UserProfilePublicationProvider({ children }: { children: ReactNo
   const error = failure?.repository === repository ? failure.message
     : !synced && version && cloud?.syncStatus === 'error'
       ? cloud.syncError || 'Не удалось синхронизировать анкету с Mezfit облаком.' : '';
-  const label = error ? 'Ошибка' : !current ? 'Загрузка' : !version ? 'Не сохранена'
-    : synced ? 'Синхронизирована' : cloud?.syncStatus === 'offline' ? 'Нет соединения'
-    : cloud?.syncStatus === 'error' ? 'Ошибка' : 'В ожидании';
-  const color = label === 'Синхронизирована' ? 'green' : label === 'Ошибка' ? 'red'
-    : label === 'В ожидании' ? 'yellow' : 'gray';
+  const sync = itemSyncStatus(synced, Boolean(error), cloud?.syncStatus ?? 'local');
+  const label = !current ? 'Загрузка' : !version ? 'Не сохранена' : syncStatusLabel(sync);
+  const color = !current || !version ? 'gray' : syncStatusColor(sync);
   const retryDelivery = () => {
     setFailure(null);
     setRetry(value => value + 1);
@@ -109,7 +108,7 @@ export function UserProfileSyncStatus() {
     ? 'Личная анкета и опубликованные значения отправлены в Mezfit облако.'
     : status?.label === 'Не сохранена' ? 'Анкета ещё не сохранена. Все поля необязательны.'
     : status?.label === 'Загрузка' ? 'Проверяем состояние анкеты.'
-    : 'Анкета сохранена на устройстве. Изменения отправятся в Mezfit облако после восстановления синхронизации.');
+    : 'Анкета сохранена на устройстве. Отправка изменений ещё не подтверждена.');
   return <span className="user-profile__sync" role="status" aria-label="Статус синхронизации анкеты">
     <LiquidPopover isOpen={opened} onOpenChange={setOpened} triggerRef={trigger}
       label="О синхронизации анкеты" text={explanation} triggerActivation="controlled"

@@ -251,8 +251,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       </div>
     </div>
     {from && to && from > to ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
-    {cloud?.syncStatus === 'offline' ? <Text variant="caption">Нет соединения. Показаны обсуждения на устройстве.</Text>
-      : cloud?.syncStatus === 'pending' ? <Text variant="caption">Синхронизируем обсуждения…</Text> : null}
+    {cloud?.syncStatus === 'local' ? <Text variant="caption">Локально. Обсуждения доступны на устройстве.</Text>
+      : cloud?.syncStatus === 'syncing' ? <Text variant="caption">Синхронизация обсуждений…</Text> : null}
     {cloud?.syncStatus === 'error' ? <Text variant="caption" role="status">Синхронизация прервана. Локальные обсуждения доступны.</Text> : null}
     {notificationMessageId && !opened && !openError ? <Text variant="footnote" role="status">Загружаем обсуждение по ссылке…</Text> : null}
     {openError ? <div className="stack"><Text role="alert">{openError}</Text>

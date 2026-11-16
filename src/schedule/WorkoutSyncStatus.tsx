@@ -3,6 +3,7 @@ import type { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occ
 import type { LocalProgramSyncRow } from '../data/cloud/database';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { workoutHasDelta } from '../data/cloud/workout-sync';
+import { itemSyncStatus, syncStatusLabel, syncStatusColor } from '../data/cloud/sync-status';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { Badge, LiquidPopover } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -22,16 +23,15 @@ export function WorkoutSyncStatus({ draft, repository }: { draft: LocalWorkoutOc
     return () => subscription.unsubscribe();
   }, [repository, draft.targetOccurrenceId]);
   const pending = workoutHasDelta(row);
-  const label = failed ? 'Ошибка' : !pending ? 'Синхронизирована'
-    : cloud?.syncStatus === 'offline' ? 'Нет соединения'
-    : cloud?.syncStatus === 'error' ? 'Ошибка' : 'В ожидании';
-  const color = failed ? 'red' : !pending ? 'green' : cloud?.syncStatus === 'offline' ? 'gray'
-    : cloud?.syncStatus === 'error' ? 'red' : 'yellow';
-  const explanation = (label === 'Синхронизирована' ? 'Изменения сохранены в Mezfit облаке.'
-    : label === 'Нет соединения' ? 'Изменения сохранены на устройстве и отправятся в Mezfit облако после восстановления соединения.'
-    : label === 'Ошибка' ? 'Не удалось синхронизировать изменения с Mezfit облаком. Они сохранены на устройстве, работу можно продолжать.'
-    : 'Изменения сохранены на устройстве и ожидают синхронизации с Mezfit облаком.')
-    + (!draft.saved ? ' Это черновик: клиент его не видит. «Сохранить» публикует тренировку; синхронизация работает автоматически.' : '');
+  const sync = itemSyncStatus(!pending, failed, cloud?.syncStatus ?? 'local');
+  const label = syncStatusLabel(sync);
+  const color = syncStatusColor(sync);
+  const explanation = ({
+    synced: 'Изменения этой тренировки подтверждены в Mezfit облаке.',
+    syncing: 'Идёт синхронизация изменений с Mezfit облаком.',
+    local: 'Изменения сохранены на устройстве, но их отправка ещё не подтверждена.',
+    error: 'Не удалось подтвердить изменения в Mezfit облаке. Они сохранены на устройстве.',
+  }[sync]) + (!draft.saved ? ' Это черновик: клиент его не видит. «Сохранить» публикует тренировку; синхронизация работает автоматически.' : '');
   return <div className="occurrence-sync-status" role="status" aria-label="Статус синхронизации тренировки">
     <LiquidPopover isOpen={opened} onOpenChange={setOpened} triggerRef={trigger}
       label="О синхронизации тренировки" text={explanation} preset={glass.preset} optics={glass.optics}

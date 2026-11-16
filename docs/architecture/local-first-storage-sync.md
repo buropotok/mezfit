@@ -130,6 +130,17 @@ to draft; date/time changes preserve it. Drafts use the same synchronized occurr
 records as published workouts. Client projections hide coach drafts by business
 status, including detail reads. Physical replication is never conditional on status.
 A capsule reports synchronization independently from the content's draft status.
+**Unified client sync presentation (2026-11-16):** Project Dexie Cloud Addon
+`syncState.phase` across discussions, programs, workouts, FACT, profiles and
+calendar: `pushing`/`pulling` → «Синхронизация»;
+`in-sync` → «Синхронизировано»; explicit error → «Ошибка»;
+initial/not-in-sync and other unconfirmed idle states → «Локально».
+The separate Addon transport `status: offline` is not a network verdict and
+MUST NOT decide user-facing sync status or block explicit awaited pushes;
+real deployments can report `in-sync / offline` while data is exchanged.
+Per-message read/delivery ticks and per-record confirmed revision remain
+independently verified; a global `in-sync` phase never fabricates a record receipt.
+
 The scoped protected calendar ACL operation grants ordinary scheduling writes;
 Workout Start/session materialization remains a separate existing concern.
 

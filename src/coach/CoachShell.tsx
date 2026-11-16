@@ -333,7 +333,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
           actor={actor} viewerRole="coach" repository={programRepository} planId={selectedClientProgram.id}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
-          syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+          syncStatus={cloudConnections?.syncStatus ?? 'local'}
           syncError={cloudConnections?.syncError ?? ''}
           onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
           onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
@@ -348,7 +348,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         }}
         cloudStatus={cloudConnections?.status ?? 'loading'}
         cloudError={cloudConnections?.error ?? ''}
-        syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+        syncStatus={cloudConnections?.syncStatus ?? 'local'}
         syncError={cloudConnections?.syncError ?? ''}
         onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
         onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
@@ -414,7 +414,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
         <CloudProgramDetailsPage onNavigationContextChange={setProgramDetailNavigation} actor={actor} viewerRole="coach" key={selectedCloudProgram.id} repository={programRepository} planId={selectedCloudProgram.id}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
-          syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+          syncStatus={cloudConnections?.syncStatus ?? 'local'}
           syncError={cloudConnections?.syncError ?? ''}
           onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
           onRetrySync={cloudConnections?.retrySync ?? (async () => {})} />
@@ -424,7 +424,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
           onNavigationContextChange={onNavigationContextChange}
           cloudStatus={cloudConnections?.status ?? 'loading'}
           cloudError={cloudConnections?.error ?? ''}
-          syncStatus={cloudConnections?.syncStatus ?? 'pending'}
+          syncStatus={cloudConnections?.syncStatus ?? 'local'}
           syncError={cloudConnections?.syncError ?? ''}
           onRetryCloud={cloudConnections?.refresh ?? (async () => {})}
           onRetrySync={cloudConnections?.retrySync ?? (async () => {})}

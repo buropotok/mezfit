@@ -4,6 +4,7 @@ import type { LocalProgramSyncRow } from '../data/cloud/database';
 import type { ProgramManagementRepository } from '../data/cloud/program-management';
 import type { CloudSyncStatus } from '../data/cloud/CloudConnectionsProvider';
 import { programHasDelta } from '../data/cloud/program-sync';
+import { itemSyncStatus, syncStatusLabel, syncStatusColor } from '../data/cloud/sync-status';
 import { Badge, GlassSurface, LiquidPopover, Text } from '../ui';
 import { loadBrowserGlassSettings } from '../glassSettings';
 import { ProgramSyncDialog } from './ProgramSyncDialog';
@@ -34,22 +35,20 @@ export function ProgramSyncControls({ repository, planId, syncStatus, onSync, on
     return () => subscription.unsubscribe();
   }, [repository, planId]);
   const pending = programHasDelta(row);
-  const label = error ? 'Ошибка' : !pending ? 'Синхронизирована'
-    : syncStatus === 'offline' ? 'Нет соединения'
-      : syncStatus === 'error' ? 'Ошибка' : 'В ожидании';
-  const color = error ? 'red' : !pending ? 'green' : syncStatus === 'offline' ? 'gray'
-    : syncStatus === 'error' ? 'red' : 'yellow';
-  const explanations = {
-    'Синхронизирована': 'Изменения сохранены в Mezfit облаке. Клиент видит опубликованную программу и её доступные фазы.',
-    'В ожидании': 'Изменения сохранены на этом устройстве. Клиент увидит их после синхронизации с Mezfit облаком.',
-    'Ошибка': 'Не удалось отправить изменения в Mezfit облако. Они сохранены на устройстве. Повторите синхронизацию вручную.',
-    'Нет соединения': 'Изменения сохранены на устройстве и пока недоступны клиенту. Для отправки в Mezfit облако нужно соединение.',
+  const sync = itemSyncStatus(!pending, Boolean(error), syncStatus);
+  const label = syncStatusLabel(sync);
+  const color = syncStatusColor(sync);
+  const explanations: Record<typeof sync, string> = {
+    synced: 'Изменения программы подтверждены в Mezfit облаке. Клиент видит опубликованную программу и её доступные фазы.',
+    syncing: 'Идёт синхронизация изменений программы с Mezfit облаком.',
+    local: 'Изменения сохранены на устройстве, но их отправка в Mezfit облако ещё не подтверждена.',
+    error: 'Не удалось отправить изменения в Mezfit облако. Они сохранены на устройстве. Повторите синхронизацию вручную.',
   };
   return <>
     <div className="program-sync-row">
       <div className="program-sync-status" role="status" aria-label="Статус синхронизации программы">
         <LiquidPopover isOpen={infoOpen} onOpenChange={setInfoOpen} triggerRef={infoRef}
-          text={explanations[label]} label="О синхронизации программы" preset={glass.preset} optics={glass.optics}
+          text={explanations[sync]} label="О синхронизации программы" preset={glass.preset} optics={glass.optics}
           trigger={<button type="button" ref={infoRef} className="program-sync-badge" aria-label={`О статусе: ${label}`}>
             <Badge color={color} textVariant="caption">{label}</Badge>
           </button>} />

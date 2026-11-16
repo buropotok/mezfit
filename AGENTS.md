@@ -66,6 +66,15 @@ React state is not authoritative persistence. Normal persistent flow:
 
 ```text
 UI intent → typed repository → local Dexie transaction → immediate UI update → Dexie Cloud Addon synchronization → authorized cloud state. Privileged operations use a typed Worker API.
+**Phase-only synchronization status (owner decision 2026-11-16):** Across
+discussions, workout/FACT, programs, profiles and calendar, display
+`pushing/pulling` → «Синхронизация», `in-sync` → «Синхронизировано»,
+explicit `error` → «Ошибка», otherwise pending/local → «Локально».
+Ignore Dexie Addon's separate `status: offline` when projecting user-facing
+sync state. It must not suppress awaited push confirmation of individual
+messages or workout/program revisions. Continue to require the actual
+per-record acknowledgement before showing delivery or entity-level green.
+
 ```
 
 Optimistic updates must be explicit and have rollback/reconciliation behavior.
