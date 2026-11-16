@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createPortal } from 'react-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscussionSwipeReplyRow, useDiscussionSwipeVisual } from './DiscussionSwipeReplyRow';
@@ -24,7 +24,9 @@ function documentTouch(type: 'touchmove' | 'touchend' | 'touchcancel', x: number
     touches: { value: type === 'touchmove' ? [touch] : [] },
     changedTouches: { value: [touch] },
   });
-  document.dispatchEvent(event);
+  // Native listeners are outside React's synthetic event dispatcher; flush
+  // their state updates before asserting movement or the reply action.
+  act(() => { document.dispatchEvent(event); });
   return event;
 }
 
