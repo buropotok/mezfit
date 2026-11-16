@@ -127,7 +127,7 @@ describe('Yandex media diagnostic log storage', () => {
       now: new Date('2026-11-15T12:00:00Z'), fetchImpl: storage.fetchImpl,
     });
     expect(key).toBe('logs/logs_20261115_0002.jsonl');
-    expect(storage.objects.get('logs/logs_20261115_0001.jsonl')).toEqual(old);
+    expect(storage.objects.get('logs/logs_20261115_0001.jsonl')?.equals(old)).toBe(true);
     expect(storage.calls.map(call => call.method)).toEqual(['GET', 'PUT']);
   });
 
