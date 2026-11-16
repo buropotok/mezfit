@@ -179,7 +179,7 @@ export function createDiscussionPreviewPort(): DiscussionPort {
     },
     sync: {
       observe: next => {
-        next({ status: 'local', offline: true, error: null });
+        next({ status: 'local', error: null });
         return { unsubscribe() {} };
       },
       retry: async () => {},
