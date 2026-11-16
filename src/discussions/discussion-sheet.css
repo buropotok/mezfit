@@ -625,6 +625,10 @@
   max-width: none;
 }
 
+.discussion-message-target--outgoing {
+  align-items: flex-end;
+}
+
 .discussion-outgoing__preview {
   position: relative;
   width: fit-content;
@@ -675,6 +679,13 @@
   align-items: flex-end;
   gap: 4px;
   padding-top: 4px;
+}
+
+.discussion-outgoing__retry-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
 
 .discussion-outgoing__retry-label { color: inherit; }
