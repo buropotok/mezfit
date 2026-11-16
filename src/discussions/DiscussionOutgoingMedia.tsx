@@ -9,12 +9,13 @@ import { DiscussionVoice } from './DiscussionVoice';
 import clock from './assets/upload-clock.svg';
 import paperplane from './assets/upload-paperplane.svg';
 
-export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, error, onCancel, onRemove, onRetry, onOpen, onMenu, menu }: {
+export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, error, retryDisabled = false, onCancel, onRemove, onRetry, onOpen, onMenu, menu }: {
   src?: string;
   attachment: DiscussionMediaDraft;
   createdAt: string;
   status: 'uploading' | 'publishing' | 'failed' | 'clearing';
   error?: string;
+  retryDisabled?: boolean;
   onCancel: () => void;
   onRemove: () => void;
   onRetry: () => void;
@@ -61,7 +62,7 @@ export function DiscussionOutgoingMedia({ src, attachment, createdAt, status, er
       {!sending && <div className="discussion-outgoing__retry">
         {error && <Text variant="caption" role="alert">{error}</Text>}
         <div className="discussion-outgoing__retry-actions">
-          <Button size="compact" color="yellow" disabled={status === 'clearing' || !src} onClick={onRetry}>
+          <Button size="compact" color="yellow" disabled={status === 'clearing' || !src || retryDisabled} onClick={onRetry}>
             <Text variant="caption" className="discussion-outgoing__retry-label">Ещё раз</Text>
           </Button>
           <Button size="compact" color="red" disabled={status === 'clearing'} onClick={onRemove}>
