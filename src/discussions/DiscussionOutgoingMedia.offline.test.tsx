@@ -36,7 +36,7 @@ it.each([voice, circle])('keeps failed $mediaType playable, and places red cance
   const view = render(<KonstaProvider theme="ios" dark><DiscussionOutgoingMedia src="blob:local-media"
     attachment={attachment} createdAt={createdAt} status="failed"
     error="Mezfit облако недоступно" onCancel={vi.fn()} onRemove={onRemove} onRetry={onRetry} /></KonstaProvider>);
-  expect(view.container.querySelector('.discussion-outgoing__preview')?.getAttribute('data-playable')).toBe('');
+  expect(view.container.querySelector('.discussion-outgoing__preview')?.hasAttribute('data-playable')).toBe(true);
   expect(view.container.querySelector('.discussion-outgoing__cancel')).toBeNull();
   expect(screen.getByRole('button', { name: 'Ещё раз' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Отменить' })).toBeTruthy();
