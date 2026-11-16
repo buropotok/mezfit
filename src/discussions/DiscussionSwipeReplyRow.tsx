@@ -35,7 +35,7 @@ export function DiscussionSwipeReplyIndicator() {
       <circle className="discussion-reply-swipe-indicator__fill" cx="22" cy="22" r="19"
         strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress)} />
     </svg>
-    <Icon name="reply-solid" className="discussion-reply-swipe-indicator__icon" />
+    <Icon name="reply-solid" className="discussion-reply-swipe-indicator__icon" style={{ width: 24, height: 24 }} />
   </span>;
 }
 
