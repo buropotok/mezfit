@@ -84,6 +84,12 @@ export function writeOnceRejected(reply: S3Reply): boolean {
 }
 
 export function anonymousRejected(reply: S3Reply): boolean {
+  // R2's S3 endpoint can reject an unsigned GET with an S3 XML
+  // InvalidArgument (HTTP 400), rather than an AWS-style 401/403.
+  // This proves the anonymous request did not retrieve object bytes;
+  // bucket public-domain privacy is checked separately by bootstrap/readback.
   return (reply.status === 403 && reply.code === 'AccessDenied')
-    || (reply.status === 401 && reply.code === 'Unauthorized');
+    || (reply.status === 401 && reply.code === 'Unauthorized')
+    || (reply.status === 400 && reply.code === 'InvalidArgument'
+      && reply.contentType === 'xml' && reply.bodyFormat === 's3-xml' && reply.codePresent);
 }
