@@ -31,6 +31,16 @@ function requireState(condition, code) {
   if (!condition) throw new Error(code);
 }
 
+function cloudflarePermission(path, method) {
+  const access = method === 'GET' ? 'Read or Edit' : 'Edit';
+  if (path.startsWith('/tokens')) return 'Account API Tokens: ' + access;
+  if (path.startsWith('/d1/')) return 'D1: ' + access;
+  if (path.startsWith('/r2/') || path.startsWith('/event_notifications/')) return 'Workers R2 Storage: ' + access;
+  if (path.startsWith('/queues')) return method === 'GET' ? 'Queues: Read or Edit (or Workers Scripts)' : 'Queues: Edit';
+  if (path.startsWith('/workers/') || path.startsWith('/workflows/')) return 'Workers Scripts: ' + access;
+  return 'access to this account API';
+}
+
 class CloudflareApi {
   constructor(account, token, label) {
     requireState(ID.test(account), 'CLOUDFLARE_ACCOUNT_ID_INVALID');
@@ -55,7 +65,8 @@ class CloudflareApi {
     const data = await response.json().catch(() => null);
     if (!response.ok || data?.success !== true || !Object.hasOwn(data, 'result')) {
       const codes = Array.isArray(data?.errors) ? data.errors.map(error => error?.code).filter(Number.isInteger) : [];
-      const access = [401, 403].includes(response.status) ? ' (check this token’s access to the named Cloudflare API)' : '';
+      const access = [401, 403].includes(response.status) || codes.includes(10000) || codes.includes(9109)
+        ? ' (verify ' + cloudflarePermission(path, method) + ')' : '';
       throw new Error(operation + ' failed with HTTP ' + response.status + ' (Cloudflare codes: '
         + (codes.join(', ') || 'none') + ')' + access);
     }
@@ -322,9 +333,10 @@ async function apply(infra, deploy, state, account, origin) {
     await infra.request(NOTIFICATIONS + '/queues/' + target.queue_id, { method: 'PUT', body: { rules: [RULE] } });
   }
   if (!token) {
-    const preflight = await inspectWorker(deploy);
+    const [preflight, currentTokens] = await Promise.all([inspectWorker(deploy), infra.pages('/tokens')]);
     requireState(preflight.owned && preflight.private && !preflight.exists,
       'EXISTING_WORKER_WITHOUT_MIGRATION_TOKEN_REQUIRES_REVIEW');
+    requireState(!unique(currentTokens, 'name', TOKEN), 'MIGRATION_TOKEN_APPEARED_DURING_APPLY: rerun preview');
     const minted = (await infra.request('/tokens', {
       method: 'POST', body: { name: TOKEN, policies: [policy] },
     })).result;
