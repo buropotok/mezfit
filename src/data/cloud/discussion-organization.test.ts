@@ -52,7 +52,7 @@ async function fixture() {
       transaction.objectStore('realms').put(pair.realm);
       for (const member of pair.members) transaction.objectStore('members').put(member);
     }
-    transaction.oncomplete = resolve;
+    transaction.oncomplete = () => resolve();
     transaction.onabort = () => reject(transaction.error);
   });
   const scope = (index: number) => ({ realmId: pairs[index].realm.realmId, coachClientId: pairs[index].realm.realmId });
