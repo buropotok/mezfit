@@ -279,7 +279,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     attribute: FlexAttributeRow | undefined, row: FlexValueRow | undefined): FlexInspectedValue {
     const base = { target, key };
     if (!attribute && !row) return { ...base, state: 'absent' };
-    if (!attribute || !row) return { ...base, state: 'pending' };
+    if (!attribute || !row) return { ...base, state: 'pending', ...(row ? { value: row.value } : {}) };
     const owner = ownerFor(target, this.actorUserId);
     if (!isFlexAttributeRow(attribute) || attribute.key !== key
       || attribute.realmId !== target.realmId || attribute.owner !== owner
@@ -310,25 +310,42 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     });
   }
 
-  /** Bounded prefix scan of definitions plus values; no unrelated personal/profile Flex decoding.
-   * A value arriving ahead of an unknown definition cannot be enumerated until hydration. */
+  /** Scan one prefix per target, including values hydrated before their definition.
+   * The deterministic Flex ID embeds a length-prefixed key even without an attribute row. */
   async inspectPrefix(targets: readonly FlexEntityTarget[], prefix: string): Promise<FlexInspectedValue[]> {
     if (!targets.length) return [];
     if (!attributeKeyPattern.test(prefix)) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
     return this.db.transaction('r', this.inspectionTables(targets.some(target => target.entityType === 'publishedUser')), async () => {
       await this.assertInspectionTargets(targets);
-      const definitions = await Promise.all([...new Set(targets.map(target => target.realmId))].map(async realmId => ({
+      const realms = [...new Set(targets.map(target => target.realmId))];
+      const definitions = await Promise.all(realms.map(async realmId => ({
         realmId,
         rows: await this.db.flexAttributes.where('[realmId+key]')
           .between([realmId, prefix], [realmId, prefix + '\uffff'], true, true).toArray(),
       })));
       const keysByRealm = new Map<string, FlexAttributeRow[]>(definitions.map(({ realmId, rows }) =>
         [realmId, rows.filter(row => typeof row.key === 'string' && row.key.startsWith(prefix))]));
-      const entries = targets.flatMap(target => (keysByRealm.get(target.realmId) ?? []).map(attribute =>
-        ({ target, key: attribute.key, attribute })));
-      const values = await this.db.flexValues.bulkGet(entries.map(({ target, key }) =>
-        flexValueId(target, flexAttributeId(target.realmId, key))));
-      return entries.map(({ target, key, attribute }, index) => this.inspectRow(target, key, attribute, values[index]));
+      const targetValues = await Promise.all(targets.map(target => this.db.flexValues
+        .where('[realmId+entityType+entityId]').equals([target.realmId, target.entityType, target.entityId]).toArray()));
+      const entries = targets.flatMap((target, index) => {
+        const attributes = new Map<string, FlexAttributeRow>();
+        for (const row of keysByRealm.get(target.realmId) ?? []) attributes.set(row.key, row);
+        const values = new Map<string, FlexValueRow>();
+        const encodedRealm = 'flex-attribute:' + target.realmId.length + ':' + target.realmId + ':';
+        for (const row of targetValues[index]) {
+          if (typeof row.attributeId !== 'string' || !row.attributeId.startsWith(encodedRealm)) continue;
+          const rest = row.attributeId.slice(encodedRealm.length);
+          const separator = rest.indexOf(':');
+          if (separator < 1) continue;
+          const key = rest.slice(separator + 1), length = Number(rest.slice(0, separator));
+          if (key.length !== length || !attributeKeyPattern.test(key) || !key.startsWith(prefix)
+            || flexAttributeId(target.realmId, key) !== row.attributeId) continue;
+          values.set(key, row);
+        }
+        return [...new Set([...attributes.keys(), ...values.keys()])].sort()
+          .map(key => ({ target, key, attribute: attributes.get(key), row: values.get(key) }));
+      });
+      return entries.map(({ target, key, attribute, row }) => this.inspectRow(target, key, attribute, row));
     });
   }
 
