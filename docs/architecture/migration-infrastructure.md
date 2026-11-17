@@ -86,8 +86,15 @@ additive and must be applied by `migration-deploy.yml` before using the new
 standalone smoke.
 
 Separate probes use unique child keys for bad MIME, length, missing conditional
-header and expiry. Each checks the S3 error semantics and absence of a probe
-object. The write-once and anonymous read checks exercise the uploaded object.
+header and expiry. To establish expiry when the S3 error is opaque, smoke uses a
+20-second capability for the isolated expiry key. It verifies a successful PUT
+before expiry, removes the probe object, and waits durably. It then re-derives
+the exact capability and verifies denial and absence of an object after expiry.
+A fresh PUT for that same key confirms permissions still work. Explicit
+signature, credential, clock and unrelated authorization failures remain
+failures. The short TTL is reserved for the expiry probe. The overwrite check
+requires 412 with S3 PreconditionFailed and an unchanged R2 object version.
+The anonymous read check sends no authorization or query parameters.
 Retries are bounded. A signed PUT that committed before the reply was lost is
 reconciled using HEAD. Unambiguous contract and authorization errors fail
 immediately.
@@ -130,3 +137,8 @@ A first merge-time smoke is required to verify Cloudflare's deployed settings
 and the existing tokens' read access. The telemetry endpoint is documented
 with **Workers Observability Write**; a refusal is shown in Actions. No token
 change is needed when the existing R2 recovery channel is readable.
+
+Workers Logs settings and Telemetry API authorization are checked separately.
+One deployed run verified enabled logs, invocation logs and full sampling in
+Worker settings while the Telemetry query returned HTTP 403. The private R2
+trace recovered the smoke evidence in that run.

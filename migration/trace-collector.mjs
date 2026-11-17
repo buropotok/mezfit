@@ -5,7 +5,7 @@ import { sanitizeTrace, TRACE_ID, TRACE_PREFIX, traceStepName } from './trace.mj
 export const STEPS = [
   'Sweep expired smoke objects', 'Upload signed R2 backup', 'Verify R2 HEAD', 'Observe R2 notification in D1',
   'Replay R2 event via Queue', 'Verify exact Queue replay receipt', 'Reject signed PUT mime', 'Reject signed PUT length',
-  'Reject signed PUT conditional', 'Reject signed PUT expired', 'Reject conditional overwrite', 'Reject anonymous R2 GET',
+  'Reject signed PUT conditional', 'Prime signed PUT expiry control', 'Wait for signed PUT expiration', 'Reject signed PUT expired', 'Verify fresh PUT after expiry', 'Reject conditional overwrite', 'Reject anonymous R2 GET',
   'Delete current smoke objects', 'Delete failed smoke objects',
 ];
 const LOGS = '/workers/observability/telemetry/query';
@@ -52,7 +52,9 @@ export function historyRecords(instance, id, context = {}) {
   for (const [index, row] of steps.entries()) {
     const name = workflowStepName(row?.name);
     const stage = name ? traceStepName(name) : 'workflow-step-' + (index + 1);
-    for (const [offset, attempt] of (Array.isArray(row?.attempts) ? row.attempts : []).entries()) {
+    const attempts = Array.isArray(row?.attempts) ? row.attempts
+      : row?.type === 'sleep' ? [{ start: row.start, end: row.end, success: row.end ? true : undefined }] : [];
+    for (const [offset, attempt] of attempts.entries()) {
       const start = Date.parse(attempt?.start);
       const end = Date.parse(attempt?.end);
       const reported = typeof attempt?.error?.message === 'string' ? attempt.error.message : '';

@@ -33,6 +33,8 @@ const SAFE_CODES = new Set([
   'SMOKE_HEAD_MISMATCH', 'SMOKE_D1_EVENT_PENDING', 'SMOKE_D1_EVENT_MISMATCH', 'SMOKE_QUEUE_SEND_FAILED',
   'SMOKE_D1_RECEIPT_READ_FAILED', 'SMOKE_QUEUE_REPLAY_PENDING', 'SMOKE_QUEUE_REPLAY_MISMATCH',
   'SMOKE_OVERWRITE_NOT_REJECTED', 'SMOKE_PUBLIC_READ_NOT_REJECTED',
+  'SMOKE_EXPIRY_CONTROL_MISMATCH', 'SMOKE_EXPIRY_CONTROL_PUT_FAILED', 'SMOKE_EXPIRY_FRESH_CONTROL_FAILED',
+  'SMOKE_OVERWRITE_CONTROL_MISSING', 'SMOKE_OVERWRITE_CHANGED_OBJECT',
 ]);
 const SAFE_LABELS = new Set([
   's3-response', 'network-or-timeout', 'configured-signer-and-valid-ttl', 'signer-unavailable',
@@ -45,9 +47,11 @@ const SAFE_LABELS = new Set([
   'metadata-mismatch', 'object-missing', 'registered-put-event', 'job-missing',
   'OBJECT_MISSING', 'OBJECT_MISMATCH', 'INVALID_BACKUP_METADATA', 'replay-accepted', 'queue-send-rejected',
   'exact-replay-receipt', 'receipt-missing', 'unchanged-job-and-valid-receipt', 'job-or-receipt-mismatch',
-  'http-412-PreconditionFailed', 'anonymous-access-denied', 'smoke-payload-and-uuid', 'invalid-input',
+  'http-412-PreconditionFailed', 'anonymous-access-denied', 'isolated-smoke-object', 'short-expiry', 'unexpected-ttl',
+  'valid-put-before-expiry', 'baseline-unverified', 'empty-probe-key', 'same-url-after-expiry', 'expiry-control-unverified',
+  'existing-backup', 'backup-unverified', 'unchanged-object-version', 'object-changed', 'smoke-payload-and-uuid', 'invalid-input',
 ]);
-const S3_LABEL = /^http-[1-5]\d\d-(?:AccessDenied|Unauthorized|SignatureDoesNotMatch|InvalidArgument|AuthorizationQueryParametersError|RequestExpired|RequestTimeTooSkewed|PreconditionFailed|ConditionalRequestConflict|MissingContentLength|InvalidAccessKeyId|SlowDown|ServiceUnavailable|NoSuchKey|NoSuchBucket|UnknownS3Code)$/;
+const S3_LABEL = /^http-[1-5]\d\d-(?:AccessDenied|Unauthorized|SignatureDoesNotMatch|InvalidArgument|AuthorizationQueryParametersError|AuthorizationHeaderMalformed|InvalidToken|ExpiredToken|RequestExpired|RequestTimeTooSkewed|PreconditionFailed|ConditionalRequestConflict|MissingContentLength|InvalidAccessKeyId|SlowDown|ServiceUnavailable|NoSuchKey|NoSuchBucket|UnknownS3Code)$/;
 const CATEGORIES = new Set(['configuration', 'authentication', 'runtime', 'transient', 'storage', 'integrity', 'http', 'delivery']);
 
 function safeLabel(value) {
