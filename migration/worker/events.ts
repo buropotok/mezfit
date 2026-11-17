@@ -1,6 +1,6 @@
 import { classifyTraceError, smokeTraceId, traceWriter, type Trace } from '../trace.mjs';
 import { isTraceObject, observed, workerTrace, type WorkerVersion } from './trace';
-import { SMOKE_ID_PATTERN, UPLOAD_BUCKET, UPLOAD_KEY_PATTERN, validBackupMetadata } from './r2-upload';
+import { SMOKE_ID_PATTERN, SMOKE_OBJECT_PATTERN, UPLOAD_BUCKET, UPLOAD_KEY_PATTERN, validBackupMetadata } from './r2-upload';
 
 const CREATE_ACTIONS = ['PutObject', 'CopyObject', 'CompleteMultipartUpload'];
 const ETAG_PATTERN = /^(?:"([a-f0-9]{32}(?:-[1-9][0-9]*)?)"|([a-f0-9]{32}(?:-[1-9][0-9]*)?))$/i;
@@ -213,6 +213,9 @@ export async function consumeUploads(batch: MessageBatch<unknown>, env: EventBin
         if (isTraceObject(object?.key)) {
           decision = 'trace-object-notification';
           emit('consumer', 'event-validation', 'QUEUE_TRACE_OBJECT_SKIPPED', 'SKIPPED', { actual: decision });
+        } else if (typeof object?.key === 'string' && SMOKE_OBJECT_PATTERN.test(object.key) && object.key.endsWith('/expired')) {
+          decision = 'expiry-control-object';
+          emit('consumer', 'event-validation', 'QUEUE_EXPIRY_CONTROL_SKIPPED', 'SKIPPED', { actual: decision });
         } else {
           const event = parseUploadEvent(message.body, env.CLOUDFLARE_ACCOUNT_ID, emit);
           if (!event) decision = 'invalid-event';
