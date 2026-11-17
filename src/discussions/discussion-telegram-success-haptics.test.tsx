@@ -116,7 +116,7 @@ describe('Telegram success notification at deliberate discussion interactions', 
         touches: { value: type === 'touchmove' ? [touch] : [] },
         changedTouches: { value: [touch] },
       });
-      act(() => document.dispatchEvent(event));
+      act(() => { document.dispatchEvent(event); });
     }
     dispatch('touchmove', 141);
     expect(haptics.notificationOccurred).not.toHaveBeenCalled();
