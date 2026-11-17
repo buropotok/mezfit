@@ -572,6 +572,11 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
 
   function classifyAsScroll() {
     cancelPressIntent();
+    if (data.touchStartedOnAction) {
+      cancelSelectionTravel();
+      clearSpring();
+      positionSelector(data.activeIndex, false);
+    }
     data.gesture = 'scroll';
     data.suppressClickUntil = now() + 500;
     cancelLensForScroll();
@@ -587,14 +592,17 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
   function onPointerDown(event) {
     if (event.pointerType !== 'touch') return;
     if (data.pointerId !== null && data.pointerId !== event.pointerId) return;
-    cancelMomentum();
-    cancelSelectionTravel();
-    clearSpring();
-    data.pointerId = event.pointerId;
-    data.touched = true;
-    data.touchStartedOnAction = Boolean(actionLink && (
+    const startedOnAction = Boolean(actionLink && (
       event.composedPath?.().includes(actionLink) || isWithinAction(event.clientX)
     ));
+    cancelMomentum();
+    if (!startedOnAction) {
+      cancelSelectionTravel();
+      clearSpring();
+    }
+    data.pointerId = event.pointerId;
+    data.touched = true;
+    data.touchStartedOnAction = startedOnAction;
     data.gesture = 'pending';
     data.holdActivated = false;
     data.touchStartX = event.clientX;
