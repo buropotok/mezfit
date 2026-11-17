@@ -254,7 +254,7 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     if (!resolved) throw new Error('DISCUSSION_NOT_FOUND');
     return resolved;
   }
-  /** One verified pair scan and one batched Flex inspection regardless of conversation count. */
+  /** Bounded, per-realm verification and batched Flex inspection independent of thread count. */
   async classifyThreads(threads: readonly DiscussionThread[]): Promise<DiscussionOrganizationSnapshot> {
     if (!Array.isArray(threads) || threads.some(thread => !thread || typeof thread !== 'object'
       || !discussionId(thread.id))) throw new Error('INVALID_DISCUSSION_THREAD');
