@@ -232,7 +232,7 @@ separate scoped PRs.
 
 ## 8. Schema evolution and CI/CD
 
-Keep Dexie schema versions and access-control configuration reviewable in the repository. Cloud permission configuration and client schema evolution are distinct operations; review compatibility before deployment. Use one Dexie Cloud database in pre-MVP and one Cloudflare deployment.
+Keep Dexie schema versions and access-control configuration reviewable in the repository. Cloud permission configuration and client schema evolution are distinct operations; review compatibility before deployment. Use one Dexie Cloud business database in pre-MVP. The Cloudflare account hosts the app Worker `mezfit` and the independently deployed private Worker `mezfit-migration`. See [migration infrastructure](migration-infrastructure.md) for the backup intake path and its technical D1 state.
 
 CI (PR): existing npm installation, tests, typecheck, build in GitHub Actions. CD (main): verified build and Cloudflare deployment with the public Dexie Cloud database URL; privileged credentials remain Worker/GitHub secrets. Remove D1 migration and database-binding steps when the runtime no longer uses D1, not in this documentation PR. No separate staging or automatic cloud permission push is required for pre-MVP.
 
