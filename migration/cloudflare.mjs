@@ -134,6 +134,58 @@ function matchesCors(rules, origin) {
     && !rule.exposeHeaders?.length && rule.maxAgeSeconds === 3600;
 }
 
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function notificationQueueLinks(config) {
+  if (config?.bucketName === BUCKET && (config.queues === undefined || Array.isArray(config.queues))) {
+    return config.queues ?? [];
+  }
+
+  // Wrangler also reads the older bucket -> configuration ID -> { queue, rules } response.
+  if (isRecord(config) && Object.keys(config).length === 1
+    && Object.hasOwn(config, BUCKET) && isRecord(config[BUCKET])) {
+    const links = Object.values(config[BUCKET]);
+    if (links.length) return links.map(link => isRecord(link) ? { queueId: link.queue, rules: link.rules } : link);
+  }
+
+  throw new Error('MIGRATION_BUCKET_SETTINGS_RESPONSE_INVALID: R2 notification response');
+}
+
+function notificationQueueId(value) {
+  if (typeof value !== 'string') return null;
+  const id = value.toLowerCase();
+  return ID.test(id) || UUID.test(id) ? id.replaceAll('-', '') : null;
+}
+
+function notificationDifferences(links, queue) {
+  if (links.length !== 1) return ['queues.length (expected 1, got ' + links.length + ')'];
+  const [target] = links;
+  if (!isRecord(target)) return ['queues[0] (expected an object)'];
+
+  // Keep diagnostics to field names and counts. API-provided strings may contain arbitrary text.
+  const differences = [];
+  const id = notificationQueueId(target.queueId);
+  if (!id || id !== queue?.queue_id) differences.push('queueId (expected the migration queue ID)');
+  if (target.queueName !== undefined && target.queueName !== QUEUE) {
+    differences.push('queueName (expected the migration queue name)');
+  }
+  if (!Array.isArray(target.rules)) return [...differences, 'rules (expected an array)'];
+  if (target.rules.length !== 1) {
+    return [...differences, 'rules.length (expected 1, got ' + target.rules.length + ')'];
+  }
+  const [rule] = target.rules;
+  if (!isRecord(rule)) return [...differences, 'rules[0] (expected an object)'];
+  if (!Array.isArray(rule.actions) || rule.actions.length !== RULE.actions.length
+    || !RULE.actions.every(action => rule.actions.includes(action))) {
+    differences.push('actions (expected PutObject, CopyObject and CompleteMultipartUpload once each)');
+  }
+  if ((rule.prefix ?? '') !== '') differences.push('prefix (expected no filter)');
+  if ((rule.suffix ?? '') !== '') differences.push('suffix (expected no filter)');
+  return differences;
+}
+
 export async function inspectBucket(api, queue, origin) {
   const bucket = await api.get(BUCKET_PATH, true);
   if (!bucket) return { bucket: false, cors: 'missing', notifications: 'missing', private: true };
@@ -146,20 +198,16 @@ export async function inspectBucket(api, queue, origin) {
     api.get(NOTIFICATIONS),
   ]);
   requireState(typeof managed?.enabled === 'boolean' && Array.isArray(custom?.domains)
-    && (!cors || Array.isArray(cors.rules)) && notifications?.bucketName === BUCKET
-    && (notifications.queues === undefined || Array.isArray(notifications.queues)),
+    && (!cors || Array.isArray(cors.rules)),
   'MIGRATION_BUCKET_SETTINGS_RESPONSE_INVALID');
   const rules = cors?.rules ?? [];
-  const linked = notifications.queues ?? [];
-  const [target] = linked;
-  const [rule] = target?.rules ?? [];
-  const matches = linked.length === 1 && target.queueId === queue?.queue_id
-    && target.rules?.length === 1 && !rule.prefix && !rule.suffix
-    && sorted(rule.actions) === sorted(RULE.actions);
+  const links = notificationQueueLinks(notifications);
+  const differences = links.length ? notificationDifferences(links, queue) : [];
   return {
     bucket: true,
     cors: !rules.length ? 'missing' : matchesCors(rules, origin) ? 'current' : 'conflict',
-    notifications: !linked.length ? 'missing' : matches ? 'current' : 'conflict',
+    notifications: !links.length ? 'missing' : differences.length ? 'conflict' : 'current',
+    ...(differences.length ? { notificationConflict: 'R2_EVENT_NOTIFICATIONS_CONFLICT: ' + differences.join(', ') } : {}),
     private: !managed.enabled && !custom.domains.length,
   };
 }
@@ -249,7 +297,7 @@ async function inspect(infra, deploy, account, origin) {
   const conflicts = [
     ...(!bucket.private ? ['R2_BUCKET_IS_PUBLIC'] : []),
     ...(bucket.cors === 'conflict' ? ['R2_CORS_CONFLICT'] : []),
-    ...(bucket.notifications === 'conflict' ? ['R2_EVENT_NOTIFICATIONS_CONFLICT'] : []),
+    ...(bucket.notificationConflict ? [bucket.notificationConflict] : []),
     ...(queueConflict(queue) ? ['QUEUE_CONFIGURATION_CONFLICT'] : []),
     ...(!worker.owned || !worker.private ? ['WORKER_OWNERSHIP_OR_PUBLIC_URL_CONFLICT'] : []),
     ...(workflow && (workflow.script_name !== WORKER || workflow.class_name !== 'MigrationWorkflow')
@@ -330,7 +378,7 @@ async function apply(infra, deploy, state, account, origin) {
   requireState(ID.test(target?.queue_id), 'MIGRATION_QUEUE_CREATE_RESPONSE_INVALID');
   const current = await inspectBucket(infra, target, origin);
   requireState(current.bucket && current.private && current.cors !== 'conflict' && current.notifications !== 'conflict',
-    'MIGRATION_BUCKET_CHANGED_DURING_APPLY');
+    'MIGRATION_BUCKET_CHANGED_DURING_APPLY' + (current.notificationConflict ? ': ' + current.notificationConflict : ''));
   if (current.cors === 'missing') {
     await infra.request(BUCKET_PATH + '/cors', { method: 'PUT', body: desiredCors(origin) });
   }
@@ -405,7 +453,7 @@ async function main() {
     });
   }
   const after = await inspect(infra, deploy, account, origin);
-  requireState(!after.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT');
+  requireState(!after.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + after.conflicts.join('; '));
   requireProvisioned(after);
   if (operation === 'deploy') {
     requireState(after.workflow && after.queue.consumers?.some(consumer => consumer.script_name === WORKER),
