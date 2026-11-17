@@ -262,7 +262,7 @@ function queueSettingDifference(path, expected, actual) {
   return path + ' (expected ' + expected + ', got ' + value + ')';
 }
 
-export function queueConfigurationDifferences(queue) {
+export function queueConfigurationDifferences(queue, requireConsumer = false) {
   if (!queue) return [];
   const differences = [];
   if (queue.settings != null && !isRecord(queue.settings)) {
@@ -277,8 +277,9 @@ export function queueConfigurationDifferences(queue) {
   const consumers = queue.consumers ?? [];
   if (!Array.isArray(consumers)) {
     differences.push('consumers (expected an array)');
-  } else if (consumers.length > 1) {
-    differences.push('consumers.length (expected at most 1, got ' + consumers.length + ')');
+  } else if (requireConsumer ? consumers.length !== 1 : consumers.length > 1) {
+    const expected = requireConsumer ? '1 after deploy' : 'at most 1';
+    differences.push('consumers.length (expected ' + expected + ', got ' + consumers.length + ')');
   } else if (consumers.length) {
     const [consumer] = consumers;
     if (!isRecord(consumer)) {
@@ -351,7 +352,7 @@ function sameTokenPolicy(token, desired) {
     && !token.expires_on && !token.not_before;
 }
 
-async function inspect(infra, deploy, account, origin) {
+async function inspect(infra, deploy, account, origin, requireQueueConsumer = false) {
   const [databases, queue, tokens, worker, workflow, group] = await Promise.all([
     infra.pages('/d1/database'), inspectQueue(infra), infra.pages('/tokens'), inspectWorker(deploy),
     deploy.get('/workflows/' + WORKFLOW, true), writeGroup(infra),
@@ -366,7 +367,7 @@ async function inspect(infra, deploy, account, origin) {
   const policy = tokenPolicy(account, group);
   const secretsReady = SECRET_NAMES.every(name => worker.secrets.includes(name));
   const secretsPartial = SECRET_NAMES.some(name => worker.secrets.includes(name));
-  const queueDifferences = queueConfigurationDifferences(queue);
+  const queueDifferences = queueConfigurationDifferences(queue, requireQueueConsumer);
   const conflicts = [
     ...(!bucket.private ? ['R2_BUCKET_IS_PUBLIC'] : []),
     ...(bucket.cors === 'conflict' ? ['R2_CORS_CONFLICT'] : []),
@@ -525,12 +526,11 @@ async function main() {
       runWrangler(['deploy', '--config', configFile]);
     });
   }
-  const after = await inspect(infra, deploy, account, origin);
+  const after = await inspect(infra, deploy, account, origin, operation === 'deploy');
   requireState(!after.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + after.conflicts.join('; '));
   requireProvisioned(after);
   if (operation === 'deploy') {
     requireState(after.workflow, 'MIGRATION_WORKFLOW_MISSING');
-    requireState(after.queue.consumers?.length === 1, 'QUEUE_CONFIGURATION_CONFLICT: consumers.length (expected 1 after deploy)');
     await smoke(deploy);
   }
 }
