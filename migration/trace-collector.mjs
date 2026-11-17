@@ -9,11 +9,14 @@ export const STEPS = [
   'Reject signed PUT conditional', 'Prime signed PUT expiry control', 'Wait for signed PUT expiration', 'Reject signed PUT expired', 'Verify fresh PUT after expiry', 'Reject conditional overwrite', 'Reject anonymous R2 GET',
   'Delete current smoke objects', 'Delete failed smoke objects',
 ];
+const PROCESS_CLEANUP_STEPS = ['Check processor cleanup scope', 'Remove processor smoke objects',
+  'Verify and remove processor smoke resources'];
+const PROCESS_CLEANUP_STAGES = new Set(PROCESS_CLEANUP_STEPS.map(traceStepName));
 const PROCESS_STEPS = [
   'Check processor runtime version', 'Upload processor fixture', 'Observe processor execution',
   'Start processor execution', 'Read and process migration input', 'Persist and verify migration result',
   'Finalize processor execution', 'Reconcile processor execution', 'Verify processor fixture result',
-  'Replay processor queue event', 'Verify processor replay receipt', 'Check processor cleanup scope', 'Remove processor smoke objects',
+  'Replay processor queue event', 'Verify processor replay receipt', ...PROCESS_CLEANUP_STEPS,
 ];
 const LOGS = '/workers/observability/telemetry/query';
 const R2 = '/r2/buckets/mezfit-migration-uploads/objects';
@@ -256,9 +259,11 @@ export function summarizeTrace(records, activeSmoke, evidence, processor = false
       'PROCESSOR_SMOKE_REPLAY_PENDING'].includes(row.error_code)
     && !records.slice(index + 1).some(later => later.status === 'OK' && later.stage === row.stage
       && later.event === row.event && (row.details.field == null || later.details.field === row.details.field)));
-  const failure = processor ? failures.find(row => !['cloudflare-api', 'cleanup'].includes(row.component)
+  const isProcessorCleanup = row => row.component === 'cleanup' || row.stage.startsWith('processor-cleanup-')
+    || PROCESS_CLEANUP_STAGES.has(row.stage);
+  const failure = processor ? failures.find(row => row.component !== 'cloudflare-api' && !isProcessorCleanup(row)
     && row.stage !== 'trace-collection' && row.event !== 'PROCESSOR_CONTROL_POLL')
-    ?? failures.find(row => row.component === 'cleanup')
+    ?? failures.find(isProcessorCleanup)
     : failures.find(row => row.component === 'consumer' || row.component === 'd1' || row.component === 'r2')
     ?? failures.find(row => row.component !== 'cloudflare-api' && row.stage !== 'trace-collection');
   const last = records.findLast(row => row.status === 'OK' && ['r2', 'consumer', 'd1', 'queue', 'workflow', 'processor'].includes(row.component)

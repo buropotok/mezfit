@@ -54,6 +54,11 @@ function setup(value = fixture) {
     MIGRATION_WORKFLOW: { create: vi.fn(async () => ({ id: instance })), get: vi.fn(async () => ({ status: async () => ({ status: 'running' }) })) },
     UPLOADS: {
       head: vi.fn(async path => objects.get(path)?.metadata ?? null),
+      delete: vi.fn(async path => { objects.delete(path); }),
+      list: vi.fn(async ({ prefix, limit }) => {
+        const matching = [...objects.keys()].filter(path => path.startsWith(prefix));
+        return { objects: matching.slice(0, limit).map(key => ({ key })), truncated: matching.length > limit };
+      }),
       get: vi.fn(async path => {
         const object = objects.get(path);
         return object ? { ...object.metadata, body: new ReadableStream(), arrayBuffer: async () => object.bytes } : null;
@@ -73,7 +78,7 @@ function setup(value = fixture) {
   const step = { do: vi.fn(async (_name, policy, action) => {
     for (let attempt = 1; ; attempt++) {
       try { return await action({ attempt }); }
-      catch (error) { if (attempt > policy.retries.limit) throw error; }
+      catch (error) { if (error.name === 'NonRetryableError' || attempt > policy.retries.limit) throw error; }
     }
   }) };
   const deliver = async (body = event) => {
@@ -81,7 +86,7 @@ function setup(value = fixture) {
     await consumeUploads({ messages: [message] }, env);
     return message;
   };
-  return { env, step, objects, event, deliver, updates, log,
+  return { env, step, objects, event, deliver, updates, log, sqlite,
     execution: () => sqlite.prepare('SELECT * FROM migration_executions').get(),
     saved: () => objects.get(resultKey)?.bytes,
     run: (ready = true) => runProcess(env, step, id, context, ready),
@@ -234,4 +239,165 @@ describe('migration processor workflow', () => {
       expect(job.execution()).toMatchObject({ state: 'failed', error_code: code });
       expect(job.log).toHaveBeenCalledWith(expect.objectContaining({ event: 'WORKFLOW_STEP', error_code: code, status: 'FAILED' }));
     });
+});
+
+function cleanupSetup(marker = id) {
+  const job = setup();
+  const { env, objects, sqlite, step } = job;
+  objects.get(key).metadata.customMetadata = { processorSmoke: marker };
+  const rows = table => sqlite.prepare('SELECT * FROM ' + table).all();
+  const complete = async () => {
+    await job.deliver();
+    await job.run();
+    await job.deliver({ ...job.event, processorReplay: id });
+  };
+  const cleanup = () => cleanupProcessorSmoke(env, id, step, context,
+    code => Object.assign(new Error(code), { name: 'NonRetryableError' }));
+  return { ...job, rows, complete, cleanup };
+}
+
+const cleanupTables = ['migration_jobs', 'migration_executions', 'migration_smoke_replays'];
+const cleanupOK = 'MIGRATION_PROCESSOR_CLEANUP_OK';
+
+describe('processor smoke cleanup', () => {
+  it('removes only the verified fixture, result and all three technical rows, then treats a retry as a no-op', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    expect(cleanupTables.map(table => job.rows(table).length)).toEqual([1, 1, 1]);
+    const unrelated = 'results/another-job/v1/result.json';
+    job.objects.set(unrelated, job.objects.get(resultKey));
+    await expect(job.cleanup()).resolves.toBe(cleanupOK);
+    expect([...job.objects.keys()]).toEqual([unrelated]);
+    expect(cleanupTables.flatMap(job.rows)).toEqual([]);
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_SMOKE_CLEANUP', status: 'OK', actual: 'removed',
+    }));
+    job.env.UPLOADS.delete.mockClear();
+    await expect(job.cleanup()).resolves.toBe(cleanupOK);
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_SCOPE', status: 'SKIPPED', actual: 'all-resources-absent',
+    }));
+  });
+
+  it.each([resultKey, 'results/' + id + '/v2/result.json'])('preserves orphaned R2 content at %s', async path => {
+    const job = cleanupSetup();
+    const evidence = job.objects.get(key);
+    job.objects.set(path, evidence);
+    job.objects.delete(key);
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_INCOMPLETE');
+    expect(job.objects.get(path)).toBe(evidence);
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_SCOPE', status: 'FAILED', actual: 'fixture-missing-with-residue',
+    }));
+  });
+
+  it('preserves D1 rows when both R2 objects are absent', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.objects.clear();
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_INCOMPLETE');
+    expect(cleanupTables.map(table => job.rows(table).length)).toEqual([1, 1, 1]);
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+  });
+
+  it('preserves both objects when the saved result checksum differs from D1', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.sqlite.prepare('UPDATE migration_executions SET result_sha256 = ?').run('0'.repeat(64));
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_RESULT_CONFLICT');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(cleanupTables.map(table => job.rows(table).length)).toEqual([1, 1, 1]);
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_SCOPE', status: 'FAILED', error_code: 'PROCESSOR_CLEANUP_RESULT_CONFLICT',
+    }));
+  });
+
+  it('rechecks ownership after a transient R2 delete and recovers after a transient verification error', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.env.UPLOADS.delete.mockRejectedValueOnce(new Error('private provider detail'));
+    const head = job.env.UPLOADS.head.getMockImplementation();
+    let readbackFailed = false;
+    job.env.UPLOADS.head.mockImplementation(async path => {
+      if (path === resultKey && !job.objects.has(resultKey) && !readbackFailed) {
+        readbackFailed = true;
+        throw new Error('private provider detail');
+      }
+      return head(path);
+    });
+    await expect(job.cleanup()).resolves.toBe(cleanupOK);
+    expect(readbackFailed).toBe(true);
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_R2_DELETE', status: 'FAILED', attempt: 1, duration_ms: expect.any(Number),
+    }));
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_R2_READBACK', status: 'FAILED', attempt: 2, duration_ms: expect.any(Number),
+    }));
+    expect(JSON.stringify(job.log.mock.calls)).not.toContain('private provider detail');
+  });
+
+  it('keeps the fixture and D1 when removal of the verified result cannot be confirmed', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.env.UPLOADS.delete.mockResolvedValue(undefined);
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_R2_UNCONFIRMED');
+    expect(job.objects.has(key)).toBe(true);
+    expect(job.objects.has(resultKey)).toBe(true);
+    expect(cleanupTables.map(table => job.rows(table).length)).toEqual([1, 1, 1]);
+  });
+
+  it('preserves D1 after a failed delete and refuses a later cleanup without the fixture', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.updates.mockImplementation(sql => {
+      if (sql.startsWith('DELETE FROM migration_executions')) throw new Error('D1 unavailable');
+    });
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_INCOMPLETE');
+    expect(cleanupTables.map(table => job.rows(table).length)).toEqual([1, 1, 1]);
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({ event: 'PROCESSOR_CLEANUP_D1_DELETE', status: 'FAILED' }));
+  });
+
+  it('fails closed if D1 cannot confirm the final readback', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.updates.mockImplementation(sql => {
+      if (sql.includes('FROM migration_smoke_replays WHERE') && sql.startsWith('SELECT') && !job.rows('migration_jobs').length) {
+        throw new Error('D1 unavailable');
+      }
+    });
+    await expect(job.cleanup()).rejects.toThrow();
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({ event: 'PROCESSOR_CLEANUP_D1_READBACK', status: 'FAILED' }));
+    expect(job.log).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'PROCESSOR_SMOKE_CLEANUP', status: 'OK' }));
+  });
+
+  it('reports the specific residual tables after a partially effective D1 delete', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    job.sqlite.exec(`CREATE TRIGGER preserve_replay BEFORE DELETE ON migration_smoke_replays
+      BEGIN SELECT RAISE(IGNORE); END`);
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_INCOMPLETE');
+    expect(cleanupTables.map(table => job.rows(table).length)).toEqual([1, 0, 1]);
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_D1_TABLE', status: 'FAILED', details: { table: 'migration_smoke_replays', sql: 'SELECT' },
+    }));
+  });
+
+  it.each(['queued', 'running'])('leaves an active %s execution and its fixture intact', async state => {
+    const job = cleanupSetup();
+    await job.deliver();
+    job.sqlite.prepare('UPDATE migration_executions SET state = ?').run(state);
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_EXECUTION_ACTIVE');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.execution().state).toBe(state);
+  });
+
+  it.each([undefined, 'wrong-owner'])('leaves input with ownership marker %s intact', async marker => {
+    const job = cleanupSetup(marker);
+    if (marker === undefined) delete job.objects.get(key).metadata.customMetadata;
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_SCOPE_INVALID');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.objects.has(key)).toBe(true);
+  });
 });
