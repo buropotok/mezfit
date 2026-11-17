@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { File } from 'node:buffer';
 import { describe, expect, it, vi } from 'vitest';
 import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, PROCESSOR_RECORD_LIMIT, PROCESSOR_RESULT_LIMIT } from '../../processor-protocol.mjs';
 import { traceWriter } from '../../trace.mjs';
@@ -68,8 +69,8 @@ describe('registered migration adapters', () => {
   it('selects by the same bytes for unrelated filenames and ignores file metadata', async () => {
     const input = nested([group('g', [item('a', 27)])]);
     const bytes = encode(input);
-    const results = await Promise.all(['backup.dbi', 'other.json', 'renamed.bin'].map(name =>
-      processFile(bytes, vi.fn(), { filename: name, mime: 'text/plain', jobId: name })));
+    const files = ['backup.dbi', 'other.json', 'renamed.bin'].map(name => new File([bytes], name, { type: 'text/plain' }));
+    const results = await Promise.all(files.map(async file => processFile(await file.arrayBuffer(), vi.fn())));
     expect(results[0]).toEqual(results[1]);
     expect(results[1]).toEqual(results[2]);
     expect(isResult(results[0])).toBe(true);
