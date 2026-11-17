@@ -146,3 +146,24 @@ Workers Logs settings and Telemetry API authorization are checked separately.
 One deployed run verified enabled logs, invocation logs and full sampling in
 Worker settings while the Telemetry query returned HTTP 403. The private R2
 trace recovered the smoke evidence in that run.
+
+### Проверка TypeScript Execution Engine
+
+После слияния запустите `Deploy migration Worker` на `main`. Он применяет
+аддитивную миграцию `0003_create_migration_executions.sql` перед выкладкой Worker
+и проверяет `MIGRATION_SMOKE_OK`. Затем запустите
+`Diagnose or smoke-test migration infrastructure` с операцией `processor-smoke`.
+Этот режим сверяет текущую версию деплоя с версией из Workflow runtime,
+загружает синтетический JSON, проверяет результат и повторную доставку, удаляет
+вход, результат и технические строки, затем выводит `MIGRATION_PROCESSOR_SMOKE_OK`.
+При сбое приложите из Actions `migration-trace.json`. CPU указывается только по
+данным invocation telemetry. При отсутствии доступа диагностика продолжится по
+приватным R2-трассам и Workflow history.
+
+В `v1` поддерживается `mezfit-migration-fixture-v1` с лимитом 8192 байт и
+256 записей. Smoke использует одновременно оба предела. Этот предел является
+консервативной настройкой v1 до первого подтверждённого прогона в Cloudflare.
+Лимит загрузки технических объектов по-прежнему 100 MiB. Файлы свыше предела
+процессора получают `PROCESSOR_INPUT_LIMIT` до чтения тела из R2. R2-результат
+проверяется независимо от ответа PUT. Повторная запись состояния D1 использует
+тот же подтверждённый результат.

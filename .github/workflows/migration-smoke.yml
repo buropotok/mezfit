@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Inspect an existing Workflow instance or run a new integration smoke
+        description: Inspect an existing Workflow instance or run a new infrastructure or processor smoke
         type: choice
-        options: [diagnose, smoke]
+        options: [diagnose, smoke, processor-smoke]
         default: diagnose
         required: true
       instance_id:
@@ -44,7 +44,7 @@ jobs:
           retention-days: 7
 
   smoke:
-    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && inputs.operation == 'smoke'
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && (inputs.operation == 'smoke' || inputs.operation == 'processor-smoke')
     concurrency:
       group: mezfit-migration-cloudflare
       cancel-in-progress: false
@@ -58,7 +58,7 @@ jobs:
       - name: Check deployed resources and run the integration smoke
         run: node migration/cloudflare.mjs
         env:
-          MIGRATION_OPERATION: smoke
+          MIGRATION_OPERATION: ${{ inputs.operation }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

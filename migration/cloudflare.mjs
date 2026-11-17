@@ -8,6 +8,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { PROCESSOR_VERSION, processorInstanceId } from './processor-protocol.mjs';
+import { deployedWorkerVersion, runProcessorSmoke } from './processor-control.mjs';
 import { diagnoseSmoke, runSmoke } from './smoke-control.mjs';
 
 const BUCKET = 'mezfit-migration-uploads';
@@ -55,7 +57,8 @@ function endpointName(path) {
   if (route.startsWith('/tokens')) return route.endsWith('/permission_groups') ? 'token-permission-groups'
     : route === '/tokens' ? 'token-list' : 'token-details';
   if (route.startsWith('/workers/observability/')) return 'workers-telemetry';
-  if (route.startsWith('/workers/scripts/')) return route.endsWith('/settings') ? 'worker-settings'
+  if (route.startsWith('/workers/scripts/')) return route.endsWith('/deployments') ? 'worker-deployments'
+    : route.endsWith('/settings') ? 'worker-settings'
     : route.endsWith('/secrets') ? 'worker-secrets' : 'worker-subdomain';
   if (route.startsWith('/workflows/')) return route.endsWith('/instances') ? 'workflow-instances'
     : route.includes('/instances/') ? 'workflow-instance' : 'workflow';
@@ -68,7 +71,7 @@ function checkTrace(component, stage, event, state, expected, actual, details = 
 
 function safeStatusFailure(error, fallback) {
   // Never include an arbitrary upstream message in the trace.
-  return /^(?:CLOUDFLARE|MIGRATION|R2|WORKFLOW|WRANGLER|D1|QUEUE)_[A-Z0-9_]{1,80}\b/.exec(error?.message ?? '')?.[0] ?? fallback;
+  return /^(?:CLOUDFLARE|MIGRATION|R2|WORKFLOW|WRANGLER|D1|QUEUE|DEPLOYED|PROCESSOR)_[A-Z0-9_]{1,80}\b/.exec(error?.message ?? '')?.[0] ?? fallback;
 }
 
 async function capture(emit, component, stage, event, action, summarize) {
@@ -85,10 +88,18 @@ async function capture(emit, component, stage, event, action, summarize) {
 }
 
 async function finalTrace({ id, operation, runtime, records, deploy, infra, state, emit, failure, since }) {
+  const processor = operation === 'processor-smoke';
   const activeSmoke = runtime.started || operation === 'diagnose';
   const history = [];
   let coverage = {};
   const pending = [];
+  if (processor && runtime.readinessId && deploy) {
+    pending.push((async () => {
+      const instance = await observeInstance(deploy, runtime.readinessId, emit);
+      if (instance) history.push(...historyRecords(instance, id, { instance_id: runtime.readinessId,
+        job_id: id, processor_version: PROCESSOR_VERSION }));
+    })());
+  }
   if (activeSmoke && deploy) {
     pending.push((async () => {
       const instance = runtime.instance ?? await observeInstance(deploy, id, emit);
@@ -96,6 +107,13 @@ async function finalTrace({ id, operation, runtime, records, deploy, infra, stat
         coverage.workflow_history = 'received';
         history.push(...historyRecords(instance, id));
       } else coverage.workflow_history = 'unavailable';
+      if (processor) {
+        const instanceId = processorInstanceId(id);
+        const process = await observeInstance(deploy, instanceId, emit);
+        coverage.processor_history = process ? 'received' : 'unavailable';
+        if (process) history.push(...historyRecords(process, id, { instance_id: instanceId,
+          job_id: id, processor_version: PROCESSOR_VERSION }));
+      }
       if (runtime.cleanupId) {
         const cleanup = await observeInstance(deploy, runtime.cleanupId, emit, { polls: 5 });
         coverage.cleanup = cleanup?.status === 'complete' ? 'completed' : 'unconfirmed';
@@ -126,7 +144,9 @@ async function finalTrace({ id, operation, runtime, records, deploy, infra, stat
   }
   if (state?.database?.uuid && runtime.started && deploy) {
     for (const [table, clause, param] of [
-      ['migration_jobs', 'object_key', 'smoke/' + id], ['migration_smoke_replays', 'replay_id', id],
+      ['migration_jobs', 'object_key', (processor ? 'uploads/' : 'smoke/') + id],
+      ['migration_smoke_replays', 'replay_id', id],
+      ...(processor ? [['migration_executions', 'job_id', 'uploads/' + id]] : []),
     ]) {
       pending.push(capture(emit, 'd1', 'd1-final-read', 'D1_REST_SELECT',
         async () => {
@@ -147,12 +167,17 @@ async function finalTrace({ id, operation, runtime, records, deploy, infra, stat
   }
   const all = [...records, ...history].map(row => sanitizeTrace({ ...row, run_id: row.run_id ?? process.env.GITHUB_RUN_ID }))
     .filter(Boolean).sort((left, right) => left.timestamp.localeCompare(right.timestamp));
-  const report = summarizeTrace(all, activeSmoke, { workflow: coverage.workflow_history === 'received' });
+  if (processor) {
+    coverage.invocation_cpu = all.some(row => row.event === 'WORKERS_INVOCATION_CPU') ? 'received' : 'unavailable';
+  }
+  const report = summarizeTrace(all, activeSmoke, { workflow: coverage.workflow_history === 'received' }, processor);
   const smokeResult = failure ? 'FAILED' : runtime.started ? 'OK' : operation === 'diagnose' ? 'HISTORY_ONLY' : 'SKIPPED';
   const missing = Object.entries(coverage).filter(([, value]) => !['received', 'completed'].includes(value));
   if (activeSmoke) missing.push(['r2-per-object-publisher-receipt', 'unavailable']);
   const output = [
-    '## MIGRATION TRACE', 'Trace ID: ' + id, 'Commit: ' + (process.env.GITHUB_SHA ?? 'unavailable'),
+    processor ? '## MIGRATION PROCESSING TRACE' : '## MIGRATION TRACE', 'Trace ID: ' + id,
+    ...(processor ? ['Job ID: ' + id, 'Processor version: ' + PROCESSOR_VERSION] : []),
+    'Commit: ' + (process.env.GITHUB_SHA ?? 'unavailable'),
     'Worker version: ' + (workerVersion ?? all.findLast(row => row.worker_version)?.worker_version ?? 'unavailable'),
     'Smoke result: ' + smokeResult, 'Collection: ' + (missing.length ? 'PARTIAL' : 'observed sources collected'),
     ...missing.map(([source, value]) => '- ' + source + ': ' + value),
@@ -809,6 +834,7 @@ async function main() {
   runnerTrace = (component, stage, event, status, fields) => traceWriter({
     trace_id: id, run_id: runId, instance_id: runtime.started || operation === 'diagnose' ? id : undefined,
     worker_version: workerVersion,
+    ...(operation === 'processor-smoke' ? { job_id: id, processor_version: PROCESSOR_VERSION } : {}),
   }, row => { records.push(row); console.log(JSON.stringify(row)); })(component, stage, event, status, fields);
   const emit = runnerTrace;
   let deploy;
@@ -823,7 +849,7 @@ async function main() {
       has_account_id: !!process.env.CLOUDFLARE_ACCOUNT_ID, has_origin: !!process.env.MEZFIT_APP_ORIGIN,
       has_deploy_token: !!process.env.CLOUDFLARE_API_TOKEN, has_bootstrap_token: !!process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN,
     } });
-    requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
+    requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke', 'processor-smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
     if (operation === 'apply') requireState(process.env.MIGRATION_CONFIRMATION === 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE',
       'MIGRATION_APPLY_CONFIRMATION_REQUIRED');
     const account = (process.env.CLOUDFLARE_ACCOUNT_ID ?? '').toLowerCase();
@@ -858,6 +884,10 @@ async function main() {
       emit('github', 'smoke-transition', 'SMOKE_START', 'STARTED', { expected: 'workflow-created' });
       runtime.started = true;
       await runSmoke(deploy, reportSmoke, { id, runId, emit, runtime });
+    } else if (operation === 'processor-smoke') {
+      workerVersion = await deployedWorkerVersion(deploy);
+      await runProcessorSmoke(deploy, id, workerVersion, emit, runtime, { runId });
+      await reportSmoke(['MIGRATION_PROCESSOR_SMOKE_OK']);
     }
   } catch (error) {
     failure = error;
