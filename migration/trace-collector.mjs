@@ -258,7 +258,8 @@ export function summarizeTrace(records, activeSmoke, evidence, processor = false
     && !['SMOKE_D1_EVENT_PENDING', 'SMOKE_QUEUE_REPLAY_PENDING', 'PROCESSOR_SMOKE_EXECUTION_PENDING',
       'PROCESSOR_SMOKE_REPLAY_PENDING'].includes(row.error_code)
     && !records.slice(index + 1).some(later => later.status === 'OK' && later.stage === row.stage
-      && later.event === row.event && (row.details.field == null || later.details.field === row.details.field)));
+      && later.event === row.event && (row.details.field == null || later.details.field === row.details.field)
+      && (row.details.table == null || later.details.table === row.details.table)));
   const isProcessorCleanup = row => row.component === 'cleanup' || row.stage.startsWith('processor-cleanup-')
     || PROCESS_CLEANUP_STAGES.has(row.stage);
   const failure = processor ? failures.find(row => row.component !== 'cloudflare-api' && !isProcessorCleanup(row)

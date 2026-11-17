@@ -103,7 +103,8 @@ async function readCleanupRows(db: D1Database, id: string, key: string, emit: Tr
         migration_smoke_replays: replays.results,
       };
       for (const [table, rows] of Object.entries(tables)) {
-        emit('d1', 'processor-cleanup-rows', 'PROCESSOR_CLEANUP_D1_TABLE', readback && rows.length ? 'FAILED' : 'OK',
+        emit('d1', 'processor-cleanup-rows', readback ? 'PROCESSOR_CLEANUP_D1_TABLE' : 'PROCESSOR_CLEANUP_D1_SCOPE_TABLE',
+          readback && rows.length ? 'FAILED' : 'OK',
           { actual: rows.length ? 'rows-present' : 'rows-absent', details: { table, sql: 'SELECT' } });
       }
       return tables;
@@ -122,14 +123,27 @@ function cleanupHead(bucket: R2Bucket, key: string, emit: Trace, kind: 'input' |
       error_code: readback && object ? 'PROCESSOR_CLEANUP_R2_UNCONFIRMED' : undefined }));
 }
 
-function cleanupResults(bucket: R2Bucket, id: string, resultKey: string, emit: Trace) {
+function cleanupResults(bucket: R2Bucket, id: string, resultKey: string, emit: Trace, readback: boolean) {
   return observed(emit, 'r2', 'processor-cleanup-results', 'PROCESSOR_CLEANUP_R2_LIST',
-    { expected: 'only-current-result-key' }, async () => {
+    { expected: readback ? 'results-absent' : 'only-current-result-key' }, async () => {
       // The trailing slash keeps the listing inside this job's namespace.
       const { objects, truncated } = await bucket.list({ prefix: 'results/' + id + '/', limit: 2 });
       return { present: objects.length > 0, conflict: truncated || objects.some(object => object.key !== resultKey) };
     }, results => ({ actual: results.conflict ? 'unexpected-result-key' : results.present ? 'result-present' : 'results-absent',
-      error_code: results.conflict ? 'PROCESSOR_CLEANUP_RESULT_CONFLICT' : undefined }));
+      error_code: readback && results.present ? 'PROCESSOR_CLEANUP_R2_UNCONFIRMED'
+        : results.conflict ? 'PROCESSOR_CLEANUP_RESULT_CONFLICT' : undefined }));
+}
+
+async function readCleanupResources(env: SmokeBindings, id: string, key: string, resultKey: string, emit: Trace, readback = false) {
+  const checks = [
+    cleanupHead(env.UPLOADS, key, emit, 'input', readback),
+    cleanupHead(env.UPLOADS, resultKey, emit, 'result', readback),
+    cleanupResults(env.UPLOADS, id, resultKey, emit, readback),
+    readCleanupRows(env.JOBS, id, key, emit, readback),
+  ] as const;
+  // Let both sources record their observations before the step flushes its trace.
+  await Promise.allSettled(checks);
+  return Promise.all(checks);
 }
 
 async function removeCleanupObject(bucket: R2Bucket, key: string, verified: R2Object | null, emit: Trace,
@@ -168,12 +182,7 @@ export async function cleanupProcessorSmoke(env: SmokeBindings, id: string, step
       return permanent(code);
     };
     emit('cleanup', scope, 'PROCESSOR_CLEANUP_SCOPE', 'STARTED');
-    const [input, result, results, rows] = await Promise.all([
-      cleanupHead(env.UPLOADS, key, emit, 'input'),
-      cleanupHead(env.UPLOADS, resultKey, emit, 'result'),
-      cleanupResults(env.UPLOADS, id, resultKey, emit),
-      readCleanupRows(env.JOBS, id, key, emit, false),
-    ]);
+    const [input, result, results, rows] = await readCleanupResources(env, id, key, resultKey, emit);
     if (!input) {
       if (result || results.present || results.conflict || Object.values(rows).some(table => table.length > 0)) {
         throw failScope('PROCESSOR_CLEANUP_INCOMPLETE', 'fixture-missing-with-residue');
@@ -242,12 +251,8 @@ export async function cleanupProcessorSmoke(env: SmokeBindings, id: string, step
           throw new Error('PROCESSOR_CLEANUP_D1_UNCONFIRMED');
         }
       }, () => ({ actual: 'committed' }));
-    const [remainingInput, remainingResult, remainingResults, remainingRows] = await Promise.all([
-      cleanupHead(env.UPLOADS, key, emit, 'input', true),
-      cleanupHead(env.UPLOADS, resultKey, emit, 'result', true),
-      cleanupResults(env.UPLOADS, id, resultKey, emit),
-      readCleanupRows(env.JOBS, id, key, emit, true),
-    ]);
+    const [remainingInput, remainingResult, remainingResults, remainingRows] =
+      await readCleanupResources(env, id, key, resultKey, emit, true);
     if (remainingInput || remainingResult || remainingResults.present || remainingResults.conflict) {
       throw new Error('PROCESSOR_CLEANUP_R2_UNCONFIRMED');
     }

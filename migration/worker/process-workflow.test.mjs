@@ -244,7 +244,7 @@ describe('migration processor workflow', () => {
 function cleanupSetup(marker = id) {
   const job = setup();
   const { env, objects, sqlite, step } = job;
-  objects.get(key).metadata.customMetadata = { processorSmoke: marker };
+  Object.assign(objects.get(key).metadata, { customMetadata: { processorSmoke: marker }, version: 'fixture-version' });
   const rows = table => sqlite.prepare('SELECT * FROM ' + table).all();
   const complete = async () => {
     await job.deliver();
@@ -336,6 +336,23 @@ describe('processor smoke cleanup', () => {
       event: 'PROCESSOR_CLEANUP_R2_READBACK', status: 'FAILED', attempt: 2, duration_ms: expect.any(Number),
     }));
     expect(JSON.stringify(job.log.mock.calls)).not.toContain('private provider detail');
+  });
+
+  it('preserves a result replaced after checksum verification', async () => {
+    const job = cleanupSetup();
+    await job.complete();
+    const get = job.env.UPLOADS.get.getMockImplementation();
+    job.env.UPLOADS.get.mockImplementation(async path => {
+      const response = await get(path);
+      if (path === resultKey) job.objects.get(path).metadata.version = 'replacement-version';
+      return response;
+    });
+    await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_SCOPE_INVALID');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.objects.get(resultKey).metadata.version).toBe('replacement-version');
+    expect(job.log).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'PROCESSOR_CLEANUP_R2_DELETE', status: 'FAILED', actual: 'object-changed',
+    }));
   });
 
   it('keeps the fixture and D1 when removal of the verified result cannot be confirmed', async () => {
