@@ -291,15 +291,36 @@ describe('typed Flex persistence and participant isolation', () => {
     expect(await coach.listCategories()).toEqual([]);
   });
 
-  it('reports failed cleanup and supports explicit retry without prematurely removing category', async () => {
-    const { entity, coach } = await fixture();
+  it('removes a category even when an unrelated thread has only the peer assignment', async () => {
+    const { entity, free, coach, client } = await fixture();
+    const category = await coach.createCategory('Разбор');
+    await coach.assignThread(free, { kind: 'custom', id: category.id });
+    await client.assignThread(entity, 'nutrition');
+
+    await coach.removeCategory(category.id);
+
+    expect(await coach.listCategories()).toEqual([]);
+    expect((await coach.getThreadOrganization(free)).ownAssignment).toBeNull();
+    expect((await coach.getThreadOrganization(entity)).ownAssignment).toBeNull();
+    expect((await client.getThreadOrganization(entity)).ownAssignment).toBe('nutrition');
+  });
+
+  it('rolls back cleared links after a realm failure and supports retry', async () => {
+    const { entity, other, coach } = await fixture();
     const category = await coach.createCategory('Повторить');
     await coach.assignThread(entity, { kind: 'custom', id: category.id });
+    await coach.assignThread(other, { kind: 'custom', id: category.id });
+    const setValues = FlexAttributesRepository.prototype.setValues;
     const spy = vi.spyOn(FlexAttributesRepository.prototype, 'setValues')
+      .mockImplementationOnce(function (this: typeof FlexAttributesRepository.prototype, target, entries) {
+        return setValues.call(this, target, entries);
+      })
       .mockRejectedValueOnce(new Error('SIMULATED_REALM_FAILURE'));
     await expect(coach.removeCategory(category.id)).rejects.toThrow('SIMULATED_REALM_FAILURE');
     spy.mockRestore();
     expect((await coach.listCategories()).map(item => item.id)).toContain(category.id);
+    expect((await coach.getThreadOrganization(entity)).ownAssignment).toBe('custom:' + category.id);
+    expect((await coach.getThreadOrganization(other)).ownAssignment).toBe('custom:' + category.id);
     await coach.removeCategory(category.id);
     expect(await coach.listCategories()).toEqual([]);
   });
