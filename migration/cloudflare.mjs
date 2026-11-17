@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { diagnoseSmoke, runSmoke } from './smoke-control.mjs';
 
 const BUCKET = 'mezfit-migration-uploads';
 const QUEUE = 'mezfit-migration-events';
@@ -53,16 +54,27 @@ export class CloudflareApi {
   }
 
   async request(path, { method = 'GET', body, optional = false } = {}) {
-    const response = await fetch(this.base + path, {
-      method, redirect: 'error', signal: AbortSignal.timeout(30000),
-      headers: {
-        Authorization: 'Bearer ' + this.token,
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    }).catch(() => null);
     const operation = this.label + ' ' + method + ' ' + path.split('?')[0];
-    requireState(response, operation + ' request failed');
+    const retryable = status => status == null || status === 429 || status >= 500;
+    let response;
+    // Only retry reads. A mutation may have committed before a lost response.
+    for (let attempt = 0; ; attempt++) {
+      response = await fetch(this.base + path, {
+        method, redirect: 'error', signal: AbortSignal.timeout(10000),
+        headers: {
+          Authorization: 'Bearer ' + this.token,
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      }).catch(() => null);
+      if (method !== 'GET' || !retryable(response?.status) || attempt >= 2) break;
+      const retryAfter = response?.headers.get('Retry-After');
+      const seconds = Number(retryAfter);
+      const hinted = retryAfter && !Number.isFinite(seconds) ? Date.parse(retryAfter) - Date.now() : seconds * 1000;
+      await response?.body?.cancel().catch(() => {});
+      await delay(Math.min(5000, Math.max(500 * 2 ** attempt, Number.isFinite(hinted) ? hinted : 0)));
+    }
+    if (!response) throw Object.assign(new Error(operation + ' request failed'), { transient: true });
     if (optional && response.status === 404) return null;
     const data = await response.json().catch(() => null);
     if (!response.ok || data?.success !== true || !Object.hasOwn(data, 'result')) {
@@ -74,8 +86,10 @@ export class CloudflareApi {
       }
       const access = [401, 403].includes(response.status) || codes.includes(10000) || codes.includes(9109)
         ? ' (verify ' + cloudflarePermission(path, method) + ')' : '';
-      throw new Error(operation + ' failed with HTTP ' + response.status + ' (Cloudflare codes: '
-        + (codes.join(', ') || 'none') + ')' + access);
+      throw Object.assign(new Error(operation + ' failed with HTTP ' + response.status + ' (Cloudflare codes: '
+        + (codes.join(', ') || 'none') + ')' + access), {
+        status: response.status, transient: retryable(response.status) && !access,
+      });
     }
     return data;
   }
@@ -352,7 +366,7 @@ function sameTokenPolicy(token, desired) {
     && !token.expires_on && !token.not_before;
 }
 
-async function inspect(infra, deploy, account, origin, requireQueueConsumer = false) {
+async function inspect(infra, deploy, account, origin) {
   const [databases, queue, tokens, worker, workflow, group] = await Promise.all([
     infra.pages('/d1/database'), inspectQueue(infra), infra.pages('/tokens'), inspectWorker(deploy),
     deploy.get('/workflows/' + WORKFLOW, true), writeGroup(infra),
@@ -367,7 +381,7 @@ async function inspect(infra, deploy, account, origin, requireQueueConsumer = fa
   const policy = tokenPolicy(account, group);
   const secretsReady = SECRET_NAMES.every(name => worker.secrets.includes(name));
   const secretsPartial = SECRET_NAMES.some(name => worker.secrets.includes(name));
-  const queueDifferences = queueConfigurationDifferences(queue, requireQueueConsumer);
+  const queueDifferences = queueConfigurationDifferences(queue);
   const conflicts = [
     ...(!bucket.private ? ['R2_BUCKET_IS_PUBLIC'] : []),
     ...(bucket.cors === 'conflict' ? ['R2_CORS_CONFLICT'] : []),
@@ -444,7 +458,12 @@ async function withConfig(account, databaseId, action, secretValues) {
   }
 }
 
-async function apply(infra, deploy, state, account, origin) {
+async function publishMigrationSecrets(account, secrets) {
+  await withConfig(account, null, (configFile, secretFile) =>
+    runWrangler(['deploy', '--config', configFile, '--secrets-file', secretFile], true), secrets);
+}
+
+export async function apply(infra, deploy, state, account, origin, publishSecrets = publishMigrationSecrets) {
   const { database, queue, bucket, token, policy } = state;
   if (!database) await infra.request('/d1/database', { method: 'POST', body: { name: DATABASE } });
   if (!bucket.bucket) await infra.request('/r2/buckets', { method: 'POST', body: { name: BUCKET } });
@@ -473,51 +492,69 @@ async function apply(infra, deploy, state, account, origin) {
       [SECRET_NAMES[0]]: minted.id,
       [SECRET_NAMES[1]]: createHash('sha256').update(minted.value).digest('hex'),
     };
-    await withConfig(account, null, (configFile, secretFile) =>
-      runWrangler(['deploy', '--config', configFile, '--secrets-file', secretFile], true), secretValues);
+    await publishSecrets(account, secretValues);
   }
+}
+
+function missingResources(state) {
+  return [
+    [state.database, 'D1'], [state.queue, 'Queue'], [state.bucket.bucket, 'R2 bucket'],
+    [state.bucket.cors === 'current', 'R2 CORS'], [state.bucket.notifications === 'current', 'R2 notification'],
+    [state.token, 'R2 uploader'], [state.secretsReady, 'Worker Secrets'],
+  ].filter(([ready]) => !ready).map(([, name]) => name);
 }
 
 function requireProvisioned(state) {
-  requireState(state.database && state.queue && state.bucket.bucket && state.bucket.cors === 'current'
-    && state.bucket.notifications === 'current' && state.token && state.secretsReady,
-  'MIGRATION_BOOTSTRAP_INCOMPLETE: run migration-bootstrap apply');
+  const missing = missingResources(state);
+  requireState(!missing.length, 'MIGRATION_BOOTSTRAP_INCOMPLETE: ' + missing.join(', ') + '; run migration-bootstrap apply');
 }
 
-async function smoke(api) {
-  const id = randomUUID();
-  const path = '/workflows/' + WORKFLOW + '/instances';
-  await api.request(path, { method: 'POST', body: { instance_id: id, params: JSON.stringify({ operation: 'smoke' }) } });
-  for (let attempt = 0; attempt < 65; attempt++) {
-    const result = await api.get(path + '/' + id);
-    if (result?.status === 'complete') {
-      requireState(result.output === 'MIGRATION_SMOKE_OK' || result.output === '"MIGRATION_SMOKE_OK"',
-        'MIGRATION_SMOKE_OUTPUT_INVALID ' + id);
-      console.log('Migration smoke passed: signed PUT, R2 privacy, Queue delivery, D1 registration and replay.');
-      return;
-    }
-    if (['errored', 'terminated', 'paused'].includes(result?.status)) {
-      const code = String(result?.error?.message).match(/^SMOKE_[A-Z_]+$/)?.[0];
-      throw new Error('MIGRATION_SMOKE_' + result.status.toUpperCase() + ' ' + id + (code ? ' ' + code : ''));
-    }
-    await delay(5000);
+async function verifyReadback(infra, deploy, account, origin, deploying) {
+  for (let attempt = 0; ; attempt++) {
+    const state = await inspect(infra, deploy, account, origin);
+    requireState(!state.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + state.conflicts.join('; '));
+    const missing = missingResources(state);
+    if (deploying && !state.workflow) missing.push('Cloudflare Workflow');
+    if (deploying && state.queue?.consumers?.length !== 1) missing.push('Queue consumer');
+    if (!missing.length) return;
+    requireState(attempt < 4, 'MIGRATION_INFRASTRUCTURE_READBACK_INCOMPLETE: ' + missing.join(', '));
+    console.log('Awaiting Cloudflare readback: ' + missing.join(', '));
+    await delay(1000 * 2 ** attempt);
   }
-  throw new Error('MIGRATION_SMOKE_TIMEOUT ' + id);
+}
+
+async function reportSmoke(lines) {
+  const output = lines.join('\n') + '\n';
+  console.log(output);
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await appendFile(process.env.GITHUB_STEP_SUMMARY, '\n### Migration Smoke\n\n' + output + '\n');
+  }
 }
 
 async function main() {
   const operation = process.env.MIGRATION_OPERATION ?? 'preview';
-  requireState(['preview', 'apply', 'deploy'].includes(operation), 'MIGRATION_OPERATION_INVALID');
+  requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
   if (operation === 'apply') requireState(process.env.MIGRATION_CONFIRMATION === 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE',
     'MIGRATION_APPLY_CONFIRMATION_REQUIRED');
   const account = (process.env.CLOUDFLARE_ACCOUNT_ID ?? '').toLowerCase();
+  const deploy = new CloudflareApi(account, process.env.CLOUDFLARE_API_TOKEN, 'CLOUDFLARE_API_TOKEN');
+  if (operation === 'diagnose') {
+    await diagnoseSmoke(deploy, process.env.MIGRATION_INSTANCE_ID, reportSmoke);
+    return;
+  }
   const origin = appOrigin(process.env.MEZFIT_APP_ORIGIN);
   const infra = new CloudflareApi(account, process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN, 'CLOUDFLARE_BOOTSTRAP_API_TOKEN');
-  const deploy = new CloudflareApi(account, process.env.CLOUDFLARE_API_TOKEN, 'CLOUDFLARE_API_TOKEN');
   const state = await inspect(infra, deploy, account, origin);
   await report(operation, state);
   if (operation === 'preview') return;
   requireState(!state.conflicts.length, 'MIGRATION_INFRASTRUCTURE_CONFLICT: see summary');
+  if (operation === 'smoke') {
+    requireProvisioned(state);
+    requireState(state.workflow, 'MIGRATION_WORKFLOW_MISSING');
+    requireState(state.queue?.consumers?.length === 1, 'MIGRATION_QUEUE_CONSUMER_MISSING');
+    await runSmoke(deploy, reportSmoke);
+    return;
+  }
   if (operation === 'apply') await apply(infra, deploy, state, account, origin);
   if (operation === 'deploy') {
     requireProvisioned(state);
@@ -526,13 +563,8 @@ async function main() {
       runWrangler(['deploy', '--config', configFile]);
     });
   }
-  const after = await inspect(infra, deploy, account, origin, operation === 'deploy');
-  requireState(!after.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + after.conflicts.join('; '));
-  requireProvisioned(after);
-  if (operation === 'deploy') {
-    requireState(after.workflow, 'MIGRATION_WORKFLOW_MISSING');
-    await smoke(deploy);
-  }
+  await verifyReadback(infra, deploy, account, origin, operation === 'deploy');
+  if (operation === 'deploy') await runSmoke(deploy, reportSmoke);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
