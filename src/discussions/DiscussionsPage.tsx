@@ -221,7 +221,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const feedback = categoryFeedback?.surface === categorySurface ? categoryFeedback : null;
   const categoryBusy = categoryFeedback?.scope === categoryScope && categoryFeedback.pending;
   const openCategoryDialog = (intent: CategoryDialogIntent) => {
-    if (covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
+    if (dialog || covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
     if (!notificationMessageId) cancelPendingOpen();
     setCategoryFeedback(null);
     setCategoryDialog({ surface: categorySurface, intent, parent });
@@ -465,8 +465,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
       if (!notificationMessageId) cancelPendingOpen();
       selectCategory(value);
-    }} hidden={false}
-      actionTab={{ label: '+', ariaLabel: 'Создать категорию', onClick: () => openCategoryDialog({ kind: 'create' }) }} />
+    }} hidden={false} fullWidth
+      actionTab={{ widthMultiplier: 2, label: '+', ariaLabel: 'Создать категорию', onClick: () => openCategoryDialog({ kind: 'create' }) }} />
     {manageCategory && !covered ? <div className="discussion-inbox__category-actions">
       <DiscussionCategoryMenu key={manageCategory.id} category={manageCategory} disabled={categoryBusy}
         onEdit={openCategoryDialog} />
