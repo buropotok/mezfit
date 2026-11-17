@@ -334,7 +334,8 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     const code = 'custom:' + id;
     const find = async () => this.flex.inspectPrefix(targets, DISCUSSION_ASSIGNMENT_KEY_PREFIX);
     const inspect = await find();
-    if (inspect.some(item => item.state === 'invalid' && item.value === code))
+    if (inspect.some(item => (item.state === 'pending' && item.value === undefined)
+      || (item.state === 'invalid' && item.value === code)))
       throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
     const byTarget = new Map<string, { target: FlexEntityTarget; keys: string[] }>();
     for (const item of inspect) {
@@ -349,7 +350,8 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
         ({ key: assignmentKey, valueType: 'string' as const, value: null })));
     }
     const remaining = await find();
-    if (remaining.some(item => item.value === code && item.state !== 'absent'))
+    if (remaining.some(item => (item.state === 'pending' && item.value === undefined)
+      || (item.value === code && item.state !== 'absent')))
       throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
     await this.flex.clearValue(this.personal, key, 'string');
   }
