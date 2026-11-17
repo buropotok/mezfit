@@ -1,0 +1,55 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "mezfit-migration",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-17",
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": {
+    "MIGRATION_INFRA_OWNER": "mezfit-migration-v1"
+  },
+  "secrets": {
+    "required": [
+      "MIGRATION_R2_ACCESS_KEY_ID",
+      "MIGRATION_R2_SECRET_ACCESS_KEY"
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "mezfit-migration-uploads"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "JOBS",
+      "database_name": "mezfit-migration-jobs",
+      "database_id": "REPLACE_WITH_MIGRATION_D1_ID",
+      "migrations_dir": "d1"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS",
+        "queue": "mezfit-migration-events"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "mezfit-migration-events",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "retry_delay": 10
+      }
+    ]
+  },
+  "workflows": [
+    {
+      "name": "mezfit-migration-workflow",
+      "binding": "MIGRATION_WORKFLOW",
+      "class_name": "MigrationWorkflow"
+    }
+  ]
+}
