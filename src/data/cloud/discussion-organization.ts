@@ -133,7 +133,7 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
   }
   private personalTables() { return [this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions]; }
   private async categorySnapshot(): Promise<DiscussionCategorySnapshot> {
-    const records = await this.flex.inspectPrefix([this.personal], DISCUSSION_CATEGORY_KEY_PREFIX);
+    const records = await this.flex.inspectPrefix([this.personal], DISCUSSION_CATEGORY_KEY_PREFIX, DISCUSSION_CATEGORY_KEY_PREFIX.length + 32);
     const categories: CategoryDefinition[] = [], diagnostics: string[] = [];
     const names = new Set<string>();
     for (const record of records.sort((a, b) => a.key.localeCompare(b.key))) {
@@ -336,7 +336,7 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     const pairs = await profileRelationships(this.db, this.actorUserId);
     const targets = [this.personal, ...pairs.map(pair => this.sharedTarget(pair.realmId, this.actorUserId))];
     const code = 'custom:' + id;
-    const find = async () => this.flex.inspectPrefix(targets, DISCUSSION_ASSIGNMENT_KEY_PREFIX);
+    const find = async () => this.flex.inspectPrefix(targets, DISCUSSION_ASSIGNMENT_KEY_PREFIX, DISCUSSION_ASSIGNMENT_KEY_PREFIX.length + 40);
     const inspect = await find();
     if (inspect.some(item => (item.state === 'pending' && item.value === undefined)
       || (item.state === 'invalid' && item.value === code)))
