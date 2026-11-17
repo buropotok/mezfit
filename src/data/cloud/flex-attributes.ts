@@ -322,7 +322,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
         rows: await this.db.flexAttributes.where('[realmId+key]')
           .between([realmId, prefix], [realmId, prefix + '\uffff'], true, true).toArray(),
       })));
-      const keysByRealm = new Map(definitions.map(({ realmId, rows }) =>
+      const keysByRealm = new Map<string, FlexAttributeRow[]>(definitions.map(({ realmId, rows }) =>
         [realmId, rows.filter(row => typeof row.key === 'string' && row.key.startsWith(prefix))]));
       const entries = targets.flatMap(target => (keysByRealm.get(target.realmId) ?? []).map(attribute =>
         ({ target, key: attribute.key, attribute })));
