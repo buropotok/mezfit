@@ -15,6 +15,8 @@ export type LiquidGlassTextOnlyActionTab = {
   label: string;
   onClick: () => void;
   ariaLabel?: string;
+  /** Multiply only the action's intrinsic slot width; defaults to 1. */
+  widthMultiplier?: 1 | 2;
 };
 
 export type LiquidGlassTextOnlyProps = {
@@ -56,12 +58,12 @@ function Scene({ tabs, value, onValueChange, actionTab, fullWidth = false, glass
       const tab = current.tabs[index];
       if (tab && tab.value !== current.value) current.onValueChange(tab.value);
       reconcileSelection();
-    }, () => latest.current.actionTab?.onClick());
+    }, () => latest.current.actionTab?.onClick(), actionTab?.widthMultiplier);
     return () => {
       controller.current?.dispose();
       controller.current = null;
     };
-  }, [shadow, order, Boolean(actionTab)]);
+  }, [shadow, order, Boolean(actionTab), actionTab?.widthMultiplier]);
 
   useLayoutEffect(() => {
     controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
