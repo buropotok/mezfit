@@ -1,0 +1,13 @@
+export const TRACE_PREFIX: string;
+export const TRACE_ID: RegExp;
+type TraceValue = string | number | boolean | null | undefined;
+export type TraceContext = { trace_id?: string | null; instance_id?: string | null; run_id?: string; worker_version?: string; attempt?: number };
+export type TraceFields = { attempt?: number | null; duration_ms?: number; error_code?: string; expected?: string; actual?: string;
+  details?: Record<string, TraceValue | number[]> };
+export type Trace = (component: string, stage: string, event: string, status: string, fields?: TraceFields) => void;
+export type TraceRecord = TraceContext & TraceFields & { timestamp: string; component: string; stage: string; event: string; status: string };
+export function sanitizeTrace(input: unknown): TraceRecord | null;
+export function traceWriter(context: TraceContext, sink?: (record: TraceRecord) => void): Trace;
+export function classifyTraceError(error: unknown): string;
+export function traceStepName(name: string): string;
+export function smokeTraceId(key: unknown): string | null;

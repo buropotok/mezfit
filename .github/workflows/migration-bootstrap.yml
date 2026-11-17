@@ -51,3 +51,11 @@ jobs:
           MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
+      - name: Upload sanitized migration trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-trace-${{ github.job }}-${{ github.run_attempt }}
+          path: migration-trace.json
+          if-no-files-found: warn
+          retention-days: 7

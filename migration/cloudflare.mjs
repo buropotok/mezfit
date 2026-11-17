@@ -1,3 +1,6 @@
+import { writeFile as writeTraceFile } from 'node:fs/promises';
+import { TRACE_ID, classifyTraceError, sanitizeTrace, traceWriter } from './trace.mjs';
+import { collectRuntimeTrace, historyRecords, observeInstance, summarizeTrace } from './trace-collector.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -30,6 +33,143 @@ const RULE = {
   description: 'Register migration backup uploads',
 };
 
+const TRACE_ARTIFACT = 'migration-trace.json';
+let runnerTrace = () => {};
+let workerVersion;
+
+function endpointName(path) {
+  const route = path.split('?')[0];
+  if (route === '') return 'account';
+  if (route.startsWith('/event_notifications/')) return route.includes('/queues/') ? 'r2-notification-rule' : 'r2-notifications';
+  if (route.startsWith('/r2/')) {
+    if (route.includes('/objects/')) return 'r2-object';
+    if (route.endsWith('/objects')) return 'r2-objects';
+    if (route.endsWith('/cors')) return 'r2-cors';
+    if (route.endsWith('/managed')) return 'r2-domains-managed';
+    if (route.endsWith('/custom')) return 'r2-domains-custom';
+    return route === '/r2/buckets' ? 'r2-buckets' : 'r2-bucket';
+  }
+  if (route === '/queues') return 'queues';
+  if (route.startsWith('/queues/')) return route.endsWith('/metrics') ? 'queue-metrics' : 'queue-details';
+  if (route.startsWith('/d1/')) return route.endsWith('/query') ? 'd1-query' : 'd1-databases';
+  if (route.startsWith('/tokens')) return route.endsWith('/permission_groups') ? 'token-permission-groups'
+    : route === '/tokens' ? 'token-list' : 'token-details';
+  if (route.startsWith('/workers/observability/')) return 'workers-telemetry';
+  if (route.startsWith('/workers/scripts/')) return route.endsWith('/settings') ? 'worker-settings'
+    : route.endsWith('/secrets') ? 'worker-secrets' : 'worker-subdomain';
+  if (route.startsWith('/workflows/')) return route.endsWith('/instances') ? 'workflow-instances'
+    : route.includes('/instances/') ? 'workflow-instance' : 'workflow';
+  return 'other';
+}
+
+function checkTrace(component, stage, event, state, expected, actual, details = {}) {
+  runnerTrace(component, stage, event, state, { expected, actual, details });
+}
+
+function safeStatusFailure(error, fallback) {
+  // Never include an arbitrary upstream message in the trace.
+  return /^(?:CLOUDFLARE|MIGRATION|R2|WORKFLOW|WRANGLER|D1|QUEUE)_[A-Z0-9_]{1,80}\b/.exec(error?.message ?? '')?.[0] ?? fallback;
+}
+
+async function capture(emit, component, stage, event, action, summarize) {
+  const start = Date.now();
+  emit(component, stage, event, 'STARTED', { expected: 'readback' });
+  try {
+    const value = await action();
+    emit(component, stage, event, 'OK', { duration_ms: Date.now() - start, ...summarize(value) });
+    return value;
+  } catch (error) {
+    emit(component, stage, event, 'NOT_OBSERVED', { expected: 'readback', actual: 'unavailable',
+      error_code: event + '_UNAVAILABLE', duration_ms: Date.now() - start, details: { http_status: error?.status } });
+  }
+}
+
+async function finalTrace({ id, operation, runtime, records, deploy, infra, state, emit, failure, since }) {
+  const activeSmoke = runtime.started || operation === 'diagnose';
+  const history = [];
+  let coverage = {};
+  const pending = [];
+  if (activeSmoke && deploy) {
+    pending.push((async () => {
+      const instance = runtime.instance ?? await observeInstance(deploy, id, emit);
+      if (instance) {
+        coverage.workflow_history = 'received';
+        history.push(...historyRecords(instance, id));
+      } else coverage.workflow_history = 'unavailable';
+      if (runtime.cleanupId) {
+        const cleanup = await observeInstance(deploy, runtime.cleanupId, emit, { polls: 5 });
+        coverage.cleanup = cleanup?.status === 'complete' ? 'completed' : 'unconfirmed';
+        if (cleanup) history.push(...historyRecords(cleanup, id, { instance_id: runtime.cleanupId }));
+        emit('cleanup', 'failed-smoke-cleanup', 'CLEANUP_READBACK', coverage.cleanup === 'completed' ? 'OK' : 'NOT_OBSERVED',
+          { expected: 'completed', actual: coverage.cleanup });
+      }
+      let from = since - 90000;
+      if (operation === 'diagnose' && instance) {
+        const queued = Date.parse(instance.queued ?? instance.start);
+        if (Number.isFinite(queued)) from = queued - 30000;
+      }
+      const result = await collectRuntimeTrace(deploy, infra ?? deploy, id, from, emit);
+      history.push(...result.records);
+      Object.assign(coverage, result.coverage);
+    })());
+  }
+  if (state?.queue?.queue_id && (runtime.started || failure)) {
+    pending.push(capture(emit, 'queue', 'queue-metrics', 'QUEUE_BACKLOG_SNAPSHOT',
+      () => infra.get('/queues/' + state.queue.queue_id + '/metrics'),
+      value => ({ actual: 'aggregate-only', details: { source: 'queue_metrics', backlog_count: value?.backlog_count,
+        backlog_bytes: value?.backlog_bytes, oldest_message_timestamp_ms: value?.oldest_message_timestamp_ms } })));
+  }
+  if (state?.bucket?.bucket && (runtime.started || failure)) {
+    pending.push(capture(emit, 'r2', 'r2-notification-rule', 'R2_NOTIFICATION_SNAPSHOT',
+      () => inspectBucket(infra, state.queue, state.origin),
+      value => ({ actual: value.notifications, details: { source: 'configuration', matched: value.notifications === 'current' } })));
+  }
+  if (state?.database?.uuid && runtime.started && deploy) {
+    for (const [table, clause, param] of [
+      ['migration_jobs', 'object_key', 'smoke/' + id], ['migration_smoke_replays', 'replay_id', id],
+    ]) {
+      pending.push(capture(emit, 'd1', 'd1-final-read', 'D1_REST_SELECT',
+        async () => {
+          const response = await deploy.request('/d1/database/' + state.database.uuid + '/query', {
+            method: 'POST', body: { sql: 'SELECT COUNT(*) AS count FROM ' + table + ' WHERE ' + clause + ' = ?', params: [param] },
+          });
+          const count = response.result?.[0]?.results?.[0]?.count;
+          if (!Number.isSafeInteger(count) || response.result[0]?.success !== true) throw new Error('D1_TRACE_QUERY_INVALID');
+          return count;
+        }, count => ({ actual: count ? 'row-found' : 'row-missing', details: { table, sql: 'SELECT', count, exists: count > 0 } })));
+    }
+  }
+  await Promise.allSettled(pending);
+  if (activeSmoke) {
+    emit('r2', 'r2-notification-published', 'R2_NOTIFICATION_PUBLISHED', 'NOT_OBSERVED', {
+      expected: 'per-object-publisher-receipt', actual: 'no-provider-receipt', details: { source: 'configuration' },
+    });
+  }
+  const all = [...records, ...history].map(row => sanitizeTrace({ ...row, run_id: row.run_id ?? process.env.GITHUB_RUN_ID }))
+    .filter(Boolean).sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+  const report = summarizeTrace(all, activeSmoke, { workflow: coverage.workflow_history === 'received' });
+  const smokeResult = failure ? 'FAILED' : runtime.started ? 'OK' : operation === 'diagnose' ? 'HISTORY_ONLY' : 'SKIPPED';
+  const missing = Object.entries(coverage).filter(([, value]) => !['received', 'completed'].includes(value));
+  if (activeSmoke) missing.push(['r2-per-object-publisher-receipt', 'unavailable']);
+  const output = [
+    '## MIGRATION TRACE', 'Trace ID: ' + id, 'Commit: ' + (process.env.GITHUB_SHA ?? 'unavailable'),
+    'Worker version: ' + (workerVersion ?? all.findLast(row => row.worker_version)?.worker_version ?? 'unavailable'),
+    'Smoke result: ' + smokeResult, 'Collection: ' + (missing.length ? 'PARTIAL' : 'observed sources collected'),
+    ...missing.map(([source, value]) => '- ' + source + ': ' + value),
+    'First confirmed failure: ' + (report.first_confirmed_failure?.stage ?? 'unestablished'),
+    'Last confirmed success: ' + (report.last_confirmed_success?.stage ?? 'unobserved'),
+    ...(report.first_confirmed_failure ? ['Confirmed failure code: ' + report.first_confirmed_failure.error_code] : []),
+    ...(activeSmoke && !report.first_confirmed_failure && failure
+      ? ['Cause unestablished. Use Worker and Workflow trace sources above; aggregate backlog cannot prove delivery of this object.'] : []),
+    '', '| Stage | Status |', '|---|---|', ...report.stages.map(row => '| ' + row.stage + ' | ' + row.status + ' |'),
+  ];
+  await writeTraceFile(TRACE_ARTIFACT, JSON.stringify({ trace_id: id, smoke_result: smokeResult,
+    coverage, missing, summary: report, events: all }, null, 2) + '\n', { mode: 0o600 });
+  console.log(output.join('\n'));
+  for (const row of all) console.log(JSON.stringify(row));
+  if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, output.join('\n') + '\n');
+}
+
 function requireState(condition, code) {
   if (!condition) throw new Error(code);
 }
@@ -53,35 +193,75 @@ export class CloudflareApi {
     this.label = label;
   }
 
-  async request(path, { method = 'GET', body, optional = false } = {}) {
+  async request(path, { method = 'GET', body, optional = false, raw = false } = {}) {
     const operation = this.label + ' ' + method + ' ' + path.split('?')[0];
     const retryable = status => status == null || status === 429 || status >= 500;
     let response;
-    // Only retry reads. A mutation may have committed before a lost response.
+    const endpoint = endpointName(path);
+    const stage = 'api-' + endpoint;
+    // A mutation may have committed before a lost response.
     for (let attempt = 0; ; attempt++) {
+      const start = Date.now();
+      let error;
+      runnerTrace('cloudflare-api', stage, 'CLOUDFLARE_REQUEST', 'STARTED', {
+        attempt: attempt + 1, expected: 'cloudflare-response', details: { endpoint, method, timeout_ms: 10000 },
+      });
       response = await fetch(this.base + path, {
         method, redirect: 'error', signal: AbortSignal.timeout(10000),
-        headers: {
-          Authorization: 'Bearer ' + this.token,
-          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-        },
+        headers: { Authorization: 'Bearer ' + this.token,
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      }).catch(() => null);
-      if (method !== 'GET' || !retryable(response?.status) || attempt >= 2) break;
+      }).catch(caught => { error = caught; return null; });
+      const canRetry = method === 'GET' && retryable(response?.status) && attempt < 2;
+      const cfCodes = response && !response.ok && !raw ? await response.clone().json()
+        .then(value => Array.isArray(value?.errors) ? value.errors.map(item => item?.code) : [], () => []) : [];
+      runnerTrace('cloudflare-api', stage, 'CLOUDFLARE_REQUEST', response?.ok ? 'OK'
+        : optional && response?.status === 404 ? 'NOT_OBSERVED' : 'FAILED', {
+        attempt: attempt + 1, duration_ms: Date.now() - start, expected: 'cloudflare-response',
+        actual: response ? 'http-' + response.status : 'transport-error',
+        error_code: response?.ok || optional && response?.status === 404 ? undefined : 'CLOUDFLARE_REQUEST_FAILED',
+        details: { endpoint, method, http_status: response?.status, cf_codes: cfCodes, can_retry: canRetry,
+          classification: error ? classifyTraceError(error) : undefined },
+      });
+      if (!canRetry) break;
       const retryAfter = response?.headers.get('Retry-After');
       const seconds = Number(retryAfter);
       const hinted = retryAfter && !Number.isFinite(seconds) ? Date.parse(retryAfter) - Date.now() : seconds * 1000;
+      const delayMs = Math.min(5000, Math.max(500 * 2 ** attempt, Number.isFinite(hinted) ? hinted : 0));
+      runnerTrace('cloudflare-api', stage, 'CLOUDFLARE_REQUEST_RETRY', 'RETRY', {
+        attempt: attempt + 1, actual: 'transient-response', details: { endpoint, method, delay_ms: delayMs },
+      });
       await response?.body?.cancel().catch(() => {});
-      await delay(Math.min(5000, Math.max(500 * 2 ** attempt, Number.isFinite(hinted) ? hinted : 0)));
+      await delay(delayMs);
     }
     if (!response) throw Object.assign(new Error(operation + ' request failed'), { transient: true });
     if (optional && response.status === 404) return null;
+    if (raw && response.ok) {
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('MIGRATION_TRACE_R2_BODY_MISSING');
+      let remaining = 100000;
+      let value = '';
+      const decoder = new TextDecoder();
+      try {
+        while (remaining > 0) {
+          const chunk = await reader.read();
+          if (chunk.done) return value + decoder.decode();
+          remaining -= chunk.value.length;
+          if (remaining < 0) break;
+          value += decoder.decode(chunk.value, { stream: true });
+        }
+      } finally {
+        await reader.cancel().catch(() => {});
+      }
+      throw new Error('MIGRATION_TRACE_R2_BODY_LIMIT');
+    }
     const data = await response.json().catch(() => null);
     if (!response.ok || data?.success !== true || !Object.hasOwn(data, 'result')) {
       const codes = Array.isArray(data?.errors) ? data.errors.map(error => error?.code).filter(Number.isInteger) : [];
       // R2 returns this error before the bucket has any notification rules.
       if (method === 'GET' && path === NOTIFICATIONS && response.status === 404
         && data?.success === false && data.errors?.length === 1 && codes[0] === 11015) {
+        checkTrace('r2', 'r2-notifications', 'R2_NOTIFICATION_CONFIGURATION_ABSENT', 'NOT_OBSERVED', 'configured-rule', 'rule-missing');
         return { success: true, result: { bucketName: BUCKET, queues: [] } };
       }
       const access = [401, 403].includes(response.status) || codes.includes(10000) || codes.includes(9109)
@@ -219,6 +399,19 @@ export async function inspectBucket(api, queue, origin) {
   const rules = cors?.rules ?? [];
   const links = notificationQueueLinks(notifications);
   const differences = links.length ? notificationDifferences(links, queue) : [];
+  const rulesFound = links.flatMap(link => Array.isArray(link?.rules) ? link.rules : []);
+  checkTrace('r2', 'r2-notification-rule', 'R2_NOTIFICATION_MATCH', differences.length ? 'FAILED' : links.length ? 'OK' : 'NOT_OBSERVED',
+    'unfiltered-object-create-rule', differences.length ? 'configuration-conflict' : links.length ? 'matches-smoke-key' : 'rule-missing',
+    { bucket: BUCKET, queue: QUEUE, rule_count: rulesFound.length,
+      prefix_filter: rulesFound.some(rule => !!rule?.prefix), suffix_filter: rulesFound.some(rule => !!rule?.suffix) });
+  for (const action of RULE.actions) checkTrace('r2', 'r2-notification-action', 'R2_NOTIFICATION_ACTION',
+    rulesFound.some(rule => Array.isArray(rule?.actions) && rule.actions.includes(action)) ? 'OK' : 'NOT_OBSERVED',
+    'subscribed-action', 'configuration-only', { action });
+  checkTrace('r2', 'r2-privacy', 'R2_PRIVACY_CHECK', !managed.enabled && !custom.domains.length ? 'OK' : 'FAILED',
+    'private-bucket', !managed.enabled && !custom.domains.length ? 'private-bucket' : 'public-exposure',
+    { private: !managed.enabled && !custom.domains.length });
+  checkTrace('r2', 'r2-cors', 'R2_CORS_CHECK', !rules.length ? 'NOT_OBSERVED' : matchesCors(rules, origin) ? 'OK' : 'FAILED',
+    'matching-cors', !rules.length ? 'cors-missing' : matchesCors(rules, origin) ? 'matches' : 'configuration-conflict');
   return {
     bucket: true,
     cors: !rules.length ? 'missing' : matchesCors(rules, origin) ? 'current' : 'conflict',
@@ -237,8 +430,26 @@ async function inspectWorker(api) {
   requireState(Array.isArray(settings.bindings) && Array.isArray(secrets)
     && typeof subdomain?.enabled === 'boolean' && typeof subdomain?.previews_enabled === 'boolean',
   'MIGRATION_WORKER_SETTINGS_RESPONSE_INVALID');
+  const observability = settings.observability;
+  const logs = observability?.logs;
+  const observed = observability?.enabled === true && logs?.enabled === true
+    && logs.invocation_logs === true && logs.head_sampling_rate === 1;
+  checkTrace('cloudflare-api', 'worker-observability', 'WORKERS_LOGS_READBACK', observed ? 'OK' : 'FAILED',
+    'logs-and-invocations-at-full-sampling', observed ? 'verified' : 'observability-not-verified',
+    { enabled: observability?.enabled, logs_enabled: logs?.enabled, invocation_logs: logs?.invocation_logs, sampling: logs?.head_sampling_rate });
+  for (const name of SECRET_NAMES) {
+    const present = secrets.some(secret => secret.type === 'secret_text' && secret.name === name);
+    checkTrace('cloudflare-api', 'worker-secrets', 'WORKER_SECRET_PRESENCE', present ? 'OK' : 'NOT_OBSERVED',
+      'secret-present', present ? 'present' : 'missing', { present, binding: name });
+  }
+  for (const [name, type] of [['UPLOADS', 'r2_bucket'], ['EVENTS', 'queue'], ['JOBS', 'd1'], ['MIGRATION_WORKFLOW', 'workflow'], ['MIGRATION_VERSION', 'version_metadata']]) {
+    const present = settings.bindings.some(binding => binding.name === name && binding.type === type);
+    checkTrace('cloudflare-api', 'worker-bindings', 'WORKER_BINDING_READBACK', present ? 'OK' : 'NOT_OBSERVED',
+      'binding-present', present ? 'present' : 'missing', { present, binding: name });
+  }
   return {
     exists: true,
+    observability: observed,
     owned: settings.bindings.some(binding => binding.name === 'MIGRATION_INFRA_OWNER'
       && binding.type === 'plain_text' && binding.text === OWNER),
     private: !subdomain.enabled && !subdomain.previews_enabled,
@@ -382,6 +593,21 @@ async function inspect(infra, deploy, account, origin) {
   const secretsReady = SECRET_NAMES.every(name => worker.secrets.includes(name));
   const secretsPartial = SECRET_NAMES.some(name => worker.secrets.includes(name));
   const queueDifferences = queueConfigurationDifferences(queue);
+  for (const [stage, event, present] of [
+    ['d1-database', 'D1_DISCOVERED', !!database], ['queue', 'QUEUE_DISCOVERED', !!queue],
+    ['r2-bucket', 'R2_BUCKET_DISCOVERED', bucket.bucket], ['worker', 'WORKER_DISCOVERED', worker.exists],
+    ['workflow', 'WORKFLOW_DISCOVERED', !!workflow], ['r2-uploader', 'R2_UPLOADER_DISCOVERED', !!token],
+  ]) checkTrace('cloudflare-api', stage, event, present ? 'OK' : 'NOT_OBSERVED', 'resource-present',
+    present ? 'present' : 'missing');
+  const scoped = !!token && sameTokenPolicy(token, policy);
+  checkTrace('cloudflare-api', 'r2-uploader-scope', 'R2_UPLOADER_SCOPE_CHECK', !token ? 'NOT_OBSERVED' : scoped ? 'OK' : 'FAILED',
+    'bucket-scoped-upload-token', scoped ? 'matches' : token ? 'configuration-conflict' : 'missing');
+  for (const [kind, entries] of [['producer', queue?.producers], ['consumer', queue?.consumers]]) {
+    const bad = queueDifferences.some(item => item.startsWith(kind + 's'));
+    checkTrace('queue', 'queue-' + kind, 'QUEUE_' + kind.toUpperCase() + '_CHECK', bad ? 'FAILED' : entries?.length ? 'OK' : 'NOT_OBSERVED',
+      'matching-' + kind + '-configuration', bad ? 'configuration-conflict' : entries?.length ? 'matches' : 'missing',
+      { count: Array.isArray(entries) ? entries.length : undefined });
+  }
   const conflicts = [
     ...(!bucket.private ? ['R2_BUCKET_IS_PUBLIC'] : []),
     ...(bucket.cors === 'conflict' ? ['R2_CORS_CONFLICT'] : []),
@@ -412,6 +638,10 @@ async function report(operation, state) {
     '- Worker uploader secrets: ' + (state.secretsReady ? 'present' : 'missing'),
     ...state.conflicts.map(issue => '- Conflict: ' + issue),
   ];
+  checkTrace('github', 'infrastructure-state', 'INFRASTRUCTURE_COMPARISON', state.conflicts.length ? 'FAILED' : 'OK',
+    'no-configuration-conflicts', state.conflicts.length ? 'configuration-conflict' : 'no-conflicts', { count: state.conflicts.length });
+  checkTrace('github', 'infrastructure-state', 'INFRASTRUCTURE_RESOURCE_GAPS', missingResources(state).length ? 'NOT_OBSERVED' : 'OK',
+    'required-resources-present', missingResources(state).length ? 'missing-resources' : 'ready', { count: missingResources(state).length });
   const summary = lines.join('\n') + '\n';
   console.log(summary);
   if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, summary);
@@ -421,7 +651,32 @@ function runWrangler(args, hideOutput = false) {
   const binary = fileURLToPath(new URL('../node_modules/.bin/wrangler', import.meta.url));
   const env = { ...process.env, WRANGLER_SEND_METRICS: 'false' };
   delete env.CLOUDFLARE_BOOTSTRAP_API_TOKEN;
-  const result = spawnSync(binary, args, { env, stdio: hideOutput ? 'pipe' : 'inherit', encoding: 'utf8' });
+  const operation = args.includes('--version') ? 'version' : args.includes('list') ? 'migrations-list'
+    : args[0] === 'd1' ? 'migrations-apply' : 'deploy';
+  const start = Date.now();
+  runnerTrace('wrangler', 'wrangler-' + operation, 'WRANGLER_COMMAND', 'STARTED', { expected: 'exit-0', details: { operation } });
+  const result = spawnSync(binary, args, { env, stdio: 'pipe', encoding: 'utf8', timeout: 180000 });
+  const output = result.stdout ?? '';
+  const codes = [...((result.stderr ?? '') + output).matchAll(/\[code: (\d+)\]/g)].map(match => Number(match[1]));
+  if (!hideOutput) {
+    const version = /(?:^|\s)(\d{1,3}\.\d{1,4}\.\d{1,4})(?:\s|$)/.exec(output)?.[1];
+    if (operation === 'version' && version) checkTrace('wrangler', 'wrangler-version', 'WRANGLER_VERSION', 'OK', 'pinned-version', 'found', { version });
+    for (const line of output.split('\n')) {
+      const migration = /\b(000[1-9]_[a-z0-9_]+\.sql)\b/.exec(line)?.[1];
+      if (migration) checkTrace('d1', 'd1-migration', 'D1_MIGRATION', line.includes('✅') ? 'OK' : line.includes('❌') ? 'FAILED' : 'STARTED',
+        'migration-applied', line.includes('✅') ? 'applied' : line.includes('❌') ? 'failed' : 'listed', { migration, table: 'd1_migrations' });
+      if (/Uploaded mezfit-migration\b/.test(line)) checkTrace('wrangler', 'worker-upload', 'WRANGLER_WORKER_UPLOAD', 'OK', 'uploaded', 'uploaded');
+      if (/Producer for mezfit-migration-events/.test(line)) checkTrace('queue', 'producer-deploy', 'QUEUE_PRODUCER_REGISTERED', 'OK', 'registered', 'registered');
+      if (/Consumer for mezfit-migration-events/.test(line)) checkTrace('queue', 'consumer-deploy', 'QUEUE_CONSUMER_REGISTERED', 'OK', 'registered', 'registered');
+      if (/workflow: mezfit-migration-workflow/.test(line)) checkTrace('workflow', 'workflow-deploy', 'WORKFLOW_REGISTERED', 'OK', 'registered', 'registered');
+    }
+    const versionId = /Current Version ID: ([a-f0-9-]{36})/i.exec(output)?.[1];
+    if (versionId) workerVersion = versionId;
+  }
+  runnerTrace('wrangler', 'wrangler-' + operation, 'WRANGLER_COMMAND', result.status === 0 ? 'OK' : 'FAILED', {
+    expected: 'exit-0', actual: result.status === 0 ? 'exit-0' : 'command-failed', duration_ms: Date.now() - start,
+    error_code: result.status === 0 ? undefined : 'WRANGLER_FAILED', details: { operation, cf_codes: codes },
+  });
   if (result.status === 0) return;
   if (hideOutput) {
     // Print numeric API codes only. Wrangler output can include submitted bindings.
@@ -434,6 +689,7 @@ function runWrangler(args, hideOutput = false) {
 
 async function withConfig(account, databaseId, action, secretValues) {
   const path = fileURLToPath(new URL('./wrangler.json', import.meta.url));
+  checkTrace('wrangler', 'wrangler-config', 'WRANGLER_CONFIG_BUILD', 'STARTED', 'isolated-config', 'building');
   const config = JSON.parse(await readFile(path, 'utf8'));
   config.vars.CLOUDFLARE_ACCOUNT_ID = account;
   if (databaseId) {
@@ -451,6 +707,7 @@ async function withConfig(account, databaseId, action, secretValues) {
     await writeFile(configFile, JSON.stringify(config), { flag: 'wx' });
     const secretFile = temp ? join(temp, 'secrets.json') : null;
     if (secretFile) await writeFile(secretFile, JSON.stringify(secretValues), { mode: 0o600, flag: 'wx' });
+    checkTrace('wrangler', 'wrangler-config', 'WRANGLER_CONFIG_BUILD', 'OK', 'isolated-config', 'generated');
     await action(configFile, secretFile);
   } finally {
     await rm(configFile, { force: true });
@@ -512,11 +769,21 @@ function requireProvisioned(state) {
 async function verifyReadback(infra, deploy, account, origin, deploying) {
   for (let attempt = 0; ; attempt++) {
     const state = await inspect(infra, deploy, account, origin);
-    requireState(!state.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + state.conflicts.join('; '));
+    if (state.conflicts.length) {
+      await report('readback', state);
+      throw new Error('MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT');
+    }
     const missing = missingResources(state);
     if (deploying && !state.workflow) missing.push('Cloudflare Workflow');
     if (deploying && state.queue?.consumers?.length !== 1) missing.push('Queue consumer');
-    if (!missing.length) return;
+    if (deploying && state.worker.exists && !state.worker.observability) missing.push('Workers Logs readback');
+    if (!missing.length) {
+      checkTrace('github', 'infrastructure-ready', 'INFRASTRUCTURE_READY', 'OK', 'deployed-resource-readback', 'verified');
+      return state;
+    }
+    runnerTrace('github', 'infrastructure-ready', 'INFRASTRUCTURE_READBACK_RETRY', 'RETRY', {
+      attempt: attempt + 1, actual: 'awaiting-ready-resources', details: { count: missing.length, delay_ms: 1000 * 2 ** attempt },
+    });
     requireState(attempt < 4, 'MIGRATION_INFRASTRUCTURE_READBACK_INCOMPLETE: ' + missing.join(', '));
     console.log('Awaiting Cloudflare readback: ' + missing.join(', '));
     await delay(1000 * 2 ** attempt);
@@ -533,43 +800,89 @@ async function reportSmoke(lines) {
 
 async function main() {
   const operation = process.env.MIGRATION_OPERATION ?? 'preview';
-  requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
-  if (operation === 'apply') requireState(process.env.MIGRATION_CONFIRMATION === 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE',
-    'MIGRATION_APPLY_CONFIRMATION_REQUIRED');
-  const account = (process.env.CLOUDFLARE_ACCOUNT_ID ?? '').toLowerCase();
-  const deploy = new CloudflareApi(account, process.env.CLOUDFLARE_API_TOKEN, 'CLOUDFLARE_API_TOKEN');
-  if (operation === 'diagnose') {
-    await diagnoseSmoke(deploy, process.env.MIGRATION_INSTANCE_ID, reportSmoke);
-    return;
-  }
-  const origin = appOrigin(process.env.MEZFIT_APP_ORIGIN);
-  const infra = new CloudflareApi(account, process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN, 'CLOUDFLARE_BOOTSTRAP_API_TOKEN');
-  const state = await inspect(infra, deploy, account, origin);
-  await report(operation, state);
-  if (operation === 'preview') return;
-  requireState(!state.conflicts.length, 'MIGRATION_INFRASTRUCTURE_CONFLICT: see summary');
-  if (operation === 'smoke') {
-    requireProvisioned(state);
-    requireState(state.workflow, 'MIGRATION_WORKFLOW_MISSING');
-    requireState(state.queue?.consumers?.length === 1, 'MIGRATION_QUEUE_CONSUMER_MISSING');
-    await runSmoke(deploy, reportSmoke);
-    return;
-  }
-  if (operation === 'apply') await apply(infra, deploy, state, account, origin);
-  if (operation === 'deploy') {
-    requireProvisioned(state);
-    await withConfig(account, state.database.uuid, configFile => {
-      runWrangler(['d1', 'migrations', 'apply', 'JOBS', '--remote', '--config', configFile]);
-      runWrangler(['deploy', '--config', configFile]);
+  const since = Date.now();
+  const requested = process.env.MIGRATION_INSTANCE_ID;
+  const id = operation === 'diagnose' && TRACE_ID.test(requested ?? '') ? requested : randomUUID();
+  const runId = process.env.GITHUB_RUN_ID;
+  const records = [];
+  const runtime = { started: false };
+  runnerTrace = (component, stage, event, status, fields) => traceWriter({
+    trace_id: id, run_id: runId, instance_id: runtime.started || operation === 'diagnose' ? id : undefined,
+    worker_version: workerVersion,
+  }, row => { records.push(row); console.log(JSON.stringify(row)); })(component, stage, event, status, fields);
+  const emit = runnerTrace;
+  let deploy;
+  let infra;
+  let state;
+  let failure;
+  try {
+    emit('github', 'actions-invocation', 'MIGRATION_ACTION_RUN', 'STARTED', {
+      expected: 'operation-completed', details: { operation, sha: process.env.GITHUB_SHA },
     });
+    emit('github', 'actions-inputs', 'MIGRATION_ACTION_INPUTS', 'OK', { actual: 'presence-checked', details: {
+      has_account_id: !!process.env.CLOUDFLARE_ACCOUNT_ID, has_origin: !!process.env.MEZFIT_APP_ORIGIN,
+      has_deploy_token: !!process.env.CLOUDFLARE_API_TOKEN, has_bootstrap_token: !!process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN,
+    } });
+    requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
+    if (operation === 'apply') requireState(process.env.MIGRATION_CONFIRMATION === 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE',
+      'MIGRATION_APPLY_CONFIRMATION_REQUIRED');
+    const account = (process.env.CLOUDFLARE_ACCOUNT_ID ?? '').toLowerCase();
+    deploy = new CloudflareApi(account, process.env.CLOUDFLARE_API_TOKEN, 'CLOUDFLARE_API_TOKEN');
+    if (operation === 'diagnose') {
+      await diagnoseSmoke(deploy, requested, reportSmoke);
+      return;
+    }
+    const origin = appOrigin(process.env.MEZFIT_APP_ORIGIN);
+    infra = new CloudflareApi(account, process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN, 'CLOUDFLARE_BOOTSTRAP_API_TOKEN');
+    await capture(emit, 'cloudflare-api', 'account', 'CLOUDFLARE_ACCOUNT_READ', () => infra.get(''),
+      result => ({ actual: result ? 'account-confirmed' : 'account-unavailable' }));
+    state = { ...await inspect(infra, deploy, account, origin), origin };
+    await report(operation, state);
+    if (operation === 'preview') return;
+    requireState(!state.conflicts.length, 'MIGRATION_INFRASTRUCTURE_CONFLICT: see summary');
+    if (operation === 'apply' || operation === 'deploy') runWrangler(['--version']);
+    if (operation === 'apply') {
+      await apply(infra, deploy, state, account, origin);
+    } else {
+      requireProvisioned(state);
+      if (operation === 'deploy') {
+        await withConfig(account, state.database.uuid, configFile => {
+          runWrangler(['d1', 'migrations', 'list', 'JOBS', '--remote', '--config', configFile]);
+          runWrangler(['d1', 'migrations', 'apply', 'JOBS', '--remote', '--config', configFile]);
+          runWrangler(['deploy', '--config', configFile]);
+        });
+      }
+    }
+    state = { ...await verifyReadback(infra, deploy, account, origin, operation !== 'apply'), origin };
+    if (operation === 'deploy' || operation === 'smoke') {
+      emit('github', 'smoke-transition', 'SMOKE_START', 'STARTED', { expected: 'workflow-created' });
+      runtime.started = true;
+      await runSmoke(deploy, reportSmoke, { id, runId, emit, runtime });
+    }
+  } catch (error) {
+    failure = error;
+    emit('github', 'actions-invocation', 'MIGRATION_ACTION_RUN', 'FAILED', {
+      error_code: safeStatusFailure(error, 'MIGRATION_ACTION_FAILED'), duration_ms: Date.now() - since,
+      expected: 'operation-completed', actual: 'operation-failed', details: { operation, classification: classifyTraceError(error) },
+    });
+    throw error;
+  } finally {
+    if (!failure) emit('github', 'actions-invocation', 'MIGRATION_ACTION_RUN', 'OK', {
+      duration_ms: Date.now() - since, actual: 'operation-completed', details: { operation },
+    });
+    try {
+      await finalTrace({ id, operation, runtime, records, deploy, infra, state, emit, failure, since });
+    } catch (error) {
+      emit('github', 'trace-collection', 'TRACE_REPORT_FAILED', 'NOT_OBSERVED', { actual: 'partial',
+        error_code: 'TRACE_REPORT_FAILED', details: { classification: classifyTraceError(error) } });
+      if (!failure) throw new Error('MIGRATION_TRACE_REPORT_FAILED');
+    }
   }
-  await verifyReadback(infra, deploy, account, origin, operation === 'deploy');
-  if (operation === 'deploy') await runSmoke(deploy, reportSmoke);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
-    console.error(error.message);
+    console.error(safeStatusFailure(error, 'MIGRATION_ACTION_FAILED'));
     process.exitCode = 1;
   });
 }
