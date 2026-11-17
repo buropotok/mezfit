@@ -144,32 +144,23 @@ thread list changes. No polling or network wait is introduced.
 
 ## Category removal and partial synchronization
 
-`removeCategory(id)`:
+The removal runs in one local IndexedDB transaction. It verifies the actor's
+category (including an existing tombstone for explicit retry), scans the actor's
+personal realm and authorized relationships, and clears matching own assignment
+values to `null`. It tombstones the category last. The transaction rolls back
+all local changes on error and prevents a concurrent local reassignment from
+interleaving with the scan or clears.
 
-1. Verifies the own category's definition (an existing null tombstone is
-   accepted for safe explicit retry).
-2. Enumerates active authorized relationship realms and the actor's personal
-   realm. Collects only **own** `discussion_thread_*` assignments pointing to
-   `custom:<id>`.
-3. Clears these values to `null` via the typed Flex repository, grouped per
-   target/realm. Does not touch peer assignments or thread/message rows.
-   If a definition is present but its assignment value has not yet hydrated,
-   the operation fails safely and can be retried after hydration.
-4. Re-reads locally visible assignments. If one still refers to the removed
-   ID, fails rather than claiming success.
-5. Tombstones the private category value *last*.
+A hydrated shared definition may belong to a thread that only the other
+participant categorized. When the peer value is present and the actor has no
+local value, that definition does not block removal. If no value is visible
+for either side, removal defers so it can be retried after hydration. A valid
+own value arriving before its definition can be cleared immediately. The
+operation never writes peer assignments, threads or messages.
 
-An error at any realm leaves the category definition active (unless it was
-already tombstoned) and the operation throws; retry re-scans and clears any
-remaining values. Successful clears remain idempotent. Cross-realm writes are
-**not cloud-atomic**: different devices may temporarily observe cleared
-assignments and the still-active name, or a late assignment after a prior
-tombstone. Invalid or stale IDs remain non-authoritative and safely fall back;
-explicitly retrying removal can clean late arrivals. Value-before-definition
-rows with a valid deterministic Flex attribute ID can be swept immediately,
-including while pending. Values not locally hydrated at all, or rows with
-unrecoverably malformed identifiers, cannot be enumerated until their data
-arrives or is repaired; they never grant or revoke discussion access.
+Dexie Cloud replicates in the background. Different devices can temporarily
+observe a late assignment after a tombstone. Own stale IDs fall back to the
+normal classification, and retrying removal can clean up these arrivals.
 No background migration, Worker task, second sync engine, or delete grant is involved.
 
 ## Authorization and security limits
