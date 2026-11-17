@@ -769,7 +769,10 @@ function requireProvisioned(state) {
 async function verifyReadback(infra, deploy, account, origin, deploying) {
   for (let attempt = 0; ; attempt++) {
     const state = await inspect(infra, deploy, account, origin);
-    requireState(!state.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + state.conflicts.join('; '));
+    if (state.conflicts.length) {
+      await report('readback', state);
+      throw new Error('MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT');
+    }
     const missing = missingResources(state);
     if (deploying && !state.workflow) missing.push('Cloudflare Workflow');
     if (deploying && state.queue?.consumers?.length !== 1) missing.push('Queue consumer');
@@ -879,7 +882,7 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
-    console.error(error.message);
+    console.error(safeStatusFailure(error, 'MIGRATION_ACTION_FAILED'));
     process.exitCode = 1;
   });
 }
