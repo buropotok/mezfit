@@ -1,4 +1,4 @@
-import { discussionAnchorKey, discussionId, discussionRecord as record, isDiscussionAnchor } from '../../shared/discussion-anchor';
+import { discussionAnchorKey, discussionId, discussionRecord as record, isDiscussionAnchor, matchesDiscussionThreadAnchor } from '../../shared/discussion-anchor';
 import { discussionCursorKey, discussionInstant, discussionReadCursor, discussionReadStateId } from '../../shared/discussion-read-state';
 import { validatedTelegramId } from '../../shared/approved-relationship';
 import { sendTopicTelegram } from './coach-telegram';
@@ -141,6 +141,7 @@ async function deliver(env: DiscussionNotificationEnv, event: PendingDiscussion,
   if (!record(thread) || thread.id !== message.threadId || thread.realmId !== event.realm_id
     || thread.coachClientId !== event.realm_id || thread.owner !== event.realm_id || !isDiscussionAnchor(thread.anchor)
     || thread.anchorKey !== discussionAnchorKey({ realmId: event.realm_id, coachClientId: event.realm_id }, thread.anchor)) return null;
+  if (!matchesDiscussionThreadAnchor(thread.anchor, message.threadId, thread.derivedTitleSnapshot, thread.contextPath)) return null;
   const attachments = await cloudList('/all/messageAttachments?messageId=' + encodeURIComponent(event.message_id), token, fetchImpl);
   const attachment = attachments.find(item => record(item) && item.realmId === event.realm_id
     && item.messageId === event.message_id && item.owner === message.authorUserId

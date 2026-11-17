@@ -34,7 +34,7 @@ backend CRUD, per-author/per-message realms или дополнительные 
 
 ## Идентичности и реальные источники
 
-`shared/discussion-anchor.ts` — discriminated union из четырёх уровней, canonical key,
+`shared/discussion-anchor.ts` — четыре типа привязки к сущностям и свободный anchor, canonical key,
 parent path, runtime shape guard и автоназвание «имя сущности · дата».
 `src/data/cloud/discussion-anchors.ts` — чистые адаптеры реальных строк:
 
@@ -59,6 +59,8 @@ parent path, runtime shape guard и автоназвание «имя сущно
 адаптер отклоняет запрос. Для удалённого источника сохранённый anchor/snapshot остаётся
 пригоден для истории; отсутствие объекта не повод направлять к соседнему подходу.
 Legacy не перепривязывается к occurrence через program ID или номер подхода.
+Свободный anchor использует ID ветки и пустой путь родителей. Этот вариант
+использует ту же строку `discussionThreads` и прежние разрешения realm пары.
 
 ## Таблицы, локальная схема и безопасное включение
 

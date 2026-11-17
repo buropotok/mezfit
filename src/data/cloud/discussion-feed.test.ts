@@ -2,10 +2,12 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { CLOUD_DATABASE_STORES_V17, type MezfitCloudDatabase } from './database';
-import { DiscussionRepository, prepareDiscussionThread } from './discussions';
+import { DiscussionSession } from '../../discussions/discussion-session';
+import { DiscussionRepository, prepareDiscussionMessage, prepareDiscussionThread, prepareFreeDiscussion,
+  readDiscussionNotificationThread } from './discussions';
 
 class FeedDatabase extends Dexie {
   declare discussionThreads: MezfitCloudDatabase['discussionThreads'];
@@ -98,4 +100,87 @@ describe('COMM-08 local feed projection', () => {
     await coach.remove(thread.id, 'message');
     expect((await client.feed(db))[0].hasAttachments).toBe(false);
   });
+});
+
+describe('free discussions in the local repository', () => {
+  it('creates one thread per command and refuses conflicting repetitions and unauthorised scopes', async () => {
+    const { db, scope, coach, client } = await fixture();
+    const input = prepareFreeDiscussion('  Питание  ');
+    const [first, repeated] = await Promise.all([coach.createFreeDiscussion(input), client.createFreeDiscussion(input)]);
+    expect(first).toEqual(repeated);
+    expect(first).toMatchObject({ id: input.id, derivedTitleSnapshot: 'Питание', contextPath: [],
+      anchor: { kind: 'free', threadId: input.id } });
+    expect(await db.discussionThreads.count()).toBe(1);
+    await expect(coach.createFreeDiscussion({ ...input, title: 'Техника' })).rejects.toThrow('DISCUSSION_ID_REUSED');
+    await expect(coach.createFreeDiscussion({ ...input, createdAt: time })).rejects.toThrow('DISCUSSION_ID_REUSED');
+    await expect(new DiscussionRepository(db, 'tg:11', scope(1)).createFreeDiscussion(input)).rejects.toThrow('DISCUSSION_ID_REUSED');
+    await expect(new DiscussionRepository(db, 'tg:44', scope(0)).createFreeDiscussion(input)).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    await expect(new DiscussionRepository(db, 'tg:11', { realmId: 'tg:11', coachClientId: null })
+      .createFreeDiscussion(input)).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    await expect(coach.ensureEntityThread(first.anchor, 'Питание')).rejects.toThrow('INVALID_DISCUSSION_ANCHOR');
+    await expect(coach.createFreeDiscussion({ ...input, id: 'plain-id' })).rejects.toThrow('INVALID_DISCUSSION_ANCHOR');
+    await expect(new DiscussionRepository(db, 'tg:11', scope(1)).getThread(first.id)).rejects.toThrow('DISCUSSION_NOT_FOUND');
+  });
+
+  it('opens same-title threads separately, including an empty chat, and resolves the exact notification', async () => {
+    const { db, scope, coach, client } = await fixture();
+    const first = await coach.createFreeDiscussion(prepareFreeDiscussion('Питание'));
+    const second = await client.createFreeDiscussion(prepareFreeDiscussion('Питание'));
+    expect(first.anchorKey).not.toBe(second.anchorKey);
+    expect(await client.feed()).toEqual(expect.arrayContaining([
+      { thread: first, latest: null, unread: 0, hasAttachments: false },
+      { thread: second, latest: null, unread: 0, hasAttachments: false },
+    ]));
+    const firstMessage = await coach.send({ id: 'first-message', threadId: first.id, text: 'Первая ветка', createdAt: time });
+    const secondMessage = await coach.send({ id: 'second-message', threadId: second.id, text: 'Вторая ветка', createdAt: time });
+    const session = new DiscussionSession(client, { threadId: second.id, anchor: second.anchor });
+    session.start();
+    try {
+      await vi.waitFor(() => expect(session.snapshot()).toMatchObject({
+        title: 'Питание', loading: false, messages: [secondMessage],
+      }));
+      expect(await session.locate(secondMessage.id)).toBe(true);
+      await expect(session.locate(firstMessage.id)).rejects.toThrow('DISCUSSION_MESSAGE_NOT_FOUND');
+      await client.markRead(second.id, secondMessage.id);
+      expect(await client.unread(second.id)).toBe(0);
+      expect(await client.unread(first.id)).toBe(1);
+      await expect(readDiscussionNotificationThread(db, client.actorUserId, secondMessage.id, new Set([scope(0).realmId])))
+        .resolves.toMatchObject({ id: second.id });
+      await expect(readDiscussionNotificationThread(db, 'tg:44', secondMessage.id, new Set([scope(0).realmId])))
+        .rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    } finally {
+      session.stop();
+    }
+  });
+});
+
+it('projects an attachment from a free chat after local hydration on another device', async () => {
+  const source = await fixture();
+  const target = await fixture();
+  const thread = await source.coach.createFreeDiscussion(prepareFreeDiscussion('Разбор техники'));
+  const storageKey = 'mvp-media/' + 'c'.repeat(64);
+  const command = { ...prepareDiscussionMessage(thread.id, ''), draftMedia: {
+    id: 'free-photo', storageKey, mediaType: 'photo' as const, mimeType: 'image/jpeg',
+    sizeBytes: 128, durationSeconds: null, fileName: 'photo.jpg', uploadState: 'uploading' as const,
+  } };
+  await source.coach.saveDraft(command);
+  const sent = await source.coach.send(command, { key: storageKey,
+    url: 'https://example.com/photo.jpg', contentType: 'image/jpeg', sizeBytes: 128, fileName: 'photo.jpg' });
+  const message = await source.db.discussionMessages.get(sent.id);
+  const attachment = await source.db.messageAttachments.get(command.draftMedia.id);
+  if (!message || !attachment) throw new Error('Missing published message or attachment');
+
+  // Seed as if the Addon hydrated an independently opened IndexedDB.
+  await new Promise<void>((resolve, reject) => {
+    const tx = target.db.backendDB().transaction(['discussionThreads', 'discussionMessages', 'messageAttachments'], 'readwrite');
+    tx.objectStore('discussionThreads').put(thread);
+    tx.objectStore('discussionMessages').put(message);
+    tx.objectStore('messageAttachments').put(attachment);
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(tx.error);
+  });
+  expect(await target.client.feed(target.db)).toMatchObject([{ thread: { id: thread.id }, hasAttachments: true, unread: 1 }]);
+  expect((await target.client.page(thread.id)).messages).toMatchObject([
+    { id: sent.id, attachments: [{ id: attachment.id, mediaType: 'photo' }] },
+  ]);
 });
