@@ -7,6 +7,7 @@ import { NavigationShell, type AppDestination, type NavigationContext } from '..
 import { isCategoryId, type CategoryDefinition, type DiscussionOrganizationSnapshot } from '../data/cloud/discussion-organization';
 import type { DiscussionThread } from '../data/cloud/discussion-contracts';
 import { GlassSurfaceProvider } from '../ui/GlassSurface';
+import { ClientCoachProvider } from '../client/ClientCoachContext';
 import { installTextOnlyLayout, textOnlyScene } from '../ui/liquid-glass-text-only/layout.test-support';
 import { DiscussionsPage } from './DiscussionsPage';
 
@@ -45,11 +46,13 @@ function Harness({ role, relationshipId }: { role: 'client' | 'coach'; relations
   return <KonstaProvider theme="ios" dark><GlassSurfaceProvider optics={false}>
     <button onClick={() => refresh(value => value + 1)}>Обновить оболочку</button>
     <button onClick={() => navigate(destination === 'discussions' ? 'today' : 'discussions')}>Сменить экран</button>
+    <ClientCoachProvider clientTelegramUserId="11" enabled={role === 'client'}>
     <NavigationShell me={me} activeRole={role} destination={destination} context={context}
       onDestinationChange={navigate} onRoleSwitch={() => {}}>
       {destination === 'discussions' ? <DiscussionsPage role={role} relationshipId={relationshipId}
         onNavigationContextChange={setContext} /> : <p>Другой экран</p>}
     </NavigationShell>
+    </ClientCoachProvider>
   </GlassSurfaceProvider></KonstaProvider>;
 }
 function dialog() { return screen.queryByRole('dialog', { name: 'Новая категория' }); }
