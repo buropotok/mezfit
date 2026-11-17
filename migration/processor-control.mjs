@@ -4,6 +4,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 const WORKER_DEPLOYMENTS = '/workers/scripts/mezfit-migration/deployments';
 const INSTANCES = '/workflows/mezfit-migration-workflow/instances';
 const ACTIVE = new Set(['queued', 'running', 'waiting', 'waitingForPause', 'rollingBack']);
+const TERMINAL = new Set(['complete', 'errored', 'terminated']);
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const READY = 'MIGRATION_PROCESSOR_READY:';
 
@@ -95,7 +96,7 @@ export async function runProcessorSmoke(api, id, version, emit, runtime, { runId
     try {
       // A timed-out controller can still be writing. Keep its evidence and
       // await a confirmed terminal state before allowing cleanup to touch it.
-      if (!runtime.instance || ACTIVE.has(runtime.instance.status)) throw new Error('PROCESSOR_SMOKE_CLEANUP_DEFERRED');
+      if (!TERMINAL.has(runtime.instance?.status)) throw new Error('PROCESSOR_SMOKE_CLEANUP_DEFERRED');
       runtime.cleanupId = randomUUID();
       const cleanup = await invoke(api, runtime.cleanupId, { operation: 'processor-cleanup', targetId: id, runId },
         emit, Date.now() + 40000, wait);

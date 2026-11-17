@@ -1,11 +1,12 @@
 import type { WorkflowStep } from 'cloudflare:workers';
-import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, PROCESSOR_RECORD_LIMIT, processorResultKey } from '../processor-protocol.mjs';
-import type { TraceContext } from '../trace.mjs';
+import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, PROCESSOR_RECORD_LIMIT, PROCESSOR_VERSION, processorInstanceId, processorResultKey } from '../processor-protocol.mjs';
+import type { Trace, TraceContext } from '../trace.mjs';
 import { readExecution } from './execution-store';
 import { processStep, readResultBytes } from './process-workflow';
-import { isResult, sha256 } from './processor';
+import { isResult, ProcessingFailure, sha256 } from './processor';
 import { UPLOAD_BUCKET } from './r2-upload';
 import type { SmokeBindings } from './smoke';
+import { observed } from './trace';
 
 const CONTENT_TYPE = 'application/octet-stream';
 const WAIT = { retries: { limit: 7, delay: '5 seconds', backoff: 'constant' }, timeout: '15 seconds' } as const;
@@ -84,40 +85,181 @@ export async function runProcessorSmoke(env: SmokeBindings, id: string, step: Wo
   return 'MIGRATION_PROCESSOR_SMOKE_VERIFIED';
 }
 
+async function readCleanupRows(db: D1Database, id: string, key: string, emit: Trace, readback: boolean) {
+  return observed(emit, 'd1', 'processor-cleanup-rows',
+    readback ? 'PROCESSOR_CLEANUP_D1_READBACK' : 'PROCESSOR_CLEANUP_D1_SCOPE',
+    { details: { sql: 'SELECT' } }, async () => {
+      const [jobs, executions, replays] = await db.batch<Record<string, unknown>>([
+        db.prepare(`SELECT id, object_key, object_etag, object_size, content_type, state
+          FROM migration_jobs WHERE id = ? OR object_key = ? LIMIT 2`).bind(key, key),
+        db.prepare(`SELECT job_id, object_key, object_etag, processor_version, workflow_id, state
+          FROM migration_executions WHERE job_id = ? OR object_key = ? OR workflow_id = ? LIMIT 2`).bind(key, key, processorInstanceId(id)),
+        db.prepare('SELECT replay_id, object_key FROM migration_smoke_replays WHERE replay_id = ? OR object_key = ? LIMIT 2').bind(id, key),
+      ]);
+      if (!jobs?.success || !executions?.success || !replays?.success) throw new Error('PROCESSOR_CLEANUP_D1_UNAVAILABLE');
+      const tables = {
+        migration_jobs: jobs.results,
+        migration_executions: executions.results,
+        migration_smoke_replays: replays.results,
+      };
+      for (const [table, rows] of Object.entries(tables)) {
+        emit('d1', 'processor-cleanup-rows', readback ? 'PROCESSOR_CLEANUP_D1_TABLE' : 'PROCESSOR_CLEANUP_D1_SCOPE_TABLE',
+          readback && rows.length ? 'FAILED' : 'OK',
+          { actual: rows.length ? 'rows-present' : 'rows-absent', details: { table, sql: 'SELECT' } });
+      }
+      return tables;
+    }, rows => {
+      const present = Object.values(rows).some(table => table.length > 0);
+      return { actual: present ? 'rows-present' : 'rows-absent',
+        error_code: readback && present ? 'PROCESSOR_CLEANUP_D1_UNCONFIRMED' : undefined };
+    });
+}
+
+function cleanupHead(bucket: R2Bucket, key: string, emit: Trace, kind: 'input' | 'result', readback = false) {
+  return observed(emit, 'r2', 'processor-cleanup-' + kind,
+    readback ? 'PROCESSOR_CLEANUP_R2_READBACK' : 'PROCESSOR_CLEANUP_R2_HEAD',
+    { expected: readback ? 'object-absent' : 'head-result' }, () => bucket.head(key),
+    object => ({ actual: object ? 'object-present' : 'object-absent',
+      error_code: readback && object ? 'PROCESSOR_CLEANUP_R2_UNCONFIRMED' : undefined }));
+}
+
+function cleanupResults(bucket: R2Bucket, id: string, resultKey: string, emit: Trace, readback: boolean) {
+  return observed(emit, 'r2', 'processor-cleanup-results', 'PROCESSOR_CLEANUP_R2_LIST',
+    { expected: readback ? 'results-absent' : 'only-current-result-key' }, async () => {
+      // The trailing slash keeps the listing inside this job's namespace.
+      const { objects, truncated } = await bucket.list({ prefix: 'results/' + id + '/', limit: 2 });
+      return { present: objects.length > 0, conflict: truncated || objects.some(object => object.key !== resultKey) };
+    }, results => ({ actual: results.conflict ? 'unexpected-result-key' : results.present ? 'result-present' : 'results-absent',
+      error_code: readback && results.present ? 'PROCESSOR_CLEANUP_R2_UNCONFIRMED'
+        : results.conflict ? 'PROCESSOR_CLEANUP_RESULT_CONFLICT' : undefined }));
+}
+
+async function readCleanupResources(env: SmokeBindings, id: string, key: string, resultKey: string, emit: Trace, readback = false) {
+  const checks = [
+    cleanupHead(env.UPLOADS, key, emit, 'input', readback),
+    cleanupHead(env.UPLOADS, resultKey, emit, 'result', readback),
+    cleanupResults(env.UPLOADS, id, resultKey, emit, readback),
+    readCleanupRows(env.JOBS, id, key, emit, readback),
+  ] as const;
+  // Let both sources record their observations before the step flushes its trace.
+  await Promise.allSettled(checks);
+  return Promise.all(checks);
+}
+
+async function removeCleanupObject(bucket: R2Bucket, key: string, verified: R2Object | null, emit: Trace,
+  kind: 'input' | 'result', permanent: (code: string) => Error) {
+  const stage = 'processor-cleanup-' + kind;
+  const event = 'PROCESSOR_CLEANUP_R2_DELETE';
+  if (!verified) {
+    emit('r2', stage, event, 'SKIPPED', { actual: 'already-absent' });
+    return;
+  }
+  // The Workers binding has no conditional DELETE. Recheck the R2 version
+  // immediately before deletion and only send a delete for a verified object.
+  const current = await cleanupHead(bucket, key, emit, kind);
+  if (!current) {
+    emit('r2', stage, event, 'SKIPPED', { actual: 'already-absent' });
+    return;
+  }
+  if (current.version !== verified.version || current.etag !== verified.etag) {
+    emit('r2', stage, event, 'FAILED', { actual: 'object-changed', error_code: 'PROCESSOR_CLEANUP_SCOPE_INVALID' });
+    throw permanent('PROCESSOR_CLEANUP_SCOPE_INVALID');
+  }
+  await observed(emit, 'r2', stage, event, { expected: 'delete-accepted' }, () => bucket.delete(key),
+    () => ({ actual: 'delete-accepted' }));
+  if (await cleanupHead(bucket, key, emit, kind, true)) throw new Error('PROCESSOR_CLEANUP_R2_UNCONFIRMED');
+  emit('r2', stage, 'PROCESSOR_CLEANUP_R2_REMOVED', 'OK', { actual: 'removed' });
+}
+
 export async function cleanupProcessorSmoke(env: SmokeBindings, id: string, step: WorkflowStep, context: TraceContext,
   permanent: (code: string) => Error) {
-  const run = (name: string) => processStep(env, step, context, name);
   const key = 'uploads/' + id;
-  const verified = await run('Check processor cleanup scope')(async emit => {
-    const object = await env.UPLOADS.head(key);
-    if (!object) {
-      emit('cleanup', 'processor-smoke-cleanup', 'PROCESSOR_CLEANUP_SCOPE', 'SKIPPED', { actual: 'fixture-missing' });
-      return false;
+  const resultKey = processorResultKey(id);
+  return processStep(env, step, context, 'Verify and remove processor smoke resources')(async emit => {
+    const scope = 'processor-smoke-cleanup';
+    const failScope = (code: string, actual: string) => {
+      emit('cleanup', scope, 'PROCESSOR_CLEANUP_SCOPE', 'FAILED', { error_code: code, actual });
+      return permanent(code);
+    };
+    emit('cleanup', scope, 'PROCESSOR_CLEANUP_SCOPE', 'STARTED');
+    const [input, result, results, rows] = await readCleanupResources(env, id, key, resultKey, emit);
+    if (!input) {
+      if (result || results.present || results.conflict || Object.values(rows).some(table => table.length > 0)) {
+        throw failScope('PROCESSOR_CLEANUP_INCOMPLETE', 'fixture-missing-with-residue');
+      }
+      emit('cleanup', scope, 'PROCESSOR_CLEANUP_SCOPE', 'SKIPPED', { actual: 'all-resources-absent' });
+      emit('cleanup', scope, 'PROCESSOR_SMOKE_CLEANUP', 'OK', { actual: 'already-absent' });
+      return 'MIGRATION_PROCESSOR_CLEANUP_OK';
     }
-    if (object.customMetadata?.processorSmoke !== id) throw permanent('PROCESSOR_CLEANUP_SCOPE_INVALID');
-    const execution = await readExecution(env.JOBS, id, emit);
-    if (execution?.state === 'running' || execution?.state === 'queued') throw new Error('PROCESSOR_CLEANUP_EXECUTION_ACTIVE');
-    const saved = await readResultBytes(env.UPLOADS, id, emit);
-    if (saved && (execution?.state !== 'succeeded' || await sha256(saved) !== execution.checksum)) {
-      throw permanent('PROCESSOR_CLEANUP_RESULT_CONFLICT');
+    if (input.customMetadata?.processorSmoke !== id) {
+      throw failScope('PROCESSOR_CLEANUP_SCOPE_INVALID', 'fixture-marker-mismatch');
     }
-    return true;
-  });
-  if (verified) await run('Remove processor smoke objects')(async emit => {
-    const resultKey = processorResultKey(id);
-    await env.UPLOADS.delete([key, resultKey]);
-    const objects = await Promise.all([env.UPLOADS.head(key), env.UPLOADS.head(resultKey)]);
-    if (objects.some(Boolean)) throw new Error('PROCESSOR_CLEANUP_R2_UNCONFIRMED');
-    const statements = await env.JOBS.batch([
-      env.JOBS.prepare('DELETE FROM migration_smoke_replays WHERE replay_id = ? AND object_key = ?').bind(id, key),
-      env.JOBS.prepare('DELETE FROM migration_executions WHERE job_id = ?').bind(key),
-      env.JOBS.prepare('DELETE FROM migration_jobs WHERE id = ?').bind(key),
-    ]);
-    if (statements.some(statement => !statement.success)
-      || await env.JOBS.prepare('SELECT id FROM migration_jobs WHERE id = ?').bind(key).first()) {
+    const etag = input.etag.toLowerCase();
+    if (rows.migration_jobs.some(row => row.id !== key || row.object_key !== key || row.object_etag !== etag
+        || row.object_size !== input.size || (row.state === 'uploaded' && row.content_type !== input.httpMetadata?.contentType))
+      || rows.migration_executions.some(row => row.job_id !== key || row.object_key !== key || row.object_etag !== etag
+        || row.processor_version !== PROCESSOR_VERSION || row.workflow_id !== processorInstanceId(id))
+      || rows.migration_smoke_replays.some(row => row.replay_id !== id || row.object_key !== key)) {
+      throw failScope('PROCESSOR_CLEANUP_SCOPE_INVALID', 'd1-ownership-conflict');
+    }
+    if (rows.migration_executions.some(row => row.state === 'queued' || row.state === 'running')) {
+      emit('cleanup', scope, 'PROCESSOR_CLEANUP_SCOPE', 'FAILED',
+        { actual: 'execution-active', error_code: 'PROCESSOR_CLEANUP_EXECUTION_ACTIVE' });
+      throw new Error('PROCESSOR_CLEANUP_EXECUTION_ACTIVE');
+    }
+
+    if (results.conflict || results.present !== Boolean(result)) {
+      throw failScope('PROCESSOR_CLEANUP_RESULT_CONFLICT', 'result-namespace-conflict');
+    }
+    const execution = rows.migration_executions.length ? await readExecution(env.JOBS, id, emit) : null;
+    if (rows.migration_executions.length && !execution) {
+      throw failScope('PROCESSOR_CLEANUP_SCOPE_INVALID', 'execution-readback-missing');
+    }
+    if (result) {
+      await observed(emit, 'r2', 'processor-cleanup-result', 'PROCESSOR_CLEANUP_RESULT_VERIFY',
+        { expected: 'verified-result-checksum' }, async () => {
+          try {
+            const saved = await readResultBytes(env.UPLOADS, id, emit);
+            if (saved && execution?.state === 'succeeded' && await sha256(saved) === execution.checksum) return;
+          } catch (error) {
+            if (!(error instanceof ProcessingFailure) || error.code !== 'RESULT_CONFLICT') throw error;
+          }
+          throw failScope('PROCESSOR_CLEANUP_RESULT_CONFLICT', 'result-integrity-conflict');
+        });
+    } else {
+      emit('r2', 'processor-cleanup-result', 'PROCESSOR_CLEANUP_RESULT_VERIFY', 'SKIPPED', { actual: 'already-absent' });
+    }
+    emit('cleanup', scope, 'PROCESSOR_CLEANUP_SCOPE', 'OK', { actual: 'ownership-confirmed' });
+
+    // Keep the input ownership marker until the verified result is gone.
+    await removeCleanupObject(env.UPLOADS, resultKey, result, emit, 'result', permanent);
+    await removeCleanupObject(env.UPLOADS, key, input, emit, 'input', permanent);
+    await observed(emit, 'd1', 'processor-cleanup-delete', 'PROCESSOR_CLEANUP_D1_DELETE',
+      { expected: 'committed', details: { sql: 'BATCH' } }, async () => {
+        const deleted = await env.JOBS.batch([
+          env.JOBS.prepare(`DELETE FROM migration_smoke_replays WHERE replay_id = ? AND object_key = ?
+            AND NOT EXISTS (SELECT 1 FROM migration_executions WHERE job_id = ? AND state IN ('queued', 'running'))`).bind(id, key, key),
+          env.JOBS.prepare(`DELETE FROM migration_executions WHERE job_id = ? AND object_key = ? AND object_etag = ?
+            AND processor_version = ? AND workflow_id = ? AND state IN ('succeeded', 'failed', 'unsupported')`)
+            .bind(key, key, etag, PROCESSOR_VERSION, processorInstanceId(id)),
+          // Avoid cascading into an execution that appeared or changed after the scope check.
+          env.JOBS.prepare(`DELETE FROM migration_jobs WHERE id = ? AND object_key = ? AND object_etag = ? AND object_size = ?
+            AND NOT EXISTS (SELECT 1 FROM migration_executions WHERE job_id = ?)
+            AND NOT EXISTS (SELECT 1 FROM migration_smoke_replays WHERE object_key = ?)`).bind(key, key, etag, input.size, key, key),
+        ]);
+        if (deleted.length !== 3 || deleted.some(statement => !statement.success)) {
+          throw new Error('PROCESSOR_CLEANUP_D1_UNCONFIRMED');
+        }
+      }, () => ({ actual: 'committed' }));
+    const [remainingInput, remainingResult, remainingResults, remainingRows] =
+      await readCleanupResources(env, id, key, resultKey, emit, true);
+    if (remainingInput || remainingResult || remainingResults.present || remainingResults.conflict) {
+      throw new Error('PROCESSOR_CLEANUP_R2_UNCONFIRMED');
+    }
+    if (Object.values(remainingRows).some(table => table.length > 0)) {
       throw new Error('PROCESSOR_CLEANUP_D1_UNCONFIRMED');
     }
-    emit('cleanup', 'processor-smoke-cleanup', 'PROCESSOR_SMOKE_CLEANUP', 'OK', { actual: 'removed' });
+    emit('cleanup', scope, 'PROCESSOR_SMOKE_CLEANUP', 'OK', { actual: 'removed' });
+    return 'MIGRATION_PROCESSOR_CLEANUP_OK';
   });
-  return 'MIGRATION_PROCESSOR_CLEANUP_OK';
 }

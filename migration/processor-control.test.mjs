@@ -84,3 +84,41 @@ describe('deployed processor smoke', () => {
     }] }] }, id).at(-1)).toMatchObject({ error_code: 'WORKFLOW_CPU_LIMIT' });
   });
 });
+
+describe('processor smoke cleanup after controller failure', () => {
+  it('retains the primary failure when cleanup fails too and records cleanup separately', async () => {
+    const { api, emit, operations } = setup([current], 'errored');
+    const get = api.get.getMockImplementation();
+    api.get.mockImplementation(path => path.endsWith('/' + id) ? { status: 'errored' } : get(path));
+    await expect(runProcessorSmoke(api, id, current, emit, {}, { wait: noWait }))
+      .rejects.toThrow('MIGRATION_PROCESSOR_SMOKE_FAILED');
+    expect(operations).toEqual(['processor-ready', 'processor-smoke', 'processor-cleanup']);
+    expect(emit).toHaveBeenCalledWith('cleanup', 'processor-smoke-cleanup', 'PROCESSOR_CLEANUP_CONTROL', 'FAILED',
+      expect.objectContaining({ error_code: 'PROCESSOR_SMOKE_CLEANUP_FAILED' }));
+  });
+
+  it.each(['paused', 'unknown'])('defers cleanup when the smoke instance status is %s', async status => {
+    const { api, emit, operations } = setup([current]);
+    const get = api.get.getMockImplementation();
+    api.get.mockImplementation(path => path.endsWith('/' + id) ? { status } : get(path));
+    await expect(runProcessorSmoke(api, id, current, emit, {}, { wait: noWait })).rejects.toThrow('MIGRATION_PROCESSOR_SMOKE_FAILED');
+    expect(operations).toEqual(['processor-ready', 'processor-smoke']);
+    expect(emit).toHaveBeenCalledWith('cleanup', 'processor-smoke-cleanup', 'PROCESSOR_CLEANUP_CONTROL', 'NOT_OBSERVED',
+      expect.objectContaining({ error_code: 'PROCESSOR_SMOKE_CLEANUP_DEFERRED' }));
+  });
+
+  it('recognizes the cleanup Workflow history while prioritizing the original smoke failure', () => {
+    const start = '2026-11-17T00:00:00.000Z';
+    const end = '2026-11-17T00:00:01.000Z';
+    const cleanup = historyRecords({ steps: [{ name: 'Verify and remove processor smoke resources', attempts: [{
+      start, end, success: false, error: { message: 'PROCESSOR_CLEANUP_INCOMPLETE' },
+    }] }] }, id);
+    const smoke = historyRecords({ steps: [{ name: 'Verify processor fixture result', attempts: [{
+      start, end, success: false, error: { message: 'PROCESSOR_SMOKE_RESULT_INVALID' },
+    }] }] }, id);
+    expect(cleanup.at(-1)).toMatchObject({ stage: 'verify-and-remove-processor-smoke-resources',
+      error_code: 'PROCESSOR_CLEANUP_INCOMPLETE', status: 'FAILED' });
+    expect(summarizeTrace([...cleanup, ...smoke], true, { workflow: true }, true).first_confirmed_failure)
+      .toMatchObject({ error_code: 'PROCESSOR_SMOKE_RESULT_INVALID' });
+  });
+});
