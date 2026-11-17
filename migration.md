@@ -1,9 +1,9 @@
 # Migration — архитектура, техническая концепция и дорожная карта
 
 **Проект:** Mezfit · **Репозиторий:** `buropotok/mezfit`  
-**Дата фиксации контекста:** 17 ноября 2026 г.  
+**Дата фиксации контекста:** 18 ноября 2026 г.
 **Статус:** архитектурный документ / ориентир для следующих этапов, **не** свидетельство реализации запланированного кода.  
-**Текущая точка:** инфраструктура и TypeScript File Processing Engine v1 приняты в Cloudflare на synthetic fixture. В MIG-03 реализованы общий Adapter Engine и два синтетических адаптера. Облачная проверка новой реализации ожидается. [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
+**Текущая точка:** инфраструктура и TypeScript File Processing Engine v1 приняты в Cloudflare на synthetic fixture. В MIG-03 реализованы общий Adapter Engine и два синтетических адаптера. MIG-03 развёрнут, независимые infra и fixture smoke пройдены. Облачная приёмка nested ожидается; ручной сценарий nested-smoke реализован в отдельной доработке. [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
 
 > **Назначение.** Это основной документ для нового рабочего чата, архитектора и разработчика, продолжающего миграцию из Gym Keeper в Mezfit. Здесь зафиксированы задача, принятые решения, границы системы, подтверждённые результаты, ещё не реализованные контракты, риски, этапы, порядок приёмки и источники. Тексты поручений агентам сюда намеренно не включены.
 
@@ -105,7 +105,7 @@ https://github.com/buropotok/mezfit/actions/runs/44094545908
 | Таблица технических `migration_executions` | **0003 применена, execution/replay/cleanup проверены** |
 | R2 JSON result write/readback для processor | **Done для v1, SHA-256/readback подтверждены** |
 | `MIGRATION_PROCESSOR_SMOKE_OK` | **Получен в независимом run 44156101755** |
-| MIG-03 Adapter Engine / registry / два synthetic adapters | **Код реализован, CI и облачная проверка новой функциональности ожидаются** |
+| MIG-03 Adapter Engine / registry / два synthetic adapters | **Merged/deployed, fixture smoke passed; nested cloud acceptance pending** |
 | AI Discovery / AI Adapter Builder | **Planned, только типизированная граница кандидатов** |
 | Чтение реального Gym Keeper `.dbi` | **Формат не подтверждён** |
 | Импорт Program / Diary JSON | **Схема образца не подтверждена** |
@@ -139,6 +139,32 @@ replay/idempotency и cleanup. В readback все три технические 
 прогоном не измерен. Эти свидетельства относятся к synthetic pipeline v1 до
 MIG-03. Реальный Gym Keeper, AI, бизнес-импорт и новая adapter-функциональность
 требуют собственной проверки.
+
+### 2.5. MIG-03 после merge — fixture regression подтверждена
+
+PR #819 объединён в `487ee11673790dd57f3a459685da3964a0402732`.
+По повторно прочитанным jobs/logs подтверждены следующие запуски.
+
+| Проверка | Run | Подтверждение |
+| --- | --- | --- |
+| Deploy MIG-03 | [44181829987](https://github.com/buropotok/mezfit/actions/runs/44181829987) | SUCCESS, `MIGRATION_SMOKE_OK` |
+| Независимый infra smoke | [44182935497](https://github.com/buropotok/mezfit/actions/runs/44182935497) | SUCCESS, `MIGRATION_SMOKE_OK` |
+| Fixture processor smoke | [44183912443](https://github.com/buropotok/mezfit/actions/runs/44183912443) | SUCCESS, `MIGRATION_PROCESSOR_SMOKE_OK` |
+
+Source SHA — `487ee11673790dd57f3a459685da3964a0402732`,
+Worker — `9d86731d-e472-4ab1-bdea-1d64c5c26f23`, processor `v1`,
+fixture trace ID — `647572ef-878d-4934-ae09-39d713abc9bf`.
+В трассе подтверждён `ADAPTER_SELECTED synthetic-fixture 1.0.0`.
+`Collection: PARTIAL` сохраняется из-за workers_logs permission-denied,
+invocation_cpu unavailable и отсутствующего per-object R2 publisher receipt.
+
+Ручной `nested-smoke` реализован отдельной доработкой. Он проверяет
+synthetic-nested 1.0.0 через существующий приватный pipeline, schema v2,
+точный normalized output с forward/cross-group references и EMPTY_GROUP,
+input/result SHA-256, D1 attempts=1, Queue replay и processor-cleanup/readback.
+`MIGRATION_NESTED_SMOKE_OK` выдаётся только после подтверждённой очистки.
+Его live run ещё не проводился. Эти изменения инструмента smoke требуют
+нового deploy перед ручным запуском. Новая схема D1 не нужна.
 
 ## 3. Доказательная база Gym Keeper и неизвестные форматы
 
@@ -566,7 +592,8 @@ suggestions и автоматическое продвижение кандид�
 | **0. Исследование Gym Keeper** | Частично Done | Статический анализ APK, разделение backup vs Program/Diary export, список неизвестных полей | Нужны реальные образцы для decoder |
 | **1. Cloudflare Migration Infrastructure** | **Done** | `MIGRATION_SMOKE_OK` на независимом run 44094545908 | Известные остатки: telemetry API 403, race версий |
 | **2. TypeScript File Processing Engine v1** | **Done для synthetic** | Независимый processor smoke 44156101755 и infra smoke 44153088455 | Telemetry PARTIAL, CPU не измерен |
-| **MIG-03. Универсальный Adapter Engine** | **Код реализован, cloud acceptance ожидается** | Registry/dispatcher + fixture/nested + общий runtime codec, отрицательные и anti-overfitting тесты | CI после PR, отдельная проверка новой версии после merge |
+| **MIG-03. Универсальный Adapter Engine** | **Merged/deployed, fixture smoke passed** | Runs 44181829987 / 44182935497 / 44183912443, §2.5 | Nested cloud acceptance pending |
+| **Nested-smoke** | **Код сценария реализован, live run ожидается** | `MIGRATION_NESTED_SMOKE_OK` после schema v2, replay и cleanup/readback | CI/merge этой доработки, deploy и ручной запуск владельцем |
 | **3. Доказать реальные форматы** | Planned, независимо от MIG-03 | Обезличенные samples, magic/schema, versioned compatibility matrix, фикстуры | Экспорт из реального Gym Keeper |
 | **4. Адаптеры реальных источников, начиная с Gym Keeper** | Planned | Decoders по подтверждённым format/version и независимым samples | MIG-03 и этап 3 |
 | **AI Discovery / Adapter Builder** | Planned | Исследование неизвестного формата, candidate → validation gate → reviewed registry | Решение по AI API/стоимости/приватности и образцы |
@@ -594,11 +621,11 @@ MIGRATION_SMOKE_OK
 MIGRATION_PROCESSOR_SMOKE_OK
 ~~~
 
-Оба маркера получены в независимых запусках, см. §2.4. Unit/mocked проверки MIG-03 ещё требуют CI; облачная приёмка v1 до MIG-03 не подтверждает новую реализацию автоматически.
+Оба маркера получены в независимых запусках, см. §2.4. MIG-03 merged/deployed и fixture regression подтверждены в §2.5. Nested требует отдельного live run.
 
 ### 10.2. MIG-03 и этап 3 — универсальность и реальные входные данные
 
-Для MIG-03 следующий рубеж — CI, merge и отдельное разрешение на cloud rollout новой Worker version. Действующий processor smoke проверяет fixture-v1; запуск этого smoke после MIG-03 подтвердит его регрессию. Второй адаптер проверяется добавленным интеграционным тестом. Для его отдельной live-приёмки нужен согласованный bounded synthetic probe через тот же приватный process path. До такого запуска nested cloud status остаётся pending. Реальный дамп для реализации MIG-03 не нужен.
+MIG-03 уже прошёл deploy/infra/fixture regression, §2.5. Следующий рубеж — CI и merge доработки nested-smoke, новый Deploy migration Worker и ручной Actions → Diagnose or smoke-test migration infrastructure → main → nested-smoke. Владелец проверяет `MIGRATION_NESTED_SMOKE_OK`, реальную Worker version, trace ID и migration-trace.json. Сценарий использует тот же приватный process path; до успешного live run nested cloud status остаётся pending. Реальный дамп для этой проверки не нужен.
 
 Подход по адаптерам:
 
@@ -661,7 +688,7 @@ Source file
 
 ### 12.2. Облачный rollout
 
-Этап 2 synthetic принят по §2.4. Следующая последовательность применяется отдельно к новой версии MIG-03; ручной запуск выполняет владелец или агент по явному разрешению.
+Этап 2 synthetic принят по §2.4, MIG-03 fixture regression — по §2.5. Следующая последовательность применяется к доработке nested-smoke; ручной запуск выполняет владелец или агент по явному разрешению.
 
 1. PR: только проверенный, ограниченный scope.
 2. CI после PR: review результатов, merge лишь после необходимых проверок.
@@ -691,7 +718,7 @@ Production Engine не должен выполняться на GitHub Actions: 
 8. `.github/workflows/migration-*.yml` — manual deployment и диагностика.
 9. `audit/2026-09-16_application_audit.md` — существующие риски и требования проверки перед PR.
 
-**Подтверждённая эксплуатационная точка:** этап 2 synthetic, независимые infra/processor runs 44153088455 / 44156101755, точные версии и ссылки в §2.4. Код MIG-03 ожидает собственной облачной проверки.
+**Подтверждённая эксплуатационная точка:** этап 2 synthetic, независимые infra/processor runs 44153088455 / 44156101755, точные версии и ссылки в §2.4. MIG-03 deploy/infra/fixture подтверждены в §2.5; nested cloud acceptance ожидается.
 
 **Примечание по аудиту:** в историческом аудите фактор `A-011` описывает дублирование числового префикса миграций в **другой части** приложения. Новые D1 migrations из `migration/d1/` должны иметь свои последовательно возрастающие уникальные имена, не переименовывать ранее применённые файлы. Этот документ не меняет схему и не устраняет старый фактор.
 
@@ -699,10 +726,10 @@ Production Engine не должен выполняться на GitHub Actions: 
 
 **Уже есть:** приватная связка R2 → Queue → Worker → D1 → Workflow, подтверждённый `MIGRATION_SMOKE_OK`, жёсткий SigV4 upload, безопасная private R2 trace; известны Workers Logs API 403 и race версий после deploy.
 
-**Реализовано в MIG-03:** универсальный registry/dispatcher, проверенные fixture/nested adapters, совместимость legacy v1 и runtime codec schema v2, граница будущего AI discovery. CI и cloud acceptance новой реализации ожидаются. Этап 2 synthetic v1 уже принят, §2.4.
+**Реализовано в MIG-03:** универсальный registry/dispatcher, проверенные fixture/nested adapters, совместимость legacy v1 и runtime codec schema v2, граница будущего AI discovery. MIG-03 merged/deployed, fixture regression подтверждена в §2.5. Ручной nested-smoke реализован, live run ожидается.
 
 **Пока не знаем:** реальный byte format `.dbi` и JSON exports, CPU-стоимость настоящего decoder, точную модель импорта в Dexie Cloud и политику хранения пользовательских файлов.
 
 **Нельзя:** объявлять synthetic parser настоящим Gym Keeper importer, переносить бизнес-данные в D1, менять Coach/Client realms или ACL без согласования, добавлять Python/Containers/VPS, считать «деплой завершён» равным «новая версия исполняется», давать успешный отчёт при неполной трассе без пометки PARTIAL.
 
-**Следующий проверяемый рубеж:** CI MIG-03, merge, отдельный rollout новой версии и подтверждение fixture regression плюс согласованная проверка nested в Cloudflare. Параллельно можно исследовать реальные обезличенные экспорты. AI API, decoder, бизнес-канонизация, preview и Dexie commit остаются отдельными этапами.
+**Следующий проверяемый рубеж:** CI/merge nested-smoke, новый deploy и ручной nested-smoke с подтверждением версии, `MIGRATION_NESTED_SMOKE_OK`, replay и cleanup/readback. Параллельно можно исследовать реальные обезличенные экспорты. AI API, decoder, бизнес-канонизация, preview и Dexie commit остаются отдельными этапами.
