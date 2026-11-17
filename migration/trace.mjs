@@ -11,8 +11,10 @@ const NUMBER_KEYS = new Set(['http_status', 'batch_size', 'size', 'expected_size
 const BOOL_KEYS = new Set(['matched', 'exists', 'etag_matches', 'mime_matches', 'size_matches', 'private', 'cors_current',
   'prefix_filter', 'suffix_filter', 'has_account', 'has_bucket', 'has_action', 'has_object', 'has_event_time', 'has_marker',
   'has_credentials', 'has_deploy_token', 'has_bootstrap_token', 'has_origin', 'has_account_id', 'invocation_logs',
-  'enabled', 'logs_enabled', 'more', 'replay', 'promoted', 'duplicate', 'managed', 'can_retry', 'present', 'truncated']);
+  's3_code_present', 'enabled', 'logs_enabled', 'more', 'replay', 'promoted', 'duplicate', 'managed', 'can_retry', 'present', 'truncated']);
 const TOKEN_KEYS = {
+  s3_content_type: new Set(['xml', 'json', 'html', 'text', 'other', 'absent']),
+  s3_body_format: new Set(['s3-xml', 'opaque', 'empty', 'truncated', 'unread']),
   field: new Set(['envelope', 'account', 'bucket', 'action', 'object', 'object.key', 'object.size', 'object.eTag', 'eventTime', 'smokeReplay']),
   action: new Set(['PutObject', 'CopyObject', 'CompleteMultipartUpload']),
   method: new Set(['GET', 'POST', 'PUT', 'DELETE', 'HEAD']),
