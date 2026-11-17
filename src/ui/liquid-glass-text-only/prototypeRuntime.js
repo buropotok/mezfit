@@ -678,9 +678,11 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     data.pointerId = null;
 
     if (cancelled || gesture === 'cancelled') {
-      cancelLensForScroll();
-      positionSelector(data.activeIndex, false);
-      positionLensTrack(data.activeIndex, false);
+      if (!startedOnAction) {
+        cancelLensForScroll();
+        positionSelector(data.activeIndex, false);
+        positionLensTrack(data.activeIndex, false);
+      }
       data.gesture = 'idle';
       return;
     }
