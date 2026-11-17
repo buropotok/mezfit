@@ -135,14 +135,23 @@ export async function diagnoseSmoke(api, id, report) {
 export async function runSmoke(api, report, { id = randomUUID(), wait = sleep, maxPolls = 50 } = {}) {
   const path = INSTANCES + '/' + id;
   // The pinned Wrangler sends an object here, matching WorkflowEvent.payload.
-  try {
-    await api.request(INSTANCES, { method: 'POST', body: { instance_id: id, params: { operation: 'smoke' } } });
-  } catch (error) {
-    if (!error?.transient) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await api.request(INSTANCES, { method: 'POST', body: { instance_id: id, params: { operation: 'smoke' } } });
+      break;
+    } catch (error) {
+      // An explicit rate-limit refusal can be retried with the same instance ID.
+      if (error?.status === 429 && attempt < 2) {
+        await wait(2000 * 2 ** attempt);
+        continue;
+      }
+      if (error?.transient && error?.status !== 429) {
+        // A lost POST response may have created the instance. Read back the same ID.
+        break;
+      }
       await report(describeSmoke(id, null, 'MIGRATION_SMOKE_CREATE_FAILED'));
       throw error;
     }
-    // A lost POST response may have created the instance. Reconcile by reading the same ID.
   }
 
   const deadline = Date.now() + 240000;
