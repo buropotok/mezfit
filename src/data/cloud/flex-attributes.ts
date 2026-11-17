@@ -334,7 +334,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
         return this.db.flexValues.where('[realmId+attributeId]')
           .between([realmId, idPrefix], [realmId, idPrefix + '\uffff'], true, true).toArray();
       }));
-      const valuesByRealm = new Map(realms.map((realmId, index) => [realmId, realmValues[index]]));
+      const valuesByRealm = new Map<string, FlexValueRow[]>(realms.map((realmId, index) => [realmId, realmValues[index]]));
       const targetValues = targets.map(target => (valuesByRealm.get(target.realmId) ?? [])
         .filter(row => row.realmId === target.realmId
           && row.entityType === target.entityType && row.entityId === target.entityId));
