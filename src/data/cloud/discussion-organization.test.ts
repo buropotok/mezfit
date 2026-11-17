@@ -257,6 +257,21 @@ describe('typed Flex persistence and participant isolation', () => {
     expect(await coach.listCategories()).toEqual([]);
   });
 
+  it('defers category deletion while a Flex assignment definition has no hydrated value', async () => {
+    const { db, entity, coach } = await fixture();
+    const category = await coach.createCategory('Ожидает значения');
+    const key = await discussionThreadAssignmentKey({ id: 'pending-value', realmId: entity.realmId });
+    const attributeId = flexAttributeId(entity.realmId, key);
+    await db.flexAttributes.add({ id: attributeId, realmId: entity.realmId, owner: entity.realmId,
+      key, valueType: 'string' });
+    await expect(coach.removeCategory(category.id)).rejects.toThrow('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
+    expect((await coach.listCategories()).map(row => row.id)).toContain(category.id);
+    await new FlexAttributesRepository(db, 'tg:11').setValue(target('tg:11', entity.realmId),
+      { key, valueType: 'string', value: null });
+    await coach.removeCategory(category.id);
+    expect(await coach.listCategories()).toEqual([]);
+  });
+
   it('reports failed cleanup and supports explicit retry without prematurely removing category', async () => {
     const { entity, coach } = await fixture();
     const category = await coach.createCategory('Повторить');
