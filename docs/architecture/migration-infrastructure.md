@@ -58,11 +58,44 @@ the Worker secret names. If the credentials cannot be recovered, explicitly
 revoke only that uploader before rerunning bootstrap. In the partial-secrets
 case, reconcile the existing private Worker and its secrets before retrying.
 
-The smoke check invokes the private Workflow through the authenticated
-Cloudflare management API. It tries signed PUTs with the wrong MIME, length
-or write-once header and an expired signature, then uploads synthetic bytes.
-It verifies HEAD, overwrite rejection and anonymous read rejection, waits for
-the R2 notification to create a D1 row, and replays that event through the Queue.
-The Workflow removes the synthetic object on success and leaves its technical
-job record for inspection. In a failed run, the instance ID identifies the
-synthetic `smoke/<instance-id>` object for diagnosis.
+## Smoke and diagnosis
+
+Run **Diagnose or smoke-test migration infrastructure** from `main` as the
+repository owner. Select `diagnose` with the Workflow instance UUID to read
+its status and step attempts via Cloudflare's management API. To examine the
+failed deployment from 2026-11-17, use
+`a9292ed7-b383-45ad-aa27-665cd70f91a2`. The diagnostic job uses the existing
+deployment token for GET requests. If Cloudflare no longer retains the
+instance, use the report from a fresh smoke run.
+
+Select `smoke` to check the deployed resource configuration and run the same
+integration verification as deploy. The runner submits an object in
+`params`, matching the pinned Wrangler command, and looks up the same UUID
+when the create reply is lost. It reports saved step and attempt history,
+a stable code, and safe expected and actual values. Unclassified Cloudflare
+errors include an exception category and a message fingerprint. The report
+excludes payloads, raw exception messages and signatures.
+
+The Workflow uploads one fixed-size synthetic object and checks HEAD, including
+the ETag of the known body. After the actual R2 event registers the job in D1,
+the Workflow publishes a marked replay through the same Queue. The consumer
+records a receipt for the exact replay in the same D1 transaction as the job
+write. Other duplicate deliveries cannot satisfy that check. The smoke verifies
+the job's state and identity after the replay. The second D1 migration is
+additive and must be applied by `migration-deploy.yml` before using the new
+standalone smoke.
+
+Separate probes use unique child keys for bad MIME, length, missing conditional
+header and expiry. Each checks the S3 error semantics and absence of a probe
+object. The write-once and anonymous read checks exercise the uploaded object.
+Retries are bounded. A signed PUT that committed before the reply was lost is
+reconciled using HEAD. Unambiguous contract and authorization errors fail
+immediately.
+
+Cleanup deletes only the synthetic keys under `smoke/<instance UUID>`.
+A successful run deletes its objects before reporting success. After a terminal
+failure, the Actions runner queues a cleanup instance and logs its ID. A later
+smoke also performs a bounded sweep of recognized synthetic keys older than 24
+hours to cover cancellations and runner interruption. Technical job and replay
+receipt rows remain available for diagnosis. A running or paused instance's
+objects are not deleted by the Actions runner.

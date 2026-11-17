@@ -6,6 +6,7 @@ const encoder = new TextEncoder();
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 export const SMOKE_ID_PATTERN = new RegExp('^' + UUID + '$');
 export const UPLOAD_KEY_PATTERN = new RegExp('^(uploads|smoke)/' + UUID + '$');
+export const SMOKE_OBJECT_PATTERN = new RegExp('^smoke/' + UUID + '(/(mime|length|conditional|expired))?$');
 const BACKUP_CONTENT_TYPES = new Set(['application/octet-stream', 'application/zip', 'application/gzip',
   'application/x-sqlite3', 'application/vnd.sqlite3']);
 
@@ -58,7 +59,8 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
   env: UploadCredentials,
   now = new Date(),
 ): Promise<{ putUrl: string; expiresAt: number; storageKey: string }> {
-  if (!UPLOAD_KEY_PATTERN.test(storageKey) || !validBackupMetadata(metadata.sizeBytes, metadata.contentType)) {
+  if ((!UPLOAD_KEY_PATTERN.test(storageKey) && !SMOKE_OBJECT_PATTERN.test(storageKey))
+    || !validBackupMetadata(metadata.sizeBytes, metadata.contentType)) {
     throw new Error('INVALID_BACKUP_UPLOAD');
   }
   if (!/^[a-f0-9]{32}$/.test(env.CLOUDFLARE_ACCOUNT_ID)
@@ -79,7 +81,7 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
     ['X-Amz-Expires', String(UPLOAD_TTL_SECONDS)],
     ['X-Amz-SignedHeaders', signedHeaders],
   ];
-  const query = parameters.sort(([left], [right]) => left.localeCompare(right))
+  const query = parameters.sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
     .map(([key, value]) => `${encodeAws(key)}=${encodeAws(value)}`).join('&');
   const path = '/' + storageKey.split('/').map(encodeAws).join('/');
   const canonicalHeaders = `content-length:${metadata.sizeBytes}\ncontent-type:${metadata.contentType}\nhost:${host}\nif-none-match:*\n`;
@@ -99,6 +101,9 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
 
 export async function verifyBackupUpload(bucket: R2Bucket, key: string, metadata: BackupMetadata): Promise<boolean> {
   if (!UPLOAD_KEY_PATTERN.test(key) || !validBackupMetadata(metadata.sizeBytes, metadata.contentType)) return false;
-  const object = await bucket.head(key);
+  return backupObjectMatches(await bucket.head(key), metadata);
+}
+
+export function backupObjectMatches(object: R2Object | null, metadata: BackupMetadata): boolean {
   return object?.size === metadata.sizeBytes && object.httpMetadata?.contentType === metadata.contentType;
 }
