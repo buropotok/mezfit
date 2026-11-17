@@ -336,7 +336,7 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
       throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
     const byTarget = new Map<string, { target: FlexEntityTarget; keys: string[] }>();
     for (const item of inspect) {
-      if (item.state !== 'present' || item.value !== code) continue;
+      if ((item.state !== 'present' && item.state !== 'pending') || item.value !== code) continue;
       const token = JSON.stringify([item.target.realmId, item.target.entityType, item.target.entityId]);
       let batch = byTarget.get(token);
       if (!batch) { batch = { target: item.target, keys: [] }; byTarget.set(token, batch); }
