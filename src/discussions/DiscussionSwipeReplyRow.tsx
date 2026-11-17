@@ -1,14 +1,15 @@
 import { createContext, useContext, useEffect, useRef, useState, type PointerEvent, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react';
 import { Icon } from '../ui/Icon';
+import { runHapticProbe } from '../telegram';
 
 export const DISCUSSION_REPLY_SWIPE_MAX_PX = 100;
 export const DISCUSSION_REPLY_SWIPE_TRIGGER_PX = 60;
 const AXIS_SLOP_PX = 8;
 
 type SwipeVisual = { offsetX: number; dragging: boolean };
-type SwipePresentation = SwipeVisual & { enabled: boolean; pulsing: boolean };
+type SwipePresentation = SwipeVisual & { enabled: boolean; pulsing: boolean; completed: boolean };
 const idleVisual: SwipeVisual = { offsetX: 0, dragging: false };
-const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false, pulsing: false });
+const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false, pulsing: false, completed: false });
 
 /** Portaled video-note and the reply indicator share the row-owned swipe offset. */
 export function useDiscussionSwipeVisual(): SwipePresentation {
@@ -21,15 +22,16 @@ export function useDiscussionSwipeVisual(): SwipePresentation {
  * travels exactly half as far as the message. The circle and ring are
  * always constrained to the gap minus 4 CSS px on either side. */
 export function DiscussionSwipeReplyIndicator() {
-  const { offsetX, dragging, enabled, pulsing } = useDiscussionSwipeVisual();
+  const { offsetX, dragging, enabled, pulsing, completed } = useDiscussionSwipeVisual();
   const distance = enabled ? Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -offsetX)) : 0;
-  const progress = Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
+  const progress = completed ? 1 : Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
   const opacity = Math.min(1, Math.max(0, (distance - AXIS_SLOP_PX) / 26));
   const circumference = 2 * Math.PI * 15.5;
   return <span className="discussion-reply-swipe-indicator" aria-hidden="true"
-    data-armed={progress >= 1 || undefined}
+    data-armed={distance >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX || undefined}
     data-dragging={dragging || undefined}
     data-pulsing={pulsing || undefined}
+    data-completed={completed || undefined}
     style={{ width: `${distance}px`, opacity }}>
     <span className="discussion-reply-swipe-indicator__circle">
       <span className="discussion-reply-swipe-indicator__icon"><Icon name="reply-solid" /></span>
@@ -61,6 +63,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
 }) {
   const [visual, setVisual] = useState<SwipeVisual>(idleVisual);
   const [pulsing, setPulsing] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const pulseTimer = useRef<number | null>(null);
   const gesture = useRef<Gesture | null>(null);
   const touchGesture = useRef<TouchGesture | null>(null);
@@ -82,11 +85,14 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     if (!active.pulsed && distance >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX) {
       active.pulsed = true;
       clearPulse();
+      setCompleted(true);
       setPulsing(true);
+      // Exactly the Telegram success notification probe, once per gesture.
+      runHapticProbe('telegram-success-notification');
       pulseTimer.current = window.setTimeout(() => {
         pulseTimer.current = null;
         setPulsing(false);
-      }, 50);
+      }, 300);
     }
   };
 
@@ -96,6 +102,8 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       touchGesture.current = null;
       removeTouchListeners.current?.();
       clearPulse();
+      // Preserve the completed-ring latch through the return transition.
+      // Only a new gesture may restore the progress track.
       setVisual(idleVisual);
     }
   }, [enabled]);
@@ -120,6 +128,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     // owns this gesture from now on, including a circle rendered via a portal.
     gesture.current = null;
     clearPulse();
+    setCompleted(false);
     touchGesture.current = { identifier: finger.identifier, startX: finger.clientX,
       startY: finger.clientY, axis: 'pending', pulsed: false };
 
@@ -188,6 +197,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     // Pointer fallback is retained for mouse/pen and synthetic pointer tests.
     if (ignoresSwipe(event.target)) return;
     clearPulse();
+    setCompleted(false);
     gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, axis: 'pending', pulsed: false };
   };
 
@@ -223,7 +233,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     if (confirmed) onReply();
   };
 
-  return <SwipeVisualContext.Provider value={{ ...visual, enabled, pulsing }}>
+  return <SwipeVisualContext.Provider value={{ ...visual, enabled, pulsing, completed }}>
     <div className="discussion-message-target discussion-message-target--reply-swipe"
       data-message-id={messageId} data-own={String(own)}
       data-highlighted={highlighted || undefined}

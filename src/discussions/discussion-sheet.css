@@ -148,14 +148,27 @@
 .discussion-reply-swipe-indicator[data-dragging] .discussion-reply-swipe-indicator__fill {
   transition: none;
 }
-/* A single 50ms outward-and-back ring pulse, triggered on first crossing 60px.
-   The SVG's width is clamped to gap width minus 8px on every frame. */
+/* The same completed SVG progress circle becomes the expanding ring:
+   hide the old track permanently for this gesture, with no second outline.
+   After 300ms the expanded circle fades away; it never reappears on reverse. */
+.discussion-reply-swipe-indicator[data-completed] .discussion-reply-swipe-indicator__track {
+  opacity: 0;
+}
+.discussion-reply-swipe-indicator[data-completed] .discussion-reply-swipe-indicator__progress {
+  opacity: 0;
+}
 .discussion-reply-swipe-indicator[data-pulsing] .discussion-reply-swipe-indicator__progress {
-  animation: discussion-reply-ring-pulse 50ms ease-out 1;
+  animation: discussion-reply-ring-pulse 300ms ease-out 1 both;
 }
 @keyframes discussion-reply-ring-pulse {
-  0%, 100% { width: max(0px, min(34px, calc(100% - 8px))); }
-  50% { width: max(0px, min(51.68px, calc(100% - 8px))); }
+  from {
+    width: max(0px, min(34px, calc(100% - 8px)));
+    opacity: 1;
+  }
+  to {
+    width: max(0px, min(51.68px, calc(100% - 8px)));
+    opacity: 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .discussion-reply-swipe-indicator,

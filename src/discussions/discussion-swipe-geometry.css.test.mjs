@@ -27,7 +27,15 @@ describe('reply swipe geometry and ring clearance contract', () => {
       expect(block).toContain('top: 50%');
     }
     expect(pulse).toContain('min(51.68px, calc(100% - 8px))');
-    expect(css).toContain('animation: discussion-reply-ring-pulse 50ms ease-out 1');
+    expect(pulse).toContain('opacity: 0');
+    expect(css).toContain('animation: discussion-reply-ring-pulse 300ms ease-out 1 both');
+    const completedTrack = css.match(/\.discussion-reply-swipe-indicator\[data-completed\] \.discussion-reply-swipe-indicator__track\s*\{([^}]+)\}/)?.[1] ?? '';
+    const completedProgress = css.match(/\.discussion-reply-swipe-indicator\[data-completed\] \.discussion-reply-swipe-indicator__progress\s*\{([^}]+)\}/)?.[1] ?? '';
+    expect(completedTrack).toContain('opacity: 0');
+    expect(completedProgress).toContain('opacity: 0');
+    expect(source).toContain('data-completed={completed || undefined}');
+    expect(source).toContain('const progress = completed ? 1 :');
+    expect(source).toContain('active.pulsed = true');
     // The 34px base circle equals a standard one-line Konsta message (22px
     // Chat line plus 6px top/bottom padding). At 60px the peak 152% ring fits:
     expect(34 * 1.52).toBeCloseTo(51.68);

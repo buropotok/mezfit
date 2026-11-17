@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscussionSwipeReplyIndicator, DiscussionSwipeReplyRow } from './DiscussionSwipeReplyRow';
 
-afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 function mount(enabled = true) {
   const onReply = vi.fn();
@@ -32,8 +32,10 @@ function mount(enabled = true) {
 }
 
 describe('reply cue follows the user-approved 60/100px swipe geometry', () => {
-  it('fills at 60px, runs one 50ms ring pulse before release, and returns with the bubble', () => {
+  it('morphs the filled circle for 300ms at 60px, haptics once, never restores the old rim', () => {
     vi.useFakeTimers();
+    const notify = vi.fn();
+    vi.stubGlobal('Telegram', { WebApp: { HapticFeedback: { notificationOccurred: notify } } });
     const gesture = mount();
     const ring = gesture.cue.querySelector<SVGCircleElement>('.discussion-reply-swipe-indicator__fill');
     if (!ring) throw new Error('Missing circular reply progress');
@@ -60,12 +62,15 @@ describe('reply cue follows the user-approved 60/100px swipe geometry', () => {
     expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(0);
     expect(gesture.cue.getAttribute('data-armed')).toBe('true');
     expect(gesture.cue.getAttribute('data-pulsing')).toBe('true');
+    expect(gesture.cue.getAttribute('data-completed')).toBe('true');
+    expect(notify).toHaveBeenCalledExactlyOnceWith('success');
     expect(gesture.onReply).not.toHaveBeenCalled();
 
-    act(() => vi.advanceTimersByTime(49));
+    act(() => vi.advanceTimersByTime(299));
     expect(gesture.cue.getAttribute('data-pulsing')).toBe('true');
     act(() => vi.advanceTimersByTime(1));
     expect(gesture.cue.getAttribute('data-pulsing')).toBeNull();
+    expect(gesture.cue.getAttribute('data-completed')).toBe('true');
 
     gesture.move(50);
     expect(gesture.row.style.transform).toBe('translate3d(-100px, 0, 0)');
@@ -73,11 +78,13 @@ describe('reply cue follows the user-approved 60/100px swipe geometry', () => {
     expect(gesture.cue.getAttribute('data-pulsing')).toBeNull();
     gesture.move(180);
     expect(gesture.cue.style.width).toBe('20px');
-    expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(circumference * (2 / 3));
+    expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(0);
     expect(gesture.cue.getAttribute('data-armed')).toBeNull();
+    expect(gesture.cue.getAttribute('data-completed')).toBe('true');
     gesture.move(140);
     expect(gesture.cue.getAttribute('data-armed')).toBe('true');
     expect(gesture.cue.getAttribute('data-pulsing')).toBeNull();
+    expect(notify).toHaveBeenCalledTimes(1);
 
     gesture.end(140);
     expect(gesture.onReply).toHaveBeenCalledOnce();
@@ -85,7 +92,16 @@ describe('reply cue follows the user-approved 60/100px swipe geometry', () => {
     expect(gesture.cue.style.width).toBe('0px');
     expect(gesture.cue.style.opacity).toBe('0');
     expect(gesture.cue.getAttribute('data-pulsing')).toBeNull();
+    expect(gesture.cue.getAttribute('data-completed')).toBe('true');
+    expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(0);
+    expect(notify).toHaveBeenCalledTimes(1);
+
+    gesture.down(200);
+    expect(gesture.cue.getAttribute('data-completed')).toBeNull();
     expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(circumference);
+    gesture.move(140);
+    expect(notify).toHaveBeenCalledTimes(2);
+    gesture.end(140);
   });
 
   it('returns the cue without replying when release is below 60px', () => {
@@ -95,6 +111,7 @@ describe('reply cue follows the user-approved 60/100px swipe geometry', () => {
     expect(gesture.cue.getAttribute('data-armed')).toBe('true');
     gesture.move(141);
     expect(gesture.cue.getAttribute('data-armed')).toBeNull();
+    expect(gesture.cue.getAttribute('data-completed')).toBe('true');
     gesture.end(141);
     expect(gesture.onReply).not.toHaveBeenCalled();
     expect(gesture.cue.style.width).toBe('0px');

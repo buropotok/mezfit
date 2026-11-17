@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { triggerTelegramSelectionHaptic } from '../telegram';
+import { runHapticProbe, triggerTelegramSelectionHaptic } from '../telegram';
 import { PRESS_SCALE_PEAK_TIME } from '../ui/PressScale';
 
 export type RecordingGesturePhase = 'idle' | 'pressing' | 'holding' | 'locked';
@@ -94,7 +94,8 @@ export function useRecordingGesture(options: {
       latest.current.onCancelGesture?.();
     } else if (up >= RECORDING_LOCK_DISTANCE && up > left) {
       current.locked = true;
-      triggerTelegramSelectionHaptic();
+      // A single success notification exactly when a real recording locks.
+      runHapticProbe('telegram-success-notification');
       latest.current.onLock?.();
       setPhase('locked');
     }
