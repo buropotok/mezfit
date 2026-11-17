@@ -2,7 +2,9 @@
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import folderPlusSvg from '../ui/icons/folder-plus.svg?raw';
+import editSvg from '../ui/icons/edit-outline.svg?raw';
+import trashSvg from '../ui/icons/trash-outline.svg?raw';
 import { DiscussionCategoryMenu } from './DiscussionCategoryControls';
 import { isCategoryId, type CategoryDefinition } from '../data/cloud/discussion-organization';
 import { installTextOnlyLayout } from '../ui/liquid-glass-text-only/layout.test-support';
@@ -86,8 +88,11 @@ describe('single category menu with real LiquidPopover', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
-  it.each(['folder-plus.svg', 'edit-outline.svg', 'trash-outline.svg'])('uses stroke 1 artwork for %s', filename => {
-    const svg = readFileSync(new URL(`../ui/icons/${filename}`, import.meta.url), 'utf8');
+  it.each([
+    { filename: 'folder-plus.svg', svg: folderPlusSvg },
+    { filename: 'edit-outline.svg', svg: editSvg },
+    { filename: 'trash-outline.svg', svg: trashSvg },
+  ])('uses stroke 1 artwork for $filename', ({ svg }) => {
     expect(svg).toContain('stroke-width="1"');
     expect(svg).not.toMatch(/stroke-width="(?:2|1\.5)"/);
   });
