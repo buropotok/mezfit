@@ -2,9 +2,9 @@ import { classifyTraceError, TRACE_PREFIX, traceStepName, type Trace, type Trace
 import { isTraceObject, observed, workerTrace, type WorkerVersion } from './trace';
 import type { WorkflowStep } from 'cloudflare:workers';
 import type { UploadEvent } from './events';
-import { SMOKE_OBJECT_PATTERN, UPLOAD_BUCKET, UPLOAD_TTL_SECONDS, signBackupPut,
+import { SMOKE_OBJECT_PATTERN, UPLOAD_BUCKET, UPLOAD_TTL_SECONDS, signBackupPut, signSmokeExpiryPut, SMOKE_EXPIRY_TTL_SECONDS,
   backupObjectMatches, type UploadCredentials } from './r2-upload';
-import { anonymousRejected, expiryRejected, readS3Reply, signatureRejected, writeOnceRejected,
+import { anonymousRejected, expiryNeedsControl, expiryRejected, readS3Reply, signatureRejected, writeOnceRejected,
   type S3Reply } from './smoke-http';
 
 export interface SmokeBindings extends UploadCredentials {
@@ -31,7 +31,9 @@ const CONTENT_TYPE = 'application/octet-stream';
 const BODY = new TextEncoder().encode('mezfit-migration-smoke\n');
 const BACKUP = { sizeBytes: BODY.byteLength, contentType: CONTENT_TYPE };
 const ETAG = 'c2c4344304438b96fbd9a2383b658334';
-const PROBES = ['mime', 'length', 'conditional', 'expired'] as const;
+const PROBES = ['mime', 'length', 'conditional'] as const;
+const EXPIRY_CLOCK_MARGIN_MS = 3000;
+const smokeProbeKeys = (key: string) => [...PROBES, 'expired'].map(kind => key + '/' + kind);
 const READ = { retries: { limit: 2, delay: '2 seconds', backoff: 'exponential' }, timeout: '15 seconds' } as const;
 const WRITE = { retries: { limit: 2, delay: '3 seconds', backoff: 'exponential' }, timeout: '20 seconds' } as const;
 const WAIT = { retries: { limit: 12, delay: '5 seconds', backoff: 'constant' }, timeout: '10 seconds' } as const;
@@ -63,7 +65,8 @@ async function request(url: string, body?: Uint8Array<ArrayBuffer>, type = CONTE
     });
     const reply = await readS3Reply(response);
     emit?.('r2', 'http-request', 'R2_HTTP_REQUEST', 'OK', { actual: 'http-' + reply.status + '-' + reply.code,
-      duration_ms: Date.now() - start, details: { method, http_status: reply.status } });
+      duration_ms: Date.now() - start, details: { method, http_status: reply.status,
+        s3_content_type: reply.contentType, s3_body_format: reply.bodyFormat, s3_code_present: reply.codePresent } });
     return reply;
   } catch (error) {
     emit?.('r2', 'http-request', 'R2_HTTP_REQUEST', 'FAILED', { expected: 's3-response', actual: 'fetch-failed',
@@ -121,17 +124,82 @@ async function putBackup(env: SmokeBindings, key: string, emit?: Trace): Promise
 }
 
 async function negativePut(env: SmokeBindings, key: string, kind: typeof PROBES[number], emit?: Trace): Promise<void> {
-  const expired = kind === 'expired';
-  const now = expired ? new Date(Date.now() - (UPLOAD_TTL_SECONDS + 60) * 1000) : undefined;
-  const url = await sign(key, env, now, emit);
+  const url = await sign(key, env, undefined, emit);
   const bytes = kind === 'length' ? new Uint8Array(BODY.byteLength + 1) : BODY;
   const reply = await request(url, bytes, kind === 'mime' ? 'application/zip' : CONTENT_TYPE, kind !== 'conditional', emit);
   if (await head(env, key, emit)) {
     throw new SmokeFailure('SMOKE_BAD_PUT_CREATED_OBJECT', 'integrity', 'probe-object-absent', 'probe-object-present');
   }
-  if (!(expired ? expiryRejected(reply) : signatureRejected(reply, kind === 'conditional'))) {
-    throw httpFailure('SMOKE_INVALID_' + kind.toUpperCase() + '_ACCEPTANCE', expired ? 'expired-signature' : 'signature-rejection', reply);
+  if (!signatureRejected(reply, kind === 'conditional')) {
+    throw httpFailure('SMOKE_INVALID_' + kind.toUpperCase() + '_ACCEPTANCE', 'signature-rejection', reply);
   }
+}
+
+type ExpiryControl = { issuedAt: number; expiresAt: number; fingerprint: string };
+
+async function expiryFingerprint(url: string): Promise<string> {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(url));
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function primeExpiry(env: SmokeBindings, key: string, emit?: Trace): Promise<ExpiryControl> {
+  const existing = await head(env, key, emit);
+  if (existing) {
+    if (!matchesBackup(existing)) {
+      throw new SmokeFailure('SMOKE_EXPIRY_CONTROL_MISMATCH', 'integrity', 'isolated-smoke-object', 'unexpected-object');
+    }
+    await deleteSmokeObjects(env, [key], emit);
+  }
+  const issuedAt = Date.now();
+  const signed = await signSmokeExpiryPut(key, BACKUP, env, new Date(issuedAt), emit);
+  if (new URL(signed.putUrl).searchParams.get('X-Amz-Expires') !== String(SMOKE_EXPIRY_TTL_SECONDS)) {
+    throw new SmokeFailure('SMOKE_EXPIRY_CONTROL_MISMATCH', 'integrity', 'short-expiry', 'unexpected-ttl');
+  }
+  const reply = await request(signed.putUrl, BODY, CONTENT_TYPE, true, emit);
+  if (reply.status !== 200) throw httpFailure('SMOKE_EXPIRY_CONTROL_PUT_FAILED', 'http-200', reply);
+  if (Date.now() >= signed.expiresAt || !matchesBackup(await head(env, key, emit))) {
+    throw new SmokeFailure('SMOKE_EXPIRY_CONTROL_MISMATCH', 'integrity', 'valid-put-before-expiry', 'baseline-unverified');
+  }
+  await deleteSmokeObjects(env, [key], emit);
+  if (await head(env, key, emit)) {
+    throw new SmokeFailure('SMOKE_EXPIRY_CONTROL_MISMATCH', 'integrity', 'empty-probe-key', 'probe-object-present');
+  }
+  // Workflow state contains a timestamp and fingerprint only. Re-signing later
+  // must yield the exact capability exercised before expiry.
+  return { issuedAt, expiresAt: signed.expiresAt, fingerprint: await expiryFingerprint(signed.putUrl) };
+}
+
+async function rejectExpired(env: SmokeBindings, key: string, control: ExpiryControl, emit?: Trace): Promise<void> {
+  const expired = await signSmokeExpiryPut(key, BACKUP, env, new Date(control.issuedAt), emit);
+  if (expired.expiresAt !== control.expiresAt || Date.now() < control.expiresAt
+    || await expiryFingerprint(expired.putUrl) !== control.fingerprint) {
+    throw new SmokeFailure('SMOKE_EXPIRY_CONTROL_MISMATCH', 'integrity', 'same-url-after-expiry', 'expiry-control-unverified');
+  }
+  if (await head(env, key, emit)) {
+    throw new SmokeFailure('SMOKE_EXPIRY_CONTROL_MISMATCH', 'integrity', 'empty-probe-key', 'probe-object-present');
+  }
+  const reply = await request(expired.putUrl, BODY, CONTENT_TYPE, true, emit);
+  if (await head(env, key, emit)) {
+    throw new SmokeFailure('SMOKE_BAD_PUT_CREATED_OBJECT', 'integrity', 'probe-object-absent', 'probe-object-present');
+  }
+  const explicitExpiry = expiryRejected(reply);
+  if (!explicitExpiry && !expiryNeedsControl(reply)) {
+    throw httpFailure('SMOKE_INVALID_EXPIRED_ACCEPTANCE', 'expired-signature', reply);
+  }
+  emit?.('r2', 'expired-put-response', 'R2_EXPIRED_PUT_RESPONSE', explicitExpiry ? 'OK' : 'NOT_OBSERVED', {
+    expected: 'expired-signature', actual: explicitExpiry ? 'explicit-expiry' : 'opaque-denial-awaiting-fresh-control',
+  });
+}
+
+// Prove the same key, headers and credentials still work after the expiry test.
+async function confirmFreshExpiryControl(env: SmokeBindings, key: string, emit?: Trace): Promise<void> {
+  await putBackup(env, key, emit);
+  if (!matchesBackup(await head(env, key, emit))) {
+    throw new SmokeFailure('SMOKE_EXPIRY_FRESH_CONTROL_FAILED', 'integrity', 'exact-size-type-etag', 'metadata-mismatch');
+  }
+  emit?.('r2', 'expired-put-proof', 'R2_EXPIRED_PUT_PROVEN', 'OK', {
+    expected: 'same-url-denied-only-after-expiry', actual: 'fresh-url-still-authorized',
+  });
 }
 
 function d1ReadFailure(code: string, error: unknown): SmokeFailure {
@@ -245,7 +313,7 @@ export async function runMigrationSmoke(env: SmokeBindings, id: string, step: Wo
     trace.emit('r2', 'smoke-key', 'R2_SMOKE_KEY_GENERATED', 'OK', { expected: 'synthetic-object-key', actual: 'smoke-key-validated' });
     await trace.flush();
   }
-  const probeKeys = PROBES.map(kind => key + '/' + kind);
+  const probeKeys = smokeProbeKeys(key);
   let failure: unknown;
   try {
     await run('Sweep expired smoke objects', READ, emit => sweepOldSmokeObjects(env, emit));
@@ -310,9 +378,23 @@ export async function runMigrationSmoke(env: SmokeBindings, id: string, step: Wo
     for (const [index, kind] of PROBES.entries()) {
       await run('Reject signed PUT ' + kind, READ, emit => negativePut(env, probeKeys[index], kind, emit));
     }
+    const expiryKey = key + '/expired';
+    const expiry = await step.do('Prime signed PUT expiry control', WRITE, stepContext =>
+      execute('Prime signed PUT expiry control', WRITE, stepContext?.attempt, emit => primeExpiry(env, expiryKey, emit)));
+    await step.sleepUntil('Wait for signed PUT expiration', new Date(expiry.expiresAt + EXPIRY_CLOCK_MARGIN_MS));
+    await run('Reject signed PUT expired', WRITE, emit => rejectExpired(env, expiryKey, expiry, emit));
+    await run('Verify fresh PUT after expiry', WRITE, emit => confirmFreshExpiryControl(env, expiryKey, emit));
     await run('Reject conditional overwrite', READ, async emit => {
+      const before = await head(env, key, emit);
+      if (!before || !matchesBackup(before)) {
+        throw new SmokeFailure('SMOKE_OVERWRITE_CONTROL_MISSING', 'integrity', 'existing-backup', 'backup-unverified');
+      }
       const reply = await request(await sign(key, env, undefined, emit), BODY, CONTENT_TYPE, true, emit);
       if (!writeOnceRejected(reply)) throw httpFailure('SMOKE_OVERWRITE_NOT_REJECTED', 'http-412-PreconditionFailed', reply);
+      const after = await head(env, key, emit);
+      if (!after || !matchesBackup(after) || before.version !== after.version) {
+        throw new SmokeFailure('SMOKE_OVERWRITE_CHANGED_OBJECT', 'integrity', 'unchanged-object-version', 'object-changed');
+      }
     });
     await run('Reject anonymous R2 GET', READ, async emit => {
       const url = new URL(await sign(key, env, undefined, emit));
@@ -341,7 +423,7 @@ export async function cleanupMigrationSmoke(env: SmokeBindings, id: string, step
     try {
       await observed(trace?.emit, 'workflow', 'delete-failed-smoke-objects', 'WORKFLOW_STEP', { expected: 'step-completed',
         details: { retry_limit: WRITE.retries.limit, timeout_ms: 20000, backoff: WRITE.retries.backoff } },
-      () => deleteSmokeObjects(env, [key, ...PROBES.map(kind => key + '/' + kind)], trace?.emit));
+      () => deleteSmokeObjects(env, [key, ...smokeProbeKeys(key)], trace?.emit));
     } finally {
       await trace?.flush();
     }
