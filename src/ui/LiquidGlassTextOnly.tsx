@@ -11,10 +11,18 @@ export type LiquidGlassTextOnlyTab = {
   label: string;
 };
 
+export type LiquidGlassTextOnlyActionTab = {
+  label: string;
+  onClick: () => void;
+  ariaLabel?: string;
+};
+
 export type LiquidGlassTextOnlyProps = {
   tabs: readonly LiquidGlassTextOnlyTab[];
   value: string;
   onValueChange: (value: string) => void;
+  /** An optional trailing action, separate from selectable tab values. */
+  actionTab?: LiquidGlassTextOnlyActionTab;
   hidden: boolean;
   /** Expand the glass strip to the host width; the default keeps its original inset. */
   fullWidth?: boolean;
@@ -23,10 +31,10 @@ export type LiquidGlassTextOnlyProps = {
   glassOptics?: boolean;
 };
 
-function Scene({ tabs, value, onValueChange, fullWidth = false, glassPreset, glassBlur, glassOptics }: Omit<LiquidGlassTextOnlyProps, 'hidden'>) {
+function Scene({ tabs, value, onValueChange, actionTab, fullWidth = false, glassPreset, glassBlur, glassOptics }: Omit<LiquidGlassTextOnlyProps, 'hidden'>) {
   const host = useRef<HTMLDivElement>(null);
   const controller = useRef<PrototypeController | null>(null);
-  const latest = useRef({ tabs, value, onValueChange });
+  const latest = useRef({ tabs, value, onValueChange, actionTab });
   const [selectionRequest, reconcileSelection] = useReducer((revision: number) => revision + 1, 0);
   const [shadow, setShadow] = useState<ShadowRoot | null>(null);
   const order = JSON.stringify(tabs.map(tab => tab.value));
@@ -37,7 +45,7 @@ function Scene({ tabs, value, onValueChange, fullWidth = false, glassPreset, gla
   }, []);
 
   useLayoutEffect(() => {
-    latest.current = { tabs, value, onValueChange };
+    latest.current = { tabs, value, onValueChange, actionTab };
   });
 
   useLayoutEffect(() => {
@@ -48,12 +56,12 @@ function Scene({ tabs, value, onValueChange, fullWidth = false, glassPreset, gla
       const tab = current.tabs[index];
       if (tab && tab.value !== current.value) current.onValueChange(tab.value);
       reconcileSelection();
-    });
+    }, () => latest.current.actionTab?.onClick());
     return () => {
       controller.current?.dispose();
       controller.current = null;
     };
-  }, [shadow, order]);
+  }, [shadow, order, Boolean(actionTab)]);
 
   useLayoutEffect(() => {
     controller.current?.setValue(Math.max(0, tabs.findIndex(tab => tab.value === value)));
@@ -92,6 +100,16 @@ function Scene({ tabs, value, onValueChange, fullWidth = false, glassPreset, gla
                       <span className="tab-label">{tab.label}</span>
                     </button>
                   ))}
+                  {actionTab && (
+                    <button
+                      className="tab-link"
+                      type="button"
+                      data-action-tab=""
+                      aria-label={actionTab.ariaLabel}
+                    >
+                      <span className="tab-label">{actionTab.label}</span>
+                    </button>
+                  )}
                   <span className="selector-track" id="selector-track" aria-hidden="true">
                     <span className="selector" id="selector" />
                   </span>

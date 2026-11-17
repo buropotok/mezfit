@@ -17,6 +17,8 @@ const prototypeTabs: readonly LiquidGlassTextOnlyTab[] = [
 export function LiquidGlassTextOnlyCatalog() {
   const [hidden, setHidden] = useState(false);
   const [value, setValue] = useState('today');
+  const [showAction, setShowAction] = useState(true);
+  const [actionCount, setActionCount] = useState(0);
   const [glassSettings] = useState(loadBrowserGlassSettings);
 
   return (
@@ -24,6 +26,9 @@ export function LiquidGlassTextOnlyCatalog() {
       <div className="ui-kit-liquid-glass-text-only__header">
         <Text id="ui-kit-liquid-glass-text-only-title" variant="title">Liquid Glass Text Only</Text>
         <Text variant="caption" tone="muted">44 px · Caption · horizontal swipe</Text>
+        <Button variant="secondary" onClick={() => setShowAction(current => !current)}>
+          {showAction ? 'Убрать «+»' : 'Добавить «+»'}
+        </Button>
         <Button variant="secondary" onClick={() => setHidden(current => !current)}>
           {hidden ? 'Показать' : 'Скрыть'}
         </Button>
@@ -33,6 +38,11 @@ export function LiquidGlassTextOnlyCatalog() {
           tabs={prototypeTabs}
           value={value}
           onValueChange={setValue}
+          actionTab={showAction ? {
+            label: '+',
+            ariaLabel: 'Создать категорию',
+            onClick: () => setActionCount(current => current + 1),
+          } : undefined}
           hidden={hidden}
           glassPreset={glassSettings.preset}
           glassBlur={glassSettings.blur}
@@ -41,6 +51,7 @@ export function LiquidGlassTextOnlyCatalog() {
       </div>
       <div className="ui-kit-liquid-glass-text-only__value">
         <Text variant="caption" tone="muted">Выбрано: {prototypeTabs.find(tab => tab.value === value)?.label}</Text>
+        <Text variant="caption" tone="muted">Нажатий на действие «+»: {actionCount}</Text>
       </div>
     </section>
   );

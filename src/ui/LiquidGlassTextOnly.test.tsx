@@ -60,6 +60,17 @@ function button(root: ShadowRoot, index: number): HTMLButtonElement {
   if (!result) throw new Error('Missing tab');
   return result;
 }
+function actionButton(root: ShadowRoot): HTMLButtonElement {
+  const result = root.querySelector<HTMLButtonElement>('[data-action-tab]');
+  if (!result) throw new Error('Missing trailing action');
+  return result;
+}
+function visibleActionX(root: ShadowRoot) {
+  const strip = element(root, 'tab-strip');
+  const action = actionButton(root);
+  strip.scrollLeft = Math.max(0, action.offsetLeft + action.offsetWidth - strip.clientWidth);
+  return action.offsetLeft + action.offsetWidth / 2 - strip.scrollLeft;
+}
 function tabWidth(element: HTMLElement) {
   return widths.get(element.textContent?.trim() ?? '') ?? 84;
 }
@@ -339,5 +350,221 @@ describe('LiquidGlassTextOnly', () => {
     view.unmount();
     expect(animationCancels.every(cancel => cancel.mock.calls.length > 0)).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('renders a single trailing plain-text action as a button, not as a selectable tab', () => {
+    const onAction = vi.fn();
+    const view = render(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+      onValueChange={changed} actionTab={{ label: '+', ariaLabel: 'Создать категорию', onClick: onAction }} />);
+    const root = getScene(view.container);
+    const action = actionButton(root);
+    const links = root.querySelectorAll('.tab-link');
+
+    expect(links).toHaveLength(tabs.length + 1);
+    expect(links[tabs.length]).toBe(action);
+    expect(action.textContent).toBe('+');
+    expect(action.getAttribute('aria-label')).toBe('Создать категорию');
+    expect(action.tagName).toBe('BUTTON');
+    expect(action.getAttribute('role')).not.toBe('tab');
+    expect(action.hasAttribute('aria-selected')).toBe(false);
+    expect(root.querySelectorAll('[role="tab"]')).toHaveLength(tabs.length);
+    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('calls an action once per mouse click without changing selection or starting lens travel', () => {
+    const onAction = vi.fn();
+    const view = render(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+      onValueChange={changed} actionTab={{ label: '+', onClick: onAction }} />);
+    const root = getScene(view.container);
+    act(() => vi.advanceTimersByTime(40));
+    const lens = element(root, 'lens-track');
+    const initialX = translateX(lens);
+
+    fireEvent.click(actionButton(root));
+    fireEvent.click(actionButton(root));
+    expect(onAction).toHaveBeenCalledTimes(2);
+    expect(changed).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(400));
+    expect(translateX(lens)).toBe(initialX);
+    expect(animateMock).not.toHaveBeenCalled();
+    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
+    expect(actionButton(root).classList.contains('active')).toBe(false);
+  });
+
+  it('runs a mobile action tap once, suppresses its synthetic click and accepts another touch tap', () => {
+    const onAction = vi.fn();
+    const view = render(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+      onValueChange={changed} actionTab={{ label: '+', onClick: onAction }} />);
+    const root = getScene(view.container);
+    const x = visibleActionX(root);
+    const tap = (pointerId: number) => {
+      fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId, clientX: x, clientY: 22 });
+      fireEvent.pointerUp(document, { pointerType: 'touch', pointerId, clientX: x, clientY: 22 });
+      fireEvent.click(actionButton(root)); // browser-synthesized click after pointerup
+    };
+    tap(10);
+    expect(onAction).toHaveBeenCalledTimes(1);
+    tap(11);
+    expect(onAction).toHaveBeenCalledTimes(2);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'mouse', pointerId: 12, clientX: x, clientY: 22 });
+    fireEvent.pointerUp(actionButton(root), { pointerType: 'mouse', pointerId: 12, clientX: x, clientY: 22 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).toHaveBeenCalledTimes(3); // distinct physical mouse click during the touch-suppression window
+    expect(changed).not.toHaveBeenCalled();
+    expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
+    expect(animateMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps a horizontal swipe starting on the action a scroll, not an invocation', () => {
+    const onAction = vi.fn();
+    const view = render(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+      onValueChange={changed} actionTab={{ label: '+', onClick: onAction }} />);
+    const root = getScene(view.container);
+    const x = visibleActionX(root);
+    const strip = element(root, 'tab-strip');
+    const startScroll = strip.scrollLeft;
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 20, clientX: x, clientY: 22 });
+    fireEvent.pointerMove(document, { pointerType: 'touch', pointerId: 20, clientX: x + 45, clientY: 22 });
+    expect(strip.scrollLeft).toBeLessThan(startScroll);
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 20, clientX: x + 45, clientY: 22 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+
+    const heldX = visibleActionX(root);
+    const heldStartScroll = strip.scrollLeft;
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 21, clientX: heldX, clientY: 22 });
+    act(() => vi.advanceTimersByTime(200));
+    fireEvent.pointerMove(document, { pointerType: 'touch', pointerId: 21, clientX: heldX + 45, clientY: 22 });
+    expect(strip.scrollLeft).toBeLessThan(heldStartScroll);
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 21, clientX: heldX + 45, clientY: 22 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).not.toHaveBeenCalled();
+
+    const verticalX = visibleActionX(root);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 22, clientX: verticalX, clientY: 22 });
+    fireEvent.pointerMove(document, { pointerType: 'touch', pointerId: 22, clientX: verticalX, clientY: 54 });
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 22, clientX: verticalX, clientY: 54 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke the action on long press or when a held selection ends over it', () => {
+    const onAction = vi.fn();
+    const view = render(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+      onValueChange={changed} actionTab={{ label: '+', onClick: onAction }} />);
+    const root = getScene(view.container);
+    const x = visibleActionX(root);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 30, clientX: x, clientY: 22 });
+    act(() => vi.advanceTimersByTime(200));
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 30, clientX: x, clientY: 22 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
+
+    const strip = element(root, 'tab-strip');
+    strip.scrollLeft = 0;
+    fireEvent.pointerDown(button(root, 0), { pointerType: 'touch', pointerId: 31, clientX: 39, clientY: 22 });
+    act(() => vi.advanceTimersByTime(160));
+    const endX = actionButton(root).offsetLeft + actionButton(root).offsetWidth / 2;
+    fireEvent.pointerMove(document, { pointerType: 'touch', pointerId: 31, clientX: endX, clientY: 22 });
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 31, clientX: endX, clientY: 22 });
+    expect(onAction).not.toHaveBeenCalled();
+    expect(changed).toHaveBeenCalledExactlyOnceWith('settings');
+    expect(actionButton(root).getAttribute('aria-selected')).toBeNull();
+  });
+
+  it('rebinds an added or removed action without breaking controlled value or the existing scene', () => {
+    const onAction = vi.fn();
+    const renderWith = (withAction: boolean, value: string) => (
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value={value} onValueChange={changed}
+        actionTab={withAction ? { label: '+', onClick: onAction } : undefined} />
+    );
+    const view = render(renderWith(true, 'today'));
+    const root = getScene(view.container);
+    view.rerender(renderWith(false, 'today'));
+    expect(getScene(view.container)).toBe(root);
+    expect(root.querySelector('[data-action-tab]')).toBeNull();
+    expect(root.querySelectorAll('.tab-link')).toHaveLength(tabs.length);
+
+    view.rerender(renderWith(true, 'settings'));
+    expect(getScene(view.container)).toBe(root);
+    expect(actionButton(root)).toBeTruthy();
+    act(() => vi.advanceTimersByTime(340));
+    expect(button(root, 6).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(actionButton(root));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(changed).not.toHaveBeenCalled();
+
+    view.rerender(<LiquidGlassTextOnly hidden tabs={tabs} value="settings" onValueChange={changed}
+      actionTab={{ label: '+', onClick: onAction }} />);
+    expect(view.container.firstElementChild?.childElementCount).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('keeps trailing actions isolated across StrictMode instances and cleans up their work', () => {
+    const firstAction = vi.fn();
+    const secondAction = vi.fn();
+    const view = render(<StrictMode>
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+        onValueChange={changed} actionTab={{ label: '+', onClick: firstAction }} />
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+        onValueChange={changed} actionTab={{ label: '+', onClick: secondAction }} />
+    </StrictMode>);
+    const first = view.container.children[0].firstElementChild?.shadowRoot;
+    const second = view.container.children[1].firstElementChild?.shadowRoot;
+    if (!first || !second) throw new Error('Missing isolated scenes');
+    fireEvent.click(actionButton(first));
+    expect(firstAction).toHaveBeenCalledTimes(1);
+    expect(secondAction).not.toHaveBeenCalled();
+    expect(button(second, 0).getAttribute('aria-selected')).toBe('true');
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('preserves an in-flight selectable-tab lens transition when the action is touched', () => {
+    const onAction = vi.fn();
+    function WithAction() {
+      const [value, setValue] = useState('today');
+      return <LiquidGlassTextOnly hidden={false} tabs={tabs} value={value}
+        onValueChange={(next) => { changed(next); setValue(next); }}
+        actionTab={{ label: '+', onClick: onAction }} />;
+    }
+    const view = render(<WithAction />);
+    const root = getScene(view.container);
+    fireEvent.click(button(root, 5));
+    act(() => vi.advanceTimersByTime(160));
+    const lensTrack = element(root, 'lens-track');
+    const duringTravel = translateX(lensTrack);
+    const x = visibleActionX(root);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 42, clientX: x, clientY: 22 });
+    expect(translateX(lensTrack)).toBe(duringTravel);
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 42, clientX: x, clientY: 22 });
+    expect(onAction).toHaveBeenCalledTimes(1);
+    act(() => vi.advanceTimersByTime(200));
+    expect(button(root, 5).getAttribute('aria-selected')).toBe('true');
+    expect(changed).toHaveBeenCalledExactlyOnceWith('measurements');
+    expect(actionButton(root).hasAttribute('aria-selected')).toBe(false);
+  });
+
+  it('uses the current action callback when props change without remounting the scene', () => {
+    const first = vi.fn();
+    const replacement = vi.fn();
+    const renderWith = (onClick: () => void) => (
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+        onValueChange={changed} actionTab={{ label: '+', onClick }} />
+    );
+    const view = render(renderWith(first));
+    const root = getScene(view.container);
+    view.rerender(renderWith(replacement));
+    expect(getScene(view.container)).toBe(root);
+    fireEvent.click(actionButton(root));
+    expect(first).not.toHaveBeenCalled();
+    expect(replacement).toHaveBeenCalledTimes(1);
+    expect(changed).not.toHaveBeenCalled();
   });
 });

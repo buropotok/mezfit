@@ -32,4 +32,5 @@
 - The lens is a real capsule, not a vertically scaled oval. Its height grows physically, its horizontal size receives the same radial offset, and its end radius is always half of its height.
 - The displacement map is rebuilt from the current capsule geometry so the refractive field follows the actual lens width/height.
 - On tap, the arrival phase owns travel, scroll, container expansion, and lens expansion together. The spring begins only after the lens has reached its maximum arrival geometry.
+- A single optional final text action is a non-selectable button. It uses the existing slot styling, participates in scrolling, and never becomes a lens destination; ordinary selectable-slot geometry and motion are unchanged.
 - Hidden scenes unmount completely. Runtime listeners, observers, timers, RAFs, and Web Animations are disposed with the scene.
