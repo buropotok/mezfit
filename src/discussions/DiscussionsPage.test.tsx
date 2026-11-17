@@ -7,12 +7,39 @@ import type { NavigationContext } from '../NavigationShell';
 import { projectDexieSyncState } from '../data/cloud/sync-status';
 import { DiscussionsPage, DiscussionInboxList } from './DiscussionsPage';
 import type { DiscussionInboxRow } from './DiscussionsProvider';
+import type { DiscussionThread } from '../data/cloud/discussion-contracts';
+import type { DiscussionOrganizationSnapshot } from '../data/cloud/discussion-organization';
+import type { LiquidGlassTextOnlyProps } from '../ui/LiquidGlassTextOnly';
 import { thread, message } from './discussion-fixture.test-support';
 
-const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), getThread: vi.fn(), cloudStatus: 'ready', syncStatus: 'local' }));
+const state = vi.hoisted(() => ({ db: {}, rows: [] as DiscussionInboxRow[], ensure: vi.fn(), getThread: vi.fn(), cloudStatus: 'ready', syncStatus: 'local' }));
 vi.mock('./DiscussionsProvider', () => ({ useDiscussions: () => ({ rows: state.rows, unread: 0, loading: false, error: '', retry: vi.fn() }) }));
+
+vi.mock('../data/cloud/discussion-organization', async importOriginal => ({
+  ...await importOriginal<typeof import('../data/cloud/discussion-organization')>(),
+  DiscussionOrganizationRepository: class {
+    observe(threads: readonly DiscussionThread[], next: (value: DiscussionOrganizationSnapshot) => void) {
+      // These inbox tests exercise navigation/feed behavior; classification
+      // precedence and delayed snapshots have their own domain/category tests.
+      next({ categories: [], diagnostics: [], threads: threads.map(thread => ({
+        thread, category: thread.anchor.kind === 'free' ? 'personal' : 'training',
+        ownAssignment: null, peerCategorized: false, diagnostics: [],
+      })) });
+      return { unsubscribe: vi.fn() };
+    }
+  },
+}));
+vi.mock('../ui/LiquidGlassTextOnly', () => ({
+  LiquidGlassTextOnly: ({ tabs, value, onValueChange, actionTab, hidden }: LiquidGlassTextOnlyProps) =>
+    <div role="tablist" hidden={hidden}>
+      {tabs.map(tab => <button key={tab.value} role="tab" aria-selected={value === tab.value}
+        onClick={() => onValueChange(tab.value)}>{tab.label}</button>)}
+      {actionTab ? <button aria-label={actionTab.ariaLabel} onClick={actionTab.onClick}>{actionTab.label}</button> : null}
+    </div>,
+}));
+
 vi.mock('../navigation/NavigationSurfaceContext', () => ({ useNavigationSurfaceContext: () => null }));
-vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: {}, actorUserId: 'tg:11',
+vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: state.db, actorUserId: 'tg:11',
   clients: [peer('pair', 'Анна'), peer('other-pair', 'Ольга')], status: state.cloudStatus, syncStatus: state.syncStatus }) }));
 vi.mock('../contacts/CloudContactAvatar', () => ({ CloudContactAvatar: ({ contact }: { contact: { displayName: string } }) => <span>{contact.displayName}</span> }));
 vi.mock('../data/cloud/discussions', () => ({ DiscussionRepository: class { ensureEntityThread = state.ensure; getThread = state.getThread; } }));
@@ -203,6 +230,7 @@ it('shows an empty free chat without an entity action and opens its saved ID', a
   state.rows = [free];
   state.getThread.mockResolvedValue(free.thread);
   render(<DiscussionsPage role="client" onNavigationContextChange={vi.fn()} />);
+  fireEvent.click(screen.getByRole('tab', { name: 'Личное' }));
   expect(screen.getByText('Сообщений пока нет')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /^К / })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Питание' }));

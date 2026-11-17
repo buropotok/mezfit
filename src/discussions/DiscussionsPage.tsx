@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from 'konsta/react';
 import type { NavigationContext } from '../NavigationShell';
@@ -7,11 +7,19 @@ import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceCont
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { syncStatusLabel } from '../data/cloud/sync-status';
 import { DiscussionRepository, observeDiscussionNotificationThread } from '../data/cloud/discussions';
+import type { AssignableDiscussionCategory } from '../data/cloud/discussion-organization';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Badge, DatePicker, Icon, List, ListItem, Text, type LocalDate } from '../ui';
+import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
+import {
+  categoryDialogTitle, categoryMutationError, categoryTabValue, discussionCategoryTabs,
+  DiscussionCategoryDialog, DiscussionCategoryMenu, DiscussionMoveMenu,
+  type CategoryDialogIntent,
+} from './DiscussionCategoryControls';
 import { DiscussionSheet } from './DiscussionSheet';
 import { DiscussionEntity } from './DiscussionEntity';
 import { useDiscussions, type DiscussionInboxRow } from './DiscussionsProvider';
+import { useDiscussionOrganization } from './useDiscussionOrganization';
 import { discussionDateLabel, discussionLocalDate, groupDiscussionFeed } from './feed-presentation';
 import { ScheduleClientFilter } from '../schedule/ScheduleClientFilter';
 import { ScheduleFilterBar } from '../schedule/ScheduleFilterBar';
@@ -22,13 +30,18 @@ const entityActionLabels = {
   program: 'К программе', workout: 'К тренировке', exercise: 'К упражнению', set: 'К подходу',
 } satisfies Record<EntityDiscussionAnchor['kind'], string>;
 
-function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey }: {
+type DiscussionMoveActions = ComponentProps<typeof DiscussionMoveMenu>['actions'] & {
+  move: (row: DiscussionInboxRow, category: AssignableDiscussionCategory | null) => void;
+};
+
+function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey, moveActions }: {
   row: DiscussionInboxRow;
   onOpen: (row: DiscussionInboxRow) => void;
   onEntity: (row: DiscussionInboxRow) => void;
   onOpenOrigin?: (row: DiscussionInboxRow, origin: AvatarFlightOrigin) => void;
   onAvatarSourceChange?: (row: DiscussionInboxRow, src: string | undefined) => void;
   hiddenAvatarKey?: string;
+  moveActions?: DiscussionMoveActions;
 }) {
   const avatarRef = useRef<HTMLSpanElement>(null);
   const avatarSrc = useRef<string | undefined>(undefined);
@@ -69,26 +82,30 @@ function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSour
       }
       onOpen(row);
     }}
-    trailingAction={entityAction && <Button rounded tonal inline
-      aria-label={`${entityAction}: ${row.thread.derivedTitleSnapshot}`}
-      onClick={() => onEntity(row)}><Text variant="caption">{entityAction}</Text></Button>}
+    trailingAction={entityAction || moveActions ? <>
+      {entityAction ? <Button rounded tonal inline aria-label={`${entityAction}: ${row.thread.derivedTitleSnapshot}`}
+        onClick={() => onEntity(row)}><Text variant="caption">{entityAction}</Text></Button> : null}
+      {moveActions ? <DiscussionMoveMenu title={row.thread.derivedTitleSnapshot} free={kind === 'free'}
+        actions={moveActions} onMove={category => moveActions.move(row, category)} /> : null}
+    </> : undefined}
   />;
 }
 
 /** List actions are siblings through ListItem.trailingAction, never nested buttons. */
-export function DiscussionInboxList({ rows, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey }: {
+export function DiscussionInboxList({ rows, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey, moveActions }: {
   rows: readonly DiscussionInboxRow[];
   onOpen: (row: DiscussionInboxRow) => void;
   onEntity: (row: DiscussionInboxRow) => void;
   onOpenOrigin?: (row: DiscussionInboxRow, origin: AvatarFlightOrigin) => void;
   onAvatarSourceChange?: (row: DiscussionInboxRow, src: string | undefined) => void;
   hiddenAvatarKey?: string;
+  moveActions?: DiscussionMoveActions;
 }) {
   return <>{groupDiscussionFeed(rows).map(group => <section className="discussion-inbox__group" key={group.date} aria-label={group.date || 'Без сообщений'}>
     <Text variant="footnote">{group.date ? discussionDateLabel(group.date) : 'Без сообщений'}</Text>
     <List divider="full">{group.rows.map(row => <DiscussionInboxItem key={row.thread.id}
       row={row} onOpen={onOpen} onEntity={onEntity} onOpenOrigin={onOpenOrigin}
-      onAvatarSourceChange={onAvatarSourceChange} hiddenAvatarKey={hiddenAvatarKey} />)}</List>
+      onAvatarSourceChange={onAvatarSourceChange} hiddenAvatarKey={hiddenAvatarKey} moveActions={moveActions} />)}</List>
   </section>)}</>;
 }
 
@@ -162,6 +179,130 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const notificationRealmsKey = JSON.stringify((notificationPeers ?? []).map(contact => contact.relationshipId).sort());
   const db = cloud?.db;
   const actorId = cloud?.actorUserId;
+  const organization = useDiscussionOrganization(db, actorId, role, inbox.rows);
+  const categoryScope = useMemo(() => ({}), [organization.scope, relationshipId]);
+  const covered = Boolean(current || clientFilter || picker);
+  const categorySurface = useMemo(() => ({}), [categoryScope, covered]);
+  const activeCategorySurface = useRef<object | null>(null);
+  useLayoutEffect(() => {
+    activeCategorySurface.current = categorySurface;
+    return () => { activeCategorySurface.current = null; };
+  }, [categorySurface]);
+  const [tabSelection, setTabSelection] = useState<{ scope: object; value: string } | null>(null);
+  const tabs = discussionCategoryTabs(role, organization.categories);
+  const requestedTab = tabSelection?.scope === categoryScope ? tabSelection.value : 'training';
+  const activeTab = tabs.some(tab => tab.value === requestedTab) ? requestedTab : 'personal';
+  const manageCategory = organization.categories.find(category => categoryTabValue({ kind: 'custom', id: category.id }) === activeTab);
+  const selectCategory = (value: string) => {
+    setTabSelection({ scope: categoryScope, value });
+    setLimit(50);
+  };
+  useEffect(() => {
+    if (!organization.snapshot || requestedTab === activeTab) return;
+    setTabSelection(current => current?.scope === categoryScope && current.value === requestedTab
+      ? { scope: categoryScope, value: activeTab } : current);
+    setLimit(50);
+  }, [activeTab, categoryScope, organization.snapshot, requestedTab]);
+  useEffect(() => setLimit(50), [categoryScope]);
+
+  const [categoryDialog, setCategoryDialog] = useState<{
+    surface: object;
+    intent: CategoryDialogIntent;
+    parent: NavigationContext | null;
+  } | null>(null);
+  const dialog = categoryDialog?.surface === categorySurface && !covered ? categoryDialog : null;
+  const runningCategoryAction = useRef<{ scope: object } | null>(null);
+  const [categoryFeedback, setCategoryFeedback] = useState<{
+    scope: object;
+    surface: object;
+    pending: boolean;
+    error: string;
+  } | null>(null);
+  const feedback = categoryFeedback?.surface === categorySurface ? categoryFeedback : null;
+  const categoryBusy = categoryFeedback?.scope === categoryScope && categoryFeedback.pending;
+  const openCategoryDialog = (intent: CategoryDialogIntent) => {
+    if (covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
+    if (!notificationMessageId) cancelPendingOpen();
+    setCategoryFeedback(null);
+    setCategoryDialog({ surface: categorySurface, intent, parent });
+  };
+  const closeCategoryDialog = useCallback(() => {
+    if (runningCategoryAction.current?.scope === categoryScope) return;
+    setCategoryDialog(null);
+    setCategoryFeedback(null);
+  }, [categoryScope]);
+  useLayoutEffect(() => {
+    if (!dialog) return;
+    const context: NavigationContext = { ...dialog.parent, title: categoryDialogTitle(dialog.intent), level: 2, onBack: () => {
+      if (activeCategorySurface.current !== dialog.surface) return;
+      if (runningCategoryAction.current?.scope === categoryScope) {
+        // Browser Back can consume the nested history entry during a write.
+        onNavigationContextChange({ ...context });
+      } else closeCategoryDialog();
+    } };
+    onNavigationContextChange(context);
+    // The enclosing coach workspace owns its parent context. A root surface's
+    // title-only snapshot must not become a new nested history entry.
+    return () => onNavigationContextChange(!relationshipId && dialog.parent?.level === 1 ? dialog.parent : null);
+  }, [dialog, categoryScope, closeCategoryDialog, onNavigationContextChange, relationshipId]);
+
+  const runCategoryAction = async <T,>(operation: () => Promise<T>, fallback: string, onSuccess?: (result: T) => void) => {
+    if (covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
+    const action = { scope: categoryScope };
+    runningCategoryAction.current = action;
+    setCategoryFeedback({ scope: categoryScope, surface: categorySurface, pending: true, error: '' });
+    try {
+      const result = await operation();
+      if (activeCategorySurface.current === categorySurface) {
+        setCategoryFeedback(null);
+        onSuccess?.(result);
+      }
+    } catch (reason) {
+      if (activeCategorySurface.current === categorySurface) {
+        setCategoryFeedback({ scope: categoryScope, surface: categorySurface, pending: false, error: categoryMutationError(reason, fallback) });
+      }
+    } finally {
+      if (runningCategoryAction.current === action) {
+        runningCategoryAction.current = null;
+        if (activeCategorySurface.current) {
+          setCategoryFeedback(current => current?.surface === categorySurface && current.pending ? null : current);
+        }
+      }
+    }
+  };
+  const submitCategoryDialog = (name: string) => {
+    if (!dialog) return;
+    const organizationRepository = organization.repository;
+    if (!organizationRepository) {
+      setCategoryFeedback({ scope: categoryScope, surface: categorySurface, pending: false, error: 'Категории обсуждений недоступны.' });
+      return;
+    }
+    const { intent } = dialog;
+    if (intent.kind === 'create') {
+      void runCategoryAction(() => organizationRepository.createCategory(name), 'Не удалось создать категорию.', category => {
+        // Read back from the committed local transaction even if the previous
+        // subscription has not delivered its invalidation yet.
+        organization.retry();
+        selectCategory(categoryTabValue({ kind: 'custom', id: category.id }));
+        setCategoryDialog(null);
+      });
+    } else if (intent.kind === 'rename') {
+      void runCategoryAction(() => organizationRepository.renameCategory(intent.category.id, name),
+        'Не удалось переименовать категорию.', () => setCategoryDialog(null));
+    } else {
+      void runCategoryAction(() => organizationRepository.removeCategory(intent.category.id), 'Не удалось удалить категорию.', () => {
+        selectCategory('personal');
+        setCategoryDialog(null);
+      });
+    }
+  };
+  const moveThread = (row: DiscussionInboxRow, category: AssignableDiscussionCategory | null) => {
+    const organizationRepository = organization.repository;
+    if (!organizationRepository || !organization.snapshot || dialog) return;
+    void runCategoryAction(() => category === null
+      ? organizationRepository.clearThreadAssignment(row.thread)
+      : organizationRepository.assignThread(row.thread, category), 'Не удалось переместить обсуждение. Повторите попытку.');
+  };
   const canResolveNotification = cloud?.status === 'ready';
   useEffect(() => {
     if (!notificationMessageId || !db || !actorId || !canResolveNotification) return;
@@ -282,7 +423,18 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       if (generation === request.current) setOpenError('Не удалось открыть обсуждение. Повторите нажатие.');
     }
   };
+  const classifications = useMemo(() => organization.snapshot
+    ? new Map(organization.snapshot.threads.map(item => [item.thread.id, categoryTabValue(item.category)]))
+    : null, [organization.snapshot]);
+  const validTabs = new Set(tabs.map(tab => tab.value));
+  const organizationError = organization.failed || Boolean(classifications && inbox.rows.some(row => {
+    const value = classifications.get(row.thread.id);
+    return !value || !validTabs.has(value);
+  }));
+  const organizationDiagnostics = organization.snapshot && (organization.snapshot.diagnostics.length > 0
+    || organization.snapshot.threads.some(item => item.diagnostics.length > 0));
   const rows = inbox.rows.filter(row => {
+    if (organization.loading || (!organizationError && classifications && classifications.get(row.thread.id) !== activeTab)) return false;
     if (relationshipId && row.thread.coachClientId !== relationshipId) return false;
     if (!relationshipId && clientUserIds.length && !cloud?.clients.some(contact =>
       contact.relationshipId === row.thread.coachClientId && clientUserIds.includes(contact.userId))) return false;
@@ -291,6 +443,9 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     const date = discussionLocalDate(row.latest.createdAt);
     return (!from || date >= from) && (!to || date <= to);
   });
+  const emptyLabel = activeTab === 'coach' ? 'Здесь чаты, которые тренер вынес в отдельную категорию.'
+    : activeTab === 'client' ? 'Здесь чаты, которые клиенты вынесли в отдельную категорию.'
+      : from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет';
   const notificationChat = current?.kind === 'notification' && !closedNotificationChat && repository
     ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
       <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
@@ -307,6 +462,15 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   if (current?.kind === 'entity' && current.row.thread.anchor.kind !== 'free') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
+    <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
+      if (!notificationMessageId) cancelPendingOpen();
+      selectCategory(value);
+    }} hidden={false}
+      actionTab={{ label: '+', ariaLabel: 'Создать категорию', onClick: () => openCategoryDialog({ kind: 'create' }) }} />
+    {manageCategory && !covered ? <div className="discussion-inbox__category-actions">
+      <DiscussionCategoryMenu key={manageCategory.id} category={manageCategory} disabled={categoryBusy}
+        onEdit={openCategoryDialog} />
+    </div> : null}
     <div className="discussion-inbox__filter-block">
       {role === 'coach' && !relationshipId ? <div className={`discussion-inbox__client-filter${clientUserIds.length ? '' : ' discussion-inbox__client-filter--all'}`}>
         {!clientUserIds.length ? <Text variant="footnote" className="discussion-inbox__all-clients">Все клиенты</Text> : null}
@@ -328,13 +492,24 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     </div> : null}
     {inbox.error ? <div className="stack"><Text role="alert">{inbox.error}</Text>
       <Button rounded tonal onClick={() => { cancelPendingOpen(); inbox.retry(); }}><Text>Повторить</Text></Button></div> : null}
+    {organizationError ? <div className="stack">
+      <Text role="alert">Не удалось загрузить категории. Показываем обсуждения без фильтра по категории.</Text>
+      <Button rounded tonal onClick={organization.retry}><Text>Повторить загрузку категорий</Text></Button>
+    </div> : null}
+    {organizationDiagnostics && !organizationError ? <Text variant="footnote" role="status">
+      Некоторые категории или назначения пока недоступны. Обсуждения остаются в списке.
+    </Text> : null}
+    {feedback?.error && !dialog ? <Text variant="footnote" role="alert">{feedback.error}</Text> : null}
     {cloud?.status === 'error' && !rows.length ? <Text role="status">{cloud.error}</Text> : null}
     {inbox.loading && !rows.length ? <Text>Загружаем обсуждения…</Text>
-      : cloud?.status === 'ready' && !inbox.error && !rows.length ? <Text>{from || to || clientUserIds.length ? 'За выбранный период обсуждений нет' : 'Обсуждений пока нет'}</Text> : null}
+      : organization.loading ? <Text>Загружаем категории обсуждений…</Text>
+        : cloud?.status === 'ready' && !inbox.error && !organizationError && !rows.length ? <Text>{emptyLabel}</Text> : null}
     <DiscussionInboxList rows={rows.slice(0, limit)} onOpen={row => { void openChat(row); }}
       onOpenOrigin={(_row, origin) => { capturedOrigin.current = origin; }}
       onAvatarSourceChange={syncOpenedAvatarSource}
       hiddenAvatarKey={current?.kind === 'chat' ? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) : undefined}
+      moveActions={organization.snapshot && !organizationError
+        ? { categories: organization.categories, disabled: categoryBusy, move: moveThread } : undefined}
       onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
     {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}
     {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}
@@ -348,6 +523,10 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
         if (picker?.side === 'from') setFrom(date); else setTo(date);
         setLimit(50); setPicker(null);
       }} />
+    {dialog && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
+      <DiscussionCategoryDialog intent={dialog.intent} pending={categoryBusy} error={feedback?.error ?? ''}
+        onClearError={() => setCategoryFeedback(null)} onSubmit={submitCategoryDialog} onClose={closeCategoryDialog} />
+    </div>, document.body)}
     {notificationChat}
     {current?.kind === 'chat' && repository && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
       <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
