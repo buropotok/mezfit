@@ -1,4 +1,5 @@
 .discussion-inbox { display: grid; gap: var(--ui-space-3); min-width: 0; align-content: start; }
+.discussion-inbox__category-actions { justify-self: end; }
 .discussion-inbox__filters { display: flex; flex-wrap: wrap; gap: var(--ui-space-2); }
 .discussion-inbox__copy { display: grid; min-width: 0; }
 .discussion-inbox__ellipsis { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
