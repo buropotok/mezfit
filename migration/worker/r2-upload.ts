@@ -4,6 +4,7 @@ import type { Trace } from '../trace.mjs';
 export const UPLOAD_BUCKET = 'mezfit-migration-uploads';
 export const MAX_BACKUP_BYTES = 100 * 1024 * 1024;
 export const UPLOAD_TTL_SECONDS = 600;
+export const SMOKE_EXPIRY_TTL_SECONDS = 20;
 const encoder = new TextEncoder();
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 export const SMOKE_ID_PATTERN = new RegExp('^' + UUID + '$');
@@ -61,6 +62,21 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
   env: UploadCredentials,
   now = new Date(),
   emit?: Trace,
+) {
+  return signPut(storageKey, metadata, env, now, UPLOAD_TTL_SECONDS, emit);
+}
+
+export async function signSmokeExpiryPut(storageKey: string, metadata: BackupMetadata,
+  env: UploadCredentials, now: Date, emit?: Trace,
+) {
+  if (!SMOKE_OBJECT_PATTERN.test(storageKey) || !storageKey.endsWith('/expired')) {
+    throw new Error('INVALID_BACKUP_UPLOAD');
+  }
+  return signPut(storageKey, metadata, env, now, SMOKE_EXPIRY_TTL_SECONDS, emit);
+}
+
+async function signPut(storageKey: string, metadata: BackupMetadata, env: UploadCredentials,
+  now: Date, ttl: number, emit?: Trace,
 ): Promise<{ putUrl: string; expiresAt: number; storageKey: string }> {
   const validKey = UPLOAD_KEY_PATTERN.test(storageKey) || SMOKE_OBJECT_PATTERN.test(storageKey);
   const validMetadata = validBackupMetadata(metadata.sizeBytes, metadata.contentType);
@@ -96,7 +112,7 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
     ['X-Amz-Content-Sha256', 'UNSIGNED-PAYLOAD'],
     ['X-Amz-Credential', `${env.MIGRATION_R2_ACCESS_KEY_ID}/${credentialScope}`],
     ['X-Amz-Date', date],
-    ['X-Amz-Expires', String(UPLOAD_TTL_SECONDS)],
+    ['X-Amz-Expires', String(ttl)],
     ['X-Amz-SignedHeaders', signedHeaders],
   ];
   const query = parameters.sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
@@ -106,7 +122,7 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
   const canonicalRequest = `PUT\n${path}\n${query}\n${canonicalHeaders}\n${signedHeaders}\nUNSIGNED-PAYLOAD`;
   emit?.('r2', 'canonical-request', 'R2_CANONICAL_REQUEST_BUILT', 'OK', { actual: 'canonical-put-request', details: { method: 'PUT' } });
   emit?.('r2', 'signed-headers', 'R2_SIGNED_HEADERS_BOUND', 'OK', { actual: 'length-type-host-conditional' });
-  emit?.('r2', 'signature-ttl', 'R2_SIGNATURE_TTL', 'OK', { details: { ttl_seconds: UPLOAD_TTL_SECONDS } });
+  emit?.('r2', 'signature-ttl', 'R2_SIGNATURE_TTL', 'OK', { details: { ttl_seconds: ttl } });
   const toSign = `AWS4-HMAC-SHA256\n${date}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
   const keyDate = await hmac(encoder.encode('AWS4' + env.MIGRATION_R2_SECRET_ACCESS_KEY), day);
   const keyRegion = await hmac(keyDate, 'auto');
@@ -117,7 +133,7 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
   return {
     storageKey,
     putUrl: `https://${host}${path}?${query}&X-Amz-Signature=${signature}`,
-    expiresAt: Math.floor(now.getTime() / 1000) * 1000 + UPLOAD_TTL_SECONDS * 1000,
+    expiresAt: Math.floor(now.getTime() / 1000) * 1000 + ttl * 1000,
   };
 }
 
