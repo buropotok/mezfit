@@ -51,5 +51,17 @@
       "binding": "MIGRATION_WORKFLOW",
       "class_name": "MigrationWorkflow"
     }
-  ]
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "head_sampling_rate": 1
+    }
+  },
+  "upload_source_maps": true,
+  "version_metadata": {
+    "binding": "MIGRATION_VERSION"
+  }
 }
