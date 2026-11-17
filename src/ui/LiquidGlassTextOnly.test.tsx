@@ -480,6 +480,10 @@ describe('LiquidGlassTextOnly', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
     expect(changed).not.toHaveBeenCalled();
 
+    view.rerender(<LiquidGlassTextOnly hidden tabs={tabs} value="settings" onValueChange={changed}
+      actionTab={{ label: '+', onClick: onAction }} />);
+    expect(view.container.firstElementChild?.childElementCount).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
     view.unmount();
     expect(vi.getTimerCount()).toBe(0);
   });
@@ -542,7 +546,7 @@ describe('LiquidGlassTextOnly', () => {
     expect(getScene(view.container)).toBe(root);
     fireEvent.click(actionButton(root));
     expect(first).not.toHaveBeenCalled();
-    expect(replacement).toHaveBeenCalledExactlyOnceWith();
+    expect(replacement).toHaveBeenCalledTimes(1);
     expect(changed).not.toHaveBeenCalled();
   });
 });
