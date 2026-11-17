@@ -23,7 +23,7 @@ const legacyStages = new Map([
 
 export function workflowStepName(value) {
   if (typeof value !== 'string') return null;
-  const slug = traceStepName(value).replace(/-\d+$/, '');
+  const slug = traceStepName(value).replace(/-(?:\d+|[a-f0-9]{8,64})$/, '');
   return knownStages.get(slug) ?? legacyStages.get(slug) ?? null;
 }
 
@@ -206,7 +206,7 @@ export function summarizeTrace(records, activeSmoke, evidence) {
   const failure = failures.find(row => row.component === 'consumer' || row.component === 'd1' || row.component === 'r2')
     ?? failures.find(row => row.component !== 'cloudflare-api' && row.stage !== 'trace-collection');
   const last = records.findLast(row => row.status === 'OK' && ['r2', 'consumer', 'd1', 'queue', 'workflow'].includes(row.component)
-    && !['trace-persist', 'trace-collection', 'instance-history'].includes(row.stage)
+    && !['trace-persist', 'trace-collection', 'instance-history', 'delete-current-smoke-objects', 'delete-failed-smoke-objects'].includes(row.stage)
     && row.actual !== 'row-missing' && row.actual !== 'object-missing');
   return { stages: rows, first_confirmed_failure: failure ?? null, last_confirmed_success: last ?? null };
 }
