@@ -1,5 +1,5 @@
 import Dexie, { liveQuery } from 'dexie';
-import { discussionAnchorKey, discussionId, discussionParents, discussionTitle } from '../../../shared/discussion-anchor';
+import { discussionAnchorKey, discussionId, discussionParents, discussionTitle, FREE_DISCUSSION_ID_PREFIX, type FreeDiscussionAnchor } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, assertMessageAttachmentWrite, discussionReadStateId,
   isDiscussionVideoPosition, sameDiscussionVideoPosition, type DiscussionVideoPosition,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
@@ -17,6 +17,7 @@ export type DiscussionDatabase = Pick<MezfitCloudDatabase,
   transaction<T>(mode: 'r' | 'rw', tables: readonly string[], task: () => Promise<T>): Promise<T>;
 };
 export interface CreateDiscussionThread { id: string; anchor: DiscussionAnchor; entityName: string; date: string; createdAt: string }
+export interface CreateFreeDiscussion { id: string; title: string; createdAt: string }
 export interface DiscussionMessageInput {
   id: string; threadId: string; text: string; createdAt: string; replyToMessageId?: string;
   replyVideoPosition?: DiscussionVideoPosition;
@@ -39,8 +40,12 @@ export function prepareDiscussionMessage(threadId: string, text: string, replyTo
 export function prepareDiscussionThread(anchor: DiscussionAnchor, entityName: string, date: string): CreateDiscussionThread {
   return { id: crypto.randomUUID(), anchor, entityName, date, createdAt: new Date().toISOString() };
 }
+export function prepareFreeDiscussion(title: string): CreateFreeDiscussion {
+  return { id: FREE_DISCUSSION_ID_PREFIX + crypto.randomUUID(), title, createdAt: new Date().toISOString() };
+}
 /** Fixed-size, namespace-separated identity, independent of device, date and entity name. */
 export async function entityDiscussionId(scope: DiscussionScope, anchor: DiscussionAnchor): Promise<string> {
+  if (anchor?.kind === 'free') fail('INVALID_DISCUSSION_ANCHOR');
   const bytes = new TextEncoder().encode(discussionAnchorKey(scope, anchor));
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return 'entity-discussion:' + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
@@ -87,7 +92,8 @@ export class DiscussionRepository {
     discussionAnchorKey(scope, { kind: 'program', trainingPlanId: 'validate-scope' });
     if (!db.discussionMessages?.schema.indexes.some(index => index.name === '[realmId+threadId+createdAt+id]')
       || !db.discussionReadStates?.schema.indexes.some(index => index.name === '[id+readThrough]')) fail('DISCUSSIONS_NOT_ENABLED');
-    this.scope = { ...scope }; this.sync = new DiscussionSync(db);
+    this.scope = { realmId: scope.realmId, coachClientId: scope.coachClientId };
+    this.sync = new DiscussionSync(db);
   }
   private async access(): Promise<void> {
     if (this.scope.coachClientId === null) {
@@ -115,6 +121,9 @@ export class DiscussionRepository {
       if (!row || row.realmId !== this.scope.realmId || row.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
       assertDiscussionThread(row); return row;
     });
+  }
+  getThread(id: string): Promise<DiscussionThread> {
+    return this.read(() => this.thread(id));
   }
   /** Header-only identity query: receipt reads must not hydrate activity/messages. */
   private storedThreads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
@@ -154,6 +163,8 @@ export class DiscussionRepository {
     return row;
   }
   async createThread(input: CreateDiscussionThread): Promise<DiscussionThread> {
+    if (input.anchor?.kind === 'free' || (typeof input.id === 'string' && input.id.startsWith(FREE_DISCUSSION_ID_PREFIX)))
+      fail('INVALID_DISCUSSION_THREAD');
     if (typeof input.entityName !== 'string' || typeof input.date !== 'string') fail('INVALID_DISCUSSION_THREAD');
     const row: DiscussionThread = { ...this.scope, id: input.id, owner: this.scope.realmId,
       anchor: structuredClone(input.anchor), anchorKey: discussionAnchorKey(this.scope, input.anchor),
@@ -168,6 +179,29 @@ export class DiscussionRepository {
         assertDiscussionThread(existing); return existing;
       }
       await this.db.discussionThreads.add(row); return row;
+    });
+  }
+  async createFreeDiscussion(input: CreateFreeDiscussion): Promise<DiscussionThread> {
+    if (this.scope.coachClientId === null) fail('DISCUSSION_ACCESS_DENIED');
+    if (typeof input.title !== 'string') fail('INVALID_DISCUSSION_TITLE');
+    const anchor: FreeDiscussionAnchor = { kind: 'free', threadId: input.id };
+    const row: DiscussionThread = {
+      ...this.scope, id: input.id, owner: this.scope.realmId, anchor,
+      anchorKey: discussionAnchorKey(this.scope, anchor), contextPath: [],
+      derivedTitleSnapshot: input.title.trim(), createdAt: input.createdAt, lastActivityAt: input.createdAt,
+    };
+    assertDiscussionThread(row);
+    return this.write(async () => {
+      const existing = await this.db.discussionThreads.get(row.id);
+      if (existing) {
+        if (existing.realmId !== row.realmId || existing.coachClientId !== row.coachClientId
+          || existing.anchorKey !== row.anchorKey || existing.createdAt !== row.createdAt
+          || existing.derivedTitleSnapshot !== row.derivedTitleSnapshot) fail('DISCUSSION_ID_REUSED');
+        assertDiscussionThread(existing);
+        return existing;
+      }
+      await this.db.discussionThreads.add(row);
+      return row;
     });
   }
   private async threads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
@@ -219,7 +253,7 @@ export class DiscussionRepository {
         });
       }
       return Promise.all(headers.map(async thread => {
-        const sources = valid.filter(row => row.anchorKey === thread.anchorKey);
+        const sources = thread.anchor.kind === 'free' ? [thread] : valid.filter(row => row.anchorKey === thread.anchorKey);
         const latest = includeLatest ? (await Promise.all(sources.map(row => this.db.discussionMessages
           .where('[realmId+threadId+createdAt+id]')
           .between([this.scope.realmId, row.id, '', ''], [this.scope.realmId, row.id, []], true, false)

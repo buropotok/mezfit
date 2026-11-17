@@ -15,12 +15,12 @@ import { useDiscussions, type DiscussionInboxRow } from './DiscussionsProvider';
 import { discussionDateLabel, discussionLocalDate, groupDiscussionFeed } from './feed-presentation';
 import { ScheduleClientFilter } from '../schedule/ScheduleClientFilter';
 import { ScheduleFilterBar } from '../schedule/ScheduleFilterBar';
-import type { DiscussionAnchor } from '../../shared/discussion-anchor';
+import type { EntityDiscussionAnchor } from '../../shared/discussion-anchor';
 import './discussions-page.css';
 
 const entityActionLabels = {
   program: 'К программе', workout: 'К тренировке', exercise: 'К упражнению', set: 'К подходу',
-} satisfies Record<DiscussionAnchor['kind'], string>;
+} satisfies Record<EntityDiscussionAnchor['kind'], string>;
 
 function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey }: {
   row: DiscussionInboxRow;
@@ -37,6 +37,9 @@ function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSour
     onAvatarSourceChange?.(row, src);
   }, [onAvatarSourceChange, row]);
   const key = discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey);
+
+  const kind = row.thread.anchor.kind;
+  const entityAction = kind === 'free' ? undefined : entityActionLabels[kind];
 
   return <ListItem
     leading={<span ref={avatarRef} className="discussion-inbox__avatar-source"
@@ -66,9 +69,9 @@ function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSour
       }
       onOpen(row);
     }}
-    trailingAction={<Button rounded tonal inline
-      aria-label={`${entityActionLabels[row.thread.anchor.kind]}: ${row.thread.derivedTitleSnapshot}`}
-      onClick={() => onEntity(row)}><Text variant="caption">{entityActionLabels[row.thread.anchor.kind]}</Text></Button>}
+    trailingAction={entityAction && <Button rounded tonal inline
+      aria-label={`${entityAction}: ${row.thread.derivedTitleSnapshot}`}
+      onClick={() => onEntity(row)}><Text variant="caption">{entityAction}</Text></Button>}
   />;
 }
 
@@ -226,6 +229,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     });
   }, [cloud]);
   const closeNotificationChat = useCallback(() => setClosedNotificationChat(true), []);
+  const closeLinkedChat = current?.row.thread.anchor.kind === 'free' ? close : closeNotificationChat;
   const chatParent = useMemo<NavigationContext | null>(() => {
     if (!current) return null;
     const displayName = current.row.contact?.displayName ?? 'Вы';
@@ -234,8 +238,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
         avatarTransitionKey: current.flightKey ?? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey),
         identity: { title: displayName, avatar: { name: displayName, src: current.avatarSrc } },
       } : {}),
-      onBack: current.kind === 'notification' ? closeNotificationChat : close };
-  }, [current, close, closeNotificationChat]);
+      onBack: current.kind === 'notification' ? closeLinkedChat : close };
+  }, [current, close, closeLinkedChat]);
   const chatNavigation = useCallback((value: NavigationContext | null) => {
     onNavigationContextChange(openRef.current ? value : null);
   }, [onNavigationContextChange]);
@@ -267,7 +271,9 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       // Entity entry points use the same idempotent operation. Historical headers
       // stay intact; the canonical sheet projects them as one conversation.
       const repository = new DiscussionRepository(cloud.db, cloud.actorUserId, row.thread);
-      const thread = await repository.ensureEntityThread(row.thread.anchor, row.thread.derivedTitleSnapshot);
+      const thread = row.thread.anchor.kind === 'free'
+        ? await repository.getThread(row.thread.id)
+        : await repository.ensureEntityThread(row.thread.anchor, row.thread.derivedTitleSnapshot);
       if (generation === request.current) {
         if (origin?.key === discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey)) avatarFlight.begin(origin);
         setOpened({ row: { ...row, thread }, kind: 'chat', parent, avatarSrc: origin?.avatar.src, flightKey: origin?.key });
@@ -285,18 +291,20 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     const date = discussionLocalDate(row.latest.createdAt);
     return (!from || date >= from) && (!to || date <= to);
   });
-  if (current?.kind === 'notification') return <>
-    <DiscussionEntity thread={current.row.thread} role={role}
-      onBack={close} onNavigationContextChange={setNotificationEntityContext} />
-    {!closedNotificationChat && repository && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
+  const notificationChat = current?.kind === 'notification' && !closedNotificationChat && repository
+    ? createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
       <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
-        focusMessageId={current.messageId} onClose={closeNotificationChat} onBack={closeNotificationChat}
+        focusMessageId={current.messageId} onClose={closeLinkedChat} onBack={closeLinkedChat}
         contextLabel={current.row.thread.derivedTitleSnapshot}
         parentNavigation={chatParent} onNavigationContextChange={setNotificationChatContext}
         resolveAuthor={id => ({ name: id === actorId ? 'Вы' : (notificationContact || activeRow?.contact)?.displayName ?? 'Участник обсуждения' })} />
-    </div>, document.body)}
+    </div>, document.body) : null;
+  if (current?.kind === 'notification' && current.row.thread.anchor.kind !== 'free') return <>
+    <DiscussionEntity thread={current.row.thread} role={role}
+      onBack={close} onNavigationContextChange={setNotificationEntityContext} />
+    {notificationChat}
   </>;
-  if (current?.kind === 'entity') return <DiscussionEntity thread={current.row.thread} role={role}
+  if (current?.kind === 'entity' && current.row.thread.anchor.kind !== 'free') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
     <div className="discussion-inbox__filter-block">
@@ -340,6 +348,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
         if (picker?.side === 'from') setFrom(date); else setTo(date);
         setLimit(50); setPicker(null);
       }} />
+    {notificationChat}
     {current?.kind === 'chat' && repository && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
       <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
         onClose={close} onBack={close} contextLabel={current.row.thread.derivedTitleSnapshot}

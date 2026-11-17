@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { discussionAnchorKey, discussionParents, discussionTitle, isDiscussionAnchor } from '../../../shared/discussion-anchor';
 import { occurrenceDiscussionAnchor, executionDiscussionAnchor, legacyDiscussionAnchor, legacyFactDiscussionAnchor } from './discussion-anchors';
-import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, discussionReadStateId,
+import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, discussionReadStateId,
   type DiscussionThread, type DiscussionMessage } from './discussion-contracts';
 
 const scope = { realmId: 'pair-a', coachClientId: 'pair-a' };
@@ -90,5 +90,33 @@ describe('normal application write contracts (not live cloud ACL verification)',
     expect(() => assertDiscussionReadStateWrite('tg:1', thread, state, message)).not.toThrow();
     expect(() => assertDiscussionReadStateWrite('tg:2', thread, state, message)).toThrow();
     expect(() => assertDiscussionReadStateWrite('tg:1', thread, state, { ...message, threadId: 'other' })).toThrow();
+  });
+});
+
+describe('free discussion contracts', () => {
+  const id = 'free-discussion:00000000-0000-4000-8000-000000000001';
+  const free = { kind: 'free' as const, threadId: id };
+  const row: DiscussionThread = { ...thread, id, anchor: free, contextPath: [],
+    anchorKey: discussionAnchorKey(scope, free), derivedTitleSnapshot: 'Питание' };
+
+  it('uses exact namespace and realm identity with an empty parent path', () => {
+    expect(isDiscussionAnchor(free)).toBe(true);
+    expect(discussionParents(free)).toEqual([]);
+    expect(row.anchorKey).toBe(JSON.stringify([scope.realmId, scope.coachClientId, 'free', id]));
+    expect(discussionAnchorKey({ realmId: 'pair-b', coachClientId: 'pair-b' }, free)).not.toBe(row.anchorKey);
+    expect(discussionAnchorKey(scope, { kind: 'program', trainingPlanId: 'program' })).toBe('["pair-a","pair-a","program","program"]');
+    expect(() => discussionAnchorKey({ realmId: 'tg:1', coachClientId: null }, free)).toThrow();
+    for (const invalid of [{ kind: 'free', id }, { ...free, threadId: '' },
+      { ...free, threadId: id + '\n' }, { ...free, programId: 'unexpected' }]) {
+      expect(isDiscussionAnchor(invalid)).toBe(false);
+    }
+  });
+
+  it('rejects a different row identity, parents and malformed titles at the persisted boundary', () => {
+    expect(() => assertDiscussionThread(row)).not.toThrow();
+    for (const change of [{ id: 'another' }, { contextPath: [thread.anchor] }, { derivedTitleSnapshot: ' Питание ' },
+      { derivedTitleSnapshot: '' }, { derivedTitleSnapshot: 'x'.repeat(121) }, { derivedTitleSnapshot: 'one\ntwo' }]) {
+      expect(() => assertDiscussionThread({ ...row, ...change })).toThrow();
+    }
   });
 });

@@ -36,7 +36,8 @@ vi.mock('../data/cloud/discussions', () => ({
   observeDiscussionNotificationThread: state.observe,
 }));
 vi.mock('./DiscussionSheet', () => ({
-  DiscussionSheet: ({ threadId }: { threadId: string }) => <div role="dialog" aria-label={threadId} />,
+  DiscussionSheet: ({ threadId, focusMessageId, onBack }: { threadId: string; focusMessageId?: string; onBack: () => void }) =>
+    <div role="dialog" aria-label={threadId} data-focus-message={focusMessageId}><button onClick={onBack}>Закрыть чат</button></div>,
 }));
 vi.mock('./DiscussionEntity', () => ({
   DiscussionEntity: () => <div>Сущность обсуждения</div>,
@@ -136,4 +137,21 @@ describe('Telegram discussion deep-link hydration', () => {
     expect(state.subscriptions).toHaveLength(3);
     expect(state.subscriptions[2].unsubscribe).toHaveBeenCalled();
   });
+});
+
+it('opens a free notification at its exact message and closes back to the inbox', () => {
+  const id = 'free-discussion:00000000-0000-4000-8000-000000000001';
+  function Host() {
+    const [messageId, setMessageId] = useState<string | null>('free-message');
+    return <DiscussionsPage role="coach" notificationMessageId={messageId}
+      onNotificationOpened={() => setMessageId(null)} onNavigationContextChange={vi.fn()} />;
+  }
+  render(<Host />);
+  act(() => state.subscriptions[0].next({ ...target, id,
+    anchor: { kind: 'free', threadId: id }, derivedTitleSnapshot: 'Питание' }));
+  expect(screen.getByRole('dialog', { name: id }).getAttribute('data-focus-message')).toBe('free-message');
+  expect(screen.queryByText('Сущность обсуждения')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть чат' }));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByRole('region', { name: 'Обсуждения' })).toBeTruthy();
 });

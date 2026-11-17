@@ -1,4 +1,4 @@
-import { discussionAnchorKey, discussionId, discussionParents, discussionRecord, type DiscussionAnchor, type DiscussionScope } from '../../../shared/discussion-anchor';
+import { discussionAnchorKey, discussionId, discussionParents, discussionRecord, matchesDiscussionThreadAnchor, type DiscussionAnchor, type DiscussionScope } from '../../../shared/discussion-anchor';
 import { discussionReadStateId } from '../../../shared/discussion-read-state';
 export { discussionReadStateId, matchesDiscussionReadStateId } from '../../../shared/discussion-read-state';
 import type { DiscussionMediaDraft } from './discussion-media';
@@ -60,6 +60,7 @@ export function assertDiscussionThread(thread: DiscussionThread): void {
   if (!Array.isArray(thread.contextPath) || typeof thread.derivedTitleSnapshot !== 'string'
     || !discussionId(thread.id) || thread.owner !== thread.realmId
     || thread.anchorKey !== discussionAnchorKey(thread, thread.anchor)
+    || !matchesDiscussionThreadAnchor(thread.anchor, thread.id, thread.derivedTitleSnapshot, thread.contextPath)
     || JSON.stringify(thread.contextPath.map(parent => discussionAnchorKey(thread, parent)))
       !== JSON.stringify(discussionParents(thread.anchor).map(parent => discussionAnchorKey(thread, parent)))
     || !thread.derivedTitleSnapshot.trim() || !instant(thread.createdAt) || !instant(thread.lastActivityAt)) invalid();

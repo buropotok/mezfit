@@ -64,7 +64,8 @@ and Telegram iOS/Android video Range behavior remain unverified gates.
 defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.
 COMM-06 (2026-11-07) registers v15/v16/v17 on the normal account lifecycle, without a
 build flag or manual activation. One entity/pair opens one canonical conversation;
-legacy threads are projected without moving messages. Production Apply
+legacy threads are projected without moving messages. Free discussions use individual
+thread IDs and the same authorized relationship realm. Production Apply
 42261608617 verifies configuration only; real-account/multi-device acceptance
 remains unverified. No second schema/ACL Apply is introduced.
 

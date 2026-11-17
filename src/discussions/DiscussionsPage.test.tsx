@@ -9,13 +9,13 @@ import { DiscussionsPage, DiscussionInboxList } from './DiscussionsPage';
 import type { DiscussionInboxRow } from './DiscussionsProvider';
 import { thread, message } from './discussion-fixture.test-support';
 
-const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), cloudStatus: 'ready', syncStatus: 'local' }));
+const state = vi.hoisted(() => ({ rows: [] as DiscussionInboxRow[], ensure: vi.fn(), getThread: vi.fn(), cloudStatus: 'ready', syncStatus: 'local' }));
 vi.mock('./DiscussionsProvider', () => ({ useDiscussions: () => ({ rows: state.rows, unread: 0, loading: false, error: '', retry: vi.fn() }) }));
 vi.mock('../navigation/NavigationSurfaceContext', () => ({ useNavigationSurfaceContext: () => null }));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => ({ db: {}, actorUserId: 'tg:11',
   clients: [peer('pair', 'Анна'), peer('other-pair', 'Ольга')], status: state.cloudStatus, syncStatus: state.syncStatus }) }));
 vi.mock('../contacts/CloudContactAvatar', () => ({ CloudContactAvatar: ({ contact }: { contact: { displayName: string } }) => <span>{contact.displayName}</span> }));
-vi.mock('../data/cloud/discussions', () => ({ DiscussionRepository: class { ensureEntityThread = state.ensure; } }));
+vi.mock('../data/cloud/discussions', () => ({ DiscussionRepository: class { ensureEntityThread = state.ensure; getThread = state.getThread; } }));
 vi.mock('./DiscussionSheet', () => ({ DiscussionSheet: ({ threadId, onClose, onNavigationContextChange }: {
   threadId: string; onClose: () => void; onNavigationContextChange: (value: NavigationContext | null) => void;
 }) => {
@@ -45,7 +45,7 @@ function selectClients(...names: string[]) {
   for (const name of names) fireEvent.click(screen.getByRole('button', { name: `Выбрать клиента ${name}` }));
   fireEvent.click(screen.getByRole('button', { name: 'Применить фильтр' }));
 }
-afterEach(() => { cleanup(); state.rows = []; state.syncStatus = 'local'; state.ensure.mockReset(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); state.rows = []; state.syncStatus = 'local'; state.ensure.mockReset(); state.getThread.mockReset(); vi.restoreAllMocks(); });
 
 describe('COMM-08 shared inbox surfaces', () => {
   it.each([
@@ -193,4 +193,20 @@ describe('COMM-08 shared inbox surfaces', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.getByText('Сущность row-1')).toBeTruthy();
   });
+});
+
+it('shows an empty free chat without an entity action and opens its saved ID', async () => {
+  const id = 'free-discussion:00000000-0000-4000-8000-000000000001';
+  const free = row(id);
+  free.thread = { ...free.thread, anchor: { kind: 'free', threadId: id }, derivedTitleSnapshot: 'Питание' };
+  free.latest = null;
+  state.rows = [free];
+  state.getThread.mockResolvedValue(free.thread);
+  render(<DiscussionsPage role="client" onNavigationContextChange={vi.fn()} />);
+  expect(screen.getByText('Сообщений пока нет')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /^К / })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Питание' }));
+  await screen.findByRole('dialog', { name: id });
+  expect(state.getThread).toHaveBeenCalledWith(id);
+  expect(state.ensure).not.toHaveBeenCalled();
 });

@@ -26,8 +26,9 @@ export function observeDiscussionDestination(db: MezfitCloudDatabase, actor: str
  * anchors never fall back to a different exercise, PLAN ID, or reusable program. */
 export async function readDiscussionDestination(db: MezfitCloudDatabase, actor: string,
   role: 'coach' | 'client', thread: DiscussionThread): Promise<DiscussionDestination> {
-  await new DiscussionRepository(db, actor, thread).listThreads(thread.anchor);
   const anchor = thread.anchor;
+  if (anchor.kind === 'free') return { kind: 'unavailable' };
+  await new DiscussionRepository(db, actor, thread).listThreads(anchor);
   if (anchor.kind === 'program') {
     const details = await new ProgramManagementRepository(db, actor).details(anchor.trainingPlanId);
     return details?.program.realmId === thread.realmId
