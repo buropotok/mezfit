@@ -312,9 +312,10 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
 
   /** Scan one prefix per target, including values hydrated before their definition.
    * The deterministic Flex ID embeds a length-prefixed key even without an attribute row. */
-  async inspectPrefix(targets: readonly FlexEntityTarget[], prefix: string): Promise<FlexInspectedValue[]> {
+  async inspectPrefix(targets: readonly FlexEntityTarget[], prefix: string, keyLength: number): Promise<FlexInspectedValue[]> {
     if (!targets.length) return [];
-    if (!attributeKeyPattern.test(prefix)) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
+    if (!attributeKeyPattern.test(prefix) || !Number.isInteger(keyLength)
+      || keyLength < prefix.length || keyLength > 64) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
     return this.db.transaction('r', this.inspectionTables(targets.some(target => target.entityType === 'publishedUser')), async () => {
       await this.assertInspectionTargets(targets);
       const realms = [...new Set(targets.map(target => target.realmId))];
@@ -325,8 +326,18 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
       })));
       const keysByRealm = new Map<string, FlexAttributeRow[]>(definitions.map(({ realmId, rows }) =>
         [realmId, rows.filter(row => typeof row.key === 'string' && row.key.startsWith(prefix))]));
-      const targetValues = await Promise.all(targets.map(target => this.db.flexValues
-        .where('[realmId+entityType+entityId]').equals([target.realmId, target.entityType, target.entityId]).toArray()));
+      // Fixed-width category/assignment namespaces can be indexed by the
+      // deterministic, length-prefixed attribute ID without hydrating every
+      // unrelated profile/avatar value in a coach's many relationship realms.
+      const realmValues = await Promise.all(realms.map(async realmId => {
+        const idPrefix = 'flex-attribute:' + realmId.length + ':' + realmId + ':' + keyLength + ':' + prefix;
+        return this.db.flexValues.where('[realmId+attributeId]')
+          .between([realmId, idPrefix], [realmId, idPrefix + '\uffff'], true, true).toArray();
+      }));
+      const valuesByRealm = new Map(realms.map((realmId, index) => [realmId, realmValues[index]]));
+      const targetValues = targets.map(target => (valuesByRealm.get(target.realmId) ?? [])
+        .filter(row => row.realmId === target.realmId
+          && row.entityType === target.entityType && row.entityId === target.entityId));
       const entries = targets.flatMap((target, index) => {
         const attributes = new Map<string, FlexAttributeRow>();
         for (const row of keysByRealm.get(target.realmId) ?? []) attributes.set(row.key, row);
@@ -338,7 +349,8 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
           const separator = rest.indexOf(':');
           if (separator < 1) continue;
           const key = rest.slice(separator + 1), length = Number(rest.slice(0, separator));
-          if (key.length !== length || !attributeKeyPattern.test(key) || !key.startsWith(prefix)
+          if (key.length !== length || length !== keyLength
+            || !attributeKeyPattern.test(key) || !key.startsWith(prefix)
             || flexAttributeId(target.realmId, key) !== row.attributeId) continue;
           values.set(key, row);
         }
