@@ -21,7 +21,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function parseUploadEvent(value: unknown, account: string, emit?: Trace): UploadEvent | null {
   const shape = isRecord(value) ? value : null;
   const object = isRecord(shape?.object) ? shape.object : null;
-  emit?.('consumer', 'event-shape', 'QUEUE_EVENT_SHAPE', 'OK', { actual: shape ? 'object' : 'invalid-envelope',
+  emit?.('consumer', 'event-shape', 'QUEUE_EVENT_SHAPE', 'OK', { actual: shape ? 'object' : typeof value === 'string' ? 'serialized-envelope' : 'invalid-envelope',
     details: { has_account: !!shape && Object.hasOwn(shape, 'account'), has_bucket: !!shape && Object.hasOwn(shape, 'bucket'),
       has_action: !!shape && Object.hasOwn(shape, 'action'), has_object: !!object,
       has_event_time: !!shape && Object.hasOwn(shape, 'eventTime'), has_marker: !!shape && Object.hasOwn(shape, 'smokeReplay') } });
@@ -179,6 +179,16 @@ function reportStatement(emit: Trace, stage: string, event: string, result: D1Re
   }
 }
 
+function correlateSmokeKey(body: unknown): string | null {
+  // A serialized envelope can still be correlated for diagnosis. Validation
+  // retains the provider contract and rejects it as an invalid message.
+  let value = body;
+  if (typeof body === 'string' && body.length <= 8192) {
+    try { value = JSON.parse(body); } catch { return null; }
+  }
+  return isRecord(value) && isRecord(value.object) ? smokeTraceId(value.object.key) : null;
+}
+
 export async function consumeUploads(batch: MessageBatch<unknown>, env: EventBindings): Promise<void> {
   const start = Date.now();
   const batchLog = traceWriter({ trace_id: crypto.randomUUID(), worker_version: env.MIGRATION_VERSION?.id });
@@ -188,7 +198,7 @@ export async function consumeUploads(batch: MessageBatch<unknown>, env: EventBin
     for (const message of batch.messages) {
       const body = isRecord(message.body) ? message.body : null;
       const object = isRecord(body?.object) ? body.object : null;
-      const traceId = smokeTraceId(object?.key);
+      const traceId = correlateSmokeKey(message.body);
       const mirror = workerTrace(env.UPLOADS, { trace_id: traceId ?? crypto.randomUUID(), instance_id: traceId,
         worker_version: env.MIGRATION_VERSION?.id, attempt: message.attempts });
       const emit = mirror.emit;
