@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const BUCKET = 'mezfit-migration-uploads';
@@ -41,7 +41,7 @@ function cloudflarePermission(path, method) {
   return 'access to this account API';
 }
 
-class CloudflareApi {
+export class CloudflareApi {
   constructor(account, token, label) {
     requireState(ID.test(account), 'CLOUDFLARE_ACCOUNT_ID_INVALID');
     requireState(token, label + '_SECRET_REQUIRED');
@@ -65,6 +65,11 @@ class CloudflareApi {
     const data = await response.json().catch(() => null);
     if (!response.ok || data?.success !== true || !Object.hasOwn(data, 'result')) {
       const codes = Array.isArray(data?.errors) ? data.errors.map(error => error?.code).filter(Number.isInteger) : [];
+      // R2 returns this error before the bucket has any notification rules.
+      if (method === 'GET' && path === NOTIFICATIONS && response.status === 404
+        && data?.success === false && data.errors?.length === 1 && codes[0] === 11015) {
+        return { success: true, result: { bucketName: BUCKET, queues: [] } };
+      }
       const access = [401, 403].includes(response.status) || codes.includes(10000) || codes.includes(9109)
         ? ' (verify ' + cloudflarePermission(path, method) + ')' : '';
       throw new Error(operation + ' failed with HTTP ' + response.status + ' (Cloudflare codes: '
@@ -129,7 +134,7 @@ function matchesCors(rules, origin) {
     && !rule.exposeHeaders?.length && rule.maxAgeSeconds === 3600;
 }
 
-async function inspectBucket(api, queue, origin) {
+export async function inspectBucket(api, queue, origin) {
   const bucket = await api.get(BUCKET_PATH, true);
   if (!bucket) return { bucket: false, cors: 'missing', notifications: 'missing', private: true };
   requireState(bucket.name === BUCKET && (!bucket.jurisdiction || bucket.jurisdiction === 'default'),
@@ -409,7 +414,9 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(error => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
