@@ -78,6 +78,7 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     touched: false,
     pointerId: null,
     touchStartedOnAction: false,
+    actionMouseDown: false,
     gesture: 'idle',
     touchStartX: 0,
     touchStartY: 0,
@@ -730,8 +731,13 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     });
   });
   if (actionLink) {
+    listen(actionLink, 'pointerdown', event => {
+      data.actionMouseDown = event.pointerType === 'mouse';
+    });
     listen(actionLink, 'click', event => {
-      if (now() < data.suppressClickUntil) {
+      const fromMouseDown = data.actionMouseDown;
+      data.actionMouseDown = false;
+      if (!fromMouseDown && now() < data.suppressClickUntil) {
         event.preventDefault();
         event.stopPropagation();
         return;
