@@ -325,7 +325,8 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
           .between([realmId, prefix], [realmId, prefix + '\uffff'], true, true).toArray(),
       })));
       const keysByRealm = new Map<string, FlexAttributeRow[]>(definitions.map(({ realmId, rows }) =>
-        [realmId, rows.filter(row => typeof row.key === 'string' && row.key.startsWith(prefix))]));
+        [realmId, rows.filter(row => typeof row.key === 'string'
+          && row.key.length === keyLength && row.key.startsWith(prefix))]));
       // Fixed-width category/assignment namespaces can be indexed by the
       // deterministic, length-prefixed attribute ID without hydrating every
       // unrelated profile/avatar value in a coach's many relationship realms.
