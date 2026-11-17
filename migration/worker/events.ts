@@ -1,5 +1,7 @@
-import { classifyTraceError, smokeTraceId, traceWriter, type Trace } from '../trace.mjs';
-import { isTraceObject, observed, workerTrace, type WorkerVersion } from './trace';
+import { PROCESSOR_VERSION, processorInstanceId } from '../processor-protocol.mjs';
+import { dispatchExecution, executionStatements, type QueueExecutionBindings } from './execution-store';
+import { classifyTraceError, smokeTraceId, TRACE_PREFIX, traceWriter, type Trace } from '../trace.mjs';
+import { observed, workerTrace, type WorkerVersion } from './trace';
 import { SMOKE_ID_PATTERN, SMOKE_OBJECT_PATTERN, UPLOAD_BUCKET, UPLOAD_KEY_PATTERN, validBackupMetadata } from './r2-upload';
 
 const CREATE_ACTIONS = ['PutObject', 'CopyObject', 'CompleteMultipartUpload'];
@@ -12,6 +14,7 @@ export interface UploadEvent {
   object: { key: string; size: number; eTag: string };
   eventTime: string;
   smokeReplay?: string;
+  processorReplay?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -27,6 +30,7 @@ export function parseUploadEvent(value: unknown, account: string, emit?: Trace):
       has_event_time: !!shape && Object.hasOwn(shape, 'eventTime'), has_marker: !!shape && Object.hasOwn(shape, 'smokeReplay') } });
   const tag = typeof object?.eTag === 'string' ? ETAG_PATTERN.exec(object.eTag) : null;
   const marker = shape?.smokeReplay;
+  const processorReplay = shape?.processorReplay;
   const key = object?.key;
   const size = object?.size;
   const action = shape?.action;
@@ -43,6 +47,9 @@ export function parseUploadEvent(value: unknown, account: string, emit?: Trace):
     ['eventTime', typeof eventTime === 'string' && Number.isFinite(Date.parse(eventTime)), 'r2-event-timestamp'],
     ['smokeReplay', marker === undefined || (typeof marker === 'string' && SMOKE_ID_PATTERN.test(marker)
       && key === 'smoke/' + marker && action === 'PutObject'), 'absent-or-matching-smoke-marker'],
+    ['processorReplay', processorReplay === undefined || (marker === undefined && typeof processorReplay === 'string'
+      && SMOKE_ID_PATTERN.test(processorReplay) && key === 'uploads/' + processorReplay && action === 'PutObject'),
+      'absent-or-matching-processor-smoke-marker'],
   ];
   for (const [field, valid, expected] of checks) {
     emit?.('consumer', 'event-validation', 'QUEUE_EVENT_FIELD_CHECKED', valid ? 'OK' : 'FAILED', {
@@ -64,17 +71,16 @@ export function parseUploadEvent(value: unknown, account: string, emit?: Trace):
       delivery_ms: Math.max(0, Date.now() - Date.parse(eventTime)) },
   });
   return { account, bucket: UPLOAD_BUCKET, action, object: { key, size, eTag: (tag[1] ?? tag[2]).toLowerCase() },
-    eventTime: new Date(eventTime).toISOString(), ...(typeof marker === 'string' ? { smokeReplay: marker } : {}) };
+    eventTime: new Date(eventTime).toISOString(), ...(typeof marker === 'string' ? { smokeReplay: marker } : {}),
+    ...(typeof processorReplay === 'string' ? { processorReplay } : {}) };
 }
 
-interface EventBindings {
+interface EventBindings extends QueueExecutionBindings {
   CLOUDFLARE_ACCOUNT_ID: string;
-  UPLOADS: R2Bucket;
-  JOBS: D1Database;
   MIGRATION_VERSION?: WorkerVersion;
 }
 
-async function registerUpload(env: EventBindings, event: UploadEvent, emit: Trace): Promise<void> {
+async function registerUpload(env: EventBindings, event: UploadEvent, jobId: string | null, emit: Trace) {
   const { key, size, eTag } = event.object;
   let object: R2Object | null;
   try {
@@ -85,6 +91,11 @@ async function registerUpload(env: EventBindings, event: UploadEvent, emit: Trac
     throw new Error('MIGRATION_R2_NOTIFICATION_HEAD_FAILED');
   }
   const contentType = object?.httpMetadata?.contentType ?? '';
+  const replayId = event.smokeReplay ?? event.processorReplay;
+  if (event.processorReplay && object?.customMetadata?.processorSmoke !== event.processorReplay) {
+    emit('consumer', 'event-validation', 'QUEUE_PROCESSOR_REPLAY_SKIPPED', 'SKIPPED', { actual: 'fixture-marker-mismatch' });
+    return;
+  }
   const errorCode = !object ? 'OBJECT_MISSING'
     : object.size !== size || object.etag.toLowerCase() !== eTag ? 'OBJECT_MISMATCH'
       : validBackupMetadata(size, contentType) ? null : 'INVALID_BACKUP_METADATA';
@@ -111,10 +122,18 @@ async function registerUpload(env: EventBindings, event: UploadEvent, emit: Trac
     + " AND migration_jobs.event_at = excluded.event_at AND migration_jobs.event_action = excluded.event_action",
   ).bind(key, key, eTag, size, errorCode ? null : contentType, event.action,
     event.eventTime, errorCode ? 'rejected' : 'uploaded', errorCode, now, now,
-    event.smokeReplay ?? null, key, eTag, size, contentType, event.eventTime, event.action);
+    replayId ?? null, key, eTag, size, contentType, event.eventTime, event.action);
   emit('d1', 'job-insert-prepare', 'D1_INSERT_PREPARE', 'OK', { actual: 'prepared', details: insertDetails });
   const writeStarted = Date.now();
-  if (event.smokeReplay) {
+  const execution = !errorCode && jobId ? executionStatements(env.JOBS, jobId, eTag, size, event.eventTime, emit) : [];
+  const dispatch = async (statements: D1Result<Record<string, unknown>>[]) => {
+    if (!jobId || !execution.length) return;
+    const fixture = object?.customMetadata?.processorSmoke === jobId;
+    await dispatchExecution(env, jobId, eTag, size, statements.slice(2), emit, fixture ? {
+      expectedVersion: object?.customMetadata?.workerVersion, runId: object?.customMetadata?.runId,
+    } : {});
+  };
+  if (replayId) {
     if (errorCode) {
       emit('d1', 'replay-receipt', 'D1_REPLAY_RECEIPT', 'SKIPPED', {
         expected: 'verified-replay-object', actual: 'rejected', error_code: errorCode,
@@ -132,15 +151,16 @@ async function registerUpload(env: EventBindings, event: UploadEvent, emit: Trac
       + ' SELECT ?, object_key, ? FROM migration_jobs'
       + " WHERE object_key = ? AND state = 'uploaded' AND object_etag = ? AND object_size = ?"
       + ' AND content_type = ? AND event_at = ? AND event_action = ?',
-    ).bind(event.smokeReplay, now, key, eTag, size, contentType, event.eventTime, event.action);
+    ).bind(replayId, now, key, eTag, size, contentType, event.eventTime, event.action);
     const replay = await observed(emit, 'd1', 'replay-batch', 'D1_REPLAY_BATCH',
-      { expected: 'committed', details: { sql: 'BATCH' } }, () => env.JOBS.batch([result, receipt]),
+      { expected: 'committed', details: { sql: 'BATCH' } }, () => env.JOBS.batch<Record<string, unknown>>([result, receipt, ...execution]),
       statements => ({ actual: statements.every(item => item.success) ? 'committed' : 'rejected',
         error_code: statements.every(item => item.success) ? undefined : 'D1_REPLAY_BATCH_FAILED' }));
     reportStatement(emit, 'job-insert', 'D1_JOB_INSERT', replay[0], insertDetails, writeStarted);
     reportStatement(emit, 'replay-receipt', 'D1_REPLAY_RECEIPT', replay[1],
       { table: 'migration_smoke_replays', sql: 'INSERT' }, writeStarted);
     if (replay.some(statement => !statement.success)) throw new Error('MIGRATION_D1_RECEIPT_WRITE_FAILED');
+    if (!event.processorReplay || replay[1].meta?.changes === 1) await dispatch(replay);
     return;
   }
   if (errorCode) {
@@ -159,11 +179,12 @@ async function registerUpload(env: EventBindings, event: UploadEvent, emit: Trac
   const promoteDetails = { table: 'migration_jobs', sql: 'UPDATE' };
   emit('d1', 'job-promote', 'D1_JOB_PROMOTE', 'STARTED', { expected: 'promoted-or-already-current', details: promoteDetails });
   const results = await observed(emit, 'd1', 'job-batch', 'D1_JOB_BATCH', { expected: 'committed', details: { sql: 'BATCH' } },
-    () => env.JOBS.batch([result, promote]), statements => ({ actual: statements.every(item => item.success) ? 'committed' : 'rejected',
+    () => env.JOBS.batch<Record<string, unknown>>([result, promote, ...execution]), statements => ({ actual: statements.every(item => item.success) ? 'committed' : 'rejected',
       error_code: statements.every(item => item.success) ? undefined : 'D1_JOB_BATCH_FAILED' }));
   reportStatement(emit, 'job-insert', 'D1_JOB_INSERT', results[0], insertDetails, writeStarted);
   reportStatement(emit, 'job-promote', 'D1_JOB_PROMOTE', results[1], promoteDetails, writeStarted);
   if (results.some(statement => !statement.success)) throw new Error('MIGRATION_D1_JOB_WRITE_FAILED');
+  await dispatch(results);
 }
 
 function reportStatement(emit: Trace, stage: string, event: string, result: D1Result, details: Record<string, string>, start: number) {
@@ -198,8 +219,12 @@ export async function consumeUploads(batch: MessageBatch<unknown>, env: EventBin
     for (const message of batch.messages) {
       const body = isRecord(message.body) ? message.body : null;
       const object = isRecord(body?.object) ? body.object : null;
-      const traceId = correlateSmokeKey(message.body);
-      const mirror = workerTrace(env.UPLOADS, { trace_id: traceId ?? crypto.randomUUID(), instance_id: traceId,
+      const jobId = typeof object?.key === 'string' && object.key.startsWith('uploads/') && UPLOAD_KEY_PATTERN.test(object.key)
+        ? object.key.slice('uploads/'.length) : null;
+      const traceId = jobId ?? correlateSmokeKey(message.body);
+      const mirror = workerTrace(env.UPLOADS, { trace_id: traceId ?? crypto.randomUUID(),
+        instance_id: jobId ? processorInstanceId(jobId) : traceId,
+        ...(jobId ? { job_id: jobId, processor_version: PROCESSOR_VERSION } : {}),
         worker_version: env.MIGRATION_VERSION?.id, attempt: message.attempts });
       const emit = mirror.emit;
       const received = Date.now();
@@ -210,7 +235,14 @@ export async function consumeUploads(batch: MessageBatch<unknown>, env: EventBin
       let decision = 'processed';
       let retry = false;
       try {
-        if (isTraceObject(object?.key)) {
+        const key = typeof object?.key === 'string' ? object.key : '';
+        const kind = key.startsWith(TRACE_PREFIX) ? 'trace' : key.startsWith('results/') ? 'result'
+          : key.startsWith('smoke/') ? 'smoke' : jobId ? 'upload' : 'unknown';
+        emit('consumer', 'event-object-type', 'QUEUE_OBJECT_TYPE', 'OK', { actual: kind });
+        if (kind === 'result') {
+          decision = 'result-object-notification';
+          emit('consumer', 'event-validation', 'QUEUE_RESULT_OBJECT_SKIPPED', 'SKIPPED', { actual: decision });
+        } else if (kind === 'trace') {
           decision = 'trace-object-notification';
           emit('consumer', 'event-validation', 'QUEUE_TRACE_OBJECT_SKIPPED', 'SKIPPED', { actual: decision });
         } else if (typeof object?.key === 'string' && SMOKE_OBJECT_PATTERN.test(object.key) && object.key.endsWith('/expired')) {
@@ -220,14 +252,15 @@ export async function consumeUploads(batch: MessageBatch<unknown>, env: EventBin
           const event = parseUploadEvent(message.body, env.CLOUDFLARE_ACCOUNT_ID, emit);
           if (!event) decision = 'invalid-event';
           else {
-            await registerUpload(env, event, emit);
+            await registerUpload(env, event, jobId, emit);
             emit('consumer', 'job-result', 'QUEUE_JOB_RESULT', 'OK', { actual: 'database-operation-completed',
               details: { replay: !!event.smokeReplay } });
           }
         }
       } catch (error) {
         retry = true;
-        decision = error instanceof Error && error.message === 'MIGRATION_R2_NOTIFICATION_HEAD_FAILED' ? 'r2-head-error' : 'd1-write-error';
+        decision = error instanceof Error && error.message === 'MIGRATION_R2_NOTIFICATION_HEAD_FAILED'
+          ? 'r2-head-error' : 'registration-or-dispatch-error';
         emit('consumer', 'job-result', 'QUEUE_JOB_RESULT', 'FAILED', { expected: 'processed', actual: decision,
           error_code: 'MIGRATION_UPLOAD_REGISTRATION_FAILED', details: { classification: classifyTraceError(error) } });
       } finally {

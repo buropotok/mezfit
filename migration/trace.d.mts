@@ -1,7 +1,7 @@
 export const TRACE_PREFIX: string;
 export const TRACE_ID: RegExp;
 type TraceValue = string | number | boolean | null | undefined;
-export type TraceContext = { trace_id?: string | null; instance_id?: string | null; run_id?: string; worker_version?: string; attempt?: number };
+export type TraceContext = { trace_id?: string | null; instance_id?: string | null; run_id?: string; worker_version?: string; attempt?: number; job_id?: string; processor_version?: string; workflow_instance_id?: string };
 export type TraceFields = { attempt?: number | null; duration_ms?: number; error_code?: string; expected?: string; actual?: string;
   details?: Record<string, TraceValue | number[]> };
 export type Trace = (component: string, stage: string, event: string, status: string, fields?: TraceFields) => void;
