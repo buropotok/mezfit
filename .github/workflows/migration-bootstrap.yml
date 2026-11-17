@@ -1,0 +1,53 @@
+name: Bootstrap migration infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Preview or explicitly apply migration infrastructure
+        type: choice
+        options: [preview, apply]
+        default: preview
+        required: true
+      confirmation:
+        description: For apply enter APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE
+        type: string
+
+concurrency:
+  group: mezfit-migration-cloudflare
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify explicit apply confirmation
+        if: inputs.operation == 'apply'
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [[ "$CONFIRMATION" != 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE' ]]; then
+            echo 'Enter APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE to apply.' >&2
+            exit 1
+          fi
+      - name: Install pinned Wrangler
+        if: inputs.operation == 'apply'
+        run: npm ci
+      - name: Inspect or provision migration infrastructure
+        run: node migration/cloudflare.mjs
+        env:
+          MIGRATION_OPERATION: ${{ inputs.operation }}
+          MIGRATION_CONFIRMATION: ${{ inputs.confirmation }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
