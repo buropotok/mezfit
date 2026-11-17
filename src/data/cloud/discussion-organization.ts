@@ -217,7 +217,9 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
       if (!persisted) throw new Error('DISCUSSION_NOT_FOUND');
       assertDiscussionThread(persisted);
       if (persisted.id !== thread.id || persisted.realmId !== thread.realmId
-        || persisted.coachClientId !== thread.coachClientId || persisted.anchorKey !== thread.anchorKey)
+        || persisted.coachClientId !== thread.coachClientId || persisted.anchorKey !== thread.anchorKey
+        || persisted.createdAt !== thread.createdAt
+        || persisted.derivedTitleSnapshot !== thread.derivedTitleSnapshot)
         throw new Error('DISCUSSION_NOT_FOUND');
       if (thread.coachClientId === null) {
         if (thread.realmId !== this.actorUserId) throw new Error('DISCUSSION_ACCESS_DENIED');
