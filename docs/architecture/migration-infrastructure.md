@@ -1,5 +1,9 @@
 # Cloudflare migration infrastructure
 
+> Общая концепция миграции Gym Keeper → Mezfit, технические решения, текущий статус,
+> этапы и дорожная карта описаны в [корневом `migration.md`](../../migration.md).
+> Этот файл остаётся подробным описанием уже развёрнутой Cloudflare инфраструктуры.
+
 The Mezfit Cloudflare account hosts two independently deployed Workers. The app
 Worker `mezfit` owns the existing Telegram API and media integration.
 `mezfit-migration` owns backup intake and its technical processing state.
