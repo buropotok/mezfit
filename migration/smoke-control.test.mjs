@@ -56,6 +56,16 @@ describe('migration Workflow management API', () => {
     expect(api.get).toHaveBeenCalledExactlyOnceWith(path + '/' + id);
   });
 
+  it('backs off an explicit rate limit and resubmits the same instance ID', async () => {
+    const api = { request: vi.fn().mockRejectedValueOnce(Object.assign(new Error('rate limited'), { status: 429, transient: true })),
+      get: vi.fn().mockResolvedValue({ status: 'complete', output: 'MIGRATION_SMOKE_OK' }) };
+    const pause = vi.fn();
+    await runSmoke(api, vi.fn(), { id, wait: pause });
+    expect(pause).toHaveBeenCalledExactlyOnceWith(2000);
+    expect(api.request).toHaveBeenCalledTimes(2);
+    expect(api.request.mock.calls[0]).toEqual(api.request.mock.calls[1]);
+  });
+
   it('queues cleanup for a failed smoke and keeps the original error report', async () => {
     const api = { request: vi.fn(), get: vi.fn().mockResolvedValue({
       status: 'errored', error: { name: 'ReferenceError', message: 'arbitrary private data' },
