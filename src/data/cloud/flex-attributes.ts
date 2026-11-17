@@ -63,6 +63,21 @@ export interface FlexAttributeInput {
   value: FlexPrimitive;
 }
 
+
+/** Read-only, per-key inspection for domain-specific EAV projections.
+ * Invalid/pending metadata is reported per key; authorization still throws. */
+export interface FlexInspectedValue {
+  target: FlexEntityTarget;
+  key: string;
+  state: 'present' | 'absent' | 'pending' | 'invalid';
+  valueType?: FlexValueType;
+  value?: unknown;
+}
+export interface FlexInspectionRequest {
+  target: FlexEntityTarget;
+  keys: readonly string[];
+}
+
 export interface FlexResolvedValue {
   key: string;
   valueType: FlexValueType;
@@ -233,6 +248,88 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
           }
         }
       });
+  }
+
+
+  /** Authorize a whole projection once, instead of rescanning every pair per thread. */
+  private async assertInspectionTargets(targets: readonly FlexEntityTarget[]): Promise<void> {
+    const shared = targets.filter(target => target.entityType === 'publishedUser');
+    if (shared.length && (!this.db.realms || !this.db.members)) throw new Error('FLEX_ENTITY_FORBIDDEN');
+    const pairs = shared.length && this.db.realms && this.db.members
+      ? await profileRelationships({ realms: this.db.realms, members: this.db.members }, this.actorUserId) : [];
+    for (const target of targets) {
+      if (target.entityType === 'user') {
+        if (target.realmId !== this.actorUserId || target.entityId !== this.actorUserId)
+          throw new Error('FLEX_ENTITY_FORBIDDEN');
+      } else if (target.entityType === 'publishedUser') {
+        if (!pairs.some(pair => pair.realmId === target.realmId
+          && (target.entityId === pair.coachUserId || target.entityId === pair.clientUserId)))
+          throw new Error('FLEX_ENTITY_FORBIDDEN');
+      } else throw new Error('INVALID_FLEX_TARGET');
+    }
+  }
+
+  private inspectionTables(includeShared: boolean) {
+    return includeShared && this.db.realms && this.db.members
+      ? [this.db.flexAttributes, this.db.flexValues, this.db.realms, this.db.members]
+      : [this.db.flexAttributes, this.db.flexValues];
+  }
+
+  private inspectRow(target: FlexEntityTarget, key: string,
+    attribute: FlexAttributeRow | undefined, row: FlexValueRow | undefined): FlexInspectedValue {
+    const base = { target, key };
+    if (!attribute && !row) return { ...base, state: 'absent' };
+    if (!attribute || !row) return { ...base, state: 'pending' };
+    const owner = ownerFor(target, this.actorUserId);
+    if (!isFlexAttributeRow(attribute) || attribute.key !== key
+      || attribute.realmId !== target.realmId || attribute.owner !== owner
+      || row.id !== flexValueId(target, flexAttributeId(target.realmId, key))
+      || row.attributeId !== attribute.id || row.realmId !== target.realmId
+      || row.owner !== owner || row.entityType !== target.entityType || row.entityId !== target.entityId
+      || !isValidFlexValue(attribute.valueType, row.value)) {
+      return { ...base, state: 'invalid', value: row.value };
+    }
+    return { ...base, state: 'present', valueType: attribute.valueType, value: row.value };
+  }
+
+  /** Batched deterministic-ID reads. Unlike getValues(), one damaged key does not mask its neighbours. */
+  async inspectKeys(requests: readonly FlexInspectionRequest[]): Promise<FlexInspectedValue[]> {
+    if (!requests.length) return [];
+    const targets = requests.map(request => request.target);
+    const keys = requests.flatMap(request => request.keys);
+    if (keys.some(key => !attributeKeyPattern.test(key))) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
+    return this.db.transaction('r', this.inspectionTables(targets.some(target => target.entityType === 'publishedUser')), async () => {
+      await this.assertInspectionTargets(targets);
+      const entries = requests.flatMap(request => request.keys.map(key => ({ target: request.target, key })));
+      const attributeIds = entries.map(({ target, key }) => flexAttributeId(target.realmId, key));
+      const [attributes, values] = await Promise.all([
+        this.db.flexAttributes.bulkGet(attributeIds),
+        this.db.flexValues.bulkGet(entries.map(({ target }, index) => flexValueId(target, attributeIds[index]))),
+      ]);
+      return entries.map(({ target, key }, index) => this.inspectRow(target, key, attributes[index], values[index]));
+    });
+  }
+
+  /** Bounded prefix scan of definitions plus values; no unrelated personal/profile Flex decoding.
+   * A value arriving ahead of an unknown definition cannot be enumerated until hydration. */
+  async inspectPrefix(targets: readonly FlexEntityTarget[], prefix: string): Promise<FlexInspectedValue[]> {
+    if (!targets.length) return [];
+    if (!attributeKeyPattern.test(prefix)) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
+    return this.db.transaction('r', this.inspectionTables(targets.some(target => target.entityType === 'publishedUser')), async () => {
+      await this.assertInspectionTargets(targets);
+      const definitions = await Promise.all([...new Set(targets.map(target => target.realmId))].map(async realmId => ({
+        realmId,
+        rows: await this.db.flexAttributes.where('[realmId+key]')
+          .between([realmId, prefix], [realmId, prefix + '\uffff'], true, true).toArray(),
+      })));
+      const keysByRealm = new Map(definitions.map(({ realmId, rows }) =>
+        [realmId, rows.filter(row => typeof row.key === 'string' && row.key.startsWith(prefix))]));
+      const entries = targets.flatMap(target => (keysByRealm.get(target.realmId) ?? []).map(attribute =>
+        ({ target, key: attribute.key, attribute })));
+      const values = await this.db.flexValues.bulkGet(entries.map(({ target, key }) =>
+        flexValueId(target, flexAttributeId(target.realmId, key))));
+      return entries.map(({ target, key, attribute }, index) => this.inspectRow(target, key, attribute, values[index]));
+    });
   }
 
   async setValue(target: FlexEntityTarget, entry: FlexAttributeInput): Promise<void> {
