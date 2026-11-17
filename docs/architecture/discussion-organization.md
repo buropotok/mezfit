@@ -47,6 +47,9 @@ and cannot contain control characters or equal any of the five built-in Russian
 tab labels (case-insensitive) or `+`. Duplicate personal category names
 (case-insensitive) are refused locally. Concurrent offline devices can create
 duplicates: reads choose a stable, key-sorted winner and report diagnostics.
+When a category definition is hydrated but its value is still pending,
+category creation, rename and reorder refuse to run until hydration resolves;
+list/observe remain readable and report diagnostics.
 Category definitions use independent Flex values rather than a growing JSON
 array (the 1024-character Flex limit). Order is an explicit non-negative safe
 integer; ties sort by name and category ID. Renaming and reordering update only
@@ -85,6 +88,9 @@ pairs, while the 160-bit output avoids exposing potentially long thread IDs
 and provides ample collision resistance. The value is exactly one of
 `nutrition`, `personal`, or `custom:<canonical UUID v4>`. Only syntactically
 valid and *active own* custom IDs can be assigned by the typed repository.
+The local assignment write transaction checks current thread provenance, pair
+membership and category existence together, after computing its hash outside
+the Dexie transaction.
 `null` (or no value) means **no explicit assignment**. In particular,
 `personal` on a free thread is an explicit choice, not an absent value.
 `training`, `coach`, `client`, `+`, display labels and arbitrary JSON
@@ -130,6 +136,8 @@ strict behavior for other feature domains.
 
 The implementation uses a bounded number of verified relationship scans and grouped indexed
 Flex lookups for an inbox-sized batch, not one observer/lookup per thread.
+The fixed-width key namespaces permit `[realmId+attributeId]` prefix ranges,
+so the cleanup scan need not hydrate unrelated profile and avatar values.
 `observeCategories` and `observe` are liveQuery-based. The latter observes
 a supplied thread snapshot; the owning inbox supplies new snapshots when its
 thread list changes. No polling or network wait is introduced.
