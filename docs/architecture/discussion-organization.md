@@ -121,9 +121,10 @@ assignment and ignored with a diagnostic when read.
 Only validated structural access errors fail the classification read. Invalid,
 pending, missing or stale per-key Flex values produce a safe fallback and a
 diagnostic, not a missing discussion. The same holds for a missing Flex value
-or definition during Addon hydration. A value arriving *before an unknown
-category definition* cannot yet be enumerated by a prefix scan; a subsequent
-definition addition re-triggers liveQuery and makes it visible. Existing
+or definition during Addon hydration. Prefix inspection also recognizes a
+value arriving before its definition by decoding the deterministic length-prefixed
+Flex attribute ID; it is marked pending until the definition arrives, and
+liveQuery re-evaluates the result. Existing
 `FlexAttributesRepository.getValues` continues to enforce its original
 strict behavior for other feature domains.
 
@@ -154,10 +155,12 @@ remaining values. Successful clears remain idempotent. Cross-realm writes are
 **not cloud-atomic**: different devices may temporarily observe cleared
 assignments and the still-active name, or a late assignment after a prior
 tombstone. Invalid or stale IDs remain non-authoritative and safely fall back;
-explicitly retrying removal can clean late arrivals. No background migration,
-Worker task, second sync engine, or delete grant is involved. Missing unknown
-attribute definitions during incomplete Addon hydration cannot be swept until
-they arrive; live reads remain safe and never grant or revoke discussion access.
+explicitly retrying removal can clean late arrivals. Value-before-definition
+rows with a valid deterministic Flex attribute ID can be swept immediately,
+including while pending. Values not locally hydrated at all, or rows with
+unrecoverably malformed identifiers, cannot be enumerated until their data
+arrives or is repaired; they never grant or revoke discussion access.
+No background migration, Worker task, second sync engine, or delete grant is involved.
 
 ## Authorization and security limits
 
