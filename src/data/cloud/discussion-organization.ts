@@ -158,11 +158,17 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
   private async modifyCategories<T>(work: () => Promise<T>): Promise<T> {
     return this.db.transaction('rw', this.personalTables(), work);
   }
+  private async writableCategories(): Promise<CategoryDefinition[]> {
+    const snapshot = await this.readCategories();
+    if (snapshot.diagnostics.some(code => code.startsWith('CATEGORY_PENDING:')))
+      throw new Error('DISCUSSION_CATEGORIES_INCOMPLETE');
+    return snapshot.categories;
+  }
   async createCategory(name: string): Promise<CategoryDefinition> {
     const validName = categoryName(name);
     const id = crypto.randomUUID() as CategoryId;
     return this.modifyCategories(async () => {
-      const existing = await this.listCategories();
+      const existing = await this.writableCategories();
       if (existing.some(category => sameName(category.name) === sameName(validName)))
         throw new Error('DUPLICATE_DISCUSSION_CATEGORY_NAME');
       const category = { id, name: validName, order: existing.reduce((max, entry) => Math.max(max, entry.order), -1) + 1 };
@@ -174,7 +180,7 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
   async renameCategory(id: CategoryId, name: string): Promise<void> {
     const validName = categoryName(name);
     await this.modifyCategories(async () => {
-      const categories = await this.listCategories();
+      const categories = await this.writableCategories();
       const previous = categories.find(category => category.id === id);
       if (!previous) throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
       if (categories.some(category => category.id !== id && sameName(category.name) === sameName(validName)))
@@ -185,7 +191,7 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
   }
   async reorderCategories(ids: readonly CategoryId[]): Promise<void> {
     await this.modifyCategories(async () => {
-      const categories = await this.listCategories();
+      const categories = await this.writableCategories();
       if (!Array.isArray(ids) || ids.length !== categories.length || new Set(ids).size !== ids.length
         || ids.some(id => !categories.some(category => category.id === id)))
         throw new Error('INVALID_DISCUSSION_CATEGORY_ORDER');
