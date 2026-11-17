@@ -128,7 +128,7 @@ liveQuery re-evaluates the result. Existing
 `FlexAttributesRepository.getValues` continues to enforce its original
 strict behavior for other feature domains.
 
-The implementation uses one verified relationship scan and grouped indexed
+The implementation uses a bounded number of verified relationship scans and grouped indexed
 Flex lookups for an inbox-sized batch, not one observer/lookup per thread.
 `observeCategories` and `observe` are liveQuery-based. The latter observes
 a supplied thread snapshot; the owning inbox supplies new snapshots when its
