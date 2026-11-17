@@ -53,7 +53,10 @@ function setup(value = fixture) {
   const env = { CLOUDFLARE_ACCOUNT_ID: account, JOBS: { prepare, batch },
     MIGRATION_WORKFLOW: { create: vi.fn(async () => ({ id: instance })), get: vi.fn(async () => ({ status: async () => ({ status: 'running' }) })) },
     UPLOADS: {
-      head: vi.fn(async path => objects.get(path)?.metadata ?? null),
+      head: vi.fn(async path => {
+        const metadata = objects.get(path)?.metadata;
+        return metadata ? { ...metadata } : null;
+      }),
       delete: vi.fn(async path => { objects.delete(path); }),
       list: vi.fn(async ({ prefix, limit }) => {
         const matching = [...objects.keys()].filter(path => path.startsWith(prefix));
@@ -68,7 +71,7 @@ function setup(value = fixture) {
         if (options.onlyIf.get('If-None-Match') !== '*' || objects.has(path)) return null;
         const etag = createHash('md5').update(data).digest('hex');
         objects.set(path, { bytes: data.buffer, metadata: { size: data.byteLength, httpMetadata: options.httpMetadata,
-          etag, httpEtag: '"' + etag + '"' } });
+          etag, httpEtag: '"' + etag + '"', version: 'result-version' } });
         return {};
       }),
     },
