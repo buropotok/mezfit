@@ -169,6 +169,9 @@ describe('typed Flex persistence and participant isolation', () => {
     await coach.assignThread(other, 'nutrition');
     expect((await otherClient.getThreadOrganization(other)).category).toBe('coach');
     await expect(otherClient.assignThread(entity, 'nutrition')).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    await expect(coach.assignThread(entity, { kind: 'custom', id: category.id }))
+      .rejects.toThrow('DISCUSSION_CATEGORY_NOT_FOUND');
+    await expect(client.assignThread(entity, 'training' as never)).rejects.toThrow('INVALID_DISCUSSION_ASSIGNMENT');
     await expect(new DiscussionOrganizationRepository(db, 'tg:33').classifyThreads([entity]))
       .rejects.toThrow('DISCUSSION_ACCESS_DENIED');
     await expect(new FlexAttributesRepository(db, 'tg:11').setValue(target('tg:22', scope(0).realmId),
@@ -234,6 +237,22 @@ describe('typed Flex persistence and participant isolation', () => {
     await coach.removeCategory(category.id); // repeat a tombstoned deletion after late hydration
     expect((await db.flexValues.get(staleId))?.value).toBeNull();
     expect((await client.getThreadOrganization(personal)).category).toBe('training');
+  });
+
+
+  it('cleans a pending value whose definition is not yet hydrated before the category tombstone', async () => {
+    const { db, entity, coach } = await fixture();
+    const category = await coach.createCategory('Ожидающий метаданные раздел');
+    await coach.assignThread(entity, { kind: 'custom', id: category.id });
+    const key = await discussionThreadAssignmentKey(entity);
+    const attributeId = flexAttributeId(entity.realmId, key);
+    const valueId = flexValueId(target('tg:11', entity.realmId), attributeId);
+    await db.flexAttributes.delete(attributeId); // only in test: imitate Addon value-first hydration
+    expect((await db.flexValues.get(valueId))?.value).toBe('custom:' + category.id);
+    await coach.removeCategory(category.id);
+    expect((await db.flexAttributes.get(attributeId))?.valueType).toBe('string');
+    expect((await db.flexValues.get(valueId))?.value).toBeNull();
+    expect(await coach.listCategories()).toEqual([]);
   });
 
   it('reports failed cleanup and supports explicit retry without prematurely removing category', async () => {
