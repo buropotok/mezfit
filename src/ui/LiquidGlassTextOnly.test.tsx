@@ -407,6 +407,10 @@ describe('LiquidGlassTextOnly', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
     tap(11);
     expect(onAction).toHaveBeenCalledTimes(2);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'mouse', pointerId: 12, clientX: x, clientY: 22 });
+    fireEvent.pointerUp(actionButton(root), { pointerType: 'mouse', pointerId: 12, clientX: x, clientY: 22 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).toHaveBeenCalledTimes(3); // distinct physical mouse click during the touch-suppression window
     expect(changed).not.toHaveBeenCalled();
     expect(button(root, 0).getAttribute('aria-selected')).toBe('true');
     expect(animateMock).not.toHaveBeenCalled();
@@ -498,5 +502,47 @@ describe('LiquidGlassTextOnly', () => {
     expect(button(second, 0).getAttribute('aria-selected')).toBe('true');
     view.unmount();
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('preserves an in-flight selectable-tab lens transition when the action is touched', () => {
+    const onAction = vi.fn();
+    function WithAction() {
+      const [value, setValue] = useState('today');
+      return <LiquidGlassTextOnly hidden={false} tabs={tabs} value={value}
+        onValueChange={(next) => { changed(next); setValue(next); }}
+        actionTab={{ label: '+', onClick: onAction }} />;
+    }
+    const view = render(<WithAction />);
+    const root = getScene(view.container);
+    fireEvent.click(button(root, 5));
+    act(() => vi.advanceTimersByTime(160));
+    const lensTrack = element(root, 'lens-track');
+    const duringTravel = translateX(lensTrack);
+    const x = visibleActionX(root);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 42, clientX: x, clientY: 22 });
+    expect(translateX(lensTrack)).toBe(duringTravel);
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 42, clientX: x, clientY: 22 });
+    expect(onAction).toHaveBeenCalledTimes(1);
+    act(() => vi.advanceTimersByTime(200));
+    expect(button(root, 5).getAttribute('aria-selected')).toBe('true');
+    expect(changed).toHaveBeenCalledExactlyOnceWith('measurements');
+    expect(actionButton(root).hasAttribute('aria-selected')).toBe(false);
+  });
+
+  it('uses the current action callback when props change without remounting the scene', () => {
+    const first = vi.fn();
+    const replacement = vi.fn();
+    const renderWith = (onClick: () => void) => (
+      <LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
+        onValueChange={changed} actionTab={{ label: '+', onClick }} />
+    );
+    const view = render(renderWith(first));
+    const root = getScene(view.container);
+    view.rerender(renderWith(replacement));
+    expect(getScene(view.container)).toBe(root);
+    fireEvent.click(actionButton(root));
+    expect(first).not.toHaveBeenCalled();
+    expect(replacement).toHaveBeenCalledExactlyOnceWith();
+    expect(changed).not.toHaveBeenCalled();
   });
 });
