@@ -169,9 +169,36 @@ Workflow возвращает `PROCESSOR_CLEANUP_INCOMPLETE` и сохраняе
 256 записей. Smoke использует одновременно оба предела. Этот предел является
 консервативной настройкой v1, проверенной synthetic smoke 44156101755.
 MIG-03 сохраняет этот smoke и добавляет nested adapter с result schema v2.
-Проверка новой реализации в Cloudflare ожидается; действующий smoke использует
-fixture-v1. Контракты registry и отдельная приёмка nested описаны в migration.md §7.6 и §10.2.
+MIG-03 deploy/infra/fixture smoke подтверждены runs 44181829987 / 44182935497 /
+44183912443. Действующий processor-smoke использует fixture-v1. Контракты registry и отдельная приёмка nested описаны в migration.md §7.6 и §10.2.
 Лимит загрузки технических объектов по-прежнему 100 MiB. Файлы свыше предела
 процессора получают `PROCESSOR_INPUT_LIMIT` до чтения тела из R2. R2-результат
 проверяется независимо от ответа PUT. Повторная запись состояния D1 использует
 тот же подтверждённый результат.
+
+### Облачная проверка второго адаптера
+
+После слияния доработки владелец запускает **Deploy migration Worker** на
+`main` и проверяет фактическую Worker version и `MIGRATION_SMOKE_OK`.
+Затем Actions → **Diagnose or smoke-test migration infrastructure** →
+**Run workflow** → branch `main` → operation `nested-smoke`.
+
+Сценарий использует readiness gate и обычную R2 notification/Queue/D1/Workflow
+обработку. Вход содержит несколько групп, неотсортированные items,
+cross-group/forward references и пустую группу. Проверяется schema v2,
+`synthetic-nested 1.0.0`, точный normalized output, EMPTY_GROUP, input/result
+SHA-256, attempts=1, replay/idempotency и cleanup с R2/D1 readback.
+Успех — `MIGRATION_NESTED_SMOKE_OK`, который появляется после очистки.
+
+В Step Summary и артефакте `migration-trace.json` проверить source SHA,
+Worker version, trace/job IDs, `ADAPTER_SELECTED` и
+`PROCESSOR_SMOKE_ADAPTER_VERIFIED` для synthetic-nested 1.0.0,
+стадии checksum/result/replay/cleanup. Исходные группы и значения в trace
+не выводятся. При `Collection: PARTIAL` сохранить список недоступных
+источников; Workers Logs 403, отсутствие CPU и per-object publisher receipt
+сами по себе не дают полной наблюдаемости. При ошибке использовать diagnose
+с UUID из отчёта. При timeout/active Workflow cleanup откладывается.
+
+Live nested-smoke для этой доработки ещё не запускался. После успешного
+ручного запуска отдельно зафиксировать run URL, source SHA, Worker version
+и trace ID в migration.md.

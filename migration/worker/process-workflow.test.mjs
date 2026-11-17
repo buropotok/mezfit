@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, processorInstanceId, processorResultKey } from '../processor-protocol.mjs';
 import { consumeUploads } from './events';
 import { runProcess } from './process-workflow';
-import { cleanupProcessorSmoke } from './processor-smoke';
+import { cleanupProcessorSmoke, runProcessorSmoke as runSmoke } from './processor-smoke';
 import { isResult } from './processor';
 import { NESTED_FORMAT } from './processor/adapters/nested';
 
@@ -446,5 +446,133 @@ describe('nested adapter through the existing migration workflow', () => {
     expect(await cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code))).toBe(cleanupOK);
     expect(cleanupTables.flatMap(table => job.sqlite.prepare('SELECT * FROM ' + table).all())).toEqual([]);
     expect(job.objects.size).toBe(0);
+  });
+});
+
+const smokeVersion = 'c89a8a4d-18c9-4eb5-9dfa-af79cfc455ef';
+function liveSmokeSetup({ loseInputReply = false, loseResultReply = false, badMarker = false, changeResult } = {}) {
+  const job = setup();
+  job.objects.clear();
+  job.env.MIGRATION_VERSION = { id: smokeVersion };
+  const put = job.env.UPLOADS.put.getMockImplementation();
+  let sourceBytes;
+  job.env.UPLOADS.put.mockImplementation(async (path, data, options) => {
+    if (path === key) {
+      expect(options.onlyIf.get('If-None-Match')).toBe('*');
+      if (job.objects.has(path)) return null;
+      sourceBytes = data.buffer;
+      const etag = createHash('md5').update(data).digest('hex');
+      const metadata = { etag, httpEtag: '"' + etag + '"', size: data.byteLength,
+        httpMetadata: options.httpMetadata, customMetadata: badMarker ? {} : options.customMetadata, version: 'input-version' };
+      job.objects.set(path, { bytes: data.buffer, metadata });
+      // Deliver the actual upload event to the production consumer, then run
+      // its deterministic process Workflow against the same R2/D1 state.
+      await job.deliver({ ...job.event, object: { key, eTag: etag, size: data.byteLength } });
+      await job.run();
+      if (changeResult) changeResult(job);
+      if (loseInputReply) { loseInputReply = false; throw new Error('response lost'); }
+      return metadata;
+    }
+    const result = await put(path, data, options);
+    if (path === resultKey && loseResultReply) { loseResultReply = false; throw new Error('response lost'); }
+    return result;
+  });
+  job.env.EVENTS = { send: vi.fn(async event => {
+    expect((await job.deliver(event)).ack).toHaveBeenCalledOnce();
+  }) };
+  return { ...job, source: () => sourceBytes,
+    smoke: (scenario = 'nested', version = smokeVersion) => runSmoke(job.env, id, job.step, context, version,
+      code => Object.assign(new Error(code), { name: 'NonRetryableError' }), scenario) };
+}
+
+function replaceSmokeResult(job, mutate) {
+  const result = JSON.parse(new TextDecoder().decode(job.saved()));
+  mutate(result);
+  const bytes = new TextEncoder().encode(JSON.stringify(result));
+  const etag = createHash('md5').update(bytes).digest('hex');
+  job.objects.set(resultKey, { bytes: bytes.buffer, metadata: { etag, httpEtag: '"' + etag + '"',
+    size: bytes.byteLength, httpMetadata: { contentType: 'application/json' }, version: 'replacement-result' } });
+  job.sqlite.prepare('UPDATE migration_executions SET result_sha256 = ?')
+    .run(createHash('sha256').update(bytes).digest('hex'));
+}
+
+describe('processor smoke scenarios on the production processing path', () => {
+  it.each(['nested', 'fixture'])('verifies %s through notification, registry, R2 readback, replay and cleanup', async scenario => {
+    const job = liveSmokeSetup({ loseInputReply: true, loseResultReply: true });
+    await expect(job.smoke(scenario)).resolves.toBe(scenario === 'nested'
+      ? 'MIGRATION_NESTED_SMOKE_VERIFIED' : 'MIGRATION_PROCESSOR_SMOKE_VERIFIED');
+    const result = JSON.parse(new TextDecoder().decode(job.saved()));
+    expect(result.inputSha256).toBe(createHash('sha256').update(new Uint8Array(job.source())).digest('hex'));
+    expect(job.execution()).toMatchObject({ state: 'succeeded', attempts: 1,
+      result_sha256: createHash('sha256').update(new Uint8Array(job.saved())).digest('hex') });
+    expect(job.env.MIGRATION_WORKFLOW.create).toHaveBeenCalledOnce();
+    expect(job.env.EVENTS.send).toHaveBeenCalledOnce();
+    expect(job.env.UPLOADS.put.mock.calls.filter(([path]) => path === resultKey)).toHaveLength(1);
+    if (scenario === 'nested') {
+      expect(result).toMatchObject({ schemaVersion: 2, adapter: { id: 'synthetic-nested', version: '1.0.0' },
+        summary: { recordsValidated: 3, warningsCount: 1 }, warnings: ['EMPTY_GROUP'],
+        normalized: { groups: [{ id: 'a-group' }, { id: 'm' }, { id: 'z' }], items: [
+          { id: 'a', group: 'a-group', value: 17, ref: null },
+          { id: 'b', group: 'a-group', value: -4, ref: 'c' },
+          { id: 'c', group: 'z', value: 9, ref: 'a' },
+        ] } });
+      expect(job.log).toHaveBeenCalledWith(expect.objectContaining({ event: 'ADAPTER_SELECTED',
+        details: { adapter_id: 'synthetic-nested', adapter_version: '1.0.0' } }));
+    } else {
+      expect(result).toMatchObject({ schemaVersion: 1, summary: { recordsValidated: 256, warningsCount: 0 } });
+    }
+    expect(await cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code))).toBe(cleanupOK);
+    expect(job.objects.size).toBe(0);
+    expect(cleanupTables.flatMap(table => job.sqlite.prepare('SELECT * FROM ' + table).all())).toEqual([]);
+    expect(JSON.stringify(job.log.mock.calls)).not.toContain('a-group');
+  });
+
+  it('refuses a stale Worker before creating the smoke input', async () => {
+    const job = liveSmokeSetup();
+    await expect(job.smoke('nested', '279fd1e0-057c-48df-b77d-612ed8c5b99b')).rejects.toThrow('DEPLOYED_VERSION_NOT_READY');
+    expect(job.env.UPLOADS.put.mock.calls.some(([path]) => path === key)).toBe(false);
+    expect(job.execution()).toBeUndefined();
+  });
+
+  it('preserves a source with an unconfirmed ownership marker', async () => {
+    const job = liveSmokeSetup({ badMarker: true });
+    await expect(job.smoke()).rejects.toThrow('PROCESSOR_SMOKE_INPUT_CONFLICT');
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_SCOPE_INVALID');
+    expect(job.objects.has(key)).toBe(true);
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['adapter', result => { result.adapter.id = 'synthetic-fixture'; }],
+    ['adapter version', result => { result.adapter.version = '2.0.0'; }],
+    ['schema', result => { result.schemaVersion = 1; delete result.adapter; delete result.normalized; }],
+    ['normalized values', result => { result.normalized.items[0].value = 999; }],
+    ['source checksum', result => { result.inputSha256 = '0'.repeat(64); }],
+    ['dangling reference', result => { result.normalized.items[0].ref = 'missing'; }],
+    ['warnings', result => { result.warnings = []; result.summary.warningsCount = 0; }],
+  ])('refuses altered %s even when the D1 result digest agrees', async (_scenario, mutate) => {
+    const job = liveSmokeSetup({ changeResult: job => replaceSmokeResult(job, mutate) });
+    await expect(job.smoke()).rejects.toThrow('PROCESSOR_SMOKE_RESULT_INVALID');
+    expect(job.env.EVENTS.send).not.toHaveBeenCalled();
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+  });
+
+  it('refuses a D1 checksum that differs from the actual result', async () => {
+    const job = liveSmokeSetup({ changeResult: job => {
+      job.sqlite.prepare('UPDATE migration_executions SET result_sha256 = ?').run('0'.repeat(64));
+    } });
+    await expect(job.smoke()).rejects.toThrow('PROCESSOR_SMOKE_RESULT_INVALID');
+    expect(job.env.EVENTS.send).not.toHaveBeenCalled();
+  });
+
+  it('refuses a replay that changes attempts', async () => {
+    const job = liveSmokeSetup();
+    const send = job.env.EVENTS.send.getMockImplementation();
+    job.env.EVENTS.send.mockImplementation(async event => {
+      await send(event);
+      job.sqlite.exec('UPDATE migration_executions SET attempts = attempts + 1');
+    });
+    await expect(job.smoke()).rejects.toThrow('PROCESSOR_SMOKE_REPLAY_CHANGED_RESULT');
   });
 });

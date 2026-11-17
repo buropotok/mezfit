@@ -3,10 +3,11 @@ import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, PROCESSOR_RECORD_LIMIT, PROCESSO
 import type { Trace, TraceContext } from '../trace.mjs';
 import { readExecution } from './execution-store';
 import { processStep, readResultBytes } from './process-workflow';
-import { isResult, ProcessingFailure, sha256 } from './processor';
+import { isResult, ProcessingFailure, sha256, type Success } from './processor';
 import { UPLOAD_BUCKET } from './r2-upload';
 import type { SmokeBindings } from './smoke';
 import { observed } from './trace';
+import { NESTED_FORMAT } from './processor/adapters/nested';
 
 const CONTENT_TYPE = 'application/octet-stream';
 const WAIT = { retries: { limit: 7, delay: '5 seconds', backoff: 'constant' }, timeout: '15 seconds' } as const;
@@ -21,14 +22,40 @@ export async function processorReadiness(env: SmokeBindings, step: WorkflowStep,
   });
 }
 
-export async function runProcessorSmoke(env: SmokeBindings, id: string, step: WorkflowStep, context: TraceContext,
-  version: string, permanent: (code: string) => Error) {
-  const run = (name: string) => processStep(env, step, context, name);
-  // Fill the configured input-size boundary with ASCII JSON whitespace. The
-  // processor and smoke verify the checksum of every byte, including padding.
+function smokeFixture(scenario: 'fixture' | 'nested') {
+  if (scenario === 'nested') {
+    const fixture = { format: NESTED_FORMAT, container: { groups: [
+      { sourceId: 'z', items: [{ sourceId: 'c', amount: 9, peerId: 'a' }] },
+      { sourceId: 'a-group', items: [
+        { sourceId: 'b', amount: -4, peerId: 'c' }, { sourceId: 'a', amount: 17, peerId: null },
+      ] },
+      { sourceId: 'm', items: [] },
+    ] } };
+    const expected = { groups: [{ id: 'a-group' }, { id: 'm' }, { id: 'z' }], items: [
+      { id: 'a', group: 'a-group', value: 17, ref: null },
+      { id: 'b', group: 'a-group', value: -4, ref: 'c' },
+      { id: 'c', group: 'z', value: 9, ref: 'a' },
+    ] };
+    return { bytes: new TextEncoder().encode(JSON.stringify(fixture)), count: 3,
+      adapterId: 'synthetic-nested', verified: 'MIGRATION_NESTED_SMOKE_VERIFIED',
+      matches: (result: Success) => result.schemaVersion === 2 && result.processorVersion === 'v1'
+        && result.detectedFormat === NESTED_FORMAT && result.adapter.id === 'synthetic-nested'
+        && result.adapter.version === '1.0.0' && result.summary.warningsCount === 1
+        && result.warnings.length === 1 && result.warnings[0] === 'EMPTY_GROUP'
+        && JSON.stringify(result.normalized) === JSON.stringify(expected) };
+  }
   const records = Array.from({ length: PROCESSOR_RECORD_LIMIT }, (_, value) => ({ value }));
   const fixture = JSON.stringify({ format: FIXTURE_FORMAT, records });
-  const bytes = new TextEncoder().encode(fixture.padEnd(PROCESSOR_INPUT_LIMIT, ' '));
+  return { bytes: new TextEncoder().encode(fixture.padEnd(PROCESSOR_INPUT_LIMIT, ' ')), count: PROCESSOR_RECORD_LIMIT,
+    adapterId: 'synthetic-fixture', verified: 'MIGRATION_PROCESSOR_SMOKE_VERIFIED',
+    matches: (result: Success) => result.schemaVersion === 1 && result.detectedFormat === FIXTURE_FORMAT };
+}
+
+export async function runProcessorSmoke(env: SmokeBindings, id: string, step: WorkflowStep, context: TraceContext,
+  version: string, permanent: (code: string) => Error, scenario: 'fixture' | 'nested' = 'fixture') {
+  const run = (name: string) => processStep(env, step, context, name);
+  const fixture = smokeFixture(scenario);
+  const { bytes } = fixture;
   const key = 'uploads/' + id;
   await run('Upload processor fixture')(async emit => {
     if (env.MIGRATION_VERSION?.id !== version) throw permanent('DEPLOYED_VERSION_NOT_READY');
@@ -56,10 +83,14 @@ export async function runProcessorSmoke(env: SmokeBindings, id: string, step: Wo
     if (!saved) throw new Error('PROCESSOR_SMOKE_RESULT_MISSING');
     const parsed: unknown = JSON.parse(new TextDecoder().decode(saved));
     if (!isResult(parsed) || parsed.inputSizeBytes !== bytes.byteLength || parsed.inputSha256 !== await sha256(bytes.buffer)
-      || parsed.summary.recordsValidated !== PROCESSOR_RECORD_LIMIT || await sha256(saved) !== completed.checksum || completed.attempts !== 1) {
+      || !fixture.matches(parsed) || parsed.summary.recordsValidated !== fixture.count || await sha256(saved) !== completed.checksum || completed.attempts !== 1) {
       throw permanent('PROCESSOR_SMOKE_RESULT_INVALID');
     }
-    emit('r2', 'processor-smoke-result', 'PROCESSOR_SMOKE_RESULT_VERIFIED', 'OK', { details: { count: PROCESSOR_RECORD_LIMIT, size: saved.byteLength } });
+    emit('processor', 'adapter-selection', 'PROCESSOR_SMOKE_ADAPTER_VERIFIED', 'OK',
+      { details: { adapter_id: fixture.adapterId, adapter_version: '1.0.0' } });
+    emit('r2', 'processor-smoke-result', 'PROCESSOR_SMOKE_INPUT_CHECKSUM_VERIFIED', 'OK');
+    emit('r2', 'processor-smoke-result', 'PROCESSOR_SMOKE_RESULT_CHECKSUM_VERIFIED', 'OK');
+    emit('r2', 'processor-smoke-result', 'PROCESSOR_SMOKE_RESULT_VERIFIED', 'OK', { details: { count: fixture.count, size: saved.byteLength } });
   });
 
   await run('Replay processor queue event')(async emit => {
@@ -77,12 +108,14 @@ export async function runProcessorSmoke(env: SmokeBindings, id: string, step: Wo
       .bind(id, key).first();
     if (receipt?.replay_id !== id) throw new Error('PROCESSOR_SMOKE_REPLAY_PENDING');
     const current = await readExecution(env.JOBS, id, emit);
-    if (current?.state !== 'succeeded' || current.attempts !== completed.attempts || current.checksum !== completed.checksum) {
+    const saved = await readResultBytes(env.UPLOADS, id, emit);
+    if (current?.state !== 'succeeded' || current.attempts !== completed.attempts || current.checksum !== completed.checksum
+      || !saved || await sha256(saved) !== completed.checksum) {
       throw permanent('PROCESSOR_SMOKE_REPLAY_CHANGED_RESULT');
     }
     emit('d1', 'processor-smoke-replay', 'PROCESSOR_SMOKE_REPLAY_VERIFIED', 'OK');
   }, WAIT);
-  return 'MIGRATION_PROCESSOR_SMOKE_VERIFIED';
+  return fixture.verified;
 }
 
 async function readCleanupRows(db: D1Database, id: string, key: string, emit: Trace, readback: boolean) {

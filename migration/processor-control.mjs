@@ -28,9 +28,9 @@ export async function deployedWorkerVersion(api) {
   return versions[0].version_id;
 }
 
-async function invoke(api, id, params, emit, deadline, wait) {
+async function invoke(api, id, params, emit, deadline, wait, operation) {
   const path = INSTANCES + '/' + id;
-  const scope = { details: { operation: 'processor-smoke' } };
+  const scope = { details: { operation } };
   emit('workflow', 'processor-instance-create', 'PROCESSOR_CONTROL_CREATE', 'STARTED', scope);
   try {
     await api.request(INSTANCES, { method: 'POST', body: { instance_id: id, params } });
@@ -64,14 +64,17 @@ async function invoke(api, id, params, emit, deadline, wait) {
   return null;
 }
 
-export async function runProcessorSmoke(api, id, version, emit, runtime, { runId, wait = sleep } = {}) {
+export async function runProcessorSmoke(api, id, version, emit, runtime, { runId, wait = sleep, operation = 'processor-smoke' } = {}) {
+  if (!['processor-smoke', 'nested-smoke'].includes(operation)) throw new Error('MIGRATION_OPERATION_INVALID');
+  const nested = operation === 'nested-smoke';
+  const verified = nested ? 'MIGRATION_NESTED_SMOKE_VERIFIED' : 'MIGRATION_PROCESSOR_SMOKE_VERIFIED';
   const deadline = Date.now() + 60000;
   let ready = false;
   for (let attempt = 1; attempt <= 5 && Date.now() < deadline; attempt++) {
     const readinessId = randomUUID();
     runtime.readinessId = readinessId;
     const instance = await invoke(api, readinessId, { operation: 'processor-ready', runId }, emit,
-      Math.min(deadline, Date.now() + 12000), wait);
+      Math.min(deadline, Date.now() + 12000), wait, operation);
     const matched = instance?.status === 'complete' && output(instance) === READY + version;
     emit('workflow', 'processor-readiness', 'DEPLOYED_VERSION_CHECK', matched ? 'OK' : 'RETRY', {
       attempt, expected: 'deployed-version', actual: matched ? 'runtime-matched' : 'runtime-unconfirmed',
@@ -84,9 +87,9 @@ export async function runProcessorSmoke(api, id, version, emit, runtime, { runId
   runtime.started = true;
   let primary;
   try {
-    runtime.instance = await invoke(api, id, { operation: 'processor-smoke', jobId: id, expectedVersion: version, runId },
-      emit, Date.now() + 130000, wait);
-    if (output(runtime.instance) !== 'MIGRATION_PROCESSOR_SMOKE_VERIFIED' || runtime.instance?.status !== 'complete') {
+    runtime.instance = await invoke(api, id, { operation: nested ? 'processor-nested-smoke' : 'processor-smoke', jobId: id, expectedVersion: version, runId },
+      emit, Date.now() + 130000, wait, operation);
+    if (output(runtime.instance) !== verified || runtime.instance?.status !== 'complete') {
       throw new Error('MIGRATION_PROCESSOR_SMOKE_FAILED');
     }
   } catch (error) {
@@ -99,7 +102,7 @@ export async function runProcessorSmoke(api, id, version, emit, runtime, { runId
       if (!TERMINAL.has(runtime.instance?.status)) throw new Error('PROCESSOR_SMOKE_CLEANUP_DEFERRED');
       runtime.cleanupId = randomUUID();
       const cleanup = await invoke(api, runtime.cleanupId, { operation: 'processor-cleanup', targetId: id, runId },
-        emit, Date.now() + 40000, wait);
+        emit, Date.now() + 40000, wait, operation);
       if (output(cleanup) !== 'MIGRATION_PROCESSOR_CLEANUP_OK' || cleanup?.status !== 'complete') {
         throw new Error('PROCESSOR_SMOKE_CLEANUP_FAILED');
       }
@@ -112,4 +115,5 @@ export async function runProcessorSmoke(api, id, version, emit, runtime, { runId
       if (!primary) throw error;
     }
   }
+  return nested ? 'MIGRATION_NESTED_SMOKE_OK' : 'MIGRATION_PROCESSOR_SMOKE_OK';
 }

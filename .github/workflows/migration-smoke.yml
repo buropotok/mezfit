@@ -6,7 +6,7 @@ on:
       operation:
         description: Inspect an existing Workflow instance or run a new infrastructure or processor smoke
         type: choice
-        options: [diagnose, smoke, processor-smoke]
+        options: [diagnose, smoke, processor-smoke, nested-smoke]
         default: diagnose
         required: true
       instance_id:
@@ -44,7 +44,7 @@ jobs:
           retention-days: 7
 
   smoke:
-    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && (inputs.operation == 'smoke' || inputs.operation == 'processor-smoke')
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && (inputs.operation == 'smoke' || inputs.operation == 'processor-smoke' || inputs.operation == 'nested-smoke')
     concurrency:
       group: mezfit-migration-cloudflare
       cancel-in-progress: false

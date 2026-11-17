@@ -88,7 +88,7 @@ async function capture(emit, component, stage, event, action, summarize) {
 }
 
 async function finalTrace({ id, operation, runtime, records, deploy, infra, state, emit, failure, since }) {
-  const processor = operation === 'processor-smoke';
+  const processor = ['processor-smoke', 'nested-smoke'].includes(operation);
   const activeSmoke = runtime.started || operation === 'diagnose';
   const history = [];
   let coverage = {};
@@ -176,7 +176,8 @@ async function finalTrace({ id, operation, runtime, records, deploy, infra, stat
   if (activeSmoke) missing.push(['r2-per-object-publisher-receipt', 'unavailable']);
   const output = [
     processor ? '## MIGRATION PROCESSING TRACE' : '## MIGRATION TRACE', 'Trace ID: ' + id,
-    ...(processor ? ['Job ID: ' + id, 'Processor version: ' + PROCESSOR_VERSION] : []),
+    ...(processor ? ['Job ID: ' + id, 'Processor version: ' + PROCESSOR_VERSION,
+      'Scenario: ' + operation, 'Expected adapter: ' + (operation === 'nested-smoke' ? 'synthetic-nested' : 'synthetic-fixture') + ' 1.0.0'] : []),
     'Commit: ' + (process.env.GITHUB_SHA ?? 'unavailable'),
     'Worker version: ' + (workerVersion ?? all.findLast(row => row.worker_version)?.worker_version ?? 'unavailable'),
     'Smoke result: ' + smokeResult, 'Collection: ' + (missing.length ? 'PARTIAL' : 'observed sources collected'),
@@ -834,7 +835,7 @@ async function main() {
   runnerTrace = (component, stage, event, status, fields) => traceWriter({
     trace_id: id, run_id: runId, instance_id: runtime.started || operation === 'diagnose' ? id : undefined,
     worker_version: workerVersion,
-    ...(operation === 'processor-smoke' ? { job_id: id, processor_version: PROCESSOR_VERSION } : {}),
+    ...(['processor-smoke', 'nested-smoke'].includes(operation) ? { job_id: id, processor_version: PROCESSOR_VERSION } : {}),
   }, row => { records.push(row); console.log(JSON.stringify(row)); })(component, stage, event, status, fields);
   const emit = runnerTrace;
   let deploy;
@@ -849,7 +850,7 @@ async function main() {
       has_account_id: !!process.env.CLOUDFLARE_ACCOUNT_ID, has_origin: !!process.env.MEZFIT_APP_ORIGIN,
       has_deploy_token: !!process.env.CLOUDFLARE_API_TOKEN, has_bootstrap_token: !!process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN,
     } });
-    requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke', 'processor-smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
+    requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke', 'processor-smoke', 'nested-smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
     if (operation === 'apply') requireState(process.env.MIGRATION_CONFIRMATION === 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE',
       'MIGRATION_APPLY_CONFIRMATION_REQUIRED');
     const account = (process.env.CLOUDFLARE_ACCOUNT_ID ?? '').toLowerCase();
@@ -884,10 +885,10 @@ async function main() {
       emit('github', 'smoke-transition', 'SMOKE_START', 'STARTED', { expected: 'workflow-created' });
       runtime.started = true;
       await runSmoke(deploy, reportSmoke, { id, runId, emit, runtime });
-    } else if (operation === 'processor-smoke') {
+    } else if (['processor-smoke', 'nested-smoke'].includes(operation)) {
       workerVersion = await deployedWorkerVersion(deploy);
-      await runProcessorSmoke(deploy, id, workerVersion, emit, runtime, { runId });
-      await reportSmoke(['MIGRATION_PROCESSOR_SMOKE_OK']);
+      const marker = await runProcessorSmoke(deploy, id, workerVersion, emit, runtime, { runId, operation });
+      await reportSmoke([marker]);
     }
   } catch (error) {
     failure = error;
