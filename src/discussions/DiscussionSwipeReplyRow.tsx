@@ -28,7 +28,7 @@ export function DiscussionSwipeReplyIndicator() {
   const opacity = Math.min(1, Math.max(0, (distance - AXIS_SLOP_PX) / 26));
   const circumference = 2 * Math.PI * 15.5;
   return <span className="discussion-reply-swipe-indicator" aria-hidden="true"
-    data-armed={progress >= 1 || undefined}
+    data-armed={distance >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX || undefined}
     data-dragging={dragging || undefined}
     data-pulsing={pulsing || undefined}
     data-completed={completed || undefined}
@@ -102,7 +102,8 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       touchGesture.current = null;
       removeTouchListeners.current?.();
       clearPulse();
-      setCompleted(false);
+      // Preserve the completed-ring latch through the return transition.
+      // Only a new gesture may restore the progress track.
       setVisual(idleVisual);
     }
   }, [enabled]);
