@@ -1,3 +1,5 @@
+import type { Trace } from '../trace.mjs';
+
 // SigV4 implementation copied from worker/lib/discussion-media-r2.ts.
 export const UPLOAD_BUCKET = 'mezfit-migration-uploads';
 export const MAX_BACKUP_BYTES = 100 * 1024 * 1024;
@@ -58,14 +60,30 @@ export async function createBackupUpload(metadata: BackupMetadata, credentials: 
 export async function signBackupPut(storageKey: string, metadata: BackupMetadata,
   env: UploadCredentials,
   now = new Date(),
+  emit?: Trace,
 ): Promise<{ putUrl: string; expiresAt: number; storageKey: string }> {
-  if ((!UPLOAD_KEY_PATTERN.test(storageKey) && !SMOKE_OBJECT_PATTERN.test(storageKey))
-    || !validBackupMetadata(metadata.sizeBytes, metadata.contentType)) {
+  const validKey = UPLOAD_KEY_PATTERN.test(storageKey) || SMOKE_OBJECT_PATTERN.test(storageKey);
+  const validMetadata = validBackupMetadata(metadata.sizeBytes, metadata.contentType);
+  const started = Date.now();
+  emit?.('r2', 'signed-url', 'R2_SIGV4_SIGNING', 'STARTED', { expected: 'signed-put-capability' });
+  emit?.('r2', 'signing-key-format', 'R2_OBJECT_KEY_CHECKED', validKey ? 'OK' : 'FAILED', {
+    expected: 'generated-backup-key', actual: validKey ? 'valid' : 'invalid', error_code: validKey ? undefined : 'INVALID_BACKUP_UPLOAD',
+  });
+  emit?.('r2', 'signing-metadata', 'R2_SIGNATURE_METADATA_CHECKED', validMetadata ? 'OK' : 'FAILED', {
+    expected: 'supported-backup-metadata', actual: validMetadata ? 'valid' : 'invalid',
+    error_code: validMetadata ? undefined : 'INVALID_BACKUP_UPLOAD', details: { size: metadata.sizeBytes, mime: metadata.contentType },
+  });
+  if (!validKey || !validMetadata) {
     throw new Error('INVALID_BACKUP_UPLOAD');
   }
-  if (!/^[a-f0-9]{32}$/.test(env.CLOUDFLARE_ACCOUNT_ID)
-    || !/^[a-f0-9]{32}$/.test(env.MIGRATION_R2_ACCESS_KEY_ID)
-    || !/^[a-f0-9]{64}$/.test(env.MIGRATION_R2_SECRET_ACCESS_KEY)) {
+  const hasCredentials = /^[a-f0-9]{32}$/.test(env.CLOUDFLARE_ACCOUNT_ID)
+    && /^[a-f0-9]{32}$/.test(env.MIGRATION_R2_ACCESS_KEY_ID)
+    && /^[a-f0-9]{64}$/.test(env.MIGRATION_R2_SECRET_ACCESS_KEY);
+  emit?.('r2', 'signing-credentials', 'R2_CREDENTIALS_CHECKED', hasCredentials ? 'OK' : 'FAILED', {
+    expected: 'configured-r2-credentials', actual: hasCredentials ? 'present' : 'missing-or-invalid',
+    error_code: hasCredentials ? undefined : 'MIGRATION_R2_SIGNER_UNAVAILABLE', details: { has_credentials: hasCredentials },
+  });
+  if (!hasCredentials) {
     throw new Error('MIGRATION_R2_SIGNER_UNAVAILABLE');
   }
   const date = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
@@ -86,12 +104,16 @@ export async function signBackupPut(storageKey: string, metadata: BackupMetadata
   const path = '/' + storageKey.split('/').map(encodeAws).join('/');
   const canonicalHeaders = `content-length:${metadata.sizeBytes}\ncontent-type:${metadata.contentType}\nhost:${host}\nif-none-match:*\n`;
   const canonicalRequest = `PUT\n${path}\n${query}\n${canonicalHeaders}\n${signedHeaders}\nUNSIGNED-PAYLOAD`;
+  emit?.('r2', 'canonical-request', 'R2_CANONICAL_REQUEST_BUILT', 'OK', { actual: 'canonical-put-request', details: { method: 'PUT' } });
+  emit?.('r2', 'signed-headers', 'R2_SIGNED_HEADERS_BOUND', 'OK', { actual: 'length-type-host-conditional' });
+  emit?.('r2', 'signature-ttl', 'R2_SIGNATURE_TTL', 'OK', { details: { ttl_seconds: UPLOAD_TTL_SECONDS } });
   const toSign = `AWS4-HMAC-SHA256\n${date}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
   const keyDate = await hmac(encoder.encode('AWS4' + env.MIGRATION_R2_SECRET_ACCESS_KEY), day);
   const keyRegion = await hmac(keyDate, 'auto');
   const keyService = await hmac(keyRegion, 's3');
   const signingKey = await hmac(keyService, 'aws4_request');
   const signature = hex(await hmac(signingKey, toSign));
+  emit?.('r2', 'signed-url', 'R2_SIGV4_SIGNING', 'OK', { actual: 'signed-put-capability', duration_ms: Date.now() - started });
   return {
     storageKey,
     putUrl: `https://${host}${path}?${query}&X-Amz-Signature=${signature}`,
