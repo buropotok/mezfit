@@ -37,6 +37,7 @@ import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { DiscussionAttachmentSaveDialog, type DiscussionAttachmentSaveTarget } from './DiscussionVideoSaveDialog';
 import { startPressScale } from '../ui/PressScale';
+import { runHapticProbe } from '../telegram';
 import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
 import { RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
 import { shouldShowWebViewUpdate, VideoWebViewUpdatePopover } from '../video-note/VideoWebViewUpdatePopover';
@@ -1018,7 +1019,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             if ((voiceConsumed || circleConsumed) && event.detail !== 0) return;
             if (lockedRecording) recordingGesture.send();
             else if (actionMode === 'send') submit();
-            else setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone');
+            else {
+              setMediaMode(current => current === 'microphone' ? 'camera' : 'microphone');
+              runHapticProbe('telegram-success-notification');
+            }
           }}>
           <DiscussionActionIcon mode={actionMode} />
         </IconButton>
