@@ -566,6 +566,29 @@ describe('processor smoke scenarios on the production processing path', () => {
     expect(job.env.EVENTS.send).not.toHaveBeenCalled();
   });
 
+  it('keeps nested evidence when cleanup finds an active execution', async () => {
+    const job = liveSmokeSetup();
+    await job.smoke();
+    job.sqlite.exec("UPDATE migration_executions SET state = 'running', result_key = NULL, result_sha256 = NULL");
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_EXECUTION_ACTIVE');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.objects.has(key)).toBe(true);
+    expect(job.objects.has(resultKey)).toBe(true);
+  });
+
+  it('keeps nested result and D1 residues if the input has disappeared', async () => {
+    const job = liveSmokeSetup();
+    await job.smoke();
+    job.objects.delete(key);
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_INCOMPLETE');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+    expect(job.objects.has(resultKey)).toBe(true);
+    expect(cleanupTables.map(table => job.sqlite.prepare('SELECT COUNT(*) AS count FROM ' + table).get().count))
+      .toEqual([1, 1, 1]);
+  });
+
   it('refuses a replay that changes attempts', async () => {
     const job = liveSmokeSetup();
     const send = job.env.EVENTS.send.getMockImplementation();

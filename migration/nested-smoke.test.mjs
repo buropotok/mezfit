@@ -21,7 +21,10 @@ function controller({ versions = [current], smokeOutput = 'MIGRATION_NESTED_SMOK
         ? { status: 'complete', output: 'MIGRATION_PROCESSOR_READY:' + versions.shift() }
         : operation === 'processor-nested-smoke' ? { status: smokeStatus, output: smokeOutput }
           : { status: cleanupStatus, output: cleanupOutput });
-      if (loseReply) { loseReply = false; throw Object.assign(new Error('lost reply'), { transient: true }); }
+      if (loseReply && operation === 'processor-nested-smoke') {
+        loseReply = false;
+        throw Object.assign(new Error('lost reply'), { transient: true });
+      }
     }),
     get: vi.fn(async path => instances.get(path.split('/').at(-1))),
   };
