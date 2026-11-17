@@ -1,6 +1,6 @@
 // Direct extraction of the approved Text Only prototype interaction model.
 // React owns identity/controlled value; this private runtime owns the tuned gesture optics.
-export function mountPrototype(root, initialIndex, onSelect) {
+export function mountPrototype(root, initialIndex, onSelect, onAction) {
   const owner = root.ownerDocument;
   const win = owner.defaultView;
   const pane = root.getElementById('toolbar-pane');
@@ -10,7 +10,8 @@ export function mountPrototype(root, initialIndex, onSelect) {
   const lensTrack = root.getElementById('lens-track');
   const lens = root.getElementById('lens');
   const filter = root.getElementById('standalone-lens-filter');
-  const links = [...tabStrip.querySelectorAll('.tab-link')];
+  const links = [...tabStrip.querySelectorAll('.tab-link:not([data-action-tab])')];
+  const actionLink = tabStrip.querySelector('[data-action-tab]');
 
   const timers = new Set();
   const frames = new Set();
@@ -76,6 +77,7 @@ export function mountPrototype(root, initialIndex, onSelect) {
     newActiveIndex: Math.max(0, Math.min(initialIndex, links.length - 1)),
     touched: false,
     pointerId: null,
+    touchStartedOnAction: false,
     gesture: 'idle',
     touchStartX: 0,
     touchStartY: 0,
@@ -500,6 +502,13 @@ export function mountPrototype(root, initialIndex, onSelect) {
     return bestIndex;
   }
 
+  function isWithinAction(clientX) {
+    if (!actionLink) return false;
+    const rect = tabStrip.getBoundingClientRect();
+    const contentX = clientX - rect.left + tabStrip.scrollLeft;
+    return contentX >= actionLink.offsetLeft && contentX <= actionLink.offsetLeft + actionLink.offsetWidth;
+  }
+
   function setHighlightOnTouch(eventLike, { startLens = true, holdStart = false } = {}) {
     const rect = tabStrip.getBoundingClientRect();
     const contentX = eventLike.clientX - rect.left + tabStrip.scrollLeft;
@@ -583,6 +592,9 @@ export function mountPrototype(root, initialIndex, onSelect) {
     clearSpring();
     data.pointerId = event.pointerId;
     data.touched = true;
+    data.touchStartedOnAction = Boolean(actionLink && (
+      event.composedPath?.().includes(actionLink) || isWithinAction(event.clientX)
+    ));
     data.gesture = 'pending';
     data.holdActivated = false;
     data.touchStartX = event.clientX;
@@ -596,6 +608,10 @@ export function mountPrototype(root, initialIndex, onSelect) {
     cancelPressIntent();
     data.pressIntentTimer = later(() => {
       if (!data.touched || data.gesture !== 'pending') return;
+      if (data.touchStartedOnAction) {
+        data.gesture = 'action-hold';
+        return;
+      }
       data.holdActivated = true;
       data.gesture = 'press';
       setHighlightOnTouch({ clientX: data.lastPointerX, clientY: data.touchStartY }, { startLens: true, holdStart: true });
@@ -615,6 +631,13 @@ export function mountPrototype(root, initialIndex, onSelect) {
       } else if (absY >= SWIPE_THRESHOLD_PX && absY > absX) {
         cancelPressIntent();
         data.gesture = 'cancelled';
+      }
+      return;
+    }
+    if (data.gesture === 'action-hold') {
+      if (absX >= SWIPE_THRESHOLD_PX && absX > absY) {
+        classifyAsScroll();
+        moveManualScroll(event.clientX);
       }
       return;
     }
@@ -638,6 +661,8 @@ export function mountPrototype(root, initialIndex, onSelect) {
   function finishPointer(event, cancelled = false) {
     if (event.pointerType !== 'touch' || !data.touched || data.pointerId !== event.pointerId) return;
     const gesture = data.gesture;
+    const startedOnAction = data.touchStartedOnAction;
+    data.touchStartedOnAction = false;
     data.touched = false;
     cancelPressIntent();
     try { if (pane.hasPointerCapture?.(event.pointerId)) pane.releasePointerCapture(event.pointerId); } catch (_) {}
@@ -657,12 +682,23 @@ export function mountPrototype(root, initialIndex, onSelect) {
       data.gesture = 'idle';
       return;
     }
+    if (gesture === 'action-hold') {
+      data.suppressClickUntil = now() + 500;
+      data.gesture = 'idle';
+      return;
+    }
     if (gesture === 'press') {
       setHighlightOnTouch(event, { startLens: false });
       commitHoldSelection();
       data.suppressClickUntil = now() + 500;
       data.holdActivated = false;
       data.gesture = 'idle';
+      return;
+    }
+    if (startedOnAction) {
+      data.suppressClickUntil = now() + 500;
+      data.gesture = 'idle';
+      if (isWithinAction(event.clientX)) onAction?.();
       return;
     }
     const index = nearestIndexForClientX(event.clientX);
@@ -685,6 +721,16 @@ export function mountPrototype(root, initialIndex, onSelect) {
       startTapTravel(index, true);
     });
   });
+  if (actionLink) {
+    listen(actionLink, 'click', event => {
+      if (now() < data.suppressClickUntil) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      onAction?.();
+    });
+  }
   listen(tabStrip, 'scroll', () => {
     if (data.gesture !== 'press' && !data.selectionTravelActive) positionLensTrack(data.activeIndex, false);
   }, { passive: true });
@@ -694,6 +740,7 @@ export function mountPrototype(root, initialIndex, onSelect) {
     positionLensTrack(data.activeIndex, false);
   }), tabStrip);
   links.forEach(link => layoutObserver.observe(link));
+  if (actionLink) layoutObserver.observe(actionLink);
 
   const OPTICS = Object.freeze({
     neutralEdge: 1.7,
