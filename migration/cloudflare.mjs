@@ -18,7 +18,9 @@ const R2_WRITE = 'Workers R2 Storage Bucket Item Write';
 const R2_SCOPE = 'com.cloudflare.edge.r2.bucket';
 const UUID = /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const ID = /^[a-f0-9]{32}$/;
-const CONSUMER_SETTINGS = { batch_size: 10, max_wait_time_ms: 5000, max_retries: 5, retry_delay: 10 };
+// The REST API expects milliseconds for the batch timeout and seconds for the retry delay.
+const CONSUMER_SETTINGS = { batch_size: 10, max_wait_time_ms: 5 * 1000, max_retries: 5, retry_delay: 10 };
+const CONSUMER_DEFAULTS = { batch_size: 10, max_wait_time_ms: 5000, max_retries: 3 };
 const WORKER_PATH = '/workers/scripts/' + WORKER;
 const BUCKET_PATH = '/r2/buckets/' + BUCKET;
 const NOTIFICATIONS = '/event_notifications/r2/' + BUCKET + '/configuration';
@@ -239,17 +241,88 @@ async function inspectQueue(api) {
   return details;
 }
 
-function queueConflict(queue) {
-  if (!queue) return false;
-  return queue.settings?.delivery_paused === true
-    || (queue.settings?.delivery_delay ?? 0) !== 0
-    || (queue.consumers ?? []).some(consumer => consumer.type !== 'worker' || consumer.script_name !== WORKER
-      || Boolean(consumer.dead_letter_queue) || consumer.settings?.max_concurrency != null
-      || Object.entries(CONSUMER_SETTINGS).some(([key, value]) => consumer.settings?.[key] !== value))
-    || (queue.producers ?? []).some(producer => !(
-      producer.type === 'worker' && producer.script === WORKER
-      || producer.type === 'r2_bucket' && producer.bucket_name === BUCKET
-    ));
+function queueWorkerDifferences(binding, path) {
+  // The REST schema uses script_name for a consumer. Wrangler's Queue
+  // readback also supports script and service + environment references.
+  const names = [binding.script_name, binding.script, binding.service].filter(name => name != null);
+  const differences = [];
+  if (!names.length || names.some(name => name !== WORKER)) {
+    differences.push(path + '.script_name/script/service (expected the migration Worker)');
+  }
+  const environment = binding.environment;
+  if ((binding.service != null || environment != null) && environment !== 'production') {
+    differences.push(path + '.environment (expected production)');
+  }
+  if ((binding.namespace ?? '') !== '') differences.push(path + '.namespace (expected no namespace)');
+  return differences;
+}
+
+function queueSettingDifference(path, expected, actual) {
+  const value = actual == null ? 'unset' : Number.isSafeInteger(actual) ? String(actual) : 'invalid value';
+  return path + ' (expected ' + expected + ', got ' + value + ')';
+}
+
+export function queueConfigurationDifferences(queue, requireConsumer = false) {
+  if (!queue) return [];
+  const differences = [];
+  if (queue.settings != null && !isRecord(queue.settings)) {
+    differences.push('settings (expected an object)');
+  }
+  if ((queue.settings?.delivery_paused ?? false) !== false) {
+    differences.push('settings.delivery_paused (expected false)');
+  }
+  const deliveryDelay = queue.settings?.delivery_delay ?? 0;
+  if (deliveryDelay !== 0) differences.push(queueSettingDifference('settings.delivery_delay', 0, deliveryDelay));
+
+  const consumers = queue.consumers ?? [];
+  if (!Array.isArray(consumers)) {
+    differences.push('consumers (expected an array)');
+  } else if (requireConsumer ? consumers.length !== 1 : consumers.length > 1) {
+    const expected = requireConsumer ? '1 after deploy' : 'at most 1';
+    differences.push('consumers.length (expected ' + expected + ', got ' + consumers.length + ')');
+  } else if (consumers.length) {
+    const [consumer] = consumers;
+    if (!isRecord(consumer)) {
+      differences.push('consumers[0] (expected an object)');
+    } else {
+      if (consumer.type !== 'worker') differences.push('consumers[0].type (expected worker)');
+      differences.push(...queueWorkerDifferences(consumer, 'consumers[0]'));
+      if ((consumer.dead_letter_queue ?? '') !== '') {
+        differences.push('consumers[0].dead_letter_queue (expected no dead-letter queue)');
+      }
+      const settings = consumer.settings;
+      if (!isRecord(settings)) {
+        differences.push('consumers[0].settings (expected an object)');
+      } else {
+        if (settings.max_concurrency != null) {
+          differences.push(queueSettingDifference('consumers[0].settings.max_concurrency', 'automatic', settings.max_concurrency));
+        }
+        for (const [key, expected] of Object.entries(CONSUMER_SETTINGS)) {
+          const actual = settings[key] ?? CONSUMER_DEFAULTS[key];
+          if (actual !== expected) {
+            differences.push(queueSettingDifference('consumers[0].settings.' + key, expected, actual));
+          }
+        }
+      }
+    }
+  }
+
+  const producers = queue.producers ?? [];
+  if (!Array.isArray(producers)) {
+    differences.push('producers (expected an array)');
+    return differences;
+  }
+  for (const [index, producer] of producers.entries()) {
+    const path = 'producers[' + index + ']';
+    if (producer?.type === 'worker') {
+      differences.push(...queueWorkerDifferences(producer, path));
+    } else if (producer?.type === 'r2_bucket') {
+      if (producer.bucket_name !== BUCKET) differences.push(path + '.bucket_name (expected the migration bucket)');
+    } else {
+      differences.push(path + '.type (expected worker or r2_bucket)');
+    }
+  }
+  return differences;
 }
 
 async function writeGroup(api) {
@@ -279,7 +352,7 @@ function sameTokenPolicy(token, desired) {
     && !token.expires_on && !token.not_before;
 }
 
-async function inspect(infra, deploy, account, origin) {
+async function inspect(infra, deploy, account, origin, requireQueueConsumer = false) {
   const [databases, queue, tokens, worker, workflow, group] = await Promise.all([
     infra.pages('/d1/database'), inspectQueue(infra), infra.pages('/tokens'), inspectWorker(deploy),
     deploy.get('/workflows/' + WORKFLOW, true), writeGroup(infra),
@@ -294,11 +367,12 @@ async function inspect(infra, deploy, account, origin) {
   const policy = tokenPolicy(account, group);
   const secretsReady = SECRET_NAMES.every(name => worker.secrets.includes(name));
   const secretsPartial = SECRET_NAMES.some(name => worker.secrets.includes(name));
+  const queueDifferences = queueConfigurationDifferences(queue, requireQueueConsumer);
   const conflicts = [
     ...(!bucket.private ? ['R2_BUCKET_IS_PUBLIC'] : []),
     ...(bucket.cors === 'conflict' ? ['R2_CORS_CONFLICT'] : []),
     ...(bucket.notificationConflict ? [bucket.notificationConflict] : []),
-    ...(queueConflict(queue) ? ['QUEUE_CONFIGURATION_CONFLICT'] : []),
+    ...(queueDifferences.length ? ['QUEUE_CONFIGURATION_CONFLICT: ' + queueDifferences.join(', ')] : []),
     ...(!worker.owned || !worker.private ? ['WORKER_OWNERSHIP_OR_PUBLIC_URL_CONFLICT'] : []),
     ...(workflow && (workflow.script_name !== WORKER || workflow.class_name !== 'MigrationWorkflow')
       ? ['WORKFLOW_OWNERSHIP_CONFLICT'] : []),
@@ -452,12 +526,11 @@ async function main() {
       runWrangler(['deploy', '--config', configFile]);
     });
   }
-  const after = await inspect(infra, deploy, account, origin);
+  const after = await inspect(infra, deploy, account, origin, operation === 'deploy');
   requireState(!after.conflicts.length, 'MIGRATION_INFRASTRUCTURE_READBACK_CONFLICT: ' + after.conflicts.join('; '));
   requireProvisioned(after);
   if (operation === 'deploy') {
-    requireState(after.workflow && after.queue.consumers?.some(consumer => consumer.script_name === WORKER),
-      'MIGRATION_WORKFLOW_OR_CONSUMER_MISSING');
+    requireState(after.workflow, 'MIGRATION_WORKFLOW_MISSING');
     await smoke(deploy);
   }
 }
