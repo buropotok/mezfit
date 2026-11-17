@@ -127,6 +127,24 @@ describe('typed Flex persistence and participant isolation', () => {
     expect(stored?.value).toContain('Новая техника');
   });
 
+  it('keeps reads reactive but rejects category edits while a definition is awaiting its value', async () => {
+    const { db, coach } = await fixture();
+    const existing = await coach.createCategory('Первая');
+    const pendingId = '49a87f72-f6d9-478a-afba-893f7eb65790' as CategoryId;
+    const key = discussionCategoryKey(pendingId);
+    await db.flexAttributes.add({ id: flexAttributeId('tg:11', key), realmId: 'tg:11',
+      owner: 'tg:11', key, valueType: 'string' });
+    expect((await coach.readCategories()).diagnostics).toContain('CATEGORY_PENDING:' + key);
+    await expect(coach.createCategory('Новая')).rejects.toThrow('DISCUSSION_CATEGORIES_INCOMPLETE');
+    await expect(coach.renameCategory(existing.id, 'Переименованная'))
+      .rejects.toThrow('DISCUSSION_CATEGORIES_INCOMPLETE');
+    await expect(coach.reorderCategories([existing.id])).rejects.toThrow('DISCUSSION_CATEGORIES_INCOMPLETE');
+    await new FlexAttributesRepository(db, 'tg:11').clearValue(target('tg:11'), key, 'string');
+    expect((await coach.readCategories()).diagnostics).toEqual([]);
+    await coach.renameCategory(existing.id, 'Переименованная');
+    expect((await coach.listCategories())[0]?.name).toBe('Переименованная');
+  });
+
   it('resolves default entity/free/personal, explicit personal, peer-only tab and own precedence', async () => {
     const { db, scope, entity, free, personal, coach, client } = await fixture();
     expect((await coach.classifyThreads([entity, free])).threads.map(row => row.category)).toEqual(['training', 'personal']);
