@@ -1,0 +1,32 @@
+name: Deploy migration Worker
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: mezfit-migration-cloudflare
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned Wrangler
+        run: npm ci
+      - name: Apply D1 migrations and deploy the private migration Worker
+        run: node migration/cloudflare.mjs
+        env:
+          MIGRATION_OPERATION: deploy
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
