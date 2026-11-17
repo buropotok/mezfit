@@ -128,3 +128,46 @@ describe('consumer step traces', () => {
     expect(put).not.toHaveBeenCalled();
   });
 });
+
+describe('ordered failure and cleanup evidence', () => {
+  it.each([
+    ['Verify exact Queue replay receipt', 'SMOKE_QUEUE_REPLAY_PENDING', 'receipt-missing'],
+    ['Delete failed smoke objects', 'SMOKE_R2_CLEANUP_FAILED', 'r2-delete-rejected'],
+  ])('records persisted attempts for %s', (name, code, actual) => {
+    const error = { name: 'Error', message: code + '|storage|operation-completed|' + actual };
+    const history = historyRecords({ steps: [{ name, attempts: [
+      { start: timestamp, end: timestamp, success: false, error },
+      { start: timestamp, end: timestamp, success: false, error },
+    ] }] }, id);
+    expect(history.filter(row => row.status === 'FAILED')).toEqual([
+      expect.objectContaining({ attempt: 1, error_code: code, expected: 'operation-completed', actual }),
+      expect.objectContaining({ attempt: 2, error_code: code, expected: 'operation-completed', actual }),
+    ]);
+  });
+
+  it('retains D1 write and later absent read as different observations', () => {
+    const output = [];
+    const emit = traceWriter({ trace_id: id }, row => output.push(row));
+    emit('d1', 'job-insert', 'D1_JOB_INSERT', 'OK', { expected: 'committed', actual: 'committed', details: { affected_rows: 1 } });
+    emit('d1', 'job-read', 'D1_JOB_SELECT', 'OK', { expected: 'job-row', actual: 'row-missing', details: { exists: false } });
+    expect(output[0]).toMatchObject({ event: 'D1_JOB_INSERT', details: { affected_rows: 1 } });
+    expect(output[1]).toMatchObject({ event: 'D1_JOB_SELECT', actual: 'row-missing', details: { exists: false } });
+    expect(summarizeTrace(output, true, { workflow: false }).last_confirmed_success.event).toBe('D1_JOB_INSERT');
+  });
+
+  it('correlates a serialized but invalid envelope and reports a repeat delivery attempt', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const put = vi.fn(async () => null);
+    const ack = vi.fn();
+    const head = vi.fn();
+    await consumeUploads({
+      messages: [{ body: JSON.stringify(smokeEvent), attempts: 2, ack, timestamp: new Date(timestamp) }],
+    }, { CLOUDFLARE_ACCOUNT_ID: account, UPLOADS: { put, head }, JOBS: {} });
+    expect(ack).toHaveBeenCalledOnce();
+    expect(head).not.toHaveBeenCalled();
+    expect(JSON.parse(put.mock.calls[0][1])).toEqual(expect.arrayContaining([
+      expect.objectContaining({ trace_id: id, attempt: 2, event: 'QUEUE_EVENT_SHAPE', actual: 'serialized-envelope' }),
+      expect.objectContaining({ event: 'QUEUE_EVENT_REJECTED', error_code: 'QUEUE_EVENT_INVALID', details: { field: 'envelope' } }),
+    ]));
+  });
+});
