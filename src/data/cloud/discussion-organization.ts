@@ -228,25 +228,29 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     }
     return byRealm;
   }
-  private async checkedThread(thread: DiscussionThread): Promise<void> {
-    await this.checkedThreads([thread]);
-  }
-  private async assignmentTarget(thread: DiscussionThread): Promise<FlexEntityTarget> {
-    await this.checkedThread(thread);
-    return thread.coachClientId === null ? this.personal : this.sharedTarget(thread.realmId, this.actorUserId);
+  /** The category and thread authorization checks must share the local write transaction.
+   * Hash before entering Dexie: WebCrypto promises must not leave a transaction idle. */
+  private async writeThreadAssignment(thread: DiscussionThread, value: ThreadAssignment | null): Promise<void> {
+    if (!thread || typeof thread !== 'object' || !discussionId(thread.id))
+      throw new Error('INVALID_DISCUSSION_THREAD');
+    const key = await discussionThreadAssignmentKey(thread);
+    await this.db.transaction('rw', [
+      this.db.discussionThreads, this.db.flexAttributes, this.db.flexValues,
+      this.db.adHocSessions, this.db.realms, this.db.members,
+    ], async () => {
+      await this.checkedThreads([thread]);
+      if (value?.startsWith('custom:')
+        && !(await this.listCategories()).some(category => category.id === value.slice(7)))
+        throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
+      const target = thread.coachClientId === null ? this.personal : this.sharedTarget(thread.realmId, this.actorUserId);
+      await this.flex.setValue(target, { key, valueType: 'string', value });
+    });
   }
   async assignThread(thread: DiscussionThread, category: AssignableDiscussionCategory): Promise<void> {
-    const code = encodeAssignment(category);
-    if (code.startsWith('custom:') && !(await this.listCategories()).some(row => row.id === code.slice(7)))
-      throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
-    const target = await this.assignmentTarget(thread);
-    const key = await discussionThreadAssignmentKey(thread);
-    await this.flex.setValue(target, { key, valueType: 'string', value: code });
+    await this.writeThreadAssignment(thread, encodeAssignment(category));
   }
   async clearThreadAssignment(thread: DiscussionThread): Promise<void> {
-    const target = await this.assignmentTarget(thread);
-    const key = await discussionThreadAssignmentKey(thread);
-    await this.flex.clearValue(target, key, 'string');
+    await this.writeThreadAssignment(thread, null);
   }
   async getThreadOrganization(thread: DiscussionThread): Promise<OrganizedDiscussionThread> {
     const snapshot = await this.classifyThreads([thread]);
