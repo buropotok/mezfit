@@ -19,7 +19,7 @@ describe('migration Queue readback', () => {
       max_retries: config.max_retries,
       retry_delay: config.retry_delay,
     });
-    expect(queueConfigurationDifferences(queue)).toEqual([]);
+    expect(queueConfigurationDifferences(queue, true)).toEqual([]);
   });
 
   it('accepts the direct script identity returned to Wrangler and omitted batch defaults', () => {
@@ -30,18 +30,22 @@ describe('migration Queue readback', () => {
         settings: { max_retries: 5, retry_delay: 10, max_concurrency: null },
       }],
       settings: { delivery_paused: false, delivery_delay: 0 },
-    })).toEqual([]);
+    }, true)).toEqual([]);
   });
 
   it('accepts the production service identity returned to Wrangler', () => {
     const identity = { type: 'worker', service: worker, environment: 'production' };
     expect(queueConfigurationDifferences({
       consumers: [{ ...identity, settings }], producers: [r2Producer, identity],
-    })).toEqual([]);
+    }, true)).toEqual([]);
   });
 
   it('allows bootstrap inspection before a consumer has been deployed', () => {
-    expect(queueConfigurationDifferences({ consumers: [], producers: [r2Producer] })).toEqual([]);
+    const pendingQueue = { consumers: [], producers: [r2Producer] };
+    expect(queueConfigurationDifferences(pendingQueue)).toEqual([]);
+    expect(queueConfigurationDifferences(pendingQueue, true)).toEqual([
+      'consumers.length (expected 1 after deploy, got 0)',
+    ]);
   });
 
   it('reports all numeric settings that differ and keeps units distinct', () => {
