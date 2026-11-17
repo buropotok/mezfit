@@ -1,3 +1,4 @@
+import { workflowStepName } from './trace-collector.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 
@@ -105,13 +106,13 @@ export function describeSmoke(id, instance, reason) {
     'Migration Smoke: ' + result, 'Workflow: ' + WORKFLOW, 'Instance: ' + id, 'Status: ' + status,
   ];
   if (result === 'FAILED') lines.push(
-    'Failed step: ' + (failure ? (KNOWN_STEPS.has(failure.name) ? failure.name : 'unknown step') : 'before step execution or unavailable'),
+    'Failed step: ' + (failure ? (workflowStepName(failure.name) ?? (KNOWN_STEPS.has(failure.name) ? failure.name : 'unnamed recorded step')) : 'before step execution or unavailable'),
     'Attempt: ' + (attempts.length || 'unavailable'),
     'Error category: ' + detail.category, 'Error code: ' + detail.code, 'Expected: ' + detail.expected,
     'Actual: ' + detail.actual, 'Cause: ' + detail.cause,
   );
   for (const [index, step] of steps.slice(0, 50).entries()) {
-    const name = KNOWN_STEPS.has(step?.name) ? step.name : 'step #' + (index + 1);
+    const name = workflowStepName(step?.name) ?? (KNOWN_STEPS.has(step?.name) ? step.name : 'step #' + (index + 1));
     lines.push('- ' + name + ' — ' + stepState(step));
     if (!Array.isArray(step?.attempts)) continue;
     for (const [i, item] of step.attempts.slice(0, 30).entries()) {
@@ -132,16 +133,21 @@ export async function diagnoseSmoke(api, id, report) {
   await report(describeSmoke(id, instance, invalidOutput ? 'MIGRATION_SMOKE_OUTPUT_INVALID' : undefined));
 }
 
-export async function runSmoke(api, report, { id = randomUUID(), wait = sleep, maxPolls = 50 } = {}) {
+export async function runSmoke(api, report, { id = randomUUID(), wait = sleep, maxPolls = 50, runId, emit = () => {}, runtime = {} } = {}) {
   const path = INSTANCES + '/' + id;
   // The pinned Wrangler sends an object here, matching WorkflowEvent.payload.
   for (let attempt = 0; ; attempt++) {
     try {
-      await api.request(INSTANCES, { method: 'POST', body: { instance_id: id, params: { operation: 'smoke' } } });
+      emit('workflow', 'instance-create', 'WORKFLOW_INSTANCE_CREATE', 'STARTED', { attempt: attempt + 1, expected: 'queued' });
+      await api.request(INSTANCES, { method: 'POST', body: { instance_id: id, params: { operation: 'smoke', ...(runId ? { runId } : {}) } } });
+      emit('workflow', 'instance-create', 'WORKFLOW_INSTANCE_CREATE', 'OK', { attempt: attempt + 1, actual: 'queued' });
       break;
     } catch (error) {
+      emit('workflow', 'instance-create', 'WORKFLOW_INSTANCE_CREATE', 'FAILED', { attempt: attempt + 1,
+        error_code: 'WORKFLOW_INSTANCE_CREATE_FAILED', actual: 'creation-not-confirmed', details: { http_status: error?.status } });
       // An explicit rate-limit refusal can be retried with the same instance ID.
       if (error?.status === 429 && attempt < 2) {
+        emit('workflow', 'instance-create', 'WORKFLOW_INSTANCE_CREATE_RETRY', 'RETRY', { attempt: attempt + 1, details: { delay_ms: 2000 * 2 ** attempt } });
         await wait(2000 * 2 ** attempt);
         continue;
       }
@@ -159,8 +165,16 @@ export async function runSmoke(api, report, { id = randomUUID(), wait = sleep, m
   try {
     for (let poll = 0; poll < maxPolls && Date.now() < deadline; poll++) {
       try {
+        emit('workflow', 'instance-poll', 'WORKFLOW_POLL', 'STARTED', { attempt: poll + 1, expected: 'instance-status',
+          details: { poll: poll + 1, remaining_ms: Math.max(0, deadline - Date.now()) } });
         instance = await api.get(path);
+        runtime.instance = instance;
+        emit('workflow', 'instance-poll', 'WORKFLOW_POLL', instance ? 'OK' : 'NOT_OBSERVED', {
+          attempt: poll + 1, actual: safeStatus(instance?.status), details: { poll: poll + 1, remaining_ms: Math.max(0, deadline - Date.now()) },
+        });
       } catch (error) {
+        emit('workflow', 'instance-poll', 'WORKFLOW_POLL', 'FAILED', { attempt: poll + 1,
+          error_code: 'WORKFLOW_POLL_FAILED', details: { http_status: error?.status } });
         if (error?.transient || (poll < 3 && error?.status === 404)) {
           await wait(5000);
           continue;
@@ -182,9 +196,12 @@ export async function runSmoke(api, report, { id = randomUUID(), wait = sleep, m
           const cleanupId = randomUUID();
           try {
             await api.request(INSTANCES, { method: 'POST',
-              body: { instance_id: cleanupId, params: { operation: 'cleanup', targetId: id } } });
+              body: { instance_id: cleanupId, params: { operation: 'cleanup', targetId: id, ...(runId ? { runId } : {}) } } });
+            runtime.cleanupId = cleanupId;
+            emit('cleanup', 'cleanup-dispatch', 'CLEANUP_INSTANCE_CREATE', 'OK', { actual: 'queued' });
             lines.push('Cleanup instance: ' + cleanupId);
           } catch {
+            emit('cleanup', 'cleanup-dispatch', 'CLEANUP_INSTANCE_CREATE', 'FAILED', { error_code: 'CLEANUP_DISPATCH_FAILED', actual: 'unconfirmed' });
             lines.push('Cleanup could not be queued; a later smoke sweeps expired synthetic objects.');
           }
         }
