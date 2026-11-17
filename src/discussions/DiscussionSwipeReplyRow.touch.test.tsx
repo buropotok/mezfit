@@ -63,11 +63,11 @@ describe('native touch swipe inside Telegram WebView-style dialog', () => {
     expect(row.style.transform).toBe('');
   });
 
-  it('does not reply when released before 50px, returned rightward or cancelled', () => {
+  it('does not reply when released before 60px, returned rightward or cancelled', () => {
     const { row, reply } = setup();
     touchStart(row, 200, 1);
-    documentTouch('touchmove', 151, 20, 1);
-    documentTouch('touchend', 151, 20, 1);
+    documentTouch('touchmove', 141, 20, 1);
+    documentTouch('touchend', 141, 20, 1);
     expect(reply).not.toHaveBeenCalled();
 
     touchStart(row, 200, 2);

@@ -26,10 +26,10 @@ function mount() {
 }
 
 describe('swipe left to reply', () => {
-  it('tracks the finger up to 100 CSS px and replies once at 50 px on release', () => {
+  it('tracks the finger up to 100 CSS px and replies once at 60 px on release', () => {
     const gesture = mount();
     expect(DISCUSSION_REPLY_SWIPE_MAX_PX).toBe(100);
-    expect(DISCUSSION_REPLY_SWIPE_TRIGGER_PX).toBe(50);
+    expect(DISCUSSION_REPLY_SWIPE_TRIGGER_PX).toBe(60);
     gesture.down(200);
     gesture.move(80);
     expect(gesture.row.style.transform).toBe('translate3d(-100px, 0, 0)');
@@ -44,11 +44,11 @@ describe('swipe left to reply', () => {
 
   it('does not reply below the threshold or if the finger returns before release', () => {
     const gesture = mount();
-    gesture.down(180); gesture.move(131); gesture.up(131);
+    gesture.down(180); gesture.move(121); gesture.up(121);
     expect(gesture.reply).not.toHaveBeenCalled();
     gesture.down(180, 20, 3); gesture.move(100, 20, 3); gesture.move(150, 20, 3); gesture.up(150, 20, 3);
     expect(gesture.reply).not.toHaveBeenCalled();
-    gesture.down(180, 20, 4); gesture.move(130, 20, 4); gesture.up(130, 20, 4);
+    gesture.down(180, 20, 4); gesture.move(120, 20, 4); gesture.up(120, 20, 4);
     expect(gesture.reply).toHaveBeenCalledOnce();
   });
 

@@ -2,45 +2,48 @@ import { createContext, useContext, useEffect, useRef, useState, type PointerEve
 import { Icon } from '../ui/Icon';
 
 export const DISCUSSION_REPLY_SWIPE_MAX_PX = 100;
-export const DISCUSSION_REPLY_SWIPE_TRIGGER_PX = 50;
+export const DISCUSSION_REPLY_SWIPE_TRIGGER_PX = 60;
 const AXIS_SLOP_PX = 8;
 
-type SwipeVisual = { offsetX: number; dragging: boolean; firing: boolean };
-type SwipePresentation = SwipeVisual & { enabled: boolean };
-const idleVisual: SwipeVisual = { offsetX: 0, dragging: false, firing: false };
-const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false });
+type SwipeVisual = { offsetX: number; dragging: boolean };
+type SwipePresentation = SwipeVisual & { enabled: boolean; pulsing: boolean };
+const idleVisual: SwipeVisual = { offsetX: 0, dragging: false };
+const SwipeVisualContext = createContext<SwipePresentation>({ ...idleVisual, enabled: false, pulsing: false });
 
 /** Portaled video-note and the reply indicator share the row-owned swipe offset. */
 export function useDiscussionSwipeVisual(): SwipePresentation {
   return useContext(SwipeVisualContext);
 }
 
-/** A presentation-only affordance anchored to the bubble's existing content slot.
- * Its positive local translation counteracts the row's negative translation:
- * the arrow stays in the uncovered space while the message follows the finger. */
+/** Gap geometry owns both the moving cue and the ring.
+ * The gap begins at the displaced bubble's right edge and ends at its
+ * original right edge. Its width equals the swipe distance, so the cue
+ * travels exactly half as far as the message. The circle and ring are
+ * always constrained to the gap minus 4 CSS px on either side. */
 export function DiscussionSwipeReplyIndicator() {
-  const { offsetX, dragging, enabled, firing } = useDiscussionSwipeVisual();
+  const { offsetX, dragging, enabled, pulsing } = useDiscussionSwipeVisual();
   const distance = enabled ? Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -offsetX)) : 0;
-  const progress = firing ? 1 : Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
-  const opacity = firing ? 1 : Math.max(0, Math.min(1, (distance - AXIS_SLOP_PX) / (DISCUSSION_REPLY_SWIPE_TRIGGER_PX - AXIS_SLOP_PX)));
-  const scale = 0.65 + progress * 0.35;
-  const circumference = 2 * Math.PI * 19;
+  const progress = Math.min(1, distance / DISCUSSION_REPLY_SWIPE_TRIGGER_PX);
+  const opacity = Math.min(1, Math.max(0, (distance - AXIS_SLOP_PX) / 26));
+  const circumference = 2 * Math.PI * 15.5;
   return <span className="discussion-reply-swipe-indicator" aria-hidden="true"
     data-armed={progress >= 1 || undefined}
     data-dragging={dragging || undefined}
-    data-completing={firing || undefined}
-    style={{ opacity, transform: `translate3d(${distance}px, -50%, 0) scale(${scale})` }}>
-    <svg className="discussion-reply-swipe-indicator__progress" viewBox="0 0 44 44" aria-hidden="true">
-      <circle className="discussion-reply-swipe-indicator__track" cx="22" cy="22" r="19" />
-      <circle className="discussion-reply-swipe-indicator__fill" cx="22" cy="22" r="19"
+    data-pulsing={pulsing || undefined}
+    style={{ width: `${distance}px`, opacity }}>
+    <span className="discussion-reply-swipe-indicator__circle">
+      <span className="discussion-reply-swipe-indicator__icon"><Icon name="reply-solid" /></span>
+    </span>
+    <svg className="discussion-reply-swipe-indicator__progress" viewBox="0 0 34 34" aria-hidden="true">
+      <circle className="discussion-reply-swipe-indicator__track" cx="17" cy="17" r="15.5" />
+      <circle className="discussion-reply-swipe-indicator__fill" cx="17" cy="17" r="15.5"
         strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress)} />
     </svg>
-    <Icon name="reply-solid" className="discussion-reply-swipe-indicator__icon" style={{ width: 24, height: 24 }} />
   </span>;
 }
 
-type Gesture = { pointerId: number; startX: number; startY: number; axis: 'pending' | 'horizontal' };
-type TouchGesture = { identifier: number; startX: number; startY: number; axis: 'pending' | 'horizontal' };
+type Gesture = { pointerId: number; startX: number; startY: number; axis: 'pending' | 'horizontal'; pulsed: boolean };
+type TouchGesture = { identifier: number; startX: number; startY: number; axis: 'pending' | 'horizontal'; pulsed: boolean };
 
 /** The reply gesture is touch-first in Telegram WebViews; PointerEvents remain a fallback. */
 function ignoresSwipe(target: EventTarget | null): boolean {
@@ -57,6 +60,8 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
   rowRef: (element: HTMLDivElement | null) => void;
 }) {
   const [visual, setVisual] = useState<SwipeVisual>(idleVisual);
+  const [pulsing, setPulsing] = useState(false);
+  const pulseTimer = useRef<number | null>(null);
   const gesture = useRef<Gesture | null>(null);
   const touchGesture = useRef<TouchGesture | null>(null);
   const removeTouchListeners = useRef<(() => void) | null>(null);
@@ -66,28 +71,45 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
   enabledRef.current = enabled;
   const ignoreClickUntil = useRef(0);
 
+  const clearPulse = () => {
+    if (pulseTimer.current !== null) window.clearTimeout(pulseTimer.current);
+    pulseTimer.current = null;
+    setPulsing(false);
+  };
+  const updateSwipe = (dx: number, active: Gesture | TouchGesture) => {
+    const distance = Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx));
+    setVisual({ offsetX: -distance, dragging: true });
+    if (!active.pulsed && distance >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX) {
+      active.pulsed = true;
+      clearPulse();
+      setPulsing(true);
+      pulseTimer.current = window.setTimeout(() => {
+        pulseTimer.current = null;
+        setPulsing(false);
+      }, 50);
+    }
+  };
+
   useEffect(() => {
     if (!enabled) {
       gesture.current = null;
       touchGesture.current = null;
       removeTouchListeners.current?.();
+      clearPulse();
       setVisual(idleVisual);
     }
   }, [enabled]);
-  useEffect(() => () => removeTouchListeners.current?.(), []);
-  // The success burst persists briefly after the row returns to its resting
-  // position. No document listeners or reply logic depend on this timer.
-  useEffect(() => {
-    if (!visual.firing) return;
-    const timeout = window.setTimeout(() => setVisual(idleVisual), 260);
-    return () => window.clearTimeout(timeout);
-  }, [visual.firing]);
+  useEffect(() => () => {
+    removeTouchListeners.current?.();
+    if (pulseTimer.current !== null) window.clearTimeout(pulseTimer.current);
+  }, []);
 
   const startTouch = (event: ReactTouchEvent<HTMLDivElement>) => {
     if (touchGesture.current && event.touches.length > 1) {
       // A second finger turns this into a native multi-touch interaction.
       touchGesture.current = null;
       removeTouchListeners.current?.();
+      clearPulse();
       setVisual(idleVisual);
       return;
     }
@@ -97,9 +119,9 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     // PointerDown fires before TouchStart on phones. The native touch stream
     // owns this gesture from now on, including a circle rendered via a portal.
     gesture.current = null;
-    if (visual.firing) setVisual(idleVisual);
+    clearPulse();
     touchGesture.current = { identifier: finger.identifier, startX: finger.clientX,
-      startY: finger.clientY, axis: 'pending' };
+      startY: finger.clientY, axis: 'pending', pulsed: false };
 
     // React attaches passive touchmove handlers in mobile WebViews. A temporary
     // non-passive native listener is required to hold a leftward drag without
@@ -110,6 +132,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       if (moveEvent.touches.length !== 1) {
         touchGesture.current = null;
         removeTouchListeners.current?.();
+        clearPulse();
         setVisual(idleVisual);
         return;
       }
@@ -129,7 +152,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
         active.axis = 'horizontal';
       }
       if (moveEvent.cancelable) moveEvent.preventDefault();
-      setVisual({ offsetX: -Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx)), dragging: true, firing: false });
+      updateSwipe(dx, active);
     };
 
     const finishTouch = (endEvent: TouchEvent, cancelled: boolean) => {
@@ -143,7 +166,8 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       const confirmed = enabledRef.current && !cancelled && active.axis === 'horizontal'
         && left >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX;
       if (active.axis === 'horizontal') ignoreClickUntil.current = Date.now() + 700;
-      setVisual(confirmed ? { ...idleVisual, firing: true } : idleVisual);
+      clearPulse();
+      setVisual(idleVisual);
       if (confirmed) onReplyRef.current();
     };
     const endTouch = (endEvent: TouchEvent) => finishTouch(endEvent, false);
@@ -163,8 +187,8 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     if (!enabled || touchGesture.current || gesture.current || event.button !== 0 || event.isPrimary === false) return;
     // Pointer fallback is retained for mouse/pen and synthetic pointer tests.
     if (ignoresSwipe(event.target)) return;
-    if (visual.firing) setVisual(idleVisual);
-    gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, axis: 'pending' };
+    clearPulse();
+    gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, axis: 'pending', pulsed: false };
   };
 
   const move = (event: PointerEvent<HTMLDivElement>) => {
@@ -180,7 +204,7 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
       current.axis = 'horizontal';
       try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* Portal/WebView may disallow capture. */ }
     }
-    setVisual({ offsetX: -Math.min(DISCUSSION_REPLY_SWIPE_MAX_PX, Math.max(0, -dx)), dragging: true, firing: false });
+    updateSwipe(dx, current);
   };
 
   const end = (event: PointerEvent<HTMLDivElement>, cancelled: boolean) => {
@@ -191,14 +215,15 @@ export function DiscussionSwipeReplyRow({ children, messageId, own, highlighted,
     const left = current.startX - event.clientX;
     const confirmed = enabled && !cancelled && current.axis === 'horizontal' && left >= DISCUSSION_REPLY_SWIPE_TRIGGER_PX;
     if (current.axis === 'horizontal') ignoreClickUntil.current = Date.now() + 700;
-    setVisual(confirmed ? { ...idleVisual, firing: true } : idleVisual);
+    clearPulse();
+    setVisual(idleVisual);
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     if (confirmed) onReply();
   };
 
-  return <SwipeVisualContext.Provider value={{ ...visual, enabled }}>
+  return <SwipeVisualContext.Provider value={{ ...visual, enabled, pulsing }}>
     <div className="discussion-message-target discussion-message-target--reply-swipe"
       data-message-id={messageId} data-own={String(own)}
       data-highlighted={highlighted || undefined}
