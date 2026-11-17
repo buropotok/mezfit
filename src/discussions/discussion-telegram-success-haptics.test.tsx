@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscussionSheet } from './DiscussionSheet';
+import { DiscussionSwipeReplyRow } from './DiscussionSwipeReplyRow';
 import { useRecordingGesture, RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
 import { PRESS_SCALE_PEAK_TIME } from '../ui/PressScale';
 import { createDiscussionPreviewPort, previewDiscussionAnchor, previewDiscussionThread } from '../ui/discussion-preview';
@@ -97,5 +98,36 @@ describe('Telegram success notification at deliberate discussion interactions', 
     expect(haptics.notificationOccurred).toHaveBeenCalledTimes(1);
     expect(haptics.impactOccurred).not.toHaveBeenCalled();
     expect(haptics.selectionChanged).not.toHaveBeenCalled();
+  });
+
+  it('notifies only once when native WebView touchmove first reaches 60px', () => {
+    const haptics = fakeTelegramSuccess();
+    const onReply = vi.fn();
+    const view = render(<DiscussionSwipeReplyRow messageId="native" own highlighted={false}
+      enabled onReply={onReply} rowRef={() => {}}>Сообщение</DiscussionSwipeReplyRow>);
+    const row = view.container.querySelector('[data-message-id="native"]');
+    if (!row) throw new Error('Missing native touch owner');
+    const startFinger = { identifier: 7, clientX: 200, clientY: 30 };
+    fireEvent.touchStart(row, { touches: [startFinger], changedTouches: [startFinger] });
+    function dispatch(type: 'touchmove' | 'touchend', x: number) {
+      const touch = { identifier: 7, clientX: x, clientY: 30 };
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        touches: { value: type === 'touchmove' ? [touch] : [] },
+        changedTouches: { value: [touch] },
+      });
+      act(() => document.dispatchEvent(event));
+    }
+    dispatch('touchmove', 141);
+    expect(haptics.notificationOccurred).not.toHaveBeenCalled();
+    dispatch('touchmove', 140);
+    expect(haptics.notificationOccurred).toHaveBeenCalledExactlyOnceWith('success');
+    dispatch('touchmove', 90);
+    dispatch('touchmove', 150);
+    dispatch('touchmove', 120);
+    expect(haptics.notificationOccurred).toHaveBeenCalledTimes(1);
+    dispatch('touchend', 120);
+    expect(onReply).toHaveBeenCalledOnce();
+    expect(haptics.notificationOccurred).toHaveBeenCalledTimes(1);
   });
 });
