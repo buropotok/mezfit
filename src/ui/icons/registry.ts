@@ -50,6 +50,7 @@ import menu2Url from './menu-2.svg';
 import xUrl from './x.svg';
 import messageCircleExclamationUrl from './message-circle-exclamation.svg';
 import messageCircleUrl from './message-circle-outline.svg';
+import messageCirclePlusUrl from './message-circle-plus.svg';
 import pencilUrl from './pencil-outline.svg';
 import tildeUrl from './tilde.svg';
 import plusOutlineUrl from './plus-outline.svg';
@@ -136,6 +137,7 @@ const uiIconRegistry = {
   'video-thin': { outline: videoThinUrl, filled: videoThinUrl },
   'message-circle-exclamation': { outline: messageCircleExclamationUrl, filled: messageCircleExclamationUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
+  'message-circle-plus': { outline: messageCirclePlusUrl, filled: messageCirclePlusUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },
   tilde: { outline: tildeUrl, filled: tildeUrl },
   plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },

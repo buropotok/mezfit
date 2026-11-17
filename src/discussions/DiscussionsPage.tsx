@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from 'konsta/react';
-import type { NavigationContext } from '../NavigationShell';
+import { useNavigationLevel, type NavigationContext } from '../NavigationShell';
 import { useDiscussionAvatarFlight, type AvatarFlightOrigin, discussionAvatarFlightKey } from '../navigation/DiscussionAvatarFlightContext';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -18,8 +18,10 @@ import {
 } from './DiscussionCategoryControls';
 import { DiscussionSheet } from './DiscussionSheet';
 import { DiscussionEntity } from './DiscussionEntity';
+import { DiscussionContactPicker, DiscussionsDestinationFab, DiscussionWorkspaceFab, FreeDiscussionTitleDialog } from './FreeDiscussionCreationControls';
 import { useDiscussions, type DiscussionInboxRow } from './DiscussionsProvider';
 import { useDiscussionOrganization } from './useDiscussionOrganization';
+import { findDiscussionPeer, useFreeDiscussionCreation } from './useFreeDiscussionCreation';
 import { discussionDateLabel, discussionLocalDate, groupDiscussionFeed } from './feed-presentation';
 import { ScheduleClientFilter } from '../schedule/ScheduleClientFilter';
 import { ScheduleFilterBar } from '../schedule/ScheduleFilterBar';
@@ -33,6 +35,14 @@ const entityActionLabels = {
 type DiscussionMoveActions = ComponentProps<typeof DiscussionMoveMenu>['actions'] & {
   move: (row: DiscussionInboxRow, category: AssignableDiscussionCategory | null) => void;
 };
+
+type InboxOpening = {
+  row: DiscussionInboxRow;
+  parent: NavigationContext | null;
+  messageId?: string;
+  avatarSrc?: string;
+  flightKey?: string;
+} & ({ kind: 'chat' | 'entity' | 'notification' } | { kind: 'created'; scope: object });
 
 function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSourceChange, hiddenAvatarKey, moveActions }: {
   row: DiscussionInboxRow;
@@ -119,6 +129,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const avatarFlight = useDiscussionAvatarFlight();
   const capturedOrigin = useRef<AvatarFlightOrigin | null>(null);
   const parent = useNavigationSurfaceContext();
+  const level = useNavigationLevel();
   const notificationParent = useRef(parent);
   notificationParent.current = parent;
   const [clientUserIds, setClientUserIds] = useState<string[]>([]);
@@ -140,7 +151,19 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     // An explicit tap in the inbox takes precedence over an unresolved deep link.
     if (notificationMessageId) onNotificationOpened?.();
   }, [avatarFlight, notificationMessageId, onNotificationOpened]);
-  const [opened, setOpened] = useState<{ row: DiscussionInboxRow; kind: 'chat' | 'entity' | 'notification'; parent: NavigationContext | null; messageId?: string; avatarSrc?: string; flightKey?: string } | null>(null);
+  const db = cloud?.db;
+  const actorId = cloud?.actorUserId;
+  const organization = useDiscussionOrganization(db, actorId, role, inbox.rows);
+  const categoryScope = useMemo(() => ({}), [organization.scope, relationshipId]);
+  const [tabSelection, setTabSelection] = useState<{ scope: object; value: string } | null>(null);
+  const tabs = discussionCategoryTabs(role, organization.categories);
+  const requestedTab = tabSelection?.scope === categoryScope ? tabSelection.value : 'training';
+  const activeTab = tabs.some(tab => tab.value === requestedTab) ? requestedTab : 'personal';
+  const manageCategory = organization.categories.find(category => categoryTabValue({ kind: 'custom', id: category.id }) === activeTab);
+  const creationScope = useMemo(() => ({}), [categoryScope, activeTab]);
+  const [unavailableCreatedChat, setUnavailableCreatedChat] = useState<object | null>(null);
+
+  const [opened, setOpened] = useState<InboxOpening | null>(null);
   // Keep avatar publication from the feed stable as messages and filters rerender.
   const syncOpenedAvatarSource = useCallback((row: DiscussionInboxRow, src: string | undefined) => {
     const key = discussionAvatarFlightKey(row.thread.realmId, row.thread.anchorKey);
@@ -154,7 +177,15 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const notificationContact = opened?.kind === 'notification' ? notificationPeers?.find(
     contact => contact.relationshipId === opened.row.thread.realmId,
   ) : undefined;
-  const current = (opened?.kind === 'notification' ? notificationContact : activeRow) ? opened : null;
+  // Creation has a committed header before the feed can project it. Keep that
+  // opening only within the same tab, account, role and verified pair.
+  const createdContact = opened?.kind === 'created' && opened.scope === creationScope && opened.row.contact
+    && !notificationMessageId ? findDiscussionPeer(notificationPeers ?? [], opened.row.contact) : undefined;
+  const current = (opened?.kind === 'notification' ? notificationContact : opened?.kind === 'created' ? createdContact : activeRow) ? opened : null;
+  const currentThread = current?.kind === 'created' ? activeRow?.thread ?? current.row.thread : current?.row.thread;
+  useLayoutEffect(() => {
+    if (opened?.kind === 'created' && !current) setOpened(previous => previous === opened ? null : previous);
+  }, [opened, current]);
   const [closedNotificationChat, setClosedNotificationChat] = useState(false);
   const [notificationEntityContext, setNotificationEntityContext] = useState<NavigationContext | null>(null);
   const [notificationChatContext, setNotificationChatContext] = useState<NavigationContext | null>(null);
@@ -171,16 +202,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   useEffect(() => () => { avatarFlight.cancel(); openRef.current = false; ++request.current; }, [avatarFlight]);
   const close = useCallback(() => { avatarFlight.cancel(); ++request.current; openRef.current = false; setOpened(null); }, [avatarFlight]);
   const closePicker = useCallback(() => setPicker(null), []);
+  const realmId = currentThread?.realmId;
+  const coachClientId = currentThread?.coachClientId;
   const repository = useMemo(() => {
-    if (!cloud || !current || current.kind === 'entity') return null;
-    try { return new DiscussionRepository(cloud.db, cloud.actorUserId, current.row.thread); }
+    if (!db || !actorId || !realmId || coachClientId === undefined || current?.kind === 'entity') return null;
+    try { return new DiscussionRepository(db, actorId, { realmId, coachClientId }); }
     catch { return null; }
-  }, [cloud?.db, cloud?.actorUserId, current?.kind, current?.row.thread]);
+  }, [db, actorId, current?.kind, realmId, coachClientId]);
   const notificationRealmsKey = JSON.stringify((notificationPeers ?? []).map(contact => contact.relationshipId).sort());
-  const db = cloud?.db;
-  const actorId = cloud?.actorUserId;
-  const organization = useDiscussionOrganization(db, actorId, role, inbox.rows);
-  const categoryScope = useMemo(() => ({}), [organization.scope, relationshipId]);
   const covered = Boolean(current || clientFilter || picker);
   const categorySurface = useMemo(() => ({}), [categoryScope, covered]);
   const activeCategorySurface = useRef<object | null>(null);
@@ -188,11 +217,6 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     activeCategorySurface.current = categorySurface;
     return () => { activeCategorySurface.current = null; };
   }, [categorySurface]);
-  const [tabSelection, setTabSelection] = useState<{ scope: object; value: string } | null>(null);
-  const tabs = discussionCategoryTabs(role, organization.categories);
-  const requestedTab = tabSelection?.scope === categoryScope ? tabSelection.value : 'training';
-  const activeTab = tabs.some(tab => tab.value === requestedTab) ? requestedTab : 'personal';
-  const manageCategory = organization.categories.find(category => categoryTabValue({ kind: 'custom', id: category.id }) === activeTab);
   const selectCategory = (value: string) => {
     setTabSelection({ scope: categoryScope, value });
     setLimit(50);
@@ -220,8 +244,22 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   } | null>(null);
   const feedback = categoryFeedback?.surface === categorySurface ? categoryFeedback : null;
   const categoryBusy = categoryFeedback?.scope === categoryScope && categoryFeedback.pending;
+  const creationCategory: AssignableDiscussionCategory | null = activeTab === 'nutrition' || activeTab === 'personal' ? activeTab
+    : manageCategory ? { kind: 'custom', id: manageCategory.id } : null;
+  const creation = useFreeDiscussionCreation({ cloud, organization: organization.repository, category: creationCategory,
+    scope: creationScope, role, relationshipId, blocked: covered || Boolean(dialog || categoryBusy || notificationMessageId),
+    parent, onNavigationContextChange, onStart: () => { cancelPendingOpen(); setOpenError(''); setUnavailableCreatedChat(null); },
+    onCreated: (thread, contact, source) => {
+      if (!contact) {
+        setUnavailableCreatedChat(creationScope);
+        return;
+      }
+      setOpened({ kind: 'created', scope: creationScope, parent: source,
+        row: { thread, contact, latest: null, unread: 0, hasAttachments: false } });
+    },
+  });
   const openCategoryDialog = (intent: CategoryDialogIntent) => {
-    if (covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
+    if (covered || creation.current || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
     if (!notificationMessageId) cancelPendingOpen();
     setCategoryFeedback(null);
     setCategoryDialog({ surface: categorySurface, intent, parent });
@@ -298,7 +336,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   };
   const moveThread = (row: DiscussionInboxRow, category: AssignableDiscussionCategory | null) => {
     const organizationRepository = organization.repository;
-    if (!organizationRepository || !organization.snapshot || dialog) return;
+    if (!organizationRepository || !organization.snapshot || dialog || creation.current) return;
     void runCategoryAction(() => category === null
       ? organizationRepository.clearThreadAssignment(row.thread)
       : organizationRepository.assignThread(row.thread, category), 'Не удалось переместить обсуждение. Повторите попытку.');
@@ -373,26 +411,26 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const closeLinkedChat = current?.row.thread.anchor.kind === 'free' ? close : closeNotificationChat;
   const chatParent = useMemo<NavigationContext | null>(() => {
     if (!current) return null;
-    const displayName = current.row.contact?.displayName ?? 'Вы';
+    const displayName = (createdContact ?? current.row.contact)?.displayName ?? 'Вы';
     return { ...current.parent, level: 2, title: current.row.thread.derivedTitleSnapshot,
       ...(current.kind === 'chat' ? {
         avatarTransitionKey: current.flightKey ?? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey),
         identity: { title: displayName, avatar: { name: displayName, src: current.avatarSrc } },
-      } : {}),
+      } : current.kind === 'created' ? { identity: { title: displayName, avatar: { name: displayName } } } : {}),
       onBack: current.kind === 'notification' ? closeLinkedChat : close };
-  }, [current, close, closeLinkedChat]);
+  }, [current, createdContact?.displayName, close, closeLinkedChat]);
   const chatNavigation = useCallback((value: NavigationContext | null) => {
     onNavigationContextChange(openRef.current ? value : null);
   }, [onNavigationContextChange]);
   useEffect(() => {
     if (!picker) return;
     onNavigationContextChange({ ...picker.parent, title: 'Период обсуждений', level: 2, onBack: closePicker });
-    return () => onNavigationContextChange(picker.parent);
-  }, [picker, closePicker, onNavigationContextChange]);
+    return () => onNavigationContextChange(!relationshipId && picker.parent?.level === 1 ? picker.parent : null);
+  }, [picker, closePicker, onNavigationContextChange, relationshipId]);
   useEffect(() => {
     if (!clientFilter) return;
     onNavigationContextChange({ ...clientFilter.parent, title: 'Фильтр по клиентам', level: 2, onBack: closeClientFilter });
-    return () => onNavigationContextChange(clientFilter.parent);
+    return () => onNavigationContextChange(clientFilter.parent?.level === 1 ? clientFilter.parent : null);
   }, [clientFilter, closeClientFilter, onNavigationContextChange]);
   // Refresh Today/Yesterday headings across local midnight/resume without touching persistence.
   const [, setClock] = useState(0);
@@ -462,12 +500,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   if (current?.kind === 'entity' && current.row.thread.anchor.kind !== 'free') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
+    {creation.action && (relationshipId ? level === 2 && <DiscussionWorkspaceFab action={creation.action} />
+      : level === 1 && <DiscussionsDestinationFab action={creation.action} />)}
     <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
       if (!notificationMessageId) cancelPendingOpen();
       selectCategory(value);
     }} hidden={false}
       actionTab={{ label: '+', ariaLabel: 'Создать категорию', onClick: () => openCategoryDialog({ kind: 'create' }) }} />
-    {manageCategory && !covered ? <div className="discussion-inbox__category-actions">
+    {manageCategory && !covered && !creation.current ? <div className="discussion-inbox__category-actions">
       <DiscussionCategoryMenu key={manageCategory.id} category={manageCategory} disabled={categoryBusy}
         onEdit={openCategoryDialog} />
     </div> : null}
@@ -490,6 +530,8 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     {openError ? <div className="stack"><Text role="alert">{openError}</Text>
       {notificationMessageId && !opened ? <Button rounded tonal onClick={retryNotification}><Text>Повторить</Text></Button> : null}
     </div> : null}
+    {unavailableCreatedChat === creationScope && !covered && !notificationMessageId
+      ? <Text role="alert" variant="footnote">Чат создан и назначен в категорию. Собеседник больше недоступен.</Text> : null}
     {inbox.error ? <div className="stack"><Text role="alert">{inbox.error}</Text>
       <Button rounded tonal onClick={() => { cancelPendingOpen(); inbox.retry(); }}><Text>Повторить</Text></Button></div> : null}
     {organizationError ? <div className="stack">
@@ -509,7 +551,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       onAvatarSourceChange={syncOpenedAvatarSource}
       hiddenAvatarKey={current?.kind === 'chat' ? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) : undefined}
       moveActions={organization.snapshot && !organizationError
-        ? { categories: organization.categories, disabled: categoryBusy, move: moveThread } : undefined}
+        ? { categories: organization.categories, disabled: categoryBusy || Boolean(creation.current), move: moveThread } : undefined}
       onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
     {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}
     {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}
@@ -527,12 +569,19 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       <DiscussionCategoryDialog intent={dialog.intent} pending={categoryBusy} error={feedback?.error ?? ''}
         onClearError={() => setCategoryFeedback(null)} onSubmit={submitCategoryDialog} onClose={closeCategoryDialog} />
     </div>, document.body)}
+    {createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
+      <DiscussionContactPicker opened={creation.current?.step === 'contact'} role={role} contacts={creation.contacts}
+        status={cloud?.status ?? 'error'} onSelect={creation.select} onClose={creation.close} />
+      {creation.current?.step === 'title' ? <FreeDiscussionTitleDialog pending={creation.current.pending}
+        saved={Boolean(creation.current.saved)} error={creation.current.error} onClearError={creation.clearError}
+        onSubmit={title => { void creation.submit(title); }} onClose={creation.close} /> : null}
+    </div>, document.body)}
     {notificationChat}
-    {current?.kind === 'chat' && repository && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
-      <DiscussionSheet opened repository={repository} threadId={current.row.thread.id} anchor={current.row.thread.anchor}
-        onClose={close} onBack={close} contextLabel={current.row.thread.derivedTitleSnapshot}
+    {(current?.kind === 'chat' || current?.kind === 'created') && currentThread && repository && createPortal(<div className="navigation-overlay-root k-ios dark safe-areas">
+      <DiscussionSheet opened repository={repository} threadId={currentThread.id} anchor={currentThread.anchor}
+        onClose={close} onBack={close} contextLabel={currentThread.derivedTitleSnapshot}
         parentNavigation={chatParent} onNavigationContextChange={chatNavigation}
-        resolveAuthor={id => ({ name: id === cloud?.actorUserId ? 'Вы' : activeRow?.contact?.displayName ?? 'Участник обсуждения' })} />
+        resolveAuthor={id => ({ name: id === actorId ? 'Вы' : (createdContact ?? activeRow?.contact)?.displayName ?? 'Участник обсуждения' })} />
     </div>, document.body)}
   </section>;
 }

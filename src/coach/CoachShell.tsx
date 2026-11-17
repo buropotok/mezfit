@@ -357,7 +357,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
         basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
         hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
-        discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
+        discussionsContent={destination === 'clients' && clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
           relationshipId={selectedClient.relationshipId} onNavigationContextChange={setClientDiscussionNavigation} /> : null}
         onTabChange={tab => { setClientTab(tab); setClientWorkoutNavigation(null); }}
         programContent={clientTab === 'program' ? programContent : null}
