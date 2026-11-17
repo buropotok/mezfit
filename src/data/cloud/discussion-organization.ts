@@ -234,16 +234,16 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     }
     return byRealm;
   }
+  private assignmentTables() {
+    return [...this.personalTables(), this.db.discussionThreads, this.db.realms, this.db.members];
+  }
   /** The category and thread authorization checks must share the local write transaction.
    * Hash before entering Dexie: WebCrypto promises must not leave a transaction idle. */
   private async writeThreadAssignment(thread: DiscussionThread, value: ThreadAssignment | null): Promise<void> {
     if (!thread || typeof thread !== 'object' || !discussionId(thread.id))
       throw new Error('INVALID_DISCUSSION_THREAD');
     const key = await discussionThreadAssignmentKey(thread);
-    await this.db.transaction('rw', [
-      this.db.discussionThreads, this.db.flexAttributes, this.db.flexValues,
-      this.db.adHocSessions, this.db.realms, this.db.members,
-    ], async () => {
+    await this.db.transaction('rw', this.assignmentTables(), async () => {
       await this.checkedThreads([thread]);
       if (value?.startsWith('custom:')
         && !(await this.listCategories()).some(category => category.id === value.slice(7)))
@@ -329,40 +329,46 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     return liveQuery(() => this.classifyThreads(threads)).subscribe({ next, error });
   }
 
-  /** Clear every locally accessible own assignment first; only then tombstone the category.
-   * A failed realm write leaves the category active for explicit retry. No peer target is written. */
+  /** Clear own links and tombstone the category in one local transaction. */
   async removeCategory(id: CategoryId): Promise<void> {
     const key = discussionCategoryKey(id);
-    const existing = await this.flex.inspectKeys([{ target: this.personal, keys: [key] }]);
-    const record = existing[0];
-    if (!record || record.state === 'absent') throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
-    if (record.state !== 'present' || record.valueType !== 'string'
-      || (record.value !== null && !decodeCategoryDefinition(key, record.value)))
-      throw new Error('INVALID_DISCUSSION_CATEGORY');
-    const pairs = await profileRelationships(this.db, this.actorUserId);
-    const targets = [this.personal, ...pairs.map(pair => this.sharedTarget(pair.realmId, this.actorUserId))];
-    const code = 'custom:' + id;
-    const find = async () => this.flex.inspectPrefix(targets, DISCUSSION_ASSIGNMENT_KEY_PREFIX, DISCUSSION_ASSIGNMENT_KEY_PREFIX.length + 40);
-    const inspect = await find();
-    if (inspect.some(item => (item.state === 'pending' && item.value === undefined)
-      || (item.state === 'invalid' && item.value === code)))
-      throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
-    const byTarget = new Map<string, { target: FlexEntityTarget; keys: string[] }>();
-    for (const item of inspect) {
-      if ((item.state !== 'present' && item.state !== 'pending') || item.value !== code) continue;
-      const token = JSON.stringify([item.target.realmId, item.target.entityType, item.target.entityId]);
-      let batch = byTarget.get(token);
-      if (!batch) { batch = { target: item.target, keys: [] }; byTarget.set(token, batch); }
-      batch.keys.push(item.key);
-    }
-    for (const { target, keys } of byTarget.values()) {
-      await this.flex.setValues(target, keys.map(assignmentKey =>
-        ({ key: assignmentKey, valueType: 'string' as const, value: null })));
-    }
-    const remaining = await find();
-    if (remaining.some(item => (item.state === 'pending' && item.value === undefined)
-      || (item.value === code && item.state !== 'absent')))
-      throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
-    await this.flex.clearValue(this.personal, key, 'string');
+    const code = `custom:${id}`;
+    await this.db.transaction('rw', this.assignmentTables(), async () => {
+      const [record] = await this.flex.inspectKeys([{ target: this.personal, keys: [key] }]);
+      if (!record || record.state === 'absent') throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
+      if (record.state !== 'present' || record.valueType !== 'string'
+        || (record.value !== null && !decodeCategoryDefinition(key, record.value)))
+        throw new Error('INVALID_DISCUSSION_CATEGORY');
+
+      const pairs = await profileRelationships(this.db, this.actorUserId);
+      const ownTargets = [this.personal, ...pairs.map(pair => this.sharedTarget(pair.realmId, this.actorUserId))];
+      const peerTargets = pairs.map(pair => this.sharedTarget(pair.realmId,
+        pair.coachUserId === this.actorUserId ? pair.clientUserId : pair.coachUserId));
+      const records = await this.flex.inspectPrefix([...ownTargets, ...peerTargets],
+        DISCUSSION_ASSIGNMENT_KEY_PREFIX, DISCUSSION_ASSIGNMENT_KEY_PREFIX.length + 40);
+      const peerKeys = new Set(records
+        .filter(item => item.target.entityId !== this.actorUserId && item.state === 'present')
+        .map(item => flexAttributeId(item.target.realmId, item.key)));
+
+      const ownRecords = records.filter(item => item.target.entityId === this.actorUserId);
+      if (ownRecords.some(item => (item.state === 'pending' && item.value === undefined
+        && !peerKeys.has(flexAttributeId(item.target.realmId, item.key)))
+        || (item.value === code && (item.state === 'invalid'
+          || (item.state === 'present' && item.valueType !== 'string')))))
+        throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
+
+      const byTarget = new Map<FlexEntityTarget, string[]>();
+      for (const item of ownRecords) {
+        if (item.value !== code) continue;
+        const keys = byTarget.get(item.target);
+        if (keys) keys.push(item.key);
+        else byTarget.set(item.target, [item.key]);
+      }
+      for (const [target, keys] of byTarget) {
+        await this.flex.setValues(target, keys.map(assignmentKey =>
+          ({ key: assignmentKey, valueType: 'string' as const, value: null })));
+      }
+      await this.flex.clearValue(this.personal, key, 'string');
+    });
   }
 }
