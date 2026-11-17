@@ -202,6 +202,11 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     return { entityType: 'publishedUser', entityId: userId, realmId };
   }
   private async checkedThreads(threads: readonly DiscussionThread[]) {
+    for (const thread of threads) {
+      if (!thread || typeof thread !== 'object' || !discussionId(thread.id))
+        throw new Error('INVALID_DISCUSSION_THREAD');
+      assertDiscussionThread(thread);
+    }
     const stored = await this.db.discussionThreads.bulkGet(threads.map(thread => thread.id));
     const pairs = threads.some(thread => thread.coachClientId !== null)
       ? await profileRelationships(this.db, this.actorUserId) : [];
@@ -243,11 +248,14 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
   }
   async getThreadOrganization(thread: DiscussionThread): Promise<OrganizedDiscussionThread> {
     const snapshot = await this.classifyThreads([thread]);
-    return snapshot.threads[0];
+    const resolved = snapshot.threads[0];
+    if (!resolved) throw new Error('DISCUSSION_NOT_FOUND');
+    return resolved;
   }
   /** One verified pair scan and one batched Flex inspection regardless of conversation count. */
   async classifyThreads(threads: readonly DiscussionThread[]): Promise<DiscussionOrganizationSnapshot> {
-    if (!Array.isArray(threads)) throw new Error('INVALID_DISCUSSION_THREAD');
+    if (!Array.isArray(threads) || threads.some(thread => !thread || typeof thread !== 'object'
+      || !discussionId(thread.id))) throw new Error('INVALID_DISCUSSION_THREAD');
     const unique = [...new Map(threads.map(thread => [thread.id, thread])).values()];
     const [categories, realms, keys] = await Promise.all([
       this.readCategories(), this.checkedThreads(unique),
