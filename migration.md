@@ -3,7 +3,7 @@
 **Проект:** Mezfit · **Репозиторий:** `buropotok/mezfit`  
 **Дата фиксации контекста:** 17 ноября 2026 г.  
 **Статус:** архитектурный документ / ориентир для следующих этапов, **не** свидетельство реализации запланированного кода.  
-**Текущая точка:** Cloudflare Migration Infrastructure прошла независимый smoke. TypeScript File Processing Engine v1 реализован для синтетического JSON и ожидает развёртывания и проверки в Cloudflare. [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
+**Текущая точка:** инфраструктура и TypeScript File Processing Engine v1 приняты в Cloudflare на synthetic fixture. В MIG-03 реализованы общий Adapter Engine и два синтетических адаптера. Облачная проверка новой реализации ожидается. [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
 
 > **Назначение.** Это основной документ для нового рабочего чата, архитектора и разработчика, продолжающего миграцию из Gym Keeper в Mezfit. Здесь зафиксированы задача, принятые решения, границы системы, подтверждённые результаты, ещё не реализованные контракты, риски, этапы, порядок приёмки и источники. Тексты поручений агентам сюда намеренно не включены.
 
@@ -11,27 +11,30 @@
 
 Mezfit — система «тренер — клиент», в которой тренер составляет программу (PLAN), назначает тренировки, а выполнение и история (FACT) имеют отдельную модель. Gym Keeper — локальный Android-дневник тренировок. Его модель нельзя механически переносить в Mezfit: исходная программа, запланированная тренировка и выполненная тренировка — разные сущности с разной семантикой доступа и жизненного цикла.
 
-**Продуктовая цель миграции:** дать тренеру контролируемый путь переноса пригодных данных Gym Keeper — программ, дневников и исторических результатов — в структуру Mezfit с предварительной проверкой, точным отображением пропусков и ошибок, без потери исходного файла и без нарушения границ Coach/Client.
+**Продуктовая цель миграции:** универсальный импортёр с проверяемыми адаптерами источников. Gym Keeper — первый предполагаемый реальный источник. Тренер получает контролируемый путь переноса программ, дневников и исторических результатов с предварительной проверкой, точным отчётом о пропусках и ошибках, сохранением исходника и границ Coach/Client. Новый формат подключается адаптером, сохраняя общий Import Engine.
 
 Целевой путь (с разделением технической подготовки и бизнес-публикации):
 
 ~~~text
-Файл Gym Keeper / экспорт пользователя
+Файл поддерживаемого источника / экспорт пользователя
            │
            ▼
 Приватная загрузка в Cloudflare R2
            │
            ▼
-Проверка, регистрация, безопасная обработка
+Проверка, регистрация, ограниченное чтение
            │
            ▼
-Версионированный структурированный результат
+Детерминированный dispatcher + registry
            │
            ▼
-Gym Keeper Import Adapter (после исследования формата)
+Проверенный адаптер формата/версии
            │
            ▼
-Каноническая промежуточная модель импорта Mezfit
+Версионированный транспортный результат
+           │
+           ▼
+Бизнес-канонизация Mezfit (будущий этап)
            │
            ▼
 Предпросмотр + выбор пользователя + проверка прав
@@ -97,11 +100,13 @@ https://github.com/buropotok/mezfit/actions/runs/44094545908
 
 | Возможность | Статус на дату документа |
 | --- | --- |
-| TypeScript File Processor | **Синтетический формат v1, cloud smoke ожидается** |
-| Операция Workflow `process` | **Подключена к Queue, cloud smoke ожидается** |
-| Таблица технических `migration_executions` | **Аддитивная миграция 0003, ожидает применения в Cloudflare** |
-| R2 JSON result write/readback для processor | **Реализованы с SHA-256, cloud smoke ожидается** |
-| `MIGRATION_PROCESSOR_SMOKE_OK` | **Пока не получен** |
+| TypeScript File Processor | **Done для synthetic v1, cloud run 44156101755** |
+| Операция Workflow `process` | **Done, подтверждён сквозной synthetic pipeline** |
+| Таблица технических `migration_executions` | **0003 применена, execution/replay/cleanup проверены** |
+| R2 JSON result write/readback для processor | **Done для v1, SHA-256/readback подтверждены** |
+| `MIGRATION_PROCESSOR_SMOKE_OK` | **Получен в независимом run 44156101755** |
+| MIG-03 Adapter Engine / registry / два synthetic adapters | **Код реализован, CI и облачная проверка новой функциональности ожидаются** |
+| AI Discovery / AI Adapter Builder | **Planned, только типизированная граница кандидатов** |
 | Чтение реального Gym Keeper `.dbi` | **Формат не подтверждён** |
 | Импорт Program / Diary JSON | **Схема образца не подтверждена** |
 | Нормализация в модель Mezfit | **Будущий этап** |
@@ -109,6 +114,31 @@ https://github.com/buropotok/mezfit/actions/runs/44094545908
 | Пользовательский экран импорта | **Будущий этап** |
 
 Новые рабочие чаты должны сверять эту таблицу с текущим `main` и последними успешными cloud-run. Наличие описания в этом файле само по себе не означает готовой реализации.
+
+### 2.4. Подтверждённая облачная приёмка этапа 2
+
+Повторно прочитаны статусы jobs и логи следующих запусков от 17 ноября 2026 г.
+
+| Проверка | Run | Подтверждение |
+| --- | --- | --- |
+| Deploy migration Worker | [44152635983](https://github.com/buropotok/mezfit/actions/runs/44152635983) | SUCCESS, D1 migrations применены до deploy, `MIGRATION_SMOKE_OK` |
+| Независимый infra smoke | [44153088455](https://github.com/buropotok/mezfit/actions/runs/44153088455) | SUCCESS, `MIGRATION_SMOKE_OK` |
+| Независимый processor smoke | [44156101755](https://github.com/buropotok/mezfit/actions/runs/44156101755) | SUCCESS, `MIGRATION_PROCESSOR_SMOKE_OK` |
+
+Processor smoke исполнялся для source SHA `35b6bc807c21b7a28fe6e1114b7c211bf5f6cd4f`,
+Worker version `7346d11b-8587-460b-947e-cfea9e978fd0`, processor `v1`,
+trace ID `a4b0bfad-ebb2-46bc-8e1e-d293051ce54d`.
+Подтверждены 256 записей при входе 8192 байта, результат 281 байт,
+R2 → Queue → D1 → Workflow → processing → R2 result/checksum → D1,
+replay/idempotency и cleanup. В readback все три технические таблицы пусты,
+вход и результат отсутствуют.
+
+Отчёт содержит `Smoke result: OK` и `Collection: PARTIAL`.
+Пробелы — `workers_logs: permission-denied`, `invocation_cpu: unavailable`,
+`r2-per-object-publisher-receipt: unavailable`. Фактический CPU budget этим
+прогоном не измерен. Эти свидетельства относятся к synthetic pipeline v1 до
+MIG-03. Реальный Gym Keeper, AI, бизнес-импорт и новая adapter-функциональность
+требуют собственной проверки.
 
 ## 3. Доказательная база Gym Keeper и неизвестные форматы
 
@@ -179,8 +209,9 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 
 | Файл/ресурс | Текущая роль | Будущее расширение |
 | --- | --- | --- |
-| `migration/worker/index.ts` | Queue entrypoint, операции Workflow `smoke` и `cleanup` | Типизированная операция `process`, без разрушения остальных |
-| `migration/worker/events.ts` | Проверка события и регистрация `migration_jobs`; `ack/retry` | Подтверждённый идемпотентный запуск процесса |
+| `migration/worker/index.ts` | Queue entrypoint и операции Workflow, включая `process` и processor smoke/cleanup | Сохранять единый orchestration path |
+| `migration/worker/events.ts` | Проверка события, регистрация и идемпотентный dispatch execution; `ack/retry` | Независим от формата файла |
+| `migration/worker/processor/` | Контракт, registry, dispatcher, fixture/nested adapters, result codec | Новый формат через явную регистрацию и тесты |
 | `migration/worker/r2-upload.ts` | SigV4 и формат upload keys | Без изменения контракта подписанной загрузки |
 | `migration/worker/smoke.ts` | Инфраструктурный end-to-end smoke | Сохранить без регрессий |
 | `migration/trace.mjs` | Общий schema/sanitizer событий | Добавить безопасные поля нового processor |
@@ -190,8 +221,9 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 | `migration/wrangler.json` | Только приватный Worker, bindings и observability | Не создавать Container |
 | `migration/d1/0001_create_migration_jobs.sql` | Техническая регистрация upload, states `uploaded/rejected` | Не менять старую семантику |
 | `migration/d1/0002_create_migration_smoke_replays.sql` | Exact replay receipt | Не смешивать с бизнес-импортом |
+| `migration/d1/0003_create_migration_executions.sql` | Технический execution, job/version uniqueness и terminal state | Применена в Cloudflare, MIG-03 не требует новой схемы |
 | `.github/workflows/migration-deploy.yml` | Deploy и действующий smoke | Readiness gate + processor smoke по готовности |
-| `.github/workflows/migration-smoke.yml` | `diagnose` / `smoke` | Независимая проверка process без обязательного redeploy |
+| `.github/workflows/migration-smoke.yml` | `diagnose` / `smoke` / `processor-smoke` | Независимые проверки фактически развёрнутой версии |
 
 Инфраструктурные endpoints Worker сейчас приватные: `workers_dev=false`, `preview_urls=false`, публичный обработчик `fetch` для них не настроен. Подписанный upload helper предназначен для будущей авторизованной интеграции, а не является уже опубликованным API для пользователя.
 
@@ -199,11 +231,11 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 
 Сейчас `migration_jobs` имеет только `uploaded` и `rejected`. Изменение исходного статуса при повторной Queue-доставке не должно превращаться в отдельную регистрацию, а действующая политика увеличения `deliveries` не должна приводить к запуску нескольких бизнес-исполнений.
 
-Новая таблица обработки должна быть **отдельной**: регистрация объекта и результат его разбора — разные жизненные циклы.
+Таблица обработки `migration_executions` **отдельная**: регистрация объекта и результат его разбора имеют разные жизненные циклы.
 
 ### 5.2. R2 namespace и фильтрация событий
 
-Планируемые префиксы и правила:
+Действующие префиксы и правила:
 
 | Prefix | Назначение | Автоматический production process |
 | --- | --- | --- |
@@ -212,7 +244,7 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 | `results/<job-id>/<processor-version>/result.json` | Технический JSON-результат | Нет |
 | `_migration-traces/...` | Санитизированная диагностика | Нет |
 
-В текущем Consumer уже есть специальная фильтрация trace и expiry-control smoke. Для `results/` потребуется отдельная явная проверка; нельзя допускать рекурсивное создание заданий от записи результата в тот же bucket.
+Consumer явно пропускает trace, results и expiry-control smoke. Запись результата в тот же bucket не создаёт рекурсивную задачу.
 
 ## 6. Принятое решение по вычислениям: TypeScript на Workers Free
 
@@ -239,7 +271,7 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 
 ### 6.2. Изоляция процессора от Cloudflare
 
-Ориентир: `migration/worker/processor/` с модулями определения формата, чтения, валидации, трансформации и схемы результата. Это **план расположения**, не уже существующий каталог.
+Ориентир: `migration/worker/processor/` с модулями определения формата, чтения, валидации, трансформации и схемы результата. Это действующий каталог pure processing, включая registry и адаптеры MIG-03.
 
 Алгоритм должен принимать проверенный поток/ограниченный byte source и технические метаданные. Сам processor не управляет Queue, D1, R2, правами доступа или GitHub Actions; этими действиями владеют orchestration/adapters. Вся обработка должна быть детерминированной, без выполнения кода пользователя.
 
@@ -267,21 +299,21 @@ R2 Put (uploads/<uuid>)
 
 ### 7.2. Техническая запись выполнения
 
-Предлагаемая новая аддитивная D1 migration: `migration_executions`.
+Действующая D1 migration `0003_create_migration_executions.sql` создала `migration_executions`.
 
-Поля/инварианты (точный SQL согласовать с текущим D1-контрактом):
+Поля/инварианты действующего D1-контракта:
 
 | Поле | Значение |
 | --- | --- |
 | `job_id`, `object_key` | Ссылка на зарегистрированный исходный upload |
-| `input_etag`, `input_size` | Контрольный снимок исходного объекта |
+| `object_etag`, `migration_jobs.object_size` | Контрольный снимок исходного объекта |
 | `processor_version` | Версия алгоритма; часть уникального ключа идемпотентности |
-| `workflow_instance_id` | Детерминированная корреляция |
-| `status` | `queued / running / succeeded / failed / unsupported` |
-| `attempt_count` | Учёт bounded retries |
+| `workflow_id` | Детерминированная корреляция |
+| `state` | `queued / running / succeeded / failed / unsupported` |
+| `attempts` | Число принятых переходов в running, step retries видны отдельно в trace |
 | `result_key`, `result_sha256` | Подтверждённый результат |
 | `error_code` | Безопасная машинная причина |
-| `created_at / started_at / finished_at / updated_at` | Диагностика |
+| `created_at / updated_at` | Диагностика; отдельные started/finished timestamps не добавлялись |
 
 Нужна уникальность для пары «зарегистрированный объект + версия процессора», CAS-подобные условные переходы в D1 и readback после записи. Повтор `succeeded` никогда не возвращает запись в `running`. Не менять `migration_jobs.state` ради этих состояний.
 
@@ -303,30 +335,31 @@ Retries и recoveries должны уточняться явно: transient fail
 
 ### 7.3. Processor output
 
-Минимальная целевая схема `result.json` (версионированная, runtime-validated):
+Действующий fixture сохраняет точную восьмиполевую схему v1 — `status`,
+`schemaVersion: 1`, `processorVersion: v1`, `detectedFormat`,
+`inputSizeBytes`, `inputSha256`, `summary`, `warnings`.
+`summary.recordsValidated` и `warningsCount: 0` совместимы с live smoke.
+Вывод fixture остаётся побайтово детерминированным при прежнем входе.
 
-~~~json
-{
-  "schema_version": 1,
-  "job_id": "<uuid>",
-  "processor_version": "1.0.0",
-  "status": "succeeded",
-  "input": {
-    "size_bytes": 123,
-    "sha256": "<sha256>",
-    "detected_format": "synthetic-json-fixture"
-  },
-  "summary": {
-    "records_validated": 1,
-    "warnings_count": 0
-  },
-  "warnings": []
-}
-~~~
+Для новых адаптеров schema v2 сохраняет общие поля и добавляет
+`adapter: { id, version }` и `normalized`. NormalizedPayload — транспортные
+коллекции записей со скалярными значениями; точные поля и ссылки проверяет
+зарегистрированный адаптер. Это граница synthetic transport, бизнес-схема
+PLAN/FACT и таблицы Dexie ещё требуют отдельного решения.
+Общий `isResult` проверяет схему, provenance, зарегистрированную версию,
+счётчики, warnings и adapter-specific payload на runtime boundary.
 
-Схема примерная: производственный контракт фиксируется реализацией. Не выдавать `synthetic-json-fixture` за Gym Keeper export. `unsupported` (формат) и `failed` (технический отказ/целостность) различаются. Ошибки не должны содержать исходных чувствительных записей.
+Вход ограничен **8192 байтами**, fixture — **256 records**, результат —
+**1024 байтами**, включая provenance и payload. При превышении результата
+возвращается `RESULT_SIZE_LIMIT`, без обрезания или успешного пустого результата.
+R2 result key сохраняется `results/<job-id>/v1/result.json`.
+После conditional PUT выполняются HEAD/readback и SHA-256 до D1 succeeded.
 
-Ограничить результат, исходное предложение — не более **2 MiB**. После PUT выполнить HEAD/readback и сверку размера/хеша **до** финального D1 `succeeded`. Исходный объект не удалять и не переписывать.
+`PROCESSOR_VERSION=v1` сохранена ради совместимого fixture и текущих ключей
+execution/idempotency. Новые результаты имеют schemaVersion 2 и явную версию
+адаптера. Изменение семантики уже выпущенного адаптера требует осознанной версии
+процессора и стратегии повторной обработки. Уже terminal execution не
+перезапускается после добавления адаптера; операторский recovery отдельный.
 
 ### 7.4. Частичные сбои
 
@@ -359,6 +392,92 @@ Retries и recoveries должны уточняться явно: transient fail
 5. Не начинать интеграционный smoke на старой версии; фиксированный `sleep` без проверки **не** считается решением.
 
 Исторический `versionId` из Cloudflare Workflow history и runtime `MIGRATION_VERSION.id` могут описывать разные уровни версии; сравнивать нужно корректные поля, а не любые встреченные UUID.
+
+### 7.6. Универсальный Adapter Engine — MIG-03
+
+Владельцы — `processor/contracts.ts`, `registry.ts`, `index.ts` и
+`adapters/*.ts`. Общий dispatcher проверяет byte limit, JSON encoding/syntax,
+передаёт адаптерам bounded bytes и разобранный JSON, определяет адаптер, вызывает parse/validate/normalize и строит общий результат. Для не-JSON сигнатур будущий проверенный decoder получает те же ограниченные bytes через AdapterInput.
+Имя файла, MIME и job/user ID не участвуют в выборе. Workflow и D1/R2 получают
+один контракт независимо от источника. Адаптеры работают без I/O.
+
+Manifest содержит стабильный adapterId, semver адаптера, format/family,
+пределы, detection (JSON marker или byte signature) и resultSchemaVersion. Registry принимает только явно
+импортированный reviewed-код, хранит неизменяемый snapshot и ограничен 16
+адаптерами. Один adapterId имеет одну активную версию в registry.
+Распознавание выполняется по ограниченному содержимому, затем отдельно
+проверяется схема. Порядок регистрации не определяет победителя.
+
+| Ситуация | Результат |
+| --- | --- |
+| Нет совпадений | typed unsupported / `UNSUPPORTED_FORMAT` |
+| Известная family, другая версия | typed unsupported / `UNSUPPORTED_FORMAT_VERSION` |
+| Более одного точного совпадения | failed / `AMBIGUOUS_FORMAT` |
+| JSON-looking input с неверным UTF-8 / синтаксисом | `INVALID_INPUT_ENCODING` / `INVALID_INPUT_JSON` |
+| Распознанный формат, неверная схема | failed / `INVALID_INPUT_SCHEMA`, без fallback |
+| Дубли ID / отсутствующие ссылки | `DUPLICATE_SOURCE_ID` / `DANGLING_REFERENCE` |
+| Нарушен adapter record limit | `ADAPTER_RECORD_LIMIT` |
+
+Fixture adapter сохраняет `mezfit-migration-fixture-v1` и `records[{value}]`.
+Nested adapter принимает только synthetic `mezfit-migration-nested-v1`.
+
+~~~json
+{
+  "format": "mezfit-migration-nested-v1",
+  "container": {
+    "groups": [
+      {"sourceId": "g", "items": [
+        {"sourceId": "a", "amount": 7, "peerId": null}
+      ]}
+    ]
+  }
+}
+~~~
+
+У nested не более 8 groups и суммарно 8 items. Source IDs уникальны между
+обоими типами, состоят из 1–32 ASCII букв/цифр/underscore/hyphen.
+Amount — safe integer, peerId — null или ссылка на item в любой группе,
+включая forward reference. Все поля обязательны, дополнительные запрещены.
+Выход — `normalized.groups[{id}]` и `items[{id,group,value,ref}]`, сортировка
+по source ID, без locale-зависимости. Пустой container допустим, наличие
+пустой группы даёт агрегированный `EMPTY_GROUP`. При длинных ID даже
+допустимые 8 items могут не вместиться в 1024 байта; такой файл получает
+явный `RESULT_SIZE_LIMIT`. Значения не обрезаются.
+
+Добавление формата требует reviewed adapter с detect/parse/validate,
+регистрации в `createProcessor([...])` и независимых тестов.
+Инфраструктурный control-flow расширять условием по источнику не требуется.
+Тестовая матрица меняет IDs, значения, объёмы и порядок, включает регистрацию
+третьего тестового адаптера, конфликт детекции, неизвестные данные и версии,
+нарушенные связи, codec mutation и общий Workflow path. Synthetic payload
+не свидетельствует о поддержке Gym Keeper.
+
+### 7.7. Будущие AI Discovery / AI Adapter Builder
+
+При unsupported вызывающий слой позднее сможет сформировать
+`AdapterDiscoveryRequest` с причиной, размером/хешем и текущими manifests.
+Исследовательский слой отдельно получает согласованный обезличенный образец,
+происхождение и версию источника. Runtime не отправляет байты автоматически.
+`AdapterCandidate` содержит unverified specification, proposed ID/version
+и hashes фикстур; у кандидата нет runtime методов.
+
+~~~text
+Unknown format
+  → отдельное исследование / AI suggestion (unverified candidate)
+  → проверка схемы, mappings и fixtures
+  → одобрение и reviewed static implementation
+  → versioned registry
+~~~
+
+Validation gate проверяет golden fixtures из независимых примеров,
+unknown input, несовместимые версии, malformed/schema/reference failures,
+детерминированный replay и лимиты bytes/records/result/CPU. Нужны ревью
+безопасности, происхождения и допустимости данных, затем обычные CI и
+cloud acceptance. Декларативные mappings предпочтительны там, где достаточны.
+Бинарный формат может потребовать отдельно проверенного decoder.
+LLM provider, стоимость, API-доступ и среда исполнения остаются отдельными
+решениями. В MIG-03 реализованы только типы границы; AI API, исполнение
+suggestions и автоматическое продвижение кандидата не подключены.
 
 ## 8. Логирование и операционная наблюдаемость — обязательный контракт
 
@@ -446,9 +565,11 @@ Retries и recoveries должны уточняться явно: transient fail
 | --- | --- | --- | --- |
 | **0. Исследование Gym Keeper** | Частично Done | Статический анализ APK, разделение backup vs Program/Diary export, список неизвестных полей | Нужны реальные образцы для decoder |
 | **1. Cloudflare Migration Infrastructure** | **Done** | `MIGRATION_SMOKE_OK` на независимом run 44094545908 | Известные остатки: telemetry API 403, race версий |
-| **2. TypeScript File Processing Engine** | **Next** | Реальный `R2 → Queue → Workflow → TS → R2 result → D1`; `MIGRATION_PROCESSOR_SMOKE_OK`; регрессия infra smoke | Workers Free limits, version gate, надежное логирование |
-| **3. Доказать реальные форматы** | Planned, можно параллельно 2 | Обезличенные samples, magic/schema, versioned compatibility matrix, фикстуры | Экспорт из реального Gym Keeper |
-| **4. Gym Keeper Import Adapters** | Planned | Отдельные decoders по подтверждённым format/version, чёткие ошибки, normalized output | Этапы 2–3 |
+| **2. TypeScript File Processing Engine v1** | **Done для synthetic** | Независимый processor smoke 44156101755 и infra smoke 44153088455 | Telemetry PARTIAL, CPU не измерен |
+| **MIG-03. Универсальный Adapter Engine** | **Код реализован, cloud acceptance ожидается** | Registry/dispatcher + fixture/nested + общий runtime codec, отрицательные и anti-overfitting тесты | CI после PR, отдельная проверка новой версии после merge |
+| **3. Доказать реальные форматы** | Planned, независимо от MIG-03 | Обезличенные samples, magic/schema, versioned compatibility matrix, фикстуры | Экспорт из реального Gym Keeper |
+| **4. Адаптеры реальных источников, начиная с Gym Keeper** | Planned | Decoders по подтверждённым format/version и независимым samples | MIG-03 и этап 3 |
+| **AI Discovery / Adapter Builder** | Planned | Исследование неизвестного формата, candidate → validation gate → reviewed registry | Решение по AI API/стоимости/приватности и образцы |
 | **5. Канонизация и preview** | Planned | Модель Mezfit, стабильная ID mapping, PLAN/FACT, date/units, warnings/loss report, pre-import diff | Подтверждённая структура, доменные контракты |
 | **6. Авторизованная публикация** | Planned, требует продуктового решения | Ограниченный import service, realm authorization, idempotent commit, rollback/recovery | Согласование способа записи в Dexie Cloud/ACL |
 | **7. Пользовательский UX** | Planned | Выбор источника/цели, загрузка, прогресс, предпросмотр, подтверждение, статус/ошибки | Этапы 4–6, auth integration |
@@ -456,7 +577,7 @@ Retries и recoveries должны уточняться явно: transient fail
 
 ### 10.1. Этап 2 — подробный вертикальный срез
 
-Планируемые блоки:
+Реализованные блоки, принятые на synthetic v1:
 
 1. **Processor contract:** детерминированная TypeScript-библиотека, synthetic JSON v1, bounded reads, schema validation, result digest, safe errors.
 2. **Execution persistence:** аддитивная D1 migration, уникальность job + processor version, terminal states, conditional transitions.
@@ -473,17 +594,20 @@ MIGRATION_SMOKE_OK
 MIGRATION_PROCESSOR_SMOKE_OK
 ~~~
 
-Ни один unit test или mock сам по себе не заменяет live smoke. До получения второго маркера выполнение processor — только планируемая функциональность.
+Оба маркера получены в независимых запусках, см. §2.4. Unit/mocked проверки MIG-03 ещё требуют CI; облачная приёмка v1 до MIG-03 не подтверждает новую реализацию автоматически.
 
-### 10.2. Этап 3 — форматные входные данные
+### 10.2. MIG-03 и этап 3 — универсальность и реальные входные данные
+
+Для MIG-03 следующий рубеж — CI, merge и отдельное разрешение на cloud rollout новой Worker version. Действующий processor smoke проверяет fixture-v1; запуск этого smoke после MIG-03 подтвердит его регрессию. Второй адаптер проверяется добавленным интеграционным тестом. Для его отдельной live-приёмки нужен согласованный bounded synthetic probe через тот же приватный process path. До такого запуска nested cloud status остаётся pending. Реальный дамп для реализации MIG-03 не нужен.
 
 Подход по адаптерам:
 
 ~~~text
 Source file
-  → detect format + supported versions
-      ├─ GymKeeperFullBackupAdapter (только после sample)
-      └─ GymKeeperDiaryProgramAdapter (только после sample)
+  → shared dispatcher / versioned registry
+      ├─ synthetic fixture + nested (MIG-03)
+      ├─ GymKeeperFullBackupAdapter (planned, после sample)
+      └─ GymKeeperDiaryProgramAdapter (planned, после sample)
   → validate references and types
   → normalize units, dates, IDs, exercise relations
   → canonical import package + loss/warnings report
@@ -520,7 +644,7 @@ Source file
 | Куда писать бизнес-данные | Только Dexie Cloud через одобренный путь | Перед этапом 6 |
 | D1 | Только технический job/execution state | Нельзя превращать в business store |
 | Workers Logs API 403 | R2 trace fallback, partial status | При отдельном согласовании permissions |
-| Deploy version race | Подтверждённый риск, нужен gate | В составе этапа 2, до live smoke |
+| Deploy version race | Readiness gate реализован и прошёл v1 smoke | Проверять фактическую версию при каждом rollout |
 | Retention персональных backup | **Не определён** | До пользовательского запуска и production import |
 | Пользовательская авторизация upload | **Не подключена** | До UI/пользовательского доступа |
 | Удаление старых данных | Только безопасная synthetic cleanup сейчас | Политика для пользовательских backups отдельно |
@@ -536,6 +660,8 @@ Source file
 После коммитов и **до PR** — ручное ревью diff, регрессий, актуальности тестового кода, AGENTS и `audit/`. Нельзя запускать локальные `npm`/`typecheck`/`tests` для обхода установленного workflow проекта: CI выполняет это после PR. Создание PR — не доказательство зелёного CI.
 
 ### 12.2. Облачный rollout
+
+Этап 2 synthetic принят по §2.4. Следующая последовательность применяется отдельно к новой версии MIG-03; ручной запуск выполняет владелец или агент по явному разрешению.
 
 1. PR: только проверенный, ограниченный scope.
 2. CI после PR: review результатов, merge лишь после необходимых проверок.
@@ -560,14 +686,12 @@ Production Engine не должен выполняться на GitHub Actions: 
 3. [`docs/architecture/migration-infrastructure.md`](docs/architecture/migration-infrastructure.md) — детальная уже реализованная инфраструктура, операции bootstrap/deploy/smoke/trace.
 4. [`docs/reference/gym-keeper/backup-format.md`](docs/reference/gym-keeper/backup-format.md) — доказанное и неустановленное про backup/export.
 5. [`docs/reference/gym-keeper/program-diary-domain.md`](docs/reference/gym-keeper/program-diary-domain.md), [`final-synthesis.md`](docs/reference/gym-keeper/final-synthesis.md) — перенос смыслов, не Android UI.
-6. `migration/worker/index.ts`, `events.ts`, `smoke.ts`, `r2-upload.ts`, `trace.ts`, `migration/trace.mjs`, `trace-collector.mjs`, `cloudflare.mjs` — фактические владельцы текущих операций.
+6. `migration/worker/processor/{contracts,registry,index}.ts`, `processor/adapters/`, `process-workflow.ts`, `execution-store.ts`, `processor-smoke.ts` — контракт адаптеров и единственный runtime path. Затем `index.ts`, `events.ts`, `smoke.ts`, `r2-upload.ts`, `trace.ts`, `migration/trace.mjs`, `trace-collector.mjs`, `cloudflare.mjs`.
 7. `migration/d1/` — действующая техническая схема.
 8. `.github/workflows/migration-*.yml` — manual deployment и диагностика.
 9. `audit/2026-09-16_application_audit.md` — существующие риски и требования проверки перед PR.
 
-**Подтверждённая эксплуатационная точка:**  
-https://github.com/buropotok/mezfit/actions/runs/44094545908  
-**`MIGRATION_SMOKE_OK`, 17 ноября 2026 г.**
+**Подтверждённая эксплуатационная точка:** этап 2 synthetic, независимые infra/processor runs 44153088455 / 44156101755, точные версии и ссылки в §2.4. Код MIG-03 ожидает собственной облачной проверки.
 
 **Примечание по аудиту:** в историческом аудите фактор `A-011` описывает дублирование числового префикса миграций в **другой части** приложения. Новые D1 migrations из `migration/d1/` должны иметь свои последовательно возрастающие уникальные имена, не переименовывать ранее применённые файлы. Этот документ не меняет схему и не устраняет старый фактор.
 
@@ -575,10 +699,10 @@ https://github.com/buropotok/mezfit/actions/runs/44094545908
 
 **Уже есть:** приватная связка R2 → Queue → Worker → D1 → Workflow, подтверждённый `MIGRATION_SMOKE_OK`, жёсткий SigV4 upload, безопасная private R2 trace; известны Workers Logs API 403 и race версий после deploy.
 
-**Сейчас строим:** TypeScript File Processing Engine без платного Container на Workers Free, отдельный технический execution state, R2 JSON result, full trace, version gate и независимый `MIGRATION_PROCESSOR_SMOKE_OK`.
+**Реализовано в MIG-03:** универсальный registry/dispatcher, проверенные fixture/nested adapters, совместимость legacy v1 и runtime codec schema v2, граница будущего AI discovery. CI и cloud acceptance новой реализации ожидаются. Этап 2 synthetic v1 уже принят, §2.4.
 
 **Пока не знаем:** реальный byte format `.dbi` и JSON exports, CPU-стоимость настоящего decoder, точную модель импорта в Dexie Cloud и политику хранения пользовательских файлов.
 
 **Нельзя:** объявлять synthetic parser настоящим Gym Keeper importer, переносить бизнес-данные в D1, менять Coach/Client realms или ACL без согласования, добавлять Python/Containers/VPS, считать «деплой завершён» равным «новая версия исполняется», давать успешный отчёт при неполной трассе без пометки PARTIAL.
 
-**Следующий проверяемый рубеж:** два независимых зелёных live smoke и документально подтверждённые версии Worker/processor. После него — получение реальных обезличенных экспортов и написание Gym Keeper Import Adapters.
+**Следующий проверяемый рубеж:** CI MIG-03, merge, отдельный rollout новой версии и подтверждение fixture regression плюс согласованная проверка nested в Cloudflare. Параллельно можно исследовать реальные обезличенные экспорты. AI API, decoder, бизнес-канонизация, preview и Dexie commit остаются отдельными этапами.

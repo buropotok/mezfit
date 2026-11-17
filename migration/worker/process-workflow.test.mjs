@@ -6,6 +6,8 @@ import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, processorInstanceId, processorRe
 import { consumeUploads } from './events';
 import { runProcess } from './process-workflow';
 import { cleanupProcessorSmoke } from './processor-smoke';
+import { isResult } from './processor';
+import { NESTED_FORMAT } from './processor/adapters/nested';
 
 const id = '4fe7581a-62c8-407d-bae6-6ddfe8067036';
 const key = 'uploads/' + id;
@@ -419,5 +421,30 @@ describe('processor smoke cleanup', () => {
     await expect(job.cleanup()).rejects.toThrow('PROCESSOR_CLEANUP_SCOPE_INVALID');
     expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
     expect(job.objects.has(key)).toBe(true);
+  });
+});
+
+describe('nested adapter through the existing migration workflow', () => {
+  it('uses the shared Queue, R2 integrity, D1 idempotency and verified cleanup path', async () => {
+    const job = setup(JSON.stringify({ format: NESTED_FORMAT, container: { groups: [
+      { sourceId: 'g', items: [{ sourceId: 'a', amount: 19, peerId: null }] },
+    ] } }));
+    job.objects.get(key).metadata.customMetadata = { processorSmoke: id };
+    expect((await job.deliver()).ack).toHaveBeenCalledOnce();
+    expect(await job.run()).toBe(resultKey);
+    const result = JSON.parse(new TextDecoder().decode(job.saved()));
+    expect(isResult(result)).toBe(true);
+    expect(result).toMatchObject({ schemaVersion: 2, adapter: { id: 'synthetic-nested', version: '1.0.0' },
+      normalized: { groups: [{ id: 'g' }], items: [{ id: 'a', group: 'g', value: 19, ref: null }] } });
+    const completed = job.execution();
+    expect(completed.result_sha256).toBe(createHash('sha256').update(new Uint8Array(job.saved())).digest('hex'));
+    expect(job.env.UPLOADS.put.mock.calls.find(([path]) => path === resultKey)[2].onlyIf.get('If-None-Match')).toBe('*');
+    await job.deliver();
+    expect(await job.run()).toBe(resultKey);
+    expect(job.execution()).toEqual(completed);
+    expect(job.env.MIGRATION_WORKFLOW.create).toHaveBeenCalledOnce();
+    expect(await cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code))).toBe(cleanupOK);
+    expect(cleanupTables.flatMap(table => job.sqlite.prepare('SELECT * FROM ' + table).all())).toEqual([]);
+    expect(job.objects.size).toBe(0);
   });
 });

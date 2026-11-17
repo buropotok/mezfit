@@ -42,6 +42,8 @@ function safeDetails(input) {
       || (BOOL_KEYS.has(key) && typeof value === 'boolean') || (Object.hasOwn(TOKEN_KEYS, key) && TOKEN_KEYS[key].has(value))
       || (key === 'endpoint' && ENDPOINTS.has(value))
       || (key === 'sha' && typeof value === 'string' && /^[a-f0-9]{40}$/i.test(value))
+      || (key === 'adapter_id' && typeof value === 'string' && /^[a-z][a-z0-9-]{0,63}$/.test(value))
+      || (key === 'adapter_version' && typeof value === 'string' && /^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(value))
       || (key === 'version' && typeof value === 'string' && /^\d{1,3}\.\d{1,4}\.\d{1,4}$/.test(value))
       || (key === 'migration' && typeof value === 'string' && /^000[1-9]_[a-z0-9_]{1,60}\.sql$/.test(value))
       || (key === 'message_id' && typeof value === 'string' && /^(?:[a-f0-9]{16,64}|[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/i.test(value))) result[key] = value;
