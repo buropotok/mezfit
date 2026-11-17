@@ -678,6 +678,7 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     data.pointerId = null;
 
     if (cancelled || gesture === 'cancelled') {
+      if (startedOnAction) data.suppressClickUntil = now() + 500;
       if (!startedOnAction) {
         cancelLensForScroll();
         positionSelector(data.activeIndex, false);
