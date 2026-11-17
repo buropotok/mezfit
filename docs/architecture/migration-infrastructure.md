@@ -99,3 +99,34 @@ smoke also performs a bounded sweep of recognized synthetic keys older than 24
 hours to cover cancellations and runner interruption. Technical job and replay
 receipt rows remain available for diagnosis. A running or paused instance's
 objects are not deleted by the Actions runner.
+
+## Trace coverage
+
+All three Actions workflows upload `migration-trace.json`, including failed
+runner executions. Use the Step Summary for the first confirmed failure and the
+artifact for ordered timestamps, intermediate observations and every available
+attempt. A Workflow instance UUID identifies a smoke across Worker invocations,
+Queue delivery, D1 checks and cleanup. The GitHub run ID is joined by this UUID.
+
+| Stage | Evidence captured | What can remain unobserved |
+| --- | --- | --- |
+| Bootstrap and deploy | Inputs by presence, method and endpoint template, status and duration for API attempts, resource comparisons, Wrangler migration/version and trigger milestones, deployed logging settings | Startup failures before the Node action begins appear in the native Actions log |
+| R2 signing and upload | Signer validation, canonical request construction, signed header set, TTL, HTTP status and S3 code, exact HEAD observations, negative probes | Cloudflare may classify a transport error without exposing its network cause |
+| R2 Event Notifications | Rule identity by expected bucket and queue, subscribed actions, prefix/suffix flags, confirmed PUT, Queue backlog snapshots | Cloudflare's aggregate backlog and rule configuration cannot establish per-object publication |
+| Queue and consumer | Received message and attempt, safe identity/timestamp, envelope field eligibility, HEAD check, insert and promote, replay, ack/retry decision | An invalid event with no recoverable smoke UUID is visible in Worker logs but cannot be asserted to belong to a run |
+| D1 | Operation and table, statement outcomes and changes, SELECT presence, exact replay receipt, confirmed state | D1 metadata alone cannot distinguish the INSERT from the ON CONFLICT branch; the trace reports that gap |
+| Workflow and cleanup | Runtime operations and persisted attempt timestamps, polling, terminal state, cleanup dispatch and readback | Timed-out or interrupted invocations may leave runtime telemetry incomplete; the Workflow history remains a separate source |
+
+The runner queries Workers Observability with existing credentials and records
+permission, lag or partial results. It also reads a per-smoke recovery copy
+under the private migration bucket prefix `_migration-traces/`. These objects
+contain only sanitized diagnostic events. Their R2 notifications are explicitly
+acknowledged without HEAD, writes to D1, or another trace object. Future smoke
+runs remove expired trace objects through a bounded prefix sweep. If R2 and
+Workers Logs both fail, the collector reports incomplete coverage and retains
+the Workflow history, runner logs and available Queue/D1 observations.
+
+A first merge-time smoke is required to verify Cloudflare's deployed settings
+and the existing tokens' read access. The telemetry endpoint is documented
+with **Workers Observability Write**; a refusal is shown in Actions. No token
+change is needed when the existing R2 recovery channel is readable.
