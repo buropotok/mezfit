@@ -431,6 +431,24 @@ describe('LiquidGlassTextOnly', () => {
     fireEvent.click(actionButton(root));
     expect(onAction).not.toHaveBeenCalled();
     expect(changed).not.toHaveBeenCalled();
+
+    const heldX = visibleActionX(root);
+    const heldStartScroll = strip.scrollLeft;
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 21, clientX: heldX, clientY: 22 });
+    act(() => vi.advanceTimersByTime(200));
+    fireEvent.pointerMove(document, { pointerType: 'touch', pointerId: 21, clientX: heldX + 45, clientY: 22 });
+    expect(strip.scrollLeft).toBeLessThan(heldStartScroll);
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 21, clientX: heldX + 45, clientY: 22 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).not.toHaveBeenCalled();
+
+    const verticalX = visibleActionX(root);
+    fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 22, clientX: verticalX, clientY: 22 });
+    fireEvent.pointerMove(document, { pointerType: 'touch', pointerId: 22, clientX: verticalX, clientY: 54 });
+    fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 22, clientX: verticalX, clientY: 54 });
+    fireEvent.click(actionButton(root));
+    expect(onAction).not.toHaveBeenCalled();
+    expect(changed).not.toHaveBeenCalled();
   });
 
   it('does not invoke the action on long press or when a held selection ends over it', () => {
