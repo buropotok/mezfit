@@ -145,6 +145,8 @@ thread list changes. No polling or network wait is introduced.
    `custom:<id>`.
 3. Clears these values to `null` via the typed Flex repository, grouped per
    target/realm. Does not touch peer assignments or thread/message rows.
+   If a definition is present but its assignment value has not yet hydrated,
+   the operation fails safely and can be retried after hydration.
 4. Re-reads locally visible assignments. If one still refers to the removed
    ID, fails rather than claiming success.
 5. Tombstones the private category value *last*.
