@@ -240,13 +240,14 @@ describe('typed Flex persistence and participant isolation', () => {
     await client.assignThread(entity, 'personal');
     await coach.removeCategory(category.id);
     expect(await coach.listCategories()).toEqual([]);
-    expect((await db.flexValues.get(flexValueId(target('tg:11'),
-      flexAttributeId('tg:11', discussionCategoryKey(category.id))))?.value).toBeNull();
+    const categoryValueId = flexValueId(target('tg:11'),
+      flexAttributeId('tg:11', discussionCategoryKey(category.id)));
+    expect((await db.flexValues.get(categoryValueId))?.value).toBeNull();
     for (const thread of [entity, other, ownPersonal]) {
       const key = await discussionThreadAssignmentKey(thread);
       const scopeTarget = target('tg:11', thread.realmId);
-      expect((await db.flexValues.get(flexValueId(scopeTarget,
-        flexAttributeId(thread.realmId, key))))?.value).toBeNull();
+      const assignmentValueId = flexValueId(scopeTarget, flexAttributeId(thread.realmId, key));
+      expect((await db.flexValues.get(assignmentValueId))?.value).toBeNull();
     }
     expect((await client.getThreadOrganization(entity)).category).toBe('personal');
     expect((await coach.getThreadOrganization(entity)).category).toBe('client');
