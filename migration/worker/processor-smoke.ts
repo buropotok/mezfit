@@ -1,8 +1,8 @@
 import type { WorkflowStep } from 'cloudflare:workers';
-import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, PROCESSOR_RECORD_LIMIT, PROCESSOR_RESULT_LIMIT, processorResultKey } from '../processor-protocol.mjs';
+import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, PROCESSOR_RECORD_LIMIT, processorResultKey } from '../processor-protocol.mjs';
 import type { TraceContext } from '../trace.mjs';
 import { readExecution } from './execution-store';
-import { processStep } from './process-workflow';
+import { processStep, readResultBytes } from './process-workflow';
 import { isResult, sha256 } from './processor';
 import { UPLOAD_BUCKET } from './r2-upload';
 import type { SmokeBindings } from './smoke';
@@ -51,9 +51,8 @@ export async function runProcessorSmoke(env: SmokeBindings, id: string, step: Wo
   }, WAIT);
 
   await run('Verify processor fixture result')(async emit => {
-    const result = await env.UPLOADS.get(processorResultKey(id), { range: { offset: 0, length: PROCESSOR_RESULT_LIMIT } });
-    if (!result || result.size > PROCESSOR_RESULT_LIMIT) throw new Error('PROCESSOR_SMOKE_RESULT_MISSING');
-    const saved = await result.arrayBuffer();
+    const saved = await readResultBytes(env.UPLOADS, id, emit);
+    if (!saved) throw new Error('PROCESSOR_SMOKE_RESULT_MISSING');
     const parsed: unknown = JSON.parse(new TextDecoder().decode(saved));
     if (!isResult(parsed) || parsed.inputSizeBytes !== bytes.byteLength || parsed.inputSha256 !== await sha256(bytes.buffer)
       || parsed.summary.recordsValidated !== PROCESSOR_RECORD_LIMIT || await sha256(saved) !== completed.checksum || completed.attempts !== 1) {
@@ -98,6 +97,10 @@ export async function cleanupProcessorSmoke(env: SmokeBindings, id: string, step
     if (object.customMetadata?.processorSmoke !== id) throw permanent('PROCESSOR_CLEANUP_SCOPE_INVALID');
     const execution = await readExecution(env.JOBS, id, emit);
     if (execution?.state === 'running' || execution?.state === 'queued') throw new Error('PROCESSOR_CLEANUP_EXECUTION_ACTIVE');
+    const saved = await readResultBytes(env.UPLOADS, id, emit);
+    if (saved && (execution?.state !== 'succeeded' || await sha256(saved) !== execution.checksum)) {
+      throw permanent('PROCESSOR_CLEANUP_RESULT_CONFLICT');
+    }
     return true;
   });
   if (verified) await run('Remove processor smoke objects')(async emit => {

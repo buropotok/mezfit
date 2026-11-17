@@ -78,6 +78,28 @@ async function readInput(bucket: R2Bucket, key: string, job: Execution, emit: Tr
     }, bytes => ({ actual: 'exact-registered-bytes', details: { size: bytes.byteLength } }));
 }
 
+export async function readResultBytes(bucket: R2Bucket, id: string, emit: Trace): Promise<ArrayBuffer | null> {
+  const key = processorResultKey(id);
+  const head = await observed(emit, 'r2', 'process-result-head', 'RESULT_R2_HEAD',
+    { expected: 'bounded-result-metadata' }, () => bucket.head(key),
+    value => ({ actual: value ? 'object-found' : 'object-missing', details: { size: value?.size } }));
+  if (!head) return null;
+  if (head.size <= 0 || head.size > PROCESSOR_RESULT_LIMIT || head.httpMetadata?.contentType !== 'application/json') {
+    throw new ProcessingFailure('RESULT_CONFLICT');
+  }
+
+  const object = await bucket.get(key, { onlyIf: new Headers({ 'If-Match': head.httpEtag }),
+    range: { offset: 0, length: head.size } });
+  if (!object || !('body' in object)) throw new ProcessingFailure('RESULT_READBACK_CHANGED', true);
+  if (object.size !== head.size || object.etag !== head.etag || object.httpMetadata?.contentType !== 'application/json') {
+    await object.body.cancel();
+    throw new ProcessingFailure('RESULT_READBACK_CHANGED', true);
+  }
+  const bytes = await object.arrayBuffer();
+  if (bytes.byteLength !== head.size) throw new ProcessingFailure('RESULT_READBACK_CHANGED', true);
+  return bytes;
+}
+
 async function writeResult(bucket: R2Bucket, id: string, result: unknown, emit: Trace) {
   emit('r2', 'process-result-build', 'RESULT_BUILD_STARTED', 'STARTED');
   if (!isResult(result)) throw new ProcessingFailure('INVALID_RESULT_SCHEMA');
@@ -102,15 +124,21 @@ async function writeResult(bucket: R2Bucket, id: string, result: unknown, emit: 
     // A lost write response is resolved by the same independent readback.
   }
   emit('r2', 'process-result-readback', 'RESULT_R2_READBACK_STARTED', 'STARTED');
-  const object = await observed(emit, 'r2', 'process-result-readback', 'RESULT_R2_READBACK', { expected: 'stored-result' },
-    () => bucket.get(key, { range: { offset: 0, length: bytes.byteLength } }),
-    value => ({ actual: value ? 'object-found' : 'object-missing', details: { size: value?.size } }));
-  if (!object) throw new ProcessingFailure('RESULT_READBACK_MISSING', true);
-  const sameSize = object.size === bytes.byteLength && object.httpMetadata?.contentType === 'application/json';
-  const saved = sameSize ? await object.arrayBuffer() : (await object.body.cancel(), null);
-  if (!saved || saved.byteLength !== bytes.byteLength || await sha256(saved) !== checksum) {
-    emit('r2', 'process-result-readback', 'RESULT_CONFLICT_DETECTED', 'FAILED', { error_code: 'RESULT_CONFLICT' });
-    throw new ProcessingFailure('RESULT_CONFLICT');
+  let saved: ArrayBuffer;
+  try {
+    const readback = await observed(emit, 'r2', 'process-result-readback', 'RESULT_R2_READBACK',
+      { expected: 'stored-result' }, () => readResultBytes(bucket, id, emit),
+      value => ({ actual: value ? 'object-found' : 'object-missing', details: { size: value?.byteLength } }));
+    if (!readback) throw new ProcessingFailure('RESULT_READBACK_MISSING', true);
+    if (readback.byteLength !== bytes.byteLength || await sha256(readback) !== checksum) {
+      throw new ProcessingFailure('RESULT_CONFLICT');
+    }
+    saved = readback;
+  } catch (error) {
+    if (error instanceof ProcessingFailure && error.code === 'RESULT_CONFLICT') {
+      emit('r2', 'process-result-readback', 'RESULT_CONFLICT_DETECTED', 'FAILED', { error_code: error.code });
+    }
+    throw error;
   }
   emit('r2', 'process-result-readback', 'RESULT_R2_READBACK_COMPLETED', 'OK', { details: { size: saved.byteLength } });
   emit('r2', 'process-result-digest', 'RESULT_CHECKSUM_VERIFIED', 'OK');
@@ -153,6 +181,8 @@ export async function runProcess(env: ExecutionBindings, step: WorkflowStep, id:
         try { return await writeResult(env.UPLOADS, id, processed, emit); }
         catch (error) {
           if (!(error instanceof ProcessingFailure) || error.retryable) throw error;
+          emit('workflow', 'process-result-outcome', 'PROCESS_RESULT_REJECTED', 'FAILED',
+            { error_code: error.code, details: { can_retry: false } });
           return { state: 'failed', code: error.code } as const;
         }
       });

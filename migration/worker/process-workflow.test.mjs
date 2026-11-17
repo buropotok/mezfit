@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FIXTURE_FORMAT, PROCESSOR_INPUT_LIMIT, processorInstanceId, processorResultKey } from '../processor-protocol.mjs';
 import { consumeUploads } from './events';
 import { runProcess } from './process-workflow';
+import { cleanupProcessorSmoke } from './processor-smoke';
 
 const id = '4fe7581a-62c8-407d-bae6-6ddfe8067036';
 const key = 'uploads/' + id;
@@ -60,7 +61,9 @@ function setup(value = fixture) {
       put: vi.fn(async (path, data, options) => {
         if (path !== resultKey) return {};
         if (options.onlyIf.get('If-None-Match') !== '*' || objects.has(path)) return null;
-        objects.set(path, { bytes: data.buffer, metadata: { size: data.byteLength, httpMetadata: options.httpMetadata } });
+        const etag = createHash('md5').update(data).digest('hex');
+        objects.set(path, { bytes: data.buffer, metadata: { size: data.byteLength, httpMetadata: options.httpMetadata,
+          etag, httpEtag: '"' + etag + '"' } });
         return {};
       }),
     },
@@ -195,24 +198,31 @@ describe('migration processor workflow', () => {
       return put(...args);
     });
     job.env.UPLOADS.get.mockImplementation(async (...args) => {
-      if (args[0] === resultKey && ++reads === 2) throw new Error('R2 unavailable');
+      if (args[0] === resultKey && ++reads === 1) throw new Error('R2 unavailable');
       return get(...args);
     });
     await job.deliver();
     expect(await job.run()).toBe(resultKey);
     expect(job.execution().state).toBe('succeeded');
-    expect([puts, reads]).toEqual([3, 3]);
+    expect([puts, reads]).toEqual([3, 2]);
   });
 
   it('rejects a conflicting result and preserves the existing bytes', async () => {
     const job = setup();
     const bytes = new TextEncoder().encode('foreign data').buffer;
-    job.objects.set(resultKey, { bytes, metadata: { size: bytes.byteLength, httpMetadata: { contentType: 'application/json' } } });
+    const etag = createHash('md5').update(new Uint8Array(bytes)).digest('hex');
+    job.objects.set(resultKey, { bytes, metadata: { size: bytes.byteLength, httpMetadata: { contentType: 'application/json' },
+      etag, httpEtag: '"' + etag + '"' } });
     await job.deliver();
     expect(await job.run()).toBe('failed');
     expect(job.execution()).toMatchObject({ state: 'failed', error_code: 'RESULT_CONFLICT' });
     expect(job.saved()).toBe(bytes);
     expect(job.log).toHaveBeenCalledWith(expect.objectContaining({ event: 'RESULT_CONFLICT_DETECTED', status: 'FAILED' }));
+
+    job.objects.get(key).metadata.customMetadata = { processorSmoke: id };
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_RESULT_CONFLICT');
+    expect(job.saved()).toBe(bytes);
   });
 
   it.each([['Worker exceeded CPU time limit', 'WORKFLOW_CPU_LIMIT'], ['Worker exceeded memory limit', 'WORKFLOW_MEMORY_LIMIT']])(
