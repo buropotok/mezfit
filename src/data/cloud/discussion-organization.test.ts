@@ -169,6 +169,8 @@ describe('typed Flex persistence and participant isolation', () => {
     await coach.assignThread(other, 'nutrition');
     expect((await otherClient.getThreadOrganization(other)).category).toBe('coach');
     await expect(otherClient.assignThread(entity, 'nutrition')).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    await expect(coach.getThreadOrganization({ ...entity, derivedTitleSnapshot: 'Подменённый заголовок' }))
+      .rejects.toThrow('DISCUSSION_NOT_FOUND');
     await expect(coach.assignThread(entity, { kind: 'custom', id: category.id }))
       .rejects.toThrow('DISCUSSION_CATEGORY_NOT_FOUND');
     await expect(client.assignThread(entity, 'training' as never)).rejects.toThrow('INVALID_DISCUSSION_ASSIGNMENT');
