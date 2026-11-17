@@ -44,7 +44,8 @@
   padding and border, before the strip's normal flex distribution. It does not
   scale the label, change the 44 px height, or alter selectable-slot optics.
   UIkit measures the label and observes resize/font changes; consumers never
-  target private slot CSS. Discussions opts into `2` for its final `+`.
+  target private slot CSS. This remains available to action consumers;
+  discussion categories now use a separate menu button outside the strip.
 - The final action can be the passive right neighbour for coordinated 300 ms
   auto-scroll. It remains outside selectable indexes and lens destinations.
   Intervening custom categories retain normal immediate-neighbour precedence.
@@ -61,10 +62,10 @@ Selectable-tab gesture/selection/spring timing is unchanged.
 
 Previously the action opened a new backdrop on pointerup. The suppression
 listener on the old action button could not intercept a WebView click retargeted
-to that new backdrop, whose ordinary onClick closed the dialog. The new
-integration regression models this hit-test sequence with real ShadowRoot,
-Dialog, NavigationShell, NavigationSurfaceContext and React commits. It also
-checks the pane-targeted capture path and a separate intentional backdrop click.
+to that new backdrop, whose ordinary onClick closed the dialog. UIkit action tests retain the captured-pane click regression. The discussions
+integration now exercises the separate IconButton → real LiquidPopover →
+presentation-end → Dialog path with NavigationShell and NavigationSurfaceContext;
+the page no longer passes an actionTab. Separate backdrop and Back checks remain.
 The two existing assertions requiring action invocation before click were updated
 with explicit owner approval (2026-11-18); selection and gesture assertions remain.
 
