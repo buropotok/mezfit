@@ -827,9 +827,11 @@ Production Engine не должен выполняться на GitHub Actions: 
 Действующий `result.json` (`results/<job-id>/v1/result.json`)
 — **технический** артефакт процессора. Nested v2 выдаёт тестовые
 `normalized.groups/items`, не структуру тренировок. Он не является готовым
-пакетом бизнес-импорта. Следующие три контракта — **целевые, пока не
-реализованные**; окончательные JSON Schema, имена ключей, форматы chunking
-и retention требуют отдельного проектирования:
+пакетом бизнес-импорта. Следующие три артефакта — **целевые, пока не
+реализованные**. Для `SourceImportPackage` зафиксированы семантика и
+эталонные поля v1, но runtime JSON Schema, сериализация и физический
+manifest/chunking ещё не реализованы; поля `MezfitImportPlan` и `ImportReceipt`,
+retention и механизм публикации требуют отдельного проектирования:
 
 1. **`SourceImportPackage`**: нейтральные к Mezfit данные источника —
    источник/format/version/adapter version/input SHA-256; исходные клиенты,
