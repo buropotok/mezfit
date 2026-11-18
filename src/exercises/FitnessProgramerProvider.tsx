@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
+import type { MezfitCloudDatabase } from '../data/cloud/database';
 import {
   FitnessProgramerCatalogueRepository, type FitnessProgramerExercise,
 } from '../data/exercises/fitnessProgramerCatalogue';
@@ -21,15 +21,17 @@ const context = createContext<{ state: FitnessProgramerState; repository: Fitnes
 });
 
 /** The Dexie Addon owns eager background downloads on open/sync and their offline persistence. */
-export function FitnessProgramerProvider({ children }: { children: ReactNode }) {
-  const cloud = useCloudConnections();
-  const db = cloud?.db;
-  const repository = useMemo(() => db?.publicFitnessProgramerGifs
+export function FitnessProgramerProvider({ children, db, cloudError }: {
+  children: ReactNode;
+  db: MezfitCloudDatabase;
+  cloudError: boolean;
+}) {
+  const repository = useMemo(() => db.publicFitnessProgramerGifs
     ? new FitnessProgramerCatalogueRepository(db) : null, [db]);
   const [state, setState] = useState<{ repository: FitnessProgramerCatalogueRepository; value: FitnessProgramerState } | null>(null);
 
   useEffect(() => {
-    if (!db || !repository) return undefined;
+    if (!repository) return undefined;
     let active = true;
     let catalogueFailed = false;
     let exercises: FitnessProgramerExercise[] | null = null;
@@ -72,8 +74,8 @@ export function FitnessProgramerProvider({ children }: { children: ReactNode }) 
   const value = state && state.repository === repository ? state.value : initial;
   return <context.Provider value={{ repository, state: {
     ...value,
-    error: value.error || (cloud?.status === 'error' && (!value.exercises || value.downloaded < value.total)),
-    retry: db ? () => { void db.cloud.sync({ purpose: 'pull', wait: true }).catch(() => {}); } : undefined,
+    error: value.error || (cloudError && (!value.exercises || value.downloaded < value.total)),
+    retry: repository ? () => { void db.cloud.sync({ purpose: 'pull', wait: true }).catch(() => {}); } : undefined,
   } }}>
     {children}
   </context.Provider>;

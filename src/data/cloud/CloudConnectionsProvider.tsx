@@ -1,3 +1,4 @@
+import { FitnessProgramerProvider } from '../../exercises/FitnessProgramerProvider';
 import { UserAvatarSources } from './user-avatar-sources';
 import { UserAvatarRepository } from './user-avatar';
 import { resolveContactNames } from './contact-presentation';
@@ -491,7 +492,9 @@ export function CloudConnectionsProvider({
     refresh, retrySync, loadAvatar, avatarUrls, userAvatarSources, avatarLoadRevision]);
 
   return <Context.Provider value={value}>
-    <SyncNotificationBudgetContext.Provider value={notificationBudget}>{children}</SyncNotificationBudgetContext.Provider>
+    <SyncNotificationBudgetContext.Provider value={notificationBudget}>
+      <FitnessProgramerProvider db={db} cloudError={status === 'error'}>{children}</FitnessProgramerProvider>
+    </SyncNotificationBudgetContext.Provider>
   </Context.Provider>;
 }
 

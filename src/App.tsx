@@ -1,4 +1,3 @@
-import { FitnessProgramerProvider } from './exercises/FitnessProgramerProvider';
 import { parseNotificationStartParam } from '../shared/telegram-notification-link';
 import { DiscussionsProvider } from './discussions/DiscussionsProvider';
 import { DiscussionsPage } from './discussions/DiscussionsPage';
@@ -527,7 +526,6 @@ export function App() {
       ) : (
       <UserProfilePublicationProvider>
       <PublicCategoryArtworkProvider>
-      <FitnessProgramerProvider>
       <ClientWorkoutProvider enabled={state.activeRole === 'client'}>
       <PublicExerciseMediaPrefetch />
       <WorkedMuscleAssetsPrefetch />
@@ -630,7 +628,6 @@ export function App() {
         </AssignedProgramsProvider>
       </ClientCoachProvider>
       </ClientWorkoutProvider>
-      </FitnessProgramerProvider>
       </PublicCategoryArtworkProvider>
       </UserProfilePublicationProvider>
       )}

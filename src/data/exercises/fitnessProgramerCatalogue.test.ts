@@ -20,6 +20,10 @@ const row: FitnessProgramerExerciseRow = {
     how_to: 'Press the bar.', muscles: { target: ['Pectoralis Major, Sternal'], synergists: ['Triceps'] } },
 };
 
+// Plain Dexie fixtures use physical IndexedDB keys. The Cloud Addon strips @ in the app.
+const indexedDbStores = (stores: typeof CLOUD_DATABASE_STORES_V17) =>
+  Object.fromEntries(Object.entries(stores).map(([name, schema]) => [name, schema?.replace(/^@/, '') ?? null]));
+
 describe('FitnessProgramer client catalogue', () => {
   it('preserves category and equipment choices and resolves the stable media reference', () => {
     const exercise = projectFitnessProgramerExercise(row);
@@ -36,12 +40,12 @@ describe('FitnessProgramer client catalogue', () => {
   it('adds Base 2 without replacing existing stores and reads only persisted GIF bytes', async () => {
     const name = 'fitnessprogramer-' + crypto.randomUUID();
     const previous = new Dexie(name);
-    previous.version(17).stores(CLOUD_DATABASE_STORES_V17);
+    previous.version(17).stores(indexedDbStores(CLOUD_DATABASE_STORES_V17));
     const existing = await previous.table('trainingPlans').add({ id: 'existing', name: 'Existing' });
     previous.close();
     const database = new Dexie(name);
-    database.version(17).stores(CLOUD_DATABASE_STORES_V17);
-    database.version(18).stores({ ...CLOUD_DATABASE_STORES_V18, publicFitnessProgramerGifs: 'id,_hasBlobRefs' });
+    database.version(17).stores(indexedDbStores(CLOUD_DATABASE_STORES_V17));
+    database.version(18).stores({ ...indexedDbStores(CLOUD_DATABASE_STORES_V18), publicFitnessProgramerGifs: 'id,_hasBlobRefs' });
     await database.open();
     try {
       expect((await database.table('trainingPlans').get(existing)).name).toBe('Existing');
