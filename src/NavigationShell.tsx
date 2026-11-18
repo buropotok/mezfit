@@ -107,6 +107,8 @@ interface NavigationItem {
 
 const NavigationLevelContext = createContext<NavigationLevel>(1);
 const NavigationBackTransitionContext = createContext<((transition: () => void) => void) | null>(null);
+type NavigationCalendarControls = { opened: boolean; toggle: () => void };
+const NavigationCalendarContext = createContext<NavigationCalendarControls | null>(null);
 const NavigationFloatingActionContext = createContext<Dispatch<SetStateAction<RegisteredFloatingAction | null>> | null>(null);
 const HISTORY_TOKEN_KEY = '__mezfitNavigationToken';
 
@@ -149,6 +151,11 @@ const clientItems: NavigationItem[] = [...clientPrimaryItems, ...clientSecondary
 
 export function useNavigationLevel(): NavigationLevel {
   return useContext(NavigationLevelContext);
+}
+
+/** Inline calendar actions delegate to the same owner as the navbar calendar button. */
+export function useNavigationCalendar(): NavigationCalendarControls | null {
+  return useContext(NavigationCalendarContext);
 }
 
 export function useNavigationBackTransition(): (transition: () => void) => void {
@@ -399,6 +406,12 @@ export function NavigationShell({
     return () => window.clearTimeout(timer);
   }, [avatarFlight?.id, avatarTarget, cancelAvatarFlight]);
 
+  const toggleCalendar = useCallback(() => {
+    if (!calendarOpen) context?.onCalendarOpen?.();
+    setCalendarOpen(!calendarOpen);
+  }, [calendarOpen, context?.onCalendarOpen]);
+  const calendarControls = useMemo(() => ({ opened: calendarOpen, toggle: toggleCalendar }),
+    [calendarOpen, toggleCalendar]);
   const calendarValue = context?.calendar?.value ?? selectedDate;
   const onCalendarDateChange = context?.calendar?.onChange ?? setSelectedDate;
   const calendarDayStatuses = context?.calendar?.dayStatuses;
@@ -633,6 +646,7 @@ export function NavigationShell({
     <FloatingActionButtonGlassProvider preset={glassPreset} optics={glassOptics}>
     <NavigationBackTransitionContext.Provider value={requestBackTransition}>
     <NavigationFloatingActionContext.Provider value={setRegisteredFloatingAction}>
+    <NavigationCalendarContext.Provider value={calendarControls}>
       <NavigationLevelContext.Provider value={level}>
       <AvatarProfileNavigationContext.Provider value={onAvatarProfileNavigate ?? null}>
       <DiscussionAvatarFlightContext.Provider value={avatarFlightController}>
@@ -653,10 +667,7 @@ export function NavigationShell({
             onIdentityClick={context?.onIdentityClick ?? (activeRole === 'client' && identity.avatar && !context?.avatarTransitionKey ? () => chooseDestination('profile') : undefined)}
             onBack={requestBack}
             onMenu={() => setMenuOpen(true)}
-            onCalendar={() => {
-              if (!calendarOpen) context?.onCalendarOpen?.();
-              setCalendarOpen(!calendarOpen);
-            }}
+            onCalendar={toggleCalendar}
             calendarOpen={calendarOpen}
             renderMenuControl={renderMenuControl}
             rightControlRef={menuOriginRef}
@@ -734,6 +745,7 @@ export function NavigationShell({
       </DiscussionAvatarFlightContext.Provider>
       </AvatarProfileNavigationContext.Provider>
       </NavigationLevelContext.Provider>
+    </NavigationCalendarContext.Provider>
     </NavigationFloatingActionContext.Provider>
     </NavigationBackTransitionContext.Provider>
     </FloatingActionButtonGlassProvider>
