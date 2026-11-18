@@ -9,7 +9,7 @@ const CANCEL_DISTANCE = 100;
 
 type Gesture = { id: number; x: number; y: number; timer: number; held: boolean; started: boolean; locked: boolean; touchId?: number };
 
-/** One local pointer owner for both chat recorders, including late permission grants. */
+/** One gesture owner for both chat recorders; native touch survives WebView pointer cancellation. */
 export function useRecordingGesture(options: {
   start: () => Promise<boolean>;
   finish: (mode: RecordingFinish) => void;
