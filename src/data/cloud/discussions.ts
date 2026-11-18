@@ -9,9 +9,10 @@ import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
 import { discussionMediaTextId, isDiscussionMediaDraft, isDiscussionMediaType, type DiscussionMediaDraft } from './discussion-media';
 import { directMediaSizeLimit, directMediaUrl, type UploadedMedia } from '../../media/directMediaUpload';
+import { deletedDiscussionIds, storeDiscussionDeletion, type DiscussionDeletionTables } from './discussion-deletion';
 import type { MezfitCloudDatabase } from './database';
 export type DiscussionDatabase = Pick<MezfitCloudDatabase,
-  'discussionThreads' | 'discussionMessages' | 'discussionReadStates' | 'realms' | 'members' | 'cloud'> & {
+  'discussionThreads' | 'discussionMessages' | 'discussionReadStates' | 'realms' | 'members' | 'cloud'> & Partial<DiscussionDeletionTables> & {
   messageAttachments?: MezfitCloudDatabase['messageAttachments'];
   /** Only the callback-based transaction capability is needed, not every app table on its context. */
   transaction<T>(mode: 'r' | 'rw', tables: readonly string[], task: () => Promise<T>): Promise<T>;
@@ -25,7 +26,11 @@ export interface DiscussionMessageInput {
   requireUnsentDraft?: true;
   draftMedia?: DiscussionMediaDraft;
 }
-export interface DiscussionPage { messages: DiscussionMessageView[]; before: DiscussionCursor | null }
+export interface DiscussionPage {
+  messages: DiscussionMessageView[];
+  before: DiscussionCursor | null;
+  deletion?: 'actor' | 'peer';
+}
 export interface DiscussionFeedRow {
   thread: DiscussionThread;
   latest: DiscussionMessageView | null;
@@ -54,8 +59,8 @@ function fail(code: string): never { throw new Error(code); }
 const tables = ['discussionThreads', 'discussionMessages', 'discussionReadStates', 'realms', 'members'];
 
 /** A Telegram target is a navigation hint. Resolve it within the current account's approved discussion scope. */
-export async function readDiscussionNotificationThread(db: DiscussionDatabase, actor: string, messageId: string,
-  allowedRealms: ReadonlySet<string>): Promise<DiscussionThread | null> {
+async function resolveDiscussionNotificationThread(db: DiscussionDatabase, actor: string, messageId: string,
+  allowedRealms: ReadonlySet<string>): Promise<DiscussionThread | 'deleted' | null> {
   const message = await db.discussionMessages.get(messageId);
   if (!isDiscussionMessage(message) || message.draftForRealmId || !allowedRealms.has(message.realmId)) return null;
   const thread = await db.discussionThreads.get(message.threadId);
@@ -63,7 +68,13 @@ export async function readDiscussionNotificationThread(db: DiscussionDatabase, a
   const repository = new DiscussionRepository(db, actor, thread);
   // Navigation only needs the authorized header and exact message identity.
   // Full message/quote/media hydration belongs to the opened DiscussionSheet.
-  return repository.notificationThread(thread.id, messageId);
+  return repository.notificationTarget(thread.id, messageId);
+}
+
+export async function readDiscussionNotificationThread(db: DiscussionDatabase, actor: string, messageId: string,
+  allowedRealms: ReadonlySet<string>): Promise<DiscussionThread | null> {
+  const target = await resolveDiscussionNotificationThread(db, actor, messageId, allowedRealms);
+  return target === 'deleted' ? null : target;
 }
 
 /**
@@ -73,12 +84,15 @@ export async function readDiscussionNotificationThread(db: DiscussionDatabase, a
  */
 export function observeDiscussionNotificationThread(
   db: DiscussionDatabase, actor: string, messageId: string, allowedRealms: ReadonlySet<string>,
-  next: (thread: DiscussionThread | null) => void, error: (reason: unknown) => void,
+  next: (thread: DiscussionThread | null) => void, error: (reason: unknown) => void, onDeleted?: () => void,
 ): { unsubscribe(): void } {
-  return liveQuery(() => readDiscussionNotificationThread(db, actor, messageId, allowedRealms).catch((reason: unknown) => {
+  return liveQuery(() => resolveDiscussionNotificationThread(db, actor, messageId, allowedRealms).catch((reason: unknown) => {
     if (reason instanceof Error && reason.message === 'DISCUSSION_ACCESS_DENIED') return null;
     throw reason;
-  })).subscribe({ next, error });
+  })).subscribe({ next: target => {
+    if (target === 'deleted') onDeleted?.();
+    else next(target);
+  }, error });
 }
 
 /** Account lifecycle owns db. No network, PLAN mutation or push in normal operations. */
@@ -95,10 +109,10 @@ export class DiscussionRepository {
     this.scope = { realmId: scope.realmId, coachClientId: scope.coachClientId };
     this.sync = new DiscussionSync(db);
   }
-  private async access(): Promise<void> {
+  private async access(): Promise<string | null> {
     if (this.scope.coachClientId === null) {
       if (this.scope.realmId !== this.actorUserId) fail('DISCUSSION_ACCESS_DENIED');
-      return;
+      return null;
     }
     const [realm, members] = await Promise.all([this.db.realms.get(this.scope.realmId),
       this.db.members.where('realmId').equals(this.scope.realmId).toArray()]);
@@ -106,14 +120,48 @@ export class DiscussionRepository {
     const client = members.find(member => member.roles?.includes('client'))?.userId;
     if (!coach || !client || (this.actorUserId !== coach && this.actorUserId !== client)
       || !await isApprovedAssignedPair(realm, members, coach, client)) fail('DISCUSSION_ACCESS_DENIED');
+    return this.actorUserId === coach ? client : coach;
   }
   get supportsMedia(): boolean { return Boolean(this.db.messageAttachments); }
-  private read<T>(task: () => Promise<T>, withMedia = false): Promise<T> {
-    return this.db.transaction('r', withMedia && this.supportsMedia ? [...tables, 'messageAttachments'] : tables, async () => { await this.access(); return task(); });
+  private transactionTables(withMedia: boolean, withFlexDefinition = false) {
+    return [...tables, ...(withMedia ? ['messageAttachments'] : []),
+      ...(this.db.flexValues ? ['flexValues'] : []), ...(withFlexDefinition && this.db.flexAttributes ? ['flexAttributes'] : [])];
   }
-  private async write<T>(task: () => Promise<T>, withMedia = false): Promise<T> {
-    const result = await this.db.transaction('rw', withMedia && this.supportsMedia ? [...tables, 'messageAttachments'] : tables, async () => { await this.access(); return task(); });
+  private read<T>(task: (peer: string | null) => Promise<T>, withMedia = false): Promise<T> {
+    return this.db.transaction('r', this.transactionTables(withMedia && this.supportsMedia),
+      async () => task(await this.access()));
+  }
+  private async write<T>(task: (peer: string | null) => Promise<T>, withMedia = false, withFlexDefinition = false): Promise<T> {
+    const result = await this.db.transaction('rw', this.transactionTables(withMedia && this.supportsMedia, withFlexDefinition),
+      async () => task(await this.access()));
     this.sync.changed(); return result;
+  }
+  private deletedIds(threads: readonly DiscussionThread[], actor = this.actorUserId): Promise<Set<string>> {
+    return this.db.flexValues
+      ? deletedDiscussionIds({ flexValues: this.db.flexValues }, threads, actor) : Dexie.Promise.resolve(new Set<string>());
+  }
+  private deletion(thread: DiscussionThread, peer: string | null): Promise<DiscussionPage['deletion']> {
+    return Dexie.Promise.all([
+      this.deletedIds([thread]), peer ? this.deletedIds([thread], peer) : Dexie.Promise.resolve(new Set<string>()),
+    ]).then(([own, other]) => own.has(thread.id) ? 'actor' : other.has(thread.id) ? 'peer' : undefined);
+  }
+  private writableThread(threadId: string, peer: string | null): Promise<DiscussionThread> {
+    return this.thread(threadId).then(thread => {
+      if (thread.anchor.kind !== 'free' || !this.db.flexValues) return thread;
+      return this.deletion(thread, peer).then(deletion => {
+        if (deletion) fail('DISCUSSION_READ_ONLY');
+        return thread;
+      });
+    });
+  }
+  /** This operation only adds the actor’s marker. Conversation records remain intact. */
+  async deleteFreeDiscussion(threadId: string): Promise<void> {
+    return this.write(async () => {
+      const thread = await this.thread(threadId);
+      const { flexAttributes, flexValues } = this.db;
+      if (!flexAttributes || !flexValues) fail('DISCUSSION_DELETION_NOT_ENABLED');
+      await storeDiscussionDeletion({ flexAttributes, flexValues }, thread, this.actorUserId);
+    }, false, true);
   }
   private thread(id: string): Promise<DiscussionThread> {
     if (!discussionId(id)) fail('INVALID_DISCUSSION_ID');
@@ -123,7 +171,11 @@ export class DiscussionRepository {
     });
   }
   getThread(id: string): Promise<DiscussionThread> {
-    return this.read(() => this.thread(id));
+    return this.read(async () => {
+      const thread = await this.thread(id);
+      if ((await this.deletedIds([thread])).has(id)) fail('DISCUSSION_NOT_FOUND');
+      return thread;
+    });
   }
   /** Header-only identity query: receipt reads must not hydrate activity/messages. */
   private storedThreads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
@@ -133,8 +185,11 @@ export class DiscussionRepository {
   }
   /** Only the canonical entry aggregates legacy rows; stored provenance never changes. */
   private conversationThreads(threadId: string): Promise<DiscussionThread[]> {
-    return this.thread(threadId).then(thread => threadId.startsWith('entity-discussion:')
-      ? this.storedThreads(thread.anchor) : [thread]);
+    return this.thread(threadId).then(thread => {
+      if (threadId.startsWith('entity-discussion:')) return this.storedThreads(thread.anchor);
+      if (thread.anchor.kind !== 'free' || !this.db.flexValues) return [thread];
+      return this.deletedIds([thread]).then(deleted => deleted.has(thread.id) ? [] : [thread]);
+    });
   }
   async ensureEntityThread(anchor: DiscussionAnchor, entityName: string): Promise<DiscussionThread> {
     const id = await entityDiscussionId(this.scope, anchor);
@@ -198,6 +253,7 @@ export class DiscussionRepository {
           || existing.anchorKey !== row.anchorKey || existing.createdAt !== row.createdAt
           || existing.derivedTitleSnapshot !== row.derivedTitleSnapshot) fail('DISCUSSION_ID_REUSED');
         assertDiscussionThread(existing);
+        if ((await this.deletedIds([existing])).has(existing.id)) fail('DISCUSSION_NOT_FOUND');
         return existing;
       }
       await this.db.discussionThreads.add(row);
@@ -205,7 +261,9 @@ export class DiscussionRepository {
     });
   }
   private async threads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
-    const valid = await this.storedThreads(anchor);
+    const stored = await this.storedThreads(anchor);
+    const deleted = anchor.kind === 'free' && this.db.flexValues ? await this.deletedIds(stored) : null;
+    const valid = deleted ? stored.filter(row => !deleted.has(row.id)) : stored;
     // Activity hints can lag concurrent sends; derive the displayed timestamp from local messages.
     const projected = await Promise.all(valid.map(async row => {
       const latest = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
@@ -222,7 +280,7 @@ export class DiscussionRepository {
   /** Read-only metadata projection. Canonical conversations absorb their legacy headers
    * exactly as page()/markRead() do; no message or header is copied or created. */
   async feed(attachments?: Pick<MezfitCloudDatabase, 'messageAttachments'>, includeLatest = true): Promise<DiscussionFeedRow[]> {
-    return this.db.transaction('r', [...tables, ...(attachments ? ['messageAttachments'] : [])], async () => {
+    return this.db.transaction('r', this.transactionTables(Boolean(attachments)), async () => {
       await this.access();
       const candidates = await this.db.discussionThreads.where('realmId').equals(this.scope.realmId).toArray();
       const valid = candidates.filter(row => {
@@ -233,7 +291,10 @@ export class DiscussionRepository {
       for (const row of [...valid].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))) {
         if (!canonical.has(row.anchorKey) || row.id.startsWith('entity-discussion:')) canonical.set(row.anchorKey, row);
       }
-      const headers = [...canonical.values()];
+      const canonicalHeaders = [...canonical.values()];
+      const deleted = this.db.flexValues && canonicalHeaders.some(thread => thread.anchor.kind === 'free')
+        ? await this.deletedIds(canonicalHeaders) : null;
+      const headers = deleted ? canonicalHeaders.filter(row => !deleted.has(row.id)) : canonicalHeaders;
       const attachedThreads = new Set<string>();
       if (attachments) {
         const rows = (await attachments.messageAttachments.where('realmId').equals(this.scope.realmId).toArray())
@@ -309,11 +370,12 @@ export class DiscussionRepository {
     return discussionMessageView(row, sameConversation ? { ...reply, threadId: row.threadId } : undefined);
   }
   /** Lightweight, authorization-checked navigation lookup, without quote or media projection. */
-  async notificationThread(threadId: string, messageId: string): Promise<DiscussionThread | null> {
+  async notificationTarget(threadId: string, messageId: string): Promise<DiscussionThread | 'deleted' | null> {
     return this.read(async () => {
       const thread = await this.thread(threadId);
       const message = await this.db.discussionMessages.get(messageId);
-      return this.visible(message, thread.id) ? thread : null;
+      if (!this.visible(message, thread.id)) return null;
+      return (await this.deletedIds([thread])).has(thread.id) ? 'deleted' : thread;
     });
   }
   async getMessage(threadId: string, id: string): Promise<DiscussionMessageView> {
@@ -330,8 +392,8 @@ export class DiscussionRepository {
         && (!discussionId(input.replyToMessageId) || !isDiscussionVideoPosition(input.replyVideoPosition)))
       || typeof input.text !== 'string' || input.text.length > 20000 || !discussionInstant(input.createdAt)) fail('INVALID_DISCUSSION_DRAFT');
     if (input.draftMedia !== undefined && (!this.supportsMedia || !isDiscussionMediaDraft(input.draftMedia))) fail('INVALID_DISCUSSION_ATTACHMENT');
-    return this.write(async () => {
-      await this.thread(input.threadId);
+    return this.write(async peer => {
+      await this.writableThread(input.threadId, peer);
       if (input.replyToMessageId) await this.message(input.threadId, input.replyToMessageId);
       const previous = await this.db.discussionMessages.get(input.id);
       if (previous && (!isDiscussionMessage(previous) || previous.realmId !== this.actorUserId
@@ -355,8 +417,9 @@ export class DiscussionRepository {
   /** Omit id to recover the newest private draft after closing/restarting the UI. */
   async getDraft(threadId: string, id?: string, scope: 'any' | 'composer' = 'any'): Promise<DiscussionMessageInput | null> {
     if (id !== undefined && !discussionId(id)) fail('INVALID_DISCUSSION_ID');
-    return this.read(async () => {
-      await this.thread(threadId);
+    return this.read(async peer => {
+      const thread = await this.thread(threadId);
+      if (thread.anchor.kind === 'free' && this.db.flexValues && await this.deletion(thread, peer)) return null;
       const row = id !== undefined ? await this.db.discussionMessages.get(id)
         : (await this.db.discussionMessages.where('[realmId+threadId]').equals([this.actorUserId, threadId])
           .filter(candidate => isDiscussionMessage(candidate) && candidate.owner === this.actorUserId
@@ -372,8 +435,9 @@ export class DiscussionRepository {
   }
   /** Recover every private media draft, independently of the current text composer. */
   async listPendingMediaDrafts(threadId: string): Promise<DiscussionMessageInput[]> {
-    return this.read(async () => {
-      await this.thread(threadId);
+    return this.read(async peer => {
+      const thread = await this.thread(threadId);
+      if (thread.anchor.kind === 'free' && this.db.flexValues && await this.deletion(thread, peer)) return [];
       const rows = await this.db.discussionMessages.where('[realmId+threadId]')
         .equals([this.actorUserId, threadId])
         .filter(row => isDiscussionMessage(row) && row.owner === this.actorUserId
@@ -390,8 +454,8 @@ export class DiscussionRepository {
     });
   }
   async updateDraftMedia(threadId: string, id: string, key: string, action: 'failed' | 'clear'): Promise<void> {
-    return this.write(async () => {
-      await this.thread(threadId);
+    return this.write(async peer => {
+      await this.writableThread(threadId, peer);
       await this.db.discussionMessages.where({ id, realmId: this.actorUserId, owner: this.actorUserId,
         threadId, draftForRealmId: this.scope.realmId }).filter(row => row.draftMedia?.storageKey === key)
         .modify(row => {
@@ -424,8 +488,8 @@ export class DiscussionRepository {
       || uploaded.key !== media.storageKey || uploaded.contentType !== media.mimeType
       || uploaded.sizeBytes !== media.sizeBytes)) fail('INVALID_DISCUSSION_ATTACHMENT');
     if (typeof input.text !== 'string' || (!input.text.trim() && !media) || input.text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
-    return this.write(async () => {
-      const thread = await this.thread(input.threadId);
+    return this.write(async peer => {
+      const thread = await this.writableThread(input.threadId, peer);
       const existing = await this.db.discussionMessages.get(input.id);
       if (existing && !existing.draftForRealmId) {
         if (!this.visible(existing, thread.id) || existing.authorUserId !== this.actorUserId
@@ -505,7 +569,8 @@ export class DiscussionRepository {
   }
   async edit(threadId: string, id: string, text: string): Promise<void> {
     if (typeof text !== 'string' || !text.trim() || text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
-    return this.write(async () => {
+    return this.write(async peer => {
+      await this.writableThread(threadId, peer);
       const row = await this.message(threadId, id), thread = await this.thread(row.threadId);
       if (row.deletedAt) fail('DISCUSSION_MESSAGE_DELETED');
       const patch = { text, editedAt: new Date().toISOString() };
@@ -517,7 +582,8 @@ export class DiscussionRepository {
     });
   }
   async remove(threadId: string, id: string): Promise<void> {
-    return this.write(async () => {
+    return this.write(async peer => {
+      await this.writableThread(threadId, peer);
       const row = await this.message(threadId, id), thread = await this.thread(row.threadId);
       if (row.owner !== this.actorUserId || row.authorUserId !== this.actorUserId) fail('DISCUSSION_ACCESS_DENIED');
       if (row.deletedAt) return;
@@ -533,39 +599,43 @@ export class DiscussionRepository {
     if (!discussionId(threadId)) fail('INVALID_DISCUSSION_ID');
     // Keep the complete page/quote read in Dexie's promise zone. Async per-row
     // projections can outlive the last IndexedDB request under liveQuery.
-    return this.read(() => this.db.discussionThreads.get(threadId).then(root => {
+    return this.read<DiscussionPage>(peer => this.db.discussionThreads.get(threadId).then(root => {
       if (!root || root.realmId !== this.scope.realmId || root.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
       assertDiscussionThread(root);
-      const headers = threadId.startsWith('entity-discussion:')
-        ? this.db.discussionThreads.where('[realmId+anchorKey]').equals([this.scope.realmId, root.anchorKey]).toArray()
-        : Dexie.Promise.resolve([root]);
-      return headers.then(candidates => {
-        const threads = candidates.filter(thread => {
-          try { assertDiscussionThread(thread); return thread.realmId === root.realmId
-            && thread.coachClientId === root.coachClientId && thread.anchorKey === root.anchorKey; }
-          catch { return false; }
-        });
-        return Dexie.Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-          .between([this.scope.realmId, thread.id, '', ''],
-            before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
-              : [this.scope.realmId, thread.id, []], true, false)
-          .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray())).then(pages => {
-          const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
-          const more = rows.length > limit; rows.splice(limit);
-          const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
-          const replyIds = [...new Set(rows.flatMap(row => row.replyToMessageId ? [row.replyToMessageId] : []))];
-          return this.db.discussionMessages.bulkGet(replyIds).then(originals => {
-            const threadIds = new Set(threads.map(thread => thread.id));
-            const quotes = new Map(originals.filter((row): row is DiscussionMessage => isDiscussionMessage(row)
-              && this.visible(row, row.threadId) && threadIds.has(row.threadId)).map(row => [row.id, row]));
-            const messages = rows.reverse().map(row => {
-              const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
-              return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
+      const project = (deletion?: DiscussionPage['deletion']): DiscussionPage | Promise<DiscussionPage> => {
+        if (deletion === 'actor') return { messages: [], before: null, deletion };
+        const headers = threadId.startsWith('entity-discussion:')
+          ? this.db.discussionThreads.where('[realmId+anchorKey]').equals([this.scope.realmId, root.anchorKey]).toArray()
+          : Dexie.Promise.resolve([root]);
+        return headers.then(candidates => {
+          const threads = candidates.filter(thread => {
+            try { assertDiscussionThread(thread); return thread.realmId === root.realmId
+              && thread.coachClientId === root.coachClientId && thread.anchorKey === root.anchorKey; }
+            catch { return false; }
+          });
+          return Dexie.Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+            .between([this.scope.realmId, thread.id, '', ''],
+              before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
+                : [this.scope.realmId, thread.id, []], true, false)
+            .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray())).then(pages => {
+            const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
+            const more = rows.length > limit; rows.splice(limit);
+            const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
+            const replyIds = [...new Set(rows.flatMap(row => row.replyToMessageId ? [row.replyToMessageId] : []))];
+            return this.db.discussionMessages.bulkGet(replyIds).then(originals => {
+              const threadIds = new Set(threads.map(thread => thread.id));
+              const quotes = new Map(originals.filter((row): row is DiscussionMessage => isDiscussionMessage(row)
+                && this.visible(row, row.threadId) && threadIds.has(row.threadId)).map(row => [row.id, row]));
+              const messages = rows.reverse().map(row => {
+                const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
+                return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
+              });
+              return this.withAttachments(messages, rows).then(projected => ({ messages: projected, before: cursor, ...(deletion ? { deletion } : {}) }));
             });
-            return this.withAttachments(messages, rows).then(projected => ({ messages: projected, before: cursor }));
           });
         });
-      });
+      };
+      return root.anchor.kind === 'free' && this.db.flexValues ? this.deletion(root, peer).then(project) : project();
     }), true);
   }
 

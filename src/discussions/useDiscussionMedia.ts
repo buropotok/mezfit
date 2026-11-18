@@ -42,7 +42,9 @@ function describeSendError(reason: unknown, savingFile: boolean, aborted: boolea
   return 'Не удалось сохранить сообщение. Повторите отправку (Код 11)';
 }
 
-export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>) {
+export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>, enabled = true) {
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
   const [selection, setSelection] = useState<Selection>();
   const selectionRef = useRef<Selection | undefined>(selection);
   selectionRef.current = selection;
@@ -69,9 +71,25 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     active.current?.abort(); active.current = null; resume.current = null;
     for (const entry of pendingRef.current) if (entry.preview) URL.revokeObjectURL(entry.preview);
   }, []);
+  useEffect(() => {
+    if (enabled) return;
+    resume.current = null;
+    const controller = active.current;
+    active.current = null;
+    controller?.abort();
+    publishing.current = false;
+    for (const entry of pendingRef.current) if (entry.preview) URL.revokeObjectURL(entry.preview);
+    pendingRef.current = [];
+    setPendingMedia([]);
+    setSelection(undefined);
+    setOutgoing(undefined);
+    setPublished(undefined);
+    setError(undefined);
+    setPhase('idle');
+  }, [enabled]);
   // Recover private, unsent media independently of the editable text composer.
   useEffect(() => {
-    if (!repository.listPendingMediaDrafts) return;
+    if (!enabled || !repository.listPendingMediaDrafts) return;
     let alive = true;
     void repository.listPendingMediaDrafts(draft.threadId).then(async commands => {
       for (const command of commands) {
@@ -89,7 +107,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       }
     }).catch(() => undefined);
     return () => { alive = false; };
-  }, [repository, repository.actorUserId, draft.threadId]);
+  }, [repository, repository.actorUserId, draft.threadId, enabled]);
   useEffect(() => {
     if (!selection) { setPreview(undefined); return; }
     const url = URL.createObjectURL(selection.file);
@@ -99,7 +117,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   const savedCapture = draft.media;
   const savedMessage = draft.mediaMessage;
   useEffect(() => {
-    if (selection || !savedCapture) return;
+    if (!enabled || selection || !savedCapture) return;
     let current = true;
     const { storageKey, mimeType, sizeBytes, fileName } = savedCapture;
     void readDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }).then(blob => {
@@ -113,7 +131,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       }
     });
     return () => { current = false; };
-  }, [repository.actorUserId, savedCapture, savedMessage, selection]);
+  }, [repository.actorUserId, savedCapture, savedMessage, selection, enabled]);
   useEffect(() => {
     const retry = () => {
       if (document.visibilityState === 'hidden' || navigator.onLine === false) {
@@ -138,7 +156,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     sendToThread?: string;
     onSelected?: () => boolean;
   } = {}) {
-    if (active.current) return false;
+    if (!enabledRef.current || active.current) return false;
     resume.current = null;
     const controller = new AbortController();
     active.current = controller;
@@ -177,7 +195,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   }
 
   function chooseVoice(clip: VoiceRecording, immediately = false) {
-    if (active.current || selection || draft.media) return;
+    if (!enabledRef.current || active.current || selection || draft.media) return;
     setError(undefined);
     try {
       const next = prepareDiscussionVoice(clip);
@@ -191,7 +209,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   }
 
   function sendVideoNote(clip: VideoNoteRecording, previewOnly = false) {
-    if (active.current || selection || draft.media) return;
+    if (!enabledRef.current || active.current || selection || draft.media) return;
     setError(undefined);
     try {
       const next = prepareDiscussionVideoNote(clip);
@@ -205,7 +223,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   }
 
   async function send(selected = selection, allowResume = true) {
-    if (!selected || active.current) return;
+    if (!enabledRef.current || !selected || active.current) return;
     resume.current = null;
     const controller = new AbortController();
     active.current = controller;
@@ -224,7 +242,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       savingFile = false;
       // Finish the private draft even if the sheet closes while IndexedDB is writing.
       command = await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' }, selected.separate);
-      if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
+      if (!enabledRef.current || controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       if (!command) {
         if (active.current === controller) { setSelection(undefined); setOutgoing(undefined); setPhase('idle'); }
         return;
@@ -232,7 +250,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       const result = await uploadMirroredDiscussionMedia(selected.file, {
         accountId: repository.actorUserId, signal: controller.signal, retryKey: selected.metadata.storageKey,
       });
-      if (controller.signal.aborted) throw new MediaUploadError('CANCELLED');
+      if (!enabledRef.current || controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
       setPhase('publishing');
       const sent = await repository.send(command, result);
@@ -306,7 +324,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
 
   function retryPending(id: string) {
     const entry = pendingRef.current.find(row => row.command.id === id);
-    if (!entry?.selected || active.current || selectionRef.current) return;
+    if (!enabledRef.current || !entry?.selected || active.current || selectionRef.current) return;
     updatePending(pendingRef.current.filter(row => row.command.id !== id));
     if (entry.preview) URL.revokeObjectURL(entry.preview);
     setSelection(entry.selected);

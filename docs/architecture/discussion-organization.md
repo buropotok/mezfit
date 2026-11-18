@@ -1,8 +1,4 @@
-# PR-2: organization of discussion threads through Flex EAV
-
-Status: domain data contract for later inbox/tab UI integration. This PR does not
-render categories, change discussion threads/messages/anchors, or install a Dexie
-Cloud schema/permission update.
+# Discussion organization and chat deletion
 
 ## Authoritative boundaries
 
@@ -43,8 +39,8 @@ the category name. The bounded string value is a strictly decoded JSON record:
 ```
 
 Names are NFC-normalized, trimmed, non-empty, limited to 48 Unicode code points,
-and cannot contain control characters or equal any of the five built-in Russian
-tab labels (case-insensitive) or `+`. Duplicate personal category names
+and cannot contain control characters or equal a built-in Russian tab label, `Без категории`
+(case-insensitive), or `+`. Duplicate personal category names
 (case-insensitive) are refused locally. Concurrent offline devices can create
 duplicates: reads choose a stable, key-sorted winner and report diagnostics.
 When a category definition is hydrated but its value is still pending,
@@ -56,133 +52,90 @@ integer; ties sort by name and category ID. Renaming and reordering update only
 the value field. Deletion sets that value to `null` and leaves the add-only
 definition intact.
 
-## Per-thread assignments and confidentiality
+## Shared thread selection
 
-The actor's own assignment for a shared thread uses:
+Each thread uses the Flex target
+`{ entityType: 'discussionThread', entityId: thread.id, realmId: thread.realmId }`
+and string key `discussion_category_selection`. The repository checks the
+persisted thread and current approved relationship membership before allowing
+read or mutation. Personal threads are accessible within the actor's realm.
 
-```ts
-{ entityType: 'publishedUser', entityId: actorUserId, realmId: relationshipRealmId }
+The value is a bounded JSON object. For example:
+
+```json
+{ "v": 1, "base": "none", "coach": "82cf2c4b-b4e0-4758-8dda-3f9c80f566ee" }
 ```
 
-The *other participant's* assignment is read from the corresponding
-`publishedUser` target with `entityId: peerUserId`, but is **never written**
-through that target. The peer ID and actor relationship access are resolved
-only from locally verified `profileRelationships` /
-`isApprovedAssignedPair` membership, not arbitrary UI input. Each shared
-realm is separate, including different pairs for the same coach.
+The base is `training`, `nutrition`, `personal`, or `none`. Optional
+`coach` and `client` fields name opaque custom folder IDs. A personal thread
+uses the optional `personal` field instead. The shared value never contains a
+folder name or order.
 
-For a personal discussion (`coachClientId === null`), the same assignment
-key instead uses the actor's `user` target in their own personal realm.
-There is no peer and no derived peer tab.
+- Selecting a basic category or «Без категории» writes the base and clears both
+  custom links in one local transaction.
+- Selecting a custom folder updates the actor's own link and preserves the
+  other participant's custom link. Both participants can keep their own folders.
+- An actor's active custom link takes precedence in that actor's projection.
+  With only a peer link, the card appears in «Тренерские» or «Клиентские».
+- Removing a custom folder sets each matching thread to `none` and tombstones
+  the private definition in the same local transaction. This removes both
+  custom links on the affected threads. The messages and other folders stay.
+- The «Все чаты» tab contains all visible conversations. Unassigned free chats
+  and explicit `none` appear only there. Entity threads without any saved
+  selection retain their initial «Тренировки» placement.
+- Simultaneous offline changes to the same selection use the Addon's existing
+  single-value conflict semantics.
 
-Every assignment has its *own* Flex definition. The attribute key is
-`discussion_thread_<40 lower-case hex digits>`, 58 ASCII characters. It is
-the first 160 bits of SHA-256 of the UTF-8 JSON array
+Legacy `discussion_thread_<40 hex>` actor-scoped values remain readable
+until a canonical selection is written. A single legacy basic choice is the
+base for both sides. Conflicting legacy basic choices resolve to `none` with
+a diagnostic. Legacy custom links retain their original owner. A definition in
+a relationship realm without a value for one target is normal. A value that
+arrives before its definition still reports pending. Private folder definitions
+have exactly one expected target and retain their existing pending behavior.
 
-```text
-["mezfit/discussion-organization/thread/v1", realmId, thread.id]
-```
+## Diagnostics
 
-The domain tag and realm namespace prevent key reuse between features and
-pairs, while the 160-bit output avoids exposing potentially long thread IDs
-and provides ample collision resistance. The value is exactly one of
-`nutrition`, `personal`, or `custom:<canonical UUID v4>`. Only syntactically
-valid and *active own* custom IDs can be assigned by the typed repository.
-The local assignment write transaction checks current thread provenance, pair
-membership and category existence together, after computing its hash outside
-the Dexie transaction.
-`null` (or no value) means **no explicit assignment**. In particular,
-`personal` on a free thread is an explicit choice, not an absent value.
-`training`, `coach`, `client`, `+`, display labels and arbitrary JSON
-are rejected. Built-in tabs `Тренерские` / `Клиентские` are not persisted.
+The inbox shows each distinct code once beneath the full list. It omits Flex
+keys, category names and raw errors.
 
-Personal category names, order and definitions are never read from another
-actor's personal realm, published to a shared realm, or included in the peer
-projection. A shared assignment necessarily discloses a categorization code
-and, for custom categories, an opaque UUID. This is not an assertion that the
-UUID is cryptographically hidden.
+| Code | Condition |
+| --- | --- |
+| 31 | Organization observation failed |
+| 32 | Inbox row has no valid category projection |
+| 33 | Private category definition or value is pending |
+| 34 | Invalid private category Flex record |
+| 35 | Invalid private category payload |
+| 36 | Own legacy assignment is pending |
+| 37 | Invalid own legacy assignment |
+| 38 | Own assignment points to a missing or invalid custom folder |
+| 39 | Peer legacy assignment is pending |
+| 40 | Invalid peer legacy assignment |
+| 41 | Shared selection is pending |
+| 42 | Invalid shared selection |
+| 43 | Incompatible legacy basic choices |
+| 44 | Unknown organization diagnostic |
+| 45 | Duplicate private category name |
 
-## Read projection and precedence
+## Free chat deletion
 
-`classifyThreads(threads)` returns exactly one resolved category per distinct
-thread ID, preserving the underlying canonical thread, message, read-state and
-attachments. The repository validates stored thread provenance, realm, anchor
-and current local relationship membership before returning a classification.
+The discussion repository adds a boolean `true` marker in the approved
+relationship realm on the deleting actor's existing `publishedUser` Flex
+target. The key `discussion_deleted_<32 hex>` uses the UUID from the validated
+free thread ID. One actor's action never mutates the peer's marker. The local
+domain exposes no operation to unset this marker. The thread, messages,
+attachments and read cursors persist. Entity-linked discussions cannot be
+deleted.
 
-| Priority | Condition | Display for this actor |
-| --- | --- | --- |
-| 1 | Valid **own** explicit assignment | That own built-in or custom category |
-| 2 | No own assignment, valid explicit peer assignment | `Тренерские` if peer is coach; `Клиентские` if peer is client |
-| 3 | Neither | `Тренировки` for entity threads; `Личное` for free threads |
-| 4 | Personal realm | Own assignment or entity/free fallback; no peer tab |
+The actor's marker filters the feed, unread count, scoped lists, direct
+lookups and notification navigation. A live open actor page drops all messages
+and closes. The peer's page keeps its published history and replaces the
+composer with «Собеседник удалил чат». Peer reads and read receipts remain
+available. Send, edit, message removal and media draft mutation check the marker
+during their local write transaction. The open sheet also cancels active
+recording and upload work when the tombstone arrives.
 
-`clearThreadAssignment` writes `null`; returning an entity thread to
-`Тренировки` does not persist a fictitious `training` code. The peer's
-custom ID is checked for *syntax*, not against the peer's private categories:
-validity of a private peer category cannot be independently proved without
-disclosing forbidden personal data. Peer categorization is therefore a UI
-interpretation only. Own stale/nonexistent/deleted custom IDs are rejected on
-assignment and ignored with a diagnostic when read.
-
-Only validated structural access errors fail the classification read. Invalid,
-pending, missing or stale per-key Flex values produce a safe fallback and a
-diagnostic, not a missing discussion. The same holds for a missing Flex value
-or definition during Addon hydration. Prefix inspection also recognizes a
-value arriving before its definition by decoding the deterministic length-prefixed
-Flex attribute ID; it is marked pending until the definition arrives, and
-liveQuery re-evaluates the result. Existing
-`FlexAttributesRepository.getValues` continues to enforce its original
-strict behavior for other feature domains.
-
-The implementation uses a bounded number of verified relationship scans and grouped indexed
-Flex lookups for an inbox-sized batch, not one observer/lookup per thread.
-The fixed-width key namespaces permit `[realmId+attributeId]` prefix ranges,
-so the cleanup scan need not hydrate unrelated profile and avatar values.
-`observeCategories` and `observe` are liveQuery-based. The latter observes
-a supplied thread snapshot; the owning inbox supplies new snapshots when its
-thread list changes. No polling or network wait is introduced.
-
-## Category removal and partial synchronization
-
-The removal runs in one local IndexedDB transaction. It verifies the actor's
-category (including an existing tombstone for explicit retry), scans the actor's
-personal realm and authorized relationships, and clears matching own assignment
-values to `null`. It tombstones the category last. The transaction rolls back
-all local changes on error and prevents a concurrent local reassignment from
-interleaving with the scan or clears.
-
-A hydrated shared definition may belong to a thread that only the other
-participant categorized. When the peer value is present and the actor has no
-local value, that definition does not block removal. If no value is visible
-for either side, removal defers so it can be retried after hydration. A valid
-own value arriving before its definition can be cleared immediately. The
-operation never writes peer assignments, threads or messages.
-
-Dexie Cloud replicates in the background. Different devices can temporarily
-observe a late assignment after a tombstone. Own stale IDs fall back to the
-normal classification, and retrying removal can clean up these arrivals.
-No background migration, Worker task, second sync engine, or delete grant is involved.
-
-## Authorization and security limits
-
-The cloud `publishedUser` FLEX ACL grants both pair participants update of
-existing `flexValues.value`. The typed repository enforces that normal writes
-address the current actor; **cloud ACL cannot cryptographically prove the
-claimed author** or prevent a modified client from updating the other member's
-assignment value. Thus `Тренерские` / `Клиентские` are user-interface
-interpretations only, not an audit trail, authorization source or access
-control mechanism. Discussion access remains exclusively governed by current
-relationship/personal realm membership and existing cloud rules. No profile
-personal realms of peers are opened. No Cloud Apply, schema revision, ACL
-extension or new business table is required.
-
-## Tests and integration boundary
-
-`discussion-organization.test.ts` uses current v17 IndexedDB schema,
-fake-indexeddb and existing relationship fixtures. It covers key codecs,
-invalid payloads, personal categorization, independent Coach/Client views,
-cross-realm isolation, free/entity fallback, null semantics, pending metadata,
-deletion retries, liveQuery, and no peer-personal access. Existing tests are
-not rewritten. CI, not local execution, owns typecheck/test/build after PR.
-Future PRs integrate this repository into the category tabs and creation flow;
-this PR has no UI rendering, navigation or thread/anchor mutation.
+These are local business eligibility rules over synchronized Flex values. The
+existing Flex realm grants bound who can access the stored records. This
+feature adds no Dexie Cloud schema, ACL, Worker endpoint or separate sync
+protocol.

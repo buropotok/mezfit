@@ -28,7 +28,7 @@ const state = vi.hoisted(() => ({
   unread: 0,
   observers: [] as Observation[],
   create: vi.fn(), rename: vi.fn(), remove: vi.fn(), assign: vi.fn(), clear: vi.fn(),
-  ensure: vi.fn(), get: vi.fn(), notification: vi.fn(),
+  ensure: vi.fn(), get: vi.fn(), deleteChat: vi.fn(), notification: vi.fn(),
 }));
 const peers = [
   { relationshipId: 'pair', displayName: 'Анна', userId: 'tg:22', telegramUserId: '22' },
@@ -59,7 +59,7 @@ vi.mock('../data/cloud/discussion-organization', async importOriginal => ({
   },
 }));
 vi.mock('../data/cloud/discussions', () => ({
-  DiscussionRepository: class { ensureEntityThread = state.ensure; getThread = state.get; },
+  DiscussionRepository: class { ensureEntityThread = state.ensure; getThread = state.get; deleteFreeDiscussion = state.deleteChat; },
   observeDiscussionNotificationThread: state.notification,
 }));
 vi.mock('../contacts/CloudContactAvatar', () => ({
@@ -175,7 +175,7 @@ describe('discussion category tabs', () => {
     emit([[program, 'training'], [free, 'personal']], [earlier, later]);
     const tablist = screen.getByRole('tablist');
     expect(within(tablist).getAllByRole('tab').map(tab => tab.textContent)).toEqual([
-      'Тренировки', 'Питание', 'Личное', label, earlier.name, later.name,
+      'Все чаты', 'Тренировки', 'Питание', 'Личное', label, earlier.name, later.name,
     ]);
     expect(within(tablist).queryByRole('button', { name: 'Создать категорию' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Управление категориями' })).toBeTruthy();
@@ -239,7 +239,8 @@ describe('discussion category tabs', () => {
     render(<DiscussionsPage role="coach" relationshipId="pair" onNavigationContextChange={navigation} />);
     const first = latestObservation();
     act(() => first.error(Error('local read failed')));
-    expect(screen.getByRole('alert').textContent).toContain('без фильтра по категории');
+    expect(screen.getByText('Код 31')).toBeTruthy();
+    click('Все чаты', 'tab');
     expect(threadButton('Видимый')).toBeTruthy();
     expect(threadButton('Другая пара')).toBeNull();
     expect(screen.getByRole('button', { name: 'К программе: Видимый' })).toBeTruthy();
@@ -247,7 +248,10 @@ describe('discussion category tabs', () => {
     expect(first.unsubscribe).toHaveBeenCalledTimes(1);
     emit([[program, 'nutrition'], [other, 'nutrition']], [], ['CATEGORY_PENDING']);
     click('Питание', 'tab');
-    expect(screen.getByText(/Некоторые категории или назначения/)).toBeTruthy();
+    expect(screen.queryByText(/Некоторые категории или назначения/)).toBeNull();
+    const diagnostic = screen.getByText('Код 33');
+    const visible = screen.getByRole('button', { name: 'Обсуждение: Анна, Видимый' });
+    expect(visible.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(threadButton('Видимый')).toBeTruthy();
     expect(threadButton('Другая пара')).toBeNull();
   });
@@ -330,8 +334,8 @@ describe('category actions', () => {
     expect(screen.getByRole('alertdialog', { name: 'Удалить категорию?' }).textContent).toContain('Чаты и сообщения сохранятся');
     await act(async () => click('Удалить'));
     expect(state.remove).toHaveBeenCalledWith(renamed.id);
-    emit([[chat, 'personal']]);
-    expect(screen.getByRole('tab', { name: 'Личное' }).getAttribute('aria-selected')).toBe('true');
+    emit([[chat, 'uncategorized']]);
+    expect(screen.getByRole('tab', { name: 'Все чаты' }).getAttribute('aria-selected')).toBe('true');
     expect(threadButton('История')).toBeTruthy();
   });
 
@@ -347,6 +351,7 @@ describe('category actions', () => {
     click('Назад к списку');
     click('Переместить в категорию: Силовая');
     expect(screen.queryByRole('menuitem', { name: 'Тренерские' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Удалить чат' })).toBeNull();
     await act(async () => click(earlier.name, 'menuitem'));
     expect(state.assign).toHaveBeenCalledWith(program.thread, inCustom(earlier));
     expect(state.assign.mock.calls[0][0]).toBe(program.thread);
@@ -360,7 +365,7 @@ describe('category actions', () => {
     click('Питание', 'tab');
     click('Переместить в категорию: Силовая');
     await act(async () => click('Тренировки', 'menuitem'));
-    expect(state.clear.mock.calls[0][0]).toBe(program.thread);
+    expect(state.assign).toHaveBeenLastCalledWith(program.thread, 'training');
 
     click('Личное', 'tab');
     expect(screen.queryByRole('button', { name: /^К / })).toBeNull();
@@ -371,9 +376,35 @@ describe('category actions', () => {
     expect(screen.getByLabelText('Есть вложения')).toBeTruthy();
     expect(screen.getByLabelText('Непрочитанных: 3')).toBeTruthy();
     click('Переместить в категорию: Заметки');
-    expect(screen.queryByRole('menuitem', { name: 'Тренировки' })).toBeNull();
-    await act(async () => click('Без категории / по умолчанию', 'menuitem'));
-    expect(state.clear.mock.calls[1][0]).toBe(free.thread);
+    expect(screen.getByRole('menuitem', { name: 'Тренировки' })).toBeTruthy();
+    await act(async () => click('Без категории', 'menuitem'));
+    expect(state.clear.mock.calls[0][0]).toBe(free.thread);
+    emit([[program, 'training'], [free, 'uncategorized']], [earlier]);
+    expect(threadButton('Заметки')).toBeNull();
+    click('Все чаты', 'tab');
+    expect(threadButton('Заметки')).toBeTruthy();
+    expect(threadButton('Силовая')).toBeTruthy();
+  });
+
+  it('confirms irreversible deletion only for free chats', async () => {
+    const free = row('Мой чат', { free: true });
+    state.rows = [free];
+    state.deleteChat.mockResolvedValue(undefined);
+    render(<DiscussionsPage role="client" onNavigationContextChange={navigation} />);
+    emit([[free, 'uncategorized']]);
+    click('Все чаты', 'tab');
+    click('Переместить в категорию: Мой чат');
+    click('Удалить чат', 'menuitem');
+    const dialog = screen.getByRole('alertdialog', { name: 'Удалить чат?' });
+    expect(dialog.textContent).toContain('Чат останется доступен вашему собеседнику для чтения');
+    expect(dialog.textContent).toContain('Восстановить чат после удаления нельзя');
+    click('Отмена');
+    expect(state.deleteChat).not.toHaveBeenCalled();
+    click('Переместить в категорию: Мой чат');
+    click('Удалить чат', 'menuitem');
+    await act(async () => click('Удалить чат'));
+    expect(state.deleteChat).toHaveBeenCalledWith(free.thread.id);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it('ignores a pending category creation after changing identity and cancels obsolete row opening', async () => {

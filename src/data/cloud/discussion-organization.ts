@@ -9,16 +9,17 @@ import type { MezfitCloudDatabase } from './database';
 
 /**
  * Personal category names and order never leave the actor's user realm.
- * The relationship realm only contains an opaque, per-actor classification code.
+ * The relationship realm only contains the selected base and opaque folder IDs.
  * Flex metadata is presentation-only and never grants discussion access.
  */
 type OrganizationDatabase = Dexie & Pick<MezfitCloudDatabase,
   'flexAttributes' | 'flexValues' | 'adHocSessions' | 'realms' | 'members' | 'discussionThreads'>;
 export type CategoryId = string & { readonly __discussionCategoryId: unique symbol };
 export interface CategoryDefinition { id: CategoryId; name: string; order: number }
-export type ThreadAssignment = 'nutrition' | 'personal' | `custom:${CategoryId}`;
-export type AssignableDiscussionCategory = 'nutrition' | 'personal' | { kind: 'custom'; id: CategoryId };
-export type ResolvedDiscussionCategory = 'training' | 'nutrition' | 'personal' | 'coach' | 'client'
+type BasicCategory = 'training' | 'nutrition' | 'personal';
+export type ThreadAssignment = BasicCategory | `custom:${CategoryId}`;
+export type AssignableDiscussionCategory = BasicCategory | { kind: 'custom'; id: CategoryId };
+export type ResolvedDiscussionCategory = BasicCategory | 'uncategorized' | 'coach' | 'client'
   | { kind: 'custom'; id: CategoryId };
 export interface DiscussionCategorySnapshot { categories: CategoryDefinition[]; diagnostics: string[] }
 export interface OrganizedDiscussionThread {
@@ -33,14 +34,15 @@ export interface DiscussionOrganizationSnapshot extends DiscussionCategorySnapsh
 }
 
 export const DISCUSSION_SYSTEM_CATEGORIES = {
-  training: 'Тренировки', nutrition: 'Питание', personal: 'Личное',
+  all: 'Все чаты', training: 'Тренировки', nutrition: 'Питание', personal: 'Личное',
   coach: 'Тренерские', client: 'Клиентские',
 } as const;
 export const DISCUSSION_CATEGORY_NAME_MAX_LENGTH = 48;
 export const DISCUSSION_CATEGORY_KEY_PREFIX = 'discussion_group_';
 export const DISCUSSION_ASSIGNMENT_KEY_PREFIX = 'discussion_thread_';
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-const reservedNames = new Set(Object.values(DISCUSSION_SYSTEM_CATEGORIES).map(name => name.toLocaleLowerCase('ru-RU')));
+const reservedNames = new Set([...Object.values(DISCUSSION_SYSTEM_CATEGORIES), 'Без категории']
+  .map(name => name.toLocaleLowerCase('ru-RU')));
 const categoryName = (value: unknown): string => {
   if (typeof value !== 'string') throw new Error('INVALID_DISCUSSION_CATEGORY_NAME');
   const trimmed = value.trim().normalize('NFC');
@@ -96,31 +98,70 @@ export function decodeCategoryDefinition(key: string, value: unknown): CategoryD
   } catch { return null; }
 }
 export function decodeThreadAssignment(value: unknown): ThreadAssignment | null {
-  if (value === 'nutrition' || value === 'personal') return value;
+  if (value === 'personal' || value === 'nutrition') return value;
   if (typeof value === 'string' && value.startsWith('custom:')
     && isCategoryId(value.slice(7))) return value as ThreadAssignment;
   return null;
 }
-function encodeAssignment(category: AssignableDiscussionCategory): ThreadAssignment {
-  if (category === 'nutrition' || category === 'personal') return category;
-  if (category && typeof category === 'object' && category.kind === 'custom' && isCategoryId(category.id))
-    return `custom:${category.id}`;
-  throw new Error('INVALID_DISCUSSION_ASSIGNMENT');
+function isBasicCategory(value: unknown): value is BasicCategory {
+  return value === 'training' || value === 'nutrition' || value === 'personal';
 }
+
+type CategoryOwner = 'coach' | 'client' | 'personal';
+type CategorySelection = { v: 1; base: BasicCategory | 'none' } & Partial<Record<CategoryOwner, CategoryId>>;
+const sharedAssignmentKey = 'discussion_category_selection';
+const emptySelection: CategorySelection = { v: 1, base: 'none' };
+
+function decodeSelection(value: unknown): CategorySelection | null {
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const row = parsed as Record<string, unknown>;
+    if (row.v !== 1 || (!isBasicCategory(row.base) && row.base !== 'none')) return null;
+    const result: CategorySelection = { v: 1, base: row.base };
+    for (const [entry, id] of Object.entries(row)) {
+      if (entry === 'v' || entry === 'base') continue;
+      if ((entry !== 'coach' && entry !== 'client' && entry !== 'personal') || !isCategoryId(id)) return null;
+      result[entry] = id;
+    }
+    return result;
+  } catch { return null; }
+}
+
+function assignmentCategoryId(value: ThreadAssignment | null): CategoryId | undefined {
+  if (!value?.startsWith('custom:')) return undefined;
+  const id = value.slice(7);
+  return isCategoryId(id) ? id : undefined;
+}
+
+function threadTarget(thread: DiscussionThread): FlexEntityTarget {
+  return { entityType: 'discussionThread', entityId: thread.id, realmId: thread.realmId };
+}
+
+function assignmentAbsent(record: FlexInspectedValue | undefined): boolean {
+  return !record || record.state === 'absent'
+    || (record.state === 'pending' && !Object.hasOwn(record, 'value'))
+    || (record.state === 'present' && record.value === null);
+}
+
 function lookup(target: FlexEntityTarget, key: string): string {
   return flexValueId(target, flexAttributeId(target.realmId, key));
 }
 function categoryOrder(a: CategoryDefinition, b: CategoryDefinition): number {
   return a.order - b.order || a.name.localeCompare(b.name, 'ru') || a.id.localeCompare(b.id);
 }
-/** Pure deterministic precedence; untrusted assignment validation occurs at the repository boundary. */
-export function resolveDiscussionCategory(
-  kind: DiscussionThread['anchor']['kind'],
-  own: ThreadAssignment | null, peer: ThreadAssignment | null, peerRole: 'coach' | 'client' | null,
-): ResolvedDiscussionCategory {
-  if (own) return own.startsWith('custom:') ? { kind: 'custom', id: own.slice(7) as CategoryId } : own as 'nutrition' | 'personal';
-  if (peer && peerRole) return peerRole;
-  return kind === 'free' ? 'personal' : 'training';
+const organizationCodes: Readonly<Record<string, number>> = {
+  OBSERVATION_FAILED: 31, PROJECTION_INVALID: 32,
+  CATEGORY_PENDING: 33, CATEGORY_INVALID: 34, CATEGORY_DEFINITION_INVALID: 35, CATEGORY_DUPLICATE: 45,
+  OWN_ASSIGNMENT_PENDING: 36, OWN_ASSIGNMENT_INVALID: 37, OWN_ASSIGNMENT_INVALID_OR_STALE: 38,
+  PEER_ASSIGNMENT_PENDING: 39, PEER_ASSIGNMENT_INVALID: 40,
+  SHARED_ASSIGNMENT_PENDING: 41, SHARED_ASSIGNMENT_INVALID: 42, LEGACY_BASIC_ASSIGNMENT_CONFLICT: 43,
+};
+
+export function discussionOrganizationCode(diagnostic: string): number {
+  const key = diagnostic.split(':', 1)[0];
+  return Object.hasOwn(organizationCodes, key) ? organizationCodes[key] : 44;
 }
 
 /** All authorization is checked against current locally available relationship membership. */
@@ -143,9 +184,8 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
       }
       if (record.value === null) continue; // Add-only definition, tombstoned value.
       const category = decodeCategoryDefinition(record.key, record.value);
-      if (!category || names.has(sameName(category.name))) {
-        diagnostics.push('CATEGORY_INVALID_OR_DUPLICATE:' + record.key); continue;
-      }
+      if (!category) { diagnostics.push('CATEGORY_DEFINITION_INVALID:' + record.key); continue; }
+      if (names.has(sameName(category.name))) { diagnostics.push('CATEGORY_DUPLICATE:' + record.key); continue; }
       names.add(sameName(category.name)); categories.push(category);
     }
     return { categories: categories.sort(categoryOrder), diagnostics };
@@ -237,27 +277,86 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
   private assignmentTables() {
     return [...this.personalTables(), this.db.discussionThreads, this.db.realms, this.db.members];
   }
-  /** The category and thread authorization checks must share the local write transaction.
-   * Hash before entering Dexie: WebCrypto promises must not leave a transaction idle. */
-  private async writeThreadAssignment(thread: DiscussionThread, value: ThreadAssignment | null): Promise<void> {
-    if (!thread || typeof thread !== 'object' || !discussionId(thread.id))
-      throw new Error('INVALID_DISCUSSION_THREAD');
+  private async writeThreadAssignment(thread: DiscussionThread, category: AssignableDiscussionCategory | null): Promise<void> {
     const key = await discussionThreadAssignmentKey(thread);
     await this.db.transaction('rw', this.assignmentTables(), async () => {
-      await this.checkedThreads([thread]);
-      if (value?.startsWith('custom:')
-        && !(await this.listCategories()).some(category => category.id === value.slice(7)))
-        throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
-      const target = thread.coachClientId === null ? this.personal : this.sharedTarget(thread.realmId, this.actorUserId);
-      await this.flex.setValue(target, { key, valueType: 'string', value });
+      const realms = await this.checkedThreads([thread]);
+      let selection: CategorySelection;
+      if (category === null || isBasicCategory(category)) {
+        selection = { v: 1, base: category ?? 'none' };
+      } else {
+        if (category?.kind !== 'custom' || !isCategoryId(category.id)) throw new Error('INVALID_DISCUSSION_ASSIGNMENT');
+        if (!(await this.listCategories()).some(entry => entry.id === category.id))
+          throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
+        const targets = this.assignmentTargets(thread, realms.get(thread.realmId), key);
+        const records = await this.flex.inspectKeys(targets.requests);
+        const byKey = new Map(records.map(record => [lookup(record.target, record.key), record]));
+        const projected = this.readSelection(thread, targets, key, byKey);
+        if (projected.diagnostics.some(code => code.endsWith('_PENDING')))
+          throw new Error('DISCUSSION_CATEGORIES_INCOMPLETE');
+        selection = { ...projected.selection, [targets.actorRole]: category.id };
+      }
+      await this.storeSelection(thread, selection);
     });
   }
   async assignThread(thread: DiscussionThread, category: AssignableDiscussionCategory): Promise<void> {
-    await this.writeThreadAssignment(thread, encodeAssignment(category));
+    await this.writeThreadAssignment(thread, category);
   }
   async clearThreadAssignment(thread: DiscussionThread): Promise<void> {
     await this.writeThreadAssignment(thread, null);
   }
+
+  private storeSelection(thread: DiscussionThread, value: CategorySelection): Promise<void> {
+    return this.flex.setValue(threadTarget(thread), { key: sharedAssignmentKey, valueType: 'string', value: JSON.stringify(value) });
+  }
+
+  private assignmentTargets(thread: DiscussionThread, pair: Awaited<ReturnType<typeof profileRelationships>>[number] | undefined,
+    key: string) {
+    if (thread.coachClientId !== null && !pair) throw new Error('DISCUSSION_ACCESS_DENIED');
+    const own = pair ? this.sharedTarget(thread.realmId, this.actorUserId) : this.personal;
+    const peer = pair ? this.sharedTarget(thread.realmId,
+      pair.coachUserId === this.actorUserId ? pair.clientUserId : pair.coachUserId) : null;
+    const actorRole: CategoryOwner = pair ? pair.coachUserId === this.actorUserId ? 'coach' : 'client' : 'personal';
+    const peerRole = pair ? actorRole === 'coach' ? 'client' as const : 'coach' as const : null;
+    const requests = [{ target: threadTarget(thread), keys: [sharedAssignmentKey] }, { target: own, keys: [key] }];
+    if (peer) requests.push({ target: peer, keys: [key] });
+    return { own, peer, actorRole, peerRole, requests };
+  }
+
+  private readSelection(thread: DiscussionThread, targets: ReturnType<DiscussionOrganizationRepository<TDatabase>['assignmentTargets']>,
+    key: string, records: ReadonlyMap<string, FlexInspectedValue>) {
+    const diagnostics: string[] = [];
+    const canonical = records.get(lookup(threadTarget(thread), sharedAssignmentKey));
+    if (canonical && !assignmentAbsent(canonical)) {
+      const selection = canonical.state === 'present' && canonical.valueType === 'string' ? decodeSelection(canonical.value) : null;
+      if (selection && (targets.peerRole ? !selection.personal : !selection.coach && !selection.client))
+        return { selection, diagnostics };
+      diagnostics.push(canonical.state === 'pending' ? 'SHARED_ASSIGNMENT_PENDING' : 'SHARED_ASSIGNMENT_INVALID');
+      return { selection: emptySelection, diagnostics };
+    }
+    const decode = (target: FlexEntityTarget, origin: 'OWN' | 'PEER'): ThreadAssignment | null => {
+      const record = records.get(lookup(target, key));
+      if (!record || assignmentAbsent(record)) return null;
+      if (record.state !== 'present' || record.valueType !== 'string') {
+        diagnostics.push(origin + '_ASSIGNMENT_' + (record.state === 'pending' ? 'PENDING' : 'INVALID'));
+        return null;
+      }
+      const value = decodeThreadAssignment(record.value);
+      if (!value) diagnostics.push(origin + '_ASSIGNMENT_INVALID');
+      return value;
+    };
+    const own = decode(targets.own, 'OWN');
+    const peer = targets.peer ? decode(targets.peer, 'PEER') : null;
+    const conflict = isBasicCategory(own) && isBasicCategory(peer) && own !== peer;
+    if (conflict) diagnostics.push('LEGACY_BASIC_ASSIGNMENT_CONFLICT');
+    const selection: CategorySelection = { v: 1, base: conflict ? 'none'
+      : isBasicCategory(own) ? own : isBasicCategory(peer) ? peer : thread.anchor.kind === 'free' ? 'none' : 'training' };
+    const ownCustom = assignmentCategoryId(own), peerCustom = assignmentCategoryId(peer);
+    if (ownCustom) selection[targets.actorRole] = ownCustom;
+    if (peerCustom && targets.peerRole) selection[targets.peerRole] = peerCustom;
+    return { selection, diagnostics };
+  }
+
   async getThreadOrganization(thread: DiscussionThread): Promise<OrganizedDiscussionThread> {
     const snapshot = await this.classifyThreads([thread]);
     const resolved = snapshot.threads[0];
@@ -273,54 +372,20 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
       this.readCategories(), this.checkedThreads(unique),
       Promise.all(unique.map(thread => discussionThreadAssignmentKey(thread))),
     ]);
+    const targets = unique.map((thread, index) => this.assignmentTargets(thread, realms.get(thread.realmId), keys[index]));
+    const records = await this.flex.inspectKeys(targets.flatMap(entry => entry.requests));
+    const byKey = new Map(records.map(record => [lookup(record.target, record.key), record]));
     const activeIds = new Set(categories.categories.map(category => category.id));
-    const requests = new Map<string, { target: FlexEntityTarget; keys: string[] }>();
-    const add = (target: FlexEntityTarget, key: string) => {
-      const token = JSON.stringify([target.realmId, target.entityType, target.entityId]);
-      let request = requests.get(token);
-      if (!request) { request = { target, keys: [] }; requests.set(token, request); }
-      request.keys.push(key);
-    };
-    unique.forEach((thread, index) => {
-      const key = keys[index];
-      add(thread.coachClientId === null ? this.personal : this.sharedTarget(thread.realmId, this.actorUserId), key);
-      if (thread.coachClientId !== null) {
-        const pair = realms.get(thread.realmId);
-        if (!pair) throw new Error('DISCUSSION_ACCESS_DENIED');
-        const peerId = pair.coachUserId === this.actorUserId ? pair.clientUserId : pair.coachUserId;
-        add(this.sharedTarget(thread.realmId, peerId), key);
-      }
-    });
-    const inspected = await this.flex.inspectKeys([...requests.values()]);
-    const byKey = new Map(inspected.map(record => [lookup(record.target, record.key), record]));
-    const decode = (record: FlexInspectedValue | undefined, own: boolean, diagnostics: string[]): ThreadAssignment | null => {
-      if (!record || record.state === 'absent' || (record.state === 'present' && record.value === null)) return null;
-      if (record.state !== 'present' || record.valueType !== 'string') {
-        diagnostics.push((own ? 'OWN_' : 'PEER_') + 'ASSIGNMENT_' + (record.state === 'pending' ? 'PENDING' : 'INVALID'));
-        return null;
-      }
-      const code = decodeThreadAssignment(record.value);
-      if (!code || (own && code.startsWith('custom:') && !activeIds.has(code.slice(7) as CategoryId))) {
-        diagnostics.push((own ? 'OWN_' : 'PEER_') + 'ASSIGNMENT_INVALID_OR_STALE');
-        return null;
-      }
-      return code;
-    };
     const result = unique.map((thread, index): OrganizedDiscussionThread => {
-      const diagnostics: string[] = [];
-      const key = keys[index];
-      const ownTarget = thread.coachClientId === null ? this.personal : this.sharedTarget(thread.realmId, this.actorUserId);
-      const own = decode(byKey.get(lookup(ownTarget, key)), true, diagnostics);
-      let peer: ThreadAssignment | null = null, peerRole: 'coach' | 'client' | null = null;
-      if (thread.coachClientId !== null) {
-        const pair = realms.get(thread.realmId);
-        if (!pair) throw new Error('DISCUSSION_ACCESS_DENIED');
-        const peerId = pair.coachUserId === this.actorUserId ? pair.clientUserId : pair.coachUserId;
-        peerRole = peerId === pair.coachUserId ? 'coach' : 'client';
-        peer = decode(byKey.get(lookup(this.sharedTarget(thread.realmId, peerId), key)), false, diagnostics);
-      }
-      return { thread, category: resolveDiscussionCategory(thread.anchor.kind, own, peer, peerRole),
-        ownAssignment: own, peerCategorized: peer !== null, diagnostics };
+      const { selection, diagnostics } = this.readSelection(thread, targets[index], keys[index], byKey);
+      const { actorRole, peerRole } = targets[index];
+      const own = selection[actorRole], peer = peerRole ? selection[peerRole] : undefined;
+      if (own && !activeIds.has(own)) diagnostics.push('OWN_ASSIGNMENT_INVALID_OR_STALE');
+      const category: ResolvedDiscussionCategory = own && activeIds.has(own) ? { kind: 'custom', id: own }
+        : own ? 'uncategorized' : peer ? peerRole ?? 'uncategorized'
+          : selection.base === 'none' ? 'uncategorized' : selection.base;
+      return { thread, category, ownAssignment: own && activeIds.has(own) ? `custom:${own}`
+        : selection.base === 'none' ? null : selection.base, peerCategorized: Boolean(peer), diagnostics };
     });
     return { ...categories, threads: result };
   }
@@ -329,10 +394,14 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     return liveQuery(() => this.classifyThreads(threads)).subscribe({ next, error });
   }
 
-  /** Clear own links and tombstone the category in one local transaction. */
+  /** Clear matching selections and tombstone the folder in one local transaction. */
   async removeCategory(id: CategoryId): Promise<void> {
     const key = discussionCategoryKey(id);
-    const code = `custom:${id}`;
+    const pairs = await profileRelationships(this.db, this.actorUserId);
+    const visibleRealms = [...pairs.map(pair => pair.realmId), this.actorUserId];
+    const legacy = await this.db.discussionThreads.where('realmId').anyOf(visibleRealms).toArray();
+    const legacyKeys = new Map(await Promise.all(legacy.map(async thread =>
+      [thread.id, await discussionThreadAssignmentKey(thread)] as const)));
     await this.db.transaction('rw', this.assignmentTables(), async () => {
       const [record] = await this.flex.inspectKeys([{ target: this.personal, keys: [key] }]);
       if (!record || record.state === 'absent') throw new Error('DISCUSSION_CATEGORY_NOT_FOUND');
@@ -340,33 +409,37 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
         || (record.value !== null && !decodeCategoryDefinition(key, record.value)))
         throw new Error('INVALID_DISCUSSION_CATEGORY');
 
-      const pairs = await profileRelationships(this.db, this.actorUserId);
-      const ownTargets = [this.personal, ...pairs.map(pair => this.sharedTarget(pair.realmId, this.actorUserId))];
-      const peerTargets = pairs.map(pair => this.sharedTarget(pair.realmId,
-        pair.coachUserId === this.actorUserId ? pair.clientUserId : pair.coachUserId));
-      const records = await this.flex.inspectPrefix([...ownTargets, ...peerTargets],
+      const currentPairs = await profileRelationships(this.db, this.actorUserId);
+      const realms = new Map(currentPairs.map(pair => [pair.realmId, pair]));
+      const threads = await this.db.discussionThreads.where('realmId')
+        .anyOf([...realms.keys(), this.actorUserId]).toArray();
+      const entries = threads.map(thread => {
+        const legacyKey = legacyKeys.get(thread.id);
+        if (!legacyKey) throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
+        return { thread, legacyKey, targets: this.assignmentTargets(thread, realms.get(thread.realmId), legacyKey) };
+      });
+      const ownLegacyTargets = [this.personal,
+        ...currentPairs.map(pair => this.sharedTarget(pair.realmId, this.actorUserId))];
+      const ownLegacy = await this.flex.inspectPrefix(ownLegacyTargets,
         DISCUSSION_ASSIGNMENT_KEY_PREFIX, DISCUSSION_ASSIGNMENT_KEY_PREFIX.length + 40);
-      const peerKeys = new Set(records
-        .filter(item => item.target.entityId !== this.actorUserId && item.state === 'present')
-        .map(item => flexAttributeId(item.target.realmId, item.key)));
-
-      const ownRecords = records.filter(item => item.target.entityId === this.actorUserId);
-      if (ownRecords.some(item => (item.state === 'pending' && item.value === undefined
-        && !peerKeys.has(flexAttributeId(item.target.realmId, item.key)))
-        || (item.value === code && (item.state === 'invalid'
-          || (item.state === 'present' && item.valueType !== 'string')))))
-        throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
-
-      const byTarget = new Map<FlexEntityTarget, string[]>();
-      for (const item of ownRecords) {
-        if (item.value !== code) continue;
-        const keys = byTarget.get(item.target);
-        if (keys) keys.push(item.key);
-        else byTarget.set(item.target, [item.key]);
-      }
-      for (const [target, keys] of byTarget) {
-        await this.flex.setValues(target, keys.map(assignmentKey =>
-          ({ key: assignmentKey, valueType: 'string' as const, value: null })));
+      const handled = new Set(entries.map(({ targets, legacyKey }) => lookup(targets.own, legacyKey)));
+      if (ownLegacy.some(record => record.value === `custom:${id}`
+        && !handled.has(lookup(record.target, record.key)))) throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
+      const values = await this.flex.inspectKeys(entries.flatMap(entry => entry.targets.requests));
+      const records = new Map(values.map(value => [lookup(value.target, value.key), value]));
+      for (const { thread, legacyKey, targets } of entries) {
+        const { selection, diagnostics } = this.readSelection(thread, targets, legacyKey, records);
+        const legacyOwn = records.get(lookup(targets.own, legacyKey));
+        const shared = records.get(lookup(threadTarget(thread), sharedAssignmentKey));
+        const matchingLegacy = legacyOwn?.value === `custom:${id}` ? legacyOwn : undefined;
+        if (diagnostics.includes('SHARED_ASSIGNMENT_PENDING') || diagnostics.includes('SHARED_ASSIGNMENT_INVALID')
+          || (matchingLegacy && (matchingLegacy.state === 'invalid'
+            || (matchingLegacy.state === 'present' && matchingLegacy.valueType !== 'string'))))
+          throw new Error('DISCUSSION_CATEGORY_CLEANUP_INCOMPLETE');
+        if (selection[targets.actorRole] === id || (matchingLegacy && assignmentAbsent(shared)))
+          await this.storeSelection(thread, emptySelection);
+        if (matchingLegacy)
+          await this.flex.clearValue(targets.own, legacyKey, 'string');
       }
       await this.flex.clearValue(this.personal, key, 'string');
     });

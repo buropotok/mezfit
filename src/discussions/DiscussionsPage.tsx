@@ -7,7 +7,7 @@ import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceCont
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { syncStatusLabel } from '../data/cloud/sync-status';
 import { DiscussionRepository, observeDiscussionNotificationThread } from '../data/cloud/discussions';
-import type { AssignableDiscussionCategory } from '../data/cloud/discussion-organization';
+import { discussionOrganizationCode, type AssignableDiscussionCategory } from '../data/cloud/discussion-organization';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { Avatar, Badge, DatePicker, Icon, List, ListItem, Text, type LocalDate } from '../ui';
 import { LiquidGlassTextOnly } from '../ui/LiquidGlassTextOnly';
@@ -33,6 +33,7 @@ const entityActionLabels = {
 } satisfies Record<EntityDiscussionAnchor['kind'], string>;
 
 type DiscussionMoveActions = ComponentProps<typeof DiscussionMoveMenu>['actions'] & {
+  remove: (row: DiscussionInboxRow) => void;
   move: (row: DiscussionInboxRow, category: AssignableDiscussionCategory | null) => void;
 };
 
@@ -96,7 +97,8 @@ function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSour
       {entityAction ? <Button rounded tonal inline aria-label={`${entityAction}: ${row.thread.derivedTitleSnapshot}`}
         onClick={() => onEntity(row)}><Text variant="caption">{entityAction}</Text></Button> : null}
       {moveActions ? <DiscussionMoveMenu title={row.thread.derivedTitleSnapshot} free={kind === 'free'}
-        actions={moveActions} onMove={category => moveActions.move(row, category)} /> : null}
+        actions={moveActions} onMove={category => moveActions.move(row, category)}
+        onDelete={() => moveActions.remove(row)} /> : null}
     </> : undefined}
   />;
 }
@@ -157,7 +159,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const [tabSelection, setTabSelection] = useState<{ scope: object; value: string } | null>(null);
   const tabs = discussionCategoryTabs(role, organization.categories);
   const requestedTab = tabSelection?.scope === categoryScope ? tabSelection.value : 'training';
-  const activeTab = tabs.some(tab => tab.value === requestedTab) ? requestedTab : 'personal';
+  const activeTab = tabs.some(tab => tab.value === requestedTab) ? requestedTab : 'all';
   const manageCategory = organization.categories.find(category => categoryTabValue({ kind: 'custom', id: category.id }) === activeTab);
   const creationScope = useMemo(() => ({}), [categoryScope, activeTab]);
   const [unavailableCreatedChat, setUnavailableCreatedChat] = useState<object | null>(null);
@@ -309,12 +311,18 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   };
   const submitCategoryDialog = (name: string) => {
     if (!dialog) return;
+    const { intent } = dialog;
+    if (intent.kind === 'delete-chat') {
+      if (!db || !actorId) return;
+      void runCategoryAction(() => new DiscussionRepository(db, actorId, intent.thread).deleteFreeDiscussion(intent.thread.id),
+        'Не удалось удалить чат. Повторите попытку.', () => setCategoryDialog(null));
+      return;
+    }
     const organizationRepository = organization.repository;
     if (!organizationRepository) {
       setCategoryFeedback({ scope: categoryScope, surface: categorySurface, pending: false, error: 'Категории обсуждений недоступны.' });
       return;
     }
-    const { intent } = dialog;
     if (intent.kind === 'create') {
       void runCategoryAction(() => organizationRepository.createCategory(name), 'Не удалось создать категорию.', category => {
         // Read back from the committed local transaction even if the previous
@@ -328,7 +336,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
         'Не удалось переименовать категорию.', () => setCategoryDialog(null));
     } else {
       void runCategoryAction(() => organizationRepository.removeCategory(intent.category.id), 'Не удалось удалить категорию.', () => {
-        selectCategory('personal');
+        selectCategory('all');
         setCategoryDialog(null);
       });
     }
@@ -385,6 +393,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
             window.clearTimeout(pendingTimer);
             setOpenError('Не удалось загрузить обсуждение. Повторите попытку.');
           }
+        },
+        () => {
+          if (cancelled || generation !== request.current) return;
+          ++request.current;
+          subscription?.unsubscribe();
+          window.clearTimeout(pendingTimer);
+          setOpenError('Обсуждение недоступно.');
+          onNotificationOpened?.();
         });
     };
     observe();
@@ -463,15 +479,21 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const classifications = useMemo(() => organization.snapshot
     ? new Map(organization.snapshot.threads.map(item => [item.thread.id, categoryTabValue(item.category)]))
     : null, [organization.snapshot]);
-  const validTabs = new Set(tabs.map(tab => tab.value));
-  const organizationError = organization.failed || Boolean(classifications && inbox.rows.some(row => {
+  const validTabs = new Set([...tabs.map(tab => tab.value), 'uncategorized']);
+  const invalidProjection = Boolean(classifications && inbox.rows.some(row => {
     const value = classifications.get(row.thread.id);
     return !value || !validTabs.has(value);
   }));
-  const organizationDiagnostics = organization.snapshot && (organization.snapshot.diagnostics.length > 0
-    || organization.snapshot.threads.some(item => item.diagnostics.length > 0));
+  const organizationError = organization.failed || invalidProjection;
+  const organizationDiagnostics = new Set<number>();
+  if (organization.failed) organizationDiagnostics.add(discussionOrganizationCode('OBSERVATION_FAILED'));
+  if (invalidProjection) organizationDiagnostics.add(discussionOrganizationCode('PROJECTION_INVALID'));
+  for (const code of organization.snapshot?.diagnostics ?? []) organizationDiagnostics.add(discussionOrganizationCode(code));
+  for (const item of organization.snapshot?.threads ?? []) {
+    for (const code of item.diagnostics) organizationDiagnostics.add(discussionOrganizationCode(code));
+  }
   const rows = inbox.rows.filter(row => {
-    if (organization.loading || (!organizationError && classifications && classifications.get(row.thread.id) !== activeTab)) return false;
+    if (activeTab !== 'all' && (organization.loading || organizationError || classifications?.get(row.thread.id) !== activeTab)) return false;
     if (relationshipId && row.thread.coachClientId !== relationshipId) return false;
     if (!relationshipId && clientUserIds.length && !cloud?.clients.some(contact =>
       contact.relationshipId === row.thread.coachClientId && clientUserIds.includes(contact.userId))) return false;
@@ -536,13 +558,6 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       ? <Text role="alert" variant="footnote">Чат создан и назначен в категорию. Собеседник больше недоступен.</Text> : null}
     {inbox.error ? <div className="stack"><Text role="alert">{inbox.error}</Text>
       <Button rounded tonal onClick={() => { cancelPendingOpen(); inbox.retry(); }}><Text>Повторить</Text></Button></div> : null}
-    {organizationError ? <div className="stack">
-      <Text role="alert">Не удалось загрузить категории. Показываем обсуждения без фильтра по категории.</Text>
-      <Button rounded tonal onClick={organization.retry}><Text>Повторить загрузку категорий</Text></Button>
-    </div> : null}
-    {organizationDiagnostics && !organizationError ? <Text variant="footnote" role="status">
-      Некоторые категории или назначения пока недоступны. Обсуждения остаются в списке.
-    </Text> : null}
     {feedback?.error && !dialog ? <Text variant="footnote" role="alert">{feedback.error}</Text> : null}
     {cloud?.status === 'error' && !rows.length ? <Text role="status">{cloud.error}</Text> : null}
     {inbox.loading && !rows.length ? <Text>Загружаем обсуждения…</Text>
@@ -553,9 +568,14 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
       onAvatarSourceChange={syncOpenedAvatarSource}
       hiddenAvatarKey={current?.kind === 'chat' ? discussionAvatarFlightKey(current.row.thread.realmId, current.row.thread.anchorKey) : undefined}
       moveActions={organization.snapshot && !organizationError
-        ? { categories: organization.categories, disabled: categoryBusy || Boolean(creation.current), move: moveThread } : undefined}
+        ? { categories: organization.categories, disabled: categoryBusy || Boolean(creation.current), move: moveThread,
+          remove: row => openCategoryDialog({ kind: 'delete-chat', thread: row.thread }) } : undefined}
       onEntity={row => { cancelPendingOpen(); setOpened({ row, kind: 'entity', parent }); }} />
     {rows.length > limit ? <Button rounded tonal onClick={() => { cancelPendingOpen(); setLimit(value => value + 50); }}><Text>Показать ещё</Text></Button> : null}
+    {organizationDiagnostics.size > 0 ? <div className="stack" role="status">
+      {[...organizationDiagnostics].sort((a, b) => a - b).map(code => <Text key={code} variant="footnote">Код {code}</Text>)}
+      {organizationError && <Button rounded tonal onClick={organization.retry}><Text>Повторить загрузку категорий</Text></Button>}
+    </div> : null}
     {role === 'coach' && !relationshipId ? <ScheduleClientFilter opened={clientFilter !== null}
       clients={clients} loading={cloud?.status === 'loading'} selected={clientUserIds}
       onClose={closeClientFilter} onApply={ids => {

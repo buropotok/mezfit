@@ -805,3 +805,12 @@
 }
 
 .discussion-outgoing__retry-label { color: inherit; }
+
+.discussion-thread__read-only {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(max(env(safe-area-inset-bottom), var(--tg-content-safe-area-inset-bottom, 0px)) + 16px);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
