@@ -1,0 +1,106 @@
+name: Migration - deploy and verify on main
+
+# A merge touching migration runtime is the approval to deploy only the
+# dedicated migration Worker. This workflow never runs on PR code.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'migration/worker/**'
+      - 'migration/d1/**'
+      - 'migration/*.mjs'
+      - 'migration/wrangler.json'
+      - '.github/workflows/migration-auto.yml'
+      - '.github/workflows/migration-deploy.yml'
+      - '.github/workflows/migration-smoke.yml'
+
+permissions:
+  contents: read
+
+# Share the lock with the existing manual deploy/smoke workflows.
+# Hold it for the full chain so another deploy cannot change the Worker
+# between version readiness and the processor/nested acceptance checks.
+concurrency:
+  group: mezfit-migration-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.repository == 'buropotok/mezfit' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned Wrangler
+        run: npm ci
+      - name: Deploy dedicated migration Worker and run infrastructure smoke
+        run: node migration/cloudflare.mjs
+        env:
+          MIGRATION_OPERATION: deploy
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
+      - name: Upload sanitized deploy trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-trace-deploy-${{ github.run_attempt }}
+          path: migration-trace.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  processor-smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify base processor contract and replay/cleanup
+        run: node migration/cloudflare.mjs
+        env:
+          MIGRATION_OPERATION: processor-smoke
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
+      - name: Upload sanitized processor trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-trace-processor-${{ github.run_attempt }}
+          path: migration-trace.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  nested-smoke:
+    needs: processor-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify nested adapter and replay/cleanup
+        run: node migration/cloudflare.mjs
+        env:
+          MIGRATION_OPERATION: nested-smoke
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
+      - name: Upload sanitized nested trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-trace-nested-${{ github.run_attempt }}
+          path: migration-trace.json
+          if-no-files-found: warn
+          retention-days: 7
