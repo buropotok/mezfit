@@ -254,7 +254,7 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 | `migration/d1/0003_create_migration_executions.sql` | Технический execution, job/version uniqueness и terminal state | Применена в Cloudflare, MIG-03 не требует новой схемы |
 | `.github/workflows/migration-deploy.yml` | Ручной Deploy + встроенный infra smoke | Сохраняется для recovery |
 | `.github/workflows/migration-smoke.yml` | Ручные `diagnose` / `smoke` / `processor-smoke` / `nested-smoke` | Независимые проверки фактически развёрнутой версии |
-| `.github/workflows/migration-auto.yml` | **Планируемая автоматизация:** на `push main` затронутого миграционного кода deploy → processor-smoke → nested-smoke | Не включает bootstrap, Dexie Cloud ACL или пользовательский импорт; вступает в действие после merge workflow |
+| `.github/workflows/migration-auto.yml` | Автозапуск на `push main` миграционного кода: deploy → processor-smoke → nested-smoke | Не включает bootstrap, Dexie Cloud ACL или пользовательский импорт; активируется после merge workflow |
 
 Инфраструктурные endpoints Worker сейчас приватные: `workers_dev=false`, `preview_urls=false`, публичный обработчик `fetch` для них не настроен. Подписанный upload helper предназначен для будущей авторизованной интеграции, а не является уже опубликованным API для пользователя.
 
