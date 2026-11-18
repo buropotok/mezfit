@@ -14,9 +14,11 @@ export function CalendarSessionSheet({ sessionId, role, actor, initData, onClose
   onClose: () => void; onNavigationContextChange: (value: NavigationContext | null) => void;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud ? role === 'client' ? new ClientWorkoutRepository(cloud.db, cloud.actorUserId)
-    : new AdHocWorkoutRepository(cloud.db, cloud.actorUserId) : null,
-    [role, cloud?.db, cloud?.actorUserId]);
+  // This sheet can mount before the Cloud connection has a usable actor identity.
+  const repository = useMemo(() => cloud?.db && /^tg:[1-9]\d*$/.test(cloud.actorUserId)
+    ? role === 'client' ? new ClientWorkoutRepository(cloud.db, cloud.actorUserId)
+      : new AdHocWorkoutRepository(cloud.db, cloud.actorUserId)
+    : null, [role, cloud?.db, cloud?.actorUserId]);
   const [retained, setRetained] = useState(sessionId);
   const [headerActionsHost, setHeaderActionsHost] = useState<HTMLDivElement | null>(null);
   useEffect(() => { if (sessionId) setRetained(sessionId); }, [sessionId]);
