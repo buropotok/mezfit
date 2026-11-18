@@ -71,10 +71,13 @@ describe('Coach client workspace presentation', () => {
     expect(tablist.getAttribute('data-full-width')).toBe('true');
     expect(screen.getByRole('group', { name: 'Разделы клиента Анна Иванова' }).contains(tablist)).toBe(true);
     expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
-      'Основные', 'Программа', 'Упражнения', 'План', 'Прогресс', 'Тренировки', 'Обсуждения',
+      'Основные', 'Тренировки', 'Программа', 'Упражнения', 'План', 'Прогресс', 'Обсуждения',
     ]);
-    expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByText('Тренировки: history')).toBeTruthy();
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Основные' }));
+    expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
     const surface = screen.getByText('Анкета клиента ещё не опубликована.').closest('section');
     expect(surface?.getAttribute('data-glass-preset')).toBe('modalTuned');
     expect(surface?.getAttribute('data-glass-optics')).toBe('false');
