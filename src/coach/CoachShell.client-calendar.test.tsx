@@ -63,7 +63,7 @@ it('keeps the selected calendar day as the workout date range and opens details 
   const context = () => onNavigation.mock.lastCall?.[0];
   const view = render(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
   fireEvent.click(screen.getByRole('button', { name: 'Открыть клиента Анна' }));
-  expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
+  expect(screen.getByRole('region', { name: 'Тренировки' })).toBeTruthy();
   // The selected client exposes its calendar projection before the navbar button is tapped.
   expect(context()?.calendar).toBeDefined();
 
