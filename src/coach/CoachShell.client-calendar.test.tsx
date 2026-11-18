@@ -13,10 +13,10 @@ const cloud = vi.hoisted(() => ({
 }));
 const calendarState = vi.hoisted(() => ({ opened: true }));
 
-vi.mock('../NavigationShell', async (importOriginal) => ({
-  ...await importOriginal<typeof import('../NavigationShell')>(),
-  useNavigationCalendar: () => ({ opened: calendarState.opened, toggle: vi.fn() }),
-}));
+vi.mock('../NavigationShell', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../NavigationShell')>();
+  return { ...actual, useNavigationCalendar: () => ({ opened: calendarState.opened, toggle: vi.fn() }) };
+});
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => cloud }));
 vi.mock('../contacts/CloudContactAvatar', () => ({
   CloudContactAvatar: () => null, useCloudContactAvatarUrl: () => undefined,
@@ -113,6 +113,10 @@ it('keeps the selected calendar day as the workout date range and opens details 
   expect(screen.getByRole('button', { name: 'По 11.10.2026' })).toBeTruthy();
   expect(screen.getAllByRole('button', { name: /^Завершённая тренировка:/ })).toHaveLength(2);
 
+  act(() => {
+    calendarState.opened = true;
+    view.rerender(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
+  });
   const markers = context()?.calendar?.dayStatuses;
   selectDay(plannedDay);
   expect(screen.getByRole('button', { name: 'С 12.10.2026' })).toBeTruthy();
