@@ -232,8 +232,8 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
       <Text variant="body">Повторить</Text>
     </KonstaButton></div> : null}
     {workouts.data && rows.length === 0 ? <Text variant="body" tone="muted">
-      {from && from === to ? 'В этот день тренировок нет'
-        : mode === 'plan' ? 'Запланированных тренировок нет' : 'Тренировок за выбранный период нет'}
+      {mode === 'plan' ? 'Запланированных тренировок нет'
+        : from && from === to ? 'В этот день тренировок нет' : 'Тренировок за выбранный период нет'}
     </Text> : null}
     <div className="profile-workout-list">
       {rows.map(row => 'session' in row
