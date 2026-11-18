@@ -470,8 +470,12 @@ describe('draft edit recovery', () => {
     expect(screen.getByText('План на тренировку')).toBeTruthy();
     const label = screen.getByText(format === 'coached' ? 'С тренером в зале' : 'Самостоятельная');
     expect(label.nextElementSibling?.getAttribute('data-testid')).toBe(format === 'coached' ? 'icon-users' : 'icon-user');
-    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, format, saved: true }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, format, saved: true,
+      startsAtUtc: '2099-10-19T08:00:00.000Z' }} drafts={drafts} onClose={() => {}} onSave={vi.fn()} />);
     expect(screen.getByText('Запланировано')).toBeTruthy();
+    view.rerender(<OccurrenceDraftSheet draft={{ ...draft, format, saved: true }} drafts={drafts}
+      onClose={() => {}} onSave={vi.fn()} />);
+    expect(screen.getByText('Пропущена')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Сохранить' })).toBeNull();
   });
   it.each(['Занятая дата', 'Некорректная дата'])('retains rejection of %s until timing is corrected, including across content edits', async badChoice => {
