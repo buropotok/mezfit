@@ -11,7 +11,12 @@ const cloud = vi.hoisted(() => ({
   db: {}, status: 'ready', actorUserId: 'tg:101',
   clients: [{ userId: 'tg:202', telegramUserId: '202', relationshipId: 'pair', displayName: 'Анна' }],
 }));
+const calendarState = vi.hoisted(() => ({ opened: true }));
 
+vi.mock('../NavigationShell', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../NavigationShell')>(),
+  useNavigationCalendar: () => ({ opened: calendarState.opened, toggle: vi.fn() }),
+}));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => cloud }));
 vi.mock('../contacts/CloudContactAvatar', () => ({
   CloudContactAvatar: () => null, useCloudContactAvatarUrl: () => undefined,
@@ -27,6 +32,7 @@ vi.mock('../schedule/CalendarSessionSheet', () => ({
 }));
 
 beforeEach(() => {
+  calendarState.opened = true;
   vi.useFakeTimers();
   vi.setSystemTime(new Date(2026, 9, 11, 12));
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -55,7 +61,7 @@ it('keeps the selected calendar day as the workout date range and opens details 
   });
   const onNavigation = vi.fn<(context: NavigationContext | null) => void>();
   const context = () => onNavigation.mock.lastCall?.[0];
-  render(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
+  const view = render(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
   fireEvent.click(screen.getByRole('button', { name: 'Открыть клиента Анна' }));
   expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
   // The selected client exposes its calendar projection before the navbar button is tapped.
@@ -97,6 +103,15 @@ it('keeps the selected calendar day as the workout date range and opens details 
   expect(screen.getByRole('button', { name: 'По 11.10.2026' })).toBeTruthy();
   expect(screen.getAllByRole('button', { name: /^Завершённая тренировка:/ })).toHaveLength(2);
   expect(screen.queryByRole('button', { name: /^Закрыть/ })).toBeNull();
+
+  // Closing the shared calendar must not restore the old date range or unfilter the list.
+  act(() => {
+    calendarState.opened = false;
+    view.rerender(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
+  });
+  expect(screen.getByRole('button', { name: 'С 11.10.2026' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'По 11.10.2026' })).toBeTruthy();
+  expect(screen.getAllByRole('button', { name: /^Завершённая тренировка:/ })).toHaveLength(2);
 
   const markers = context()?.calendar?.dayStatuses;
   selectDay(plannedDay);
