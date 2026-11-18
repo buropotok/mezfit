@@ -95,10 +95,10 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   onCalendarChange?: (calendar: NavigationContext['calendar']) => void;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud
+  const repository = useMemo(() => cloud?.db && /^tg:[1-9]\d*$/.test(cloud.actorUserId)
     ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
-  const planner = useMemo(() => cloud
+  const planner = useMemo(() => cloud?.db && /^tg:[1-9]\d*$/.test(cloud.actorUserId)
     ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   const { workouts, historyFilter, setHistoryFilter } = useProfileSnapshot();
