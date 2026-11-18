@@ -541,7 +541,12 @@ describe('NavigationShell MezfitNavbar integration', () => {
       expect(capsule.textContent).toBe('Открыт');
       expect(panel?.getAttribute('data-state')).toBe('opened');
     });
-    fireEvent.click(view.getByRole('button', { name: 'Закрыть календарь' }));
+    const closeCalendarButton = view.getByRole('button', { name: 'Закрыть календарь' });
+    fireEvent.pointerDown(closeCalendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(closeCalendarButton);
+    const identityAction = view.container.querySelector<HTMLElement>('.ui-identity-action--double');
+    if (!identityAction) throw new Error('Missing double identity action');
+    fireEvent.animationEnd(identityAction);
     await waitFor(() => {
       expect(capsule.textContent).toBe('Закрыт');
       expect(panel?.getAttribute('data-state')).toBe('closed');
