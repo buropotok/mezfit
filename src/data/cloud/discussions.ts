@@ -138,18 +138,21 @@ export class DiscussionRepository {
   }
   private deletedIds(threads: readonly DiscussionThread[], actor = this.actorUserId): Promise<Set<string>> {
     return this.db.flexValues
-      ? deletedDiscussionIds({ flexValues: this.db.flexValues }, threads, actor) : Promise.resolve(new Set());
+      ? deletedDiscussionIds({ flexValues: this.db.flexValues }, threads, actor) : Dexie.Promise.resolve(new Set<string>());
   }
-  private async deletion(thread: DiscussionThread, peer: string | null): Promise<DiscussionPage['deletion']> {
-    const [own, other] = await Promise.all([
-      this.deletedIds([thread]), peer ? this.deletedIds([thread], peer) : Promise.resolve(new Set<string>()),
-    ]);
-    return own.has(thread.id) ? 'actor' : other.has(thread.id) ? 'peer' : undefined;
+  private deletion(thread: DiscussionThread, peer: string | null): Promise<DiscussionPage['deletion']> {
+    return Dexie.Promise.all([
+      this.deletedIds([thread]), peer ? this.deletedIds([thread], peer) : Dexie.Promise.resolve(new Set<string>()),
+    ]).then(([own, other]) => own.has(thread.id) ? 'actor' : other.has(thread.id) ? 'peer' : undefined);
   }
-  private async writableThread(threadId: string, peer: string | null): Promise<DiscussionThread> {
-    const thread = await this.thread(threadId);
-    if (await this.deletion(thread, peer)) fail('DISCUSSION_READ_ONLY');
-    return thread;
+  private writableThread(threadId: string, peer: string | null): Promise<DiscussionThread> {
+    return this.thread(threadId).then(thread => {
+      if (thread.anchor.kind !== 'free' || !this.db.flexValues) return thread;
+      return this.deletion(thread, peer).then(deletion => {
+        if (deletion) fail('DISCUSSION_READ_ONLY');
+        return thread;
+      });
+    });
   }
   /** This operation only adds the actor’s marker. Conversation records remain intact. */
   async deleteFreeDiscussion(threadId: string): Promise<void> {
@@ -182,9 +185,10 @@ export class DiscussionRepository {
   }
   /** Only the canonical entry aggregates legacy rows; stored provenance never changes. */
   private conversationThreads(threadId: string): Promise<DiscussionThread[]> {
-    return this.thread(threadId).then(async thread => {
-      if ((await this.deletedIds([thread])).has(thread.id)) return [];
-      return threadId.startsWith('entity-discussion:') ? this.storedThreads(thread.anchor) : [thread];
+    return this.thread(threadId).then(thread => {
+      if (threadId.startsWith('entity-discussion:')) return this.storedThreads(thread.anchor);
+      if (thread.anchor.kind !== 'free' || !this.db.flexValues) return [thread];
+      return this.deletedIds([thread]).then(deleted => deleted.has(thread.id) ? [] : [thread]);
     });
   }
   async ensureEntityThread(anchor: DiscussionAnchor, entityName: string): Promise<DiscussionThread> {
@@ -258,8 +262,8 @@ export class DiscussionRepository {
   }
   private async threads(anchor: DiscussionAnchor): Promise<DiscussionThread[]> {
     const stored = await this.storedThreads(anchor);
-    const deleted = await this.deletedIds(stored);
-    const valid = stored.filter(row => !deleted.has(row.id));
+    const deleted = anchor.kind === 'free' && this.db.flexValues ? await this.deletedIds(stored) : null;
+    const valid = deleted ? stored.filter(row => !deleted.has(row.id)) : stored;
     // Activity hints can lag concurrent sends; derive the displayed timestamp from local messages.
     const projected = await Promise.all(valid.map(async row => {
       const latest = await this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
@@ -287,8 +291,10 @@ export class DiscussionRepository {
       for (const row of [...valid].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))) {
         if (!canonical.has(row.anchorKey) || row.id.startsWith('entity-discussion:')) canonical.set(row.anchorKey, row);
       }
-      const deleted = await this.deletedIds([...canonical.values()]);
-      const headers = [...canonical.values()].filter(row => !deleted.has(row.id));
+      const canonicalHeaders = [...canonical.values()];
+      const deleted = this.db.flexValues && canonicalHeaders.some(thread => thread.anchor.kind === 'free')
+        ? await this.deletedIds(canonicalHeaders) : null;
+      const headers = deleted ? canonicalHeaders.filter(row => !deleted.has(row.id)) : canonicalHeaders;
       const attachedThreads = new Set<string>();
       if (attachments) {
         const rows = (await attachments.messageAttachments.where('realmId').equals(this.scope.realmId).toArray())
@@ -412,7 +418,8 @@ export class DiscussionRepository {
   async getDraft(threadId: string, id?: string, scope: 'any' | 'composer' = 'any'): Promise<DiscussionMessageInput | null> {
     if (id !== undefined && !discussionId(id)) fail('INVALID_DISCUSSION_ID');
     return this.read(async peer => {
-      if (await this.deletion(await this.thread(threadId), peer)) return null;
+      const thread = await this.thread(threadId);
+      if (thread.anchor.kind === 'free' && this.db.flexValues && await this.deletion(thread, peer)) return null;
       const row = id !== undefined ? await this.db.discussionMessages.get(id)
         : (await this.db.discussionMessages.where('[realmId+threadId]').equals([this.actorUserId, threadId])
           .filter(candidate => isDiscussionMessage(candidate) && candidate.owner === this.actorUserId
@@ -429,7 +436,8 @@ export class DiscussionRepository {
   /** Recover every private media draft, independently of the current text composer. */
   async listPendingMediaDrafts(threadId: string): Promise<DiscussionMessageInput[]> {
     return this.read(async peer => {
-      if (await this.deletion(await this.thread(threadId), peer)) return [];
+      const thread = await this.thread(threadId);
+      if (thread.anchor.kind === 'free' && this.db.flexValues && await this.deletion(thread, peer)) return [];
       const rows = await this.db.discussionMessages.where('[realmId+threadId]')
         .equals([this.actorUserId, threadId])
         .filter(row => isDiscussionMessage(row) && row.owner === this.actorUserId
@@ -591,41 +599,43 @@ export class DiscussionRepository {
     if (!discussionId(threadId)) fail('INVALID_DISCUSSION_ID');
     // Keep the complete page/quote read in Dexie's promise zone. Async per-row
     // projections can outlive the last IndexedDB request under liveQuery.
-    return this.read(peer => this.db.discussionThreads.get(threadId).then(async (root): Promise<DiscussionPage> => {
+    return this.read<DiscussionPage>(peer => this.db.discussionThreads.get(threadId).then(root => {
       if (!root || root.realmId !== this.scope.realmId || root.coachClientId !== this.scope.coachClientId) fail('DISCUSSION_NOT_FOUND');
       assertDiscussionThread(root);
-      const deletion = await this.deletion(root, peer);
-      if (deletion === 'actor') return { messages: [], before: null, deletion };
-      const headers = threadId.startsWith('entity-discussion:')
-        ? this.db.discussionThreads.where('[realmId+anchorKey]').equals([this.scope.realmId, root.anchorKey]).toArray()
-        : Dexie.Promise.resolve([root]);
-      return headers.then(candidates => {
-        const threads = candidates.filter(thread => {
-          try { assertDiscussionThread(thread); return thread.realmId === root.realmId
-            && thread.coachClientId === root.coachClientId && thread.anchorKey === root.anchorKey; }
-          catch { return false; }
-        });
-        return Dexie.Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
-          .between([this.scope.realmId, thread.id, '', ''],
-            before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
-              : [this.scope.realmId, thread.id, []], true, false)
-          .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray())).then(pages => {
-          const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
-          const more = rows.length > limit; rows.splice(limit);
-          const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
-          const replyIds = [...new Set(rows.flatMap(row => row.replyToMessageId ? [row.replyToMessageId] : []))];
-          return this.db.discussionMessages.bulkGet(replyIds).then(originals => {
-            const threadIds = new Set(threads.map(thread => thread.id));
-            const quotes = new Map(originals.filter((row): row is DiscussionMessage => isDiscussionMessage(row)
-              && this.visible(row, row.threadId) && threadIds.has(row.threadId)).map(row => [row.id, row]));
-            const messages = rows.reverse().map(row => {
-              const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
-              return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
+      const project = (deletion?: DiscussionPage['deletion']): DiscussionPage | Promise<DiscussionPage> => {
+        if (deletion === 'actor') return { messages: [], before: null, deletion };
+        const headers = threadId.startsWith('entity-discussion:')
+          ? this.db.discussionThreads.where('[realmId+anchorKey]').equals([this.scope.realmId, root.anchorKey]).toArray()
+          : Dexie.Promise.resolve([root]);
+        return headers.then(candidates => {
+          const threads = candidates.filter(thread => {
+            try { assertDiscussionThread(thread); return thread.realmId === root.realmId
+              && thread.coachClientId === root.coachClientId && thread.anchorKey === root.anchorKey; }
+            catch { return false; }
+          });
+          return Dexie.Promise.all(threads.map(thread => this.db.discussionMessages.where('[realmId+threadId+createdAt+id]')
+            .between([this.scope.realmId, thread.id, '', ''],
+              before ? [this.scope.realmId, thread.id, before.createdAt, before.id]
+                : [this.scope.realmId, thread.id, []], true, false)
+            .reverse().filter(row => this.visible(row, thread.id)).limit(limit + 1).toArray())).then(pages => {
+            const rows = pages.flat().sort((a, b) => discussionCursorKey(a) < discussionCursorKey(b) ? 1 : -1);
+            const more = rows.length > limit; rows.splice(limit);
+            const cursor = more && rows.length ? { createdAt: rows[rows.length - 1].createdAt, id: rows[rows.length - 1].id } : null;
+            const replyIds = [...new Set(rows.flatMap(row => row.replyToMessageId ? [row.replyToMessageId] : []))];
+            return this.db.discussionMessages.bulkGet(replyIds).then(originals => {
+              const threadIds = new Set(threads.map(thread => thread.id));
+              const quotes = new Map(originals.filter((row): row is DiscussionMessage => isDiscussionMessage(row)
+                && this.visible(row, row.threadId) && threadIds.has(row.threadId)).map(row => [row.id, row]));
+              const messages = rows.reverse().map(row => {
+                const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
+                return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
+              });
+              return this.withAttachments(messages, rows).then(projected => ({ messages: projected, before: cursor, ...(deletion ? { deletion } : {}) }));
             });
-            return this.withAttachments(messages, rows).then(projected => ({ messages: projected, before: cursor, ...(deletion ? { deletion } : {}) }));
           });
         });
-      });
+      };
+      return root.anchor.kind === 'free' && this.db.flexValues ? this.deletion(root, peer).then(project) : project();
     }), true);
   }
 

@@ -1,3 +1,4 @@
+import Dexie from 'dexie';
 import { FREE_DISCUSSION_ID_PREFIX } from '../../../shared/discussion-anchor';
 import { flexAttributeId, flexValueId } from '../../../shared/flex-identifiers';
 import { isFlexAttributeRow } from './flex-attributes';
@@ -14,20 +15,20 @@ function deletionMarker(thread: DiscussionThread, actor: string) {
 }
 
 /** Callers supply a verified thread and participant from the current realm transaction. */
-export async function deletedDiscussionIds(
+export function deletedDiscussionIds(
   db: Pick<DiscussionDeletionTables, 'flexValues'>, threads: readonly DiscussionThread[], actor: string,
 ): Promise<Set<string>> {
   const markers = threads.filter(thread => thread.anchor.kind === 'free')
     .map(thread => ({ thread, ...deletionMarker(thread, actor) }));
-  if (!markers.length) return new Set();
-  const rows = await db.flexValues.bulkGet(markers.map(marker => marker.id));
-  return new Set(markers.flatMap(({ thread, id, attributeId, target }, index) => {
-    const row = rows[index];
-    // The exact monotone tombstone is sufficient even when Addon delivers the definition later.
-    return row?.id === id && row.realmId === target.realmId && row.owner === target.realmId
-      && row.entityType === target.entityType && row.entityId === target.entityId
-      && row.attributeId === attributeId && row.value === true ? [thread.id] : [];
-  }));
+  if (!markers.length) return Dexie.Promise.resolve(new Set<string>());
+  return db.flexValues.bulkGet(markers.map(marker => marker.id)).then(rows =>
+    new Set(markers.flatMap(({ thread, id, attributeId, target }, index) => {
+      const row = rows[index];
+      // The exact monotone tombstone is sufficient even when Addon delivers the definition later.
+      return row?.id === id && row.realmId === target.realmId && row.owner === target.realmId
+        && row.entityType === target.entityType && row.entityId === target.entityId
+        && row.attributeId === attributeId && row.value === true ? [thread.id] : [];
+    })));
 }
 
 export async function storeDiscussionDeletion(
