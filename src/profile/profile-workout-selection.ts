@@ -31,6 +31,7 @@ export function localWorkoutDate(value: string | Date): LocalDate {
 /** Read-side projection only. It never authorizes or changes an occurrence or FACT. */
 export function selectProfileWorkoutRows(options: Selection & { mode: 'plan' }): TimelineRow[];
 export function selectProfileWorkoutRows(options: Selection & { mode: 'history' | 'calendar' }): CalendarTimelineRow[];
+export function selectProfileWorkoutRows(options: Selection): CalendarTimelineRow[];
 export function selectProfileWorkoutRows({
   occurrences, sessions, actorUserId, contact, mode, today, now, from, to,
 }: Selection): CalendarTimelineRow[] {
