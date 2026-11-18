@@ -37,7 +37,7 @@ export function UserProfileNavigationShell({
     return () => { activeRepository.current = null; };
   }, [repository]);
   const [retry, setRetry] = useState(0);
-  const [tab, setTab] = useState<ProfileTab>('basics');
+  const [tab, setTab] = useState<ProfileTab>('history');
   const [profileNavigation, setProfileNavigation] = useState<NavigationContext | null>(null);
   const [historyCalendar, setHistoryCalendar] = useState<NavigationContext['calendar']>();
   const initialProfileVisit = useRef<string | null>(null);
@@ -61,7 +61,7 @@ export function UserProfileNavigationShell({
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [repository, retry]);
-  useEffect(() => { setTab('basics'); setProfileNavigation(null); }, [props.activeRole, cloud?.actorUserId]);
+  useEffect(() => { setTab('history'); setProfileNavigation(null); }, [props.activeRole, cloud?.actorUserId]);
   useEffect(() => { if (props.destination !== 'profile') setProfileNavigation(null); }, [props.destination]);
   const current = snapshot?.repository === repository ? snapshot : null;
   useEffect(() => {
