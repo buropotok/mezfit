@@ -34,7 +34,7 @@ Worker starts with Queue and Workflow entrypoints only.
 
 ## GitHub Actions rollout
 
-Run both workflows as the repository owner on `main` after merging:
+**Initial bootstrap remains manual and owner-restricted** (on `main`):
 
 1. Run **Bootstrap migration infrastructure** in `preview` mode to read the
    resource state and planned changes.
@@ -42,8 +42,23 @@ Run both workflows as the repository owner on `main` after merging:
    any missing resources and publishes the uploader credentials directly as
    Worker Secrets via an initial private deployment. The initial deployment has
    no Queue consumer until the D1 schema has been installed.
-3. Run **Deploy migration Worker**. It applies the D1 migrations, deploys the
-   Worker, Queue binding and Cloudflare Workflow, and runs the live smoke check.
+
+**For subsequent migration-code merges**, `.github/workflows/migration-auto.yml`
+triggers on `push` to `main` for the migration Worker, technical D1 migrations,
+runner/scripts and relevant migration workflows. It runs, in order:
+
+1. **Deploy migration**: apply only the migration-job D1 migrations, deploy the
+   private migration Worker/Queue/Workflow and run the built-in infrastructure smoke.
+2. **Processor smoke**: verify the synthetic fixture, output, replay and cleanup.
+3. **Nested smoke**: verify synthetic nested adapter, references and cleanup.
+
+All three share the `mezfit-migration-cloudflare` concurrency lock, run only on
+`main`, and stop on the first failure. Each uploads a separate sanitized trace.
+No PR, docs-only change, application Worker, Dexie Cloud role/schema operator,
+bootstrap apply or user business import is triggered by this chain. **Merging a
+migration-runtime PR now approves an automatic live migration Worker deploy and
+potential technical D1 migrations.** The existing manual Deploy and Diagnose/smoke
+workflows remain available for recovery and independent verification.
 
 The workflows share a concurrency group. They use the existing account and
 origin repository variables and the existing deployment and bootstrap secrets.
@@ -149,10 +164,12 @@ trace recovered the smoke evidence in that run.
 
 ### Проверка TypeScript Execution Engine
 
-После слияния запустите `Deploy migration Worker` на `main`. Он применяет
-аддитивную миграцию `0003_create_migration_executions.sql` перед выкладкой Worker
-и проверяет `MIGRATION_SMOKE_OK`. Затем запустите
-`Diagnose or smoke-test migration infrastructure` с операцией `processor-smoke`.
+На новых изменениях миграционного runtime после merge автоматически выполняется
+`migration-auto.yml`: Deploy migration (включая `MIGRATION_SMOKE_OK`), затем
+`processor-smoke` и `nested-smoke`. Ручные `Deploy migration Worker` и
+`Diagnose or smoke-test migration infrastructure` остаются для самостоятельного
+повторного запуска/диагностики. Начальный Deploy применял аддитивную миграцию
+`0003_create_migration_executions.sql` перед выкладкой Worker.
 Этот режим сверяет текущую версию деплоя с версией из Workflow runtime,
 загружает синтетический JSON, проверяет результат и повторную доставку, удаляет
 вход, результат и технические строки, затем выводит `MIGRATION_PROCESSOR_SMOKE_OK`.
@@ -178,10 +195,10 @@ MIG-03 deploy/infra/fixture smoke подтверждены runs 44181829987 / 44
 
 ### Облачная проверка второго адаптера
 
-После слияния доработки владелец запускает **Deploy migration Worker** на
-`main` и проверяет фактическую Worker version и `MIGRATION_SMOKE_OK`.
-Затем Actions → **Diagnose or smoke-test migration infrastructure** →
-**Run workflow** → branch `main` → operation `nested-smoke`.
+После merge миграционного runtime автоматическая цепочка вызывает Deploy,
+`processor-smoke` и `nested-smoke` последовательно. При необходимости
+владелец может отдельно повторить: Actions → **Diagnose or smoke-test migration
+infrastructure** → **Run workflow** → branch `main` → operation `nested-smoke`.
 
 Сценарий использует readiness gate и обычную R2 notification/Queue/D1/Workflow
 обработку. Вход содержит несколько групп, неотсортированные items,
@@ -199,6 +216,9 @@ Worker version, trace/job IDs, `ADAPTER_SELECTED` и
 сами по себе не дают полной наблюдаемости. При ошибке использовать diagnose
 с UUID из отчёта. При timeout/active Workflow cleanup откладывается.
 
-Live nested-smoke для этой доработки ещё не запускался. После успешного
-ручного запуска отдельно зафиксировать run URL, source SHA, Worker version
-и trace ID в migration.md.
+Live nested-smoke успешно пройден в [run 44201744839](https://github.com/buropotok/mezfit/actions/runs/44201744839):
+`MIGRATION_NESTED_SMOKE_OK`, Worker version
+`93a4ac02-7cce-4fec-b52c-13044e11c775`, trace ID
+`1fe7b878-d142-4970-8ce2-2bc77be96784`. Детали в `migration.md` §2.5.
+Для следующих изменений проверять актуальные SHA/Worker version и сохранять
+их в Actions run/trace; этот run не подтверждает будущие версии.
