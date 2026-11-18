@@ -54,12 +54,37 @@ describe('profile workout PLAN / FACT projection', () => {
       .toEqual(['today', 'future']);
   });
 
-  it('shows completed FACT and only past missed PLAN on History, newest first', () => {
+  it('shows scheduled, missed, active and completed workouts together, newest first', () => {
     const rows = selectProfileWorkoutRows({
       occurrences, sessions, contact: client, actorUserId: 'tg:101', mode: 'history', today,
+      now: Date.parse('2026-11-08T12:30:00'),
     });
-    expect(rows.map(row => [row.kind, row.kind === 'completed' ? row.session.id : row.occurrence.id]))
-      .toEqual([['missed', 'missed'], ['completed', 'completed']]);
+    expect(rows.map(row => [row.kind, 'session' in row ? row.session.id : row.occurrence.id]))
+      .toEqual([['planned', 'future'], ['planned', 'today'], ['active', 'active'],
+        ['missed', 'missed'], ['completed', 'completed']]);
+  });
+
+  it('changes only the display kind at the scheduled end, even on the same day', () => {
+    const before = selectProfileWorkoutRows({
+      occurrences, sessions, contact: client, actorUserId: 'tg:101', mode: 'history', today,
+      now: Date.parse('2026-11-08T14:29:59'),
+    });
+    const after = selectProfileWorkoutRows({
+      occurrences, sessions, contact: client, actorUserId: 'tg:101', mode: 'history', today,
+      now: Date.parse('2026-11-08T14:30:00'),
+    });
+    expect(before.find(row => 'occurrence' in row && row.occurrence.id === 'today')?.kind).toBe('planned');
+    expect(after.find(row => 'occurrence' in row && row.occurrence.id === 'today')?.kind).toBe('missed');
+    expect(occurrences.find(row => row.id === 'today')?.status).toBe('scheduled');
+  });
+
+  it('applies the mandatory To bound to upcoming scheduled workouts', () => {
+    const rows = selectProfileWorkoutRows({
+      occurrences, sessions, contact: client, actorUserId: 'tg:101', mode: 'history', today,
+      now: Date.parse('2026-11-08T12:30:00'), to: today,
+    });
+    expect(rows.some(row => 'occurrence' in row && row.occurrence.id === 'future')).toBe(false);
+    expect(rows.some(row => 'occurrence' in row && row.occurrence.id === 'today')).toBe(true);
   });
 
   it('uses inclusive From / To filters on History, not the Plan list', () => {
@@ -79,6 +104,9 @@ describe('profile workout PLAN / FACT projection', () => {
     const rows = selectProfileWorkoutRows({
       occurrences, sessions, actorUserId: client.userId, mode: 'history', today,
     });
-    expect(rows.map(row => row.kind)).toEqual(['missed', 'missed', 'completed', 'completed']);
+    expect(rows.filter(row => 'occurrence' in row).map(row => row.occurrence.id).sort())
+      .toEqual(['future', 'missed', 'other-realm', 'today']);
+    expect(rows.filter(row => 'session' in row).map(row => row.session.id).sort())
+      .toEqual(['active', 'another-realm', 'completed']);
   });
 });
