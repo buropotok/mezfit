@@ -16,6 +16,7 @@ const errorLabels: Record<VideoRecordingDiagnostic['errorCode'], string> = {
   CAMERA_INTERRUPTED: 'Получение видеопотока прервано',
   CAMERA_PREVIEW_NOT_READY: 'Изображение камеры ещё не готово',
   CAMERA_ORIENTATION: 'Ориентация видеопотока не совпала',
+  CAMERA_ORIENTATION_FALLBACK: 'Повторная настройка ориентации камеры',
   RECORDER_START_FAILED: 'MediaRecorder не запустился',
   RECORDER_RUNTIME_FAILED: 'Ошибка во время записи',
   RECORDER_STOP_FAILED: 'Не удалось завершить запись',
