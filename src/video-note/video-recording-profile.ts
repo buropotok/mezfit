@@ -9,8 +9,16 @@ export const VIDEO_RECORDING_PROFILES = {
 
 export type VideoRecordingProfile = keyof typeof VIDEO_RECORDING_PROFILES;
 
+export function usesSensorCameraDimensions(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 export function videoRecordingConstraints(profile: VideoRecordingProfile): MediaTrackConstraints {
-  const { width, height } = VIDEO_RECORDING_PROFILES[profile];
+  // WebKit interprets constraints in the camera's primary (landscape) orientation.
+  // The actual portrait dimensions are checked after the first preview frame.
+  const captureProfile = profile !== 'circle' && usesSensorCameraDimensions() ? 'landscape' : profile;
+  const { width, height } = VIDEO_RECORDING_PROFILES[captureProfile];
   const supported = navigator.mediaDevices?.getSupportedConstraints?.();
   const canRequireNativeSize = profile !== 'circle' && supported && 'resizeMode' in supported && supported.resizeMode === true;
   return {

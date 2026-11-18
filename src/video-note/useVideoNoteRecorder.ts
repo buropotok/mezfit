@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
-import { recordingOptionsCandidates, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
+import { recordingOptionsCandidates, usesSensorCameraDimensions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
+import { matchesCameraOrientation, waitForCameraFrame } from './camera-orientation';
 import { getVideoRecordingFormatPreference } from './video-recording-format-preference';
 import { reportVideoRecordingFailure } from './video-recording-diagnostics';
 import type { VideoRecordingDiagnostic, VideoRecordingErrorCode } from '../../shared/video-recording-diagnostic';
@@ -65,6 +66,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const deadlineRef = useRef<number | null>(null);
   const cameraSettingsRef = useRef<MediaTrackSettings>({});
   const failedMimeTypesRef = useRef(new Set<string>());
+  const previewAbortRef = useRef<AbortController | null>(null);
 
   const reportFailure = useCallback((
     code: VideoRecordingErrorCode, extra: VideoRecordingDiagnostic['device'] = {},
@@ -92,6 +94,8 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
 
   const cancel = useCallback(() => {
     epochRef.current += 1;
+    previewAbortRef.current?.abort();
+    previewAbortRef.current = null;
     clearTimers();
     const recorder = recorderRef.current;
     recorderRef.current = null;
@@ -200,18 +204,50 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     }
     if (cameraOptions?.profile) {
       const { video, profile: orientationProfile } = cameraOptions;
-      if (!video || video.srcObject !== source || !video.videoWidth || !video.videoHeight || video.readyState < 2) {
+      const previewAbort = new AbortController();
+      previewAbortRef.current = previewAbort;
+      const current = () => mountedRef.current && epoch === epochRef.current && !previewAbort.signal.aborted;
+      const hasCurrentFrame = video && typeof video.requestVideoFrameCallback !== 'function'
+        && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+      const frameReady = video && video.srcObject === source
+        && (hasCurrentFrame || await waitForCameraFrame(video, previewAbort.signal));
+      if (!current()) return false;
+      cameraSettingsRef.current = source.getVideoTracks()[0]?.getSettings?.() ?? {};
+      if (!video || !frameReady) {
+        previewAbortRef.current = null;
         reportFailure('CAMERA_PREVIEW_NOT_READY');
         setError('Дождитесь изображения с камеры и повторите попытку.');
         updateStatus('error');
         return false;
       }
-      const matchesOrientation = orientationProfile === 'portrait'
-        ? video.videoHeight > video.videoWidth
-        : video.videoWidth > video.videoHeight;
-      if (!matchesOrientation) {
+      const track = source.getVideoTracks()[0];
+      if (!matchesCameraOrientation(video, orientationProfile) && !usesSensorCameraDimensions()
+        && profile === 'portrait' && typeof track?.applyConstraints === 'function') {
+        let fallbackResult = 'orientation-mismatch';
+        let errorName: string | undefined;
+        try {
+          await track.applyConstraints({ width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } });
+          if (!current()) return false;
+          const matched = await waitForCameraFrame(video, previewAbort.signal, orientationProfile);
+          fallbackResult = matched ? 'success' : 'orientation-mismatch';
+        } catch (cause) {
+          fallbackResult = 'constraints-failed';
+          errorName = cause instanceof DOMException ? cause.name : 'unknown';
+        }
+        if (!current()) return false;
+        cameraSettingsRef.current = track.getSettings?.() ?? {};
+        reportFailure('CAMERA_ORIENTATION_FALLBACK', {
+          cameraRequestedSize: '1280x720',
+          cameraPreviewSize: `${video.videoWidth}x${video.videoHeight}`,
+          cameraFallbackResult: fallbackResult, errorName,
+        });
+      }
+      previewAbortRef.current = null;
+      if (!matchesCameraOrientation(video, orientationProfile)) {
         const orientation = orientationProfile === 'portrait' ? 'вертикальный' : 'горизонтальный';
-        reportFailure('CAMERA_ORIENTATION');
+        reportFailure('CAMERA_ORIENTATION', {
+          cameraPreviewSize: `${video.videoWidth}x${video.videoHeight}`,
+        });
         setError(`Камера Telegram не отдаёт ${orientation} кадр. Можно выбрать готовое видео из галереи.`);
         updateStatus('error');
         return false;

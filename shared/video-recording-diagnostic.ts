@@ -21,6 +21,7 @@ export const VIDEO_RECORDING_MIME_TYPES = [
 export const VIDEO_RECORDING_ERROR_CODES = [
   'UNSUPPORTED_MP4_AVC', 'MEDIA_API_UNAVAILABLE', 'CAMERA_ACCESS_FAILED',
   'CAMERA_INTERRUPTED', 'CAMERA_PREVIEW_NOT_READY', 'CAMERA_ORIENTATION',
+  'CAMERA_ORIENTATION_FALLBACK',
   'RECORDER_START_FAILED', 'RECORDER_RUNTIME_FAILED', 'RECORDER_STOP_FAILED',
   'RECORDER_INTERRUPTED', 'RECORDING_EMPTY', 'RECORDED_FORMAT_INVALID',
   'RECORDER_MIME_ATTEMPT_FAILED',
@@ -41,6 +42,7 @@ export const VIDEO_RECORDING_DEVICE_FIELDS = [
   'mediaRecorder', 'isTypeSupported', 'getUserMedia', 'mediaDevices',
   'videoEncoder', 'mediaCapabilities', 'supportedConstraints',
   'cameraWidth', 'cameraHeight', 'cameraFrameRate', 'cameraFacingMode',
+  'cameraRequestedSize', 'cameraPreviewSize', 'cameraFallbackResult',
 ] as const;
 
 export type VideoRecordingErrorCode = typeof VIDEO_RECORDING_ERROR_CODES[number];
