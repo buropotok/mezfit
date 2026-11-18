@@ -109,9 +109,12 @@ it('treats native touchcancel and a second finger as cancellation, never a send'
   await begin();
   const another = finger(11, 310, 600);
   const original = finger(10);
-  act(() => { document.dispatchEvent(Object.assign(new Event('touchstart', { bubbles: true }), {
-    touches: [original, another], changedTouches: [another],
-  })); });
+  const secondTouch = new Event('touchstart', { bubbles: true });
+  Object.defineProperties(secondTouch, {
+    touches: { value: [original, another] },
+    changedTouches: { value: [another] },
+  });
+  act(() => { document.dispatchEvent(secondTouch); });
   expect(cancel).toHaveBeenCalledTimes(2);
   nativeTouch('touchend', 10);
   expect(finish).not.toHaveBeenCalled();
@@ -128,4 +131,26 @@ it('ignores other fingers and removes document listeners on unmount', async () =
   nativeTouch('touchend');
   expect(finish).not.toHaveBeenCalled();
   expect(cancel).toHaveBeenCalledOnce();
+});
+
+it('cancels a native left swipe without sending on the later touch release', async () => {
+  const finish = vi.fn(), cancel = vi.fn();
+  render(<Harness finish={finish} cancel={cancel} />);
+  touchStart();
+  await begin();
+  nativeTouch('touchmove', 8, 185, 590);
+  expect(cancel).toHaveBeenCalledOnce();
+  nativeTouch('touchend', 8, 185, 590);
+  expect(finish).not.toHaveBeenCalled();
+});
+
+it('does not start a recording for a brief native tap', () => {
+  const finish = vi.fn(), cancel = vi.fn();
+  render(<Harness finish={finish} cancel={cancel} />);
+  touchStart();
+  nativeTouch('touchend');
+  act(() => { vi.advanceTimersByTime(1000); });
+  expect(screen.getByRole('button').textContent).toBe('idle');
+  expect(finish).not.toHaveBeenCalled();
+  expect(cancel).not.toHaveBeenCalled();
 });
