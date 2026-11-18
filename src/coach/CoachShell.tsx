@@ -1,5 +1,5 @@
 import { DiscussionsPage } from '../discussions/DiscussionsPage';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -241,7 +241,8 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     }
   }, [destination, selectedClientId]);
 
-  useEffect(() => {
+  // Forward nested Back handlers before the newly opened surface can receive input.
+  useLayoutEffect(() => {
     if (selectingProgramClient && destination === 'programs') {
       onNavigationContextChange({ title: 'Клиенты', scrollKey: 'program-client-selection', onBack: () => setSelectingProgramClient(false) });
       return () => onNavigationContextChange(null);
@@ -357,7 +358,7 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
       <ProfileWorkspace view={{ kind: 'contact', contact: selectedClient }} tab={clientTab}
         basicsContent={<PublishedUserProfile key={selectedClient.relationshipId + ':' + selectedClient.userId} contact={selectedClient} />}
         hideTabs={clientTab === 'exercises' && clientExerciseNavigation !== null}
-        discussionsContent={clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
+        discussionsContent={destination === 'clients' && clientTab === 'discussions' ? <DiscussionsPage key={selectedClient.relationshipId} role="coach"
           relationshipId={selectedClient.relationshipId} onNavigationContextChange={setClientDiscussionNavigation} /> : null}
         onTabChange={tab => { setClientTab(tab); setClientWorkoutNavigation(null); }}
         programContent={clientTab === 'program' ? programContent : null}

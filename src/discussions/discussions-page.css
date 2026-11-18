@@ -11,3 +11,5 @@
 .discussion-inbox__client-filter--all { grid-template-columns: auto minmax(0, 1fr); gap: var(--ui-space-2); }
 
 .discussion-inbox__avatar-source { display: inline-flex; align-items: center; justify-content: center; }
+.discussion-inbox__contact-picker { display: grid; gap: var(--ui-space-3); padding: var(--ui-space-4) var(--page-pad-x); }
+.discussion-inbox__contact-picker-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--ui-space-2); }
