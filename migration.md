@@ -1053,9 +1053,9 @@ admission по `AGENTS.md`; «CI green» сам по себе не даёт
 
 Один `migrationJobId` связывает источник и checksum, тренера,
 версии формата/адаптера/плана, execution/trace и receipt.
-Желаемые продуктовые состояния `uploaded → analyzing → building
-→ ready → importing → completed` и `adapter_failed` — **проект
-будущего orchestrator**, а не существующий enum D1.
+Желаемые продуктовые состояния: `uploaded` → `analyzing` →
+`building` → `ready` → `importing` → `completed`, а также
+`adapter_failed` — **проект будущего orchestrator**, а не существующий enum D1.
 Текущие `migration_executions`: `queued/running/succeeded/failed/unsupported`.
 
 Нужны идемпотентность каждой стадии, обработка duplicate events,
@@ -1092,8 +1092,8 @@ Dexie Cloud REST upsert нельзя считать безопасным мас�
   доступа клиента; отдельное согласование privileged Dexie
   Cloud операций.
 - Параметры AI API, безопасного sandbox, CI/autofix limits
-  и reviewed admission; независимые реальными sample tests
-  до заявления о поддержке конкретного приложения.
+  и reviewed admission; независимые тесты на реальных обезличенных
+  образцах до заявления о поддержке конкретного приложения.
 
 **Запрет на угадывающий импорт:** до решения этих вопросов
 допустимы исследование, extraction и dry-run с явными
