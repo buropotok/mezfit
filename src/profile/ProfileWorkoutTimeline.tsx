@@ -241,7 +241,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
         setHistoryFilter({ from: null, to: today });
       }}><Text variant="footnote">Сбросить</Text></KonstaButton>
     </div> : null}
-    {from && to && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
+    {!calendarDay && from && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
     {workouts.failed ? <div className="stack"><Text variant="footnote" role="alert">
       Не удалось {workouts.data ? 'обновить' : 'загрузить'} тренировки.
