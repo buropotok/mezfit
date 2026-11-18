@@ -74,7 +74,7 @@ export function installTextOnlyLayout(viewport = 280) {
   };
 }
 
-export function textOnlyScene(container: ParentNode): ShadowRoot {
+export function textOnlyScene(container: HTMLElement): ShadowRoot {
   for (const element of container.querySelectorAll('*')) {
     if (element.shadowRoot?.querySelector('[role="tablist"]')) return element.shadowRoot;
   }
