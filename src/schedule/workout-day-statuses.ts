@@ -93,7 +93,7 @@ export function deriveWorkoutDayStatuses(
     } else if (effectiveStatus === 'in_progress' || row.workoutSessionId) {
       // An already started workout cannot become missed, even if it began late.
       mark(row.startsAtUtc, 'scheduled');
-    } else if (now >= end) {
+    } else if (isScheduledWorkoutMissed(row, now)) {
       mark(row.startsAtUtc, 'missed');
     } else {
       mark(row.startsAtUtc, 'scheduled');
