@@ -6,6 +6,7 @@ import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation
 import type { ExercisePeriod } from '../coach/clientExerciseStatistics';
 import type { LocalDate } from '../ui';
 import type { ProfileTab } from './ProfileWorkspace';
+import { localWorkoutDate } from './profile-workout-selection';
 
 type Observe<T> = (next: (data: T) => void, error: (reason: unknown) => void) => { unsubscribe(): void };
 type Snapshot<T> = { data: T | null; failed: boolean };
@@ -41,7 +42,7 @@ function useProfileRead<T>(requested: boolean, observe: Observe<T> | null) {
 }
 
 type Workouts = { occurrences: CloudWorkoutOccurrenceRow[]; sessions: CalendarWorkoutSession[] };
-type HistoryFilter = { from: LocalDate | null; to: LocalDate | null; source?: 'calendar' };
+type HistoryFilter = { from: LocalDate | null; to: LocalDate };
 type ExerciseFilter = { period: ExercisePeriod; anchor: Date; anchorDay: number; category: string | null };
 type Cloud = NonNullable<ReturnType<typeof useCloudConnections>>;
 
@@ -68,7 +69,9 @@ function useProfileData(cloud: Cloud | null, tab: ProfileTab, clientUserId?: str
   }, [db, actorUserId, clientUserId, realmId]);
   const workouts = useProfileRead(tab === 'calendar' || tab === 'history', db ? observeWorkouts : null);
   const exercises = useProfileRead(tab === 'exercises', db ? observeFacts : null);
-  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>({ from: null, to: null });
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>(() => ({
+    from: null, to: localWorkoutDate(new Date()),
+  }));
   const [exerciseFilter, setExerciseFilter] = useState<ExerciseFilter>(() => {
     const anchor = new Date();
     return { period: '30d', anchor, anchorDay: anchor.getDate(), category: null };
