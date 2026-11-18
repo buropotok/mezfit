@@ -61,7 +61,7 @@ it('filters client History by a calendar day and opens details only for a single
   const openCalendar = context()?.onCalendarOpen;
   expect(openCalendar).toBeDefined();
   act(() => openCalendar?.());
-  expect(screen.getByRole('region', { name: 'История тренировок' })).toBeTruthy();
+  expect(screen.getByRole('region', { name: 'Тренировки' })).toBeTruthy();
   const selectDay = (day: string) => {
     const calendar = context()?.calendar;
     expect(calendar).toBeDefined();

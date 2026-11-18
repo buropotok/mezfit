@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavigationShell, useNavigationFloatingAction, useNavigationSurfaceFloatingAction } from './NavigationShell';
+import { NavigationShell, useNavigationCalendar, useNavigationFloatingAction, useNavigationSurfaceFloatingAction } from './NavigationShell';
 import { GlassSurfaceProvider } from './ui';
 import { getUiIconAsset, type UiIconName } from './ui/icons/registry';
 
@@ -54,6 +54,13 @@ const surfaceFloatingAction = {
   onClick: vi.fn(),
   icon: 'plus' as const,
 };
+
+function CalendarCapsuleProbe() {
+  const calendar = useNavigationCalendar();
+  return <button onClick={() => calendar?.toggle()} aria-label="Календарь в фильтрах">
+    {calendar?.opened ? 'Открыт' : 'Закрыт'}
+  </button>;
+}
 
 function SurfaceFloatingActionRegistration() {
   useNavigationSurfaceFloatingAction(surfaceFloatingAction);
@@ -513,6 +520,36 @@ describe('NavigationShell MezfitNavbar integration', () => {
     await waitFor(() => {
       expect(panel?.getAttribute('data-state')).toBe('closed');
       expect(view.getByRole('button', { name: 'Открыть календарь' }).getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
+  it('opens the navbar-owned top calendar from a profile filter capsule', async () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => (
+      window.setTimeout(() => callback(0), 0)
+    ));
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id));
+
+    const view = render(<NavigationShell me={me} activeRole="client" destination="profile"
+      context={{ level: 1, title: 'Мой профиль' }} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
+      <CalendarCapsuleProbe />
+    </NavigationShell>);
+    const capsule = view.getByRole('button', { name: 'Календарь в фильтрах' });
+    expect(capsule.textContent).toBe('Закрыт');
+    fireEvent.click(capsule);
+    const panel = view.container.querySelector<HTMLElement>('[data-date-picker-surface="top-panel"]');
+    await waitFor(() => {
+      expect(capsule.textContent).toBe('Открыт');
+      expect(panel?.getAttribute('data-state')).toBe('opened');
+    });
+    const closeCalendarButton = view.getByRole('button', { name: 'Закрыть календарь' });
+    fireEvent.pointerDown(closeCalendarButton, { pointerType: 'touch', button: 0 });
+    fireEvent.click(closeCalendarButton);
+    const identityAction = view.container.querySelector<HTMLElement>('.ui-identity-action--double');
+    if (!identityAction) throw new Error('Missing double identity action');
+    fireEvent.animationEnd(identityAction);
+    await waitFor(() => {
+      expect(capsule.textContent).toBe('Закрыт');
+      expect(panel?.getAttribute('data-state')).toBe('closed');
     });
   });
 

@@ -1,6 +1,7 @@
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import type { LocalDate } from '../ui';
+import { isScheduledWorkoutMissed } from '../schedule/workout-day-statuses';
 
 export type TimelineRow =
   | { kind: 'planned' | 'missed'; occurrence: CloudWorkoutOccurrenceRow; date: LocalDate }
@@ -16,6 +17,7 @@ type Selection = {
   contact?: { userId: string; relationshipId: string };
   mode: 'plan' | 'history' | 'calendar';
   today: LocalDate;
+  now?: number;
   from?: LocalDate | null;
   to?: LocalDate | null;
 };
@@ -27,40 +29,40 @@ export function localWorkoutDate(value: string | Date): LocalDate {
 }
 
 /** Read-side projection only. It never authorizes or changes an occurrence or FACT. */
-export function selectProfileWorkoutRows(options: Selection & { mode: 'plan' | 'history' }): TimelineRow[];
-export function selectProfileWorkoutRows(options: Selection & { mode: 'calendar' }): CalendarTimelineRow[];
+export function selectProfileWorkoutRows(options: Selection & { mode: 'plan' }): TimelineRow[];
+export function selectProfileWorkoutRows(options: Selection & { mode: 'history' | 'calendar' }): CalendarTimelineRow[];
+export function selectProfileWorkoutRows(options: Selection): CalendarTimelineRow[];
 export function selectProfileWorkoutRows({
-  occurrences, sessions, actorUserId, contact, mode, today, from, to,
+  occurrences, sessions, actorUserId, contact, mode, today, now, from, to,
 }: Selection): CalendarTimelineRow[] {
+  const currentTime = now ?? Date.parse(`${today}T00:00:00`);
   const belongs = (row: { athleteUserId: string; realmId: string }) =>
     contact ? row.athleteUserId === contact.userId && row.realmId === contact.relationshipId
       : row.athleteUserId === actorUserId;
   const planned: TimelineRow[] = [];
   const history: CalendarTimelineRow[] = [];
   const scopedSessions = sessions.filter(belongs);
-  const linkedSessions = mode === 'calendar'
-    ? new Map(scopedSessions.map(session => [session.occurrenceId, session]))
-    : null;
+  const linkedSessions = new Map(scopedSessions.map(session => [session.occurrenceId, session]));
   for (const occurrence of occurrences) {
     if (!belongs(occurrence) || occurrence.inactive || occurrence.cancelledAt
       || occurrence.status === 'cancelled' || occurrence.publicationStatus === 'draft') continue;
-    const linked = linkedSessions?.get(occurrence.id);
+    const linked = linkedSessions.get(occurrence.id);
     if (linked && linked.realmId === occurrence.realmId
       && linked.coachUserId === occurrence.coachUserId && linked.clientUserId === occurrence.clientUserId
       && (!occurrence.workoutSessionId || occurrence.workoutSessionId === linked.id)) continue;
     const date = localWorkoutDate(occurrence.startsAtUtc);
     if (occurrence.status === 'scheduled') {
-      if (date < today) history.push({ kind: 'missed', occurrence, date });
+      if (isScheduledWorkoutMissed(occurrence, currentTime)) history.push({ kind: 'missed', occurrence, date });
       else planned.push({ kind: 'planned', occurrence, date });
     }
   }
   for (const session of scopedSessions) {
-    if (session.status === 'completed' || mode === 'calendar') {
+    if (session.status === 'completed' || mode !== 'plan') {
       history.push({ kind: session.status, session, date: localWorkoutDate(session.startedAt) });
     }
   }
   const inPeriod = (row: CalendarTimelineRow) => (!from || row.date >= from) && (!to || row.date <= to);
-  const rows = mode === 'calendar' ? [...history, ...planned] : history;
+  const rows = [...history, ...planned];
   return (mode === 'plan' ? planned : rows.filter(inPeriod)).sort((a, b) => {
     const left = 'session' in a ? a.session.startedAt : a.occurrence.startsAtUtc;
     const right = 'session' in b ? b.session.startedAt : b.occurrence.startsAtUtc;

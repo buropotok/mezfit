@@ -78,8 +78,8 @@ describe('profile registration navigation', () => {
     await screen.findByLabelText('Имя');
     expect(screen.getByTestId('destination').textContent).toBe('profile');
     expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(screen.getByRole('tab', { name: 'История' }));
-    expect(screen.getByRole('tab', { name: 'История' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Тренировки' }));
+    expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByText('Настройки'));
     expect(screen.getByTestId('destination').textContent).toBe('settings');
     fireEvent.click(screen.getByText('Таб тренировки'));

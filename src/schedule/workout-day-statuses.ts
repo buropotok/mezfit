@@ -25,6 +25,17 @@ const priority: Record<DatePickerDayStatus, number> = {
   missed: 2,
 };
 
+/** A missed workout is a display state, never a persisted lifecycle mutation. */
+export function isScheduledWorkoutMissed(
+  workout: { startsAtUtc: string; durationMinutes: number; status?: string | null; workoutSessionId?: string | null },
+  now: number,
+): boolean {
+  if ((workout.status && workout.status !== 'scheduled') || workout.workoutSessionId
+    || !Number.isFinite(workout.durationMinutes) || workout.durationMinutes < 0) return false;
+  const start = Date.parse(workout.startsAtUtc);
+  return Number.isFinite(start) && now >= start + workout.durationMinutes * 60_000;
+}
+
 export function preferredWorkoutDayStatus(
   current: DatePickerDayStatus | undefined,
   candidate: DatePickerDayStatus,
@@ -82,7 +93,7 @@ export function deriveWorkoutDayStatuses(
     } else if (effectiveStatus === 'in_progress' || row.workoutSessionId) {
       // An already started workout cannot become missed, even if it began late.
       mark(row.startsAtUtc, 'scheduled');
-    } else if (now >= end) {
+    } else if (isScheduledWorkoutMissed(row, now)) {
       mark(row.startsAtUtc, 'missed');
     } else {
       mark(row.startsAtUtc, 'scheduled');

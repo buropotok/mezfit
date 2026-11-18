@@ -47,7 +47,7 @@ describe('Coach client Exercises tab', () => {
     expect(renderExercises).toHaveBeenCalledWith(client);
     expect(screen.queryByText('Каталог упражнений клиента будет доступен после перевода этого раздела на Dexie Cloud.')).toBeNull();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'История' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Тренировки' }));
     expect(screen.queryByRole('region', { name: 'История упражнений клиента' })).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Упражнения' }));
     expect(screen.getByRole('region', { name: 'История упражнений клиента' })).toBeTruthy();

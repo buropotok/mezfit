@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button as KonstaButton } from 'konsta/react';
-import type { NavigationContext } from '../NavigationShell';
+import { useNavigationCalendar, type NavigationContext } from '../NavigationShell';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
@@ -106,9 +106,14 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const occurrences = workouts.data?.occurrences ?? EMPTY_OCCURRENCES;
   const sessions = workouts.data?.sessions ?? EMPTY_SESSIONS;
   const loading = !workouts.data && !workouts.failed;
-  const [today, setToday] = useState<LocalDate>(() => localDate(new Date()));
-  const { from, to, source } = historyFilter;
-  const calendarDay = mode === 'history' && source === 'calendar' ? from : null;
+  const [now, setNow] = useState(Date.now);
+  const today = localDate(new Date(now));
+  const { from, to } = historyFilter;
+  const navigationCalendar = useNavigationCalendar();
+  const calendarOpen = navigationCalendar?.opened ?? false;
+  // A calendar-day preview is independent from the saved From / To range.
+  const [calendarDay, setCalendarDay] = useState<LocalDate | null>(null);
+  const wasCalendarOpen = useRef(calendarOpen);
   const [pendingCalendarDay, setPendingCalendarDay] = useState<LocalDate | null>(null);
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
   const [openedOccurrenceId, setOpenedOccurrenceId] = useState<string | null>(null);
@@ -118,11 +123,18 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const [sourceProgramName, setSourceProgramName] = useState<string | null>(null);
 
   useEffect(() => {
-    const tick = () => setToday(localDate(new Date()));
+    const tick = () => setNow(Date.now());
     const timer = window.setInterval(tick, 60_000);
     document.addEventListener('visibilitychange', tick);
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
   }, []);
+  useEffect(() => {
+    if (wasCalendarOpen.current && !calendarOpen) {
+      setCalendarDay(null);
+      setPendingCalendarDay(null);
+    }
+    wasCalendarOpen.current = calendarOpen;
+  }, [calendarOpen]);
 
   const selected = occurrences.find(row => row.id === openedOccurrenceId) ?? null;
   const selectedDraft = useMemo(() => selected && cloud
@@ -142,8 +154,8 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   }, [planner, selected?.trainingPlanId]);
 
   const rows = useMemo(() => selectProfileWorkoutRows({ occurrences, sessions,
-    actorUserId: cloud?.actorUserId, contact, mode, today, from, to,
-  }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, from, to]);
+    actorUserId: cloud?.actorUserId, contact, mode, today, now, from, to,
+  }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, now, from, to]);
 
   const calendarEnabled = Boolean(onCalendarChange) || calendarDay !== null;
   const clientUserId = contact?.userId;
@@ -154,7 +166,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     if (calendarEnabled) {
       const calendarRows = selectProfileWorkoutRows({ occurrences, sessions, actorUserId: cloud?.actorUserId,
         contact: clientUserId && relationshipId ? { userId: clientUserId, relationshipId } : undefined,
-        mode: 'calendar', today });
+        mode: 'calendar', today, now });
       for (const row of calendarRows) {
         const group = rowsByDate.get(row.date);
         if (group) group.push(row);
@@ -164,7 +176,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
       }
     }
     return { rowsByDate, dayStatuses: Array.from(statuses, ([date, status]) => ({ date, status })) };
-  }, [calendarEnabled, occurrences, sessions, cloud?.actorUserId, clientUserId, relationshipId, today]);
+  }, [calendarEnabled, occurrences, sessions, cloud?.actorUserId, clientUserId, relationshipId, today, now]);
   const visibleRows = calendarDay ? rowsByDate.get(calendarDay) ?? EMPTY_TIMELINE_ROWS : rows;
 
   const openWorkout = useCallback((row: CalendarTimelineRow) => {
@@ -179,14 +191,14 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const close = useCallback(() => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); }, []);
   const selectCalendarDay = useCallback((date: LocalDate) => {
     close();
-    setHistoryFilter({ from: date, to: date, source: 'calendar' });
+    setCalendarDay(date);
     const group = rowsByDate.get(date);
     if (workouts.data) {
       if (group?.length === 1) openWorkout(group[0]);
     } else {
       setPendingCalendarDay(date);
     }
-  }, [close, setHistoryFilter, rowsByDate, workouts.data, openWorkout]);
+  }, [close, rowsByDate, workouts.data, openWorkout]);
 
   useEffect(() => {
     onCalendarChange?.({ value: calendarDay ?? today, onChange: selectCalendarDay, dayStatuses });
@@ -213,16 +225,23 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => onNavigationContextChange(null);
   }, [picker, openedOccurrenceId, openedSessionId, nestedNavigation, close, onNavigationContextChange]);
 
-  return <section className="profile-workout-timeline" aria-label={mode === 'plan' ? 'План тренировок' : 'История тренировок'}>
+  const displayedFrom = calendarDay ? null : from;
+  const displayedTo = calendarDay ? today : to;
+
+  return <section className="profile-workout-timeline" aria-label={mode === 'plan' ? 'План тренировок' : 'Тренировки'}>
     {mode === 'history' ? <div className="profile-workout-timeline__filters">
-      <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{from ? `С ${dateLabel(from)}` : 'С даты'}</Text></KonstaButton>
-      <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">{to ? `По ${dateLabel(to)}` : 'По дату'}</Text></KonstaButton>
-      {from || to ? <KonstaButton rounded clear inline onClick={() => {
+      <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{displayedFrom ? `С ${dateLabel(displayedFrom)}` : 'С даты'}</Text></KonstaButton>
+      <Text variant="footnote" tone="muted">—</Text>
+      <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">По {dateLabel(displayedTo)}</Text></KonstaButton>
+      <KonstaButton rounded tonal inline disabled={!navigationCalendar} onClick={() => navigationCalendar?.toggle()}>
+        <Text variant="footnote">Календарь</Text>
+      </KonstaButton>
+      <KonstaButton rounded clear inline onClick={() => {
         setPendingCalendarDay(null);
-        setHistoryFilter({ from: null, to: null });
-      }}><Text variant="footnote">Сбросить</Text></KonstaButton> : null}
+        setHistoryFilter({ from: null, to: today });
+      }}><Text variant="footnote">Сбросить</Text></KonstaButton>
     </div> : null}
-    {from && to && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
+    {!calendarDay && from && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
     {workouts.failed ? <div className="stack"><Text variant="footnote" role="alert">
       Не удалось {workouts.data ? 'обновить' : 'загрузить'} тренировки.

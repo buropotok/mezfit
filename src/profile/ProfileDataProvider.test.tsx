@@ -72,8 +72,9 @@ function Rows({ tab, client }: { tab: ProfileTab; client?: CloudContact }) {
   const snapshot = tab === 'exercises' ? exercises : workouts;
   const names = tab === 'exercises' ? exercises.data?.map(row => row.name) : workouts.data &&
     selectProfileWorkoutRows({ ...workouts.data, actorUserId: cloud?.actorUserId, contact: client,
-      mode: tab === 'calendar' ? 'plan' : 'history', today: '2026-11-08' })
-      .map(row => row.kind === 'completed' ? row.session.name : row.occurrence.plan.name);
+      mode: tab === 'calendar' ? 'plan' : 'history', today: '2026-11-08',
+      to: tab === 'history' ? '2026-11-08' : undefined })
+      .map(row => 'session' in row ? row.session.name : row.occurrence.plan.name);
   return <>
     {snapshot.failed ? <div role="alert">Ошибка чтения <button onClick={snapshot.retry}>Повторить</button></div> : null}
     {!snapshot.data && !snapshot.failed ? <p>Первичное чтение</p> : null}

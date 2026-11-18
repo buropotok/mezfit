@@ -13,7 +13,7 @@ const tabs: ReadonlyArray<{ value: ProfileTab; label: string }> = [
   { value: 'exercises', label: 'Упражнения' },
   { value: 'calendar', label: 'План' },
   { value: 'progress', label: 'Прогресс' },
-  { value: 'history', label: 'История' },
+  { value: 'history', label: 'Тренировки' },
 ];
 const contactPlaceholders: Partial<Record<ProfileTab, string>> = {
   progress: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.',
