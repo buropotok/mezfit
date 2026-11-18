@@ -252,8 +252,9 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 | `migration/d1/0001_create_migration_jobs.sql` | Техническая регистрация upload, states `uploaded/rejected` | Не менять старую семантику |
 | `migration/d1/0002_create_migration_smoke_replays.sql` | Exact replay receipt | Не смешивать с бизнес-импортом |
 | `migration/d1/0003_create_migration_executions.sql` | Технический execution, job/version uniqueness и terminal state | Применена в Cloudflare, MIG-03 не требует новой схемы |
-| `.github/workflows/migration-deploy.yml` | Deploy и действующий smoke | Readiness gate + processor smoke по готовности |
-| `.github/workflows/migration-smoke.yml` | `diagnose` / `smoke` / `processor-smoke` | Независимые проверки фактически развёрнутой версии |
+| `.github/workflows/migration-deploy.yml` | Ручной Deploy + встроенный infra smoke | Сохраняется для recovery |
+| `.github/workflows/migration-smoke.yml` | Ручные `diagnose` / `smoke` / `processor-smoke` / `nested-smoke` | Независимые проверки фактически развёрнутой версии |
+| `.github/workflows/migration-auto.yml` | **Планируемая автоматизация:** на `push main` затронутого миграционного кода deploy → processor-smoke → nested-smoke | Не включает bootstrap, Dexie Cloud ACL или пользовательский импорт; вступает в действие после merge workflow |
 
 Инфраструктурные endpoints Worker сейчас приватные: `workers_dev=false`, `preview_urls=false`, публичный обработчик `fetch` для них не настроен. Подписанный upload helper предназначен для будущей авторизованной интеграции, а не является уже опубликованным API для пользователя.
 
@@ -626,7 +627,7 @@ MIGRATION_SMOKE_OK
 MIGRATION_PROCESSOR_SMOKE_OK
 ~~~
 
-Оба маркера получены в независимых запусках, см. §2.4. MIG-03 merged/deployed и fixture regression подтверждены в §2.5. Nested требует отдельного live run.
+Оба маркера получены в независимых запусках, см. §2.4. MIG-03 fixture и nested acceptance также подтверждены в §2.5.
 
 ### 10.2. MIG-03 и этап 3 — универсальность и реальные входные данные
 
@@ -697,15 +698,27 @@ Source file
 
 ### 12.2. Облачный rollout
 
-Этап 2 synthetic принят по §2.4, MIG-03 fixture и nested regression — по §2.5. Ниже общий порядок выпуска будущих изменений; уже выполненный nested-smoke повторять только при обоснованной новой проверке. Ручной запуск выполняет владелец или агент по явному разрешению.
+Этап 2 synthetic принят по §2.4, MIG-03 fixture и nested regression — по §2.5.
+Для изменений *только* миграционного runtime после слияния PR в `main`
+предусмотрен `.github/workflows/migration-auto.yml`. Он срабатывает при
+изменении `migration/worker/**`, `migration/d1/**`, `migration/*.mjs`,
+`migration/wrangler.json` либо миграционных deploy/smoke/auto workflow
+файлов; изменение одного `migration.md` его не запускает.
+`push` в `main` означает, что Cloudflare deployment и применение
+**технических** D1 migrations будут выполнены автоматически — это нужно
+учитывать при ревью каждого такого PR.
 
-1. PR: только проверенный, ограниченный scope.
-2. CI после PR: review результатов, merge лишь после необходимых проверок.
-3. Отдельный manual deploy на `main` владельцем репозитория.
-4. Сначала проверить реально выполняемую версию, затем запускать processor smoke.
-5. Провести независимый инфраструктурный smoke и processor smoke.
-6. Сохранить ссылки на run, Git commit, Worker version, trace ID, подтверждённый результат.
-7. При неудаче: разбирать stage/attempt/root evidence из одного trace, не добавлять «слепой» retry/timeout без причин.
+1. PR: проверить scope, `AGENTS.md`, аудит, актуальность тестов и CI; merge лишь после обязательных проверок и решения владельца о выпуске.
+2. После merge автоматически запускается `Deploy migration`: D1 technical migration, Worker deploy и **уже включённый** infra `MIGRATION_SMOKE_OK`.
+3. Только при успехе deploy — `processor-smoke`, затем `nested-smoke`. Оба проверяют реально исполняемую Worker version, SHA/readback, replay и cleanup. Все три этапа выполняются в одной GitHub Actions цепочке с общей блокировкой `mezfit-migration-cloudflare`.
+4. Каждый этап публикует отдельный санитизированный trace artifact; провал останавливает следующие проверки. Успешный результат не объявлять полной телеметрией при `Collection: PARTIAL`.
+5. Сохранить ссылки на run, Git commit, Worker version и trace ID. При сбое использовать ручные `migration-deploy.yml`, `migration-smoke.yml` / `diagnose`, разбирать первую подтверждённую причину, а не запускать слепые повторы.
+
+Автоматизация **не** запускается на PR, не выполняет `migration-bootstrap apply`,
+Dexie Cloud ACL/schema operations, бизнес-импорт или основной Worker Mezfit.
+Для новых MIG-04 и дальнейших адаптеров добавлять отдельные профильные smoke
+и расширять цепочку по отдельному проверенному PR; текущие два smoke проверяют
+только synthetic fixture/nested, не реальные форматы.
 
 Production Engine не должен выполняться на GitHub Actions: GitHub управляет деплоем, проверками и диагностикой, вычисления выполняет Cloudflare Worker/Workflow в допустимых пределах.
 
@@ -724,7 +737,7 @@ Production Engine не должен выполняться на GitHub Actions: 
 5. [`docs/reference/gym-keeper/program-diary-domain.md`](docs/reference/gym-keeper/program-diary-domain.md), [`final-synthesis.md`](docs/reference/gym-keeper/final-synthesis.md) — перенос смыслов, не Android UI.
 6. `migration/worker/processor/{contracts,registry,index}.ts`, `processor/adapters/`, `process-workflow.ts`, `execution-store.ts`, `processor-smoke.ts` — контракт адаптеров и единственный runtime path. Затем `index.ts`, `events.ts`, `smoke.ts`, `r2-upload.ts`, `trace.ts`, `migration/trace.mjs`, `trace-collector.mjs`, `cloudflare.mjs`.
 7. `migration/d1/` — действующая техническая схема.
-8. `.github/workflows/migration-*.yml` — manual deployment и диагностика.
+8. `.github/workflows/migration-auto.yml` — автоматический pipeline после merge; `.github/workflows/migration-deploy.yml` / `migration-smoke.yml` — ручная диагностика и повторная приёмка.
 9. `audit/2026-09-16_application_audit.md` — существующие риски и требования проверки перед PR.
 
 **Подтверждённая эксплуатационная точка:** этап 2 synthetic, независимые infra/processor runs 44153088455 / 44156101755 (§2.4). MIG-03 fixture/nested подтверждены в §2.5, включая live nested run 44201744839.
