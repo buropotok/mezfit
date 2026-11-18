@@ -71,7 +71,7 @@ describe('Coach client workspace presentation', () => {
     expect(tablist.getAttribute('data-full-width')).toBe('true');
     expect(screen.getByRole('group', { name: 'Разделы клиента Анна Иванова' }).contains(tablist)).toBe(true);
     expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
-      'Основные', 'Программа', 'Упражнения', 'План', 'Прогресс', 'История', 'Обсуждения',
+      'Основные', 'Программа', 'Упражнения', 'План', 'Прогресс', 'Тренировки', 'Обсуждения',
     ]);
     expect(screen.getByRole('tab', { name: 'Основные' }).getAttribute('aria-selected')).toBe('true');
 
@@ -81,8 +81,8 @@ describe('Coach client workspace presentation', () => {
     expect(surface?.getAttribute('data-glass-blur')).toBeNull();
     expect(surface?.getAttribute('data-glass-shape')).toBe('auto');
 
-    fireEvent.click(screen.getByRole('tab', { name: 'История' }));
-    expect(screen.getByRole('tab', { name: 'История' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Тренировки' }));
+    expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByText('Тренировки: history')).toBeTruthy();
   });
 });
