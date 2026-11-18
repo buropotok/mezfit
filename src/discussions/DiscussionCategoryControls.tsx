@@ -85,28 +85,56 @@ export function DiscussionCategoryDialog({ intent, pending, error, onClearError,
   </MezfitDialog>;
 }
 
-export function DiscussionCategoryMenu({ category, disabled, onEdit }: {
-  category: CategoryDefinition;
+export function DiscussionCategoryMenu({ category, scope, disabled, available, onEdit }: {
+  category?: CategoryDefinition;
+  scope: object;
   disabled: boolean;
+  available: boolean;
   onEdit: (intent: CategoryDialogIntent) => void;
 }) {
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const requestedAction = useRef<CategoryEdit | null>(null);
-  useLayoutEffect(() => () => { requestedAction.current = null; }, []);
-  const label = `Управление категорией: ${category.name}`;
-  return <LiquidPopover isOpen={open} onOpenChange={setOpen} triggerRef={trigger} label={label}
-    trigger={<IconButton size="compact" ref={trigger} icon="dots-vertical" label={label} disabled={disabled} />}
+  const requestedAction = useRef<CategoryDialogIntent | null>(null);
+  const activeScope = useRef<object | null>(null);
+  useLayoutEffect(() => {
+    activeScope.current = scope;
+    setOpen(false);
+    return () => { activeScope.current = null; requestedAction.current = null; };
+  }, [scope]);
+  useLayoutEffect(() => {
+    if (disabled || !available) {
+      requestedAction.current = null;
+      setOpen(false);
+    }
+  }, [disabled, available]);
+  const request = (intent: CategoryDialogIntent) => {
+    if (!disabled && available && !requestedAction.current) requestedAction.current = intent;
+  };
+  const label = 'Управление категориями';
+  const items: LiquidPopoverItem[] = [
+    { id: 'create', label: 'Добавить категорию', icon: 'folder-plus', disabled: disabled || !available,
+      onSelect: () => request({ kind: 'create' }) },
+    ...(category ? [
+      { id: 'rename', label: 'Переименовать категорию', icon: 'edit' as const, disabled: disabled || !available,
+        onSelect: () => request({ kind: 'rename', category }) },
+      { id: 'remove', label: 'Удалить категорию', icon: 'trash-outline' as const,
+        iconColor: 'var(--ui-color-danger, #ff6b6b)', disabled: disabled || !available,
+        onSelect: () => request({ kind: 'remove', category }) },
+    ] : []),
+  ];
+  return <LiquidPopover isOpen={open} onOpenChange={value => {
+    if (!value || !disabled) setOpen(value);
+  }} triggerRef={trigger} label={label}
+    trigger={<IconButton size="compact" ref={trigger} icon="dots-vertical" label={label} disabled={disabled}
+      aria-haspopup="menu" aria-expanded={open} />}
     onPresentationChange={presented => {
       if (presented || !requestedAction.current) return;
-      const kind = requestedAction.current;
+      const intent = requestedAction.current;
       requestedAction.current = null;
-      onEdit({ kind, category });
-    }}
-    items={[
-      { id: 'rename', label: 'Переименовать', icon: 'pencil', onSelect: () => { requestedAction.current = 'rename'; } },
-      { id: 'remove', label: 'Удалить категорию', icon: 'trash-outline', onSelect: () => { requestedAction.current = 'remove'; } },
-    ]} />;
+      // The old popover and its backdrop must finish before mounting Dialog.
+      // Scope cleanup also prevents close/unmount callbacks opening stale forms.
+      if (activeScope.current === scope && !disabled && available) onEdit(intent);
+    }} items={items} />;
 }
 
 interface DiscussionMoveActions {

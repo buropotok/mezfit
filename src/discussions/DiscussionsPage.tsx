@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from 'konsta/react';
-import { useNavigationLevel, type NavigationContext } from '../NavigationShell';
+import type { NavigationContext } from '../NavigationShell';
 import { useDiscussionAvatarFlight, type AvatarFlightOrigin, discussionAvatarFlightKey } from '../navigation/DiscussionAvatarFlightContext';
 import { useNavigationSurfaceContext } from '../navigation/NavigationSurfaceContext';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
@@ -129,7 +129,6 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const avatarFlight = useDiscussionAvatarFlight();
   const capturedOrigin = useRef<AvatarFlightOrigin | null>(null);
   const parent = useNavigationSurfaceContext();
-  const level = useNavigationLevel();
   const notificationParent = useRef(parent);
   notificationParent.current = parent;
   const [clientUserIds, setClientUserIds] = useState<string[]>([]);
@@ -259,7 +258,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     },
   });
   const openCategoryDialog = (intent: CategoryDialogIntent) => {
-    if (covered || creation.current || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
+    if (dialog || covered || creation.current || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
     if (!notificationMessageId) cancelPendingOpen();
     setCategoryFeedback(null);
     setCategoryDialog({ surface: categorySurface, intent, parent });
@@ -500,17 +499,20 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   if (current?.kind === 'entity' && current.row.thread.anchor.kind !== 'free') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
-    {creation.action && (relationshipId ? level === 2 && <DiscussionWorkspaceFab action={creation.action} />
-      : level === 1 && <DiscussionsDestinationFab action={creation.action} />)}
-    <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
-      if (!notificationMessageId) cancelPendingOpen();
-      selectCategory(value);
-    }} hidden={false}
-      actionTab={{ label: '+', ariaLabel: 'Создать категорию', onClick: () => openCategoryDialog({ kind: 'create' }) }} />
-    {manageCategory && !covered && !creation.current ? <div className="discussion-inbox__category-actions">
-      <DiscussionCategoryMenu key={manageCategory.id} category={manageCategory} disabled={categoryBusy}
+    {creation.action && (relationshipId ? <DiscussionWorkspaceFab action={creation.action} />
+      : <DiscussionsDestinationFab action={creation.action} />)}
+    <div className="discussion-inbox__toolbar">
+      <div className="discussion-inbox__tabs">
+        <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
+          if (!notificationMessageId) cancelPendingOpen();
+          selectCategory(value);
+        }} hidden={false} fullWidth />
+      </div>
+      <DiscussionCategoryMenu key={activeTab} category={manageCategory} scope={categorySurface}
+        disabled={Boolean(categoryBusy || covered || dialog || creation.current)}
+        available={Boolean(organization.repository && organization.snapshot && !organization.loading && !organization.failed)}
         onEdit={openCategoryDialog} />
-    </div> : null}
+    </div>
     <div className="discussion-inbox__filter-block">
       {role === 'coach' && !relationshipId ? <div className={`discussion-inbox__client-filter${clientUserIds.length ? '' : ' discussion-inbox__client-filter--all'}`}>
         {!clientUserIds.length ? <Text variant="footnote" className="discussion-inbox__all-clients">Все клиенты</Text> : null}

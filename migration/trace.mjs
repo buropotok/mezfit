@@ -21,7 +21,7 @@ const TOKEN_KEYS = {
   sql: new Set(['SELECT', 'INSERT', 'UPDATE', 'BATCH']),
   table: new Set(['migration_jobs', 'migration_smoke_replays', 'd1_migrations', 'migration_executions']),
   backoff: new Set(['constant', 'linear', 'exponential']),
-  operation: new Set(['preview', 'apply', 'deploy', 'diagnose', 'smoke', 'cleanup', 'processor-smoke', 'version', 'migrations-list', 'migrations-apply']),
+  operation: new Set(['preview', 'apply', 'deploy', 'diagnose', 'smoke', 'cleanup', 'processor-smoke', 'nested-smoke', 'version', 'migrations-list', 'migrations-apply']),
   classification: new Set(['network', 'timeout', 'abort', 'dns_tls', 'runtime', 'storage', 'cpu_limit', 'memory_limit', 'unknown']),
   source: new Set(['workers_logs', 'r2_trace', 'workflow_history', 'queue_metrics', 'runtime', 'configuration']),
   mime: new Set(['application/octet-stream', 'application/zip', 'application/gzip', 'application/x-sqlite3', 'application/vnd.sqlite3']),

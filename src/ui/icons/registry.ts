@@ -1,3 +1,5 @@
+import messageCirclePlusUrl from './message-circle-plus.svg';
+import folderPlusUrl from './folder-plus.svg';
 import lockUrl from './lock.svg';
 import lockOpenUrl from './lock-open.svg';
 import recordCircleUrl from './record-circle.svg';
@@ -50,7 +52,6 @@ import menu2Url from './menu-2.svg';
 import xUrl from './x.svg';
 import messageCircleExclamationUrl from './message-circle-exclamation.svg';
 import messageCircleUrl from './message-circle-outline.svg';
-import messageCirclePlusUrl from './message-circle-plus.svg';
 import pencilUrl from './pencil-outline.svg';
 import tildeUrl from './tilde.svg';
 import plusOutlineUrl from './plus-outline.svg';
@@ -79,6 +80,8 @@ import tablerNumber8Url from './tabler-number-8.svg';
 import tablerNumber9Url from './tabler-number-9.svg';
 
 const uiIconRegistry = {
+  'message-circle-plus': { outline: messageCirclePlusUrl, filled: messageCirclePlusUrl },
+  'folder-plus': { outline: folderPlusUrl, filled: folderPlusUrl },
   'camera-rotate': { outline: cameraRotateUrl, filled: cameraRotateUrl },
   lock: { outline: lockUrl, filled: lockUrl },
   'lock-open': { outline: lockOpenUrl, filled: lockOpenUrl },
@@ -137,7 +140,6 @@ const uiIconRegistry = {
   'video-thin': { outline: videoThinUrl, filled: videoThinUrl },
   'message-circle-exclamation': { outline: messageCircleExclamationUrl, filled: messageCircleExclamationUrl },
   'message-circle': { outline: messageCircleUrl, filled: messageCircleUrl },
-  'message-circle-plus': { outline: messageCirclePlusUrl, filled: messageCirclePlusUrl },
   pencil: { outline: pencilUrl, filled: pencilUrl },
   tilde: { outline: tildeUrl, filled: tildeUrl },
   plus: { outline: plusOutlineUrl, filled: plusOutlineUrl },

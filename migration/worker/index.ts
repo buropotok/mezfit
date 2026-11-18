@@ -13,7 +13,7 @@ type Bindings = SmokeBindings & QueueExecutionBindings;
 export default { queue: consumeUploads } satisfies ExportedHandler<Bindings, unknown>;
 
 type MigrationOperation = (ProcessOperation | { operation: 'smoke' | 'processor-ready' }
-  | { operation: 'processor-smoke'; jobId: string; expectedVersion: string }
+  | { operation: 'processor-smoke' | 'processor-nested-smoke'; jobId: string; expectedVersion: string }
   | { operation: 'cleanup' | 'processor-cleanup'; targetId: string }) & { runId?: string };
 const WORKER_VERSION = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 
@@ -22,7 +22,7 @@ export class MigrationWorkflow extends WorkflowEntrypoint<Bindings, MigrationOpe
     const payload = event.payload;
     const processorOperation = payload?.operation === 'process' || typeof payload?.operation === 'string' && payload.operation.startsWith('processor-');
     const traceId = payload?.operation === 'cleanup' || payload?.operation === 'processor-cleanup' ? payload.targetId
-      : payload?.operation === 'process' || payload?.operation === 'processor-smoke' ? payload.jobId : event.instanceId;
+      : payload?.operation === 'process' || (payload?.operation === 'processor-smoke' || payload?.operation === 'processor-nested-smoke') ? payload.jobId : event.instanceId;
     const context = { trace_id: traceId, instance_id: event.instanceId, run_id: payload?.runId,
       worker_version: this.env.MIGRATION_VERSION?.id,
       ...(processorOperation ? { job_id: traceId, processor_version: PROCESSOR_VERSION } : {}) };
@@ -33,12 +33,12 @@ export class MigrationWorkflow extends WorkflowEntrypoint<Bindings, MigrationOpe
       const permanent = (code: string) => new NonRetryableError(code);
       if (processorOperation) {
         const validId = typeof traceId === 'string' && SMOKE_ID_PATTERN.test(traceId);
-        const expectedVersion = payload?.operation === 'process' || payload?.operation === 'processor-smoke'
+        const expectedVersion = payload?.operation === 'process' || (payload?.operation === 'processor-smoke' || payload?.operation === 'processor-nested-smoke')
           ? payload.expectedVersion : undefined;
         const valid = validId && (payload?.operation === 'process'
           ? event.instanceId === processorInstanceId(traceId)
           : SMOKE_ID_PATTERN.test(event.instanceId))
-          && (expectedVersion === undefined ? payload?.operation !== 'processor-smoke'
+          && (expectedVersion === undefined ? (payload?.operation !== 'processor-smoke' && payload?.operation !== 'processor-nested-smoke')
             : typeof expectedVersion === 'string' && WORKER_VERSION.test(expectedVersion));
         emit('workflow', 'process-payload', 'PROCESS_PAYLOAD_VALIDATED', valid ? 'OK' : 'FAILED',
           { expected: 'valid-processor-operation', error_code: valid ? undefined : 'PROCESS_WORKFLOW_INPUT_INVALID' });
@@ -46,8 +46,8 @@ export class MigrationWorkflow extends WorkflowEntrypoint<Bindings, MigrationOpe
         if (payload?.operation === 'process') return await runProcess(this.env, step, traceId, context,
           expectedVersion === undefined || this.env.MIGRATION_VERSION?.id === expectedVersion);
         if (payload?.operation === 'processor-ready') return await processorReadiness(this.env, step, context);
-        if (payload?.operation === 'processor-smoke') return await runProcessorSmoke(this.env, traceId, step, context,
-          payload.expectedVersion, permanent);
+        if (payload?.operation === 'processor-smoke' || payload?.operation === 'processor-nested-smoke') return await runProcessorSmoke(this.env, traceId, step, context,
+          payload.expectedVersion, permanent, payload.operation === 'processor-nested-smoke' ? 'nested' : 'fixture');
         if (payload?.operation === 'processor-cleanup') return await cleanupProcessorSmoke(this.env, traceId, step, context, permanent);
       }
       if (event.payload?.operation === 'cleanup' && typeof event.payload.targetId === 'string'

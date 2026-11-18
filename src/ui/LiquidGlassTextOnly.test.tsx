@@ -392,7 +392,7 @@ describe('LiquidGlassTextOnly', () => {
     expect(actionButton(root).classList.contains('active')).toBe(false);
   });
 
-  it('runs a mobile action tap once, suppresses its synthetic click and accepts another touch tap', () => {
+  it('runs a mobile action once on its completed click and accepts another touch tap', () => {
     const onAction = vi.fn();
     const view = render(<LiquidGlassTextOnly hidden={false} tabs={tabs} value="today"
       onValueChange={changed} actionTab={{ label: '+', onClick: onAction }} />);
@@ -400,7 +400,9 @@ describe('LiquidGlassTextOnly', () => {
     const x = visibleActionX(root);
     const tap = (pointerId: number) => {
       fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId, clientX: x, clientY: 22 });
+      const callsBeforeClick = onAction.mock.calls.length;
       fireEvent.pointerUp(document, { pointerType: 'touch', pointerId, clientX: x, clientY: 22 });
+      expect(onAction).toHaveBeenCalledTimes(callsBeforeClick);
       fireEvent.click(actionButton(root)); // browser-synthesized click after pointerup
     };
     tap(10);
@@ -544,6 +546,8 @@ describe('LiquidGlassTextOnly', () => {
     fireEvent.pointerDown(actionButton(root), { pointerType: 'touch', pointerId: 42, clientX: x, clientY: 22 });
     expect(translateX(lensTrack)).toBe(duringTravel);
     fireEvent.pointerUp(document, { pointerType: 'touch', pointerId: 42, clientX: x, clientY: 22 });
+    expect(onAction).not.toHaveBeenCalled();
+    fireEvent.click(actionButton(root));
     expect(onAction).toHaveBeenCalledTimes(1);
     act(() => vi.advanceTimersByTime(200));
     expect(button(root, 5).getAttribute('aria-selected')).toBe('true');

@@ -177,7 +177,8 @@ describe('discussion category tabs', () => {
     expect(within(tablist).getAllByRole('tab').map(tab => tab.textContent)).toEqual([
       'Тренировки', 'Питание', 'Личное', label, earlier.name, later.name,
     ]);
-    expect(tablist.lastElementChild?.getAttribute('aria-label')).toBe('Создать категорию');
+    expect(within(tablist).queryByRole('button', { name: 'Создать категорию' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Управление категориями' })).toBeTruthy();
     expect(threadButton('Программа')).toBeTruthy();
     expect(threadButton('Свободный чат')).toBeNull();
     click('Личное', 'tab');
@@ -279,7 +280,8 @@ describe('category actions', () => {
     state.create.mockRejectedValueOnce(new Error('DUPLICATE_DISCUSSION_CATEGORY_NAME')).mockReturnValueOnce(creation.promise);
     render(<StrictMode><DiscussionsPage role="client" onNavigationContextChange={navigation} /></StrictMode>);
     emit();
-    click('Создать категорию');
+    click('Управление категориями');
+    click('Добавить категорию', 'menuitem');
     const dialog = screen.getByRole('dialog', { name: 'Новая категория' });
     const create = within(dialog).getByRole('button', { name: 'Создать' });
     const name = within(dialog).getByLabelText('Название');
@@ -301,7 +303,8 @@ describe('category actions', () => {
     emit([], [later]);
     expect(screen.queryByRole('dialog', { name: 'Новая категория' })).toBeNull();
     expect(screen.getByRole('tab', { name: later.name }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tablist').lastElementChild?.getAttribute('aria-label')).toBe('Создать категорию');
+    expect(within(screen.getByRole('tablist')).queryByRole('button', { name: 'Создать категорию' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Управление категориями' })).toBeTruthy();
   });
 
   it('renames the active category and confirms removal without deleting the conversation', async () => {
@@ -312,8 +315,8 @@ describe('category actions', () => {
     render(<DiscussionsPage role="client" onNavigationContextChange={navigation} />);
     emit([[chat, inCustom(earlier)]], [earlier]);
     click(earlier.name, 'tab');
-    click('Управление категорией: ' + earlier.name);
-    click('Переименовать', 'menuitem');
+    click('Управление категориями');
+    click('Переименовать категорию', 'menuitem');
     expect(screen.getByLabelText('Название')).toHaveProperty('value', earlier.name);
     const renamed = { ...earlier, name: 'Новый раздел' };
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: renamed.name } });
@@ -322,7 +325,7 @@ describe('category actions', () => {
     emit([[chat, inCustom(renamed)]], [renamed]);
     expect(screen.queryByRole('tab', { name: earlier.name })).toBeNull();
     expect(threadButton('История')).toBeTruthy();
-    click('Управление категорией: ' + renamed.name);
+    click('Управление категориями');
     click('Удалить категорию', 'menuitem');
     expect(screen.getByRole('alertdialog', { name: 'Удалить категорию?' }).textContent).toContain('Чаты и сообщения сохранятся');
     await act(async () => click('Удалить'));
@@ -387,7 +390,8 @@ describe('category actions', () => {
     click('Личное', 'tab');
     await act(async () => opening.resolve(program.thread));
     expect(screen.queryByRole('dialog')).toBeNull();
-    click('Создать категорию');
+    click('Управление категориями');
+    click('Добавить категорию', 'menuitem');
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: later.name } });
     click('Создать');
     state.actor = 'tg:41';
@@ -406,7 +410,8 @@ describe('category actions', () => {
       onNotificationOpened={consumed} onNavigationContextChange={navigation} />);
     emit();
     click('Питание', 'tab');
-    click('Создать категорию');
+    click('Управление категориями');
+    click('Добавить категорию', 'menuitem');
     expect(consumed).not.toHaveBeenCalled();
     const resolveNotification = state.notification.mock.calls[0][4] as (thread: DiscussionThread) => void;
     act(() => resolveNotification(free.thread));

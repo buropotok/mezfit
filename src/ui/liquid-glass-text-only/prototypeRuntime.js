@@ -1,6 +1,6 @@
 // Direct extraction of the approved Text Only prototype interaction model.
 // React owns identity/controlled value; this private runtime owns the tuned gesture optics.
-export function mountPrototype(root, initialIndex, onSelect, onAction) {
+export function mountPrototype(root, initialIndex, onSelect, onAction, actionWidthMultiplier = 1) {
   const owner = root.ownerDocument;
   const win = owner.defaultView;
   const pane = root.getElementById('toolbar-pane');
@@ -79,6 +79,7 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     pointerId: null,
     touchStartedOnAction: false,
     actionMouseDown: false,
+    actionTapReady: false,
     gesture: 'idle',
     touchStartX: 0,
     touchStartY: 0,
@@ -239,11 +240,11 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
 
     if (index === 0) {
       if (selectedLeft < visibleLeft || selectedRight > visibleRight) target = selectedLeft;
-    } else if (index === links.length - 1) {
+    } else if (index === links.length - 1 && !actionLink) {
       if (selectedLeft < visibleLeft || selectedRight > visibleRight) target = selectedRight - viewport;
     } else {
       const previous = links[index - 1];
-      const next = links[index + 1];
+      const next = links[index + 1] ?? actionLink;
       const previousLeft = previous.offsetLeft;
       const nextRight = next.offsetLeft + next.offsetWidth;
       const leftGap = selectedLeft - visibleLeft;
@@ -601,6 +602,7 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
       cancelSelectionTravel();
       clearSpring();
     }
+    data.actionTapReady = false;
     data.pointerId = event.pointerId;
     data.touched = true;
     data.touchStartedOnAction = startedOnAction;
@@ -710,7 +712,9 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     if (startedOnAction) {
       data.suppressClickUntil = now() + 500;
       data.gesture = 'idle';
-      if (isWithinAction(event.clientX)) onAction?.();
+      // Do not mount an overlay before the compatibility click finishes.
+      // Pointer capture can target that click at pane rather than actionLink.
+      data.actionTapReady = isWithinAction(event.clientX);
       return;
     }
     const index = nearestIndexForClientX(event.clientX);
@@ -737,10 +741,14 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     listen(actionLink, 'pointerdown', event => {
       data.actionMouseDown = event.pointerType === 'mouse';
     });
-    listen(actionLink, 'click', event => {
+    listen(pane, 'click', event => {
+      const completedTap = data.actionTapReady;
+      data.actionTapReady = false;
+      const targetsAction = event.composedPath().includes(actionLink);
+      if (!targetsAction && !(completedTap && isWithinAction(event.clientX))) return;
       const fromMouseDown = data.actionMouseDown;
       data.actionMouseDown = false;
-      if (!fromMouseDown && now() < data.suppressClickUntil) {
+      if (!completedTap && !fromMouseDown && now() < data.suppressClickUntil) {
         event.preventDefault();
         event.stopPropagation();
         return;
@@ -752,12 +760,31 @@ export function mountPrototype(root, initialIndex, onSelect, onAction) {
     if (data.gesture !== 'press' && !data.selectionTravelActive) positionLensTrack(data.activeIndex, false);
   }, { passive: true });
 
+  // Measure the intrinsic label, not the flex-grown slot: fullWidth may
+  // distribute spare space, which must never feed back into this multiplier.
+  const actionLabel = actionLink?.querySelector('.tab-label');
+  const previousActionWidth = actionLink?.style.width;
+  function sizeAction() {
+    if (!actionLabel || actionWidthMultiplier !== 2) return;
+    const style = win.getComputedStyle(actionLink);
+    const naturalWidth = actionLabel.offsetWidth
+      + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
+      + (parseFloat(style.borderLeftWidth) || 0) + (parseFloat(style.borderRightWidth) || 0);
+    const width = `${naturalWidth * actionWidthMultiplier}px`;
+    if (actionLink.style.width !== width) actionLink.style.width = width;
+  }
+  sizeAction();
+  if (actionLink && actionWidthMultiplier === 2) {
+    disposers.push(() => { actionLink.style.width = previousActionWidth; });
+  }
   const layoutObserver = observe(new globalThis.ResizeObserver(() => {
+    sizeAction();
     positionSelector(data.activeIndex, false);
     positionLensTrack(data.activeIndex, false);
   }), tabStrip);
   links.forEach(link => layoutObserver.observe(link));
   if (actionLink) layoutObserver.observe(actionLink);
+  if (actionLabel && actionWidthMultiplier === 2) layoutObserver.observe(actionLabel);
 
   const OPTICS = Object.freeze({
     neutralEdge: 1.7,

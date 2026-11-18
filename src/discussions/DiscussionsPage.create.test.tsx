@@ -213,12 +213,15 @@ describe('creating free discussions from the standard navigation FAB', () => {
     expect(screen.getByRole('button', { name: 'Обсуждение: Ольга, Разбор' })).toBeTruthy();
   });
 
-  it('keeps the category action distinct and hides the FAB for unsupported tabs and covered global surfaces', () => {
+  it('keeps the category action distinct and hides the FAB for unsupported tabs and covered global surfaces', async () => {
     const view = render(<Harness />);
     for (const tab of ['Тренировки', 'Тренерские']) { click(tab, 'tab'); expect(fab()).toBeNull(); }
     for (const tab of ['Личное', 'Питание', 'Цели', 'Привычки']) { click(tab, 'tab'); expect(fab()).toBeTruthy(); }
-    click('Создать категорию');
-    expect(screen.getByRole('dialog', { name: 'Новая категория' })).toBeTruthy();
+    click('Управление категориями');
+    const addCategory = await screen.findByRole('menuitem', { name: 'Добавить категорию' });
+    await waitFor(() => expect(addCategory.closest('[inert]')).toBeNull());
+    fireEvent.click(addCategory);
+    expect(await screen.findByRole('dialog', { name: 'Новая категория' })).toBeTruthy();
     expect(fab()).toBeNull();
     click('Отмена');
     click('С даты');
