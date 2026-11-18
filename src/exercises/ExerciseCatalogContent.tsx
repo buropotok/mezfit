@@ -222,7 +222,7 @@ export function ExerciseCatalogContent({
     return () => onNavigationContextChange(null);
   }, [category, categoryLabel, onNavigationContextChange, requestBackTransition, selected, selectedId]);
 
-  const tabExercises = useMemo(() => {
+  const tabExercises = useMemo<readonly CatalogueExerciseRow[]>(() => {
     if (tab === 'base2') return base2.exercises ?? [];
     if (!isPersonal) return exercises;
     if (tab === 'main') return [];
