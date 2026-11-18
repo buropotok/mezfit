@@ -107,6 +107,24 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
     await open('Мой текст'); fireEvent.click(screen.getByRole('menuitem', { name: 'Копировать' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(full));
   });
+  it('keeps published history while closing the live composer when the peer deletes the chat', async () => {
+    const f = mount();
+    await screen.findByText('Мой текст');
+    expect(screen.getByPlaceholderText('Сообщение')).toBeTruthy();
+    act(() => {
+      for (const observer of f.observers) observer.next({
+        deletion: 'peer', before: null,
+        messages: [message('own', 'Мой текст'), message('other', 'Чужой текст', 'tg:2', 1)],
+      });
+    });
+    expect(screen.getByText('Собеседник удалил чат').closest('.ui-badge--yellow')).toBeTruthy();
+    expect(screen.getByText('Мой текст')).toBeTruthy();
+    expect(screen.queryByPlaceholderText('Сообщение')).toBeNull();
+    await open('Мой текст');
+    expect(within(screen.getByRole('menu')).getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Копировать']);
+    expect(f.port.send).not.toHaveBeenCalled();
+  });
+
   it('confirms deletion, preserves data on cancel and renders live tombstones without old text', async () => {
     const f = mount();
     await open('Мой текст'); fireEvent.click(screen.getByRole('menuitem', { name: 'Удалить' }));

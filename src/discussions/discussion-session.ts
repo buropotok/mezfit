@@ -12,7 +12,7 @@ export type DiscussionPort = Pick<DiscussionRepository, 'actorUserId' | 'listThr
   };
 export interface DiscussionTarget { threadId: string; anchor: DiscussionAnchor; focusMessageId?: string }
 export interface DiscussionSnapshot {
-  title: string; messages: DiscussionMessageView[]; loading: boolean; more: boolean; error: string | null;
+  title: string; messages: DiscussionMessageView[]; loading: boolean; more: boolean; error: string | null; deletion?: DiscussionPage['deletion'];
 }
 type Subscription = { unsubscribe(): void };
 const sameCursor = (a: DiscussionCursor | null, b: DiscussionCursor | null) => a?.id === b?.id && a?.createdAt === b?.createdAt;
@@ -77,6 +77,11 @@ export class DiscussionSession {
       const oldCursor = this.pages[index]?.before ?? null;
       const hadChildren = this.pageTokens.length > index + 1;
       this.pages[index] = page;
+      if (index === 0 && page.deletion === 'actor') {
+        this.dropFrom(1);
+        this.publish({ messages: [], loading: false, more: false, error: null, deletion: 'actor' });
+        return;
+      }
       if (hadChildren && !sameCursor(oldCursor, page.before)) this.dropFrom(index + 1);
       const oldest = page.messages[0];
       const lostHistory = this.historyFloor && oldest && (oldest.createdAt > this.historyFloor.createdAt
@@ -94,6 +99,8 @@ export class DiscussionSession {
     this.subscriptions[index] = sub;
   }
   private updateProjection() {
+    const deletion = this.pages[0]?.deletion;
+    if (deletion === 'actor') return;
     const rows = new Map<string, DiscussionMessageView>();
     // Latest page wins overlaps while neighbouring live cursors settle.
     for (const page of [...this.pages].reverse()) for (const row of page.messages) rows.set(row.id, row);
@@ -103,13 +110,13 @@ export class DiscussionSession {
     if (loading || error) {
       // Preserve the visible history while dependent cursors settle. Apply any
       // refreshed text/tombstone immediately without briefly removing older rows.
-      this.publish({ messages: this.state.messages.map(row => rows.get(row.id) ?? row), loading, error });
+      this.publish({ messages: this.state.messages.map(row => rows.get(row.id) ?? row), loading, error, deletion });
     } else {
       // Preserve the revealed boundary, not just a fixed number of sliding pages.
       if (messages[0]) this.historyFloor = {
         createdAt: messages[0].createdAt, id: messages[0].id,
       };
-      this.publish({ messages, loading, more: Boolean(this.pages.at(-1)?.before), error });
+      this.publish({ messages, loading, more: Boolean(this.pages.at(-1)?.before), error, deletion });
     }
   }
   loadMore = () => {

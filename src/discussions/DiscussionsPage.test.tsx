@@ -22,7 +22,7 @@ vi.mock('../data/cloud/discussion-organization', async importOriginal => ({
       // These inbox tests exercise navigation/feed behavior; classification
       // precedence and delayed snapshots have their own domain/category tests.
       next({ categories: [], diagnostics: [], threads: threads.map(thread => ({
-        thread, category: thread.anchor.kind === 'free' ? 'personal' : 'training',
+        thread, category: thread.anchor.kind === 'free' ? 'uncategorized' : 'training',
         ownAssignment: null, peerCategorized: false, diagnostics: [],
       })) });
       return { unsubscribe: vi.fn() };
@@ -230,7 +230,7 @@ it('shows an empty free chat without an entity action and opens its saved ID', a
   state.rows = [free];
   state.getThread.mockResolvedValue(free.thread);
   render(<DiscussionsPage role="client" onNavigationContextChange={vi.fn()} />);
-  fireEvent.click(screen.getByRole('tab', { name: 'Личное' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Все чаты' }));
   expect(screen.getByText('Сообщений пока нет')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /^К / })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Обсуждение: Анна, Питание' }));

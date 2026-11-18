@@ -80,9 +80,10 @@ it('projects created free chats and their explicit personal assignments from a s
   for (const [index, scenario] of scenarios.entries()) {
     const thread = created[index];
     expect(snapshot.threads.find(item => item.thread.id === thread.id)).toMatchObject({
-      ownAssignment: scenario.resolved, category: scenario.assignment, peerCategorized: true,
+      ownAssignment: scenario.resolved, category: scenario.assignment, peerCategorized: false,
     });
-    await expect(peer.getThreadOrganization(thread)).resolves.toMatchObject({ ownAssignment: 'personal', category: 'personal' });
+    await expect(peer.getThreadOrganization(thread)).resolves.toMatchObject({ category:
+      typeof scenario.assignment === 'string' ? scenario.assignment : 'client' });
   }
   expect(rows).toHaveLength(3);
   expect(new Set(created.map(thread => thread.id)).size).toBe(3);

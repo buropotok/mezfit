@@ -1,14 +1,16 @@
 import type Dexie from 'dexie';
+import { discussionId } from '../../../shared/discussion-anchor';
 import { flexAttributeId, flexValueId } from '../../../shared/flex-identifiers';
 export { flexAttributeId, flexValueId } from '../../../shared/flex-identifiers';
 import { profileRelationships } from './user-profile-relationships';
 import type { MezfitCloudDatabase } from './database';
+import { assertDiscussionThread } from './discussion-contracts';
 
 /**
  * Flex definitions are scoped to a realm. A shared session never references
  * an attribute definition hidden in an athlete's personal realm.
  */
-export type FlexEntityType = 'user' | 'adHocSession' | 'publishedUser';
+export type FlexEntityType = 'user' | 'adHocSession' | 'publishedUser' | 'discussionThread';
 export type FlexValueType = 'string' | 'number' | 'boolean' | 'avatar';
 export interface FlexBlobReference { _bt: 'Blob'; ref: string; size: number; ct: 'image/jpeg' }
 export interface FlexAvatarValue { version: string; revision: string; small: Blob | FlexBlobReference | null; large: Blob | FlexBlobReference | null }
@@ -122,7 +124,7 @@ function ownerFor(target: FlexEntityTarget, actorUserId: string): string {
  * flexValues must never be interpreted as permissions or PLAN/FACT authority.
  */
 type FlexTables = Pick<MezfitCloudDatabase, 'flexAttributes' | 'flexValues' | 'adHocSessions'>
-  & Partial<Pick<MezfitCloudDatabase, 'realms' | 'members'>>;
+  & Partial<Pick<MezfitCloudDatabase, 'realms' | 'members' | 'discussionThreads'>>;
 
 /** Keep Dexie's own transaction type coupled to the concrete database class. */
 export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
@@ -131,12 +133,14 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
   }
 
   private targetTables(target: FlexEntityTarget) {
-    const tables = [this.db.flexAttributes, this.db.flexValues, this.db.adHocSessions];
-    return target.entityType === 'publishedUser' && this.db.realms && this.db.members
-      ? [...tables, this.db.realms, this.db.members] : tables;
+    return [this.db.adHocSessions, ...this.inspectionTables([target])];
   }
 
   private async assertTarget(target: FlexEntityTarget, writing = false, override = false): Promise<void> {
+    if (target.entityType === 'discussionThread') {
+      await this.assertInspectionTargets([target]);
+      return;
+    }
     if (target.entityType === 'publishedUser') {
       if (!this.db.realms || !this.db.members || (writing && !override && target.entityId !== this.actorUserId))
         throw new Error('FLEX_ENTITY_FORBIDDEN');
@@ -179,7 +183,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
         for (const entry of values) {
           const attribute = await this.db.flexAttributes.get(entry.attributeId);
           // Shared values may download before their add-only definitions. Keep observing.
-          if (!attribute && (target.entityType === 'publishedUser'
+          if (!attribute && (target.entityType === 'publishedUser' || target.entityType === 'discussionThread'
             || entry.attributeId === flexAttributeId(target.realmId, 'profile_avatar'))) continue;
           if (entry.realmId !== target.realmId || entry.entityType !== target.entityType || entry.entityId !== target.entityId
             || !isFlexAttributeRow(attribute) || attribute.realmId !== target.realmId
@@ -253,7 +257,15 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
 
   /** Authorize a whole projection once, instead of rescanning every pair per thread. */
   private async assertInspectionTargets(targets: readonly FlexEntityTarget[]): Promise<void> {
-    const shared = targets.filter(target => target.entityType === 'publishedUser');
+    const discussionTargets = targets.filter(target => target.entityType === 'discussionThread');
+    if (discussionTargets.length && (!this.db.discussionThreads
+      || discussionTargets.some(target => !discussionId(target.entityId) || !discussionId(target.realmId))))
+      throw new Error('FLEX_ENTITY_FORBIDDEN');
+    const discussionRows = discussionTargets.length && this.db.discussionThreads
+      ? await this.db.discussionThreads.bulkGet(discussionTargets.map(target => target.entityId)) : [];
+    const threads = new Map(discussionRows.flatMap(row => row ? [[row.id, row] as const] : []));
+    const shared = targets.filter(target => target.entityType === 'publishedUser'
+      || (target.entityType === 'discussionThread' && target.realmId !== this.actorUserId));
     if (shared.length && (!this.db.realms || !this.db.members)) throw new Error('FLEX_ENTITY_FORBIDDEN');
     const pairs = shared.length && this.db.realms && this.db.members
       ? await profileRelationships({ realms: this.db.realms, members: this.db.members }, this.actorUserId) : [];
@@ -261,6 +273,13 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
       if (target.entityType === 'user') {
         if (target.realmId !== this.actorUserId || target.entityId !== this.actorUserId)
           throw new Error('FLEX_ENTITY_FORBIDDEN');
+      } else if (target.entityType === 'discussionThread') {
+        const row = threads.get(target.entityId);
+        if (!row || row.realmId !== target.realmId
+          || (row.coachClientId === null ? row.realmId !== this.actorUserId
+            : row.coachClientId !== row.realmId || !pairs.some(pair => pair.realmId === row.realmId)))
+          throw new Error('FLEX_ENTITY_FORBIDDEN');
+        assertDiscussionThread(row);
       } else if (target.entityType === 'publishedUser') {
         if (!pairs.some(pair => pair.realmId === target.realmId
           && (target.entityId === pair.coachUserId || target.entityId === pair.clientUserId)))
@@ -269,21 +288,25 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     }
   }
 
-  private inspectionTables(includeShared: boolean) {
-    return includeShared && this.db.realms && this.db.members
-      ? [this.db.flexAttributes, this.db.flexValues, this.db.realms, this.db.members]
-      : [this.db.flexAttributes, this.db.flexValues];
+  private inspectionTables(targets: readonly FlexEntityTarget[]) {
+    const hasThreads = targets.some(target => target.entityType === 'discussionThread');
+    const hasRelationships = hasThreads || targets.some(target => target.entityType === 'publishedUser');
+    return [this.db.flexAttributes, this.db.flexValues,
+      ...(hasThreads && this.db.discussionThreads ? [this.db.discussionThreads] : []),
+      ...(hasRelationships && this.db.realms && this.db.members ? [this.db.realms, this.db.members] : [])];
   }
 
   private inspectRow(target: FlexEntityTarget, key: string,
     attribute: FlexAttributeRow | undefined, row: FlexValueRow | undefined): FlexInspectedValue {
     const base = { target, key };
+    const owner = ownerFor(target, this.actorUserId);
+    if (attribute && (!isFlexAttributeRow(attribute) || attribute.key !== key
+      || attribute.realmId !== target.realmId || attribute.owner !== owner)) {
+      return { ...base, state: 'invalid', ...(row ? { value: row.value } : {}) };
+    }
     if (!attribute && !row) return { ...base, state: 'absent' };
     if (!attribute || !row) return { ...base, state: 'pending', ...(row ? { value: row.value } : {}) };
-    const owner = ownerFor(target, this.actorUserId);
-    if (!isFlexAttributeRow(attribute) || attribute.key !== key
-      || attribute.realmId !== target.realmId || attribute.owner !== owner
-      || row.id !== flexValueId(target, flexAttributeId(target.realmId, key))
+    if (row.id !== flexValueId(target, flexAttributeId(target.realmId, key))
       || row.attributeId !== attribute.id || row.realmId !== target.realmId
       || row.owner !== owner || row.entityType !== target.entityType || row.entityId !== target.entityId
       || !isValidFlexValue(attribute.valueType, row.value)) {
@@ -298,7 +321,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     const targets = requests.map(request => request.target);
     const keys = requests.flatMap(request => request.keys);
     if (keys.some(key => !attributeKeyPattern.test(key))) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
-    return this.db.transaction('r', this.inspectionTables(targets.some(target => target.entityType === 'publishedUser')), async () => {
+    return this.db.transaction('r', this.inspectionTables(targets), async () => {
       await this.assertInspectionTargets(targets);
       const entries = requests.flatMap(request => request.keys.map(key => ({ target: request.target, key })));
       const attributeIds = entries.map(({ target, key }) => flexAttributeId(target.realmId, key));
@@ -316,7 +339,7 @@ export class FlexAttributesRepository<TDatabase extends Dexie & FlexTables> {
     if (!targets.length) return [];
     if (!attributeKeyPattern.test(prefix) || !Number.isInteger(keyLength)
       || keyLength < prefix.length || keyLength > 64) throw new Error('INVALID_FLEX_ATTRIBUTE_VALUE');
-    return this.db.transaction('r', this.inspectionTables(targets.some(target => target.entityType === 'publishedUser')), async () => {
+    return this.db.transaction('r', this.inspectionTables(targets), async () => {
       await this.assertInspectionTargets(targets);
       const realms = [...new Set(targets.map(target => target.realmId))];
       const definitions = await Promise.all(realms.map(async realmId => ({
