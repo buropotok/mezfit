@@ -6,6 +6,7 @@ import type { NavigationContext } from '../NavigationShell';
 import { CoachShell } from './CoachShell';
 
 const client = { relationshipId: 'realm-202', userId: 'tg:202', telegramUserId: '202', displayName: 'Анна Иванова' };
+const cloudDb = vi.hoisted(() => ({}));
 const plan: CloudTrainingPlanRow = {
   id: 'plan-202', realmId: client.relationshipId, owner: null,
   coachUserId: 'tg:101', clientUserId: client.userId, athleteUserId: client.userId,
@@ -17,7 +18,7 @@ vi.mock('../data/cloud/program-management-activation', () => ({ CLOUD_PROGRAM_MA
 
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    db: {}, actorUserId: 'tg:101', clients: [client], coaches: [],
+    db: cloudDb, actorUserId: 'tg:101', clients: [client], coaches: [],
     status: 'ready', error: '', syncStatus: 'synced', syncError: '',
     refresh: vi.fn(async () => {}), retrySync: vi.fn(async () => {}),
   }),
