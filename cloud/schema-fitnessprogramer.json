@@ -1,0 +1,7 @@
+{
+  "schema": {
+    "publicFitnessProgramerExercises": "id",
+    "publicFitnessProgramerGifs": "id",
+    "publicFitnessProgramerCatalogues": "id"
+  }
+}
