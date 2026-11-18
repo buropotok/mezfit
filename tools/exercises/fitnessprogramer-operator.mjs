@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { parseReadOnlyCredentials } from './diagnose-public-catalogue-rest.mjs';
@@ -152,35 +153,96 @@ async function processBatchQueue(items, processItem) {
   if (failure) throw failure.reason;
 }
 
+const REQUEST_SPACING_MS = 350;
+const MAX_RETRIES = 8;
+const MAX_RETRY_WAIT_MS = 15 * 60_000;
+const ROW_BATCH_SIZE = 25;
+
+function retryAfterMs(header, now) {
+  if (!header) return 0;
+  if (/^\d+$/.test(header)) return Number(header) * 1000;
+  const date = Date.parse(header);
+  return Number.isFinite(date) ? Math.max(0, date - now) : 0;
+}
+
+/** One rate limit and cooldown shared by the entire publishing job. */
+export function createDexieRequestQueue({
+  fetchRequest = fetch, wait = sleep, clock = Date.now, onThrottle = () => {},
+} = {}) {
+  let nextRequestAt = 0;
+  return async (url, init = {}, operation = 'REQUEST') => {
+    for (let attempt = 0; ; attempt++) {
+      let delay = nextRequestAt - clock();
+      while (delay > 0) {
+        await wait(delay);
+        delay = nextRequestAt - clock();
+      }
+      nextRequestAt = clock() + REQUEST_SPACING_MS;
+      const response = await fetchRequest(url, { ...init, signal: AbortSignal.timeout(60000) });
+      if (response.status !== 429) return response;
+
+      const advertisedDelay = retryAfterMs(response.headers.get('retry-after'), clock());
+      const backoff = Math.min(300_000, 5000 * (2 ** attempt));
+      const waitMs = Math.max(advertisedDelay, backoff);
+      const canRetry = attempt < MAX_RETRIES && waitMs <= MAX_RETRY_WAIT_MS;
+      if (canRetry) nextRequestAt = Math.max(nextRequestAt, clock() + waitMs);
+      await response.body?.cancel();
+      if (!canRetry) fail('FITNESSPROGRAMER_' + operation + '_RATE_LIMIT_EXHAUSTED');
+      onThrottle({ operation, retry: attempt + 1, waitMs });
+    }
+  };
+}
+
 async function publish(prepared, mode) {
   const { clientId, clientSecret } = parseReadOnlyCredentials(process.env.DEXIE_CLOUD_WRITE_KEY, DB_URL);
   const scopes = ['ACCESS_DB', 'GLOBAL_READ'];
   if (mode === 'apply') scopes.push('GLOBAL_WRITE');
-  const token = await fetch(DB_URL + '/token', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ grant_type: 'client_credentials', scopes, client_id: clientId, client_secret: clientSecret }),
-    signal: AbortSignal.timeout(30000),
+  const queuedFetch = createDexieRequestQueue({
+    onThrottle: detail => console.log(JSON.stringify({ status: 'rate_limited', ...detail })),
   });
-  if (!token.ok) fail('FITNESSPROGRAMER_TOKEN_REQUEST_FAILED');
-  const { accessToken } = await token.json();
-  if (typeof accessToken !== 'string' || !accessToken) fail('INVALID_FITNESSPROGRAMER_TOKEN');
-  const request = async (path, { method = 'GET', body, type } = {}) => {
+  const issueToken = async () => {
+    const token = await queuedFetch(DB_URL + '/token', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ grant_type: 'client_credentials', scopes, client_id: clientId, client_secret: clientSecret }),
+    }, 'TOKEN');
+    if (!token.ok) fail('FITNESSPROGRAMER_TOKEN_REQUEST_FAILED');
+    const payload = await token.json();
+    if (typeof payload?.accessToken !== 'string' || !payload.accessToken)
+      fail('INVALID_FITNESSPROGRAMER_TOKEN');
+    return payload.accessToken;
+  };
+  let accessToken = await issueToken();
+  let renewingToken;
+  const request = async (operation, path, { method = 'GET', body, type } = {}) => {
     if (mode === 'preview' && method !== 'GET') fail('FITNESSPROGRAMER_PREVIEW_CANNOT_WRITE');
-    const headers = { authorization: 'Bearer ' + accessToken };
-    if (type) headers['content-type'] = type;
-    const response = await fetch(DB_URL + path, { method, headers, body, signal: AbortSignal.timeout(60000) });
-    if (!response.ok) fail('FITNESSPROGRAMER_HTTP_' + response.status);
+    const send = token => {
+      const headers = { authorization: 'Bearer ' + token };
+      if (type) headers['content-type'] = type;
+      return queuedFetch(DB_URL + path, { method, headers, body }, operation);
+    };
+    const sentToken = accessToken;
+    let response = await send(sentToken);
+    if (response.status === 401) {
+      await response.body?.cancel();
+      if (accessToken === sentToken) {
+        renewingToken ??= issueToken().then(token => { accessToken = token; })
+          .finally(() => { renewingToken = undefined; });
+        await renewingToken;
+      }
+      response = await send(accessToken);
+    }
+    if (!response.ok) fail('FITNESSPROGRAMER_' + operation + '_HTTP_' + response.status);
     return response;
   };
   const readRows = async table => {
-    const value = await (await request('/all/' + table)).json();
+    const value = await (await request('LIST_ROWS', '/all/' + table)).json();
     const rows = Array.isArray(value) ? value : value?.data;
     if (!Array.isArray(rows)) fail('INVALID_FITNESSPROGRAMER_READBACK');
     return rows;
   };
   const writeRows = async (table, rows) => {
-    for (let i = 0; i < rows.length; i += 25) {
-      await request('/all/' + table, { method: 'POST', body: JSON.stringify(rows.slice(i, i + 25)),
+    for (let i = 0; i < rows.length; i += ROW_BATCH_SIZE) {
+      await request('WRITE_ROWS', '/all/' + table, { method: 'POST', body: JSON.stringify(rows.slice(i, i + ROW_BATCH_SIZE)),
         type: 'application/json' });
     }
   };
@@ -206,21 +268,32 @@ async function publish(prepared, mode) {
   console.log(JSON.stringify({ mode, exercisesPending: first.pendingRows.length, gifsPending: first.pendingGifs.size }));
   if (mode === 'preview') return;
 
-  // Every newly attached BlobRef is recoverable on rerun even if publication stops mid-batch.
-  await processBatchQueue([...first.pendingGifs.values()], async asset => {
-    const bytes = await readFile(asset.path);
-    if (hash(bytes) !== asset.digest) fail('FITNESSPROGRAMER_GIF_CHANGED_DURING_PUBLICATION');
-    const uploaded = await (await request('/blob/' + asset.digest + '?ct=image%2Fgif',
-      { method: 'PUT', body: bytes, type: 'image/gif' })).json();
-    if (typeof uploaded?.ref !== 'string' || !refPattern.test(uploaded.ref))
-      fail('INVALID_FITNESSPROGRAMER_BLOB_REF');
-    await writeRows(GIFS, [prepared.gifRow(asset, uploaded.ref)]);
-  });
+  const pendingGifs = [...first.pendingGifs.values()];
+  for (let offset = 0; offset < pendingGifs.length; offset += ROW_BATCH_SIZE) {
+    const rows = [];
+    try {
+      await processBatchQueue(pendingGifs.slice(offset, offset + ROW_BATCH_SIZE), async asset => {
+        const bytes = await readFile(asset.path);
+        if (hash(bytes) !== asset.digest) fail('FITNESSPROGRAMER_GIF_CHANGED_DURING_PUBLICATION');
+        const uploaded = await (await request('UPLOAD_GIF', '/blob/' + asset.digest + '?ct=image%2Fgif',
+          { method: 'PUT', body: bytes, type: 'image/gif' })).json();
+        if (typeof uploaded?.ref !== 'string' || !refPattern.test(uploaded.ref))
+          fail('INVALID_FITNESSPROGRAMER_BLOB_REF');
+        rows.push(prepared.gifRow(asset, uploaded.ref));
+      });
+    } finally {
+      // Preserve successful uploads even when another GIF in the batch fails.
+      await writeRows(GIFS, rows);
+    }
+    console.log(JSON.stringify({
+      status: 'gifs_staged', gifsPending: pendingGifs.length - offset - rows.length,
+    }));
+  }
   await writeRows(EXERCISES, first.pendingRows);
   const staged = await plan();
   if (staged.pendingRows.length || staged.pendingGifs.size) fail('FITNESSPROGRAMER_STAGE_INCOMPLETE');
   await processBatchQueue(staged.gifs, async row => {
-    const bytes = await (await request('/blob/' + encodeURIComponent(row.image.ref))).arrayBuffer();
+    const bytes = await (await request('VERIFY_GIF', '/blob/' + encodeURIComponent(row.image.ref))).arrayBuffer();
     if (bytes.byteLength !== row.size || hash(Buffer.from(bytes)) !== row.digest)
       fail('FITNESSPROGRAMER_BLOB_READBACK_MISMATCH');
   });
