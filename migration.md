@@ -599,7 +599,7 @@ suggestions и автоматическое продвижение кандид�
 | **2. TypeScript File Processing Engine v1** | **Done для synthetic** | Независимый processor smoke 44156101755 и infra smoke 44153088455 | Telemetry PARTIAL, CPU не измерен |
 | **MIG-03. Универсальный Adapter Engine** | **Done для synthetic** | Fixture + nested confirmed, runs 44183912443 / 44201744839, §2.5 | Реальные форматы ещё не реализованы |
 | **Nested-smoke** | **Done** | `MIGRATION_NESTED_SMOKE_OK` в run 44201744839 после schema v2, replay и cleanup/readback | Телеметрия `PARTIAL`, CPU не измерен |
-| **Контракт универсального импорта (MIG-04)** | **Next: спецификация** | Версионированный source package, правила канонизации, mapping/preview/receipt и модель Imported Clients / Clone & Rebind (§15) | Контракты фактов, identity/ACL и открытые продуктовые решения |
+| **Контракт универсального импорта (MIG-04)** | **Спецификация зафиксирована; реализация Next** | [`SourceImportPackage v1`](docs/architecture/migration-source-contract.md): PROGRAM=структура, OCCURRENCE=PLAN, SESSION=frozen PLAN+FACT; проверка исходных связей/единиц | Runtime schema/processor output ещё не реализованы; ImportPlan, identity/ACL, Clone & Rebind — отдельные этапы |
 | **3. Доказать реальные форматы** | Planned, независимо от MIG-03 | Обезличенные samples, magic/schema, versioned compatibility matrix, фикстуры | Экспорт из реального Gym Keeper |
 | **4. Адаптеры реальных источников, начиная с Gym Keeper** | Planned | Decoders по подтверждённым format/version и независимым samples | MIG-03 и этап 3 |
 | **AI Discovery / Adapter Builder** | Planned | Исследование неизвестного формата, candidate → validation gate → reviewed registry | Решение по AI API/стоимости/приватности и образцы |
@@ -733,6 +733,7 @@ Production Engine не должен выполняться на GitHub Actions: 
 1. Корневой [`AGENTS.md`](AGENTS.md) — обязательные инженерные, security и PR-правила.
 2. [`docs/architecture/local-first-storage-sync.md`](docs/architecture/local-first-storage-sync.md) — главный контракт бизнес-хранилища, Coach/Client realms и PLAN/FACT.
 3. [`docs/architecture/migration-infrastructure.md`](docs/architecture/migration-infrastructure.md) — детальная уже реализованная инфраструктура, операции bootstrap/deploy/smoke/trace.
+   [`docs/architecture/migration-source-contract.md`](docs/architecture/migration-source-contract.md) — нормативная предметная спецификация `SourceImportPackage v1` для MIG-04; wire schema и runtime ещё не реализованы.
 4. [`docs/reference/gym-keeper/backup-format.md`](docs/reference/gym-keeper/backup-format.md) — доказанное и неустановленное про backup/export.
 5. [`docs/reference/gym-keeper/program-diary-domain.md`](docs/reference/gym-keeper/program-diary-domain.md), [`final-synthesis.md`](docs/reference/gym-keeper/final-synthesis.md) — перенос смыслов, не Android UI.
 6. `migration/worker/processor/{contracts,registry,index}.ts`, `processor/adapters/`, `process-workflow.ts`, `execution-store.ts`, `processor-smoke.ts` — контракт адаптеров и единственный runtime path. Затем `index.ts`, `events.ts`, `smoke.ts`, `r2-upload.ts`, `trace.ts`, `migration/trace.mjs`, `trace-collector.mjs`, `cloudflare.mjs`.
@@ -754,7 +755,7 @@ Production Engine не должен выполняться на GitHub Actions: 
 
 **Нельзя:** объявлять synthetic parser настоящим Gym Keeper importer, переносить бизнес-данные в D1, менять Coach/Client realms или ACL без согласования, добавлять Python/Containers/VPS, считать «деплой завершён» равным «новая версия исполняется», давать успешный отчёт при неполной трассе без пометки PARTIAL.
 
-**Следующий проверяемый рубеж:** утвердить модель универсальных импортных артефактов и Imported Client / Clone & Rebind (§15), затем проверять реальные обезличенные экспорты и проектировать AI Adapter Builder. AI API, реальные decoders, бизнес-канонизация, preview и Dexie commit остаются отдельными этапами.
+**Следующий проверяемый рубеж:** реализовать и проверить `SourceImportPackage v1` по [предметной спецификации](docs/architecture/migration-source-contract.md) (runtime validator / versioned result / synthetic smoke), не затрагивая Dexie. Контракт Imported Client / Clone & Rebind (§15), реальные обезличенные экспорты и AI Adapter Builder требуют отдельных решений и этапов. AI API, реальные decoders, бизнес-канонизация, preview и Dexie commit не реализованы.
 
 ## 15. Последние бизнес-правила и целевые flows импорта
 
@@ -815,12 +816,22 @@ Production Engine не должен выполняться на GitHub Actions: 
 
 ### 15.3. Выходы адаптера, канонизации и публикации
 
+**Зафиксирована предметная спецификация** [`SourceImportPackage v1`](docs/architecture/migration-source-contract.md):
+**PROGRAM = STRUCTURE (вплоть до подхода без числовых значений) → OCCURRENCE = PLAN → SESSION = FROZEN PLAN (при наличии исходного снимка) + FACT.**
+Отдельная Ad-hoc сессия может содержать только FACT, без программы, occurrence и frozen PLAN.
+Числовые предписания, если стороннее приложение хранит их непосредственно в шаблоне программы,
+остаются типизированными исходными атрибутами и проблемой сопоставления, но **не** числовым PLAN
+программы Mezfit и не автоматически созданным occurrence. Бизнес-решения по ним принимает
+только будущий ImportPlan Engine. Это соглашение не меняет существующие Dexie-типы.
+
 Действующий `result.json` (`results/<job-id>/v1/result.json`)
 — **технический** артефакт процессора. Nested v2 выдаёт тестовые
 `normalized.groups/items`, не структуру тренировок. Он не является готовым
-пакетом бизнес-импорта. Следующие три контракта — **целевые, пока не
-реализованные**; окончательные JSON Schema, имена ключей, форматы chunking
-и retention требуют отдельного проектирования:
+пакетом бизнес-импорта. Следующие три артефакта — **целевые, пока не
+реализованные**. Для `SourceImportPackage` зафиксированы семантика и
+эталонные поля v1, но runtime JSON Schema, сериализация и физический
+manifest/chunking ещё не реализованы; поля `MezfitImportPlan` и `ImportReceipt`,
+retention и механизм публикации требуют отдельного проектирования:
 
 1. **`SourceImportPackage`**: нейтральные к Mezfit данные источника —
    источник/format/version/adapter version/input SHA-256; исходные клиенты,
@@ -903,11 +914,12 @@ Source package не обязан быть одним JSON blob: для боль�
 программ, множественных программ, конфликтов с действующей активной
 программой и отсутствующей/неоднозначной последней сессии **открыты**.
 
-Числовой FACT исторических подходов не становится автоматически
-числовым PLAN программы. Правило переноса структуры подходов и их
-типов, равно как использование последних весов/повторений в будущих
-плановых значениях, требует отдельного согласования. Разделение PLAN/FACT
-из §4 обязательно.
+В программе Mezfit **вообще нет числового PLAN по бизнес-модели**: она хранит
+структуру вплоть до подхода. Числовой PLAN существует только у конкретного
+occurrence и в замороженном снимке сессии. При автоматическом создании
+программы из последней сессии берутся только структура упражнений и подходов,
+но **не** фактические веса/повторения. Перенос типов и структуры подходов требует
+отдельной доменной проверки; PLAN/FACT остаются разделены. [MIG-04 contract](docs/architecture/migration-source-contract.md).
 
 ### 15.6. Сопоставление упражнений и централизованная коррекция
 
