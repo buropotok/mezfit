@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveWorkoutDayStatuses } from './workout-day-statuses';
+import { deriveWorkoutDayStatuses, isScheduledWorkoutMissed } from './workout-day-statuses';
 import { calendarDate } from './calendar-time';
 
 type Occurrence = Parameters<typeof deriveWorkoutDayStatuses>[0][number];
@@ -30,6 +30,25 @@ const derive = (
   occurrences: Occurrence[], now: number, sessions: Session[] = [],
   drafts: Draft[] = [], athletes = ['tg:202'],
 ) => deriveWorkoutDayStatuses(occurrences, drafts, sessions, athletes, now);
+
+describe('display-only missed workout status', () => {
+  const booking = { startsAtUtc: '2026-11-08T13:30:00', durationMinutes: 60, status: 'scheduled' };
+
+  it('becomes missed exactly when the scheduled end passes', () => {
+    expect(isScheduledWorkoutMissed(booking, at('2026-11-08T14:29:59'))).toBe(false);
+    expect(isScheduledWorkoutMissed(booking, at('2026-11-08T14:30:00'))).toBe(true);
+    expect(booking.status).toBe('scheduled');
+  });
+
+  it('never flags started, completed or invalid bookings as missed', () => {
+    const now = at('2026-11-08T15:30:00');
+    expect(isScheduledWorkoutMissed({ ...booking, workoutSessionId: 'session-1' }, now)).toBe(false);
+    expect(isScheduledWorkoutMissed({ ...booking, status: 'in_progress' }, now)).toBe(false);
+    expect(isScheduledWorkoutMissed({ ...booking, status: 'completed' }, now)).toBe(false);
+    expect(isScheduledWorkoutMissed({ ...booking, durationMinutes: -5 }, now)).toBe(false);
+    expect(isScheduledWorkoutMissed({ ...booking, startsAtUtc: 'invalid' }, now)).toBe(false);
+  });
+});
 
 describe('workout calendar day status projection', () => {
   const start = at('2026-10-20T18:00:00.000Z');
