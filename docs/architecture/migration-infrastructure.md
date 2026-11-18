@@ -170,7 +170,7 @@ trace recovered the smoke evidence in that run.
 `Diagnose or smoke-test migration infrastructure` остаются для самостоятельного
 повторного запуска/диагностики. Начальный Deploy применял аддитивную миграцию
 `0003_create_migration_executions.sql` перед выкладкой Worker.
-Этот режим сверяет текущую версию деплоя с версией из Workflow runtime,
+Операция `processor-smoke` сверяет текущую версию деплоя с версией из Workflow runtime,
 загружает синтетический JSON, проверяет результат и повторную доставку, удаляет
 вход, результат и технические строки, затем выводит `MIGRATION_PROCESSOR_SMOKE_OK`.
 Cleanup подтверждает отсутствие объектов в R2 и строк в трёх технических
