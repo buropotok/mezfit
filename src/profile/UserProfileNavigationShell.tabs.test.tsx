@@ -80,6 +80,8 @@ it('duplicates the unrestricted Client Programs page and opens the shared self e
     context={null} onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
     <span>Экран клиента</span>
   </UserProfileNavigationShell>);
+  expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
+  expect(screen.getByRole('region', { name: 'Тренировки' }).textContent).toBe('client · Мои тренировки');
   fireEvent.click(screen.getByRole('tab', { name: 'Программа' }));
   expect(screen.getByRole('region', { name: 'Каталог программ клиента' })).toBeTruthy();
   expect(probes.programs).toHaveBeenCalled();
@@ -103,9 +105,12 @@ it('opens the coach’s own profile tabs and preserves Back from exercise detail
     onDestinationChange={vi.fn()} onRoleSwitch={vi.fn()}>
     <span>Экран тренера</span>
   </UserProfileNavigationShell>);
-  expect(screen.getByText('Анкета')).toBeTruthy();
+  expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
+  expect(screen.getByRole('region', { name: 'Тренировки' }).textContent).toBe('coach · Мои тренировки');
   expect(screen.queryByRole('tab', { name: 'Обсуждения' })).toBeNull();
 
+  fireEvent.click(screen.getByRole('tab', { name: 'Основные' }));
+  expect(screen.getByText('Анкета')).toBeTruthy();
   fireEvent.click(screen.getByRole('tab', { name: 'Программа' }));
   expect(probes.programs).toHaveBeenLastCalledWith(expect.objectContaining({ personalProgramRole: 'coach' }));
 
