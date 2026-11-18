@@ -1,3 +1,5 @@
+import { fitnessProgramerGifFromReference } from '../data/exercises/fitnessProgramerCatalogue';
+import { useLocalFitnessProgramerGif } from './FitnessProgramerProvider';
 import { useEffect, useState } from 'react';
 import type { CatalogueExerciseRow } from '../data/exercises/coachExerciseTypes';
 import { exerciseImageUrl } from '../data/exercises/publicExerciseMedia';
@@ -19,7 +21,10 @@ export function PublicExerciseMedia({
   variant: Variant;
   mediaAccountId?: string;
 }) {
-  const mediaUrl = exerciseImageUrl(row);
+  const reference = exerciseImageUrl(row);
+  const gifId = fitnessProgramerGifFromReference(reference);
+  const localGif = useLocalFitnessProgramerGif(gifId);
+  const mediaUrl = gifId ? localGif : reference;
   const personal = isPersonalExerciseMediaUrl(mediaUrl);
   const [local, setLocal] = useState<{ source: string; url: string } | null>(null);
   const [cacheResolved, setCacheResolved] = useState(false);

@@ -1,3 +1,4 @@
+import { isFitnessProgramerExerciseId } from '../../shared/fitnessprogramer-id';
 import cloudConfig from '../../dexie-cloud.json';
 import { cloudMembershipAdminToken } from './dexie-cloud-membership';
 import { validatedPair } from './cloud-contact-profiles';
@@ -135,9 +136,11 @@ export async function confirmWorkoutOccurrence(
 
   // Deduplicate by catalogue + ID, with at most six reads in flight.
   const definitions = new Map<string, Json | null>();
+  const publicTable = (id: string) => isFitnessProgramerExerciseId(id)
+    ? 'publicFitnessProgramerExercises' : 'publicExerciseDefinitions';
   const lookups = new Map<string, { table: string; id: string }>();
   for (const { exercise } of (input.targetOccurrenceId && !input.updatePlan ? [] : input.plan.exercises)) {
-    const table = exercise.scope === 'public' ? 'publicExerciseDefinitions'
+    const table = exercise.scope === 'public' ? publicTable(exercise.exerciseDefinitionId)
       : exercise.scope === 'coach' ? 'coachExerciseDefinitions' : null;
     if (!table) reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
     lookups.set(table + ':' + exercise.exerciseDefinitionId, { table, id: exercise.exerciseDefinitionId });
@@ -153,7 +156,7 @@ export async function confirmWorkoutOccurrence(
   for (const { exercise } of (input.targetOccurrenceId && !input.updatePlan ? [] : input.plan.exercises)) {
     const definitionId = exercise.exerciseDefinitionId;
     if (exercise.scope === 'public') {
-      const definition = definitions.get('publicExerciseDefinitions:' + definitionId);
+      const definition = definitions.get(publicTable(definitionId) + ':' + definitionId);
       if (!definition || definition.realmId !== 'rlm-public' || exercise.catalogueDefinition !== undefined)
         reject(403, 'SCHEDULE_EXERCISE_UNAVAILABLE');
     } else if (exercise.scope === 'coach') {

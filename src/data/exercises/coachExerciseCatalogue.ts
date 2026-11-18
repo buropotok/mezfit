@@ -1,3 +1,5 @@
+import { isFitnessProgramerExerciseId } from '../../../shared/fitnessprogramer-id';
+import { FitnessProgramerCatalogueRepository } from './fitnessProgramerCatalogue';
 import { liveQuery } from 'dexie';
 import { blankPersonalExercise } from './blankPersonalExercise';
 import { AssignedCoachExercisesRepository } from './assignedCoachExercises';
@@ -31,7 +33,9 @@ export class CoachExerciseCatalogueRepository {
   async setFavourite(exerciseId: string, favourite: boolean, assignedCoachUserId?: string): Promise<void> {
     const id = coachFavouriteId(this.actorUserId, exerciseId);
     // The reference must belong to the public catalogue or to this coach.
-    if (/^\d{4}$/.test(exerciseId)) {
+    if (isFitnessProgramerExerciseId(exerciseId)) {
+      if (!await new FitnessProgramerCatalogueRepository(this.db).get(exerciseId)) throw new Error('EXERCISE_NOT_FOUND');
+    } else if (/^\d{4}$/.test(exerciseId)) {
       if (!isPublicExerciseRow(await this.db.publicExerciseDefinitions.get(exerciseId))) {
         throw new Error('EXERCISE_NOT_FOUND');
       }
@@ -58,9 +62,11 @@ export class CoachExerciseCatalogueRepository {
   /** Global base exercises are immutable. The only supported edit path is a private copy. */
   async duplicatePublicExercise(sourceExerciseId: string, changes: CoachExerciseChanges = {}): Promise<string> {
     if (!isCoachExerciseChanges(changes)) throw new Error('INVALID_CUSTOM_EXERCISE');
-    if (!/^\d{4}$/.test(sourceExerciseId)) throw new Error('EXERCISE_NOT_FOUND');
-    const source = await this.db.publicExerciseDefinitions.get(sourceExerciseId);
-    if (!isPublicExerciseRow(source)) throw new Error('EXERCISE_NOT_FOUND');
+    const source = isFitnessProgramerExerciseId(sourceExerciseId)
+      ? await new FitnessProgramerCatalogueRepository(this.db).get(sourceExerciseId)
+      : await this.db.publicExerciseDefinitions.get(sourceExerciseId);
+    if (!source || (!isFitnessProgramerExerciseId(sourceExerciseId) && !isPublicExerciseRow(source)))
+      throw new Error('EXERCISE_NOT_FOUND');
     const { id: _id, realmId: _realmId, owner: _owner, sourceSha256: _sha, ...data } = source;
     return this.createExercise({ ...structuredClone(data), ...changes, created_at: new Date().toISOString() }, {
       copiedFromExerciseId: source.id, copiedFromScope: 'public',

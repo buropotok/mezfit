@@ -12,9 +12,10 @@ import { adHocSessionValidationIssue, type AdHocSessionValidationIssue, isAdHocS
 import { isApprovedAssignedPair } from './assigned-programs';
 import { ProgramManagementRepository } from './program-management';
 import { orderedPlanRows } from './program-day-tree';
-import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
+import { exerciseSelectionTables, programExerciseSnapshot, readProgramCatalogueExercise, readPublicExerciseDefinition } from './program-exercise-selection';
 import { isWorkoutExerciseSnapshot, type CloudWorkoutOccurrenceRow, type CloudProgramExerciseSnapshot, type CloudWorkoutExerciseSnapshot } from './workout-foundation-types';
 import { snapshotProgramDay, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
+import { isFitnessProgramerExerciseId } from '../../../shared/fitnessprogramer-id';
 import { isExerciseTrackingType, isPublicExerciseRow } from '../exercises/publicExerciseTypes';
 import { PUBLIC_EXERCISE_CATEGORIES } from '../exercises/publicExerciseFilters';
 import { isSetType } from '../../../shared/set-type';
@@ -50,7 +51,6 @@ export type AdHocSessionAccessIssue = AdHocSessionValidationIssue | 'ADHOC_LOCAL
 const executionTables = ['adHocSessions', 'adHocExercises', 'adHocSets', 'realms', 'members'];
 const programTables = ['trainingPlans', 'programPhases', 'programDays', 'programExercises',
   'programSets', 'localProgramSync', 'roles'];
-const catalogueTables = ['publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'];
 function hasPlannedLifecycleGrant(value: unknown, role = 'coach', requireFormat = false): boolean {
   if (!value || typeof value !== 'object' || !('realmId' in value) || value.realmId !== 'rlm-public'
     || !('name' in value) || value.name !== role || !('permissions' in value)) return false;
@@ -120,6 +120,10 @@ export class AdHocWorkoutRepository {
   constructor(private readonly db: MezfitCloudDatabase, readonly actorUserId: string) {
     if (!/^tg:[1-9]\d*$/.test(actorUserId)) throw new Error('ADHOC_INVALID_ACTOR');
     this.programs = new ProgramManagementRepository(db, actorUserId);
+  }
+
+  private get catalogueTables(): string[] {
+    return exerciseSelectionTables(this.db.publicFitnessProgramerExercises ? undefined : []);
   }
 
   private write<T>(extra: string[], task: () => Promise<T>): Promise<T> {
@@ -248,8 +252,8 @@ export class AdHocWorkoutRepository {
         let category = categories.get(key);
         if (category === undefined) {
           const definition = snapshot.scope === 'public'
-            ? await this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId) : null;
-          const candidate = definition && isPublicExerciseRow(definition)
+            ? await readPublicExerciseDefinition(this.db, snapshot.exerciseDefinitionId) : null;
+          const candidate = definition && (isFitnessProgramerExerciseId(definition.id) || isPublicExerciseRow(definition))
             ? definition.category : snapshot.catalogueDefinition?.category;
           category = PUBLIC_EXERCISE_CATEGORIES.some(item => item[0] === candidate)
             ? candidate ?? 'other' : 'other';
@@ -325,8 +329,8 @@ export class AdHocWorkoutRepository {
         let category = categories.get(key);
         if (category === undefined) {
           const definition = snapshot.scope === 'public'
-            ? await this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId) : null;
-          const candidate = definition && isPublicExerciseRow(definition)
+            ? await readPublicExerciseDefinition(this.db, snapshot.exerciseDefinitionId) : null;
+          const candidate = definition && (isFitnessProgramerExerciseId(definition.id) || isPublicExerciseRow(definition))
             ? definition.category : snapshot.catalogueDefinition?.category;
           category = PUBLIC_EXERCISE_CATEGORIES.some(item => item[0] === candidate)
             ? candidate ?? 'other' : 'other';
@@ -427,7 +431,7 @@ export class AdHocWorkoutRepository {
       || (programId !== undefined && (typeof programId !== 'string' || !programId))
       || (dayId !== undefined && (typeof dayId !== 'string' || !dayId || !programId)))
       return Promise.reject(new Error('ADHOC_INVALID_TARGET'));
-    return this.write(['workoutOccurrences', ...programTables, ...catalogueTables], async () => {
+    return this.write(['workoutOccurrences', ...programTables, ...this.catalogueTables], async () => {
       await this.requireNoActiveSession(athleteUserId);
       // Eligibility, default graph and execution snapshot share one transaction.
       const programs = await this.listPrograms(athleteUserId);
@@ -489,7 +493,7 @@ export class AdHocWorkoutRepository {
    */
   async createFromOccurrence(occurrenceId: string, options?: { asCoached: boolean }): Promise<{ id: string; createdProgram: false }> {
     if (typeof occurrenceId !== 'string' || !occurrenceId) throw new Error('PLANNED_WORKOUT_NOT_FOUND');
-    return this.write(['workoutOccurrences', 'localWorkoutSync', 'trainingPlans', 'roles', ...catalogueTables], async () => {
+    return this.write(['workoutOccurrences', 'localWorkoutSync', 'trainingPlans', 'roles', ...this.catalogueTables], async () => {
       const workspace = await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
       const occurrence = workspace.find(row => row.id === occurrenceId && row.entryKind !== 'personal_event');
       if (!occurrence || occurrence.cancelledAt || occurrence.status === 'cancelled'
@@ -586,7 +590,7 @@ export class AdHocWorkoutRepository {
 
   async addExercises(sessionId: string, ids: string[]): Promise<void> {
     if (!idsValid(ids)) throw new Error('ADHOC_INVALID_EXERCISE_IDS');
-    await this.write(catalogueTables, async () => {
+    await this.write(exerciseSelectionTables(ids), async () => {
       const session = await this.require(sessionId), existing = await this.exercises(session);
       if (existing.length + ids.length > 100) throw new Error('ADHOC_TOO_MANY_EXERCISES');
       let position = existing.reduce((max, row) => Math.max(max, row.position), -1) + 1;

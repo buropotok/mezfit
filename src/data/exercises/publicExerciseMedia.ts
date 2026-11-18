@@ -1,3 +1,4 @@
+import { fitnessProgramerMediaReference } from './fitnessProgramerCatalogue';
 import type { CatalogueExerciseRow } from './coachExerciseTypes';
 import { isPersonalExerciseMediaUrl } from './personalExerciseMediaReference';
 import approvedMediaRelease from '../../../shared/approved-exercise-media.json';
@@ -36,5 +37,5 @@ export function publicExerciseMediaUrl(
 export function exerciseImageUrl(row: MediaIdentity & { image?: string }): string | null {
   if ((row.sourceSha256 === 'coach-custom' || row.sourceSha256 === 'assigned-coach-snapshot')
     && isPersonalExerciseMediaUrl(row.image)) return row.image;
-  return publicExerciseMediaUrl(row);
+  return fitnessProgramerMediaReference(row.media_id) ?? publicExerciseMediaUrl(row);
 }

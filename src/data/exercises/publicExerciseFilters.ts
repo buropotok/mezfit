@@ -52,7 +52,7 @@ export const EQUIPMENT_LABELS: Readonly<Record<string, string>> = {
   bike: 'Велотренажёр', 'stationary bike': 'Велотренажёр',
   stepper: 'Степпер', mat: 'Коврик', wall: 'Стена',
   box: 'Платформа', 'plyo box': 'Плиобокс',
-  other: 'Другое оборудование',
+  gymstick: 'Гимстик', other: 'Другое оборудование',
 };
 export const MOVEMENT_LABELS: Readonly<Record<string, string>> = {
   resistance: 'Силовые', mobility: 'Подвижность', cardio: 'Кардио',
@@ -129,7 +129,7 @@ export function filterPublicExercises(
   const selected = ALL_GROUPS.flatMap(group => filters[group]?.length
     ? [[group, new Set(filters[group])]] as const : []);
   return rows.filter(row => {
-    if (categoryContext && row.category !== categoryContext) return false;
+    if (categoryContext && !(row.categories ?? [row.category]).includes(categoryContext)) return false;
     if (search && !normalizeExerciseSearch([
       row.name, row.name_ru, row.name_en, row.subcategory_ru,
     ].join(' ')).includes(search)) return false;
@@ -137,7 +137,9 @@ export function filterPublicExercises(
       if (group === 'category' || group === 'subcategory'
         || group === 'equipment' || group === 'movement_type') {
         return group === 'subcategory' ? values.has(row[group])
-          : matchesValue(group, row[group], values);
+          : (group === 'category' ? row.categories ?? [row.category]
+            : group === 'equipment' ? row.equipmentOptions ?? [row.equipment]
+              : [row.movement_type]).some(id => matchesValue(group, id, values));
       }
       return muscleIds(row, group, zones).some(id => values.has(id));
     });
@@ -160,7 +162,7 @@ export function filterOptions(
       .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   }
   if (group !== 'subcategory' && group !== 'equipment' && group !== 'movement_type') return [];
-  return [...new Set(exercises.map(row => row[group]).filter(Boolean))]
+  return [...new Set(exercises.flatMap(row => group === 'equipment' ? row.equipmentOptions ?? [row.equipment] : [row[group]]).filter(Boolean))]
     .map(id => ({
       id,
       label: group === 'subcategory' ? subcategoryLabels[id] ?? 'Подкатегория'
@@ -184,7 +186,7 @@ export function facetedFilterOptions(
   const candidates = filterPublicExercises(exercises, taxonomy, others, query, categoryContext);
   const populated = filterOptions(group, candidates, taxonomy, subcategoryLabels);
   if (group !== 'category') return populated;
-  const available = new Set(candidates.map(row => row.category));
+  const available = new Set(candidates.flatMap(row => row.categories ?? [row.category]));
   return populated.filter(option => available.has(option.id));
 }
 
@@ -202,7 +204,7 @@ export function editorFieldOptions(
       .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   }
   const ids = new Set([
-    ...exercises.map(row => row[group]).filter(Boolean),
+    ...exercises.flatMap(row => group === 'equipment' ? row.equipmentOptions ?? [row.equipment] : [row[group]]).filter(Boolean),
     ...Object.keys(group === 'equipment' ? EQUIPMENT_LABELS : MOVEMENT_LABELS),
     ...current,
   ].filter(Boolean));

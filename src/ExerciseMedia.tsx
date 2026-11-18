@@ -1,3 +1,5 @@
+import { fitnessProgramerGifFromReference } from './data/exercises/fitnessProgramerCatalogue';
+import { useLocalFitnessProgramerGif } from './exercises/FitnessProgramerProvider';
 import { useEffect, useState, type CSSProperties } from 'react';
 import type { ExerciseDefinition } from './api';
 import { exerciseDisplayName } from './exerciseLocalization';
@@ -30,7 +32,10 @@ export function ExerciseMedia({
   decorative?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const mediaUrl = sourceUrl ?? exerciseMediaUrl(exercise);
+  const reference = sourceUrl ?? exerciseMediaUrl(exercise);
+  const gifId = fitnessProgramerGifFromReference(reference);
+  const localGif = useLocalFitnessProgramerGif(gifId);
+  const mediaUrl = gifId ? localGif : reference;
 
   useEffect(() => {
     setFailed(false);

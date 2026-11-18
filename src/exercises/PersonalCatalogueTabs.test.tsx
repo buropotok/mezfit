@@ -101,14 +101,14 @@ describe('separate personal and selected trainer tabs', () => {
     expect(onEdit).toHaveBeenCalledWith(trainer.id);
   });
 
-  it('keeps custom copies in Mine and public exercises in All Database', () => {
+  it('keeps custom copies in Mine and public exercises in Base 1', () => {
     render(<ExerciseCatalogContent snapshot={snapshot} scope="client"
       catalogueExercises={[publicRow, mine, trainer]}
       personalIds={new Set([mine.id])} assignedIds={new Set([trainer.id])} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Мои упражнения' }));
     expect(screen.getByText('Моё движение')).toBeTruthy();
     expect(screen.queryByText('Авторское тренера')).toBeNull();
-    fireEvent.click(screen.getByRole('tab', { name: 'Вся база' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'База 1' }));
     fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
     expect(screen.getByText('Общий жим')).toBeTruthy();
     expect(screen.queryByText('Моё движение')).toBeNull();

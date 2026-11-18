@@ -1,3 +1,4 @@
+import { useFitnessProgramerCatalogue } from './FitnessProgramerProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import { coachFavouriteId, resolveCoachExerciseCatalogue, type CoachExercisePersonalSnapshot } from '../data/exercises/coachExerciseTypes';
@@ -20,6 +21,7 @@ export function PersonalExercises({
   selectedCoachUserId?: string | null;
   onNavigationContextChange: (context: NavigationContext | null) => void;
 }) {
+  const base2 = useFitnessProgramerCatalogue();
   const { cloud, snapshot, error } = usePublishedExerciseCatalogue();
   const repository = useMemo(() => cloud
     ? new CoachExerciseCatalogueRepository(cloud.db, cloud.actorUserId) : null,
@@ -72,8 +74,8 @@ export function PersonalExercises({
   }, [assignedRepository, role, selectedCoachUserId]);
 
   const merged = useMemo(() => snapshot?.status === 'ready' && personal && cloud
-    ? resolveCoachExerciseCatalogue(snapshot.exercises, personal, cloud.actorUserId) : null,
-  [snapshot, personal, cloud?.actorUserId]);
+    ? resolveCoachExerciseCatalogue([...snapshot.exercises, ...(base2.exercises ?? [])], personal, cloud.actorUserId) : null,
+  [snapshot, personal, cloud?.actorUserId, base2.exercises]);
 
   const assignedIds = useMemo(() => new Set((assigned ?? []).map(row => row.id)), [assigned]);
   const personalIds = useMemo(() => new Set(merged?.exercises

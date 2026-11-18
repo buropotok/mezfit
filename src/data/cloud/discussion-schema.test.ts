@@ -4,7 +4,7 @@ import Dexie from 'dexie';
 import dexieCloud from 'dexie-cloud-addon';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CLOUD_DATABASE_STORES_V14, CLOUD_DATABASE_STORES_V15, CLOUD_DATABASE_VERSION,
-  CLOUD_DISCUSSION_DATABASE_VERSION, MezfitCloudDatabase } from './database';
+  CLOUD_ACCOUNT_DATABASE_VERSION, MezfitCloudDatabase } from './database';
 import { DISCUSSION_STORES } from './discussion-contracts';
 import manifest from '../../../cloud/schema-discussions.json';
 const databases: Dexie[] = [];
@@ -52,7 +52,7 @@ describe('additive opt-in discussion schema', () => {
   it('registers discussions by default and retains an explicit historical-schema fixture', () => {
     const current = new MezfitCloudDatabase('123456', 'signed'); databases.push(current);
     const opted = new MezfitCloudDatabase('123457', 'signed', { discussions: false }); databases.push(opted);
-    expect(current.verno).toBe(CLOUD_DISCUSSION_DATABASE_VERSION);
+    expect(current.verno).toBe(CLOUD_ACCOUNT_DATABASE_VERSION);
     expect(current.tables.some(table => table.name === 'discussionMessages')).toBe(true);
     expect(opted.verno).toBe(CLOUD_DATABASE_VERSION);
     expect(opted.tables.some(table => table.name === 'discussionMessages')).toBe(false);
