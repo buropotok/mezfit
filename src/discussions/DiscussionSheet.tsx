@@ -1029,6 +1029,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             voice.onPointerDown(event, actionMode === 'microphone' && !circleInProgress && !mediaPresent && Boolean(repository.supportsMedia));
             videoNote.onPointerDown(event, actionMode === 'camera' && !voiceInProgress && !mediaPresent && Boolean(repository.supportsMedia));
           }}
+          onTouchStart={event => {
+            voice.onTouchStart(event, actionMode === 'microphone' && !circleInProgress && !mediaPresent && Boolean(repository.supportsMedia));
+            videoNote.onTouchStart(event, actionMode === 'camera' && !voiceInProgress && !mediaPresent && Boolean(repository.supportsMedia));
+          }}
           onPointerMove={event => { voice.onPointerMove(event); videoNote.onPointerMove(event); }}
           onPointerUp={event => { voice.onPointerUp(event); videoNote.onPointerUp(event); }}
           onPointerCancel={event => { voice.onPointerCancel(event); videoNote.onPointerCancel(event); }}
