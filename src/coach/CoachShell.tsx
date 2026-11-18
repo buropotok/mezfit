@@ -1,5 +1,5 @@
 import { DiscussionsPage } from '../discussions/DiscussionsPage';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   createClientInvite,
   createCoachProgram,
@@ -241,7 +241,8 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     }
   }, [destination, selectedClientId]);
 
-  useEffect(() => {
+  // Forward nested Back handlers before the newly opened surface can receive input.
+  useLayoutEffect(() => {
     if (selectingProgramClient && destination === 'programs') {
       onNavigationContextChange({ title: 'Клиенты', scrollKey: 'program-client-selection', onBack: () => setSelectingProgramClient(false) });
       return () => onNavigationContextChange(null);
