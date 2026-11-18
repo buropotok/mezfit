@@ -43,7 +43,7 @@ vi.mock('./UserAvatarEditor', () => ({ UserAvatarEditor: () => null }));
 vi.mock('./UserProfilePublicationProvider', () => ({ UserProfileSyncStatus: () => null }));
 vi.mock('./ProfileWorkoutTimeline', () => ({
   ProfileWorkoutTimeline: ({ mode, role, contact }: { mode: string; role: string; contact?: { userId: string } }) =>
-    <section aria-label={mode === 'plan' ? 'План тренировок' : 'История тренировок'}>
+    <section aria-label={mode === 'plan' ? 'План тренировок' : 'Тренировки'}>
       {role} · {contact?.userId ?? 'Мои тренировки'}
     </section>,
 }));
@@ -111,8 +111,8 @@ it('opens the coach’s own profile tabs and preserves Back from exercise detail
 
   fireEvent.click(screen.getByRole('tab', { name: 'План' }));
   expect(screen.getByRole('region', { name: 'План тренировок' }).textContent).toBe('coach · Мои тренировки');
-  fireEvent.click(screen.getByRole('tab', { name: 'История' }));
-  expect(screen.getByRole('region', { name: 'История тренировок' }).textContent).toBe('coach · Мои тренировки');
+  fireEvent.click(screen.getByRole('tab', { name: 'Тренировки' }));
+  expect(screen.getByRole('region', { name: 'Тренировки' }).textContent).toBe('coach · Мои тренировки');
 
   fireEvent.click(screen.getByRole('tab', { name: 'Упражнения' }));
   expect(probes.exercises.mock.lastCall?.[0].client).toBeUndefined();
