@@ -1,12 +1,27 @@
+import { isFitnessProgramerExerciseId } from '../../../shared/fitnessprogramer-id';
+import { FitnessProgramerCatalogueRepository, FITNESSPROGRAMER_DEFINITION_TABLES } from '../exercises/fitnessProgramerCatalogue';
 import { exerciseImageUrl } from '../exercises/publicExerciseMedia';
 import type { MezfitCloudDatabase } from './database';
 import { isPublicCatalogueRow, isPublicExerciseRow } from '../exercises/publicExerciseTypes';
 import { isCoachExerciseDefinition, type CatalogueExerciseRow } from '../exercises/coachExerciseTypes';
 import type { CloudProgramExerciseSnapshot } from './workout-foundation-types';
 
+export function exerciseSelectionTables(ids?: readonly string[]): string[] {
+  return ['publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions',
+    ...((!ids || ids.some(isFitnessProgramerExerciseId)) ? FITNESSPROGRAMER_DEFINITION_TABLES : [])];
+}
+
+export async function readPublicExerciseDefinition(db: MezfitCloudDatabase, id: string) {
+  if (isFitnessProgramerExerciseId(id)) return new FitnessProgramerCatalogueRepository(db).get(id);
+  return db.publicExerciseDefinitions.get(id);
+}
+
 export async function readProgramCatalogueExercise(db: MezfitCloudDatabase, actor: string,
   id: string): Promise<CatalogueExerciseRow> {
-  if (/^\d{4}$/.test(id)) {
+  if (isFitnessProgramerExerciseId(id)) {
+    const row = await new FitnessProgramerCatalogueRepository(db).get(id);
+    if (row) return row;
+  } else if (/^\d{4}$/.test(id)) {
     const row = await db.publicExerciseDefinitions.get(id);
     const manifest = await db.publicExerciseCatalogues.get('mezfit:exercise-catalogue');
     if (isPublicExerciseRow(row) && isPublicCatalogueRow(manifest) && manifest.sourceSha256 === row.sourceSha256) return row;

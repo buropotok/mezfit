@@ -1,3 +1,4 @@
+import { isFitnessProgramerExerciseId } from '../../../shared/fitnessprogramer-id';
 import { isExerciseTrackingType, isPublicExerciseRow, type PublicExercise, type PublicExerciseRow } from './publicExerciseTypes';
 import { isPersonalExerciseMediaUrl } from './personalExerciseMediaReference';
 
@@ -6,6 +7,8 @@ export type CatalogueExerciseRow = PublicExercise & {
   realmId: string;
   owner: string | null;
   sourceSha256: string;
+  categories?: readonly string[];
+  equipmentOptions?: readonly string[];
   copiedFromExerciseId?: string;
   copiedFromScope?: 'public' | 'coach';
 };
@@ -56,7 +59,7 @@ export function coachOverrideId(actorUserId: string, publicExerciseId: string): 
 
 export function coachFavouriteId(actorUserId: string, exerciseId: string): string {
   if (!/^tg:[1-9]\d*$/.test(actorUserId)
-    || (!/^\d{4}$/.test(exerciseId) && !/^custom:[0-9a-f-]{36}$/.test(exerciseId))) {
+    || (!/^\d{4}$/.test(exerciseId) && !isFitnessProgramerExerciseId(exerciseId) && !/^custom:[0-9a-f-]{36}$/.test(exerciseId))) {
     throw new Error('INVALID_COACH_EXERCISE_REFERENCE');
   }
   return `fav:${actorUserId}:${exerciseId}`;

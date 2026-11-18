@@ -1,3 +1,4 @@
+import type { FitnessProgramerExerciseRow, FitnessProgramerGifRow, FitnessProgramerCatalogueRow } from '../exercises/fitnessProgramerCatalogue';
 import { DISCUSSION_STORES, type DiscussionThread, type DiscussionMessage, type DiscussionReadState, type MessageAttachment } from './discussion-contracts';
 import { CLOUD_DISCUSSIONS_ENABLED } from './discussion-activation';
 import type { AdHocSessionRow, AdHocExerciseRow, AdHocSetRow } from './adhoc-workout-types';
@@ -23,6 +24,7 @@ import type {
 export const CLOUD_DATABASE_VERSION = 14;
 /** Normal discussion account schema; cloud tables/ACL were installed separately by COMM-03. */
 export const CLOUD_DISCUSSION_DATABASE_VERSION = 17;
+export const CLOUD_ACCOUNT_DATABASE_VERSION = 18;
 
 export interface LocalProgramSyncRow {
   id: string;
@@ -239,6 +241,13 @@ export const CLOUD_DATABASE_STORES_V17 = {
   discussionReadStates: CLOUD_DATABASE_STORES_V16.discussionReadStates + ', [id+lastReadAt]',
 } as const;
 
+export const CLOUD_DATABASE_STORES_V18 = {
+  ...CLOUD_DATABASE_STORES_V17,
+  publicFitnessProgramerExercises: 'id',
+  publicFitnessProgramerGifs: 'id',
+  publicFitnessProgramerCatalogues: 'id',
+} as const;
+
 /**
  * Stable one-to-one FACT ID. `@id` in different Dexie Cloud tables cannot
  * reuse another table's prefix. An ordinary `id` key can safely be derived
@@ -284,6 +293,9 @@ export class MezfitCloudDatabase extends Dexie {
   workoutSessions!: Table<CloudWorkoutSessionRow, string>;
   sessionSets!: Table<CloudSessionSetRow, string>;
   sessionSetFacts!: Table<CloudSessionSetFactRow, string>;
+  publicFitnessProgramerExercises!: Table<FitnessProgramerExerciseRow, string>;
+  publicFitnessProgramerGifs!: Table<FitnessProgramerGifRow, string>;
+  publicFitnessProgramerCatalogues!: Table<FitnessProgramerCatalogueRow, string>;
   publicExerciseDefinitions!: Table<PublicExerciseRow, string>;
   publicExerciseTaxonomy!: Table<PublicTaxonomyRow, string>;
   publicExerciseCatalogues!: Table<PublicExerciseCatalogueRow, string>;
@@ -316,10 +328,14 @@ export class MezfitCloudDatabase extends Dexie {
       this.version(CLOUD_DISCUSSION_DATABASE_VERSION).stores({
         ...CLOUD_DATABASE_STORES_V17, localProgramSync: 'id', localWorkoutSync: 'id',
       });
+      this.version(CLOUD_ACCOUNT_DATABASE_VERSION).stores({
+        ...CLOUD_DATABASE_STORES_V18, localProgramSync: 'id', localWorkoutSync: 'id',
+      });
     }
     this.cloud.configure({
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
+      blobMode: 'eager',
       unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync'],
       // Disable the email OTP UI: the Worker verifies Telegram initData.
       fetchTokens: (params) => getDexieCloudTokens(initData, params),

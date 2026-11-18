@@ -237,7 +237,7 @@ describe('COMM-04 with pinned Addon and local IndexedDB; not live server ACL tes
     expect(current.discussionReadStates.schema.indexes.map(index => index.name)).toContain('[id+readThrough]');
     expect(current.discussionReadStates.schema.indexes.map(index => index.name)).toContain('[id+lastReadAt]');
     const production = new MezfitCloudDatabase('99881', 'signed'); databases.push(production);
-    expect(production.verno).toBe(17);
+    expect(production.verno).toBe(18);
     expect(production.tables.some(table => table.name === 'discussionMessages')).toBe(true);
   });
   it('derives receipt from the recipient watermark, and delivery only from an awaited push for exact IDs', async () => {

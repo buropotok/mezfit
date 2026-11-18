@@ -1,3 +1,5 @@
+import { isFitnessProgramerExerciseId } from '../../shared/fitnessprogramer-id';
+import { useFitnessProgramerCatalogue } from './FitnessProgramerProvider';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Checkbox, Chip } from 'konsta/react';
 import { loadBrowserGlassSettings } from '../glassSettings';
@@ -35,15 +37,18 @@ const PERSONAL_CATALOG_TABS = [
   { value: 'main', label: 'Основные' },
   { value: 'favourites', label: 'Избранное' },
   { value: 'mine', label: 'Мои упражнения' },
-  { value: 'all', label: 'Вся база' },
+  { value: 'all', label: 'База 1' },
+  { value: 'base2', label: 'База 2' },
 ] as const;
 const CLIENT_CATALOG_TABS = [
   { value: 'main', label: 'Основные' },
   { value: 'favourites', label: 'Избранное' },
   { value: 'mine', label: 'Мои упражнения' },
   { value: 'trainer', label: 'Тренерские' },
-  { value: 'all', label: 'Вся база' },
+  { value: 'all', label: 'База 1' },
+  { value: 'base2', label: 'База 2' },
 ] as const;
+const PUBLIC_CATALOG_TABS = PERSONAL_CATALOG_TABS.slice(-2);
 const EMPTY_FAVOURITES: ReadonlySet<string> = new Set();
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
@@ -117,7 +122,7 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
       </Text> : null}
       {editor ? editor.metadata : <div className="mezfit-public-exercises__detail-metadata">
         {row.category ? <Text variant="footnote">Категория: {exerciseValueLabel('category', row.category)}</Text> : null}
-        {row.equipment ? <Text variant="footnote">Оборудование: {exerciseValueLabel('equipment', row.equipment)}</Text> : null}
+        {row.equipment ? <Text variant="footnote">Оборудование: {(row.equipmentOptions ?? [row.equipment]).map(id => exerciseValueLabel('equipment', id)).join(', ')}</Text> : null}
         {row.movement_type ? <Text variant="footnote">Тип движения: {exerciseValueLabel('movement_type', row.movement_type)}</Text> : null}
         {isExerciseTrackingType(row.tracking_type)
           ? <Text variant="footnote">Тип учёта: {TRACKING_TYPE_LABELS[row.tracking_type]}</Text> : null}
@@ -130,7 +135,8 @@ export function ExerciseDetail({ row, taxonomy, onEdit, origin, media, mediaLayo
           <ol>{row.instruction_steps.ru.map((step, i) => (
             <li key={`${row.id}-${i}`}><Text variant="body">{step}</Text></li>
           ))}</ol>
-        ) : <p><Text variant="body">{row.instructions.ru}</Text></p>}
+        ) : <p><Text variant="body">{row.instructions.ru
+          || (isFitnessProgramerExerciseId(row.id) ? row.instructions.en : '')}</Text></p>}
       </GlassSurface>
       <GlassSurface preset="modalTuned" optics={false} className="mezfit-public-exercises__detail-section"
         contentClassName="mezfit-public-exercises__detail-section-content">
@@ -176,6 +182,7 @@ export function ExerciseCatalogContent({
   mediaAccountId?: string;
 }) {
   const { taxonomy, catalogue } = snapshot;
+  const base2 = useFitnessProgramerCatalogue();
   const exercises = catalogueExercises ?? snapshot.exercises;
   const isPersonal = scope === 'coach' || scope === 'client';
   const glassPreset = isPersonal ? loadBrowserGlassSettings().preset : undefined;
@@ -187,11 +194,11 @@ export function ExerciseCatalogContent({
   const [filterDialogGroup, setFilterDialogGroup] = useState<FilterGroup | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
-  const [tab, setTab] = useState<'main' | 'favourites' | 'mine' | 'trainer' | 'all'>(initialTab);
+  const [tab, setTab] = useState<'main' | 'favourites' | 'mine' | 'trainer' | 'all' | 'base2'>(initialTab);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const requestBackTransition = useNavigationBackTransition();
 
-  const byId = useMemo(() => new Map(exercises.map((row) => [row.id, row])), [exercises]);
+  const byId = useMemo(() => new Map([...exercises, ...(base2.exercises ?? [])].map(row => [row.id, row])), [exercises, base2.exercises]);
   const selected = selectedId ? byId.get(selectedId) : undefined;
   const categoryLabel = category ? categories[category] ?? category : null;
 
@@ -215,16 +222,17 @@ export function ExerciseCatalogContent({
     return () => onNavigationContextChange(null);
   }, [category, categoryLabel, onNavigationContextChange, requestBackTransition, selected, selectedId]);
 
-  const tabExercises = useMemo(() => {
+  const tabExercises = useMemo<readonly CatalogueExerciseRow[]>(() => {
+    if (tab === 'base2') return base2.exercises ?? [];
     if (!isPersonal) return exercises;
     if (tab === 'main') return [];
     if (tab === 'mine') return exercises.filter(row => personalIds.has(row.id));
     if (tab === 'trainer') return scope === 'client'
       ? exercises.filter(row => assignedIds.has(row.id)) : [];
     if (tab === 'favourites') return exercises.filter(row => favouriteIds.has(row.id));
-    // "Вся база" means the immutable public catalogue, not private definitions.
-    return exercises.filter(row => row.realmId === 'rlm-public' && row.owner === null);
-  }, [exercises, isPersonal, scope, tab, personalIds, assignedIds, favouriteIds]);
+    // Base 1 contains the original public catalogue.
+    return exercises.filter(row => row.realmId === 'rlm-public' && row.owner === null && !isFitnessProgramerExerciseId(row.id));
+  }, [exercises, isPersonal, scope, tab, personalIds, assignedIds, favouriteIds, base2.exercises]);
 
   const selectedEntries = FILTER_GROUPS.flatMap(({ id, label }) =>
     (filters[id] ?? []).map((value) => {
@@ -271,19 +279,20 @@ export function ExerciseCatalogContent({
   return (
     <section className="mezfit-public-exercises stack">
       {isPersonal && onCreateExercise ? <CoachExerciseCatalogFab onCreate={() => onCreateExercise(category)} /> : null}
-      {isPersonal ? <div className="mezfit-public-exercises__tabs">
+      <div className="mezfit-public-exercises__tabs">
         <div className="mezfit-public-exercises__tabs-content">
-          <LiquidGlassTextOnly tabs={scope === 'client' ? CLIENT_CATALOG_TABS : PERSONAL_CATALOG_TABS}
+          <LiquidGlassTextOnly tabs={scope === 'client' ? CLIENT_CATALOG_TABS : isPersonal ? PERSONAL_CATALOG_TABS : PUBLIC_CATALOG_TABS}
             value={tab} hidden={false} glassPreset={glassPreset}
             onValueChange={(value) => {
               if (value !== 'main' && value !== 'favourites' && value !== 'mine'
-                && value !== 'trainer' && value !== 'all') return;
+                && value !== 'trainer' && value !== 'all' && value !== 'base2') return;
               setTab(value);
+              setFilters({});
               setCategory(null);
               setVisibleLimit(PAGE_SIZE);
             }} />
         </div>
-      </div> : null}
+      </div>
       <div className="mezfit-public-exercises__toolbar">
         <MezfitSearchbar
           placeholder="Найти упражнение"
@@ -317,15 +326,22 @@ export function ExerciseCatalogContent({
         </div>
       ) : null}
 
-      {isPersonal && tab === 'main' ? (
+      {tab === 'base2' && (base2.error || !base2.exercises || base2.downloaded < base2.total) ? (
+        <Surface><Text role="status">{base2.error ? 'Не удалось загрузить Базу 2.'
+          : !base2.exercises ? 'Синхронизация Базы 2…'
+            : `Загружено GIF: ${base2.downloaded} из ${base2.total}${base2.downloading ? '…' : ''}`}</Text>
+          {!base2.downloading && base2.retry
+            ? <Button variant="secondary" size="compact" onClick={base2.retry}>Повторить</Button> : null}
+        </Surface>
+      ) : isPersonal && tab === 'main' ? (
         <Surface><Text variant="body">Раздел «Основные» будет доступен позже.</Text></Surface>
-      ) : !category && !query.trim() && selectedEntries.length === 0 && (!isPersonal || tab === 'all') ? (
+      ) : !category && !query.trim() && selectedEntries.length === 0 && (!isPersonal || tab === 'all' || tab === 'base2') ? (
         <List className="mezfit-public-exercises__category-list">
           {PUBLIC_EXERCISE_CATEGORIES.map(([id, label]) => (
             <ListItem
               key={id}
               title={label}
-              subtitle={`${tabExercises.filter((row) => row.category === id).length} упражнений`}
+              subtitle={`${tabExercises.filter((row) => (row.categories ?? [row.category]).includes(id)).length} упражнений`}
               leading={<span className="mezfit-public-exercises__category-fallback">
                 {id === 'other' ? <Icon name="barbell" /> : <CategoryArtwork category={id} />}
               </span>}

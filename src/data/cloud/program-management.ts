@@ -1,3 +1,4 @@
+import { isFitnessProgramerExerciseId } from '../../../shared/fitnessprogramer-id';
 import { liveQuery } from 'dexie';
 import { isExerciseTrackingType, type ExerciseTrackingType } from '../exercises/publicExerciseTypes';
 import { markProgramChanged } from './program-sync';
@@ -6,7 +7,7 @@ import { isExpectedPlanOwner, isExpectedPhaseOwner } from './program-ownership';
 import type { LocalProgramSyncRow, CloudProgramStatus, CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import { belongsToPlan, orderedPlanRows, readProgramDays } from './program-day-tree';
 import { isProgramExerciseSnapshot } from './workout-foundation-types';
-import { programExerciseSnapshot, readProgramCatalogueExercise } from './program-exercise-selection';
+import { exerciseSelectionTables, programExerciseSnapshot, readProgramCatalogueExercise, readPublicExerciseDefinition } from './program-exercise-selection';
 import { isWorkoutOccurrencePlan, snapshotProgramDay, type WorkoutOccurrencePlan } from './workout-occurrence-plan';
 import { occurrencePlanChanged } from './workout-occurrence-edit';
 import type { CloudProgramDayOutline, CloudProgramDayRow, CloudProgramPhaseRow } from './workout-foundation-types';
@@ -532,7 +533,7 @@ export class ProgramManagementRepository {
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
     await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises',
-      'publicExerciseDefinitions', 'publicExerciseCatalogues', 'coachExerciseDefinitions'], async () => {
+      ...exerciseSelectionTables(exerciseIds)], async () => {
       const current = await this.beginChange(plan);
       await this.currentDay(current, dayId);
       const existing = await this.db.programExercises.where('programDayId').equals(dayId).toArray();
@@ -589,6 +590,8 @@ export class ProgramManagementRepository {
     let row: CatalogueExerciseRow | null = null;
     if (snapshot.catalogueDefinition) {
       row = { ...snapshot.catalogueDefinition, realmId, owner: null, sourceSha256: 'program-snapshot' };
+    } else if (snapshot.scope === 'public' && isFitnessProgramerExerciseId(snapshot.exerciseDefinitionId)) {
+      row = await readPublicExerciseDefinition(this.db, snapshot.exerciseDefinitionId) ?? null;
     } else if (snapshot.scope === 'public' && catalogue.status === 'ready') {
       row = catalogue.exercises.find(item => item.id === snapshot.exerciseDefinitionId) ?? null;
     }
@@ -633,7 +636,7 @@ export class ProgramManagementRepository {
   /** Tracking metadata belongs to the canonical exercise definition, never to the PLAN snapshot. */
   async trackingTypeForExercise(snapshot: CloudProgramExerciseSnapshot): Promise<ExerciseTrackingType | null> {
     const definition = snapshot.scope === 'public'
-      ? await this.db.publicExerciseDefinitions.get(snapshot.exerciseDefinitionId)
+      ? await readPublicExerciseDefinition(this.db, snapshot.exerciseDefinitionId)
       : snapshot.scope === 'coach'
         ? await this.db.coachExerciseDefinitions.get(snapshot.exerciseDefinitionId)
         : null;
