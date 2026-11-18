@@ -39,6 +39,7 @@ export function UserProfileNavigationShell({
   const [retry, setRetry] = useState(0);
   const [tab, setTab] = useState<ProfileTab>('basics');
   const [profileNavigation, setProfileNavigation] = useState<NavigationContext | null>(null);
+  const [historyCalendar, setHistoryCalendar] = useState<NavigationContext['calendar']>();
   const initialProfileVisit = useRef<string | null>(null);
   const destinationChange = useRef(props.onDestinationChange);
   useLayoutEffect(() => { destinationChange.current = props.onDestinationChange; });
@@ -105,7 +106,7 @@ export function UserProfileNavigationShell({
     scrollKey: `profile:${props.me.user.telegramUserId}:${props.activeRole}:${tab}`, restoreScroll: true,
   }), [props.context, props.me.user.telegramUserId, props.activeRole, tab]);
   const navigation = showingProfile
-    ? profileNavigation ?? profileContext
+    ? { ...(profileNavigation ?? profileContext), calendar: tab === 'history' ? historyCalendar : undefined }
     : props.context;
   return <ClientWorkoutNavigationShell {...props}
     context={navigation}>
@@ -121,7 +122,8 @@ export function UserProfileNavigationShell({
         calendarContent={tab === 'calendar' ? <ProfileWorkoutTimeline key="plan" mode="plan" role={props.activeRole}
           initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null}
         historyContent={tab === 'history' ? <ProfileWorkoutTimeline key="history" mode="history" role={props.activeRole}
-          initData={initData} actor={actor} onNavigationContextChange={setProfileNavigation} /> : null} />
+          initData={initData} actor={actor} onCalendarChange={setHistoryCalendar}
+          onNavigationContextChange={setProfileNavigation} /> : null} />
     </ProfileDataProvider> : props.children}
   </ClientWorkoutNavigationShell>;
 }
