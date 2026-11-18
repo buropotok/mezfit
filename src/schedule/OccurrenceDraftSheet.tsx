@@ -21,6 +21,7 @@ import { localScheduleInstant, localScheduleEnd } from './calendar-time';
 import { sessionTiming } from '../workout/session-timing';
 import { useSessionClock } from '../workout/useSessionClock';
 import { useWorkoutPerson } from './WorkoutPerson';
+import { isScheduledWorkoutMissed } from './workout-day-statuses';
 import type { NavigationContext } from '../NavigationShell';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { WorkoutRepeatRule } from '../data/cloud/workout-recurrence';
@@ -267,7 +268,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const glass = loadBrowserGlassSettings();
   const owner = useWorkoutPerson(draft?.coachUserId ?? draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
   const athlete = useWorkoutPerson(draft?.athleteUserId ?? null, draft?.realmId ?? '', actor);
-  const now = useSessionClock(Boolean(draft?.executionTiming && !draft.executionTiming.completedAt));
+  const now = useSessionClock(Boolean(
+    (draft?.executionTiming && !draft.executionTiming.completedAt)
+    || (draft?.saved && !draft.workoutSessionId
+      && (!draft.executionStatus || draft.executionStatus === 'scheduled')),
+  ));
   const [dateOpened, setDateOpened] = useState(false);
   const [copyDate, setCopyDate] = useState<LocalDate>(() => localDate(new Date()));
   const [timeOpened, setTimeOpened] = useState<'start' | 'end' | null>(null);
@@ -542,6 +547,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       return false;
     }
   };
+  const missed = Boolean(draft?.saved && !cancelled && isScheduledWorkoutMissed({
+    startsAtUtc: draft.startsAtUtc, durationMinutes: draft.durationMinutes,
+    status: draft.executionStatus ?? 'scheduled', workoutSessionId: draft.workoutSessionId,
+  }, now));
   const actual = draft?.executionTiming ? sessionTiming(draft.executionTiming, now) : null;
   const start = new Date(actual?.startsAtUtc ?? draft?.startsAtUtc ?? now);
   const end = actual ? new Date(actual.endsAtUtc) : draft ? currentEnd(draft) : new Date(now);
@@ -615,7 +624,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
           programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
           creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
           status={collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
-            ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : undefined}
+            ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+            : collapsed && missed ? <Badge color="gray" textVariant="caption">Пропущена</Badge> : undefined}
           scheduledTiming={collapsed ? scheduledTiming : undefined} discussionAction={discussionAction}
           collapsed={collapsed} onCollapsedChange={onCollapsedChange}>{!collapsed ? actionsMenu : null}</WorkoutPlanCardHeader></div> : null}
         {!collapsed ? <>
@@ -642,7 +652,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             {cancelled ? <Badge textVariant="body">Отменена</Badge>
               : draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed'
                 ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
-              : <Badge color={draft.saved ? 'green' : 'yellow'} textVariant="caption">{draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
+              : <Badge color={missed ? 'gray' : draft.saved ? 'green' : 'yellow'} textVariant="caption">{missed ? 'Пропущена' : draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
           </div>
           <div className="occurrence-draft-sheet__timing">
             <Button className="occurrence-draft-sheet__date-button" variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>
