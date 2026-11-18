@@ -10,6 +10,27 @@ export function exerciseMediaPublicUrl(source:string|null,key:string|null):strin
 export function exerciseMediaR2Key(source:string,key:string,version?:string):string { const base=`exercise-media/${source.replace(/[^a-z0-9_-]+/gi,'-').toLowerCase()}`; return version?`${base}/versions/${version}/${key}.gif`:`${base}/${key}.gif` }
 function mediaHeaders(type:string,etag?:string){const h=new Headers({'content-type':type,'cache-control':'public, max-age=31536000, immutable','x-content-type-options':'nosniff'});if(etag)h.set('etag',etag);return h}
 function notFound(){return new Response(null,{status:404,headers:{'cache-control':'no-store'}})}
+
+export async function handleBase2MediaRoute(request: Request, bucket: R2Bucket, filename: string): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(null, { status: 405, headers: { allow: 'GET, HEAD' } });
+  }
+
+  const key = `exercises/base2/v1/${filename}`;
+  function response(object: R2Object, body: R2ObjectBody['body'] | null): Response {
+    const headers = mediaHeaders(filename.endsWith('.gif') ? 'image/gif' : 'image/webp', object.httpEtag);
+    headers.set('content-length', String(object.size));
+    return new Response(body, { headers });
+  }
+
+  if (request.method === 'HEAD') {
+    const metadata = await bucket.head(key);
+    return metadata ? response(metadata, null) : notFound();
+  }
+  const object = await bucket.get(key);
+  return object ? response(object, object.body) : notFound();
+}
+
 function validDatasetId(key:string){return /^\d{4}$/.test(key)}
 function validImportId(value:string){return /^[a-f0-9]{40}$/.test(value)}
 function validRussianName(value:unknown){return typeof value==='string'&&value.trim().length>0&&/[А-Яа-яЁё]/.test(value)}

@@ -1,7 +1,7 @@
 import { getGlobalTheme } from './lib/app-config';
 import { resolveInviteStartParam } from './lib/invite-launch';
 import { handleCoachExerciseCatalogueRoute } from './lib/coach-exercise-api';
-import { handleExerciseMediaRoute } from './lib/exercise-media';
+import { handleBase2MediaRoute, handleExerciseMediaRoute } from './lib/exercise-media';
 import { handlePersonalExerciseMedia } from './lib/personal-exercise-media';
 import {
   createExerciseForClient,
@@ -346,6 +346,11 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
   const personalMediaMatch = url.pathname.match(/^\/api\/exercise-media\/personal\/([^/]+)$/);
   if (personalMediaMatch) return handlePersonalExerciseMedia(request, env, personalMediaMatch[1]);
+
+  const base2MediaMatch = url.pathname.match(/^\/api\/exercise-media\/base2\/v1\/([a-f0-9]{64}\.(?:gif|webp))$/);
+  if (base2MediaMatch) {
+    return handleBase2MediaRoute(request, env.R2_BINDING_MEZFIT, base2MediaMatch[1]);
+  }
 
   const mediaMatch = url.pathname.match(/^\/api\/exercise-media\/gym_keeper_apk\/([^/]+)$/);
   if (mediaMatch) {

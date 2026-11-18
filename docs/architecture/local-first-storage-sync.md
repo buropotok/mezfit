@@ -30,6 +30,8 @@ The app never receives privileged Dexie Cloud credentials or Telegram bot secret
 
 Cloudflare may still host the application and store exercise GIF media in R2. The eight public exercise-category WebP/SVG illustrations are a separate exception: publish them once through the protected Dexie Cloud Blob operator into a public realm table, and render only locally synchronized Blob values from IndexedDB, never Cloudflare media URLs. **Telegram contact avatars are the explicit exception:** the two optimized JPEG versions reside in the authenticated Dexie Cloud blob service, referenced by relationship-scoped `contactProfiles` along with version metadata and resolved by the Addon into authorized IndexedDB subsets; avatar reads do not depend on R2 or D1. Cloudflare D1 is not a second business database. There is one Dexie Cloud environment for pre-MVP; staging and migration of test users are not required.
 
+**FitnessProgramer («База 2»):** Dexie Cloud publishes the exercise definitions, categories and stable GIF identifiers. Exercise GIFs and first-frame WebP previews share immutable keys under `exercises/base2/v1/` in Yandex Object Storage (`mezfit-comm-poc-20261106`) and Cloudflare R2 (`mezfit`). The Mini App reads cached media locally, then tries Yandex and falls back to the exercise-media Worker route for R2. The catalogue, category navigation, search and exercise selection become available as soon as the definitions are local. Media downloads run independently. See the [Base 2 publication procedure](../operations/fitnessprogramer-base-2.md).
+
 **Communications target (COMM-09 dual-upload exception, 2026-11-15):**
 [communications.md](communications.md), based on
 [issue #636](https://github.com/buropotok/mezfit/issues/636), governs contextual

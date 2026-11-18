@@ -336,7 +336,8 @@ export class MezfitCloudDatabase extends Dexie {
       databaseUrl: cloudConfig.dbUrl,
       requireAuth: true,
       blobMode: 'eager',
-      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync'],
+      // Old Base 2 GIFs remain readable locally. New media is delivered by the two object stores.
+      unsyncedTables: ['localProgramSync', 'localWorkoutOccurrenceDrafts', 'localWorkoutSync', 'publicFitnessProgramerGifs'],
       // Disable the email OTP UI: the Worker verifies Telegram initData.
       fetchTokens: (params) => getDexieCloudTokens(initData, params),
     });

@@ -326,11 +326,9 @@ export function ExerciseCatalogContent({
         </div>
       ) : null}
 
-      {tab === 'base2' && (base2.error || !base2.exercises || base2.downloaded < base2.total) ? (
-        <Surface><Text role="status">{base2.error ? 'Не удалось загрузить Базу 2.'
-          : !base2.exercises ? 'Синхронизация Базы 2…'
-            : `Загружено GIF: ${base2.downloaded} из ${base2.total}${base2.downloading ? '…' : ''}`}</Text>
-          {!base2.downloading && base2.retry
+      {tab === 'base2' && !base2.exercises ? (
+        <Surface><Text role="status">{base2.error ? 'Не удалось загрузить Базу 2.' : 'Синхронизация Базы 2…'}</Text>
+          {base2.error && base2.retry
             ? <Button variant="secondary" size="compact" onClick={base2.retry}>Повторить</Button> : null}
         </Surface>
       ) : isPersonal && tab === 'main' ? (
