@@ -36,6 +36,14 @@ vi.mock('../data/cloud/discussion-organization', async importOriginal => ({
   },
 }));
 
+// jsdom omits WAAPI. Keep the real IconButton/PressScale path and provide
+// only the animation handle used by press and tab motion, including cancellation.
+class TestAnimation extends EventTarget {
+  cancel = vi.fn(() => { this.dispatchEvent(new Event('cancel')); });
+}
+const animate = vi.fn(() => new TestAnimation());
+let originalAnimate: PropertyDescriptor | undefined;
+
 const me = { user: { id: 11, telegramUserId: '11', username: null, firstName: 'Тест', lastName: null,
   languageCode: 'ru', photoUrl: null, isPremium: false }, roles: ['client' as const, 'coach' as const] };
 function Harness({ role, relationshipId }: { role: 'client' | 'coach'; relationshipId?: string }) {
@@ -60,7 +68,9 @@ async function openByMenu(container: HTMLElement) {
   const root = textOnlyScene(container);
   expect(root.querySelector('[data-action-tab]')).toBeNull();
   const button = screen.getByRole('button', { name: 'Управление категориями' });
+  const animationsBeforeTouch = animate.mock.calls.length;
   fireEvent.pointerDown(button, { pointerId: 7, pointerType: 'touch', clientX: 258, clientY: 22 });
+  expect(animate.mock.calls.length).toBeGreaterThan(animationsBeforeTouch);
   fireEvent.pointerUp(button, { pointerId: 7, pointerType: 'touch', clientX: 258, clientY: 22 });
   fireEvent.click(button);
   expect(dialog()).toBeNull();
@@ -84,6 +94,8 @@ if (!isCategoryId(id)) throw Error('Invalid fixture ID');
 const category: CategoryDefinition = { id, name: 'Реабилитация', order: 0 };
 
 beforeEach(() => {
+  originalAnimate = Object.getOwnPropertyDescriptor(Element.prototype, 'animate');
+  Object.defineProperty(Element.prototype, 'animate', { configurable: true, value: animate });
   installTextOnlyLayout();
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
   state.categories = [];
@@ -99,6 +111,9 @@ afterEach(() => {
   state.create.mockReset();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  if (originalAnimate) Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+  else Reflect.deleteProperty(Element.prototype, 'animate');
+  animate.mockClear();
   window.history.replaceState(null, '');
 });
 
