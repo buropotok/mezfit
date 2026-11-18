@@ -1,3 +1,4 @@
+import folderPlusUrl from './folder-plus.svg';
 import lockUrl from './lock.svg';
 import lockOpenUrl from './lock-open.svg';
 import recordCircleUrl from './record-circle.svg';
@@ -78,6 +79,7 @@ import tablerNumber8Url from './tabler-number-8.svg';
 import tablerNumber9Url from './tabler-number-9.svg';
 
 const uiIconRegistry = {
+  'folder-plus': { outline: folderPlusUrl, filled: folderPlusUrl },
   'camera-rotate': { outline: cameraRotateUrl, filled: cameraRotateUrl },
   lock: { outline: lockUrl, filled: lockUrl },
   'lock-open': { outline: lockOpenUrl, filled: lockOpenUrl },

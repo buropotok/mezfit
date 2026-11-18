@@ -221,7 +221,7 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   const feedback = categoryFeedback?.surface === categorySurface ? categoryFeedback : null;
   const categoryBusy = categoryFeedback?.scope === categoryScope && categoryFeedback.pending;
   const openCategoryDialog = (intent: CategoryDialogIntent) => {
-    if (covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
+    if (dialog || covered || activeCategorySurface.current !== categorySurface || runningCategoryAction.current?.scope === categoryScope) return;
     if (!notificationMessageId) cancelPendingOpen();
     setCategoryFeedback(null);
     setCategoryDialog({ surface: categorySurface, intent, parent });
@@ -462,15 +462,18 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   if (current?.kind === 'entity' && current.row.thread.anchor.kind !== 'free') return <DiscussionEntity thread={current.row.thread} role={role}
     onBack={close} onNavigationContextChange={onNavigationContextChange} />;
   return <section className="discussion-inbox" aria-label="Обсуждения">
-    <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
-      if (!notificationMessageId) cancelPendingOpen();
-      selectCategory(value);
-    }} hidden={false}
-      actionTab={{ label: '+', ariaLabel: 'Создать категорию', onClick: () => openCategoryDialog({ kind: 'create' }) }} />
-    {manageCategory && !covered ? <div className="discussion-inbox__category-actions">
-      <DiscussionCategoryMenu key={manageCategory.id} category={manageCategory} disabled={categoryBusy}
+    <div className="discussion-inbox__toolbar">
+      <div className="discussion-inbox__tabs">
+        <LiquidGlassTextOnly tabs={tabs} value={activeTab} onValueChange={value => {
+          if (!notificationMessageId) cancelPendingOpen();
+          selectCategory(value);
+        }} hidden={false} fullWidth />
+      </div>
+      <DiscussionCategoryMenu key={activeTab} category={manageCategory} scope={categorySurface}
+        disabled={Boolean(categoryBusy || covered || dialog)}
+        available={Boolean(organization.repository && organization.snapshot && !organization.loading && !organization.failed)}
         onEdit={openCategoryDialog} />
-    </div> : null}
+    </div>
     <div className="discussion-inbox__filter-block">
       {role === 'coach' && !relationshipId ? <div className={`discussion-inbox__client-filter${clientUserIds.length ? '' : ' discussion-inbox__client-filter--all'}`}>
         {!clientUserIds.length ? <Text variant="footnote" className="discussion-inbox__all-clients">Все клиенты</Text> : null}
