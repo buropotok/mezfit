@@ -5,10 +5,11 @@ import { CoachShell } from './CoachShell';
 
 const client = { userId: 'tg:202', relationshipId: 'realm-202', telegramUserId: '202', displayName: 'Анна Иванова' };
 const renderExercises = vi.hoisted(() => vi.fn());
+const cloudDb = vi.hoisted(() => ({}));
 
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    db: {}, actorUserId: 'tg:101', status: 'ready', clients: [client],
+    db: cloudDb, actorUserId: 'tg:101', status: 'ready', clients: [client],
     error: '', syncStatus: 'synced', syncError: '',
     refresh: vi.fn(async () => {}), retrySync: vi.fn(async () => {}),
   }),
