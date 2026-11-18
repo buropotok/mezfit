@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button as KonstaButton } from 'konsta/react';
 import { useNavigationCalendar, type NavigationContext } from '../NavigationShell';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -21,7 +21,6 @@ import './profile-workout-timeline.css';
 
 const EMPTY_OCCURRENCES: CloudWorkoutOccurrenceRow[] = [];
 const EMPTY_SESSIONS: CalendarWorkoutSession[] = [];
-const EMPTY_TIMELINE_ROWS: CalendarTimelineRow[] = [];
 
 function dateLabel(date: LocalDate): string {
   return date.split('-').reverse().join('.');
@@ -96,10 +95,10 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   onCalendarChange?: (calendar: NavigationContext['calendar']) => void;
 }) {
   const cloud = useCloudConnections();
-  const repository = useMemo(() => cloud
+  const repository = useMemo(() => cloud?.db && /^tg:[1-9]\d*$/.test(cloud.actorUserId)
     ? new WorkoutOccurrenceDraftRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
-  const planner = useMemo(() => cloud
+  const planner = useMemo(() => cloud?.db && /^tg:[1-9]\d*$/.test(cloud.actorUserId)
     ? new WorkoutPlanningRepository(cloud.db, cloud.actorUserId) : null,
   [cloud?.db, cloud?.actorUserId]);
   const { workouts, historyFilter, setHistoryFilter } = useProfileSnapshot();
@@ -110,10 +109,6 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const today = localDate(new Date(now));
   const { from, to } = historyFilter;
   const navigationCalendar = useNavigationCalendar();
-  const calendarOpen = navigationCalendar?.opened ?? false;
-  // A calendar-day preview is independent from the saved From / To range.
-  const [calendarDay, setCalendarDay] = useState<LocalDate | null>(null);
-  const wasCalendarOpen = useRef(calendarOpen);
   const [pendingCalendarDay, setPendingCalendarDay] = useState<LocalDate | null>(null);
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
   const [openedOccurrenceId, setOpenedOccurrenceId] = useState<string | null>(null);
@@ -128,14 +123,6 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     document.addEventListener('visibilitychange', tick);
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
   }, []);
-  useEffect(() => {
-    if (wasCalendarOpen.current && !calendarOpen) {
-      setCalendarDay(null);
-      setPendingCalendarDay(null);
-    }
-    wasCalendarOpen.current = calendarOpen;
-  }, [calendarOpen]);
-
   const selected = occurrences.find(row => row.id === openedOccurrenceId) ?? null;
   const selectedDraft = useMemo(() => selected && cloud
     ? draftFromOccurrence(cloud.actorUserId, selected) : null, [selected, cloud?.actorUserId]);
@@ -157,7 +144,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     actorUserId: cloud?.actorUserId, contact, mode, today, now, from, to,
   }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, now, from, to]);
 
-  const calendarEnabled = Boolean(onCalendarChange) || calendarDay !== null;
+  const calendarEnabled = Boolean(onCalendarChange);
   const clientUserId = contact?.userId;
   const relationshipId = contact?.relationshipId;
   const { rowsByDate, dayStatuses } = useMemo(() => {
@@ -177,7 +164,6 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     }
     return { rowsByDate, dayStatuses: Array.from(statuses, ([date, status]) => ({ date, status })) };
   }, [calendarEnabled, occurrences, sessions, cloud?.actorUserId, clientUserId, relationshipId, today, now]);
-  const visibleRows = calendarDay ? rowsByDate.get(calendarDay) ?? EMPTY_TIMELINE_ROWS : rows;
 
   const openWorkout = useCallback((row: CalendarTimelineRow) => {
     setNestedNavigation(null);
@@ -191,26 +177,26 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
   const close = useCallback(() => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); }, []);
   const selectCalendarDay = useCallback((date: LocalDate) => {
     close();
-    setCalendarDay(date);
+    setHistoryFilter({ from: date, to: date });
     const group = rowsByDate.get(date);
     if (workouts.data) {
       if (group?.length === 1) openWorkout(group[0]);
     } else {
       setPendingCalendarDay(date);
     }
-  }, [close, rowsByDate, workouts.data, openWorkout]);
+  }, [close, setHistoryFilter, rowsByDate, workouts.data, openWorkout]);
 
   useEffect(() => {
-    onCalendarChange?.({ value: calendarDay ?? today, onChange: selectCalendarDay, dayStatuses });
+    onCalendarChange?.({ value: to, onChange: selectCalendarDay, dayStatuses });
     return () => onCalendarChange?.(undefined);
-  }, [onCalendarChange, calendarDay, today, selectCalendarDay, dayStatuses]);
+  }, [onCalendarChange, to, selectCalendarDay, dayStatuses]);
 
   useEffect(() => {
     if (!pendingCalendarDay || !workouts.data) return;
     setPendingCalendarDay(null);
     const group = rowsByDate.get(pendingCalendarDay);
-    if (pendingCalendarDay === calendarDay && group?.length === 1) openWorkout(group[0]);
-  }, [pendingCalendarDay, calendarDay, workouts.data, rowsByDate, openWorkout]);
+    if (pendingCalendarDay === from && pendingCalendarDay === to && group?.length === 1) openWorkout(group[0]);
+  }, [pendingCalendarDay, from, to, workouts.data, rowsByDate, openWorkout]);
 
   useEffect(() => {
     if (picker) {
@@ -225,14 +211,11 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => onNavigationContextChange(null);
   }, [picker, openedOccurrenceId, openedSessionId, nestedNavigation, close, onNavigationContextChange]);
 
-  const displayedFrom = calendarDay ? null : from;
-  const displayedTo = calendarDay ? today : to;
-
   return <section className="profile-workout-timeline" aria-label={mode === 'plan' ? 'План тренировок' : 'Тренировки'}>
     {mode === 'history' ? <div className="profile-workout-timeline__filters">
-      <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{displayedFrom ? `С ${dateLabel(displayedFrom)}` : 'С даты'}</Text></KonstaButton>
+      <KonstaButton rounded tonal inline onClick={() => setPicker('from')}><Text variant="footnote">{from ? `С ${dateLabel(from)}` : 'С даты'}</Text></KonstaButton>
       <Text variant="footnote" tone="muted">—</Text>
-      <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">По {dateLabel(displayedTo)}</Text></KonstaButton>
+      <KonstaButton rounded tonal inline onClick={() => setPicker('to')}><Text variant="footnote">По {dateLabel(to)}</Text></KonstaButton>
       <KonstaButton rounded tonal inline disabled={!navigationCalendar} onClick={() => navigationCalendar?.toggle()}>
         <Text variant="footnote">Календарь</Text>
       </KonstaButton>
@@ -241,19 +224,19 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
         setHistoryFilter({ from: null, to: today });
       }}><Text variant="footnote">Сбросить</Text></KonstaButton>
     </div> : null}
-    {!calendarDay && from && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
+    {from && from > to && mode === 'history' ? <Text variant="footnote" role="alert">Дата начала позже даты окончания</Text> : null}
     {loading ? <Text variant="body">Загружаем тренировки…</Text> : null}
     {workouts.failed ? <div className="stack"><Text variant="footnote" role="alert">
       Не удалось {workouts.data ? 'обновить' : 'загрузить'} тренировки.
     </Text><KonstaButton rounded tonal onClick={workouts.retry}>
       <Text variant="body">Повторить</Text>
     </KonstaButton></div> : null}
-    {workouts.data && visibleRows.length === 0 ? <Text variant="body" tone="muted">
-      {calendarDay ? 'В этот день тренировок нет'
-        : mode === 'plan' ? 'Запланированных тренировок нет' : 'Тренировок за выбранный период нет'}
+    {workouts.data && rows.length === 0 ? <Text variant="body" tone="muted">
+      {mode === 'plan' ? 'Запланированных тренировок нет'
+        : from && from === to ? 'В этот день тренировок нет' : 'Тренировок за выбранный период нет'}
     </Text> : null}
     <div className="profile-workout-list">
-      {visibleRows.map(row => 'session' in row
+      {rows.map(row => 'session' in row
         ? <SessionRow key={`session:${row.session.id}`} session={row.session}
           programName={row.session.programName ?? 'Без программы'} actor={actor}
           onOpen={() => openWorkout(row)} />

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachShell } from './CoachShell';
+import type { NavigationContext } from '../NavigationShell';
 import { resetTestClientRelationship } from '../api';
 
 vi.mock('../api', async original => ({
@@ -32,8 +33,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 function openProfile() {
-  render(<CoachShell initData="telegram-init" destination="clients" onNavigationContextChange={vi.fn()} />);
+  const onNavigationContextChange = vi.fn<(context: NavigationContext | null) => void>();
+  render(<CoachShell initData="telegram-init" destination="clients" onNavigationContextChange={onNavigationContextChange} />);
   fireEvent.click(screen.getByRole('button', { name: 'Открыть клиента Тестовый клиент' }));
+  // Workouts is the default tab now. The navbar profile identity opens Basics for administration.
+  const profileContext = onNavigationContextChange.mock.calls.map(([value]) => value)
+    .reverse().find(value => value?.onIdentityClick);
+  if (!profileContext?.onIdentityClick) throw new Error('Missing client profile identity action');
+  act(() => profileContext.onIdentityClick?.());
 }
 
 describe('Coach test link reset confirmation', () => {

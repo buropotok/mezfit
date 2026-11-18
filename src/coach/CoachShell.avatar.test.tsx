@@ -12,9 +12,10 @@ const client = {
 };
 
 let navbarAvatarUrl: string | undefined;
+const cloudDb = vi.hoisted(() => ({}));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    db: {}, actorUserId: 'tg:101', clients: [client], coaches: [],
+    db: cloudDb, actorUserId: 'tg:101', clients: [client], coaches: [],
     status: 'ready', error: '', refresh: vi.fn(),
   }),
 }));

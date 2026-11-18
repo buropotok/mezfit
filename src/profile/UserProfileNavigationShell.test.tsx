@@ -82,6 +82,8 @@ describe('profile registration navigation', () => {
     expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByText('Настройки'));
     expect(screen.getByTestId('destination').textContent).toBe('settings');
+    fireEvent.click(screen.getByText('Мой профиль'));
+    expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByText('Таб тренировки'));
     expect(screen.getByTestId('destination').textContent).toBe('training');
     expect(screen.getByText('Обычный экран')).toBeTruthy();
@@ -98,8 +100,10 @@ describe('profile registration navigation', () => {
 
     // Deferring automatic onboarding never blocks an explicit visit.
     fireEvent.click(screen.getByText('Мой профиль'));
-    expect(await screen.findByLabelText('Имя')).toBeTruthy();
     expect(screen.getByTestId('destination').textContent).toBe('profile');
+    expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Основные' }));
+    expect(await screen.findByLabelText('Имя')).toBeTruthy();
   });
 
   it('keeps an existing client profile from redirecting the initial destination', async () => {
@@ -152,6 +156,8 @@ describe('profile registration navigation', () => {
     fireEvent.click(screen.getByText('Сохранить'));
     state.actor = 'tg:303';
     view.rerender(<Harness user={{ ...me, user: { ...me.user, telegramUserId: '303' } }} />);
+    expect(screen.getByRole('tab', { name: 'Тренировки' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Основные' }));
     await waitFor(() => expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe(''));
     await act(async () => { finish?.(saved); });
     expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('');

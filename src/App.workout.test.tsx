@@ -263,7 +263,7 @@ describe('App own profile navigation', () => {
     expect(training.getAttribute('aria-selected')).toBe('true');
     expect(profile.getAttribute('aria-selected')).toBe('false');
     fireEvent.click(profile);
-    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    await screen.findByRole('region', { name: 'Тренировки' });
     expect(profile.getAttribute('aria-selected')).toBe('true');
     const menu = screen.getByRole('button', { name: 'Меню страницы' });
     expect(menu.hasAttribute('disabled')).toBe(false);
@@ -274,7 +274,7 @@ describe('App own profile navigation', () => {
     const back = screen.getByRole('button', { name: 'Назад' });
     fireEvent.click(back);
     fireEvent.animationEnd(back);
-    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    await screen.findByRole('region', { name: 'Тренировки' });
   });
 
   it.each([
@@ -294,7 +294,7 @@ describe('App own profile navigation', () => {
       fireEvent.click(menu);
       fireEvent.click(await screen.findByRole('menuitem', { name: label }));
       if (label === 'Мой профиль') {
-        await screen.findByRole('region', { name: 'Анкета пользователя' });
+        await screen.findByRole('region', { name: 'Тренировки' });
       } else {
         expect(screen.queryByRole('region', { name: 'Анкета пользователя' })).toBeNull();
       }
@@ -321,7 +321,7 @@ describe('App own profile navigation', () => {
     }
 
     fireEvent.popState(window);
-    expect(await screen.findByRole('region', { name: 'Анкета пользователя' })).toBeTruthy();
+    expect(await screen.findByRole('region', { name: 'Тренировки' })).toBeTruthy();
     fireEvent.popState(window);
     expect(await screen.findByText('Coach home')).toBeTruthy();
   });
@@ -335,7 +335,7 @@ describe('App own profile navigation', () => {
     const profileTab = getPrimaryTabsRoot(view.container).querySelector('[role="tab"][aria-label="Мой профиль"]');
     if (!profileTab) throw new Error('Missing My profile tab');
     fireEvent.click(profileTab);
-    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    await screen.findByRole('region', { name: 'Тренировки' });
     const menu = screen.getByRole('button', { name: 'Меню страницы' });
     fireEvent.pointerDown(menu, { pointerType: 'touch', button: 0 });
     fireEvent.click(menu);
@@ -344,7 +344,7 @@ describe('App own profile navigation', () => {
     const back = screen.getByRole('button', { name: 'Назад' });
     fireEvent.click(back);
     fireEvent.animationEnd(back);
-    expect(await screen.findByRole('region', { name: 'Анкета пользователя' })).toBeTruthy();
+    expect(await screen.findByRole('region', { name: 'Тренировки' })).toBeTruthy();
   });
 
   it('opens the coach own profile from the first system-menu entry and returns home', async () => {
@@ -357,7 +357,7 @@ describe('App own profile navigation', () => {
     const items = await screen.findAllByRole('menuitem');
     expect(items[0].textContent).toBe('Мой профиль');
     fireEvent.click(items[0]);
-    await screen.findByRole('region', { name: 'Анкета пользователя' });
+    await screen.findByRole('region', { name: 'Тренировки' });
     const back = screen.getByRole('button', { name: 'Назад' });
     fireEvent.click(back);
     fireEvent.animationEnd(back);

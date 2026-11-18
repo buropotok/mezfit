@@ -11,7 +11,12 @@ const cloud = vi.hoisted(() => ({
   db: {}, status: 'ready', actorUserId: 'tg:101',
   clients: [{ userId: 'tg:202', telegramUserId: '202', relationshipId: 'pair', displayName: 'Анна' }],
 }));
+const calendarState = vi.hoisted(() => ({ opened: true }));
 
+vi.mock('../NavigationShell', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../NavigationShell')>();
+  return { ...actual, useNavigationCalendar: () => ({ opened: calendarState.opened, toggle: vi.fn() }) };
+});
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({ useCloudConnections: () => cloud }));
 vi.mock('../contacts/CloudContactAvatar', () => ({
   CloudContactAvatar: () => null, useCloudContactAvatarUrl: () => undefined,
@@ -27,6 +32,7 @@ vi.mock('../schedule/CalendarSessionSheet', () => ({
 }));
 
 beforeEach(() => {
+  calendarState.opened = true;
   vi.useFakeTimers();
   vi.setSystemTime(new Date(2026, 9, 11, 12));
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -47,7 +53,7 @@ function completed(id: string, day: string): CalendarWorkoutSession {
     completedAt: time, createdAt: time, updatedAt: time, comment: null, programName: null, autoCreatedProgram: false };
 }
 
-it('filters client History by a calendar day and opens details only for a single workout', () => {
+it('keeps the selected calendar day as the workout date range and opens details only for a single workout', () => {
   let publish: Parameters<WorkoutOccurrenceDraftRepository['observeWorkspace']>[0] | undefined;
   vi.spyOn(WorkoutOccurrenceDraftRepository.prototype, 'observeWorkspace').mockImplementation(next => {
     publish = next;
@@ -55,8 +61,11 @@ it('filters client History by a calendar day and opens details only for a single
   });
   const onNavigation = vi.fn<(context: NavigationContext | null) => void>();
   const context = () => onNavigation.mock.lastCall?.[0];
-  render(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
+  const view = render(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
   fireEvent.click(screen.getByRole('button', { name: 'Открыть клиента Анна' }));
+  expect(screen.getByRole('region', { name: 'Тренировки' })).toBeTruthy();
+  // The selected client exposes its calendar projection before the navbar button is tapped.
+  expect(context()?.calendar).toBeDefined();
 
   const openCalendar = context()?.onCalendarOpen;
   expect(openCalendar).toBeDefined();
@@ -69,6 +78,8 @@ it('filters client History by a calendar day and opens details only for a single
   };
 
   selectDay(singleDay);
+  expect(screen.getByRole('button', { name: 'С 10.10.2026' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'По 10.10.2026' })).toBeTruthy();
   const planned: CloudWorkoutOccurrenceRow = {
     ...pair, id: 'planned', startsAtUtc: plannedDay + 'T12:00:00', durationMinutes: 60,
     status: 'scheduled', workoutSessionId: null, publicationStatus: 'published',
@@ -88,11 +99,28 @@ it('filters client History by a calendar day and opens details only for a single
   expect(screen.queryByRole('button', { name: /Чужая/ })).toBeNull();
 
   selectDay(multipleDay);
+  expect(screen.getByRole('button', { name: 'С 11.10.2026' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'По 11.10.2026' })).toBeTruthy();
   expect(screen.getAllByRole('button', { name: /^Завершённая тренировка:/ })).toHaveLength(2);
   expect(screen.queryByRole('button', { name: /^Закрыть/ })).toBeNull();
 
+  // Closing the shared calendar must not restore the old date range or unfilter the list.
+  act(() => {
+    calendarState.opened = false;
+    view.rerender(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
+  });
+  expect(screen.getByRole('button', { name: 'С 11.10.2026' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'По 11.10.2026' })).toBeTruthy();
+  expect(screen.getAllByRole('button', { name: /^Завершённая тренировка:/ })).toHaveLength(2);
+
+  act(() => {
+    calendarState.opened = true;
+    view.rerender(<CoachShell initData="test" destination="clients" onNavigationContextChange={onNavigation} />);
+  });
   const markers = context()?.calendar?.dayStatuses;
   selectDay(plannedDay);
+  expect(screen.getByRole('button', { name: 'С 12.10.2026' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'По 12.10.2026' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Запланированная тренировка: План' })).toBeTruthy();
   expect(screen.getByRole('dialog', { name: 'draft:planned' })).toBeTruthy();
   expect(context()?.calendar?.value).toBe(plannedDay);

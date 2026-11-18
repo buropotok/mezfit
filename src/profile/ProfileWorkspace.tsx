@@ -9,11 +9,11 @@ export type ProfileTab = 'basics' | 'program' | 'exercises' | 'calendar' | 'prog
 export type ProfileViewContext = { kind: 'self'; name: string } | { kind: 'contact'; contact: CloudContact };
 const tabs: ReadonlyArray<{ value: ProfileTab; label: string }> = [
   { value: 'basics', label: 'Основные' },
+  { value: 'history', label: 'Тренировки' },
   { value: 'program', label: 'Программа' },
   { value: 'exercises', label: 'Упражнения' },
   { value: 'calendar', label: 'План' },
   { value: 'progress', label: 'Прогресс' },
-  { value: 'history', label: 'Тренировки' },
 ];
 const contactPlaceholders: Partial<Record<ProfileTab, string>> = {
   progress: 'Замеры, фотографии и производные показатели будут добавлены после тренировочного ядра.',

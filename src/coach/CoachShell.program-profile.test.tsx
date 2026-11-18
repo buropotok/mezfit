@@ -8,9 +8,10 @@ const client = {
   telegramUserId: '202', displayName: 'Анна Иванова',
 };
 const capture = vi.hoisted(() => ({ programs: vi.fn() }));
+const cloudDb = vi.hoisted(() => ({}));
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({
-    db: {}, actorUserId: 'tg:101', clients: [client], status: 'ready',
+    db: cloudDb, actorUserId: 'tg:101', clients: [client], status: 'ready',
     error: '', syncStatus: 'synced', syncError: '',
     refresh: vi.fn(async () => {}), retrySync: vi.fn(async () => {}),
   }),
