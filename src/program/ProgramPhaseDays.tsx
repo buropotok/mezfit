@@ -185,7 +185,7 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     try {
       const athleteUserId = program.clientUserId ?? program.athleteUserId ?? repository.actorUserId;
       const result = await workoutStart.startFromProgram({
-        athleteUserId, programId: program.id, dayId: item.day.id, independent: true,
+        athleteUserId, programId: program.id, dayId: item.day.id, sourceDayStart: true,
       }, () => alive.current);
       if (alive.current) workoutStart.showSession(result.id);
     } catch (reason) {
