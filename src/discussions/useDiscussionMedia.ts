@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
+import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
 import { MediaUploadError } from '../media/directMediaUpload';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from '../media/dualMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
@@ -22,24 +24,38 @@ interface PendingMedia {
 
 // Stable, non-sensitive support codes for failures in the media send flow.
 // 1/2/3 identify the failed network request: signer, PUT, or retry HEAD.
-function describeSendError(reason: unknown, savingFile: boolean, aborted: boolean): string {
-  if (aborted || (reason instanceof MediaUploadError && reason.code === 'CANCELLED')) {
-    return 'Загрузка отменена. Можно повторить отправку (Код 12)';
-  }
+function sendFailureCode(reason: unknown, savingFile: boolean, aborted: boolean) {
+  if (aborted || (reason instanceof MediaUploadError && reason.code === 'CANCELLED')) return APP_ERROR_CODES.MEDIA_SEND_CANCELLED;
   if (reason instanceof MediaUploadError) {
     if (reason.code === 'NETWORK') {
-      const code = reason.stage === 'signer' ? 1 : reason.stage === 'put' ? 2
-        : reason.stage === 'head' ? 3 : 4;
-      return `Mezfit облако недоступно. Проверьте сеть и повторите отправку (Код ${code})`;
+      return reason.stage === 'signer' ? APP_ERROR_CODES.MEDIA_SEND_NETWORK_SIGNER
+        : reason.stage === 'put' ? APP_ERROR_CODES.MEDIA_SEND_NETWORK_PUT
+        : reason.stage === 'head' ? APP_ERROR_CODES.MEDIA_SEND_NETWORK_HEAD
+        : APP_ERROR_CODES.MEDIA_SEND_NETWORK_OTHER;
     }
-    if (reason.code === 'TIMEOUT') return 'Mezfit облако недоступно. Проверьте сеть и повторите отправку (Код 5)';
-    if (reason.code === 'SIGNER_AUTH') return 'Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram (Код 6)';
-    if (reason.code === 'SIGNER_UNAVAILABLE') return 'Не удалось получить ссылку для загрузки. Повторите отправку (Код 7)';
-    if (reason.code === 'HTTP') return 'Хранилище не приняло файл. Повторите отправку (Код 8)';
-    return 'Хранилище не приняло файл. Повторите отправку (Код 9)';
+    if (reason.code === 'TIMEOUT') return APP_ERROR_CODES.MEDIA_SEND_TIMEOUT;
+    if (reason.code === 'SIGNER_AUTH') return APP_ERROR_CODES.MEDIA_SEND_AUTH;
+    if (reason.code === 'SIGNER_UNAVAILABLE') return APP_ERROR_CODES.MEDIA_SEND_SIGNER_UNAVAILABLE;
+    if (reason.code === 'HTTP') return APP_ERROR_CODES.MEDIA_SEND_STORAGE_HTTP;
+    return APP_ERROR_CODES.MEDIA_SEND_STORAGE_UNKNOWN;
   }
-  if (savingFile) return 'Не удалось сохранить файл на устройстве. Освободите место и попробуйте ещё раз (Код 10)';
-  return 'Не удалось сохранить сообщение. Повторите отправку (Код 11)';
+  return savingFile ? APP_ERROR_CODES.MEDIA_SEND_LOCAL_SAVE : APP_ERROR_CODES.MEDIA_SEND_MESSAGE;
+}
+
+function describeSendError(reason: unknown, savingFile: boolean, aborted: boolean): string {
+  const code = sendFailureCode(reason, savingFile, aborted);
+  if (code === APP_ERROR_CODES.MEDIA_SEND_CANCELLED) return withErrorCode('Загрузка отменена. Можно повторить отправку', code);
+  if (reason instanceof MediaUploadError) {
+    if (reason.code === 'NETWORK' || reason.code === 'TIMEOUT') {
+      return withErrorCode('Mezfit облако недоступно. Проверьте сеть и повторите отправку', code);
+    }
+    if (reason.code === 'SIGNER_AUTH') return withErrorCode('Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram', code);
+    if (reason.code === 'SIGNER_UNAVAILABLE') return withErrorCode('Не удалось получить ссылку для загрузки. Повторите отправку', code);
+    return withErrorCode('Хранилище не приняло файл. Повторите отправку', code);
+  }
+  return withErrorCode(savingFile
+    ? 'Не удалось сохранить файл на устройстве. Освободите место и попробуйте ещё раз'
+    : 'Не удалось сохранить сообщение. Повторите отправку', code);
 }
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>, enabled = true) {
@@ -184,7 +200,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (active.current === controller) {
         if (controller.signal.aborted) setPhase('idle');
         else {
-          setError(reason instanceof Error ? reason.message : 'Не удалось проверить файл');
+          setError(reason instanceof Error ? reason.message : withErrorCode('Не удалось проверить файл', APP_ERROR_CODES.MEDIA_INVALID_FORMAT));
           setPhase('failed');
         }
       }
@@ -203,7 +219,8 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (immediately) void send(next);
       else setPhase('idle');
     } catch {
-      setError('Формат голосового не поддерживается или запись превышает 25 МБ');
+      setError(withErrorCode('Формат голосового не поддерживается или запись превышает 25 МБ', APP_ERROR_CODES.MEDIA_VOICE_UNSUPPORTED));
+      reportVideoRecordingFailure(APP_ERROR_CODES.MEDIA_VOICE_UNSUPPORTED, 'voice');
       setPhase('failed');
     }
   }
@@ -217,7 +234,8 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       if (previewOnly) setPhase('idle');
       else void send(next);
     } catch {
-      setError('Не удалось подготовить видеокружок. Проверьте формат и размер записи.');
+      setError(withErrorCode('Не удалось подготовить видеокружок. Проверьте формат и размер записи.', APP_ERROR_CODES.MEDIA_VIDEO_NOTE_INVALID));
+      reportVideoRecordingFailure(APP_ERROR_CODES.MEDIA_VIDEO_NOTE_INVALID, 'media');
       setPhase('failed');
     }
   }
@@ -279,6 +297,16 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         resume.current = () => { retryPending(message.id); };
       }
       const errorText = describeSendError(reason, savingFile, controller.signal.aborted);
+      if (sendFailureCode(reason, savingFile, controller.signal.aborted) !== APP_ERROR_CODES.MEDIA_SEND_CANCELLED) {
+        reportVideoRecordingFailure(sendFailureCode(reason, savingFile, controller.signal.aborted), 'media', {
+          mediaMimeType: selected.metadata.mimeType,
+          mediaSizeBytes: String(selected.metadata.sizeBytes),
+          ...(reason instanceof MediaUploadError ? {
+            mediaUploadStage: reason.stage,
+            mediaUploadStatus: reason.status === undefined ? undefined : String(reason.status),
+          } : {}),
+        });
+      }
       if (command) {
         // Network failure is not a failed local save. Keep the private draft and
         // cached bytes for independent retry; free Messagebar for the next message.

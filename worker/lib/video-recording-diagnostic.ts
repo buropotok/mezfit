@@ -9,7 +9,7 @@ const lastReportByActorAndEvent = new Map<string, number>();
 const MIN_INTERVAL_MS = 15_000;
 const MAX_BODY_CHARS = 8_000;
 
-const errorLabels: Record<VideoRecordingDiagnostic['errorCode'], string> = {
+const errorLabels: Partial<Record<VideoRecordingDiagnostic['errorCode'], string>> = {
   UNSUPPORTED_MP4_AVC: 'Не найден поддерживаемый MP4/H.264 или WebM',
   MEDIA_API_UNAVAILABLE: 'Недоступны MediaRecorder или getUserMedia',
   CAMERA_ACCESS_FAILED: 'Ошибка доступа к камере/микрофону',
@@ -31,6 +31,12 @@ const errorLabels: Record<VideoRecordingDiagnostic['errorCode'], string> = {
   WEBM_KEYFRAME_FALLBACK: 'WebM обрезан по ключевым кадрам вместо точного режима',
   WEBM_TRIM_FAILED: 'Все способы обрезки WebM завершились ошибкой',
   WEBM_TRIM_INSPECTION_FAILED: 'Не удалось прочитать WebM в редакторе',
+  MEDIA_VIDEO_DECODE_FAILED: 'Браузер отклонил записанное или выбранное видео',
+  MEDIA_VIDEO_METADATA_INVALID: 'Некорректные метаданные видео',
+  MEDIA_VIDEO_FRAME_INVALID: 'Не получен корректный видеокадр',
+  MEDIA_CHECK_TIMEOUT: 'Проверка медиа завершилась по тайм-ауту',
+  MEDIA_PHOTO_DECODE_FAILED: 'Браузер не смог прочитать изображение',
+  MEDIA_REVIEW_PLAYBACK_FAILED: 'Не удалось воспроизвести предварительный просмотр',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -40,7 +46,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function parseDiagnostic(raw: unknown): VideoRecordingDiagnostic | null {
   if (!isRecord(raw) || !isRecord(raw.device) || !isRecord(raw.mimeSupport)) return null;
   if (!VIDEO_RECORDING_ERROR_CODES.some(code => code === raw.errorCode)) return null;
-  if (raw.profile !== 'circle' && raw.profile !== 'portrait' && raw.profile !== 'landscape') return null;
+  if (raw.profile !== 'circle' && raw.profile !== 'portrait' && raw.profile !== 'landscape'
+    && raw.profile !== 'media' && raw.profile !== 'voice') return null;
   const mimeSupport: VideoRecordingDiagnostic['mimeSupport'] = {};
   for (const mime of VIDEO_RECORDING_MIME_TYPES) {
     const value = raw.mimeSupport[mime];
@@ -60,10 +67,12 @@ function html(value: string): string {
 }
 
 export function formatVideoRecordingDiagnostic(report: VideoRecordingDiagnostic): string {
-  const title = errorLabels[report.errorCode];
+  const title = errorLabels[report.errorCode] ?? report.errorCode;
   const platform = report.device.telegramPlatform ?? report.device.platform ?? 'unknown';
   const header = [
-    '🚨 <b>Mezfit · Ошибка видеозаписи</b>',
+    report.profile === 'voice' ? '🚨 <b>Mezfit · Ошибка голосового сообщения</b>'
+      : report.profile === 'media' ? '🚨 <b>Mezfit · Ошибка медиа</b>'
+        : '🚨 <b>Mezfit · Ошибка видеозаписи</b>',
     '<b>' + html(title) + '</b>',
     'Код: <code>' + report.errorCode + '</code>',
     'Telegram: <code>' + html(platform) + '</code> · ' + html(report.profile),

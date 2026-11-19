@@ -94,3 +94,18 @@ CI on PR executes typecheck, tests and build. Runtime acceptance still requires
 an Android Telegram WebView that reproduces the original failure, another
 device for media playback compatibility, and a bot private chat that has
 been started by the recipient.
+
+## Broadened application error telemetry
+
+The same authenticated Worker endpoint, bot token, destination, allowlisted
+fields, client five-minute deduplication and server short per-actor throttle are
+also used for media-file decode/probe, recorded-video review, media transport and
+voice-recorder failures. The report profile is `media` or `voice`; only a stable
+support code plus bounded MIME, byte count, numeric media decoder state and upload
+stage/status may be added. File names, message contents, storage keys, URLs,
+identities, raw exceptions and uploaded bytes remain prohibited. The same
+`VIDEO_RECORDING_REPORT_CHAT_ID` setting disables/enables all such notifications.
+The notification is best effort and never blocks user-visible error handling.
+
+User-facing errors use `(Код: CODE)` at the end. For the canonical code registry,
+legacy-code crosswalk and rollout scope, see [error-codes.md](error-codes.md).

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
+import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
 import { acquireSessionMicrophone } from './sessionMicrophone';
 import { voiceWaveformFromAudioBuffer, voiceWaveformFromPeaks } from './voiceWaveform';
 
@@ -151,7 +153,8 @@ export function useVoiceRecorder({ session = false, onSample }: {
   const start = useCallback(async (permissionOnly = false): Promise<boolean> => {
     if (statusRef.current !== 'idle' && statusRef.current !== 'error') return false;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setError('Telegram WebView не поддерживает запись звука.');
+      setError(withErrorCode('Telegram WebView не поддерживает запись звука.', APP_ERROR_CODES.VOICE_CAPTURE_UNAVAILABLE));
+      reportVideoRecordingFailure(APP_ERROR_CODES.VOICE_CAPTURE_UNAVAILABLE, 'voice');
       updateStatus('error');
       return false;
     }
@@ -173,7 +176,10 @@ export function useVoiceRecorder({ session = false, onSample }: {
           : await navigator.mediaDevices.getUserMedia(constraints);
       } catch (cause) {
         if (mountedRef.current && epoch === epochRef.current) {
-          setError(microphoneError(cause));
+          const code = cause instanceof DOMException && ['NotAllowedError', 'PermissionDeniedError'].includes(cause.name)
+            ? APP_ERROR_CODES.VOICE_PERMISSION_DENIED : APP_ERROR_CODES.VOICE_CAPTURE_FAILED;
+          setError(withErrorCode(microphoneError(cause), code));
+          reportVideoRecordingFailure(code, 'voice', { errorName: cause instanceof DOMException ? cause.name : 'unknown' });
           updateStatus('error');
         }
         return false;
@@ -200,7 +206,8 @@ export function useVoiceRecorder({ session = false, onSample }: {
       recorder.onerror = () => {
         if (recorderRef.current !== recorder) return;
         release();
-        setError('Ошибка записи звука. Попробуйте ещё раз.');
+        setError(withErrorCode('Ошибка записи звука. Попробуйте ещё раз.', APP_ERROR_CODES.VOICE_RECORD_FAILED));
+        reportVideoRecordingFailure(APP_ERROR_CODES.VOICE_RECORD_FAILED, 'voice');
         updateStatus('error');
       };
       recorder.onstop = () => {
@@ -223,7 +230,8 @@ export function useVoiceRecorder({ session = false, onSample }: {
             : await decodeFallback(blob);
           if (!mountedRef.current || epoch !== epochRef.current) return;
           if (blob.size === 0) {
-            setError('Запись не содержит звука. Попробуйте ещё раз.');
+            setError(withErrorCode('Запись не содержит звука. Попробуйте ещё раз.', APP_ERROR_CODES.VOICE_RECORD_EMPTY));
+            reportVideoRecordingFailure(APP_ERROR_CODES.VOICE_RECORD_EMPTY, 'voice');
             updateStatus('error');
             resolveStopRef.current?.(null);
           } else {
@@ -241,7 +249,8 @@ export function useVoiceRecorder({ session = false, onSample }: {
       recorderRef.current = null;
       if (session) release();
       else stopSampling();
-      setError('Не удалось запустить запись на этом устройстве.');
+      setError(withErrorCode('Не удалось запустить запись на этом устройстве.', APP_ERROR_CODES.VOICE_RECORD_START_FAILED));
+      reportVideoRecordingFailure(APP_ERROR_CODES.VOICE_RECORD_START_FAILED, 'voice');
       updateStatus('error');
       return false;
     }
@@ -261,7 +270,8 @@ export function useVoiceRecorder({ session = false, onSample }: {
         resolveStopRef.current = null;
         resolve(null);
         release();
-        setError('Не удалось завершить запись. Попробуйте ещё раз.');
+        setError(withErrorCode('Не удалось завершить запись. Попробуйте ещё раз.', APP_ERROR_CODES.VOICE_RECORD_STOP_FAILED));
+        reportVideoRecordingFailure(APP_ERROR_CODES.VOICE_RECORD_STOP_FAILED, 'voice');
         updateStatus('error');
       }
     });
