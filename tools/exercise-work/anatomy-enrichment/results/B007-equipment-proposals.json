@@ -1,0 +1,192 @@
+{
+  "batch_id": "B007",
+  "proposals": [
+    {
+      "id": "pvc-pipe",
+      "label_ru": "Гимнастическая ПВХ-палка",
+      "definition_ru": "Лёгкая жёсткая гладкая труба или палка из ПВХ для работы над подвижностью, хватом и положением рук в front-rack; не Gymstick с резиновым сопротивлением.",
+      "exercise_ids": [
+        "fitnessprogramer:front-rack-pvc-stretch"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/front-rack-pvc-stretch/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "gymstick",
+        "barbell",
+        "pvc pipe"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "power-rack",
+      "label_ru": "Силовая рама со страховочными упорами",
+      "definition_ru": "Силовая рама/стойка для приседаний с держателями штанги или регулируемой перекладиной и страховочными упорами; тот же предлагаемый ID, что в B004.",
+      "exercise_ids": [
+        "fitnessprogramer:front-squat",
+        "fitnessprogramer:inverted-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/front-squat/",
+        "https://fitnessprogramer.com/exercise/inverted-row/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "squat rack",
+        "power rack",
+        "smith machine",
+        "barbell"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hack-squat-machine",
+      "label_ru": "Гакк-тренажёр",
+      "definition_ru": "Наклонный гакк-тренажёр со скользящей кареткой, плечевыми упорами и платформой для ног; используется и для подъёмов на носки.",
+      "exercise_ids": [
+        "fitnessprogramer:hack-squat-calf-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hack-squat-calf-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "leg press machine",
+        "hack squat machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hand-gripper",
+      "label_ru": "Кистевой эспандер",
+      "definition_ru": "Компактный пружинный или рычажный тренажёр для сжатия кистью; отличен от резиновой ленты и стационарной машины.",
+      "exercise_ids": [
+        "fitnessprogramer:hand-gripper"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hand-gripper/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "resistance band",
+        "grip trainer"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "upper-body-ergometer",
+      "label_ru": "Ручной велоэргометр",
+      "definition_ru": "Кардиотренажёр с рукоятками и педальным циклом, приводимыми руками, также arm bike; не ножной стационарный велосипед.",
+      "exercise_ids": [
+        "fitnessprogramer:hands-bike"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hands-bike/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "bike",
+        "stationary bike",
+        "arm ergometer",
+        "machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "squat-wedge",
+      "label_ru": "Клин для подъёма пяток",
+      "definition_ru": "Устойчивые наклонные подставки под пятки или slant board для heel-elevated goblet squat; альтернативны блинам.",
+      "exercise_ids": [
+        "fitnessprogramer:heel-elevated-goblet-squat"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/heel-elevated-goblet-squat/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "weight plate",
+        "box",
+        "slant board",
+        "heel wedge"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "bosu-balance-trainer",
+      "label_ru": "Балансировочная полусфера BOSU",
+      "definition_ru": "Надувная полусфера с жёсткой плоской платформой для нестабильной опоры; отдельная от сферического фитбола. ID совпадает с предложением B004.",
+      "exercise_ids": [
+        "fitnessprogramer:high-knee-lunge-on-bosu-ball"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/high-knee-lunge-on-bosu-ball/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "exercise ball",
+        "stability ball",
+        "bosu ball"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "horizontal-leg-press-machine",
+      "label_ru": "Горизонтальный тренажёр для жима ногами",
+      "definition_ru": "Силовая машина для жима ногами с горизонтально направленным сопротивлением, а не любой generic machine.",
+      "exercise_ids": [
+        "fitnessprogramer:horizontal-leg-press"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/horizontal-leg-press/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "leg press",
+        "horizontal leg press"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "vertical-pole",
+      "label_ru": "Вертикальный гимнастический шест",
+      "definition_ru": "Прочная вертикальная опора с возможностью разноуровневого хвата двумя руками для human flag; не обычный горизонтальный турник.",
+      "exercise_ids": [
+        "fitnessprogramer:human-flag"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/human-flag/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "pull-up bar",
+        "parallel bars",
+        "pole",
+        "wall"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "roman-chair",
+      "label_ru": "Римский стул",
+      "definition_ru": "Специализированная опора/скамья с фиксацией стоп и опорными подушками для гиперэкстензии и боковых наклонов корпуса; тот же ID, что в B004.",
+      "exercise_ids": [
+        "fitnessprogramer:hyperextension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hyperextension/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bench",
+        "hyperextension bench",
+        "machine",
+        "roman chair"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
