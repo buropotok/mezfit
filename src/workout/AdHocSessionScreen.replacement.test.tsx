@@ -55,12 +55,12 @@ const row = {
   createdAt: '2026-11-19T10:00:00.000Z', updatedAt: '2026-11-19T10:00:00.000Z',
 };
 function fixture(type: 'weight_reps' | 'time') {
-  let notify: Parameters<AdHocWorkoutRepository['observe']>[1] | null = null;
+  const observer: { notify: Parameters<AdHocWorkoutRepository['observe']>[1] | null } = { notify: null };
   const replaceExercise = vi.fn<AdHocWorkoutRepository['replaceExercise']>().mockResolvedValue(undefined);
   const repository = {
     actorUserId: 'tg:101',
     observe: vi.fn<AdHocWorkoutRepository['observe']>((_id, next) => {
-      notify = next;
+      observer.notify = next;
       return { unsubscribe: vi.fn() };
     }),
     replacementTrackingType: vi.fn<AdHocWorkoutRepository['replacementTrackingType']>()
@@ -79,7 +79,7 @@ function fixture(type: 'weight_reps' | 'time') {
   } satisfies AdHocSessionRepository;
   render(<AdHocSessionScreen repository={repository} sessionId="session-a" initData="signed"
     onNavigationContextChange={vi.fn()} />);
-  act(() => notify?.(session, row));
+  act(() => observer.notify?.(session, row));
   return replaceExercise;
 }
 afterEach(cleanup);
