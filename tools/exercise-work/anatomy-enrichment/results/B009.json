@@ -1242,6 +1242,615 @@
           "reason": "Пистолетик — односторонний присед: квадрицепс разгибает колено, ягодичные и приводящие помогают, корпус и таз удерживают баланс."
         }
       ]
+    },
+    {
+      "id": "fitnessprogramer:pistol-squat-to-box",
+      "source_path": "assets/work/hip/pistol-squat-to-box.json",
+      "source_blob_sha": "5a0affda7c4f3e38663b5feb4a967b15ced33125",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pistol-squat-to-box/"
+          ],
+          "confidence": "medium",
+          "reason": "Пистолетик до опоры: одна нога выполняет присед, позади располагается коробка/платформа для ограничения глубины."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:planche-push-up",
+      "source_path": "assets/work/chest/planche-push-up.json",
+      "source_blob_sha": "60bc0f735ac0208d2a133c36cf7046aff104af5d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "gluteus_maximus",
+            "erector_spinae"
+          ]
+        },
+        "primary_category": "shoulders"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/planche-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Planche push-up — горизонтальный баланс с большим рычагом в плечевом суставе, работа передних дельт, груди и трицепса."
+        }
+      ],
+      "notes": "Категория shoulders выбрана по экстремальному плечевому моменту; по GIF может потребоваться chest/full_body."
+    },
+    {
+      "id": "fitnessprogramer:plank",
+      "source_path": "assets/work/abs/plank.json",
+      "source_blob_sha": "e3c57bffd3328a21967cc00b96d132739e588d47",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plank/"
+          ],
+          "confidence": "medium",
+          "reason": "Статическая планка — антиразгибательная работа мышц брюшного пресса, мышцы плечевого пояса и ягодиц обеспечивают удержание."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:plank-jacks-extended-leg",
+      "source_path": "assets/work/abs/plank-jacks-extended-leg.json",
+      "source_blob_sha": "c196b54d1bbaf56f520ac122f66ca4361f533e2f",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "gluteus_medius"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plank-jacks-extended-leg/"
+          ],
+          "confidence": "medium",
+          "reason": "Plank jacks: сохранение планки с разведением ног; медиальная ягодичная отвечает за отведение, мышцы живота удерживают корпус."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:plank-knee-to-elbow",
+      "source_path": "assets/work/abs/plank-knee-to-elbow.json",
+      "source_blob_sha": "e3988b47a702f36f4510ccbefc34d58e37cbf513",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plank-knee-to-elbow/"
+          ],
+          "confidence": "medium",
+          "reason": "Подведение колена к локтю в планке сочетает сгибание бедра и анти-ротационный контроль брюшных мышц."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:plank-leg-lift",
+      "source_path": "assets/work/abs/plank-leg-lift.json",
+      "source_blob_sha": "9c48bbc083f39e9a2756070eae27c9757ccb7675",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plank-leg-lift/"
+          ],
+          "confidence": "medium",
+          "reason": "Планка с подъёмом ноги: таз разгибается ягодичной, живот фиксирует поясницу; плечевая стабилизация сохраняется."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:plank-with-arm-and-leg-lift",
+      "source_path": "assets/work/abs/plank-with-arm-and-leg-lift.json",
+      "source_blob_sha": "3ed0136010eee791939419b460b7598c3078aab3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plank-with-arm-and-leg-lift/"
+          ],
+          "confidence": "medium",
+          "reason": "Планка с противоположным подъёмом руки и ноги: анти-ротационная стабилизация мышцами живота, разгибание бедра ягодичной."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:plate-loaded-seated-row",
+      "source_path": "assets/work/back/plate-loaded-seated-row.json",
+      "source_blob_sha": "3fc3fd0757a9a9eb68edb2ff17300e50fc14030e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plate_loaded_seated_row_machine"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "deltoid_posterior",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plate-loaded-seated-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Сидячая рычажная тяга с дисковой нагрузкой на специализированном plate-loaded row; не общий machine."
+        }
+      ],
+      "notes": "other обозначает отсутствие установленной мышцы в данной роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:plate-loaded-shoulder-press",
+      "source_path": "assets/work/shoulders/plate-loaded-shoulder-press.json",
+      "source_blob_sha": "8cc0f20d2c2e4caeea4f93339786962dfb7616fa",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plate_loaded_shoulder_press_machine"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plate-loaded-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим плечами на рычажном тренажёре с дисками, специализированная конструкция для вертикального жима."
+        }
+      ],
+      "notes": "other обозначает отсутствие установленной мышцы в данной роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:plate-push",
+      "source_path": "assets/work/full-body/plate-push.json",
+      "source_blob_sha": "e76c9a4a75e77f606ee59eee8a1d7ce0edde49c1",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "weight plate"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "erector_spinae"
+          ]
+        },
+        "primary_category": "legs"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plate-push/"
+          ],
+          "confidence": "medium",
+          "reason": "Толкание диска по полу — вариант sled-push без саней; пропульсия создаётся ногами и тазом, корпус передаёт усилие."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:plyo-jacks",
+      "source_path": "assets/work/cardio/plyo-jacks.json",
+      "source_blob_sha": "dcd3ef6192fa70199a27e116b2fee8405b8043b1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/plyo-jacks/"
+          ],
+          "confidence": "medium",
+          "reason": "Plyo jacks — динамическое аэробное упражнение; устойчивые силовые роли отдельных мышц не установлены."
+        }
+      ],
+      "notes": "Не приписывать изолированный мышечный target кардио-прыжкам. other обозначает отсутствие установленной мышцы в данной роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:posterior-tibialis-stretch",
+      "source_path": "assets/work/calf/posterior-tibialis-stretch.json",
+      "source_blob_sha": "bbe2b3199f4c04235c25665bc122d37d2b2aaf7f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/posterior-tibialis-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжка задней большеберцовой мышцы с помощью резинки; механика не описывает активных силовых движителей."
+        }
+      ],
+      "notes": "Растягиваемая структура tibialis_posterior не является автоматически двигателем. other обозначает отсутствие установленной мышцы в данной роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:power-clean",
+      "source_path": "assets/work/full-body/power-clean.json",
+      "source_blob_sha": "49a870013e4c131df02a176a0b5cb0301b34838e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/power-clean/"
+          ],
+          "confidence": "medium",
+          "reason": "Power clean — взятие штанги с быстрым разгибанием таза/колена и шрагом, мышцы корпуса удерживают штангу."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:power-lunge",
+      "source_path": "assets/work/hip/power-lunge.json",
+      "source_blob_sha": "793368bb1df20d4db18819391933b8f6798deb62",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/power-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Power lunge — динамический выпад с разгибанием колена и таза, нагрузка на ягодичные и квадрицепс."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:power-skips",
+      "source_path": "assets/work/cardio/power-skips.json",
+      "source_blob_sha": "c4413ed9054fe6c972b142ec2bdab8cb10d9ffcf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/power-skips/"
+          ],
+          "confidence": "medium",
+          "reason": "Power skips — упражнение на взрывную координацию/кардиовыносливость; нет надёжно установленной роли основных, вспомогательных мышц и стабилизаторов."
+        }
+      ],
+      "notes": "other обозначает отсутствие установленной мышцы в данной роли, не биологический ID."
     }
   ]
 }
