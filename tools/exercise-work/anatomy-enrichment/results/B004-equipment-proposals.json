@@ -1,0 +1,134 @@
+{
+  "batch_id": "B004",
+  "proposals": [
+    {
+      "id": "arm-blaster",
+      "label_ru": "Армбластер (упор для рук)",
+      "definition_ru": "Жёсткая изогнутая опора на грудь для фиксации плеч во время сгибаний рук; не равно скамье Скотта.",
+      "exercise_ids": [
+        "fitnessprogramer:barbell-curl-on-arm-blaster"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/barbell-curl-on-arm-blaster/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "preacher bench",
+        "bench",
+        "arm blaster"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "power-rack",
+      "label_ru": "Силовая рама со страховочными упорами",
+      "definition_ru": "Стойка или силовая рама с регулируемыми страховочными упорами для размещения штанги или использования перекладины.",
+      "exercise_ids": [
+        "fitnessprogramer:barbell-pin-squat",
+        "fitnessprogramer:bodyweight-skull-crushers"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/barbell-pin-squat/",
+        "https://fitnessprogramer.com/exercise/bodyweight-skull-crushers/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "squat rack",
+        "barbell rack",
+        "machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "battle-rope",
+      "label_ru": "Боевые канаты",
+      "definition_ru": "Толстый тренировочный канат или пара канатов для создания волн, ударов и циклической кондиционной нагрузки; отдельный от каната для лазания.",
+      "exercise_ids": [
+        "fitnessprogramer:battle-rope"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/battle-rope/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "rope",
+        "jump rope",
+        "battle ropes"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "belt-squat-machine",
+      "label_ru": "Тренажёр для приседаний с поясом",
+      "definition_ru": "Специализированная система belt squat с нагрузкой, подвешенной или передаваемой на пояс на уровне таза. При ручной loading pin конфигурации тип требует проверки.",
+      "exercise_ids": [
+        "fitnessprogramer:belt-squat"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/belt-squat/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "squat machine",
+        "belt squat",
+        "loading pin"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "roman-chair",
+      "label_ru": "Римский стул",
+      "definition_ru": "Опора для бёдер и фиксации ног при боковых наклонах и разгибаниях корпуса, в том числе вариант Roman chair.",
+      "exercise_ids": [
+        "fitnessprogramer:bench-side-bend"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/bench-side-bend/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bench",
+        "hyperextension bench",
+        "machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "door-frame",
+      "label_ru": "Дверной проём (опора)",
+      "definition_ru": "Прочная архитектурная дверная коробка или проём, используемый как опора для тяги с собственным весом; не спортивный турник.",
+      "exercise_ids": [
+        "fitnessprogramer:bodyweight-row-in-doorway"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/bodyweight-row-in-doorway/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "pull-up bar",
+        "wall",
+        "doorway"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "bosu-balance-trainer",
+      "label_ru": "Балансировочная полусфера BOSU",
+      "definition_ru": "Полусферическая балансировочная платформа с жёстким плоским основанием и надувным куполом, в отличие от круглого фитбола.",
+      "exercise_ids": [
+        "fitnessprogramer:bosu-ball-push-up"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/bosu-ball-push-up/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "exercise ball",
+        "stability ball",
+        "bosu ball"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
