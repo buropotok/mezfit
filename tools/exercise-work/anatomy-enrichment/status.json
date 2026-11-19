@@ -371,15 +371,39 @@
       "result_stats": null
     },
     "B012": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "gpt6-enrich-b012-7m42xoz0gi",
       "claim_id": "b012-mwnwgw7d-7m42xoz0gi",
       "started_at": "2026-11-19T18:45:02.857Z",
       "lease_until": "2026-11-19T20:45:02.857Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-11-19T19:04:01.932Z",
+      "result_branch": "data/anatomy-batch-B012-b012-mwnwgw7d-7m42xoz0gi",
+      "result_commit": "76f9a156acc2944b30e990a4039db0a312b235c2",
+      "result_stats": {
+        "unique_exercises": 73,
+        "source_anatomy_empty": 31,
+        "source_anatomy_partially_filled": 25,
+        "source_anatomy_fully_filled": 17,
+        "source_roles_recovered": 83,
+        "muscle_ids_added_to_empty_roles": 143,
+        "equipment_refined_or_type_corrected": 40,
+        "new_equipment_types": 9,
+        "existing_equipment_filters_used": 18,
+        "marker_other_primary": 9,
+        "marker_other_secondary": 18,
+        "marker_other_stabilizers": 30,
+        "other_equipment": 8,
+        "category_other": 3,
+        "category_changed": 2,
+        "category_review_required": 7,
+        "category_unverified": 4,
+        "verified": 16,
+        "partial": 21,
+        "needs_review": 36,
+        "unchanged": 0,
+        "unique_evidence_sources": 73,
+        "evidence_records": 73
+      }
     }
   }
 }
