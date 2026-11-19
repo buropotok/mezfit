@@ -2859,7 +2859,7 @@
       "id": "fitnessprogramer:lying-weighted-lateral-neck-flexion",
       "source_path": "assets/work/neck/lying-weighted-lateral-neck-flexion.json",
       "source_blob_sha": "1e56f386d791dab53069845dfaa0aed165e188e0",
-      "status": "verified",
+      "status": "partial",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2892,10 +2892,10 @@
             "https://fitnessprogramer.com/exercise/lying-weighted-lateral-neck-flexion/"
           ],
           "confidence": "medium",
-          "reason": "По пошаговой инструкции голова в подвесной упряжи с утяжеляющим блином, тело лежит боком на наклонной скамье; оборудование head harness отличен от гантели."
+          "reason": "По пошаговой инструкции голова в подвесной упряжи с утяжеляющим блином, тело лежит боком на наклонной скамье; оборудование head harness отличен от гантели. Исходное описание не подтверждает отдельные мышечные роли стабилизаторов, поэтому статус partial."
         }
       ],
-      "notes": "По пошаговой инструкции голова в подвесной упряжи с утяжеляющим блином, тело лежит боком на наклонной скамье; оборудование head harness отличен от гантели."
+      "notes": "По пошаговой инструкции голова в подвесной упряжи с утяжеляющим блином, тело лежит боком на наклонной скамье; оборудование head harness отличен от гантели. Исходное описание не подтверждает отдельные мышечные роли стабилизаторов, поэтому статус partial."
     },
     {
       "id": "fitnessprogramer:lying-weighted-neck-extension",
