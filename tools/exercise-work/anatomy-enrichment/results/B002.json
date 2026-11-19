@@ -5224,6 +5224,974 @@
         }
       ],
       "notes": "Без инструкции/анатомии исходника точный вклад двух основных мышц требует проверки на GIF; стабилизаторы не установлены."
+    },
+    {
+      "id": "fitnessprogramer:seated-cable-rope-row",
+      "source_path": "assets/work/back/seated-cable-rope-row.json",
+      "source_blob_sha": "86b5339253753c046415de92875e9aea1a0b9ae1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "trapezius",
+            "teres_major",
+            "rhomboids",
+            "brachioradialis",
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-rope-row/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Горизонтальная тяга канатной рукоятью сидя: широчайшая и мышцы тягового движения, разгибатели позвоночника контролируют корпус. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-rope-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Горизонтальная тяга канатной рукоятью сидя: широчайшая и мышцы тягового движения, разгибатели позвоночника контролируют корпус."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-rope-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизаторы подтверждены исходным перечнем и механикой: Горизонтальная тяга канатной рукоятью сидя: широчайшая и мышцы тягового движения, разгибатели позвоночника контролируют корпус."
+        }
+      ],
+      "notes": "Из оригинального широкого списка не перенесены ротаторы плеча и levator scapulae как синергисты без достаточной биомеханической проверки."
+    },
+    {
+      "id": "fitnessprogramer:seated-cable-row",
+      "source_path": "assets/work/back/seated-cable-row.json",
+      "source_blob_sha": "b811e3ac86e453abb40a4074e7c52e83d39c6c2a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "seated-cable-row-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "trapezius",
+            "teres_major",
+            "rhomboids",
+            "brachioradialis",
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-row/",
+            "https://www.majorfitness.com/blogs/training-tips/seated-cable-row"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: seated-cable-row-machine. Источник описывает тяговый тренажёр с опорой ступней на специальную платформу, сиденьем и блочной тягой; широчайшие и сгибатели локтя действуют динамически, разгибатели спины удерживают корпус. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-row/",
+            "https://www.majorfitness.com/blogs/training-tips/seated-cable-row"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Источник описывает тяговый тренажёр с опорой ступней на специальную платформу, сиденьем и блочной тягой; широчайшие и сгибатели локтя действуют динамически, разгибатели спины удерживают корпус."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-row/",
+            "https://www.majorfitness.com/blogs/training-tips/seated-cable-row"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизаторы подтверждены исходным перечнем и механикой: Источник описывает тяговый тренажёр с опорой ступней на специальную платформу, сиденьем и блочной тягой; широчайшие и сгибатели локтя действуют динамически, разгибатели спины удерживают корпус."
+        }
+      ],
+      "notes": "Исходный Biceps Brachii назван динамическим стабилизатором, но при сгибании локтя участвует как синергист; Hamstrings и Gluteus Maximus не перенесены автоматически как стабилизаторы сидячей тяги."
+    },
+    {
+      "id": "fitnessprogramer:seated-cable-twist",
+      "source_path": "assets/work/abs/seated-cable-twist.json",
+      "source_blob_sha": "8703f611df6515a64a7d54e6a89744c63d20a14a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Сидячее вращение корпуса с тросом — работа косых мышц живота; источник не содержит точных дополнительных анатомических ролей. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Двигательные мышцы: Сидячее вращение корпуса с тросом — работа косых мышц живота; источник не содержит точных дополнительных анатомических ролей."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-twist/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:single-arm-cable-crossover",
+      "source_path": "assets/work/chest/single-arm-cable-crossover.json",
+      "source_blob_sha": "ccfabc2afd3d8e48380117d4b299705199463eb7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "brachialis",
+            "biceps_brachii",
+            "triceps_brachii",
+            "forearm_flexors",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-cable-crossover/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Одноручное горизонтальное сведение груди: исходный target sternal pec, ключичная часть содействует; исходник отдельно называет мышцы предплечья и корпуса стабилизаторами. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-cable-crossover/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Одноручное горизонтальное сведение груди: исходный target sternal pec, ключичная часть содействует; исходник отдельно называет мышцы предплечья и корпуса стабилизаторами."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-cable-crossover/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизаторы подтверждены исходным перечнем и механикой: Одноручное горизонтальное сведение груди: исходный target sternal pec, ключичная часть содействует; исходник отдельно называет мышцы предплечья и корпуса стабилизаторами."
+        }
+      ],
+      "notes": "Не перенесены latissimus, rhomboids, levator scapulae как прямые синергисты горизонтального сведения плеча без дополнительных доказательств."
+    },
+    {
+      "id": "fitnessprogramer:single-arm-reverse-grip-cable-bicep-curl",
+      "source_path": "assets/work/biceps/single-arm-reverse-grip-cable-bicep-curl.json",
+      "source_blob_sha": "5528193d91872d4e6baf173210cdde720eb97082",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "brachioradialis",
+            "brachialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-reverse-grip-cable-bicep-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Сгибание локтя обратным пронированным хватом с одного блока акцентирует brachioradialis и brachialis; бицепс также участвует, но с меньшим преимуществом. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-reverse-grip-cable-bicep-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Сгибание локтя обратным пронированным хватом с одного блока акцентирует brachioradialis и brachialis; бицепс также участвует, но с меньшим преимуществом."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-reverse-grip-cable-bicep-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ],
+      "notes": "В исходнике пустая анатомия; оборудование Resistance Band не подтверждено для точного выполнения, в итоговом патче канонический cable."
+    },
+    {
+      "id": "fitnessprogramer:single-arm-twisting-seated-cable-row",
+      "source_path": "assets/work/back/single-arm-twisting-seated-cable-row.json",
+      "source_blob_sha": "ce2163928c07ba8b7cc5b984c0c9b94f7f0b2cd2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "obliques"
+          ],
+          "secondary": [
+            "teres_major",
+            "trapezius",
+            "rhomboids",
+            "deltoid_posterior",
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-twisting-seated-cable-row/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Односторонняя тяга блока с поворотом корпуса сочетает разгибание плеча/сведение лопатки с ротацией за счёт косых мышц живота. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-twisting-seated-cable-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Односторонняя тяга блока с поворотом корпуса сочетает разгибание плеча/сведение лопатки с ротацией за счёт косых мышц живота."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-twisting-seated-cable-row/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ],
+      "notes": "Источник без инструкции и анатомии; конкретные стабилизаторы сидячей поворотной тяги не установлены."
+    },
+    {
+      "id": "fitnessprogramer:standing-cable-crunch",
+      "source_path": "assets/work/abs/standing-cable-crunch.json",
+      "source_blob_sha": "e4b228d3aecd43fd57fb2a9ddba3b72c51eff71c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Скручивание корпуса стоя нагружает rectus abdominis, косые мышцы помогают, erector spinae изначально указан как стабилизатор. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "Двигательные мышцы: Скручивание корпуса стоя нагружает rectus abdominis, косые мышцы помогают, erector spinae изначально указан как стабилизатор."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизаторы подтверждены исходным перечнем и механикой: Скручивание корпуса стоя нагружает rectus abdominis, косые мышцы помогают, erector spinae изначально указан как стабилизатор."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:standing-cable-high-to-low-twist",
+      "source_path": "assets/work/abs/standing-cable-high-to-low-twist.json",
+      "source_blob_sha": "bcc12fc6e9e84a5eb6df4441fcfe1cb6c32d9753",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-high-to-low-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Высокая тяга блока по диагонали вниз с ротацией туловища: исходный target Obliques, дополнительные роли не установлены. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-high-to-low-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Двигательные мышцы: Высокая тяга блока по диагонали вниз с ротацией туловища: исходный target Obliques, дополнительные роли не установлены."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-high-to-low-twist/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:standing-cable-low-to-high-twist",
+      "source_path": "assets/work/abs/standing-cable-low-to-high-twist.json",
+      "source_blob_sha": "c39e55c96024c47107dacd73b689b841137dfaa8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-low-to-high-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Вращение туловища снизу вверх против тросовой нагрузки: источник прямо указывает Obliques как основную группу. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-low-to-high-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Двигательные мышцы: Вращение туловища снизу вверх против тросовой нагрузки: источник прямо указывает Obliques как основную группу."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-low-to-high-twist/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:standing-cable-twist",
+      "source_path": "assets/work/abs/standing-cable-twist.json",
+      "source_blob_sha": "6c04aeab81a363be53c1ca11382be96794d3b797",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Повороты туловища стоя с кабелем: источник прямо указывает Obliques, но не выделяет точные вторичные мышечные роли. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-twist/"
+          ],
+          "confidence": "high",
+          "reason": "Двигательные мышцы: Повороты туловища стоя с кабелем: источник прямо указывает Obliques, но не выделяет точные вторичные мышечные роли."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cable-twist/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:two-arm-cable-front-raise",
+      "source_path": "assets/work/shoulders/two-arm-cable-front-raise.json",
+      "source_blob_sha": "3ee43cf3946abb25ba57e2072da55687329f7c39",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "trapezius",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-cable-front-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Двусторонний фронтальный подъём на блоках: передняя дельта и синергисты прямо указаны в исходнике, wrist extensors нормализованы. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-cable-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Двусторонний фронтальный подъём на блоках: передняя дельта и синергисты прямо указаны в исходнике, wrist extensors нормализованы."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-cable-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизаторы подтверждены исходным перечнем и механикой: Двусторонний фронтальный подъём на блоках: передняя дельта и синергисты прямо указаны в исходнике, wrist extensors нормализованы."
+        }
+      ],
+      "notes": "Неверно записанное Levatos Scapula не перенесено в стабилизаторы без предметного подтверждения."
+    },
+    {
+      "id": "fitnessprogramer:two-arm-cable-lateral-raise",
+      "source_path": "assets/work/shoulders/two-arm-cable-lateral-raise.json",
+      "source_blob_sha": "f97387cbe218248a761cd5cda346b53109b3f99a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "serratus_anterior",
+            "deltoid_anterior",
+            "trapezius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-cable-lateral-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: cable. Двустороннее отведение плеча с блоками: средняя дельта ведущая, надостная, передняя дельта и мышцы вращения лопатки содействуют по исходному списку. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-cable-lateral-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Двигательные мышцы: Двустороннее отведение плеча с блоками: средняя дельта ведущая, надостная, передняя дельта и мышцы вращения лопатки содействуют по исходному списку."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-cable-lateral-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:bent-over-rear-delt-fly-gymstick",
+      "source_path": "assets/work/shoulders/bent-over-rear-delt-fly-gymstick.json",
+      "source_blob_sha": "761bccdbb535c26fb861685ca1e16a579a37d96c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "trapezius_middle",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-rear-delt-fly-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: gymstick. Разведение рук в наклоне с гимстиком работает задней дельтой и мышцами ретракции лопатки; гимстик — канонический тип оборудования, его встроенная резина не отдельный обязательный инвентарь. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-rear-delt-fly-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Разведение рук в наклоне с гимстиком работает задней дельтой и мышцами ретракции лопатки; гимстик — канонический тип оборудования, его встроенная резина не отдельный обязательный инвентарь."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-rear-delt-fly-gymstick/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-rear-delt-fly-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Предварительная категория проверена по характеру и направлению движения: Разведение рук в наклоне с гимстиком работает задней дельтой и мышцами ретракции лопатки; гимстик — канонический тип оборудования, его встроенная резина не отдельный обязательный инвентарь."
+        }
+      ],
+      "notes": "Исходная анатомия пустая, роли синергистов основаны на типе движения; точная роль стабилизаторов не установлена."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-row-gymstick",
+      "source_path": "assets/work/back/bent-over-row-gymstick.json",
+      "source_blob_sha": "6c27afed4a196b0950c2c4ae08e162eb70af939b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "trapezius",
+            "rhomboids",
+            "deltoid_posterior",
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-row-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: gymstick. Тяга к поясу в наклоне с гимстиком: широчайшая и мышцы верхней части спины выполняют тягу, разгибатели позвоночника удерживают наклон. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-row-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Тяга к поясу в наклоне с гимстиком: широчайшая и мышцы верхней части спины выполняют тягу, разгибатели позвоночника удерживают наклон."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-row-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизаторы подтверждены исходным перечнем и механикой: Тяга к поясу в наклоне с гимстиком: широчайшая и мышцы верхней части спины выполняют тягу, разгибатели позвоночника удерживают наклон."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-row-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Предварительная категория проверена по характеру и направлению движения: Тяга к поясу в наклоне с гимстиком: широчайшая и мышцы верхней части спины выполняют тягу, разгибатели позвоночника удерживают наклон."
+        }
+      ],
+      "notes": "Гимстик (тренировочная палка с эспандерами) учтён как единая система; Resistance Band из исходника не дублируется отдельным предметом."
+    },
+    {
+      "id": "fitnessprogramer:bicycle-crunch-gymstick",
+      "source_path": "assets/work/abs/bicycle-crunch-gymstick.json",
+      "source_blob_sha": "9fd2728a8c7d65093023e3439902a2dc1747b6f5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bicycle-crunch-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: gymstick. Скручивания «велосипед» с гимстиком включают сгибание и вращение туловища за счёт прямой и косых мышц живота. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bicycle-crunch-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Скручивания «велосипед» с гимстиком включают сгибание и вращение туловища за счёт прямой и косых мышц живота."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bicycle-crunch-gymstick/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ],
+      "notes": "Ни исходная карточка, ни инструкция не устанавливают точные синергисты и стабилизаторы; other — специальный маркер."
+    },
+    {
+      "id": "fitnessprogramer:down-to-up-twist-gymstick",
+      "source_path": "assets/work/abs/down-to-up-twist-gymstick.json",
+      "source_blob_sha": "94cc55e564a372393268522c77704159dc3f7095",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/down-to-up-twist-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Проверен конкретный инвентарь: gymstick. Диагональный поворот корпуса снизу вверх с гимстиком — ротационная работа косых мышц живота. Общий Full Gym не используется."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/down-to-up-twist-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Двигательные мышцы: Диагональный поворот корпуса снизу вверх с гимстиком — ротационная работа косых мышц живота."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/down-to-up-twist-gymstick/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно однозначно определить анатомическую стабилизирующую роль; записан временный маркер other, не анатомический ID."
+        }
+      ],
+      "notes": "Остальные роли неизвестны; эспандеры, конструктивно входящие в Gymstick, не добавлены как отдельный фильтр."
     }
   ]
 }

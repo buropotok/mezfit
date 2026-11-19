@@ -76,6 +76,25 @@
         "negative incline bench"
       ],
       "existing_equipment_match_checked": true
+    },
+    {
+      "id": "seated-cable-row-machine",
+      "label_ru": "Тренажёр для горизонтальной тяги сидя",
+      "definition_ru": "Специализированный тросовый тренажёр для горизонтальной тяги с сиденьем, низким блоком и опорной платформой для стоп.",
+      "exercise_ids": [
+        "fitnessprogramer:seated-cable-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/seated-cable-row/",
+        "https://www.majorfitness.com/blogs/training-tips/seated-cable-row"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "seated cable row machine",
+        "low row station",
+        "seated low-pulley row"
+      ],
+      "existing_equipment_match_checked": true
     }
   ]
 }
