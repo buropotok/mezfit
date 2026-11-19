@@ -1020,6 +1020,609 @@
         }
       ],
       "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-dumbbell-push-up",
+      "source_path": "assets/work/chest/close-grip-dumbbell-push-up.json",
+      "source_blob_sha": "37ad6ef1062c037fc820632ca8520b8a6073f62c",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-dumbbell-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Отжимание узким хватом с опорой рук на одной гантели; большой грудной и трицепс выполняют жим, корпус стабилен."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:close-grip-incline-dumbbell-press",
+      "source_path": "assets/work/chest/close-grip-incline-dumbbell-press.json",
+      "source_blob_sha": "9cd661ebf0f19ee3f801d8e3a70693582bdcf065",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-incline-dumbbell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Узкий жим гантелей на наклонной скамье акцентирует ключичную часть груди, помогают трицепс и передняя дельта."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-knee-push-up",
+      "source_path": "assets/work/chest/close-grip-knee-push-up.json",
+      "source_blob_sha": "abeda29badc491fc977535151550800841065e3c",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-knee-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Отжимание узким хватом с колен — облегчённый жим, нагрузка на трицепс и грудь."
+        }
+      ],
+      "notes": "Без инструкции о траектории роль стабилизаторов подтверждается только общей механикой отжиманий."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-lat-pulldown",
+      "source_path": "assets/work/back/close-grip-lat-pulldown.json",
+      "source_blob_sha": "20f7baa39cdd8593a4e87115e2f6930e1146c8df",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "brachialis",
+            "brachioradialis",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-lat-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга верхнего блока узким хватом нагружает широчайшие, большую круглую и сгибатели локтя, а также мышцы лопаток."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-z-bar-curl",
+      "source_path": "assets/work/biceps/close-grip-z-bar-curl.json",
+      "source_blob_sha": "0676954f9411be84ab114e27458234d1d65f1c91",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-z-bar-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Z-гриф — канонический EZ-гриф; основное сгибание локтей происходит за счёт бицепса и синергистов."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:cobra-abdominal-stretch",
+      "source_path": "assets/work/abs/cobra-abdominal-stretch.json",
+      "source_blob_sha": "968ed023f011f6803a6d1a56064e673e735d507e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cobra-abdominal-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Поза кобры здесь используется для растяжения прямой мышцы живота; силовые двигатели и их роли не устанавливаются."
+        }
+      ],
+      "notes": "Растягиваемая rectus_abdominis не должна автоматически становиться мышцей-двигателем. Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:cobra-push-up",
+      "source_path": "assets/work/chest/cobra-push-up.json",
+      "source_blob_sha": "c1780ab7ba081aa6ae81f36983c643310f4e2067",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cobra-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Cobra push-up — отжимание с разгибанием локтя и плечевой нагрузкой; точный акцент корпуса в исходной карточке не указан."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:commander-pull-up",
+      "source_path": "assets/work/back/commander-pull-up.json",
+      "source_blob_sha": "922c9a0d7c93f55204ab965acd845f2fbe2f5046",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/commander-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Commander pull-up — подтягивание боковым хватом на турнике; главная тяга широчайшими и сгибателями локтя."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:concentration-curl",
+      "source_path": "assets/work/biceps/concentration-curl.json",
+      "source_blob_sha": "98653fda0d9576ad8e43e89e7b9a922f00115562",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/concentration-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Концентрированное сгибание с гантелью главным образом развивает бицепс; исходный brachialis не должен заменять бицепс как единственную главную мышцу."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:corner-wall-stretch",
+      "source_path": "assets/work/chest/corner-wall-stretch.json",
+      "source_blob_sha": "f4371dd5e17cf162a2197179cd0008eb0e337d45",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/corner-wall-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжка груди и плеч в углу стены не имеет подтверждённой роли активных силовых двигателей; требуется угол стен."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:cossack-squat",
+      "source_path": "assets/work/hip/cossack-squat.json",
+      "source_blob_sha": "af7b907f6636d4a3dfe19d902a016d3f6cad46df",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cossack-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Боковой присед казака: разгибание колена и бедра, контроль таза и корпуса, натяжение приводящих бедра."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:crab-twist-toe-touch",
+      "source_path": "assets/work/abs/crab-twist-toe-touch.json",
+      "source_blob_sha": "38b348f3f99979b651ddec2939a03e0842822031",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "obliques"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/crab-twist-toe-touch/"
+          ],
+          "confidence": "medium",
+          "reason": "Поворот из позиции краба с касанием носка включает сгибание и ротацию корпуса; синергист сгибатель бедра."
+        }
+      ],
+      "notes": "Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:cross-arm-push-up",
+      "source_path": "assets/work/triceps/cross-arm-push-up.json",
+      "source_blob_sha": "ada73d4f255ab3e5a0de25d2280906c922b2a5a4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-arm-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Перекрёстная постановка рук в отжимании повышает акцент на трицепс; грудные помогают, корпус удерживается."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cross-body-mountain-climber",
+      "source_path": "assets/work/abs/cross-body-mountain-climber.json",
+      "source_blob_sha": "a2e2a9ad73fde044e230a2835e1653dd669ba10e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "obliques"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-body-mountain-climber/"
+          ],
+          "confidence": "high",
+          "reason": "В cross-body mountain climber колено приводится к противоположному локтю за счёт сгибания бедра и ротационного контроля корпуса."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cross-body-push-up",
+      "source_path": "assets/work/cardio/cross-body-push-up.json",
+      "source_blob_sha": "fc490a04fd1f0f3a2d26024c8c9849b18a915b76",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "other"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-body-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Для Cross Body Push-up исходная страница даёт только категории Cardio/Full Body без инструкции и анатомии; точная версия движения не подтверждена."
+        }
+      ],
+      "notes": "Нужен визуальный просмотр GIF: нельзя уверенно выбрать между силовым отжиманием, динамическим комплексом и кардио. Маркер other — отдельный результат ревью, а не анатомическая мышца."
     }
   ]
 }
