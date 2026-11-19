@@ -1,0 +1,755 @@
+{
+  "schema_version": 1,
+  "batch_id": "B003",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:kneeling-incline-press-gymstick",
+      "source_path": "assets/work/chest/kneeling-incline-press-gymstick.json",
+      "source_blob_sha": "c0b243db593d010ae6ce25c92516b1f7da9ba259",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-incline-press-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-incline-press-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонный жим: верх грудных, передняя дельта и трицепс. Источник не выделяет стабилизаторы поимённо."
+        }
+      ],
+      "notes": "Наклонный жим: верх грудных, передняя дельта и трицепс. Источник не выделяет стабилизаторы поимённо."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-single-leg-kick-gymstick",
+      "source_path": "assets/work/hip/kneeling-single-leg-kick-gymstick.json",
+      "source_blob_sha": "af1538b931b8adba735474de5fd136374c86c069",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-single-leg-kick-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-single-leg-kick-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Односторонний мах ногой назад — разгибание бедра. Синергисты и стабилизаторы в источнике не конкретизированы."
+        }
+      ],
+      "notes": "Односторонний мах ногой назад — разгибание бедра. Синергисты и стабилизаторы в источнике не конкретизированы."
+    },
+    {
+      "id": "fitnessprogramer:lying-alternate-leg-press-gymstick",
+      "source_path": "assets/work/leg/lying-alternate-leg-press-gymstick.json",
+      "source_blob_sha": "4ac59aa2f96152578979181333750a6825050d5f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-alternate-leg-press-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-alternate-leg-press-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Попеременный жим ногами предполагает разгибание колена и бедра; версия Gymstick не имеет индивидуальной анатомической разметки."
+        }
+      ],
+      "notes": "Попеременный жим ногами предполагает разгибание колена и бедра; версия Gymstick не имеет индивидуальной анатомической разметки."
+    },
+    {
+      "id": "fitnessprogramer:overhead-triceps-extension-gymstick",
+      "source_path": "assets/work/triceps/overhead-triceps-extension-gymstick.json",
+      "source_blob_sha": "9af4c555d09be75dec6c822892c08293f2e361bd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-triceps-extension-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-triceps-extension-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание локтя из-за головы, остальные роли не выделены надёжно."
+        }
+      ],
+      "notes": "Разгибание локтя из-за головы, остальные роли не выделены надёжно."
+    },
+    {
+      "id": "fitnessprogramer:single-arm-upright-row-gymstick",
+      "source_path": "assets/work/shoulders/single-arm-upright-row-gymstick.json",
+      "source_blob_sha": "a58fa8215c6c31c85566492d47ddf08d02b67e14",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-upright-row-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-arm-upright-row-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга к подбородку одной рукой: средняя дельта и верх трапеции, сгибатели локтя как синергисты. Один финальный раздел shoulders."
+        }
+      ],
+      "notes": "Тяга к подбородку одной рукой: средняя дельта и верх трапеции, сгибатели локтя как синергисты. Один финальный раздел shoulders."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-reverse-hyperextension-gymstick",
+      "source_path": "assets/work/hip/single-leg-reverse-hyperextension-gymstick.json",
+      "source_blob_sha": "d9dcf17eeee4f4c3236cf4b74441db670a925090",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-reverse-hyperextension-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-reverse-hyperextension-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратная гиперэкстензия одной ногой — разгибание бедра; разгибатели позвоночника удерживают корпус, поэтому роль стабилизатора. Категория legs."
+        }
+      ],
+      "notes": "Обратная гиперэкстензия одной ногой — разгибание бедра; разгибатели позвоночника удерживают корпус, поэтому роль стабилизатора. Категория legs."
+    },
+    {
+      "id": "fitnessprogramer:skier-gymstick",
+      "source_path": "assets/work/shoulders/skier-gymstick.json",
+      "source_blob_sha": "2db01a2815f7c34619a643d149ea56a453b95e66",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/skier-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/skier-gymstick/"
+          ],
+          "confidence": "low",
+          "reason": "«Лыжник» с разгибанием плеча прямыми руками назад. Уточнить по GIF амплитуду и возможное участие дополнительных двигателей."
+        }
+      ],
+      "notes": "«Лыжник» с разгибанием плеча прямыми руками назад. Уточнить по GIF амплитуду и возможное участие дополнительных двигателей."
+    },
+    {
+      "id": "fitnessprogramer:split-squat-gymstick",
+      "source_path": "assets/work/hip/split-squat-gymstick.json",
+      "source_blob_sha": "82e6ee3013e543cd6bcd802c238455b773e0fbfa",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/split-squat-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/split-squat-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Разножное приседание: разгибатели колена/бедра, стабилизация таза средней ягодичной. Источник приводит общие группы, не индивидуальные роли."
+        }
+      ],
+      "notes": "Разножное приседание: разгибатели колена/бедра, стабилизация таза средней ягодичной. Источник приводит общие группы, не индивидуальные роли."
+    },
+    {
+      "id": "fitnessprogramer:squat-gymstick",
+      "source_path": "assets/work/hip/squat-gymstick.json",
+      "source_blob_sha": "420e9661c93e473f3d2fc3c7e80100edb4592402",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/squat-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/squat-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Приседание: основные разгибатели колена/бедра; приводящие помогают в разгибании бедра, мышцы спины стабилизируют позвоночник."
+        }
+      ],
+      "notes": "Приседание: основные разгибатели колена/бедра; приводящие помогают в разгибании бедра, мышцы спины стабилизируют позвоночник."
+    },
+    {
+      "id": "fitnessprogramer:standing-side-bend-gymstick",
+      "source_path": "assets/work/abs/standing-side-bend-gymstick.json",
+      "source_blob_sha": "ba1dadc4b21702924ee17478c5335e2faf5ae12f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-side-bend-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-side-bend-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Боковое сгибание туловища: косые мышцы живота и квадратная мышца поясницы; вторые роли неизвестны."
+        }
+      ],
+      "notes": "Боковое сгибание туловища: косые мышцы живота и квадратная мышца поясницы; вторые роли неизвестны."
+    },
+    {
+      "id": "fitnessprogramer:standing-triceps-extension-gymstick",
+      "source_path": "assets/work/triceps/standing-triceps-extension-gymstick.json",
+      "source_blob_sha": "ad7c9043847871253787491e31e7e9d21cf0e8f4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-triceps-extension-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-triceps-extension-gymstick/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание рук стоя с гимстиком, основное движение в локте. Вторые роли не установлены."
+        }
+      ],
+      "notes": "Разгибание рук стоя с гимстиком, основное движение в локте. Вторые роли не установлены."
+    },
+    {
+      "id": "fitnessprogramer:swing-gymstick",
+      "source_path": "assets/work/shoulders/swing-gymstick.json",
+      "source_blob_sha": "97282918544a4e47dd178db52de2c9e841650ee7",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/swing-gymstick/"
+          ],
+          "confidence": "high",
+          "reason": "Источник явно указывает Gymstick с интегрированными резиновыми тяжами. Full Gym — не тип оборудования, дополнительный band не нужен как отдельный снаряд."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/swing-gymstick/"
+          ],
+          "confidence": "low",
+          "reason": "Swing Gymstick: источник называет плечи, тазобедренную область и разгибатели спины, но не описывает траекторию. Требуется просмотр GIF перед выбором мышц и основной категории."
+        }
+      ],
+      "notes": "Swing Gymstick: источник называет плечи, тазобедренную область и разгибатели спины, но не описывает траекторию. Требуется просмотр GIF перед выбором мышц и основной категории."
+    },
+    {
+      "id": "fitnessprogramer:1-2-stick-drill",
+      "source_path": "assets/work/cardio/1-2-stick-drill.json",
+      "source_blob_sha": "0529af4330059551eccc46d1c09da95e6b4e2ac9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/1-2-stick-drill/"
+          ],
+          "confidence": "high",
+          "reason": "Источник указывает NO EQUIPMENT. Использован существующий канонический ID none."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/1-2-stick-drill/"
+          ],
+          "confidence": "high",
+          "reason": "Плиометрика на латеральное перемещение и фиксацию приземления: силовые роли не выделены достоверно. Разметочные ориентиры не являются обязательным спортивным оборудованием."
+        }
+      ],
+      "notes": "Плиометрика на латеральное перемещение и фиксацию приземления: силовые роли не выделены достоверно. Разметочные ориентиры не являются обязательным спортивным оборудованием."
+    },
+    {
+      "id": "fitnessprogramer:4-point-tummy-vacuum-exercise",
+      "source_path": "assets/work/abs/4-point-tummy-vacuum-exercise.json",
+      "source_blob_sha": "a7f60a14aa4d547218c198ee3d2b8503e1c94b07",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/4-point-tummy-vacuum-exercise/"
+          ],
+          "confidence": "high",
+          "reason": "Источник указывает NO EQUIPMENT. Использован существующий канонический ID none."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/4-point-tummy-vacuum-exercise/"
+          ],
+          "confidence": "high",
+          "reason": "Источник прямо называет поперечную мышцу живота; диафрагма, тазовое дно и multifidus отсутствуют среди 69 канонических ID и не заменялись анатомическими синонимами."
+        }
+      ],
+      "notes": "Источник прямо называет поперечную мышцу живота; диафрагма, тазовое дно и multifidus отсутствуют среди 69 канонических ID и не заменялись анатомическими синонимами."
+    },
+    {
+      "id": "fitnessprogramer:45-degree-incline-row",
+      "source_path": "assets/work/shoulders/45-degree-incline-row.json",
+      "source_blob_sha": "58a9994e95f39a2cbfe6df9b9dc04fd78a75e5fd",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "dumbbells",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "trapezius_middle",
+            "rhomboids",
+            "infraspinatus",
+            "teres_minor",
+            "latissimus_dorsi",
+            "brachioradialis",
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "back"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/45-degree-incline-row/"
+          ],
+          "confidence": "high",
+          "reason": "В инструкции прямо указаны гантели и наклонная скамья под 45 градусов. Оба ID уже есть в EQUIPMENT_LABELS."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/45-degree-incline-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/45-degree-incline-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Текст обзора описывает верхнюю и среднюю спину как основную область тяги, хотя рубрика источника содержит Shoulders/Trapezius; оставить человеку окончательное решение."
+        }
+      ],
+      "notes": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки."
+    }
+  ]
+}
