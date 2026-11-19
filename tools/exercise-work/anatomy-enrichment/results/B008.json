@@ -1341,6 +1341,441 @@
         }
       ],
       "notes": "Kneeling T-spine rotation — мобилизация грудного отдела позвоночника, а не силовая тренировка."
+    },
+    {
+      "id": "fitnessprogramer:knuckle-push-up",
+      "source_path": "assets/work/chest/knuckle-push-up.json",
+      "source_blob_sha": "f4c38109abaadea7d8dde4cfec1ba6e7433568e2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques",
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/knuckle-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Knuckle push-up — отжимания на костяшках кулаков, изменения нагрузки на кисть не меняют грудные как основную; не приписываем динамическую роль бицепсу."
+        }
+      ],
+      "notes": "Knuckle push-up — отжимания на костяшках кулаков, изменения нагрузки на кисть не меняют грудные как основную; не приписываем динамическую роль бицепсу."
+    },
+    {
+      "id": "fitnessprogramer:korean-dips",
+      "source_path": "assets/work/chest/korean-dips.json",
+      "source_blob_sha": "4f9800e78ea13a5bedf6bddae09ea4ae06f9914a",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "primary_category": "arms",
+        "equipment": [
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/korean-dips/"
+          ],
+          "confidence": "low",
+          "reason": "Korean dips обычно выполняются на прямой перекладине за спиной, но исходная инструкция неожиданно требует parallel bars и описывает обычный dip. Конкретное устройство и GIF требуют проверки; `other` не выдаётся за установленный тип."
+        }
+      ],
+      "notes": "Korean dips обычно выполняются на прямой перекладине за спиной, но исходная инструкция неожиданно требует parallel bars и описывает обычный dip. Конкретное устройство и GIF требуют проверки; `other` не выдаётся за установленный тип."
+    },
+    {
+      "id": "fitnessprogramer:l-sit",
+      "source_path": "assets/work/abs/l-sit.json",
+      "source_blob_sha": "7cfcfd9734ac91ce752bd1f107746e31125b0b71",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "secondary": [
+            "quadriceps_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/l-sit/"
+          ],
+          "confidence": "medium",
+          "reason": "L-sit — статическое удержание прямых ног на весу за счёт сгибателей бедра и корпуса; исходное no equipment допускает выполнение на полу."
+        }
+      ],
+      "notes": "L-sit — статическое удержание прямых ног на весу за счёт сгибателей бедра и корпуса; исходное no equipment допускает выполнение на полу."
+    },
+    {
+      "id": "fitnessprogramer:l-sit-pull-up",
+      "source_path": "assets/work/back/l-sit-pull-up.json",
+      "source_blob_sha": "6151779c64f3caf4934c1596cb9dc867662d5f44",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/l-sit-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "L-sit pull-up выполняется в висе на турнике: тяга спины и удержание ног сгибателями бедра, корпус стабилизирует положение."
+        }
+      ],
+      "notes": "L-sit pull-up выполняется в висе на турнике: тяга спины и удержание ног сгибателями бедра, корпус стабилизирует положение."
+    },
+    {
+      "id": "fitnessprogramer:landmine-deadlift",
+      "source_path": "assets/work/hip/landmine-deadlift.json",
+      "source_blob_sha": "a68f4e87f030b503c0148e9f094df36a26f10402",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine deadlift — тяга закреплённого с одного конца грифа с разгибанием бедра/колена, нагрузка на заднюю цепь."
+        }
+      ],
+      "notes": "Landmine deadlift — тяга закреплённого с одного конца грифа с разгибанием бедра/колена, нагрузка на заднюю цепь."
+    },
+    {
+      "id": "fitnessprogramer:landmine-floor-chest-fly",
+      "source_path": "assets/work/chest/landmine-floor-chest-fly.json",
+      "source_blob_sha": "84fde44dbcc9f880016702eed97c8f0233d465fd",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-floor-chest-fly/"
+          ],
+          "confidence": "low",
+          "reason": "Landmine floor chest fly — горизонтальная траектория перед грудью с закреплённым грифом; без инструкции неясно, лежит ли человек на полу и как устроена рукоять."
+        }
+      ],
+      "notes": "Landmine floor chest fly — горизонтальная траектория перед грудью с закреплённым грифом; без инструкции неясно, лежит ли человек на полу и как устроена рукоять."
+    },
+    {
+      "id": "fitnessprogramer:landmine-lateral-raise",
+      "source_path": "assets/work/shoulders/landmine-lateral-raise.json",
+      "source_blob_sha": "50da789c84d21c56d0027a5a661ca3a861605dc3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine lateral raise — отведение/подъём плеча с фиксированным грифом, стабилизация лопатки трапецией."
+        }
+      ],
+      "notes": "Landmine lateral raise — отведение/подъём плеча с фиксированным грифом, стабилизация лопатки трапецией."
+    },
+    {
+      "id": "fitnessprogramer:landmine-lunge",
+      "source_path": "assets/work/hip/landmine-lunge.json",
+      "source_blob_sha": "40dbfe16d6fd650d502b9085d54d1e8b132da79a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine lunge — выпады с закреплённым грифом, разгибатели опорной ноги и стабилизаторы таза."
+        }
+      ],
+      "notes": "Landmine lunge — выпады с закреплённым грифом, разгибатели опорной ноги и стабилизаторы таза."
+    },
+    {
+      "id": "fitnessprogramer:landmine-press",
+      "source_path": "assets/work/shoulders/landmine-press.json",
+      "source_blob_sha": "23c74bf9f1c828f07bf1f63c26d880d7373b3567",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "triceps_brachii",
+            "pectoralis_clavicular",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine press: главный двигатель передняя дельта исходника, трицепс разгибает локоть; массив исходных glute/quads не является доказанной синергией без push-press."
+        }
+      ],
+      "notes": "Landmine press: главный двигатель передняя дельта исходника, трицепс разгибает локоть; массив исходных glute/quads не является доказанной синергией без push-press."
+    },
+    {
+      "id": "fitnessprogramer:landmine-squat",
+      "source_path": "assets/work/hip/landmine-squat.json",
+      "source_blob_sha": "cf37b9f1fad3c05db84de73893fb1ba74d7ccfec",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine squat — приседания с рычагом закреплённой штанги, задействованы разгибатели коленей и бедра."
+        }
+      ],
+      "notes": "Landmine squat — приседания с рычагом закреплённой штанги, задействованы разгибатели коленей и бедра."
+    },
+    {
+      "id": "fitnessprogramer:landmine-t-bar-row",
+      "source_path": "assets/work/back/landmine-t-bar-row.json",
+      "source_blob_sha": "478429cf87e01a084bfcb6f512247d139a01c19b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-t-bar-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine T-bar row — тяга Т-грифа с шарнирным креплением, динамика приведения плеча/лопатки, разгибатели спины удерживают наклон."
+        }
+      ],
+      "notes": "Landmine T-bar row — тяга Т-грифа с шарнирным креплением, динамика приведения плеча/лопатки, разгибатели спины удерживают наклон."
+    },
+    {
+      "id": "fitnessprogramer:landmine-twist",
+      "source_path": "assets/work/abs/landmine-twist.json",
+      "source_blob_sha": "1393f5d0d6f8be70733a1f00330ee66e2b76b783",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/landmine-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Landmine twist — ротация корпуса и перевод фиксированного грифа из стороны в сторону, исходные obliques верны, уточняется контроль позвоночника."
+        }
+      ],
+      "notes": "Landmine twist — ротация корпуса и перевод фиксированного грифа из стороны в сторону, исходные obliques верны, уточняется контроль позвоночника."
     }
   ]
 }
