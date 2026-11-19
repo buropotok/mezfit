@@ -33,7 +33,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-inner-thigh-adductor-stretch/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Роликовая мобилизация приводящей поверхности бедра; нет доказуемой выделенной двигательной мышцы. Роли помечены специальным маркером, а не мышечным ID."
         }
       ],
@@ -103,7 +103,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-lat-stretch/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Мобилизация широчайшей на ролике; растягиваемая ткань не является доказанным главным движителем упражнения."
         }
       ],
@@ -138,7 +138,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-plantar-fasciitis/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Прокатка подошвенной фасции относится к мягкотканной мобилизации; фасция не является одной из 69 мышц и не подменяется соседним мышечным ID."
         }
       ],
@@ -173,7 +173,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-posterior-shoulder/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Роликовая мобилизация задней области плеча без описания техники; индивидуальные движущие и стабилизирующие мышцы не подтверждены."
         }
       ],
@@ -208,7 +208,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-quads/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Роликовая работа с передней поверхностью бедра не доказывает силовую роль квадрицепса; маркируются невыделенные роли."
         }
       ],
@@ -243,7 +243,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-rhomboids/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Роликовая мобилизация области ромбовидных мышц; целевая мягкая ткань не приравнивается к главному двигателю."
         }
       ],
@@ -278,7 +278,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foam-roller-upper-back/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Самомассаж верхней спины на ролике: нельзя автоматически назвать трапецию/ромбовидные движущими мышцами без описания действия."
         }
       ],
@@ -313,7 +313,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/foot-and-ankles-stretches/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Комплекс растяжек стопы и голеностопа без описания каждого движения; целевые ткани и роли индивидуальных мышц неразличимы."
         }
       ],
@@ -420,7 +420,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/frog-crunch/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Вариант frog crunch, разгибание/сгибание туловища и скручивание; без подробной техники дополнительных стабилизаторов не выделяем."
         }
       ],
@@ -455,7 +455,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/frog-pose/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Frog pose — статическая растяжка приводящих бедра; растягиваемые ткани не являются подтверждёнными силовыми двигательными мышцами."
         }
       ],
@@ -490,7 +490,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/frog-pump/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Frog pump — ягодичный подъём таза с развёрнутыми коленями; большая ягодичная разгибает бедро, дополнительные роли отмечены с ограниченной уверенностью."
         }
       ],
@@ -562,7 +562,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/front-plank-with-arm-and-leg-lift/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Планка с одновременным подъёмом руки и ноги создаёт антиразгибательную нагрузку корпуса и контроль опоры плеча; техника не детализирована в источнике."
         }
       ],
@@ -599,7 +599,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/front-plank-with-arm-lift/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Планка с подъёмом руки: сопротивление ротации корпуса, стабилизация лопатки; индивидуальная синергия ног достоверно не выделяется."
         }
       ],
@@ -796,7 +796,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/full-range-of-motion-lat-pulldown/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Пулдаун с полным ROM обычно выполняется на верхнем тросовом блоке, но точная техника в карточке отсутствует; без просмотра GIF дополнительных стабилизаторов нет."
         }
       ],
@@ -913,7 +913,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/glute-bridge-on-bench/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Glute bridge с опорой на скамью: bench обязателен, NO EQUIPMENT исходной карточки некорректен; разгибание бедра выполняет большая ягодичная."
         }
       ],
@@ -953,7 +953,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/glute-bridge-one-leg-on-bench/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Одноногий ягодичный мост со скамьёй; фиксация таза повышает стабилизирующую нагрузку, однако техника без инструкции требует ревью."
         }
       ],
@@ -1080,7 +1080,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/good-morning-with-resistance-band/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Good morning с резинкой; Resistance Band уже имеет канонический фильтр band, не требуется нового типа. Исходная анатомия пустая."
         }
       ],
@@ -1195,7 +1195,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/half-cross-crunch/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Half cross crunch — скручивание с диагональным компонентом, техника локального источника не позволяет назвать дополнительные мышцы."
         }
       ],
@@ -1232,7 +1232,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/half-frog-pose/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Half Frog Pose / Ardha Bhekasana — yoga stretch передней части бедра; исходная core категория из смешанных групп не отражает преимущественно растяжение ноги."
         }
       ],
@@ -1379,7 +1379,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hammer-curl-with-resistance-band/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Hammer curl с резинкой: нейтральное положение кисти нагружает brachioradialis и сгибатели локтя. Не вводим второй фильтр для Resistance Band."
         }
       ],
@@ -1446,7 +1446,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hand-gripper/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Hand gripper — отдельный механический кистевой эспандер, не generic machine и не резинка. Основные мышцы сгибания пальцев/хвата."
         }
       ],
@@ -1456,7 +1456,7 @@
       "id": "fitnessprogramer:hands-bike",
       "source_path": "assets/work/cardio/hands-bike.json",
       "source_blob_sha": "f7fda264b95cef13fe4ed4ba08b8eb45f500d240",
-      "status": "partial",
+      "status": "needs_review",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1485,11 +1485,11 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hands-bike/"
           ],
-          "confidence": "medium",
-          "reason": "Hands bike — кардиотренажёр ручного вращения (arm ergometer), отличен от обычного велотренажёра. Точная мускульная роль без описания не устанавливается."
+          "confidence": "low",
+          "reason": "Hands Bike — вероятно ручной велоэргометр (arm bike), но исходная карточка не содержит инструкции или изображения устройства в текстовых данных; конкретную конструкцию необходимо сверить с GIF. Предложение equipment upper-body-ergometer предварительное."
         }
       ],
-      "notes": "Hands bike — кардиотренажёр ручного вращения (arm ergometer), отличен от обычного велотренажёра. Точная мускульная роль без описания не устанавливается."
+      "notes": "Hands Bike — вероятно ручной велоэргометр (arm bike), но исходная карточка не содержит инструкции или изображения устройства в текстовых данных; конкретную конструкцию необходимо сверить с GIF. Предложение equipment upper-body-ergometer предварительное."
     },
     {
       "id": "fitnessprogramer:hands-in-air-dead-bug",
@@ -1748,7 +1748,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hanging-side-knee-raises/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Подъём коленей в сторону в висе: требует перекладину, ротацию/наклон таза выполняют косые; работа хвата поддерживает вис."
         }
       ],
@@ -1788,7 +1788,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hanging-windshield-wiper/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Висячие дворники — перенос ног в стороны на турнике. Движение корпуса и хвата отделено от вспомогательной роли сгибателей бедра."
         }
       ],
@@ -1823,7 +1823,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/happy-baby-pose/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Happy Baby — статическая йога-растяжка области таза; растягиваемые ткани не идентичны активным силовым мышцам."
         }
       ],
@@ -2005,7 +2005,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/heel-touch-side-kick-squat/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Комбинация приседания, касания пятки и бокового удара ногой; без пошаговой техники отдельные фазы требуют визуальной проверки."
         }
       ],
@@ -2273,7 +2273,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/high-knees-against-wall/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "High knees against wall выполняется с упором на стену; cardio-ритм нельзя разметить как изолированное силовое упражнение."
         }
       ],
@@ -2308,7 +2308,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/high-knees-lift-run/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "High-knees lift run — аэробный бег на месте с высоким подъёмом бедра; конкретная анатомическая иерархия не следует из пустого источника."
         }
       ],
@@ -2492,7 +2492,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hip-extension-on-bench/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Hip extension on bench: названа обязательная опора bench, исходное NO EQUIPMENT конфликтует с ней; точный способ фиксации без инструкции требует GIF."
         }
       ],
@@ -2531,7 +2531,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/hook-kick/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Hook kick — удар ногой без спортивного снаряда, в исходном источнике ошибочно только Full Gym. Оборудование не требуется; анатомическая иерархия без инструкции неизвестна."
         }
       ],
@@ -2571,7 +2571,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/horizontal-leg-press/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Horizontal leg press — горизонтальный жим ногами на отдельном тренажёре, отличен от generic machine; вариант с опорной спинкой не требует выдуманных стабилизаторов."
         }
       ],
@@ -2971,7 +2971,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/incline-dumbbell-hammer-row/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Incline hammer row — тяга гантелей нейтральным хватом с поддержкой наклонной скамьи; исходное how_to отсутствует, ролям дана средняя уверенность."
         }
       ],
@@ -3296,7 +3296,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/incline-reverse-grip-dumbbell-row/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Incline reverse-grip dumbbell row — тяга обратным хватом с грудной поддержкой наклонной скамьи; исходная страница без инструкции, детали траектории требуют просмотра."
         }
       ],
@@ -3493,7 +3493,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/jab-boxing/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Jab Boxing — одиночный удар рукой в кардиоритме; без инструкции нет доказанной анатомической иерархии."
         }
       ],
@@ -3602,7 +3602,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/jefferson-squat/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Jefferson squat — разноименная постановка ног вокруг штанги и подъём разгибателями бедра/колена; точная техника не дана, требуется визуальная проверка."
         }
       ],
@@ -3755,7 +3755,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/jumping-pull-up/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Jumping pull-up требует перекладину, прыжок облегчает подтягивание; без инструкции вклад ног нельзя количественно назначить."
         }
       ],
@@ -3792,7 +3792,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/kettlebell-arnold-press/"
           ],
-          "confidence": "medium",
+          "confidence": "low",
           "reason": "Arnold press с гирей — жим с вращением плеча; конкретные стабилизаторы не установлены, исходный Kettlebell уже канонический."
         }
       ],
