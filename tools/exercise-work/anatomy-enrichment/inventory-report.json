@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "inventory": {
+    "source_json_files": 1673,
+    "unique_exercises": 1173,
+    "duplicate_source_files": 500,
+    "duplicate_groups": 375,
+    "duplicate_blob_conflicts": 0,
+    "provisional_category_reviews": 248,
+    "batch_count": 12,
+    "batch_sizes": [
+      100,
+      100,
+      100,
+      100,
+      100,
+      100,
+      100,
+      100,
+      100,
+      100,
+      100,
+      73
+    ]
+  },
+  "diagnosis": {
+    "state": "pending",
+    "reason": "Source-card anatomy/equipment fields not read during metadata-only Git-tree inventory; run the read-only diagnostic against a checkout of source_commit before processing B001.",
+    "metrics": null
+  }
+}
