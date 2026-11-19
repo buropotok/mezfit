@@ -4531,6 +4531,507 @@
         }
       ],
       "notes": "Сгибание плеча против резины: передняя дельта как основной движитель, ключичная часть большой грудной помогает. Стабилизаторы в исходнике не установлены."
+    },
+    {
+      "id": "fitnessprogramer:banded-single-leg-glute-bridge",
+      "source_path": "assets/work/hip/banded-single-leg-glute-bridge.json",
+      "source_blob_sha": "57775356efb3c13e58a4fafffcdf72c4b6ef7ac1",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-single-leg-glute-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-single-leg-glute-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноногий ягодичный мост с резиной: основное разгибание бедра большой ягодичной, бицепс бедра помогает, средняя ягодичная стабилизирует положение таза на одной опоре."
+        }
+      ],
+      "notes": "Одноногий ягодичный мост с резиной: основное разгибание бедра большой ягодичной, бицепс бедра помогает, средняя ягодичная стабилизирует положение таза на одной опоре."
+    },
+    {
+      "id": "fitnessprogramer:banded-split-squat",
+      "source_path": "assets/work/leg/banded-split-squat.json",
+      "source_blob_sha": "e2d09383bb5cea5c951aea6fb57b2f8ca9f01eee",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-split-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-split-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Разножные приседания с лентой: квадрицепс и большая ягодичная разгибают колено/бедро, приводящие содействуют, средняя ягодичная контролирует таз во фронтальной плоскости."
+        }
+      ],
+      "notes": "Разножные приседания с лентой: квадрицепс и большая ягодичная разгибают колено/бедро, приводящие содействуют, средняя ягодичная контролирует таз во фронтальной плоскости."
+    },
+    {
+      "id": "fitnessprogramer:banded-standing-glute-kickback",
+      "source_path": "assets/work/hip/banded-standing-glute-kickback.json",
+      "source_blob_sha": "64b4ada222e6dffa8f6ab8be7df8420403ecea51",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-standing-glute-kickback/"
+          ],
+          "confidence": "medium",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-standing-glute-kickback/"
+          ],
+          "confidence": "medium",
+          "reason": "Мах ногой назад стоя с сопротивлением ленты — разгибание бедра с акцентом на большую ягодичную. Иные мышечные роли по исходнику не перечислены."
+        }
+      ],
+      "notes": "Мах ногой назад стоя с сопротивлением ленты — разгибание бедра с акцентом на большую ягодичную. Иные мышечные роли по исходнику не перечислены."
+    },
+    {
+      "id": "fitnessprogramer:banded-step-up",
+      "source_path": "assets/work/hip/banded-step-up.json",
+      "source_blob_sha": "04c54e8408266ae190d8390d4c3f78481bf71890",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-step-up/"
+          ],
+          "confidence": "medium",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-step-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Step-Up — подъём на устойчивую платформу с резиной, поэтому помимо band необходим box/ступень. Разгибание колена/бедра основное, ягодичная средняя стабилизирует таз."
+        }
+      ],
+      "notes": "Banded Step-Up — подъём на устойчивую платформу с резиной, поэтому помимо band необходим box/ступень. Разгибание колена/бедра основное, ягодичная средняя стабилизирует таз."
+    },
+    {
+      "id": "fitnessprogramer:banded-thigh-fly",
+      "source_path": "assets/work/hip/banded-thigh-fly.json",
+      "source_blob_sha": "b3970d51751e8a55a7f37577c549c03c4c1147b2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-thigh-fly/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-thigh-fly/"
+          ],
+          "confidence": "high",
+          "reason": "При Banded Thigh Fly лёжа на спине активное разведение поднятых ног против резины выполняют отводящие ягодичные. Исходный список смешивает мышцы-мишени растяжения приводящих с движителями; не переносим приводящие автоматически в основные."
+        }
+      ],
+      "notes": "При Banded Thigh Fly лёжа на спине активное разведение поднятых ног против резины выполняют отводящие ягодичные. Исходный список смешивает мышцы-мишени растяжения приводящих с движителями; не переносим приводящие автоматически в основные."
+    },
+    {
+      "id": "fitnessprogramer:banded-walk",
+      "source_path": "assets/work/hip/banded-walk.json",
+      "source_blob_sha": "d6e615346ffc59eb3f8f3445501bb76a4ee40d01",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_minimus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-walk/"
+          ],
+          "confidence": "medium",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-walk/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Walk с боковыми шагами активирует отводящие тазобедренные мышцы, в особенности среднюю/большую ягодичные; точную траекторию шагов и стабилизацию потребуется перепроверить по GIF."
+        }
+      ],
+      "notes": "Banded Walk с боковыми шагами активирует отводящие тазобедренные мышцы, в особенности среднюю/большую ягодичные; точную траекторию шагов и стабилизацию потребуется перепроверить по GIF."
+    },
+    {
+      "id": "fitnessprogramer:barbell-alternate-biceps-curl",
+      "source_path": "assets/work/biceps/barbell-alternate-biceps-curl.json",
+      "source_blob_sha": "98ae12617c0d168464544675cfb6826c8d91f131",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-alternate-biceps-curl/"
+          ],
+          "confidence": "low",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-alternate-biceps-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Barbell Alternate Biceps Curl: сгибание локтя штангой по основным ролям понятно, но слово Alternate не объяснено в исходнике: стандартная цель бицепс и другие сгибатели, нужна визуальная проверка механики чередования рук на одной штанге."
+        }
+      ],
+      "notes": "Barbell Alternate Biceps Curl: сгибание локтя штангой по основным ролям понятно, но слово Alternate не объяснено в исходнике: стандартная цель бицепс и другие сгибатели, нужна визуальная проверка механики чередования рук на одной штанге."
+    },
+    {
+      "id": "fitnessprogramer:barbell-bench-front-squat",
+      "source_path": "assets/work/leg/barbell-bench-front-squat.json",
+      "source_blob_sha": "18e1bb4067da3f62430ba3ec889688a985e785e1",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "deltoid_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-bench-front-squat/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-bench-front-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Исходная инструкция прямо требует штангу в переднем упоре и скамью для касания ягодиц. Квадрицепс основной, ягодичные/приводящие/камбаловидная — синергисты, разгибатели спины/передняя дельта стабилизируют положение корпуса и грифа."
+        }
+      ],
+      "notes": "Исходная инструкция прямо требует штангу в переднем упоре и скамью для касания ягодиц. Квадрицепс основной, ягодичные/приводящие/камбаловидная — синергисты, разгибатели спины/передняя дельта стабилизируют положение корпуса и грифа."
+    },
+    {
+      "id": "fitnessprogramer:barbell-bent-over-row",
+      "source_path": "assets/work/back/barbell-bent-over-row.json",
+      "source_blob_sha": "ebc700f18b7490030142afaf63ec9b388f13dc16",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "brachioradialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-bent-over-row/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-bent-over-row/"
+          ],
+          "confidence": "high",
+          "reason": "Тяга штанги в наклоне: источник содержит общее target Back, но перечисляет широчайшие, ретракторы лопаток и сгибатели локтя, а также разгибатели спины/ягодичные в динамической стабилизации. Основная категория back, а не full_body."
+        }
+      ],
+      "notes": "Тяга штанги в наклоне: источник содержит общее target Back, но перечисляет широчайшие, ретракторы лопаток и сгибатели локтя, а также разгибатели спины/ягодичные в динамической стабилизации. Основная категория back, а не full_body."
+    },
+    {
+      "id": "fitnessprogramer:barbell-bulgarian-split-squat",
+      "source_path": "assets/work/leg/barbell-bulgarian-split-squat.json",
+      "source_blob_sha": "eb1ec1f4a03509f0b02119c9dd5c71602985dd2e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "gluteus_minimus",
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-bulgarian-split-squat/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и/или инструкции подтверждено необходимое оборудование. Сопоставлены существующие канонические ID Базы 1, Full Gym удалён как несуществующий тип."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-bulgarian-split-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Bulgarian Split Squat со штангой: обязательна скамья под задней стопой, квадрицепс основной, ягодичная и приводящие помогают разгибанию бедра; средняя/малая ягодичные, икроножная удерживают баланс по исходной dynamic разметке."
+        }
+      ],
+      "notes": "Bulgarian Split Squat со штангой: обязательна скамья под задней стопой, квадрицепс основной, ягодичная и приводящие помогают разгибанию бедра; средняя/малая ягодичные, икроножная удерживают баланс по исходной dynamic разметке."
     }
   ]
 }
