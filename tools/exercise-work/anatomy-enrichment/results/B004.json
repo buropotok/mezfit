@@ -284,6 +284,314 @@
         }
       ],
       "notes": "Жим штанги лёжа на полу: основные грудная и трицепс, передняя дельта вспомогательная; не установлены отдельные стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:barbell-front-raise",
+      "source_path": "assets/work/shoulders/barbell-front-raise.json",
+      "source_blob_sha": "32c3598a03c3df2c9bddaccad2c5e5ab1365ae6a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_upper",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём штанги перед собой; устранено дублирование трапециевидной мышцы как целого и верхнего пучка в разных ролях."
+        }
+      ],
+      "notes": "Подъём штанги перед собой; устранено дублирование трапециевидной мышцы как целого и верхнего пучка в разных ролях."
+    },
+    {
+      "id": "fitnessprogramer:barbell-front-raise-twist",
+      "source_path": "assets/work/shoulders/barbell-front-raise-twist.json",
+      "source_blob_sha": "9ccd78d148df34f925167348816582ef602cfe67",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-front-raise-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Вариант с вращением штанги не имеет инструкции в источнике; движение уточнить по GIF до назначения мышц вращения."
+        }
+      ],
+      "notes": "Вариант с вращением штанги не имеет инструкции в источнике; движение уточнить по GIF до назначения мышц вращения."
+    },
+    {
+      "id": "fitnessprogramer:barbell-glute-bridge",
+      "source_path": "assets/work/hip/barbell-glute-bridge.json",
+      "source_blob_sha": "ab8072db7e1adf38b820be4c6fbaaab02c389d98",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-glute-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Ягодичный мост со штангой: разгибание бедра, стабилизация таза/туловища; вторичную роль мышц задней поверхности бедра нельзя считать количественной оценкой."
+        }
+      ],
+      "notes": "Ягодичный мост со штангой: разгибание бедра, стабилизация таза/туловища; вторичную роль мышц задней поверхности бедра нельзя считать количественной оценкой."
+    },
+    {
+      "id": "fitnessprogramer:barbell-glute-bridge-two-legs-on-bench",
+      "source_path": "assets/work/hip/barbell-glute-bridge-two-legs-on-bench.json",
+      "source_blob_sha": "e476d24e6fe7db5608042ff72887f164c3c33a5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-glute-bridge-two-legs-on-bench/"
+          ],
+          "confidence": "medium",
+          "reason": "Вариант с опорой обеих стоп на скамью; устранена недоказанная исходная длинная цепочка стабилизаторов, включая неканонические ткани."
+        }
+      ],
+      "notes": "Вариант с опорой обеих стоп на скамью; устранена недоказанная исходная длинная цепочка стабилизаторов, включая неканонические ткани."
+    },
+    {
+      "id": "fitnessprogramer:barbell-hack-squats",
+      "source_path": "assets/work/hip/barbell-hack-squats.json",
+      "source_blob_sha": "6af9721e1f9fac83ae804e3fefc51a2bbaf6bd63",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-hack-squats/"
+          ],
+          "confidence": "medium",
+          "reason": "Это barbell hack squat со штангой за ногами, НЕ гакк-машина; не вводить гакк-тренажёр. Нормализованы Adductor Magnus и исходные роли без недоказанных мышц."
+        }
+      ],
+      "notes": "Это barbell hack squat со штангой за ногами, НЕ гакк-машина; не вводить гакк-тренажёр. Нормализованы Adductor Magnus и исходные роли без недоказанных мышц."
+    },
+    {
+      "id": "fitnessprogramer:barbell-hang-clean",
+      "source_path": "assets/work/full-body/barbell-hang-clean.json",
+      "source_blob_sha": "0d9ef3219201436e5a70cb45d76d8138400c30c8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-hang-clean/",
+            "https://www.muscleandfitness.com/exercise/workouts/leg-exercises/clean-and-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Взятие штанги с виса — взрывное разгибание ног/бедра и тракция штанги; точное распределение ролей по фазам требует кинематического ревью."
+        }
+      ],
+      "notes": "Взятие штанги с виса — взрывное разгибание ног/бедра и тракция штанги; точное распределение ролей по фазам требует кинематического ревью."
+    },
+    {
+      "id": "fitnessprogramer:barbell-hip-thrusts",
+      "source_path": "assets/work/hip/barbell-hip-thrusts.json",
+      "source_blob_sha": "0eaefe7d2f97da2f6cfd6b864905f62c65b07135",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "quadriceps_femoris",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "hip_external_rotators"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-hip-thrusts/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции подтверждена опора верхней части спины на скамью; удалены неканонические обобщённые Scapular Stabilizers и Hamstrings из динамических стабилизаторов."
+        }
+      ],
+      "notes": "В инструкции подтверждена опора верхней части спины на скамью; удалены неканонические обобщённые Scapular Stabilizers и Hamstrings из динамических стабилизаторов."
+    },
+    {
+      "id": "fitnessprogramer:barbell-jm-press",
+      "source_path": "assets/work/triceps/barbell-jm-press.json",
+      "source_blob_sha": "1bc5d1e3a6ebb5b65204f54bd480a6bc8b4f5123",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-jm-press/"
+          ],
+          "confidence": "medium",
+          "reason": "JM press на плоской скамье: главная функция разгибание локтя; грудная и передняя дельта помогают в жимовом движении, мышцы предплечья удерживают запястье."
+        }
+      ],
+      "notes": "JM press на плоской скамье: главная функция разгибание локтя; грудная и передняя дельта помогают в жимовом движении, мышцы предплечья удерживают запястье."
     }
   ]
 }
