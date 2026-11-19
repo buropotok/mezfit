@@ -2,7 +2,9 @@ import { AVC_MP4_MIME_TYPES } from '../../shared/video-recording-diagnostic';
 import type { VideoRecordingFormatPreference } from './video-recording-format-preference';
 
 export const VIDEO_RECORDING_PROFILES = {
-  circle: { width: 480, height: 480, maxDurationMs: 60_000 },
+  // Slightly asymmetric frames let playback detect a missing native quarter-turn.
+  // The circular viewport still crops the recording to a circle.
+  circle: { width: 480, height: 488, maxDurationMs: 60_000 },
   landscape: { width: 1280, height: 720, maxDurationMs: 180_000 },
   portrait: { width: 720, height: 1280, maxDurationMs: 180_000 },
 } as const;
