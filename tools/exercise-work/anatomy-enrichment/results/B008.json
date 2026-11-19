@@ -917,6 +917,430 @@
         }
       ],
       "notes": "Название Knee Push-Up стандартное, но исходный how_to описывает узкий diamond-хват: это вариант с акцентом на трицепс. Категория chest сохранена предварительно, нужна проверка GIF."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-back-rotation",
+      "source_path": "assets/work/shoulders/kneeling-back-rotation.json",
+      "source_blob_sha": "7741ef27c7a8b8ec65d14293d7b144eea639f1a9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "back",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-back-rotation/"
+          ],
+          "confidence": "low",
+          "reason": "Kneeling back rotation — грудная ротационная мобилизация из положения на коленях; предварительная категория back вместо shoulders, двигательная анатомия не доказана."
+        }
+      ],
+      "notes": "Kneeling back rotation — грудная ротационная мобилизация из положения на коленях; предварительная категория back вместо shoulders, двигательная анатомия не доказана."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-high-pulley-row",
+      "source_path": "assets/work/back/kneeling-high-pulley-row.json",
+      "source_blob_sha": "ac1d07e976b8a1178e6c5fe98a337782162b00f2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "brachialis",
+            "biceps_brachii",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-high-pulley-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга верхнего блока из положения на коленях: приведение плеч и лопаток, мышцы спины главные, корпус удерживается."
+        }
+      ],
+      "notes": "Тяга верхнего блока из положения на коленях: приведение плеч и лопаток, мышцы спины главные, корпус удерживается."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-hip-flexor-stretch",
+      "source_path": "assets/work/hip/kneeling-hip-flexor-stretch.json",
+      "source_blob_sha": "0572c58c2ee7dc80dcfb5113819a67f0ba6ee4bc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-hip-flexor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжка сгибателей бедра в выпаде на колене по инструкции — mobility, iliopsoas растягивается, не действует как подтверждённый первичный силовой двигатель."
+        }
+      ],
+      "notes": "Растяжка сгибателей бедра в выпаде на колене по инструкции — mobility, iliopsoas растягивается, не действует как подтверждённый первичный силовой двигатель."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-jump-squat",
+      "source_path": "assets/work/hip/kneeling-jump-squat.json",
+      "source_blob_sha": "0a3043d639ee60be9f1ee2177be796ef9ffc2711",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-jump-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Прыжковое вставание из положения на коленях требует разгибателей бедра/колена; нет точной инструкции, стабилизаторы предварительные."
+        }
+      ],
+      "notes": "Прыжковое вставание из положения на коленях требует разгибателей бедра/колена; нет точной инструкции, стабилизаторы предварительные."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-landmine-press",
+      "source_path": "assets/work/chest/kneeling-landmine-press.json",
+      "source_blob_sha": "0c6ee6a5951605c4742eec1eaa23ca315c0dde2c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-landmine-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Kneeling landmine press выполняется с грифом, закреплённым в landmine, и может быть двуручным/одноручным по источнику; бицепс не подтверждён в качестве динамического стабилизатора."
+        }
+      ],
+      "notes": "Kneeling landmine press выполняется с грифом, закреплённым в landmine, и может быть двуручным/одноручным по источнику; бицепс не подтверждён в качестве динамического стабилизатора."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-leg-out-adductor-stretch",
+      "source_path": "assets/work/hip/kneeling-leg-out-adductor-stretch.json",
+      "source_blob_sha": "5c74e53941a69dd5199f7ac8a0e66ae0bc85ac30",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-leg-out-adductor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Статическая растяжка приводящих бедра из положения на колене с отведённой ногой: мышца-мишень не равна активному двигателю."
+        }
+      ],
+      "notes": "Статическая растяжка приводящих бедра из положения на колене с отведённой ногой: мышца-мишень не равна активному двигателю."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-neck-stretch",
+      "source_path": "assets/work/neck/kneeling-neck-stretch.json",
+      "source_blob_sha": "667d9e5c7a52e2519ab0211533c7d45e63da64c9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-neck-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Kneeling neck stretch по источнику является растяжкой; перечисленные Splenius/Trapezius/Levator Scapulae не распределены по силовым ролям."
+        }
+      ],
+      "notes": "Kneeling neck stretch по источнику является растяжкой; перечисленные Splenius/Trapezius/Levator Scapulae не распределены по силовым ролям."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-pulldown-with-resistance-band",
+      "source_path": "assets/work/back/kneeling-pulldown-with-resistance-band.json",
+      "source_blob_sha": "9bc214cd4364fe3916ff7b906f4b1346b605da44",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "biceps_brachii",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-pulldown-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга эластичной ленты сверху на коленях: resistance band достаточно, Gymstick не нужен по названию варианта; без инструкции не выделяются стабилизаторы."
+        }
+      ],
+      "notes": "Тяга эластичной ленты сверху на коленях: resistance band достаточно, Gymstick не нужен по названию варианта; без инструкции не выделяются стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-push-up",
+      "source_path": "assets/work/chest/kneeling-push-up.json",
+      "source_blob_sha": "aeafcca948b37894e3082835512221de8a22bf80",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Kneeling push-up — классические отжимания с опорой на колени, исходные target/synergists верны и сохраняются; заменены неподтверждённые Biceps/Quadriceps-стабилизаторы."
+        }
+      ],
+      "notes": "Kneeling push-up — классические отжимания с опорой на колени, исходные target/synergists верны и сохраняются; заменены неподтверждённые Biceps/Quadriceps-стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-quad-stretch",
+      "source_path": "assets/work/leg/kneeling-quad-stretch.json",
+      "source_blob_sha": "95ca7e4ad39c797a9ac7ff7a0f7e43d696127feb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-quad-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Kneeling quad stretch — растяжение квадрицепса, а не силовое упражнение с quadriceps как двигательной primary."
+        }
+      ],
+      "notes": "Kneeling quad stretch — растяжение квадрицепса, а не силовое упражнение с quadriceps как двигательной primary."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-single-arm-high-pulley-row",
+      "source_path": "assets/work/back/kneeling-single-arm-high-pulley-row.json",
+      "source_blob_sha": "af7859d5680e0c560f06681e44d2e39e3c65b94d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-single-arm-high-pulley-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручная тяга высокого тросового блока на колене; obliques противодействуют ротации корпуса, ромбовидные сводят лопатку."
+        }
+      ],
+      "notes": "Одноручная тяга высокого тросового блока на колене; obliques противодействуют ротации корпуса, ромбовидные сводят лопатку."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-t-spine-rotation",
+      "source_path": "assets/work/back/kneeling-t-spine-rotation.json",
+      "source_blob_sha": "f5cdbfc0c716be8a65a7aa40a693218277c62452",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "back",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-t-spine-rotation/"
+          ],
+          "confidence": "low",
+          "reason": "Kneeling T-spine rotation — мобилизация грудного отдела позвоночника, а не силовая тренировка."
+        }
+      ],
+      "notes": "Kneeling T-spine rotation — мобилизация грудного отдела позвоночника, а не силовая тренировка."
     }
   ]
 }
