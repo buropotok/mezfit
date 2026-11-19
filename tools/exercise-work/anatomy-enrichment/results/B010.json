@@ -462,6 +462,421 @@
         }
       ],
       "notes": "Scapula pull-up требует турник, депрессию/поворот лопаток без сгибания локтя, хват удерживает вис."
+    },
+    {
+      "id": "fitnessprogramer:scapular-protraction-and-retraction",
+      "source_path": "assets/work/back/scapular-protraction-and-retraction.json",
+      "source_blob_sha": "959477cf19936130319c1b1469eecb852581798c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "serratus_anterior",
+            "rhomboids"
+          ],
+          "secondary": [
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/scapular-protraction-and-retraction/"
+          ],
+          "confidence": "medium",
+          "reason": "Scapular protraction and retraction — смещение лопаток вперёд/назад без нагрузки, serratus anterior и ромбовидные управляют движением; роль прочих стабилизаторов не определена."
+        }
+      ],
+      "notes": "Scapular protraction and retraction — смещение лопаток вперёд/назад без нагрузки, serratus anterior и ромбовидные управляют движением; роль прочих стабилизаторов не определена."
+    },
+    {
+      "id": "fitnessprogramer:scott-press",
+      "source_path": "assets/work/shoulders/scott-press.json",
+      "source_blob_sha": "5f8a5f361613dee692f78b7f6c4cc3539f3e8aba",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/scott-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Scott Press — укороченный Arnold press с вращением по инструкции; исходная lateral deltoid и помощники оставлены, стабилизаторы не подтверждены."
+        }
+      ],
+      "notes": "Scott Press — укороченный Arnold press с вращением по инструкции; исходная lateral deltoid и помощники оставлены, стабилизаторы не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:seated-alternating-dumbbell-curl",
+      "source_path": "assets/work/biceps/seated-alternating-dumbbell-curl.json",
+      "source_blob_sha": "81f5ca6539edd34650adbd4c71f7b0b6b8e93596",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-alternating-dumbbell-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Чередующееся сгибание рук с гантелями сидя, локтевой бицепс и помощники, контроль хвата."
+        }
+      ],
+      "notes": "Чередующееся сгибание рук с гантелями сидя, локтевой бицепс и помощники, контроль хвата."
+    },
+    {
+      "id": "fitnessprogramer:seated-back-extension",
+      "source_path": "assets/work/erector-spinae/seated-back-extension.json",
+      "source_blob_sha": "cff014b3ea1476f600f68df51b55c05a989dcbda",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "seated-back-extension-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-back-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated back extension исходно Machine, но это отдельный рычажный тренажёр для разгибания корпуса сидя, не скамья для гиперэкстензии."
+        }
+      ],
+      "notes": "Seated back extension исходно Machine, но это отдельный рычажный тренажёр для разгибания корпуса сидя, не скамья для гиперэкстензии."
+    },
+    {
+      "id": "fitnessprogramer:seated-ballerina-exercise",
+      "source_path": "assets/work/shoulders/seated-ballerina-exercise.json",
+      "source_blob_sha": "c4ac674fb8ad4f1ebd5be26ab1bec24783bfd70c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-ballerina-exercise/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated ballerina exercise — работа над мобильностью плечевого пояса, исходные Shoulder/Scapula/Chest не являются точными анатомическими ID или силовыми ролями."
+        }
+      ],
+      "notes": "Seated ballerina exercise — работа над мобильностью плечевого пояса, исходные Shoulder/Scapula/Chest не являются точными анатомическими ID или силовыми ролями."
+    },
+    {
+      "id": "fitnessprogramer:seated-banded-leg-extension",
+      "source_path": "assets/work/leg/seated-banded-leg-extension.json",
+      "source_blob_sha": "e8dce55a991ebb408101e2e5bc6c698b0e263f80",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-banded-leg-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Сидячее разгибание колена с сопротивлением резинки, квадрицепс основной, конкретные дополнительные двигатели не выделяются."
+        }
+      ],
+      "notes": "Сидячее разгибание колена с сопротивлением резинки, квадрицепс основной, конкретные дополнительные двигатели не выделяются."
+    },
+    {
+      "id": "fitnessprogramer:seated-barbell-finger-curl",
+      "source_path": "assets/work/forearm/seated-barbell-finger-curl.json",
+      "source_blob_sha": "d73590c943debf9f0a10338387405e645a16ed0b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors",
+            "forearm_grip"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-barbell-finger-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Barbell finger curl по инструкции выполняется на плоской скамье, штанга прокатывается к пальцам и возвращается сгибателями пальцев; исходные мелкие мышцы нормализованы."
+        }
+      ],
+      "notes": "Barbell finger curl по инструкции выполняется на плоской скамье, штанга прокатывается к пальцам и возвращается сгибателями пальцев; исходные мелкие мышцы нормализованы."
+    },
+    {
+      "id": "fitnessprogramer:seated-barbell-twist",
+      "source_path": "assets/work/abs/seated-barbell-twist.json",
+      "source_blob_sha": "f69041cded496a7ddef09f0c31c4dc264032c9e6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-barbell-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated barbell twist — повороты туловища со штангой, obliques основной двигатель ротации; постановка дополнительной скамьи без инструкции необоснованна."
+        }
+      ],
+      "notes": "Seated barbell twist — повороты туловища со штангой, obliques основной двигатель ротации; постановка дополнительной скамьи без инструкции необоснованна."
+    },
+    {
+      "id": "fitnessprogramer:seated-behind-neck-press",
+      "source_path": "assets/work/shoulders/seated-behind-neck-press.json",
+      "source_blob_sha": "5856b17e59967983775f4169dcf649aa2875d562",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "rotator_cuff"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-behind-neck-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Behind-neck barbell press сидя: плечевой жим из-за головы требует штангу и сидячую опору, исходная Levatos Scapula — некорректный написанный стабилизатор, заменён вращательной манжетой."
+        }
+      ],
+      "notes": "Behind-neck barbell press сидя: плечевой жим из-за головы требует штангу и сидячую опору, исходная Levatos Scapula — некорректный написанный стабилизатор, заменён вращательной манжетой."
+    },
+    {
+      "id": "fitnessprogramer:seated-bench-leg-pull-in",
+      "source_path": "assets/work/abs/seated-bench-leg-pull-in.json",
+      "source_blob_sha": "24d586a6b5543626df4da2cc9f24dc3f903f2c6c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-bench-leg-pull-in/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated Bench Leg Pull In прямо требует скамью, сгибатели бедра подтягивают колени, пресс удерживает таз."
+        }
+      ],
+      "notes": "Seated Bench Leg Pull In прямо требует скамью, сгибатели бедра подтягивают колени, пресс удерживает таз."
+    },
+    {
+      "id": "fitnessprogramer:seated-bicep-curl-with-resistance-band",
+      "source_path": "assets/work/biceps/seated-bicep-curl-with-resistance-band.json",
+      "source_blob_sha": "84fe2b2a70082183d77f0b8365d4b88f2f79da53",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-bicep-curl-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Сидячий бицепс-кёрл с резинкой; band существует в фильтрах, доп. оборудование необязательно."
+        }
+      ],
+      "notes": "Сидячий бицепс-кёрл с резинкой; band существует в фильтрах, доп. оборудование необязательно."
+    },
+    {
+      "id": "fitnessprogramer:seated-biceps-curl",
+      "source_path": "assets/work/biceps/seated-biceps-curl.json",
+      "source_blob_sha": "a5d0f65a009fffa05794f64d189204339f69066d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-biceps-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Seated Biceps Curl с гантелями: исходный бицепс, брахиалис и brachioradialis корректны; Wrist Flexors нормализовано к каноническому ID."
+        }
+      ],
+      "notes": "Seated Biceps Curl с гантелями: исходный бицепс, брахиалис и brachioradialis корректны; Wrist Flexors нормализовано к каноническому ID."
     }
   ]
 }
