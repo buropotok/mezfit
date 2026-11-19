@@ -576,7 +576,9 @@ export class ProgramManagementRepository {
       await this.currentDay(current, dayId);
       const previous = await this.db.programExercises.get(exerciseId);
       if (!previous || previous.programDayId !== dayId || !belongsToPlan(previous, current)
-        || previous.status !== 'active') throw new Error('Упражнение не найдено');
+        || previous.status !== 'active'
+        || previous.exercise.exerciseDefinitionId !== source?.exercise.exerciseDefinitionId)
+        throw new Error('Упражнение изменилось. Повторите выбор.');
       const selected = await readProgramCatalogueExercise(this.db, this.actorUserId, definitionId);
       if (!isExerciseTrackingType(selected.tracking_type)) throw new Error('Не удалось определить тип учёта упражнения');
       if (preserveSets && (await this.trackingTypeForExercise(previous.exercise)) !== selected.tracking_type)
