@@ -247,11 +247,11 @@
       }
     },
     "B008": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-anatomy-2026-11-19",
+      "claim_id": "b008-mwnt4eey-w634tspgn",
+      "started_at": "2026-11-19T17:11:21.082Z",
+      "lease_until": "2026-11-19T19:11:21.082Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
