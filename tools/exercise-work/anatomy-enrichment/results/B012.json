@@ -1630,6 +1630,426 @@
         }
       ],
       "notes": "Изометрическая передняя планка с дополнительным грузом: пресс и корпус выполняют антиэкстензионную работу, груз упомянут, но его тип не указан, поэтому equipment other. Категория core подтверждена."
+    },
+    {
+      "id": "fitnessprogramer:weighted-hanging-knee-raises",
+      "source_path": "assets/work/abs/weighted-hanging-knee-raises.json",
+      "source_blob_sha": "3e2694e006b7e90b3e52faae7f431a93cd148536",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar",
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-hanging-knee-raises/"
+          ],
+          "confidence": "low",
+          "reason": "Подъём согнутых коленей в висе требует перекладины, исходный equipment содержит гантель как вариант добавочного груза. В исходнике нет техники и анатомии, конкретное крепление груза и роли проверить по GIF."
+        }
+      ],
+      "notes": "Подъём согнутых коленей в висе требует перекладины, исходный equipment содержит гантель как вариант добавочного груза. В исходнике нет техники и анатомии, конкретное крепление груза и роли проверить по GIF."
+    },
+    {
+      "id": "fitnessprogramer:weighted-lying-neck-extension",
+      "source_path": "assets/work/neck/weighted-lying-neck-extension.json",
+      "source_blob_sha": "921e95f37ba5c51f38f5a846779e624270985fd5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "neck_harness",
+          "plate",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_extensors"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-lying-neck-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция прямо предусматривает шейную лямку с цепью, диск и наклонную скамью под 45°. Splenius/Semispinalis отнесены к канонической группе cervical_extensors; не выдаём их за отдельные ID."
+        }
+      ],
+      "notes": "Исходная инструкция прямо предусматривает шейную лямку с цепью, диск и наклонную скамью под 45°. Splenius/Semispinalis отнесены к канонической группе cervical_extensors; не выдаём их за отдельные ID."
+    },
+    {
+      "id": "fitnessprogramer:weighted-lying-neck-flexion",
+      "source_path": "assets/work/neck/weighted-lying-neck-flexion.json",
+      "source_blob_sha": "7a700567828ff3681cae469e4e0afae7c126cc91",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "neck_harness",
+          "plate",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-lying-neck-flexion/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция подтверждает neck harness, диск и наклонную скамью. Sternocleidomastoid в исходнике не имеет собственного ID Базы 1 и отнесён к общей группе cervical_flexors без выдуманного отдельного идентификатора."
+        }
+      ],
+      "notes": "Исходная инструкция подтверждает neck harness, диск и наклонную скамью. Sternocleidomastoid в исходнике не имеет собственного ID Базы 1 и отнесён к общей группе cervical_flexors без выдуманного отдельного идентификатора."
+    },
+    {
+      "id": "fitnessprogramer:weighted-lying-twist",
+      "source_path": "assets/work/abs/weighted-lying-twist.json",
+      "source_blob_sha": "4c525b63c4b392a18d395127a6b140bfc2bf8508",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "stability ball",
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-lying-twist/"
+          ],
+          "confidence": "low",
+          "reason": "Исходное название Weighted Lying Twist на фитболе говорит о ротации корпуса, но способ приложения дополнительного веса неизвестен. Уточнить по GIF, какие мышцы динамические."
+        }
+      ],
+      "notes": "Исходное название Weighted Lying Twist на фитболе говорит о ротации корпуса, но способ приложения дополнительного веса неизвестен. Уточнить по GIF, какие мышцы динамические."
+    },
+    {
+      "id": "fitnessprogramer:weighted-muscle-up",
+      "source_path": "assets/work/back/weighted-muscle-up.json",
+      "source_blob_sha": "9eb0da83ad95a4bff44dc553e4672942832edd75",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar",
+          "dip_belt",
+          "weighted_vest"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-muscle-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Weighted Muscle-Up состоит из подтягивания и жима над перекладиной, поэтому нельзя считать только широчайшие основными. В инструкции прямо разрешены пояс с грузом, жилет или рюкзак; здесь отражены два специализированных варианта."
+        }
+      ],
+      "notes": "Weighted Muscle-Up состоит из подтягивания и жима над перекладиной, поэтому нельзя считать только широчайшие основными. В инструкции прямо разрешены пояс с грузом, жилет или рюкзак; здесь отражены два специализированных варианта."
+    },
+    {
+      "id": "fitnessprogramer:weighted-neck-harness-extension",
+      "source_path": "assets/work/neck/weighted-neck-harness-extension.json",
+      "source_blob_sha": "e4e5cd3ceb0a6e79eaad6344e2e502d288c41425",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "neck_harness"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-neck-harness-extension/"
+          ],
+          "confidence": "low",
+          "reason": "Weighted Neck Harness Extension однозначно требует шейной лямки, однако конкретный вид подвешенного груза и техника отсутствуют в исходнике; определить по GIF."
+        }
+      ],
+      "notes": "Weighted Neck Harness Extension однозначно требует шейной лямки, однако конкретный вид подвешенного груза и техника отсутствуют в исходнике; определить по GIF."
+    },
+    {
+      "id": "fitnessprogramer:weighted-neutral-wrist-curl",
+      "source_path": "assets/work/forearm/weighted-neutral-wrist-curl.json",
+      "source_blob_sha": "29bbbc89c974d6ee08485ec6d940c4104aa7ccc0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plate",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-neutral-wrist-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция описывает удержание блина вертикально нейтральным хватом и сгибание запястья с опорой предплечья на бедро; исходный target Brachioradialis ошибочен как основной сгибатель кисти."
+        }
+      ],
+      "notes": "Исходная инструкция описывает удержание блина вертикально нейтральным хватом и сгибание запястья с опорой предплечья на бедро; исходный target Brachioradialis ошибочен как основной сгибатель кисти."
+    },
+    {
+      "id": "fitnessprogramer:weighted-one-arm-pull-up",
+      "source_path": "assets/work/back/weighted-one-arm-pull-up.json",
+      "source_blob_sha": "6aeebcd9ce14e73091069bece5cefcf090418dfb",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar",
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "forearm_grip",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-one-arm-pull-up/"
+          ],
+          "confidence": "low",
+          "reason": "Утяжелённое подтягивание одной рукой требует турника, но тип внешнего веса и хват не уточнены. Выраженная анти-ротационная нагрузка требует контроля по GIF."
+        }
+      ],
+      "notes": "Утяжелённое подтягивание одной рукой требует турника, но тип внешнего веса и хват не уточнены. Выраженная анти-ротационная нагрузка требует контроля по GIF."
+    },
+    {
+      "id": "fitnessprogramer:weighted-pull-up",
+      "source_path": "assets/work/back/weighted-pull-up.json",
+      "source_blob_sha": "7d38e66a9b44306125090939f00771fb89f31584",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar",
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "brachioradialis",
+            "rhomboids",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-pull-up/"
+          ],
+          "confidence": "low",
+          "reason": "В исходном оборудовании ошибочно только generic Machine. Турник необходим для подтягивания, способ утяжеления не указан. Не переносим Triceps из исходного stabilizers без доказательства."
+        }
+      ],
+      "notes": "В исходном оборудовании ошибочно только generic Machine. Турник необходим для подтягивания, способ утяжеления не указан. Не переносим Triceps из исходного stabilizers без доказательства."
+    },
+    {
+      "id": "fitnessprogramer:weighted-push-up",
+      "source_path": "assets/work/chest/weighted-push-up.json",
+      "source_blob_sha": "f6acc022a88198d24fd610ba375d10abc145cf33",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plate",
+          "weighted_vest"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция предлагает класть на спину диск при помощи партнёра либо надевать утяжелённый жилет; обе альтернативы реальны. Грудь и трицепс двигают, корпус удерживает планку."
+        }
+      ],
+      "notes": "Исходная инструкция предлагает класть на спину диск при помощи партнёра либо надевать утяжелённый жилет; обе альтернативы реальны. Грудь и трицепс двигают, корпус удерживает планку."
     }
   ]
 }
