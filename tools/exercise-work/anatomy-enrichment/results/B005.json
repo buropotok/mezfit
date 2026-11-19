@@ -2844,6 +2844,620 @@
         }
       ],
       "notes": "other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dragon-flag",
+      "source_path": "assets/work/abs/dragon-flag.json",
+      "source_blob_sha": "85a5792584a8226d61b1435b6d4db4e0617f16c9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dragon-flag/"
+          ],
+          "confidence": "medium",
+          "reason": "Dragon flag: жёсткий подъём/опускание тела с антиразгибательной работой пресса; опорой служит скамья или неподвижная поверхность."
+        }
+      ],
+      "notes": "Проверить, поддерживает ли показанный GIF альтернативу без скамьи. Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:drop-push-up",
+      "source_path": "assets/work/chest/drop-push-up.json",
+      "source_blob_sha": "5a49ecd50a8f514318f59ea328fa23fa2900e6f7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/drop-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Drop push-up — плиометрическое отжимание между двумя опорами: грудь и трицепсы выполняют жим, корпус стабилизирует положение."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:duck-walk",
+      "source_path": "assets/work/hip/duck-walk.json",
+      "source_blob_sha": "93e5e54ced64e51fd1fd1d999d6b6e0e7d8c8f63",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "soleus",
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/duck-walk/"
+          ],
+          "confidence": "high",
+          "reason": "Duck walk — передвижение в глубоком приседе с активной работой квадрицепсов и ягодичных."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-4-ways-lateral-raise",
+      "source_path": "assets/work/shoulders/dumbbell-4-ways-lateral-raise.json",
+      "source_blob_sha": "18716ac4e3167b27f707c6ef25cccba1b843aae7",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoideus"
+          ],
+          "secondary": [
+            "trapezius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-4-ways-lateral-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Четырёхнаправленный подъём гантелей нагружает дельтовидную мышцу в разных плоскостях; по названию нельзя уверенно разделить её пучки."
+        }
+      ],
+      "notes": "Уточнить четыре фазы по GIF перед детализацией передней/средней/задней дельты. Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-6-ways-raise",
+      "source_path": "assets/work/shoulders/dumbbell-6-ways-raise.json",
+      "source_blob_sha": "71b645cfd67a8ed8c431e41ec34c32f9701bcbeb",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoideus"
+          ],
+          "secondary": [
+            "trapezius",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-6-ways-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Шестинаправленный подъём с гантелями — комбинированное плечевое движение; точный перечень пучков зависит от шести фаз."
+        }
+      ],
+      "notes": "Детализацию мышц нужно сверить с GIF, нет текстовой инструкции. Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-alternate-preacher-curl",
+      "source_path": "assets/work/biceps/dumbbell-alternate-preacher-curl.json",
+      "source_blob_sha": "ee3ec72f82772ed7580a6364e105399298ff234a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-alternate-preacher-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Попеременные сгибания рук с гантелью на скамье Скотта; фиксация плеча на пюпитре отличает её от обычной наклонной скамьи."
+        }
+      ],
+      "notes": "Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-bench-squat",
+      "source_path": "assets/work/hip/dumbbell-bench-squat.json",
+      "source_blob_sha": "35033eaaf4bfa867c1e55d1a5f0bf486c6d80107",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-bench-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Присед с гантелями до скамьи: разгибатели коленей и таза основные, скамья задаёт глубину."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-bent-over-reverse-row",
+      "source_path": "assets/work/back/dumbbell-bent-over-reverse-row.json",
+      "source_blob_sha": "eba088fc14c429e4dd4dc7e139568928bfc334b0",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "biceps_brachii",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-bent-over-reverse-row/"
+          ],
+          "confidence": "low",
+          "reason": "Наклонная тяга гантелей к корпусу: широчайшие/средняя спина, сгибатели локтя; разгибатели позвоночника удерживают наклон."
+        }
+      ],
+      "notes": "Убедиться по GIF, что reverse row означает обратный хват, а не обратное разведение."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-bulgarian-split-squat",
+      "source_path": "assets/work/leg/dumbbell-bulgarian-split-squat.json",
+      "source_blob_sha": "9baec604fa9100b9ed0c1663ea8a6f42b573d83a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-bulgarian-split-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Болгарский сплит-присед с гантелями: опора задней ноги на скамье, ведущая нагрузка на квадрицепс передней ноги."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-burpees",
+      "source_path": "assets/work/cardio/dumbbell-burpees.json",
+      "source_blob_sha": "2ad42941a0c8cf24d771e8167df99f1af59462bf",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-burpees/"
+          ],
+          "confidence": "high",
+          "reason": "Burpee с гантелями: динамическое кардио с приседом/отжиманием; основной характер — повышение ЧСС при комплексной нагрузке."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-chest-supported-lateral-raises",
+      "source_path": "assets/work/shoulders/dumbbell-chest-supported-lateral-raises.json",
+      "source_blob_sha": "877c183235a75ade583c7d77ef73651f9b2bda32",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "trapezius_middle",
+            "rhomboids",
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-chest-supported-lateral-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение гантелей с упором грудью на наклонную скамью нагружает среднюю/заднюю дельту и приводящие лопатки."
+        }
+      ],
+      "notes": "Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-cossack-squat",
+      "source_path": "assets/work/hip/dumbbell-cossack-squat.json",
+      "source_blob_sha": "73c8fa356345018b7c29ee12530bdf574c275274",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-cossack-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Cossack squat с гантелью — боковой присед с разгибанием колена и бедра и стабилизацией таза."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-cuban-external-rotation",
+      "source_path": "assets/work/shoulders/dumbbell-cuban-external-rotation.json",
+      "source_blob_sha": "bb09c45a3179da44c586b06df501a77eb6191f8e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-cuban-external-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Кубинская внешняя ротация — наружное вращение плеча подостной и малой круглой; плечо поддерживается дельтовидной."
+        }
+      ],
+      "notes": "Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-cuban-press",
+      "source_path": "assets/work/shoulders/dumbbell-cuban-press.json",
+      "source_blob_sha": "86bbb83abbeee6b565e7993b8a6bf15a375ace72",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "trapezius_upper",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-cuban-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Cuban press сочетает наружную ротацию плеча и жим гантелей вверх, вовлекая вращательную манжету и переднюю дельту."
+        }
+      ],
+      "notes": "Маркер other является специальной позицией для ревью, не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-curl",
+      "source_path": "assets/work/biceps/dumbbell-curl.json",
+      "source_blob_sha": "d75ee24e2782c3eac4ac8740069e45c31e430acf",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Классическое сгибание рук с гантелями: бицепс основной сгибатель, плечевая/плечелучевая помогают."
+        }
+      ]
     }
   ]
 }
