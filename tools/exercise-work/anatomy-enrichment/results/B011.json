@@ -840,6 +840,407 @@
         }
       ],
       "notes": "Standing barbell calf raise: инструкция прямо требует штангу и повышенную устойчивую платформу; икроножные исходно primary."
+    },
+    {
+      "id": "fitnessprogramer:standing-barbell-close-grip-military-press",
+      "source_path": "assets/work/shoulders/standing-barbell-close-grip-military-press.json",
+      "source_blob_sha": "cb41487ce8e4681091d3f988ede8c027bf9ec108",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "obliques",
+            "rotator_cuff"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-barbell-close-grip-military-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing close-grip barbell military press: передняя дельта source target верна; трицепс и зубчатая синергисты, корпус/манжета удерживают нагрузку."
+        }
+      ],
+      "notes": "Standing close-grip barbell military press: передняя дельта source target верна; трицепс и зубчатая синергисты, корпус/манжета удерживают нагрузку."
+    },
+    {
+      "id": "fitnessprogramer:standing-barbell-concentration-curl",
+      "source_path": "assets/work/biceps/standing-barbell-concentration-curl.json",
+      "source_blob_sha": "86c6eed2291db8f94d7a28d581b9e7bc4f9a4045",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-barbell-concentration-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing barbell concentration curl с локтями на бёдрах: brachialis и biceps primary/synergists сохранены, чрезмерный список ног-стабилизаторов сокращён."
+        }
+      ],
+      "notes": "Standing barbell concentration curl с локтями на бёдрах: brachialis и biceps primary/synergists сохранены, чрезмерный список ног-стабилизаторов сокращён."
+    },
+    {
+      "id": "fitnessprogramer:standing-barbell-rollout",
+      "source_path": "assets/work/abs/standing-barbell-rollout.json",
+      "source_blob_sha": "c69c925507f13ff99574ffab4d48fa192acee425",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "latissimus_dorsi"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-barbell-rollout/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing barbell rollout — выкат штанги вперёд для антиразгибательной нагрузки пресса. Длина выката и хват требуют соблюдения безопасной амплитуды."
+        }
+      ],
+      "notes": "Standing barbell rollout — выкат штанги вперёд для антиразгибательной нагрузки пресса. Длина выката и хват требуют соблюдения безопасной амплитуды."
+    },
+    {
+      "id": "fitnessprogramer:standing-barbell-triceps-extension",
+      "source_path": "assets/work/triceps/standing-barbell-triceps-extension.json",
+      "source_blob_sha": "6209ac142ec34756f4f838c42bf685adc34aaa8e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-barbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing barbell triceps extension по инструкции над головой, трицепс primary, мышцы корпуса держат положение."
+        }
+      ],
+      "notes": "Standing barbell triceps extension по инструкции над головой, трицепс primary, мышцы корпуса держат положение."
+    },
+    {
+      "id": "fitnessprogramer:standing-calf-raise",
+      "source_path": "assets/work/calf/standing-calf-raise.json",
+      "source_blob_sha": "e2592d2d84c7d15e1020468053beb461eeabefe3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing calf raise с собственным весом на высокой платформе из инструкции, икроножная исходно главная, soleus и мышцы голени дополняют нагрузку."
+        }
+      ],
+      "notes": "Standing calf raise с собственным весом на высокой платформе из инструкции, икроножная исходно главная, soleus и мышцы голени дополняют нагрузку."
+    },
+    {
+      "id": "fitnessprogramer:standing-cross-leg-hamstring-stretch",
+      "source_path": "assets/work/hip/standing-cross-leg-hamstring-stretch.json",
+      "source_blob_sha": "1b4b624c19d98cfa5abb59bf99dc380c94a867b6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-cross-leg-hamstring-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Cross-leg hamstring stretch — статическое растяжение задней поверхности бедра со скрещёнными ногами, исходный hamstrings обозначает растягиваемую ткань."
+        }
+      ],
+      "notes": "Cross-leg hamstring stretch — статическое растяжение задней поверхности бедра со скрещёнными ногами, исходный hamstrings обозначает растягиваемую ткань."
+    },
+    {
+      "id": "fitnessprogramer:standing-dorsiflexion",
+      "source_path": "assets/work/calf/standing-dorsiflexion.json",
+      "source_blob_sha": "31daa1be09c0bf3c270204b46af0ccf60321e62b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "tibialis_anterior"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "ankle_stabilizers"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-dorsiflexion/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing dorsiflexion: инструкция требует поднять носки при пятках на полу; исходный Gastrocnemius (подошвенный сгибатель) ошибочен. Главный tibialis anterior; дополнительные мышцы по карточке не определены."
+        }
+      ],
+      "notes": "Standing dorsiflexion: инструкция требует поднять носки при пятках на полу; исходный Gastrocnemius (подошвенный сгибатель) ошибочен. Главный tibialis anterior; дополнительные мышцы по карточке не определены."
+    },
+    {
+      "id": "fitnessprogramer:standing-dumbbell-shoulder-press",
+      "source_path": "assets/work/shoulders/standing-dumbbell-shoulder-press.json",
+      "source_blob_sha": "b613b4673f74e145bc89b9c95a4dbbaaf4c86530",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "rotator_cuff",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-dumbbell-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing dumbbell press: передняя дельта primary исходника, плечевой манжет и косые держат вес; исходный Levatos Scapula/Biceps стабилизаторами не подтверждены."
+        }
+      ],
+      "notes": "Standing dumbbell press: передняя дельта primary исходника, плечевой манжет и косые держат вес; исходный Levatos Scapula/Biceps стабилизаторами не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:standing-gastrocnemius-calf-stretch",
+      "source_path": "assets/work/calf/standing-gastrocnemius-calf-stretch.json",
+      "source_blob_sha": "e10768120db269f8bc2709efdcc889c8ca93dc58",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-gastrocnemius-calf-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Gastrocnemius calf stretch по инструкции выполняется с пяткой на скамье ИЛИ поднятой платформе. Растяжка, не силовая работа."
+        }
+      ],
+      "notes": "Gastrocnemius calf stretch по инструкции выполняется с пяткой на скамье ИЛИ поднятой платформе. Растяжка, не силовая работа."
+    },
+    {
+      "id": "fitnessprogramer:standing-hamstring-stretch",
+      "source_path": "assets/work/hip/standing-hamstring-stretch.json",
+      "source_blob_sha": "4dc2b3e021fdaa293b31b08d538b278f050c0b2b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-hamstring-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing hamstring stretch — наклон с выпрямленной ногой для растяжения заднего бедра, нет силовых primary."
+        }
+      ],
+      "notes": "Standing hamstring stretch — наклон с выпрямленной ногой для растяжения заднего бедра, нет силовых primary."
+    },
+    {
+      "id": "fitnessprogramer:standing-hip-abduction",
+      "source_path": "assets/work/hip/standing-hip-abduction.json",
+      "source_blob_sha": "f0519a2c48a943f31fda727c67dd864d328e8617",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-hip-abduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing hip abduction: в тексте названы средняя и малая ягодичные; исходные Hip Abductors/TFL/Gluteus Maximus неправильно приравнены к первичным."
+        }
+      ],
+      "notes": "Standing hip abduction: в тексте названы средняя и малая ягодичные; исходные Hip Abductors/TFL/Gluteus Maximus неправильно приравнены к первичным."
+    },
+    {
+      "id": "fitnessprogramer:standing-hip-extension",
+      "source_path": "assets/work/hip/standing-hip-extension.json",
+      "source_blob_sha": "1ccbc332dc1a7321a8044faa8509bd78257538f7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-hip-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing hip extension: gluteus maximus исходная primary верна, задняя бедра помогает разгибать, корпус удерживается."
+        }
+      ],
+      "notes": "Standing hip extension: gluteus maximus исходная primary верна, задняя бедра помогает разгибать, корпус удерживается."
     }
   ]
 }
