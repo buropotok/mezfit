@@ -2675,6 +2675,485 @@
         }
       ],
       "notes": "Impossible dips в инструкции прямо выполняются между parallel bars; изоляция трицепса и контроль корпуса, категория arms подтверждена."
+    },
+    {
+      "id": "fitnessprogramer:inchworm",
+      "source_path": "assets/work/abs/inchworm.json",
+      "source_blob_sha": "30768a3ca3881d3e5dca050e4e6994a4cb71a6e3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/inchworm/"
+          ],
+          "confidence": "medium",
+          "reason": "Inchworm сочетает наклон, ходьбу руками в планку и подтягивание ног: движение на контроль корпуса и мобильность, не изолированная мышечная силовая нагрузка."
+        }
+      ],
+      "notes": "Inchworm сочетает наклон, ходьбу руками в планку и подтягивание ног: движение на контроль корпуса и мобильность, не изолированная мышечная силовая нагрузка."
+    },
+    {
+      "id": "fitnessprogramer:incline-barbell-bench-press",
+      "source_path": "assets/work/chest/incline-barbell-bench-press.json",
+      "source_blob_sha": "c8379ce37796c4308afbf7cb05bbc483a1387bfc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-barbell-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонная скамья 30–45° прямо указана; исходный Biceps Brachii не доказан как динамический стабилизатор жима штанги."
+        }
+      ],
+      "notes": "Наклонная скамья 30–45° прямо указана; исходный Biceps Brachii не доказан как динамический стабилизатор жима штанги."
+    },
+    {
+      "id": "fitnessprogramer:incline-barbell-row",
+      "source_path": "assets/work/back/incline-barbell-row.json",
+      "source_blob_sha": "08100aacd1d99f0d3c4b1e104665d9d79de05d0c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-barbell-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline Barbell Row предполагает наклонную опору для корпуса; сайт описывает тягу спиной, но без пошаговой техники опору следует визуально проверить."
+        }
+      ],
+      "notes": "Incline Barbell Row предполагает наклонную опору для корпуса; сайт описывает тягу спиной, но без пошаговой техники опору следует визуально проверить."
+    },
+    {
+      "id": "fitnessprogramer:incline-close-grip-bench-press",
+      "source_path": "assets/work/chest/incline-close-grip-bench-press.json",
+      "source_blob_sha": "77f8c38e91d0849e1adf0547e133f12b563c4ffe",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-close-grip-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Close-grip incline bench press: наклонная скамья необходима; исходный Biceps Brachii не подтверждён как стабилизатор."
+        }
+      ],
+      "notes": "Close-grip incline bench press: наклонная скамья необходима; исходный Biceps Brachii не подтверждён как стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:incline-dumbbel-hammer-press",
+      "source_path": "assets/work/chest/incline-dumbbel-hammer-press.json",
+      "source_blob_sha": "16a8b4440767a96127ec35b76d6604e9d31f35e9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-dumbbel-hammer-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline dumbbell hammer press в инструкции: гантели с нейтральным хватом и скамья 30–45°. Главная нагрузка верх груди; Biceps Brachii не является подтверждённым стабилизатором."
+        }
+      ],
+      "notes": "Incline dumbbell hammer press в инструкции: гантели с нейтральным хватом и скамья 30–45°. Главная нагрузка верх груди; Biceps Brachii не является подтверждённым стабилизатором."
+    },
+    {
+      "id": "fitnessprogramer:incline-dumbbell-fly",
+      "source_path": "assets/work/chest/incline-dumbbell-fly.json",
+      "source_blob_sha": "cc4750335fd84b2a26bbd990edaf0c200d480cce",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-dumbbell-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "В наклонном разведении гантелей анатомически уместна верхняя часть груди; бицепс и трицепс не приписываются одновременно в качестве главных динамических помощников."
+        }
+      ],
+      "notes": "В наклонном разведении гантелей анатомически уместна верхняя часть груди; бицепс и трицепс не приписываются одновременно в качестве главных динамических помощников."
+    },
+    {
+      "id": "fitnessprogramer:incline-dumbbell-hammer-row",
+      "source_path": "assets/work/back/incline-dumbbell-hammer-row.json",
+      "source_blob_sha": "609fc502f0505ac8d1af6c839e2816abcad8a520",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-dumbbell-hammer-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline hammer row — тяга гантелей нейтральным хватом с поддержкой наклонной скамьи; исходное how_to отсутствует, ролям дана средняя уверенность."
+        }
+      ],
+      "notes": "Incline hammer row — тяга гантелей нейтральным хватом с поддержкой наклонной скамьи; исходное how_to отсутствует, ролям дана средняя уверенность."
+    },
+    {
+      "id": "fitnessprogramer:incline-dumbbell-press",
+      "source_path": "assets/work/chest/incline-dumbbell-press.json",
+      "source_blob_sha": "0754787a50fffb6b9007473502387850339a9cd8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-dumbbell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонный жим гантелей по инструкции выполняется с опорой на скамью; основная верхняя грудь, бицепс не объявлен динамическим стабилизатором."
+        }
+      ],
+      "notes": "Наклонный жим гантелей по инструкции выполняется с опорой на скамью; основная верхняя грудь, бицепс не объявлен динамическим стабилизатором."
+    },
+    {
+      "id": "fitnessprogramer:incline-dumbbell-side-lateral-raise",
+      "source_path": "assets/work/shoulders/incline-dumbbell-side-lateral-raise.json",
+      "source_blob_sha": "95f0b5ea23887f5d80283db1f71f0aed572b5ebe",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "serratus_anterior",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-dumbbell-side-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline lateral raise — отведение руки с гантелью с наклонной опорой, конкретная стабилизирующая роль не определена источником."
+        }
+      ],
+      "notes": "Incline lateral raise — отведение руки с гантелью с наклонной опорой, конкретная стабилизирующая роль не определена источником."
+    },
+    {
+      "id": "fitnessprogramer:incline-dumbbell-y-raise",
+      "source_path": "assets/work/shoulders/incline-dumbbell-y-raise.json",
+      "source_blob_sha": "e2475662fd3a57d7372fb2a84ba66612c0febee9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench",
+          "stability ball"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_lower",
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "serratus_anterior",
+            "supraspinatus",
+            "infraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-dumbbell-y-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Y-raise: источник описывает наклонную скамью ИЛИ фитбол под грудью и тазом; вариативные предметы нельзя трактовать как одновременное требование. Нижняя трапеция разгибает/ротирует лопатку."
+        }
+      ],
+      "notes": "Y-raise: источник описывает наклонную скамью ИЛИ фитбол под грудью и тазом; вариативные предметы нельзя трактовать как одновременное требование. Нижняя трапеция разгибает/ротирует лопатку."
+    },
+    {
+      "id": "fitnessprogramer:incline-ez-bar-triceps-extension",
+      "source_path": "assets/work/triceps/incline-ez-bar-triceps-extension.json",
+      "source_blob_sha": "c0d0ef60a370079c79935ae661ea18b262550f4f",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-ez-bar-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции incline EZ-bar triceps extension: EZ-гриф и наклонная скамья 30–45°, локти разгибаются трицепсом. Гриф не равен прямой штанге."
+        }
+      ],
+      "notes": "В инструкции incline EZ-bar triceps extension: EZ-гриф и наклонная скамья 30–45°, локти разгибаются трицепсом. Гриф не равен прямой штанге."
+    },
+    {
+      "id": "fitnessprogramer:incline-landmine-press",
+      "source_path": "assets/work/chest/incline-landmine-press.json",
+      "source_blob_sha": "118c0c3cf5cec58bc69ffe177b860dd96a7b6b50",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-landmine-press/"
+          ],
+          "confidence": "low",
+          "reason": "Incline Landmine Press может быть жимом по наклонной траектории без скамьи; исходный Landmine уже канонический. Разделение chest/shoulders и точная позиция требуют GIF."
+        }
+      ],
+      "notes": "Incline Landmine Press может быть жимом по наклонной траектории без скамьи; исходный Landmine уже канонический. Разделение chest/shoulders и точная позиция требуют GIF."
     }
   ]
 }
