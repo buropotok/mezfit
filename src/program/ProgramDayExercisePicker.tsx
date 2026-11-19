@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NavigationContext } from '../NavigationShell';
 import type { CloudTrainingPlanRow } from '../data/cloud/database';
 import type { CloudProgramExerciseSnapshot } from '../data/cloud/workout-foundation-types';
@@ -23,6 +23,13 @@ export function ProgramDayExercisePicker({ repository, program, dayId, onClose, 
   const [error, setError] = useState('');
   const [sheetNavigation, setSheetNavigation] = useState<NavigationContext | null>(null);
   const running = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const cancelReplacement = useCallback(() => {
+    if (running.current) return;
+    setChoice(null);
+    onCloseRef.current();
+  }, []);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const close = () => { if (!running.current) setClosing(true); };
@@ -65,9 +72,12 @@ export function ProgramDayExercisePicker({ repository, program, dayId, onClose, 
     }
   };
   useEffect(() => {
-    onNavigationContextChange?.(sheetNavigation);
+    const current: NavigationContext | null = choice
+      ? { level: 2, title: 'Замена упражнения', onBack: cancelReplacement }
+      : sheetNavigation;
+    onNavigationContextChange?.(current);
     return () => onNavigationContextChange?.(null);
-  }, [sheetNavigation, onNavigationContextChange]);
+  }, [choice, sheetNavigation, cancelReplacement, onNavigationContextChange]);
   return <>
     <WorkoutExerciseSelectionSheet opened={opened} initData="" personalCatalogueRole={catalogueRole}
       mode={replacement ? 'replace' : 'add'} saving={busy} actionError={error}
@@ -77,7 +87,7 @@ export function ProgramDayExercisePicker({ repository, program, dayId, onClose, 
         setClosing(false); setError(''); onClose();
       }} onNavigationContextChange={setSheetNavigation} />
     {choice ? <ExerciseReplacementDialog opened compatible={choice.compatible}
-      busy={busy} error={error} onCancel={() => { if (!running.current) { setChoice(null); onClose(); } }}
+      busy={busy} error={error} onCancel={cancelReplacement}
       onConfirm={value => { void confirmReplacement(value); }} /> : null}
   </>;
 }
