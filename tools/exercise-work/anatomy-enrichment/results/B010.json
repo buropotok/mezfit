@@ -2128,6 +2128,438 @@
         }
       ],
       "notes": "Side bent — боковой наклон туловища без отягощения, косые и квадратная мышца поясницы управляют боковым сгибанием."
+    },
+    {
+      "id": "fitnessprogramer:side-bridge",
+      "source_path": "assets/work/abs/side-bridge.json",
+      "source_blob_sha": "cd684723b2105213b80b96a560fa11330017caef",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Side bridge по инструкции — боковые подъёмы таза в упоре на предплечье, косые и квадратная поясницы выполняют боковое сгибание, плечевой пояс удерживает опору."
+        }
+      ],
+      "notes": "Side bridge по инструкции — боковые подъёмы таза в упоре на предплечье, косые и квадратная поясницы выполняют боковое сгибание, плечевой пояс удерживает опору."
+    },
+    {
+      "id": "fitnessprogramer:side-bridge-hip-abduction",
+      "source_path": "assets/work/abs/side-bridge-hip-abduction.json",
+      "source_blob_sha": "012a4cd2fb25c0f5a8e392855b7d3a17ac3e08b0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-bridge-hip-abduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Side bridge hip abduction — удержание боковой планки с отведением верхней ноги, основной динамический двигатель средняя/малая ягодичные."
+        }
+      ],
+      "notes": "Side bridge hip abduction — удержание боковой планки с отведением верхней ноги, основной динамический двигатель средняя/малая ягодичные."
+    },
+    {
+      "id": "fitnessprogramer:side-hip-abduction",
+      "source_path": "assets/work/hip/side-hip-abduction.json",
+      "source_blob_sha": "009123c402ea038febdb3fea4da8572a11afb719",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-hip-abduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Side hip abduction — боковое отведение бедра, ягодичные средняя и малая основная нагрузка."
+        }
+      ],
+      "notes": "Side hip abduction — боковое отведение бедра, ягодичные средняя и малая основная нагрузка."
+    },
+    {
+      "id": "fitnessprogramer:side-lunge-stretch",
+      "source_path": "assets/work/leg/side-lunge-stretch.json",
+      "source_blob_sha": "71e6626e0bce8c3b9292396fe36e4aa403002db8",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-lunge-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Название Side Lunge Stretch говорит о растяжке, но исходный Benefits описывает динамические силовые side lunges. Без инструкции/GIF нельзя уверенно приписать силовую роль квадрицепса этой версии."
+        }
+      ],
+      "notes": "Название Side Lunge Stretch говорит о растяжке, но исходный Benefits описывает динамические силовые side lunges. Без инструкции/GIF нельзя уверенно приписать силовую роль квадрицепса этой версии."
+    },
+    {
+      "id": "fitnessprogramer:side-lying-clam",
+      "source_path": "assets/work/hip/side-lying-clam.json",
+      "source_blob_sha": "e0be8ba3aabab6f174a3e1d3640b140ae4121332",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "hip_external_rotators"
+          ],
+          "secondary": [
+            "gluteus_minimus"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-lying-clam/"
+          ],
+          "confidence": "medium",
+          "reason": "Side-lying clam — наружная ротация согнутого бедра с сомкнутыми стопами. Исходный Gluteus Maximus как единственный primary заменён средним ягодичным и наружными ротаторами."
+        }
+      ],
+      "notes": "Side-lying clam — наружная ротация согнутого бедра с сомкнутыми стопами. Исходный Gluteus Maximus как единственный primary заменён средним ягодичным и наружными ротаторами."
+    },
+    {
+      "id": "fitnessprogramer:side-lying-feet-raise",
+      "source_path": "assets/work/abs/side-lying-feet-raise.json",
+      "source_blob_sha": "d205cd2c4abde68da574e1143a2299b00ac9e24f",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-lying-feet-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Side lying feet raise без описания техники: подъём обеих стоп, внутреннее приведение или сгибание корпуса — разные версии; мышцы и core категория требуют GIF."
+        }
+      ],
+      "notes": "Side lying feet raise без описания техники: подъём обеих стоп, внутреннее приведение или сгибание корпуса — разные версии; мышцы и core категория требуют GIF."
+    },
+    {
+      "id": "fitnessprogramer:side-lying-hip-adduction",
+      "source_path": "assets/work/hip/side-lying-hip-adduction.json",
+      "source_blob_sha": "f5331d103afbb0001f30c733f7e1fe3f66f3d63e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "hip_adductors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-lying-hip-adduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Side-lying hip adduction — подъём нижней ноги с приведением к средней линии, приводящие бедра основные."
+        }
+      ],
+      "notes": "Side-lying hip adduction — подъём нижней ноги с приведением к средней линии, приводящие бедра основные."
+    },
+    {
+      "id": "fitnessprogramer:side-lying-rear-delt-dumbbell-raise",
+      "source_path": "assets/work/shoulders/side-lying-rear-delt-dumbbell-raise.json",
+      "source_blob_sha": "ffebd414858137db9ea84aaa340aeb25716a2204",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-lying-rear-delt-dumbbell-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Rear delt dumbbell raise лёжа на боку — отведение плеча в горизонтальной плоскости, задняя дельта целевая."
+        }
+      ],
+      "notes": "Rear delt dumbbell raise лёжа на боку — отведение плеча в горизонтальной плоскости, задняя дельта целевая."
+    },
+    {
+      "id": "fitnessprogramer:side-neck-stretch",
+      "source_path": "assets/work/neck/side-neck-stretch.json",
+      "source_blob_sha": "dd3e9ca7705c70980d91307baefd10c46247ca05",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-neck-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Side neck stretch — удержание бокового наклона головы для растяжки, исходный перечень мышц шеи не описывает primary силовое движение."
+        }
+      ],
+      "notes": "Side neck stretch — удержание бокового наклона головы для растяжки, исходный перечень мышц шеи не описывает primary силовое движение."
+    },
+    {
+      "id": "fitnessprogramer:side-one-arm-reverse-pushdown",
+      "source_path": "assets/work/triceps/side-one-arm-reverse-pushdown.json",
+      "source_blob_sha": "c010e2ff238c77897a0cf6180759741ab62d8b5f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-one-arm-reverse-pushdown/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное разгибание на тросе обратным хватом, трицепс основной динамический, хват удерживает рукоять."
+        }
+      ],
+      "notes": "Одноручное разгибание на тросе обратным хватом, трицепс основной динамический, хват удерживает рукоять."
+    },
+    {
+      "id": "fitnessprogramer:side-plank-hip-adduction",
+      "source_path": "assets/work/abs/side-plank-hip-adduction.json",
+      "source_blob_sha": "5dff8b5843d9357bac2945de1bfea613fd840332",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "legs",
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "hip_adductors"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-plank-hip-adduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Copenhagen side plank hip adduction с верхней ногой на скамье по инструкции: внутреннее приведение бедра — основной силовой акцент, боковая планка удерживает корпус."
+        }
+      ],
+      "notes": "Copenhagen side plank hip adduction с верхней ногой на скамье по инструкции: внутреннее приведение бедра — основной силовой акцент, боковая планка удерживает корпус."
+    },
+    {
+      "id": "fitnessprogramer:side-plank-knee-to-elbow",
+      "source_path": "assets/work/abs/side-plank-knee-to-elbow.json",
+      "source_blob_sha": "5a7959be628f086899bb58a148b598eb8bb41306",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/side-plank-knee-to-elbow/"
+          ],
+          "confidence": "medium",
+          "reason": "Side plank knee to elbow — сгибание бедра/корпуса в боковой планке, косые и iliopsoas участвуют."
+        }
+      ],
+      "notes": "Side plank knee to elbow — сгибание бедра/корпуса в боковой планке, косые и iliopsoas участвуют."
     }
   ]
 }
