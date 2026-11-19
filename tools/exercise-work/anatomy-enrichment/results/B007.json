@@ -1,0 +1,430 @@
+{
+  "schema_version": 1,
+  "batch_id": "B007",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:foam-roller-inner-thigh-adductor-stretch",
+      "source_path": "assets/work/hip/foam-roller-inner-thigh-adductor-stretch.json",
+      "source_blob_sha": "f58e7ab734bb7c5a4027634e315dcad65cb6b991",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-inner-thigh-adductor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Роликовая мобилизация приводящей поверхности бедра; нет доказуемой выделенной двигательной мышцы. Роли помечены специальным маркером, а не мышечным ID."
+        }
+      ],
+      "notes": "Роликовая мобилизация приводящей поверхности бедра; нет доказуемой выделенной двигательной мышцы. Роли помечены специальным маркером, а не мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-it-iliotibial-band-stretch",
+      "source_path": "assets/work/leg/foam-roller-it-iliotibial-band-stretch.json",
+      "source_blob_sha": "e90a774861aceba9d61039c240754e7c77140c59",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-it-iliotibial-band-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Прокатка вдоль подвздошно-большеберцового тракта: IT band — фасциальная структура, не мышца. Инструкция описывает самомассаж, не силовую работу."
+        }
+      ],
+      "notes": "Прокатка вдоль подвздошно-большеберцового тракта: IT band — фасциальная структура, не мышца. Инструкция описывает самомассаж, не силовую работу."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-lat-stretch",
+      "source_path": "assets/work/back/foam-roller-lat-stretch.json",
+      "source_blob_sha": "49d1694e097fb7376e436744e9fc54de346eb126",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-lat-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Мобилизация широчайшей на ролике; растягиваемая ткань не является доказанным главным движителем упражнения."
+        }
+      ],
+      "notes": "Мобилизация широчайшей на ролике; растягиваемая ткань не является доказанным главным движителем упражнения."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-plantar-fasciitis",
+      "source_path": "assets/work/leg/foam-roller-plantar-fasciitis.json",
+      "source_blob_sha": "7717a0840d7e44960436f1b6af4b87be3626c377",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-plantar-fasciitis/"
+          ],
+          "confidence": "medium",
+          "reason": "Прокатка подошвенной фасции относится к мягкотканной мобилизации; фасция не является одной из 69 мышц и не подменяется соседним мышечным ID."
+        }
+      ],
+      "notes": "Прокатка подошвенной фасции относится к мягкотканной мобилизации; фасция не является одной из 69 мышц и не подменяется соседним мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-posterior-shoulder",
+      "source_path": "assets/work/shoulders/foam-roller-posterior-shoulder.json",
+      "source_blob_sha": "95adeb4f4ef916bf06c49c3a02f01438e1257137",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-posterior-shoulder/"
+          ],
+          "confidence": "medium",
+          "reason": "Роликовая мобилизация задней области плеча без описания техники; индивидуальные движущие и стабилизирующие мышцы не подтверждены."
+        }
+      ],
+      "notes": "Роликовая мобилизация задней области плеча без описания техники; индивидуальные движущие и стабилизирующие мышцы не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-quads",
+      "source_path": "assets/work/leg/foam-roller-quads.json",
+      "source_blob_sha": "6a80a03dba3da8b2a25dbdd0a55374cfdcc5bc9a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-quads/"
+          ],
+          "confidence": "medium",
+          "reason": "Роликовая работа с передней поверхностью бедра не доказывает силовую роль квадрицепса; маркируются невыделенные роли."
+        }
+      ],
+      "notes": "Роликовая работа с передней поверхностью бедра не доказывает силовую роль квадрицепса; маркируются невыделенные роли."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-rhomboids",
+      "source_path": "assets/work/back/foam-roller-rhomboids.json",
+      "source_blob_sha": "9ab548341744a74f5b879f6b976cb2a621fa2f30",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-rhomboids/"
+          ],
+          "confidence": "medium",
+          "reason": "Роликовая мобилизация области ромбовидных мышц; целевая мягкая ткань не приравнивается к главному двигателю."
+        }
+      ],
+      "notes": "Роликовая мобилизация области ромбовидных мышц; целевая мягкая ткань не приравнивается к главному двигателю."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-upper-back",
+      "source_path": "assets/work/back/foam-roller-upper-back.json",
+      "source_blob_sha": "ff53369a15bf907be1a600bff74663b1d69aaefe",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-upper-back/"
+          ],
+          "confidence": "medium",
+          "reason": "Самомассаж верхней спины на ролике: нельзя автоматически назвать трапецию/ромбовидные движущими мышцами без описания действия."
+        }
+      ],
+      "notes": "Самомассаж верхней спины на ролике: нельзя автоматически назвать трапецию/ромбовидные движущими мышцами без описания действия."
+    },
+    {
+      "id": "fitnessprogramer:foot-and-ankles-stretches",
+      "source_path": "assets/work/calf/foot-and-ankles-stretches.json",
+      "source_blob_sha": "1bb33f70f0a69029c5bfcdc3b94bf69b9956ab30",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foot-and-ankles-stretches/"
+          ],
+          "confidence": "medium",
+          "reason": "Комплекс растяжек стопы и голеностопа без описания каждого движения; целевые ткани и роли индивидуальных мышц неразличимы."
+        }
+      ],
+      "notes": "Комплекс растяжек стопы и голеностопа без описания каждого движения; целевые ткани и роли индивидуальных мышц неразличимы."
+    },
+    {
+      "id": "fitnessprogramer:forearm-push-up",
+      "source_path": "assets/work/chest/forearm-push-up.json",
+      "source_blob_sha": "651c8ccbc3a123459789782a52ca2d2c1ce786c9",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "primary_category": "arms",
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/forearm-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Описание forearm push-up противоречиво: указаны сгибание локтей вниз и затем возвращение в планку. По target Triceps и поддержанию планки предварительно arms, но последовательность требуется проверить по GIF."
+        }
+      ],
+      "notes": "Описание forearm push-up противоречиво: указаны сгибание локтей вниз и затем возвращение в планку. По target Triceps и поддержанию планки предварительно arms, но последовательность требуется проверить по GIF."
+    },
+    {
+      "id": "fitnessprogramer:forward-bend",
+      "source_path": "assets/work/hip/forward-bend.json",
+      "source_blob_sha": "42644129a0289e1cc1dec8d68ec064d71e8d3020",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/forward-bend/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции это наклон туловища для растяжки задней цепи, а не силовое разгибание позвоночника; исходные «Glutes», «Upper Back Stabilizers» нельзя объявить главными мышцами этой mobility-позы."
+        }
+      ],
+      "notes": "В инструкции это наклон туловища для растяжки задней цепи, а не силовое разгибание позвоночника; исходные «Glutes», «Upper Back Stabilizers» нельзя объявить главными мышцами этой mobility-позы."
+    },
+    {
+      "id": "fitnessprogramer:frog-crunch",
+      "source_path": "assets/work/abs/frog-crunch.json",
+      "source_blob_sha": "bda1853fb6ec129ce9a1b32b580d3c648089e00c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/frog-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Вариант frog crunch, разгибание/сгибание туловища и скручивание; без подробной техники дополнительных стабилизаторов не выделяем."
+        }
+      ],
+      "notes": "Вариант frog crunch, разгибание/сгибание туловища и скручивание; без подробной техники дополнительных стабилизаторов не выделяем."
+    }
+  ]
+}
