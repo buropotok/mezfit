@@ -1623,6 +1623,619 @@
         }
       ],
       "notes": "Нужен визуальный просмотр GIF: нельзя уверенно выбрать между силовым отжиманием, динамическим комплексом и кардио. Маркер other — отдельный результат ревью, а не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:cross-crunch",
+      "source_path": "assets/work/abs/cross-crunch.json",
+      "source_blob_sha": "1d25931418c29037326f1a77ddbb401a171ad43b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Перекрёстное скручивание сочетает сгибание и поворот туловища; акцент на косых мышцах живота."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:crouching-heel-back-calf-stretch",
+      "source_path": "assets/work/leg/crouching-heel-back-calf-stretch.json",
+      "source_blob_sha": "a505eada337130602a0edc5f081757cd6edf535e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/crouching-heel-back-calf-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжение икроножной в приседе не является активным силовым движением с определяемыми prime movers."
+        }
+      ],
+      "notes": "Растягиваемая голень не записывается как силовая группа основных мышц. Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:crunch",
+      "source_path": "assets/work/abs/crunch.json",
+      "source_blob_sha": "fb3d41768c4b277c69691f91de7c9d3b5cf6ae43",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Обычное скручивание — сгибание грудопоясничного отдела преимущественно прямой мышцей живота, косые помогают."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:crunch-with-leg-raise",
+      "source_path": "assets/work/abs/crunch-with-leg-raise.json",
+      "source_blob_sha": "8b4ee3c86dd64d1b8c7617f85825f3406059780b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/crunch-with-leg-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Скручивание совмещено с подъёмом ног: прямая мышца живота сгибает корпус, подвздошно-поясничная помогает поднять бедро."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:curtsy-lunge",
+      "source_path": "assets/work/hip/curtsy-lunge.json",
+      "source_blob_sha": "332fa45926d5c83f65bb61b95c04193d474e43d8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/curtsy-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Перекрёстный выпад включает разгибание колена и бедра, боковую стабилизацию таза."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:curtsy-squat",
+      "source_path": "assets/work/hip/curtsy-squat.json",
+      "source_blob_sha": "8e3378c68d1aed41d175e81fb03aac32ccbba137",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "gluteus_minimus",
+            "obliques",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/curtsy-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Curtsy squat: квадрицепсы разгибают колено, ягодичные и приводящие помогают, мышцы таза и корпуса стабилизируют."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dead-bug",
+      "source_path": "assets/work/abs/dead-bug.json",
+      "source_blob_sha": "165db7b95e89ffcf507a18f979335b489711c899",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "transversus_abdominis",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dead-bug/"
+          ],
+          "confidence": "medium",
+          "reason": "Dead bug — контролируемая антиэкстензия с поперечной и прямой мышцами живота; исходное перечисление latissimus/квадрицепса как prime movers не подтверждено."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:dead-hang",
+      "source_path": "assets/work/back/dead-hang.json",
+      "source_blob_sha": "5733ece08fe281d860b2ec3d2be9e4a9189e4186",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_grip"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dead-hang/"
+          ],
+          "confidence": "low",
+          "reason": "Пассивный вис на турнике прежде всего требует удержания хвата; исходный Latissimus Dorsi как активный prime mover не подтверждён."
+        }
+      ],
+      "notes": "Вариант active hang мог бы требовать иной анатомической классификации; проверить исходный GIF. Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:deadlift",
+      "source_path": "assets/work/back/deadlift.json",
+      "source_blob_sha": "cab42a69e3cb4d60a9d4551e804e645d2d47a8f2",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "erector_spinae"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "forearm_grip",
+            "latissimus_dorsi",
+            "transversus_abdominis"
+          ]
+        },
+        "primary_category": "legs"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/deadlift/",
+            "https://www.strengthlog.com/deadlift/"
+          ],
+          "confidence": "high",
+          "reason": "Классическая становая тяга: разгибатели таза/коленей и спины выполняют подъём, хват, широчайшие и пресс стабилизируют штангу."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:decline-barbell-bench-press",
+      "source_path": "assets/work/chest/decline-barbell-bench-press.json",
+      "source_blob_sha": "493e179f28554326b72c2b8dd3122cdce72e3a40",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-barbell-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим штанги лёжа головой вниз акцентирует нижнюю часть большой грудной; скамья и штанга обязательны."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:decline-bench-dumbbell-lunge",
+      "source_path": "assets/work/hip/decline-bench-dumbbell-lunge.json",
+      "source_blob_sha": "508a7d2362e97675dffcbc9e1f0b6d8fd54c0cb2",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-bench-dumbbell-lunge/"
+          ],
+          "confidence": "low",
+          "reason": "Выпад с гантелями и опорой на скамью выполняется ногами с контролем таза."
+        }
+      ],
+      "notes": "Проверить GIF: положение задней ноги на decline bench и направление выпада не описаны."
+    },
+    {
+      "id": "fitnessprogramer:decline-close-grip-bench-to-skull-crusher",
+      "source_path": "assets/work/triceps/decline-close-grip-bench-to-skull-crusher.json",
+      "source_blob_sha": "8899323c3e3522f85cc6dd8895660fcc1105a3ed",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-close-grip-bench-to-skull-crusher/"
+          ],
+          "confidence": "medium",
+          "reason": "Комбинация узкого жима и французского жима на наклонной вниз скамье: разгибание локтя — трицепс; грудь участвует в жимовой фазе."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:decline-dumbbell-fly",
+      "source_path": "assets/work/chest/decline-dumbbell-fly.json",
+      "source_blob_sha": "8bef28b74f9a7efe950f396d98bc4493c876763e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-dumbbell-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение гантелей лёжа головой вниз акцентирует нижние грудные; плечо выполняет горизонтальное приведение."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:decline-dumbbell-leg-curl",
+      "source_path": "assets/work/leg/decline-dumbbell-leg-curl.json",
+      "source_blob_sha": "b66aad3d09ef5718783e725aa6d67ded110cb4de",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-dumbbell-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание ног с зажатой гантелью на наклонной скамье нагружает заднюю поверхность бедра; икроножная помогает."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:decline-dumbbell-press",
+      "source_path": "assets/work/chest/decline-dumbbell-press.json",
+      "source_blob_sha": "a7c136c885304145c41747ee8fc062e38314fac7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-dumbbell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонный вниз жим гантелей — нижняя часть грудных, трицепсы и передняя дельта, скамья обязательна."
+        }
+      ],
+      "notes": "Маркер other означает неизвестную роль, а не мышцу."
     }
   ]
 }
