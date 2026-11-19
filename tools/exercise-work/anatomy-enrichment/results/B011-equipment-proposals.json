@@ -1,0 +1,136 @@
+{
+  "batch_id": "B011",
+  "proposals": [
+    {
+      "id": "ski-ergometer",
+      "label_ru": "Лыжный эргометр SkiErg",
+      "definition_ru": "Вертикальный двухрукояточный кардиотренажёр с регулируемым сопротивлением для имитации попеременной или одновременной тяги лыжными палками; не гребной тренажёр.",
+      "exercise_ids": [
+        "fitnessprogramer:ski-ergometer"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ski-ergometer/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "rowing machine",
+        "ski trainer"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "power-rack",
+      "label_ru": "Силовая рама со страховочными упорами",
+      "definition_ru": "Силовая рама/стойка для снятия штанги и приседаний с поддержкой грифа и возможными страховочными упорами. Каноническое предложение соответствует B004/B007.",
+      "exercise_ids": [
+        "fitnessprogramer:squat"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/squat/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "barbell",
+        "smith machine",
+        "squat rack"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "towel",
+      "label_ru": "Полотенце для упражнений",
+      "definition_ru": "Полотенце как мягкий нескользящий реквизит для растяжки или как скользящая опора пяток при сгибании ног; не резиновая эластичная лента.",
+      "exercise_ids": [
+        "fitnessprogramer:stretch-with-towel",
+        "fitnessprogramer:towel-leg-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/stretch-with-towel/",
+        "https://fitnessprogramer.com/exercise/towel-leg-curl/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "band",
+        "mat",
+        "towel"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "t-bar-row-machine",
+      "label_ru": "Тренажёр Т-грифа для тяги",
+      "definition_ru": "Специализированная силовая машина T-bar row с установленным рычажным грифом и рукоятями для тяги. Вариант на штанге с landmine является альтернативным способом выполнения.",
+      "exercise_ids": [
+        "fitnessprogramer:t-bar-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/t-bar-row/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "landmine",
+        "barbell",
+        "t bar row"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "table",
+      "label_ru": "Устойчивый гимнастический/бытовой стол",
+      "definition_ru": "Устойчивый стол достаточной высоты и прочности для inverted row снизу, позволяющий безопасно держаться за край и подтягивать грудь; не спортивная скамья.",
+      "exercise_ids": [
+        "fitnessprogramer:table-inverted-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/table-inverted-row/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "bench",
+        "pull-up bar",
+        "table"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "tractor-tire",
+      "label_ru": "Большая покрышка для силовых упражнений",
+      "definition_ru": "Тяжёлая широкая покрышка для переворачивания руками или ударов кувалдой в функциональных тренировках, отдельный снаряд, не weight plate.",
+      "exercise_ids": [
+        "fitnessprogramer:tire-flip",
+        "fitnessprogramer:tire-sledge-hammer"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/tire-flip/",
+        "https://fitnessprogramer.com/exercise/tire-sledge-hammer/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "weight plate",
+        "strongman tire"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "sledgehammer",
+      "label_ru": "Тренировочная кувалда",
+      "definition_ru": "Кувалда с длинной рукояткой для контролируемых ударов по покрышке в функциональных тренировках; не медицинский молоточек и не штанга.",
+      "exercise_ids": [
+        "fitnessprogramer:tire-sledge-hammer"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/tire-sledge-hammer/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "barbell",
+        "medicine ball",
+        "training hammer"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
