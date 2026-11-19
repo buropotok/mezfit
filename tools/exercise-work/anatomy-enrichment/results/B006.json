@@ -1,0 +1,424 @@
+{
+  "schema_version": 1,
+  "batch_id": "B006",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:dumbbell-incline-t-raise",
+      "source_path": "assets/work/shoulders/dumbbell-incline-t-raise.json",
+      "source_blob_sha": "e9722e90298360e8a7c83bd44955f80f9b4598a7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle",
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-incline-t-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонная скамья обеспечивает опору; источник перечисляет синергистов, но не подтверждает отдельные стабилизаторы. Источник: Dumbbell Incline T-Raise."
+        }
+      ],
+      "notes": "Наклонная скамья обеспечивает опору; источник перечисляет синергистов, но не подтверждает отдельные стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-incline-two-arm-extension",
+      "source_path": "assets/work/triceps/dumbbell-incline-two-arm-extension.json",
+      "source_blob_sha": "a741fdee0e2241740c91a65387c3abf3871c9785",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-incline-two-arm-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонная скамья прямо указана в инструкции; синергисты и стабилизаторы в источнике не названы. Источник: Dumbbell Incline Two-Arm Extension."
+        }
+      ],
+      "notes": "Наклонная скамья прямо указана в инструкции; синергисты и стабилизаторы в источнике не названы."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-iron-cross",
+      "source_path": "assets/work/shoulders/dumbbell-iron-cross.json",
+      "source_blob_sha": "b0e07dcc119c9b699f813e28f5e9dad0194b4bde",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-iron-cross/",
+            "https://tviky.com/en/exercises/dumbbell-iron-cross/"
+          ],
+          "confidence": "low",
+          "reason": "В исходной карточке нет инструкции/анатомии. Внешняя демонстрация описывает сочетание приседания и отведения рук. Проверить точную версию на GIF перед интеграцией. Источник: Dumbbell Iron Cross."
+        }
+      ],
+      "notes": "В исходной карточке нет инструкции/анатомии. Внешняя демонстрация описывает сочетание приседания и отведения рук. Проверить точную версию на GIF перед интеграцией."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-jefferson-curl",
+      "source_path": "assets/work/hip/dumbbell-jefferson-curl.json",
+      "source_blob_sha": "36b231a0671028e284897c4fccc6b17b049038eb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus",
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "back"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-jefferson-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сегментарное сгибание позвоночника и растяжение задней цепи; платформа упоминается в инструкции. Основная категория «Спина» по движению позвоночника. Источник: Dumbbell Jefferson Curl."
+        }
+      ],
+      "notes": "Сегментарное сгибание позвоночника и растяжение задней цепи; платформа упоминается в инструкции. Основная категория «Спина» по движению позвоночника."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-jump-squat",
+      "source_path": "assets/work/hip/dumbbell-jump-squat.json",
+      "source_blob_sha": "bf803c735a4352681292866f2f8363167abe94e1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-jump-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "В исходном перечне стабилизаторов есть неподтверждённые плечевые мышцы; не переносим их автоматически. Источник: Dumbbell Jump Squat."
+        }
+      ],
+      "notes": "В исходном перечне стабилизаторов есть неподтверждённые плечевые мышцы; не переносим их автоматически."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-kickback",
+      "source_path": "assets/work/triceps/dumbbell-kickback.json",
+      "source_blob_sha": "61e7486c9c1282524f2c5d66eb5d352ce8b06541",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-kickback/"
+          ],
+          "confidence": "medium",
+          "reason": "Целевые мышцы сопоставлены с анатомической таксономией по описанию и механике упражнения; для недоказанных ролей применён специальный маркер other. Источник: Dumbbell Kickback."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lateral-raise",
+      "source_path": "assets/work/shoulders/dumbbell-lateral-raise.json",
+      "source_blob_sha": "ee37abcaea297251f3af1958632278f3417d10ac",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Целевые мышцы сопоставлены с анатомической таксономией по описанию и механике упражнения; для недоказанных ролей применён специальный маркер other. Источник: Dumbbell Lateral Raise."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lateral-step-up",
+      "source_path": "assets/work/hip/dumbbell-lateral-step-up.json",
+      "source_blob_sha": "6bd8ca8f03f06997fd237dc41fd01f9c0c8816c6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lateral-step-up/",
+            "https://www.muscleandfitness.com/exercise/workouts/leg-exercises/lateral-dumbbell-step/"
+          ],
+          "confidence": "low",
+          "reason": "В исходнике нет описания; платформа необходима по специфике step-up, проверить высоту/вариант по GIF. Источник: Dumbbell Lateral Step Up."
+        }
+      ],
+      "notes": "В исходнике нет описания; платформа необходима по специфике step-up, проверить высоту/вариант по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lateral-to-front-raise",
+      "source_path": "assets/work/shoulders/dumbbell-lateral-to-front-raise.json",
+      "source_blob_sha": "f896a2951e4d2cceb6df8fab6166ccb319fa9dcf",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lateral-to-front-raise/"
+          ],
+          "confidence": "low",
+          "reason": "В исходнике пустая анатомия и нет техники. Роли оценены из двух фаз подъёма; требуется визуальная сверка. Источник: Dumbbell Lateral to Front Raise."
+        }
+      ],
+      "notes": "В исходнике пустая анатомия и нет техники. Роли оценены из двух фаз подъёма; требуется визуальная сверка."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lunge",
+      "source_path": "assets/work/hip/dumbbell-lunge.json",
+      "source_blob_sha": "7b247da4a0464477f22341d907e60062ae7ecd11",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "erector_spinae",
+            "obliques",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Отбрасываем широкий исходный перечень стабилизаторов без привязки к конкретной фазе движения. Источник: Dumbbell Lunge."
+        }
+      ],
+      "notes": "Отбрасываем широкий исходный перечень стабилизаторов без привязки к конкретной фазе движения."
+    }
+  ]
+}
