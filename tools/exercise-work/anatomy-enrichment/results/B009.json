@@ -1,0 +1,630 @@
+{
+  "schema_version": 1,
+  "batch_id": "B009",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:one-arm-biceps-curl-with-resistance-band",
+      "source_path": "assets/work/biceps/one-arm-biceps-curl-with-resistance-band.json",
+      "source_blob_sha": "7f1499084baf6df4739035eb922b138f70927710",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-biceps-curl-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное сгибание локтя с резинкой; исходное Cable здесь лишь альтернативная нагрузка, не обязательное оборудование."
+        }
+      ],
+      "notes": "Маркер other — специальное значение ревью, не анатомический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-chin-up",
+      "source_path": "assets/work/back/one-arm-chin-up.json",
+      "source_blob_sha": "3464f9d99453fac6f662161947350d7ba397b76d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "teres_major",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_grip",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-chin-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное подтягивание на турнике: широчайшая и сгибатели локтя создают тягу, хват и корпус удерживают тело."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-dumbbell-snatch",
+      "source_path": "assets/work/shoulders/one-arm-dumbbell-snatch.json",
+      "source_blob_sha": "7d56e9cf14eab5abacdad5633480825d32bc956a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques",
+            "forearm_grip"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-dumbbell-snatch/"
+          ],
+          "confidence": "medium",
+          "reason": "Рывок гантели одной рукой: мощное разгибание ног и таза с подъёмом веса над головой; это многосуставный full-body паттерн."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-dumbbell-upright-row",
+      "source_path": "assets/work/shoulders/one-arm-dumbbell-upright-row.json",
+      "source_blob_sha": "cd8e0e5bde2a1f3f7677e13bea5c606a131d399f",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-dumbbell-upright-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга гантели к подбородку стоя одной рукой: отведение плеча и подъём лопатки, контроль ротации корпуса."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-high-pulley-overhead-tricep-extension",
+      "source_path": "assets/work/triceps/one-arm-high-pulley-overhead-tricep-extension.json",
+      "source_blob_sha": "9d825fce5e8f71c6ccbfaf8e52a383c3837a7990",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_long_head",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-high-pulley-overhead-tricep-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание локтя из-за головы с верхним блоком акцентирует длинную головку трицепса; активные синергисты/стабилизаторы отдельно не подтверждены."
+        }
+      ],
+      "notes": "Маркер other — специальное значение ревью, не анатомический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-kettlebell-chest-press-on-the-bench",
+      "source_path": "assets/work/chest/one-arm-kettlebell-chest-press-on-the-bench.json",
+      "source_blob_sha": "ea37b8fcf89c3e5f7d8f6b0e681e3c31bddab9ee",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "kettlebell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-kettlebell-chest-press-on-the-bench/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный жим гири на скамье требует контроля ротации корпуса; грудные, трицепс и передняя дельта выполняют жим."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-kettlebell-snatch",
+      "source_path": "assets/work/shoulders/one-arm-kettlebell-snatch.json",
+      "source_blob_sha": "ee3015b9ed2c520f0aca814359e4af3462faf352",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "kettlebell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "obliques",
+            "erector_spinae",
+            "forearm_grip"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-kettlebell-snatch/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный рывок гири включает разгибание таза и ног, ускорение и фиксацию гири над головой."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-kettlebell-swing",
+      "source_path": "assets/work/shoulders/one-arm-kettlebell-swing.json",
+      "source_blob_sha": "45481a7e516c2b5a3f9dc169f70b2b029126092d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "kettlebell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques",
+            "forearm_grip"
+          ]
+        },
+        "primary_category": "legs"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-kettlebell-swing/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный свинг гири строится на разгибании бедра, а не подъёме рукой: основной движитель большая ягодичная."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-landmine-row",
+      "source_path": "assets/work/back/one-arm-landmine-row.json",
+      "source_blob_sha": "b8e72718c9f6ecb24693776c85851fa7ee5b5ba7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "landmine"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "deltoid_posterior",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-landmine-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручная тяга лэндмайна: тяга плеча и ретракция лопатки при удержании наклона туловища."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-lying-triceps-extension",
+      "source_path": "assets/work/triceps/one-arm-lying-triceps-extension.json",
+      "source_blob_sha": "a1ebd39df2d69c18b5486fbcf0db57128e5dea10",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-lying-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Французский жим одной рукой лёжа: локтевое разгибание трицепсом; скамья допустима, но по инструкции возможен пол."
+        }
+      ],
+      "notes": "Маркер other — специальное значение ревью, не анатомический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-medicine-ball-slam",
+      "source_path": "assets/work/chest/one-arm-medicine-ball-slam.json",
+      "source_blob_sha": "d1e3c85af0d61518189024f056a31b257d1ef2e7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "obliques",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "triceps_brachii",
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-medicine-ball-slam/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный бросок медбола в пол — взрывное сгибание корпуса и ускорение плеча с переносом усилия через ноги."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-pronated-dumbbell-triceps-extension",
+      "source_path": "assets/work/triceps/one-arm-pronated-dumbbell-triceps-extension.json",
+      "source_blob_sha": "8c6c00d58f56919b52e726f89da2ae3b5a17353a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-pronated-dumbbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание локтя с пронированным хватом одной гантелью лёжа на скамье."
+        }
+      ],
+      "notes": "Без дополнительной механической проверки нельзя распределять нагрузку по отдельным головкам трицепса. Маркер other — специальное значение ревью, не анатомический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-prone-dumbbell-curl",
+      "source_path": "assets/work/biceps/one-arm-prone-dumbbell-curl.json",
+      "source_blob_sha": "ec0c5fcf0d66d78c4db28b8ffe374077ccda6316",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-prone-dumbbell-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Сгибание руки лёжа грудью на наклонной скамье сохраняет акцент на бицепсе."
+        }
+      ],
+      "notes": "В оригинале нет текстовой техники; требуется GIF для подтверждения положения скамьи и плеча. Маркер other — специальное значение ревью, не анатомический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-push-ups-with-support",
+      "source_path": "assets/work/chest/one-arm-push-ups-with-support.json",
+      "source_blob_sha": "873b5ef39e0a9864020ac224626dc5f602226a90",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "obliques",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-push-ups-with-support/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное отжимание с дополнительной опорой на скамью или возвышение; эти варианты указаны в инструкции."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-reverse-push-down",
+      "source_path": "assets/work/triceps/one-arm-reverse-push-down.json",
+      "source_blob_sha": "6743251f282ac27059c039c0ceee5bbe8c09943f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-reverse-push-down/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратный одноручный push-down выполняется рукояткой верхнего блока; предплечье стабилизирует супинированный хват."
+        }
+      ],
+      "notes": "Маркер other — специальное значение ревью, не анатомический ID."
+    }
+  ]
+}
