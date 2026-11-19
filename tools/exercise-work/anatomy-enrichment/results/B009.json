@@ -2466,6 +2466,605 @@
           "reason": "Отжимание на специальных напольных упорах для отжиманий; это не обычные брусья или отсутствие оборудования."
         }
       ]
+    },
+    {
+      "id": "fitnessprogramer:push-up-with-rotation",
+      "source_path": "assets/work/chest/push-up-with-rotation.json",
+      "source_blob_sha": "4654d67bc9172a988ba06474aafd032f56a4d020",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior",
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up-with-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание с ротацией после подъёма корпуса: грудь и трицепсы выполняют жим, косые мышцы управляют поворотом."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:pvc-hip-hinge",
+      "source_path": "assets/work/hip/pvc-hip-hinge.json",
+      "source_blob_sha": "63775e958ed827981618f241eafd500f280d6266",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pvc_pipe"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris"
+          ],
+          "secondary": [
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pvc-hip-hinge/"
+          ],
+          "confidence": "medium",
+          "reason": "Обучающий hip hinge с ПВХ-палкой вдоль позвоночника; палка является обязательным тактильным ориентиром несмотря на NO EQUIPMENT."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:quarter-sit-up",
+      "source_path": "assets/work/abs/quarter-sit-up.json",
+      "source_blob_sha": "ae568f6a6c75b6500c608db20c44dda39590f430",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/quarter-sit-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Неполный подъём корпуса (quarter sit-up) акцентирует прямую мышцу живота, косые помогают."
+        }
+      ],
+      "notes": "other — специальная роль ревью, а не мышца."
+    },
+    {
+      "id": "fitnessprogramer:rack-pull",
+      "source_path": "assets/work/hip/rack-pull.json",
+      "source_blob_sha": "385150b54efccd8237a4e171a65a3f171fd09ac5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "power_rack"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "erector_spinae"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "quadriceps_femoris"
+          ],
+          "stabilizers": [
+            "latissimus_dorsi",
+            "forearm_grip",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rack-pull/"
+          ],
+          "confidence": "medium",
+          "reason": "Rack pull — частичная тяга штанги со страховочных упоров силовой рамы, а не стандартная тяга с пола."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:reaction-ball-throw",
+      "source_path": "assets/work/chest/reaction-ball-throw.json",
+      "source_blob_sha": "25d7753d8e988f74fbc5a12d30bbf6a6fba84ef9",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "reaction_ball",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "other"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reaction-ball-throw/"
+          ],
+          "confidence": "low",
+          "reason": "Реакционный мяч бросают в стену и ловят после непредсказуемого отскока: это тренировка реакции/координации, не изолированная силовая нагрузка."
+        }
+      ],
+      "notes": "Предварительная chest заменена на other: важнее реакция, а не жим; подтверждать GIF и категорию при UI-ревью. other — специальная роль ревью, а не мышца."
+    },
+    {
+      "id": "fitnessprogramer:rear-drive-with-resistance-band",
+      "source_path": "assets/work/triceps/rear-drive-with-resistance-band.json",
+      "source_blob_sha": "8f369ec5a6deb0a97ce6f9afb3c6d32413f56a38",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rear-drive-with-resistance-band/"
+          ],
+          "confidence": "low",
+          "reason": "Rear drive with resistance band отнесён источником к упражнениям на трицепс, но техника отсутствует."
+        }
+      ],
+      "notes": "Уточнить по GIF: это трицепсовое разгибание назад или тяга плеча, определяющая другое участие мышц. other — специальная роль ревью, а не мышца."
+    },
+    {
+      "id": "fitnessprogramer:recumbent-exercise-bike",
+      "source_path": "assets/work/cardio/recumbent-exercise-bike.json",
+      "source_blob_sha": "3f734147f61661ad2603e5f39b7cf9840ec412b4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "stationary bike"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/recumbent-exercise-bike/"
+          ],
+          "confidence": "medium",
+          "reason": "Кардио на велотренажёре с полулежачей посадкой; существующий фильтр велотренажёра охватывает посадку recumbent, не создаётся дублирующий ID."
+        }
+      ],
+      "notes": "other — специальная роль ревью, а не мышца."
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-alternating-chest-fly",
+      "source_path": "assets/work/chest/resistance-band-alternating-chest-fly.json",
+      "source_blob_sha": "30a0e5dbbf3b9ab14a780fc1c8627a05e2d5620c",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-alternating-chest-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Попеременные сведения рук с резиной: горизонтальное приведение плеча грудными, анти-ротация корпуса."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-bent-over-rear-delt-fly",
+      "source_path": "assets/work/shoulders/resistance-band-bent-over-rear-delt-fly.json",
+      "source_blob_sha": "e0e3c5b20dc49dc1bec0a4b01403fb1d1361b21b",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-bent-over-rear-delt-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение рук в наклоне с резиной нагружает заднюю дельту и приводящие лопатку мышцы."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-hip-thrust",
+      "source_path": "assets/work/hip/resistance-band-hip-thrust.json",
+      "source_blob_sha": "2d051f0735a7a92e5e9745db35741723e58075c5",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-hip-thrust/"
+          ],
+          "confidence": "low",
+          "reason": "Hip thrust с лентой: главное усилие — разгибание бедра ягодичной, задняя поверхность бедра помогает."
+        }
+      ],
+      "notes": "Исходная карточка не подтверждает обязательную скамью; для оборудования оставлена только доказанная резина."
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-hip-thrusts-on-knees",
+      "source_path": "assets/work/hip/resistance-band-hip-thrusts-on-knees.json",
+      "source_blob_sha": "84298a7ce7f0fa2497c6383a6943325197c65351",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-hip-thrusts-on-knees/"
+          ],
+          "confidence": "low",
+          "reason": "Разгибание таза из положения на коленях с эспандером акцентирует ягодичные."
+        }
+      ],
+      "notes": "По GIF проверить опору, траекторию таза и вариант резины. other — специальная роль ревью, а не мышца."
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-lateral-walk",
+      "source_path": "assets/work/hip/resistance-band-lateral-walk.json",
+      "source_blob_sha": "8666a2d9c020c7b227ab7dd6f89722985fda577b",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "hip_external_rotators"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-lateral-walk/"
+          ],
+          "confidence": "medium",
+          "reason": "Боковые шаги против сопротивления резинки: отведение бедра средними и малыми ягодичными, контроль таза."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-overhead-squat",
+      "source_path": "assets/work/hip/resistance-band-overhead-squat.json",
+      "source_blob_sha": "cfed2f091f8f8dcd2ad2a811dcea9f4ad687b75a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rotator_cuff"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-overhead-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Присед с поднятой над головой резинкой: ногами выполняется присед, плечевой пояс и спина фиксируют руки."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-pull-apart",
+      "source_path": "assets/work/shoulders/resistance-band-pull-apart.json",
+      "source_blob_sha": "a22435e508c69b2b77d1d75f5888c344f40e65e0",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior",
+            "rhomboids"
+          ],
+          "secondary": [
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "rotator_cuff"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-pull-apart/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение резины перед собой: горизонтальное отведение плеч и ретракция лопаток."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-reverse-hyperextension",
+      "source_path": "assets/work/hip/resistance-band-reverse-hyperextension.json",
+      "source_blob_sha": "e97aebbfcadabe9bc57fb7c215b83747cb2c93fa",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris"
+          ],
+          "secondary": [
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-reverse-hyperextension/"
+          ],
+          "confidence": "low",
+          "reason": "Обратная гиперэкстензия с эспандером: разгибание бедра ягодичными и задней поверхностью бедра."
+        }
+      ],
+      "notes": "Неизвестна конструкция опоры (скамья, платформа или специальный тренажёр); по источнику достоверна только резина; требуется GIF."
     }
   ]
 }
