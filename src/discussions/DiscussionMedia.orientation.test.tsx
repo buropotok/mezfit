@@ -24,6 +24,15 @@ function load(video: HTMLVideoElement, width: number, height: number) {
   fireEvent.loadedMetadata(video);
 }
 
+it('renders photo attachments without trying to inspect video orientation', () => {
+  render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:photo" type="photo" mode="thumbnail" />
+  </KonstaProvider>);
+  expect(screen.getByRole('link', { name: 'Открыть фото' })).toBeTruthy();
+  expect(screen.getByAltText('Фото во вложении').getAttribute('src')).toBe('blob:photo');
+  expect(readVideoOrientation).not.toHaveBeenCalled();
+});
+
 it('corrects ordinary video while keeping playback and seeking controls upright', async () => {
   vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
   const { container } = render(<KonstaProvider theme="ios" dark>
