@@ -13,8 +13,9 @@
       ],
       "confidence": "high",
       "aliases_considered": [
-        "machine",
-        "machines"
+        "cable",
+        "rope",
+        "landmine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -31,7 +32,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "mat"
       ],
       "existing_equipment_match_checked": true
     },
@@ -68,7 +69,8 @@
       "confidence": "medium",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable machine",
+        "smith machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -89,7 +91,8 @@
       "confidence": "medium",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable",
+        "dumbbells"
       ],
       "existing_equipment_match_checked": true
     },
@@ -108,7 +111,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -124,8 +127,9 @@
       ],
       "confidence": "high",
       "aliases_considered": [
-        "machine",
-        "machines"
+        "stepper",
+        "bike",
+        "treadmill"
       ],
       "existing_equipment_match_checked": true
     },
@@ -148,7 +152,8 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "mat",
+        "stability ball"
       ],
       "existing_equipment_match_checked": true
     },
@@ -169,7 +174,8 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "smith machine",
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -188,7 +194,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "smith machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -209,7 +215,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "band"
       ],
       "existing_equipment_match_checked": true
     },
@@ -228,7 +234,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "band"
       ],
       "existing_equipment_match_checked": true
     },
@@ -245,7 +251,8 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "smith machine",
+        "barbell"
       ],
       "existing_equipment_match_checked": true
     },
@@ -268,7 +275,7 @@
       "confidence": "medium",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -287,7 +294,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -306,7 +313,8 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "rowing machine",
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -323,7 +331,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "bench"
       ],
       "existing_equipment_match_checked": true
     },
@@ -344,7 +352,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "smith machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -363,7 +371,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -379,8 +387,8 @@
       ],
       "confidence": "high",
       "aliases_considered": [
-        "machine",
-        "machines"
+        "stepper",
+        "treadmill"
       ],
       "existing_equipment_match_checked": true
     },
@@ -401,7 +409,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -419,8 +427,8 @@
       ],
       "confidence": "high",
       "aliases_considered": [
-        "machine",
-        "machines"
+        "dip bars",
+        "machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -439,7 +447,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -458,7 +466,7 @@
       "confidence": "medium",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -475,7 +483,8 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "barbell",
+        "trap bar"
       ],
       "existing_equipment_match_checked": true
     },
@@ -492,7 +501,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "bench"
       ],
       "existing_equipment_match_checked": true
     },
@@ -511,7 +520,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "smith machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -528,7 +537,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -547,7 +556,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "weight plate"
       ],
       "existing_equipment_match_checked": true
     },
@@ -564,7 +573,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     },
@@ -585,7 +594,7 @@
       "confidence": "medium",
       "aliases_considered": [
         "machine",
-        "machines"
+        "smith machine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -604,7 +613,8 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "barbell",
+        "landmine"
       ],
       "existing_equipment_match_checked": true
     },
@@ -621,7 +631,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "barbell"
       ],
       "existing_equipment_match_checked": true
     },
@@ -638,7 +648,7 @@
       "confidence": "high",
       "aliases_considered": [
         "machine",
-        "machines"
+        "cable"
       ],
       "existing_equipment_match_checked": true
     }
