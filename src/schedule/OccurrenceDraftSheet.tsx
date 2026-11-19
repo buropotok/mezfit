@@ -665,13 +665,14 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               void flushEdits().then(() => { if (!mutationBlocked()) setProgramSheetOpen(true); })
                 .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
             }} />{!actionsOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}</span> : null;
+  const inlineStatus = draft && collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
+    ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+    : collapsed && missed ? <Badge color="gray" textVariant="caption">Пропущена</Badge> : undefined;
   const content = draft ? <section className={`occurrence-draft-sheet${inlineCard ? ' occurrence-draft-sheet--inline' : ''}`}>
-        {inlineCard ? <div className="occurrence-draft-sheet__identity"><WorkoutPlanCardHeader name={draft.plan.name}
+        {inlineCard ? <div className={`occurrence-draft-sheet__identity${inlineStatus ? ' occurrence-draft-sheet__identity--with-status' : ''}`}><WorkoutPlanCardHeader name={draft.plan.name}
           programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
           creatorName={owner.name} creatorAvatar={owner.avatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
-          status={collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
-            ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
-            : collapsed && missed ? <Badge color="gray" textVariant="caption">Пропущена</Badge> : undefined}
+          status={inlineStatus}
           scheduledTiming={collapsed ? scheduledTiming : undefined} discussionAction={discussionAction}
           collapsed={collapsed} onCollapsedChange={onCollapsedChange}>{!collapsed ? actionsMenu : null}</WorkoutPlanCardHeader></div> : null}
         {!collapsed ? <>

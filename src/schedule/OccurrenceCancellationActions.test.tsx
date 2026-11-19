@@ -29,6 +29,20 @@ function cardControls() {
   return within(card);
 }
 describe('scheduled workout cancellation actions', () => {
+  it('adds bottom space only to collapsed inline cards that display a status', () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-19T12:00:00.000Z'));
+    try {
+      const input = props();
+      const view = render(<OccurrenceDraftCard {...input} collapsed />);
+      const identity = view.container.querySelector('.occurrence-draft-sheet__identity');
+      expect(identity?.classList.contains('occurrence-draft-sheet__identity--with-status')).toBe(true);
+      view.rerender(<OccurrenceDraftCard {...input} collapsed
+        draft={{ ...draft, startsAtUtc: '2026-11-26T10:00:00.000Z' }} />);
+      expect(identity?.classList.contains('occurrence-draft-sheet__identity--with-status')).toBe(false);
+    } finally {
+      clock.mockRestore();
+    }
+  });
   it('places Delete after Cancel and flushes the current PLAN before asking its owner to close the sheet', async () => {
     const input = props(); render(<OccurrenceDraftCard {...input} />);
     const buttons = cardControls().getAllByRole('button').map(button => button.textContent);

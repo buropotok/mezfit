@@ -26,5 +26,6 @@
 .occurrence-draft-sheet--inline .occurrence-draft-sheet__timing { margin-inline-start: -10px; }
 .occurrence-draft-sheet__start { padding: 0 0 max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
 .occurrence-draft-sheet__identity { padding: 16px 16px 0; }
+.occurrence-draft-sheet__identity--with-status { padding-bottom: 16px; }
 
 .occurrence-draft-sheet__actions { display: flex; flex-direction: column; gap: 12px; padding: 0 0 max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
