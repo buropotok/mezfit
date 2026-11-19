@@ -4,15 +4,47 @@
   "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
   "batches": {
     "B001": {
-      "status": "in_progress",
+      "status": "completed",
       "agent": "gpt6-mezfit-reprocess-20261119201610",
       "claim_id": "b001-20261119201610-vvbc53mt",
       "started_at": "2026-11-19T20:16:10.954Z",
       "lease_until": "2026-11-19T22:16:10.954Z",
-      "completed_at": null,
-      "result_branch": null,
-      "result_commit": null,
-      "result_stats": null
+      "completed_at": "2026-11-19T20:35:41.219Z",
+      "result_branch": "data/anatomy-batch-B001-b001-20261119201610-vvbc53mt",
+      "result_commit": "d33c9a53e4f1430de0a218126b17a586901bba0e",
+      "result_stats": {
+        "unique_exercises": 100,
+        "source_anatomy_empty": 45,
+        "source_anatomy_partially_filled": 24,
+        "source_anatomy_fully_filled": 31,
+        "source_equipment_contains_generic_full_gym": 99,
+        "anatomy_patched": 100,
+        "equipment_patched": 100,
+        "canonical_muscle_assignments": 290,
+        "canonical_muscle_assignments_by_role": {
+          "primary": 127,
+          "secondary": 150,
+          "stabilizers": 13
+        },
+        "new_concrete_equipment_types": 33,
+        "equipment_new_type_exercises": 73,
+        "exercises_using_existing_equipment": 27,
+        "existing_equipment_filter_types": 7,
+        "muscles_other_primary": 3,
+        "muscles_other_secondary": 17,
+        "muscles_other_stabilizers": 87,
+        "equipment_other": 1,
+        "category_other": 2,
+        "category_review_required": 8,
+        "category_verified": 100,
+        "category_changed": 1,
+        "verified": 11,
+        "partial": 72,
+        "needs_review": 17,
+        "unchanged": 0,
+        "unique_evidence_sources": 100,
+        "evidence_records": 208
+      }
     },
     "B002": {
       "status": "completed",
