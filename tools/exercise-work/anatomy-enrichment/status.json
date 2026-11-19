@@ -50,11 +50,11 @@
       "result_stats": null
     },
     "B003": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-mezfit-b003-20261119",
+      "claim_id": "b003-20261119154806-cw8ffunslh",
+      "started_at": "2026-11-19T15:48:06.230Z",
+      "lease_until": "2026-11-19T17:48:06.230Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
