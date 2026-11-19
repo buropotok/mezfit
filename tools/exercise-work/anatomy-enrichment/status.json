@@ -39,11 +39,11 @@
       }
     },
     "B002": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-mezfit-enrichment-b002-eceohwdg9f",
+      "claim_id": "b002-mwnq47y6-eceohwdg9f",
+      "started_at": "2026-11-19T15:47:13.851Z",
+      "lease_until": "2026-11-19T17:47:13.851Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
