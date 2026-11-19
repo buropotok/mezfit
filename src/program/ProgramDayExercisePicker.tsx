@@ -56,7 +56,7 @@ export function ProgramDayExercisePicker({ repository, program, dayId, onClose, 
     try {
       await repository.replaceDayExercise(program.id, dayId, replacement.exerciseId,
         choice.definitionId, preserveSets);
-      if (alive.current) { setChoice(null); setClosing(true); }
+      if (alive.current) { setChoice(null); onClose(); }
     } catch (reason) {
       if (alive.current) setError(programMutationMessage(reason));
     } finally {
