@@ -43,7 +43,7 @@ export function useVideoOrientation(
       video.removeEventListener('resize', resized);
     };
   }, [ref, src, fit, resetKey]);
-  const rotation = result?.src === src ? result.rotation : 0;
+  const rotation = result && result.src === src ? result.rotation : 0;
   const style: CSSProperties | undefined = rotation ? {
     transform: `rotate(${rotation}deg) scale(${result?.scale ?? 1})`,
     transformOrigin: 'center',
