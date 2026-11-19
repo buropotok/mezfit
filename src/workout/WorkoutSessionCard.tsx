@@ -439,12 +439,14 @@ function WorkoutFactCard<Id extends string | number = number>({
               <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
                 {workoutProgramName(session)}
               </Text>
-              {showStatus ? <Badge color={session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge> : null}
             </div>
             {headerActionsHost === undefined ? headerActions : null}
             <div className="workout-plan-card__avatar" aria-label={`Атлет: ${athleteName ?? workoutCreatorName(session)}`}>
               {athleteAvatar ?? <Avatar name={athleteName ?? workoutCreatorName(session)} src={!athleteName ? session.creator?.photoUrl ?? undefined : undefined} />}
             </div>
+            {showStatus ? <div className="workout-session-card__status-row">
+              <Badge color={session.status === 'active' ? 'green' : 'gray'} textVariant="caption">{session.status === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+            </div> : null}
           </div>
         )}
         footer={(
