@@ -11,7 +11,7 @@ vi.mock('./videoOrientation', async importOriginal => ({
 }));
 afterEach(() => { cleanup(); vi.resetAllMocks(); });
 
-function Player({ src }: { src: string }) {
+function Player({ src }: { src?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const orientation = useVideoOrientation(ref, src, 'contain');
   return <video ref={ref} src={src} style={orientation.style} />;
@@ -24,6 +24,17 @@ function load(video: HTMLVideoElement, width: number, height: number) {
   });
   fireEvent.loadedMetadata(video);
 }
+
+it('renders before a source is available and waits for the resolved video metadata', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
+  const { container, rerender } = render(<Player />);
+  const video = container.querySelector('video')!;
+  expect(video.style.transform).toBe('');
+  expect(readVideoOrientation).not.toHaveBeenCalled();
+  rerender(<Player src="blob:resolved" />);
+  load(video, 480, 488);
+  await waitFor(() => expect(video.style.transform).toContain('rotate(90deg)'));
+});
 
 it('does not read metadata or apply transforms for square recordings', () => {
   const { container } = render(<Player src="blob:square" />);
