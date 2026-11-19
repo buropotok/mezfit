@@ -1219,6 +1219,417 @@
         }
       ],
       "notes": "Отжимания от стены нагружают грудные и трёхглавую мышцы, при этом напрягается корпус. Исходный NO EQUIPMENT неполон: стена обязательна; категория грудь обоснована для обычного широкого хвата."
+    },
+    {
+      "id": "fitnessprogramer:wall-slides",
+      "source_path": "assets/work/back/wall-slides.json",
+      "source_blob_sha": "ed748d1c15cb0d70a0d291417b03af5827bd0908",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "serratus_anterior",
+            "trapezius_lower"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "shoulders"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wall-slides/"
+          ],
+          "confidence": "low",
+          "reason": "Wall Slides — движение вверх с контролем лопаток на стене; основная нагрузка на переднюю зубчатую и нижнюю трапецию, но источник описывает в первую очередь мобильность; проверить мышечные роли по GIF."
+        }
+      ],
+      "notes": "Wall Slides — движение вверх с контролем лопаток на стене; основная нагрузка на переднюю зубчатую и нижнюю трапецию, но источник описывает в первую очередь мобильность; проверить мышечные роли по GIF."
+    },
+    {
+      "id": "fitnessprogramer:wall-supported-arm-raises",
+      "source_path": "assets/work/shoulders/wall-supported-arm-raises.json",
+      "source_blob_sha": "c07167764f9c61a4ff39e2f3ed64aa9ac0aeaa93",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "serratus_anterior",
+            "trapezius_lower"
+          ],
+          "stabilizers": [
+            "rotator_cuff"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wall-supported-arm-raises/"
+          ],
+          "confidence": "low",
+          "reason": "Подъём рук у стены с опорой; исходник не описывает движение, предположено сгибание плеча. Отдельное подтверждение роли манжеты по GIF обязательно."
+        }
+      ],
+      "notes": "Подъём рук у стены с опорой; исходник не описывает движение, предположено сгибание плеча. Отдельное подтверждение роли манжеты по GIF обязательно."
+    },
+    {
+      "id": "fitnessprogramer:wall-supported-handstand-push-ups",
+      "source_path": "assets/work/shoulders/wall-supported-handstand-push-ups.json",
+      "source_blob_sha": "7d28dd9598444eef1ac1474a02e5e3b366e6a751",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_lateral",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wall-supported-handstand-push-ups/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание в стойке на руках с опорой ногами на стену; инструкция явно подтверждает жим над головой и напряжение корпуса. Исходное NO EQUIPMENT не учитывает стену."
+        }
+      ],
+      "notes": "Отжимание в стойке на руках с опорой ногами на стену; инструкция явно подтверждает жим над головой и напряжение корпуса. Исходное NO EQUIPMENT не учитывает стену."
+    },
+    {
+      "id": "fitnessprogramer:wall-walk",
+      "source_path": "assets/work/full-body/wall-walk.json",
+      "source_blob_sha": "90eeac6c885e9edbb604b72f1460d1804e9390d9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wall-walk/"
+          ],
+          "confidence": "medium",
+          "reason": "Wall walk: ходьба руками к стене с подъёмом стоп по стене; плечи и разгибатели локтя несут вес, а корпус препятствует прогибу. Стена обязательна."
+        }
+      ],
+      "notes": "Wall walk: ходьба руками к стене с подъёмом стоп по стене; плечи и разгибатели локтя несут вес, а корпус препятствует прогибу. Стена обязательна."
+    },
+    {
+      "id": "fitnessprogramer:water-bottle-hammer-curl",
+      "source_path": "assets/work/biceps/water-bottle-hammer-curl.json",
+      "source_blob_sha": "6b32ec4af572670882ba9363ab1427a8fc4d4836",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "water_bottle"
+        ],
+        "muscles": {
+          "primary": [
+            "brachioradialis",
+            "brachialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/water-bottle-hammer-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Предмет нагрузки — бутылка с водой, не NO EQUIPMENT. По названию hammer curl предполагается нейтральный хват, исходная инструкция отсутствует, проверить GIF."
+        }
+      ],
+      "notes": "Предмет нагрузки — бутылка с водой, не NO EQUIPMENT. По названию hammer curl предполагается нейтральный хват, исходная инструкция отсутствует, проверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:weight-plate-front-raise",
+      "source_path": "assets/work/shoulders/weight-plate-front-raise.json",
+      "source_blob_sha": "61246c4858d87c99313e1af86149c2bcfdc04e2c",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plate"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_upper",
+            "forearm_extensors",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weight-plate-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Название Weight Plate Front Raise конкретно определяет диск от штанги (plate), несмотря на ошибочное Dumbbells в исходнике. Анатомия нормализована из исходных мышц."
+        }
+      ],
+      "notes": "Название Weight Plate Front Raise конкретно определяет диск от штанги (plate), несмотря на ошибочное Dumbbells в исходнике. Анатомия нормализована из исходных мышц."
+    },
+    {
+      "id": "fitnessprogramer:weighted-back-extension",
+      "source_path": "assets/work/erector-spinae/weighted-back-extension.json",
+      "source_blob_sha": "d8be3c19ee281b27d93aa0002c6896cf43b321ba",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "back_extension_bench",
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "biceps_femoris_long",
+            "semitendinosus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-back-extension/"
+          ],
+          "confidence": "low",
+          "reason": "Для weighted back extension исходный Machine не определяет точную модификацию; функционально нужна станция гиперэкстензии, дополнительный тип отягощения в карточке не указан. Требуется GIF."
+        }
+      ],
+      "notes": "Для weighted back extension исходный Machine не определяет точную модификацию; функционально нужна станция гиперэкстензии, дополнительный тип отягощения в карточке не указан. Требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:weighted-crunch",
+      "source_path": "assets/work/abs/weighted-crunch.json",
+      "source_blob_sha": "c78cce0e8d302105f59909a15981f101ed63ac2b",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-crunch/"
+          ],
+          "confidence": "low",
+          "reason": "Weighted Crunch использует внешнее отягощение, но тип предмета в исходной инструкции не раскрыт; нельзя автоматически приписывать блин/гантель. Оборудование other только для неизвестного веса."
+        }
+      ],
+      "notes": "Weighted Crunch использует внешнее отягощение, но тип предмета в исходной инструкции не раскрыт; нельзя автоматически приписывать блин/гантель. Оборудование other только для неизвестного веса."
+    },
+    {
+      "id": "fitnessprogramer:weighted-donkey-calf-raise",
+      "source_path": "assets/work/calf/weighted-donkey-calf-raise.json",
+      "source_blob_sha": "d36020a204ed4e279ddb3264b64718bff2ea86f0",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "soleus",
+            "tibialis_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-donkey-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник прямо требует подставку для носков и партнёра как отягощение; партнёр не является тренажёром. Скамья/поручень для опоры руки факультативны, не отмечены обязательными."
+        }
+      ],
+      "notes": "Источник прямо требует подставку для носков и партнёра как отягощение; партнёр не является тренажёром. Скамья/поручень для опоры руки факультативны, не отмечены обязательными."
+    },
+    {
+      "id": "fitnessprogramer:weighted-front-plank",
+      "source_path": "assets/work/abs/weighted-front-plank.json",
+      "source_blob_sha": "584e5deab65dc38a430b5199f00fcd5ad3a9b83e",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "quadriceps_femoris"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-front-plank/"
+          ],
+          "confidence": "low",
+          "reason": "Изометрическая передняя планка с дополнительным грузом: пресс и корпус выполняют антиэкстензионную работу, груз упомянут, но его тип не указан, поэтому equipment other. Категория core подтверждена."
+        }
+      ],
+      "notes": "Изометрическая передняя планка с дополнительным грузом: пресс и корпус выполняют антиэкстензионную работу, груз упомянут, но его тип не указан, поэтому equipment other. Категория core подтверждена."
     }
   ]
 }
