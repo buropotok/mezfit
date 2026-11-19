@@ -1,5 +1,5 @@
 import type { WorkflowStep } from 'cloudflare:workers';
-import { PROCESSOR_INPUT_LIMIT, PROCESSOR_RESULT_LIMIT, processorResultKey } from '../processor-protocol.mjs';
+import { PROCESSOR_INPUT_LIMIT, PROCESSOR_RESULT_LIMIT, SOURCE_PACKAGE_RESULT_LIMIT, processorResultLimit, processorResultKey } from '../processor-protocol.mjs';
 import { classifyTraceError, traceStepName, type Trace, type TraceContext } from '../trace.mjs';
 import { readExecution, transition, type Execution, type ExecutionBindings, type Terminal } from './execution-store';
 import { isResult, processFile, ProcessingFailure, sha256 } from './processor';
@@ -84,7 +84,7 @@ export async function readResultBytes(bucket: R2Bucket, id: string, emit: Trace)
     { expected: 'bounded-result-metadata' }, () => bucket.head(key),
     value => ({ actual: value ? 'object-found' : 'object-missing', details: { size: value?.size } }));
   if (!head) return null;
-  if (head.size <= 0 || head.size > PROCESSOR_RESULT_LIMIT || head.httpMetadata?.contentType !== 'application/json') {
+  if (head.size <= 0 || head.size > SOURCE_PACKAGE_RESULT_LIMIT || head.httpMetadata?.contentType !== 'application/json') {
     throw new ProcessingFailure('RESULT_CONFLICT');
   }
 
@@ -97,6 +97,12 @@ export async function readResultBytes(bucket: R2Bucket, id: string, emit: Trace)
   }
   const bytes = await object.arrayBuffer();
   if (bytes.byteLength !== head.size) throw new ProcessingFailure('RESULT_READBACK_CHANGED', true);
+  if (bytes.byteLength > PROCESSOR_RESULT_LIMIT) {
+    let result: unknown;
+    try { result = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+    catch { throw new ProcessingFailure('RESULT_CONFLICT'); }
+    if (!isResult(result) || result.schemaVersion !== 3) throw new ProcessingFailure('RESULT_CONFLICT');
+  }
   return bytes;
 }
 
@@ -105,7 +111,7 @@ async function writeResult(bucket: R2Bucket, id: string, result: unknown, emit: 
   if (!isResult(result)) throw new ProcessingFailure('INVALID_RESULT_SCHEMA');
   const bytes = new TextEncoder().encode(JSON.stringify(result));
   emit('r2', 'process-result-build', 'RESULT_BUILD_COMPLETED', 'OK', { details: { size: bytes.byteLength } });
-  if (bytes.byteLength > PROCESSOR_RESULT_LIMIT) throw new ProcessingFailure('RESULT_SIZE_LIMIT');
+  if (bytes.byteLength > processorResultLimit(result.schemaVersion)) throw new ProcessingFailure('RESULT_SIZE_LIMIT');
   emit('r2', 'process-result-size', 'RESULT_SIZE_VERIFIED', 'OK', { details: { size: bytes.byteLength } });
   const checksum = await sha256(bytes.buffer);
   emit('r2', 'process-result-digest', 'RESULT_SHA256_CALCULATED', 'OK');

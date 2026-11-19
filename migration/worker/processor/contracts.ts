@@ -1,9 +1,12 @@
+import type { SourceImportPackageV1 } from './source-package/types';
 import { PROCESSOR_VERSION } from '../../processor-protocol.mjs';
 
 // Transport collections only. Business PLAN/FACT normalization is a later boundary.
 export type NormalizedPayload = { [collection: string]: { [field: string]: string | number | boolean | null }[] };
-export type AdapterInput = { readonly bytes: ArrayBuffer; readonly json: unknown };
-export type AdapterData = { recordsValidated: number; warnings: string[]; normalized: NormalizedPayload | null };
+export type AdapterInput = { readonly bytes: ArrayBuffer; readonly json: unknown; readonly inputSha256?: string };
+export type AdapterData = { recordsValidated: number; warnings: string[] } & (
+  { normalized: NormalizedPayload | null; sourcePackage?: never } |
+  { normalized: null; sourcePackage: SourceImportPackageV1 });
 export type InputProvenance = { inputSizeBytes: number; inputSha256: string };
 type SuccessBase = InputProvenance & {
   status: 'succeeded';
@@ -16,6 +19,10 @@ export type Success = SuccessBase & ({ schemaVersion: 1 } | {
   schemaVersion: 2;
   adapter: { id: string; version: string };
   normalized: NormalizedPayload;
+} | {
+  schemaVersion: 3;
+  adapter: { id: string; version: string };
+  sourcePackage: SourceImportPackageV1;
 });
 export type Unsupported = {
   status: 'unsupported';
@@ -33,7 +40,7 @@ export type AdapterDescriptor = {
   readonly detection: 'bounded-json-marker' | 'bounded-signature';
   readonly maxInputBytes: number;
   readonly maxRecords: number;
-  readonly resultSchemaVersion: 1 | 2;
+  readonly resultSchemaVersion: 1 | 2 | 3;
 };
 export interface ImportAdapter {
   readonly descriptor: AdapterDescriptor;

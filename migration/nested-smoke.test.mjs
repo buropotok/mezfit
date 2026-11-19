@@ -107,7 +107,7 @@ describe('manual nested smoke controller', () => {
 
   it('offers nested smoke only through the existing owner-protected manual workflow', () => {
     const workflow = readFileSync(new URL('../.github/workflows/migration-smoke.yml', import.meta.url), 'utf8');
-    expect(workflow).toContain('options: [diagnose, smoke, processor-smoke, nested-smoke]');
+    expect(workflow).toContain('options: [diagnose, smoke, processor-smoke, nested-smoke, source-package-smoke]');
     const guard = workflow.split('\n').find(line => line.includes("inputs.operation == 'nested-smoke'"));
     expect(guard).toContain("github.ref == 'refs/heads/main'");
     expect(guard).toContain('github.actor == github.repository_owner');

@@ -1,6 +1,8 @@
-import { PROCESSOR_INPUT_LIMIT, PROCESSOR_RESULT_LIMIT, PROCESSOR_VERSION } from '../../processor-protocol.mjs';
+import { PROCESSOR_INPUT_LIMIT, processorResultLimit, PROCESSOR_VERSION } from '../../processor-protocol.mjs';
 import type { Trace } from '../../trace.mjs';
 import { fixtureAdapter } from './adapters/fixture';
+import { isSourceImportPackage } from './source-package/validate';
+import { trainingAdapter } from './adapters/training';
 import { nestedAdapter } from './adapters/nested';
 import { exactKeys, ProcessingFailure, record, type ImportAdapter, type ProcessingResult, type Success } from './contracts';
 import { createAdapterRegistry } from './registry';
@@ -51,14 +53,22 @@ export function createProcessor(adapters: readonly ImportAdapter[]) {
     if (value.inputSizeBytes > adapter.descriptor.maxInputBytes
       || value.summary.recordsValidated > adapter.descriptor.maxRecords) return false;
     const keys = ['status', 'schemaVersion', 'processorVersion', 'detectedFormat', 'inputSizeBytes', 'inputSha256', 'summary', 'warnings'];
-    if (value.schemaVersion === 2) {
+    if ((value.schemaVersion === 2 || value.schemaVersion === 3)) {
       if (!record(value.adapter) || !exactKeys(value.adapter, ['id', 'version'])
         || value.adapter.id !== adapter.descriptor.adapterId || value.adapter.version !== adapter.descriptor.adapterVersion
-        || !exactKeys(value, [...keys, 'adapter', 'normalized'])) return false;
+        || !exactKeys(value, [...keys, 'adapter', value.schemaVersion === 3 ? 'sourcePackage' : 'normalized'])) return false;
     } else if (value.schemaVersion !== 1 || !exactKeys(value, keys)) return false;
+    if (value.schemaVersion === 3) {
+      if (!isSourceImportPackage(value.sourcePackage, { adapterId: adapter.descriptor.adapterId,
+        adapterVersion: adapter.descriptor.adapterVersion, formatFamily: adapter.descriptor.formatFamily,
+        inputSha256: value.inputSha256 })) return false;
+      if (!adapter.validate({ recordsValidated: value.summary.recordsValidated, warnings: value.warnings,
+        normalized: null, sourcePackage: value.sourcePackage })) return false;
+      return new TextEncoder().encode(JSON.stringify(value)).byteLength <= processorResultLimit(3);
+    }
     const normalized = value.schemaVersion === 1 ? null : value.normalized;
     if (!adapter.validate({ recordsValidated: value.summary.recordsValidated, warnings: value.warnings, normalized })) return false;
-    return new TextEncoder().encode(JSON.stringify(value)).byteLength <= PROCESSOR_RESULT_LIMIT;
+    return new TextEncoder().encode(JSON.stringify(value)).byteLength <= processorResultLimit(value.schemaVersion);
   }
 
   async function processFile(bytes: ArrayBuffer, emit: Trace): Promise<ProcessingResult> {
@@ -80,7 +90,10 @@ export function createProcessor(adapters: readonly ImportAdapter[]) {
         try { return JSON.parse(text) as unknown; }
         catch { throw new ProcessingFailure('INVALID_INPUT_JSON'); }
       });
-      const source = { bytes, json: input };
+      const digestStarted = Date.now();
+      const checksum = await sha256(bytes);
+      emit('processor', 'input-digest', 'INPUT_SHA256_CALCULATED', 'OK', { duration_ms: Date.now() - digestStarted });
+      const source = { bytes, json: input, inputSha256: checksum };
       const selected = phase(emit, 'ADAPTER_SELECTION', () => registry.select(source));
       if (!selected.adapter) {
         emit('processor', 'format-detection', 'FORMAT_UNSUPPORTED', 'SKIPPED', { actual: 'unknown-or-incompatible-format',
@@ -99,9 +112,6 @@ export function createProcessor(adapters: readonly ImportAdapter[]) {
         }
         return parsed;
       }, value => value.recordsValidated);
-      const digestStarted = Date.now();
-      const checksum = await sha256(bytes);
-      emit('processor', 'input-digest', 'INPUT_SHA256_CALCULATED', 'OK', { duration_ms: Date.now() - digestStarted });
       const result = phase<Success>(emit, 'TRANSFORMATION', () => {
         const common = {
           status: 'succeeded', processorVersion: PROCESSOR_VERSION, detectedFormat: adapter.descriptor.format,
@@ -114,12 +124,17 @@ export function createProcessor(adapters: readonly ImportAdapter[]) {
           detectedFormat: common.detectedFormat, inputSizeBytes: common.inputSizeBytes,
           inputSha256: common.inputSha256, summary: common.summary, warnings: common.warnings,
         };
+        if (adapter.descriptor.resultSchemaVersion === 3) {
+          if (!data.sourcePackage) throw new ProcessingFailure('INVALID_ADAPTER_OUTPUT');
+          return { ...common, schemaVersion: 3, adapter: { id: adapter.descriptor.adapterId,
+            version: adapter.descriptor.adapterVersion }, sourcePackage: data.sourcePackage };
+        }
         if (!data.normalized) throw new ProcessingFailure('INVALID_ADAPTER_OUTPUT');
         return { ...common, schemaVersion: 2, adapter: { id: adapter.descriptor.adapterId,
           version: adapter.descriptor.adapterVersion }, normalized: data.normalized };
       });
       phase(emit, 'RESULT_SCHEMA_VALIDATION', () => {
-        if (new TextEncoder().encode(JSON.stringify(result)).byteLength > PROCESSOR_RESULT_LIMIT) {
+        if (new TextEncoder().encode(JSON.stringify(result)).byteLength > processorResultLimit(result.schemaVersion)) {
           throw new ProcessingFailure('RESULT_SIZE_LIMIT');
         }
         if (!isResult(result)) throw new ProcessingFailure('INVALID_RESULT_SCHEMA');
@@ -135,7 +150,7 @@ export function createProcessor(adapters: readonly ImportAdapter[]) {
   return Object.freeze({ processFile, isResult, descriptors: registry.descriptors });
 }
 
-const processor = createProcessor([fixtureAdapter, nestedAdapter]);
+const processor = createProcessor([fixtureAdapter, nestedAdapter, trainingAdapter]);
 export const processFile = processor.processFile;
 export const isResult = processor.isResult;
 export const adapterDescriptors = processor.descriptors;

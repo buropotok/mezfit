@@ -599,3 +599,82 @@ describe('processor smoke scenarios on the production processing path', () => {
     await expect(job.smoke()).rejects.toThrow('PROCESSOR_SMOKE_REPLAY_CHANGED_RESULT');
   });
 });
+
+// MIG-04 adds cases; released fixture/nested assertions above are unchanged.
+describe('SourceImportPackage smoke on the existing Queue/Workflow boundary', () => {
+  it('verifies v3 beyond 1KiB, reconciles lost PUT replies, replays once and removes every owned resource', async () => {
+    const job = liveSmokeSetup({ loseInputReply: true, loseResultReply: true });
+    await expect(job.smoke('source-package')).resolves.toBe('MIGRATION_SOURCE_PACKAGE_SMOKE_VERIFIED');
+    const result = JSON.parse(new TextDecoder().decode(job.saved()));
+    expect(isResult(result)).toBe(true);
+    expect(result).toMatchObject({ schemaVersion: 3, processorVersion: 'v1', adapter: { id: 'synthetic-training', version: '1.0.0' },
+      summary: { recordsValidated: 5, warningsCount: 3 }, sourcePackage: { kind: 'mezfit.source-import', schemaVersion: 1 } });
+    expect(job.saved().byteLength).toBeGreaterThan(1024);
+    expect(job.execution()).toMatchObject({ state: 'succeeded', attempts: 1,
+      result_sha256: createHash('sha256').update(new Uint8Array(job.saved())).digest('hex') });
+    expect(result.inputSha256).toBe(createHash('sha256').update(new Uint8Array(job.source())).digest('hex'));
+    expect(result.sourcePackage.provenance.inputSha256).toBe(result.inputSha256);
+    expect(job.env.MIGRATION_WORKFLOW.create).toHaveBeenCalledOnce();
+    expect(job.env.UPLOADS.put.mock.calls.filter(([path]) => path === resultKey)).toHaveLength(1);
+    expect(job.env.EVENTS.send).toHaveBeenCalledOnce();
+    // Publishing result.json must not register a second migration job.
+    await job.deliver({ ...job.event, object: { ...job.event.object, key: resultKey } });
+    expect(job.sqlite.prepare('SELECT COUNT(*) AS n FROM migration_executions').get().n).toBe(1);
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code))).resolves.toBe(cleanupOK);
+    expect(job.objects.size).toBe(0);
+    expect(cleanupTables.flatMap(table => job.sqlite.prepare('SELECT * FROM ' + table).all())).toEqual([]);
+    expect(JSON.stringify(job.log.mock.calls)).not.toMatch(/Synthetic Person|Source press|subject:p|program:p1|source_planned_weight/);
+  });
+
+  it.each([
+    ['PLAN value', result => { result.sourcePackage.scheduledWorkouts[0].plan.exercises[0].sets[0].metrics.reps++; }],
+    ['FACT value', result => { result.sourcePackage.sessions[0].performedExercises[0].sets[0].metrics.reps++; }],
+    ['source link', result => { result.sourcePackage.sessions[0].performedExercises[0].sets[0].planSetRef = { state: 'none' }; }],
+    ['provenance', result => { result.sourcePackage.provenance.inputSha256 = '0'.repeat(64); }],
+    ['adapter version', result => { result.adapter.version = '2.0.0'; }],
+  ])('rejects altered %s even when storage checksum agrees', async (_name, mutate) => {
+    const job = liveSmokeSetup({ changeResult: job => replaceSmokeResult(job, mutate) });
+    await expect(job.smoke('source-package')).rejects.toThrow();
+    expect(job.env.EVENTS.send).not.toHaveBeenCalled();
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+  });
+
+  it('leaves v3 evidence intact on conflicting checksum or missing input during cleanup', async () => {
+    const job = liveSmokeSetup();
+    await job.smoke('source-package');
+    const bytes = job.saved();
+    job.sqlite.prepare('UPDATE migration_executions SET result_sha256 = ?').run('0'.repeat(64));
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_RESULT_CONFLICT');
+    expect(job.saved()).toBe(bytes);
+    job.objects.delete(key);
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_INCOMPLETE');
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+  });
+
+  it('does not publish succeeded when v3 result readback stays unavailable', async () => {
+    const job = liveSmokeSetup();
+    const get = job.env.UPLOADS.get.getMockImplementation();
+    job.env.UPLOADS.get.mockImplementation(path => {
+      if (path === resultKey) throw new Error('private provider error');
+      return get(path);
+    });
+    await expect(job.smoke('source-package')).rejects.toThrow('PROCESSOR_SMOKE_EXECUTION_REJECTED');
+    expect(job.execution().state).toBe('failed');
+    expect(job.objects.has(key)).toBe(true);
+    expect(job.objects.has(resultKey)).toBe(true);
+    expect(JSON.stringify(job.log.mock.calls)).not.toContain('private provider error');
+  });
+
+  it('refuses an oversized stored object before reading its body', async () => {
+    const job = liveSmokeSetup();
+    await job.smoke('source-package');
+    job.objects.get(resultKey).metadata.size = 65537;
+    job.env.UPLOADS.get.mockClear();
+    await expect(cleanupProcessorSmoke(job.env, id, job.step, context, code => new Error(code)))
+      .rejects.toThrow('PROCESSOR_CLEANUP_RESULT_CONFLICT');
+    expect(job.env.UPLOADS.get).not.toHaveBeenCalled();
+    expect(job.env.UPLOADS.delete).not.toHaveBeenCalled();
+  });
+});

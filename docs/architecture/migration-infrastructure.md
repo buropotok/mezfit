@@ -166,7 +166,7 @@ trace recovered the smoke evidence in that run.
 
 На новых изменениях миграционного runtime после merge автоматически выполняется
 `migration-auto.yml`: Deploy migration (включая `MIGRATION_SMOKE_OK`), затем
-`processor-smoke` и `nested-smoke`. Ручные `Deploy migration Worker` и
+`processor-smoke`, `nested-smoke` и `source-package-smoke`. Ручные `Deploy migration Worker` и
 `Diagnose or smoke-test migration infrastructure` остаются для самостоятельного
 повторного запуска/диагностики. Начальный Deploy применял аддитивную миграцию
 `0003_create_migration_executions.sql` перед выкладкой Worker.
@@ -196,7 +196,7 @@ MIG-03 deploy/infra/fixture smoke подтверждены runs 44181829987 / 44
 ### Облачная проверка второго адаптера
 
 После merge миграционного runtime автоматическая цепочка вызывает Deploy,
-`processor-smoke` и `nested-smoke` последовательно. При необходимости
+`processor-smoke`, `nested-smoke` и `source-package-smoke` последовательно. При необходимости
 владелец может отдельно повторить: Actions → **Diagnose or smoke-test migration
 infrastructure** → **Run workflow** → branch `main` → operation `nested-smoke`.
 
@@ -222,3 +222,36 @@ Live nested-smoke успешно пройден в [run 44201744839](https://git
 `1fe7b878-d142-4970-8ce2-2bc77be96784`. Детали в `migration.md` §2.5.
 Для следующих изменений проверять актуальные SHA/Worker version и сохранять
 их в Actions run/trace; этот run не подтверждает будущие версии.
+
+
+### MIG-04: проверка SourceImportPackage после merge
+
+Новый шаг source-package-smoke зависит от nested-smoke в migration-auto.yml.
+После зелёного CI и merge отдельный ручной Deploy не нужен: push main запускает
+Deploy (+ technical D1 migrations и infra smoke), затем три smoke. MIG-04 не
+добавляет D1 migrations, bindings, permissions, public endpoints или сервисы.
+Используются существующие vars/secrets, Worker и Queue/Workflow.
+
+Владелец проверяет SHA merge, ожидаемую и фактическую Worker version, успех
+всех четырёх jobs и маркеры MIGRATION_SMOKE_OK, MIGRATION_PROCESSOR_SMOKE_OK,
+MIGRATION_NESTED_SMOKE_OK, MIGRATION_SOURCE_PACKAGE_SMOKE_OK. Новый сценарий
+проверяет synthetic-training 1.0.0, result schema v3 / package schema v1,
+полный canonical graph PROGRAM/PLAN/FACT, checksums, attempts=1, replay и
+подтверждённое отсутствие input/result/D1 rows после owned cleanup.
+Сохранить ссылки на run и отдельные trace artifacts, включая новый
+migration-trace-source-package-<attempt> с migration-trace.json.
+При Collection: PARTIAL перечислить отсутствующие источники; R2 receipt,
+Workers Logs API и CPU telemetry имеют прежние ограничения наблюдаемости.
+
+Для адресного повторения после диагностики: Actions → Diagnose or smoke-test
+migration infrastructure → Run workflow → main → source-package-smoke.
+При расхождении version, checksum, активном execution или неполном cleanup
+успешного маркера нет. Не удалять остатки без ownership; использовать diagnose
+с trace UUID и доступные history/R2 evidence. Не делать bootstrap apply и не
+расширять permissions ради повторного smoke.
+
+V3 private result ограничен 65536 bytes; legacy v1/v2 сохраняют 1024 bytes,
+input — 8192 bytes. Один immutable JSON object, без chunking. Keys/version D1
+и processor v1 прежние. Это synthetic acceptance, не поддержка Gym Keeper,
+Business Mapping или пользовательского импорта. Live MIG-04 здесь пока не
+подтверждён.

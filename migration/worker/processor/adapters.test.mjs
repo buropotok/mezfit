@@ -89,7 +89,7 @@ describe('registered migration adapters', () => {
       expect(processor.isResult(result)).toBe(true);
       expect(isResult(result)).toBe(false);
     }
-    expect(adapterDescriptors.map(row => row.adapterId)).toEqual(['synthetic-fixture', 'synthetic-nested']);
+    expect(adapterDescriptors.map(row => row.adapterId)).toEqual(['synthetic-fixture', 'synthetic-nested', 'synthetic-training']);
   });
 
   it('allows a reviewed binary signature adapter without changing the common processing path', async () => {

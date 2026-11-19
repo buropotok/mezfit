@@ -3,7 +3,7 @@
 **Проект:** Mezfit · **Репозиторий:** `buropotok/mezfit`  
 **Дата фиксации контекста:** 18 ноября 2026 г.
 **Статус:** архитектурный документ / ориентир для следующих этапов, **не** свидетельство реализации запланированного кода.  
-**Текущая точка:** инфраструктура и TypeScript File Processing Engine v1 приняты в Cloudflare; MIG-03 с двумя синтетическими адаптерами развернут и принят в независимых fixture/nested smoke. Реальные форматы, AI API, бизнес-канонизация, временные импортированные клиенты и публикация в Dexie Cloud ещё не реализованы. Последние продуктовые решения, их приоритет и открытые вопросы — в [§15](#15-последние-бизнес-правила-и-целевые-flows-импорта). [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
+**Текущая точка:** инфраструктура и TypeScript File Processing Engine v1 приняты в Cloudflare; MIG-03 с двумя синтетическими адаптерами развернут и принят в независимых fixture/nested smoke. Реальные форматы, AI API, бизнес-канонизация, временные импортированные клиенты и публикация в Dexie Cloud ещё не реализованы. MIG-04 добавляет runtime SourceImportPackage v1, result schema v3 и synthetic-training smoke; облачная приёмка новой версии ожидается после merge. Последние продуктовые решения, их приоритет и открытые вопросы — в [§15](#15-последние-бизнес-правила-и-целевые-flows-импорта). [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
 
 > **Назначение.** Это основной документ для нового рабочего чата, архитектора и разработчика, продолжающего миграцию из Gym Keeper в Mezfit. Здесь зафиксированы задача, принятые решения, границы системы, подтверждённые результаты, ещё не реализованные контракты, риски, этапы, порядок приёмки и источники. Тексты поручений агентам сюда намеренно не включены.
 
@@ -253,8 +253,8 @@ Dexie Cloud (авторитетная бизнес-БД, realm ACL)
 | `migration/d1/0002_create_migration_smoke_replays.sql` | Exact replay receipt | Не смешивать с бизнес-импортом |
 | `migration/d1/0003_create_migration_executions.sql` | Технический execution, job/version uniqueness и terminal state | Применена в Cloudflare, MIG-03 не требует новой схемы |
 | `.github/workflows/migration-deploy.yml` | Ручной Deploy + встроенный infra smoke | Сохраняется для recovery |
-| `.github/workflows/migration-smoke.yml` | Ручные `diagnose` / `smoke` / `processor-smoke` / `nested-smoke` | Независимые проверки фактически развёрнутой версии |
-| `.github/workflows/migration-auto.yml` | Автозапуск на `push main` миграционного кода: deploy → processor-smoke → nested-smoke | Не включает bootstrap, Dexie Cloud ACL или пользовательский импорт; активируется после merge workflow |
+| `.github/workflows/migration-smoke.yml` | Ручные `diagnose` / `smoke` / `processor-smoke` / `nested-smoke` / `source-package-smoke` | Независимые проверки фактически развёрнутой версии |
+| `.github/workflows/migration-auto.yml` | Автозапуск на `push main` миграционного кода: deploy → processor-smoke → nested-smoke → source-package-smoke | Не включает bootstrap, Dexie Cloud ACL или пользовательский импорт; активируется после merge workflow |
 
 Инфраструктурные endpoints Worker сейчас приватные: `workers_dev=false`, `preview_urls=false`, публичный обработчик `fetch` для них не настроен. Подписанный upload helper предназначен для будущей авторизованной интеграции, а не является уже опубликованным API для пользователя.
 
@@ -375,22 +375,54 @@ Retries и recoveries должны уточняться явно: transient fail
 Для новых адаптеров schema v2 сохраняет общие поля и добавляет
 `adapter: { id, version }` и `normalized`. NormalizedPayload — транспортные
 коллекции записей со скалярными значениями; точные поля и ссылки проверяет
-зарегистрированный адаптер. Это граница synthetic transport, бизнес-схема
-PLAN/FACT и таблицы Dexie ещё требуют отдельного решения.
+зарегистрированный адаптер. Schema v3 использует отдельный `sourcePackage`
+вместо `normalized`: SourceImportPackage v1 по предметному контракту.
+Бизнес-маппинг пакета и запись в Dexie ещё не реализованы.
 Общий `isResult` проверяет схему, provenance, зарегистрированную версию,
 счётчики, warnings и adapter-specific payload на runtime boundary.
 
-Вход ограничен **8192 байтами**, fixture — **256 records**, результат —
-**1024 байтами**, включая provenance и payload. При превышении результата
+Вход ограничен **8192 байтами**, fixture — **256 records**. Legacy result
+schema v1/v2 ограничен **1024 байтами**, schema v3 — **65536 байтами**,
+включая provenance и payload. V3 сохраняется одним private JSON object, без
+chunks/manifest; это предел synthetic, не обещание поддержки реальных архивов. При превышении результата
 возвращается `RESULT_SIZE_LIMIT`, без обрезания или успешного пустого результата.
 R2 result key сохраняется `results/<job-id>/v1/result.json`.
 После conditional PUT выполняются HEAD/readback и SHA-256 до D1 succeeded.
 
 `PROCESSOR_VERSION=v1` сохранена ради совместимого fixture и текущих ключей
-execution/idempotency. Новые результаты имеют schemaVersion 2 и явную версию
+execution/idempotency. Новые результаты имеют schemaVersion 2/3 и явную версию
 адаптера. Изменение семантики уже выпущенного адаптера требует осознанной версии
 процессора и стратегии повторной обработки. Уже terminal execution не
 перезапускается после добавления адаптера; операторский recovery отдельный.
+
+### 7.3.1. MIG-04: SourceImportPackage v1
+
+Третий reviewed adapter `synthetic-training 1.0.0` извлекает из bounded tuple
+source format `mezfit-synthetic-training-v1` subjects, исходные упражнения,
+структурные программы, отдельный occurrence PLAN, source frozen PLAN и FACT,
+включая completed Ad-hoc/date-only, unknown unit и omitted measures.
+Числовые prescriptions программы остаются typed sourceAttributes с issue.
+Никаких записей в бизнес-хранилище и сопоставления с каталогом Mezfit нет.
+
+Runtime проверяет exact fields/enum/числа/даты, воспроизводимые typed keys,
+sibling positions, тип/родителя/subject ссылок и обязательные issues.
+Linked на невыгруженный объект сохраняется с UNRESOLVED_SOURCE_REFERENCE;
+известная чужая/конфликтующая ссылка делает пакет invalid. Valid-with-issues
+не означает publishable; publishability здесь не вычисляется.
+
+Пределы: коллекция 32, sourceAttributes 16, issues 256, ключ 128 символов,
+текст 1000, граф 512 сущностей, структурный бюджет 4096 значений/depth 12.
+Полный пакет остаётся только в private R2; trace содержит codes/counts и
+reviewed adapter id/version. Input SHA рассчитан по bytes, provenance
+проверяется против trusted descriptor, output повторно валидируется до PUT.
+Те же instance/result keys и D1 processor_version=v1; legacy JSON order/bytes
+сохранены. Readback разрешает более 1КБ только валидному result schema v3.
+
+Новая автоматическая операция `source-package-smoke` сравнивает полный
+пакет с независимым canonical эталоном, проверяет SHA, attempts=1,
+Queue replay и owned cleanup. Только после cleanup возможен
+`MIGRATION_SOURCE_PACKAGE_SMOKE_OK`. Cloud acceptance этого изменения
+ещё не подтверждена; реальные Gym Keeper и большие архивы вне scope.
 
 ### 7.4. Частичные сбои
 
@@ -599,7 +631,7 @@ suggestions и автоматическое продвижение кандид�
 | **2. TypeScript File Processing Engine v1** | **Done для synthetic** | Независимый processor smoke 44156101755 и infra smoke 44153088455 | Telemetry PARTIAL, CPU не измерен |
 | **MIG-03. Универсальный Adapter Engine** | **Done для synthetic** | Fixture + nested confirmed, runs 44183912443 / 44201744839, §2.5 | Реальные форматы ещё не реализованы |
 | **Nested-smoke** | **Done** | `MIGRATION_NESTED_SMOKE_OK` в run 44201744839 после schema v2, replay и cleanup/readback | Телеметрия `PARTIAL`, CPU не измерен |
-| **Контракт универсального импорта (MIG-04)** | **Спецификация зафиксирована; реализация Next** | [`SourceImportPackage v1`](docs/architecture/migration-source-contract.md): PROGRAM=структура, OCCURRENCE=PLAN, SESSION=frozen PLAN+FACT; проверка исходных связей/единиц | Runtime schema/processor output ещё не реализованы; ImportPlan, identity/ACL, Clone & Rebind — отдельные этапы |
+| **Контракт универсального импорта (MIG-04)** | **Runtime реализован; cloud acceptance pending** | [`SourceImportPackage v1`](docs/architecture/migration-source-contract.md): PROGRAM=структура, OCCURRENCE=PLAN, SESSION=frozen PLAN+FACT; проверка исходных связей/единиц | Типы/runtime validator, schema v3, synthetic-training и auto smoke; live подтверждение ожидается. ImportPlan, identity/ACL, Clone & Rebind — отдельные этапы |
 | **3. Доказать реальные форматы** | Planned, независимо от MIG-03 | Обезличенные samples, magic/schema, versioned compatibility matrix, фикстуры | Экспорт из реального Gym Keeper |
 | **4. Адаптеры реальных источников, начиная с Gym Keeper** | Planned | Decoders по подтверждённым format/version и независимым samples | MIG-03 и этап 3 |
 | **AI Discovery / Adapter Builder** | Planned | Исследование неизвестного формата, candidate → validation gate → reviewed registry | Решение по AI API/стоимости/приватности и образцы |
@@ -710,15 +742,15 @@ Source file
 
 1. PR: проверить scope, `AGENTS.md`, аудит, актуальность тестов и CI; merge лишь после обязательных проверок и решения владельца о выпуске.
 2. После merge автоматически запускается `Deploy migration`: D1 technical migration, Worker deploy и **уже включённый** infra `MIGRATION_SMOKE_OK`.
-3. Только при успехе deploy — `processor-smoke`, затем `nested-smoke`. Оба проверяют реально исполняемую Worker version, SHA/readback, replay и cleanup. Все три этапа выполняются в одной GitHub Actions цепочке с общей блокировкой `mezfit-migration-cloudflare`.
+3. Только при успехе deploy — `processor-smoke`, затем `nested-smoke`, затем `source-package-smoke`. Все smoke проверяют реально исполняемую Worker version, SHA/readback, replay и cleanup. Все четыре этапа выполняются в одной GitHub Actions цепочке с общей блокировкой `mezfit-migration-cloudflare`.
 4. Каждый этап публикует отдельный санитизированный trace artifact; провал останавливает следующие проверки. Успешный результат не объявлять полной телеметрией при `Collection: PARTIAL`.
 5. Сохранить ссылки на run, Git commit, Worker version и trace ID. При сбое использовать ручные `migration-deploy.yml`, `migration-smoke.yml` / `diagnose`, разбирать первую подтверждённую причину, а не запускать слепые повторы.
 
 Автоматизация **не** запускается на PR, не выполняет `migration-bootstrap apply`,
 Dexie Cloud ACL/schema operations, бизнес-импорт или основной Worker Mezfit.
-Для новых MIG-04 и дальнейших адаптеров добавлять отдельные профильные smoke
-и расширять цепочку по отдельному проверенному PR; текущие два smoke проверяют
-только synthetic fixture/nested, не реальные форматы.
+MIG-04 расширяет эту же цепочку отдельным source-package smoke; новые адаптеры
+требуют собственных профильных проверок. Все три текущих smoke проверяют
+синтетические форматы, не реальные выгрузки.
 
 Production Engine не должен выполняться на GitHub Actions: GitHub управляет деплоем, проверками и диагностикой, вычисления выполняет Cloudflare Worker/Workflow в допустимых пределах.
 
@@ -733,7 +765,7 @@ Production Engine не должен выполняться на GitHub Actions: 
 1. Корневой [`AGENTS.md`](AGENTS.md) — обязательные инженерные, security и PR-правила.
 2. [`docs/architecture/local-first-storage-sync.md`](docs/architecture/local-first-storage-sync.md) — главный контракт бизнес-хранилища, Coach/Client realms и PLAN/FACT.
 3. [`docs/architecture/migration-infrastructure.md`](docs/architecture/migration-infrastructure.md) — детальная уже реализованная инфраструктура, операции bootstrap/deploy/smoke/trace.
-   [`docs/architecture/migration-source-contract.md`](docs/architecture/migration-source-contract.md) — нормативная предметная спецификация `SourceImportPackage v1` для MIG-04; wire schema и runtime ещё не реализованы.
+   [`docs/architecture/migration-source-contract.md`](docs/architecture/migration-source-contract.md) — нормативная предметная спецификация `SourceImportPackage v1` для MIG-04; runtime в `migration/worker/processor/source-package/`, cloud acceptance pending.
 4. [`docs/reference/gym-keeper/backup-format.md`](docs/reference/gym-keeper/backup-format.md) — доказанное и неустановленное про backup/export.
 5. [`docs/reference/gym-keeper/program-diary-domain.md`](docs/reference/gym-keeper/program-diary-domain.md), [`final-synthesis.md`](docs/reference/gym-keeper/final-synthesis.md) — перенос смыслов, не Android UI.
 6. `migration/worker/processor/{contracts,registry,index}.ts`, `processor/adapters/`, `process-workflow.ts`, `execution-store.ts`, `processor-smoke.ts` — контракт адаптеров и единственный runtime path. Затем `index.ts`, `events.ts`, `smoke.ts`, `r2-upload.ts`, `trace.ts`, `migration/trace.mjs`, `trace-collector.mjs`, `cloudflare.mjs`.
@@ -755,7 +787,7 @@ Production Engine не должен выполняться на GitHub Actions: 
 
 **Нельзя:** объявлять synthetic parser настоящим Gym Keeper importer, переносить бизнес-данные в D1, менять Coach/Client realms или ACL без согласования, добавлять Python/Containers/VPS, считать «деплой завершён» равным «новая версия исполняется», давать успешный отчёт при неполной трассе без пометки PARTIAL.
 
-**Следующий проверяемый рубеж:** реализовать и проверить `SourceImportPackage v1` по [предметной спецификации](docs/architecture/migration-source-contract.md) (runtime validator / versioned result / synthetic smoke), не затрагивая Dexie. Контракт Imported Client / Clone & Rebind (§15), реальные обезличенные экспорты и AI Adapter Builder требуют отдельных решений и этапов. AI API, реальные decoders, бизнес-канонизация, preview и Dexie commit не реализованы.
+**Следующий проверяемый рубеж:** подтвердить после merge live `MIGRATION_SOURCE_PACKAGE_SMOKE_OK` для `SourceImportPackage v1` по [предметной спецификации](docs/architecture/migration-source-contract.md) (runtime validator / versioned result / synthetic smoke), не затрагивая Dexie. Контракт Imported Client / Clone & Rebind (§15), реальные обезличенные экспорты и AI Adapter Builder требуют отдельных решений и этапов. AI API, реальные decoders, бизнес-канонизация, preview и Dexie commit не реализованы.
 
 ## 15. Последние бизнес-правила и целевые flows импорта
 
@@ -858,7 +890,7 @@ source exercise ID — это **не** `exerciseDefinitionId` Mezfit.
 
 Source package не обязан быть одним JSON blob: для больших файлов
 потребуются версионированный manifest и ограниченные chunk-артефакты.
-Текущие пределы processor v1 (8192 байта input / 1024 байта result)
+Текущие пределы processor v1 (8192 байта input / 1024 байта legacy result; 65536 байт schema v3)
 **не** являются обещанием поддержки реальной клиентской базы.
 Текущая D1 хранит только технические задания, не бизнес-историю.
 
