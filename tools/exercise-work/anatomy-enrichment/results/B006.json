@@ -179,7 +179,7 @@
       "id": "fitnessprogramer:dumbbell-jump-squat",
       "source_path": "assets/work/hip/dumbbell-jump-squat.json",
       "source_blob_sha": "bf803c735a4352681292866f2f8363167abe94e1",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -381,7 +381,7 @@
       "id": "fitnessprogramer:dumbbell-lunge",
       "source_path": "assets/work/hip/dumbbell-lunge.json",
       "source_blob_sha": "7b247da4a0464477f22341d907e60062ae7ecd11",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -590,7 +590,7 @@
       "id": "fitnessprogramer:dumbbell-one-arm-shoulder-press",
       "source_path": "assets/work/shoulders/dumbbell-one-arm-shoulder-press.json",
       "source_blob_sha": "2b076e3ca8bf9546fca8d388c3ae67d4c787ebf0",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -716,7 +716,7 @@
       "id": "fitnessprogramer:dumbbell-preacher-curl",
       "source_path": "assets/work/biceps/dumbbell-preacher-curl.json",
       "source_blob_sha": "7a4940e4a198e0ac082ada17a31cce42155a1ed1",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -798,7 +798,7 @@
       "id": "fitnessprogramer:dumbbell-press",
       "source_path": "assets/work/chest/dumbbell-press.json",
       "source_blob_sha": "84e816589d8f2ffd5257d51c8732394d1f00602b",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -881,7 +881,7 @@
       "id": "fitnessprogramer:dumbbell-pullover",
       "source_path": "assets/work/chest/dumbbell-pullover.json",
       "source_blob_sha": "d39514e557585f37e13fee27b9cc90e436901fbd",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1009,7 +1009,7 @@
       "id": "fitnessprogramer:dumbbell-raise",
       "source_path": "assets/work/shoulders/dumbbell-raise.json",
       "source_blob_sha": "9a3e00709ff4c30fc2a260746a589132066f6d54",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1091,7 +1091,7 @@
       "id": "fitnessprogramer:dumbbell-rear-lunge",
       "source_path": "assets/work/hip/dumbbell-rear-lunge.json",
       "source_blob_sha": "bc5a1ce50a311c1fb49e96039b75459750d629a7",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1300,7 +1300,7 @@
       "id": "fitnessprogramer:dumbbell-reverse-lunge",
       "source_path": "assets/work/hip/dumbbell-reverse-lunge.json",
       "source_blob_sha": "0dd4d2cf5a55146a3b654232e6b83d06f6061f01",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1342,7 +1342,7 @@
       "id": "fitnessprogramer:dumbbell-romanian-deadlift",
       "source_path": "assets/work/hip/dumbbell-romanian-deadlift.json",
       "source_blob_sha": "d93c8688d09b1af5c701255bec053e17c7cb86de",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1384,7 +1384,7 @@
       "id": "fitnessprogramer:dumbbell-row",
       "source_path": "assets/work/back/dumbbell-row.json",
       "source_blob_sha": "f129f579bf0080d79661541a1b478da6c01fcc2a",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1429,7 +1429,7 @@
       "id": "fitnessprogramer:dumbbell-scaption",
       "source_path": "assets/work/shoulders/dumbbell-scaption.json",
       "source_blob_sha": "1a1e31c6216de714542c51bcc5670348945e84fc",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1512,7 +1512,7 @@
       "id": "fitnessprogramer:dumbbell-scott-hammer-curl",
       "source_path": "assets/work/biceps/dumbbell-scott-hammer-curl.json",
       "source_blob_sha": "6ba8a98aaa5f2ea5a1f51f278846eaac57b7307f",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1726,7 +1726,7 @@
       "id": "fitnessprogramer:dumbbell-seated-front-and-back-tate-press",
       "source_path": "assets/work/triceps/dumbbell-seated-front-and-back-tate-press.json",
       "source_blob_sha": "081cbfe812df0e7e38bdbdb27ac57384493bce2c",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1807,7 +1807,7 @@
       "id": "fitnessprogramer:dumbbell-shoulder-press",
       "source_path": "assets/work/shoulders/dumbbell-shoulder-press.json",
       "source_blob_sha": "22040dcf23167144937389336820252a6de72b92",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -1850,7 +1850,7 @@
       "id": "fitnessprogramer:dumbbell-shrug",
       "source_path": "assets/work/trapezius/dumbbell-shrug.json",
       "source_blob_sha": "af091c16bbab365c82df7e524d3cf17dbec9ec49",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2135,7 +2135,7 @@
       "id": "fitnessprogramer:dumbbell-squat",
       "source_path": "assets/work/hip/dumbbell-squat.json",
       "source_blob_sha": "5a29b55df762b36b0b636ae0ad0406922f1ce5d5",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2300,7 +2300,7 @@
       "id": "fitnessprogramer:dumbbell-straight-leg-deadlift",
       "source_path": "assets/work/back/dumbbell-straight-leg-deadlift.json",
       "source_blob_sha": "e628ae52d849cbc465ac5f8e463ae31b811e2c3a",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2344,7 +2344,7 @@
       "id": "fitnessprogramer:dumbbell-sumo-deadlift",
       "source_path": "assets/work/hip/dumbbell-sumo-deadlift.json",
       "source_blob_sha": "106ec299eb6a2821f74d3836bfe1345b64cad2fb",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2385,7 +2385,7 @@
       "id": "fitnessprogramer:dumbbell-sumo-squat",
       "source_path": "assets/work/hip/dumbbell-sumo-squat.json",
       "source_blob_sha": "9efd6d7014d495b1bf58c974225930435e007d62",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2505,7 +2505,7 @@
       "id": "fitnessprogramer:dumbbell-upright-row",
       "source_path": "assets/work/shoulders/dumbbell-upright-row.json",
       "source_blob_sha": "331aa946d02871f80c9b79139265b2cd4b300c7d",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2548,7 +2548,7 @@
       "id": "fitnessprogramer:dumbbell-upward-fly",
       "source_path": "assets/work/chest/dumbbell-upward-fly.json",
       "source_blob_sha": "31da508a2543e0c051b03351ebd414a1a1d03085",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2669,7 +2669,7 @@
       "id": "fitnessprogramer:dumbbell-walking-lunge",
       "source_path": "assets/work/hip/dumbbell-walking-lunge.json",
       "source_blob_sha": "f65c1f0e8cd80ffc8b7c7621657e2d66f8cbb105",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -2876,7 +2876,7 @@
       "id": "fitnessprogramer:eccentric-pull-up",
       "source_path": "assets/work/back/eccentric-pull-up.json",
       "source_blob_sha": "28463b01ce7482b5981f431ec22bcb04456f7aa4",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3163,7 +3163,7 @@
       "id": "fitnessprogramer:ez-bar-bent-arm-pullover",
       "source_path": "assets/work/back/ez-bar-bent-arm-pullover.json",
       "source_blob_sha": "c66f113f984b5b176281082f69cf7c5e6a29fd3f",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3286,7 +3286,7 @@
       "id": "fitnessprogramer:ez-bar-underhand-press",
       "source_path": "assets/work/shoulders/ez-bar-underhand-press.json",
       "source_blob_sha": "ce22ff75bbb45a29573dd81fc6516f7883783253",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3328,7 +3328,7 @@
       "id": "fitnessprogramer:ez-bar-upright-row",
       "source_path": "assets/work/shoulders/ez-bar-upright-row.json",
       "source_blob_sha": "de4c15c3d2e3862d00b0f4d6a634f265b89e8073",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3371,7 +3371,7 @@
       "id": "fitnessprogramer:face-pull",
       "source_path": "assets/work/shoulders/face-pull.json",
       "source_blob_sha": "d5196503c8efbb4da83be9a52673e4a886f9e6d5",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3456,7 +3456,7 @@
       "id": "fitnessprogramer:farmers-walk",
       "source_path": "assets/work/full-body/farmers-walk.json",
       "source_blob_sha": "698e39e2f7ee779b6d8c716100dba98e396a4990",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3578,7 +3578,7 @@
       "id": "fitnessprogramer:finger-push-up",
       "source_path": "assets/work/chest/finger-push-up.json",
       "source_blob_sha": "7ba3587f71a3b3a0389bdd4a9df4ae1c0c087ee1",
-      "status": "partial",
+      "status": "verified",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -3619,7 +3619,7 @@
       "id": "fitnessprogramer:fire-hydrant",
       "source_path": "assets/work/hip/fire-hydrant.json",
       "source_blob_sha": "3474f7ca150446b0f60491bff6337db4a5dc2d66",
-      "status": "partial",
+      "status": "needs_review",
       "category_verified": true,
       "patch": {
         "equipment": [
