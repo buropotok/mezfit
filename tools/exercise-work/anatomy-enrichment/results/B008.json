@@ -3553,6 +3553,151 @@
         }
       ],
       "notes": "Neutral grip pull-up: турник с параллельными рукоятями, подтягивание спиной и сгибателями локтя, корпус удерживается."
+    },
+    {
+      "id": "fitnessprogramer:nordic-hamstring-curl",
+      "source_path": "assets/work/leg/nordic-hamstring-curl.json",
+      "source_blob_sha": "d3936d5f35cc2e5c53fa2bf80a8c3cdacc82f949",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "nordic-curl-bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "gluteus_maximus",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/nordic-hamstring-curl/",
+            "https://blog.performancelab16.com/nordic-hamstring-e-test-isocinetico/"
+          ],
+          "confidence": "low",
+          "reason": "Nordic hamstring curl — эксцентрическое сгибание колена при фиксации голеней; исходное Machine указывает на аппарат, предлагается специальная скамья Nordic с фиксаторами голеней, но конкретный вариант GIF пока не подтверждён."
+        }
+      ],
+      "notes": "Nordic hamstring curl — эксцентрическое сгибание колена при фиксации голеней; исходное Machine указывает на аппарат, предлагается специальная скамья Nordic с фиксаторами голеней, но конкретный вариант GIF пока не подтверждён."
+    },
+    {
+      "id": "fitnessprogramer:oblique-floor-crunches",
+      "source_path": "assets/work/abs/oblique-floor-crunches.json",
+      "source_blob_sha": "0bd3c97a53af460ce104a0b43cd2d711ccfaae3d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/oblique-floor-crunches/"
+          ],
+          "confidence": "medium",
+          "reason": "Oblique floor crunches: в инструкции боковое сгибание корпуса лёжа на боку, исходный obliques target верен; дополнительная прямая живота помогает."
+        }
+      ],
+      "notes": "Oblique floor crunches: в инструкции боковое сгибание корпуса лёжа на боку, исходный obliques target верен; дополнительная прямая живота помогает."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-barbell-row",
+      "source_path": "assets/work/back/one-arm-barbell-row.json",
+      "source_blob_sha": "6b75088c9b9e59e722065642f9eefccb48ca24e3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "teres_major",
+            "rhomboids",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-barbell-row/"
+          ],
+          "confidence": "medium",
+          "reason": "One-arm barbell row: исходный Latissimus Dorsi primary сохранён, длинный перечень неподтверждённых ротаторов плеча очищен, корпус удерживает наклон."
+        }
+      ],
+      "notes": "One-arm barbell row: исходный Latissimus Dorsi primary сохранён, длинный перечень неподтверждённых ротаторов плеча очищен, корпус удерживает наклон."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-biceps-curl",
+      "source_path": "assets/work/biceps/one-arm-biceps-curl.json",
+      "source_blob_sha": "060be007b9e5e9fc0e077a42e2cb43ac7c6940db",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-biceps-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "One-arm biceps curl с гантелью, локтевое сгибание бицепсом и брахиалисом, контроль хвата."
+        }
+      ],
+      "notes": "One-arm biceps curl с гантелью, локтевое сгибание бицепсом и брахиалисом, контроль хвата."
     }
   ]
 }
