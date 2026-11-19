@@ -7,11 +7,14 @@
       "definition_ru": "Специализированная скамья с наклонной опорой для плеча при сгибании рук на бицепс; не обычная горизонтальная или наклонная скамья.",
       "exercise_ids": [
         "fitnessprogramer:dumbbell-preacher-curl",
-        "fitnessprogramer:dumbbell-preacher-hammer-curl"
+        "fitnessprogramer:dumbbell-preacher-hammer-curl",
+        "fitnessprogramer:dumbbell-scott-curl",
+        "fitnessprogramer:dumbbell-scott-hammer-curl"
       ],
       "source_urls": [
         "https://fitnessprogramer.com/exercise/dumbbell-preacher-curl/",
-        "https://fitnessprogramer.com/exercise/dumbbell-preacher-hammer-curl/"
+        "https://fitnessprogramer.com/exercise/dumbbell-preacher-hammer-curl/",
+        "https://fitnessprogramer.com/exercise/dumbbell-scott-hammer-curl/"
       ],
       "confidence": "high",
       "aliases_considered": [
