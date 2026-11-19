@@ -505,7 +505,8 @@
       "patch": {
         "muscles": {
           "primary": [
-            "other"
+            "cervical_flexors",
+            "cervical_extensors"
           ],
           "secondary": [
             "other"
@@ -526,10 +527,10 @@
             "https://fitnessprogramer.com/exercise/front-and-back-neck-stretch/"
           ],
           "confidence": "medium",
-          "reason": "Front/back neck stretch с ручным сопротивлением: исходный перечень микромышц не нормализуется как будто это первичные силовые движения; упражнение растяжки шеи, роли неизвестны."
+          "reason": "В инструкции поочерёдные разгибание шеи и сгибание против сопротивления рук; конкретные исходные мышцы объединены в существующие canonical cervical_flexors / cervical_extensors, остальные роли не подтверждены."
         }
       ],
-      "notes": "Front/back neck stretch с ручным сопротивлением: исходный перечень микромышц не нормализуется как будто это первичные силовые движения; упражнение растяжки шеи, роли неизвестны."
+      "notes": "В инструкции поочерёдные разгибание шеи и сгибание против сопротивления рук; конкретные исходные мышцы объединены в существующие canonical cervical_flexors / cervical_extensors, остальные роли не подтверждены."
     },
     {
       "id": "fitnessprogramer:front-plank-with-arm-and-leg-lift",
@@ -977,7 +978,10 @@
           "stabilizers": [
             "erector_spinae"
           ]
-        }
+        },
+        "equipment": [
+          "other"
+        ]
       },
       "evidence": [
         {
@@ -991,9 +995,20 @@
           ],
           "confidence": "low",
           "reason": "Название glute-ham raise указывает на сгибание колена и разгибание бедра, но исходное NO EQUIPMENT не определяет устройство/партнёра; нельзя приписать GHD-тренажёр без GIF."
+        },
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/glute-ham-raise/",
+            "https://workoutandrecover.com/exercises/glute-ham-developer/"
+          ],
+          "confidence": "low",
+          "reason": "Glute Ham Raise: в исходнике NO EQUIPMENT, но движение имеет варианты на GHD-тренажёре и без него. Источник без инструкции, точный GIF оборудования не проверен, поэтому временный other и ручное визуальное ревью; НЕ утверждать, что аппарат не нужен."
         }
       ],
-      "notes": "Название glute-ham raise указывает на сгибание колена и разгибание бедра, но исходное NO EQUIPMENT не определяет устройство/партнёра; нельзя приписать GHD-тренажёр без GIF."
+      "notes": "Glute Ham Raise: в исходнике NO EQUIPMENT, но движение имеет варианты на GHD-тренажёре и без него. Источник без инструкции, точный GIF оборудования не проверен, поэтому временный other и ручное визуальное ревью; НЕ утверждать, что аппарат не нужен."
     },
     {
       "id": "fitnessprogramer:good-morning",
