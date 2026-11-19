@@ -565,8 +565,13 @@ export class ProgramManagementRepository {
       throw new Error('Некорректное упражнение для замены');
     const plan = await this.writable(id);
     await this.dayAuthoringReady(plan);
+    // Include only the catalogue dependencies of the old and new definitions.
+    // FitnessProgramer stores are optional in older/offline fixture schemas.
+    const source = await this.db.programExercises.get(exerciseId);
+    const definitionIds = [definitionId, ...(source?.exercise.exerciseDefinitionId
+      ? [source.exercise.exerciseDefinitionId] : [])];
     await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
-      ...exerciseSelectionTables()], async () => {
+      ...exerciseSelectionTables(definitionIds)], async () => {
       const current = await this.currentParent(plan);
       await this.currentDay(current, dayId);
       const previous = await this.db.programExercises.get(exerciseId);
