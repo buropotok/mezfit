@@ -76,8 +76,8 @@ export function ProgramDayExercisePicker({ repository, program, dayId, onClose, 
         if (choice) return;
         setClosing(false); setError(''); onClose();
       }} onNavigationContextChange={setSheetNavigation} />
-    <ExerciseReplacementDialog opened={choice !== null} compatible={choice?.compatible ?? false}
+    {choice ? <ExerciseReplacementDialog opened compatible={choice.compatible}
       busy={busy} error={error} onCancel={() => { if (!running.current) { setChoice(null); onClose(); } }}
-      onConfirm={value => { void confirmReplacement(value); }} />
+      onConfirm={value => { void confirmReplacement(value); }} /> : null}
   </>;
 }
