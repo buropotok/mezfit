@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { DiscussionMedia } from './DiscussionMedia';
 import { CircularVideoPlayback } from '../settings/CircularVideoPlayback';
 import { readVideoOrientation } from '../media/videoOrientation';
+import * as annotation from './discussion-annotation';
 
 vi.mock('./useDiscussionMediaSource', () => ({
   useDiscussionMediaSource: (src: string) => ({ url: src, container: undefined, tryR2Fallback: vi.fn() }),
@@ -58,6 +59,24 @@ it('uses the same correction for circular playback without changing its tap cont
   load(video, 480, 488);
   await waitFor(() => expect(video.style.transform).toContain('rotate(270deg)'));
   expect(screen.getAllByRole('button')).toHaveLength(1);
+});
+
+it('passes the missing rotation when copying a compensated video frame for annotation', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
+  const image = document.createElement('canvas');
+  const copy = vi.spyOn(annotation, 'copyAnnotationImage').mockReturnValue(image);
+  const onAnnotate = vi.fn();
+  const { container } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:rotated" type="video" mode="viewer" onAnnotate={onAnnotate} />
+  </KonstaProvider>);
+  const video = container.querySelector('video')!;
+  Object.defineProperty(video, 'readyState', { configurable: true, value: 2 });
+  load(video, 480, 488);
+  await waitFor(() => expect(video.style.transform).toContain('rotate(90deg)'));
+  fireEvent.loadedData(video);
+  fireEvent.click(screen.getByRole('button', { name: 'Рисовать на изображении' }));
+  expect(copy).toHaveBeenCalledWith(video, 90);
+  expect(onAnnotate).toHaveBeenCalledWith(image, 0);
 });
 
 it('preserves native controls for already-correct and square videos', async () => {
