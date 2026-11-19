@@ -24,9 +24,10 @@
       73
     ]
   },
-  "diagnosis": {
-    "state": "pending",
-    "reason": "Source-card anatomy/equipment fields not read during metadata-only Git-tree inventory; run the read-only diagnostic against a checkout of source_commit before processing B001.",
-    "metrics": null
+  "processing_scope": {
+    "anatomy_equipment_diagnostics": "performed by the agent only after claiming each batch",
+    "preliminary_anatomy_equipment_diagnostics": false,
+    "maximum_unique_exercises_per_batch": 100,
+    "diagnostic_metrics": "recorded in each batch result, not in the stage-1 inventory"
   }
 }
