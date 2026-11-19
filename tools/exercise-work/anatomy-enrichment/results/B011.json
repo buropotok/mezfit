@@ -2573,6 +2573,441 @@
         }
       ],
       "notes": "Stretch with towel: по инструкции полотенце за спиной для растяжки плеча/трицепса, не силовая спина, отдельный тип towel вместо NO EQUIPMENT."
+    },
+    {
+      "id": "fitnessprogramer:sumo-deadlift",
+      "source_path": "assets/work/back/sumo-deadlift.json",
+      "source_blob_sha": "2f074743be49659ff61ecdd44acf3b17db0d688b",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "legs",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sumo-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Sumo deadlift со штангой — разгибание тазобедренного и коленного суставов широкой стойкой, не упражнение на широчайшие как главные двигатели."
+        }
+      ],
+      "notes": "Sumo deadlift со штангой — разгибание тазобедренного и коленного суставов широкой стойкой, не упражнение на широчайшие как главные двигатели."
+    },
+    {
+      "id": "fitnessprogramer:sumo-plie-dumbbell-squat",
+      "source_path": "assets/work/hip/sumo-plie-dumbbell-squat.json",
+      "source_blob_sha": "acc757e1e26877b588851d15c20147c13283d0df",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sumo-plie-dumbbell-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Sumo plié goblet squat с гантелью: широкий присед нагружает квадрицепс, ягодичные и приводящие, исходная фрагментарная анатомия переписана каноническими группами."
+        }
+      ],
+      "notes": "Sumo plié goblet squat с гантелью: широкий присед нагружает квадрицепс, ягодичные и приводящие, исходная фрагментарная анатомия переписана каноническими группами."
+    },
+    {
+      "id": "fitnessprogramer:superman",
+      "source_path": "assets/work/erector-spinae/superman.json",
+      "source_blob_sha": "65ffafe3be1b0e9e306990ab015baaa4b1931b45",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "gluteus_maximus",
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/superman/"
+          ],
+          "confidence": "medium",
+          "reason": "Superman лёжа — разгибание туловища и бедра, erector spinae исходная primary подтверждается текстом, ягодичные и задняя бедра помогают."
+        }
+      ],
+      "notes": "Superman лёжа — разгибание туловища и бедра, erector spinae исходная primary подтверждается текстом, ягодичные и задняя бедра помогают."
+    },
+    {
+      "id": "fitnessprogramer:supine-medicine-ball-chest-throw",
+      "source_path": "assets/work/chest/supine-medicine-ball-chest-throw.json",
+      "source_blob_sha": "c7a8b6c61950e4fb80a567fb8142c08c1a0c2e45",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/supine-medicine-ball-chest-throw/"
+          ],
+          "confidence": "low",
+          "reason": "Supine chest throw with medicine ball: исходный Exercise Ball неправильно указывает фитбол; техника броска и наличие партнёра/стены не описаны, нужен GIF."
+        }
+      ],
+      "notes": "Supine chest throw with medicine ball: исходный Exercise Ball неправильно указывает фитбол; техника броска и наличие партнёра/стены не описаны, нужен GIF."
+    },
+    {
+      "id": "fitnessprogramer:supine-spinal-twist",
+      "source_path": "assets/work/back/supine-spinal-twist.json",
+      "source_blob_sha": "dc0669cfc81c5b662415cb23593e8a7b766a7a90",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/supine-spinal-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Supine spinal twist — йогическая ротационная растяжка позвоночника лёжа, мышцы-мишени нельзя автоматически объявить силовыми primary."
+        }
+      ],
+      "notes": "Supine spinal twist — йогическая ротационная растяжка позвоночника лёжа, мышцы-мишени нельзя автоматически объявить силовыми primary."
+    },
+    {
+      "id": "fitnessprogramer:supported-one-leg-standing-hip-flexor-and-knee-extensor-stretch",
+      "source_path": "assets/work/hip/supported-one-leg-standing-hip-flexor-and-knee-extensor-stretch.json",
+      "source_blob_sha": "e24f483c767700e9253df0817e7d05c42e9f51c4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/supported-one-leg-standing-hip-flexor-and-knee-extensor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Supported one-leg hip flexor and knee extensor stretch — комбинированная растяжка передней поверхности бедра, конкретная опора не указана."
+        }
+      ],
+      "notes": "Supported one-leg hip flexor and knee extensor stretch — комбинированная растяжка передней поверхности бедра, конкретная опора не указана."
+    },
+    {
+      "id": "fitnessprogramer:supported-pistol-squat",
+      "source_path": "assets/work/leg/supported-pistol-squat.json",
+      "source_blob_sha": "679be5722b35363a5caca5a20011f1844f24d7f3",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/supported-pistol-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Supported pistol squat выполняется с дополнительной опорой, исходное NO EQUIPMENT не показывает предмет; требуется проверить GIF, чтобы уточнить equipment."
+        }
+      ],
+      "notes": "Supported pistol squat выполняется с дополнительной опорой, исходное NO EQUIPMENT не показывает предмет; требуется проверить GIF, чтобы уточнить equipment."
+    },
+    {
+      "id": "fitnessprogramer:suspended-ab-fall-out",
+      "source_path": "assets/work/abs/suspended-ab-fall-out.json",
+      "source_blob_sha": "f20253c5e4e75aad07759712565fba1643633e95",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "latissimus_dorsi"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/suspended-ab-fall-out/"
+          ],
+          "confidence": "medium",
+          "reason": "Suspended ab fall-out на TRX — аналог anti-extension rollout с подвесными ремнями, прямой и поперечный пресс контролируют корпус."
+        }
+      ],
+      "notes": "Suspended ab fall-out на TRX — аналог anti-extension rollout с подвесными ремнями, прямой и поперечный пресс контролируют корпус."
+    },
+    {
+      "id": "fitnessprogramer:suspended-push-up",
+      "source_path": "assets/work/chest/suspended-push-up.json",
+      "source_blob_sha": "1910eaa21ac516401a2fe8b945437eabf3a1a886",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/suspended-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Suspended push-up с опорой на подвесные рукояти TRX/rings: source target pectoralis sternal оставлен, стабилизация плеч и корпуса уточнена."
+        }
+      ],
+      "notes": "Suspended push-up с опорой на подвесные рукояти TRX/rings: source target pectoralis sternal оставлен, стабилизация плеч и корпуса уточнена."
+    },
+    {
+      "id": "fitnessprogramer:svend-press",
+      "source_path": "assets/work/chest/svend-press.json",
+      "source_blob_sha": "8c692ca407f0a05b33078ca47885b3024c3cc101",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "weight plate"
+        ],
+        "muscles": {
+          "secondary": [
+            "pectoralis_clavicular",
+            "triceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/svend-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Svend press по инструкции выполняется с блином между ладоней; исходное NO EQUIPMENT неверно. Грудь сокращается изометрически при выталкивании блина."
+        }
+      ],
+      "notes": "Svend press по инструкции выполняется с блином между ладоней; исходное NO EQUIPMENT неверно. Грудь сокращается изометрически при выталкивании блина."
+    },
+    {
+      "id": "fitnessprogramer:swimming",
+      "source_path": "assets/work/back/swimming.json",
+      "source_blob_sha": "8b0222b28e1c15c83b5047d8d87d7900f3701185",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/swimming/"
+          ],
+          "confidence": "low",
+          "reason": "Swimming: source группа спины и название, но без инструкции неизвестно, это движение лёжа (имитация плавания) или плавание в воде. Исходный Abdominal неканоничен."
+        }
+      ],
+      "notes": "Swimming: source группа спины и название, но без инструкции неизвестно, это движение лёжа (имитация плавания) или плавание в воде. Исходный Abdominal неканоничен."
+    },
+    {
+      "id": "fitnessprogramer:swing-360",
+      "source_path": "assets/work/back/swing-360.json",
+      "source_blob_sha": "f728b5eba4b4d83dd812ec9a964b5008edfc32ef",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "latissimus_dorsi",
+            "forearm_grip",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/swing-360/"
+          ],
+          "confidence": "medium",
+          "reason": "Swing 360 по инструкции требует турник с висом и раскачиванием тела, а не упражнения без оборудования; основной навык координационно-гимнастический."
+        }
+      ],
+      "notes": "Swing 360 по инструкции требует турник с висом и раскачиванием тела, а не упражнения без оборудования; основной навык координационно-гимнастический."
     }
   ]
 }
