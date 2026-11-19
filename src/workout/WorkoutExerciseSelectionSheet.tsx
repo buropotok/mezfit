@@ -10,6 +10,7 @@ interface WorkoutExerciseSelectionSheetProps {
   personalCatalogueRole?: 'coach' | 'client';
   opened?: boolean;
   saving: boolean;
+  mode?: 'add' | 'replace';
   actionError?: string;
   onConfirm: (exerciseIds: string[]) => void;
   onClose: () => void;
@@ -30,7 +31,7 @@ export function WorkoutExerciseSelectionSheet(props: WorkoutExerciseSelectionShe
 
 /** Selection/navigation subscriptions exist only while the sheet content is mounted. */
 function WorkoutExerciseSelectionContent({
-  opened = true, personalCatalogueRole,
+  opened = true, personalCatalogueRole, mode = 'add',
   saving,
   actionError = '',
   onConfirm,
@@ -46,10 +47,11 @@ function WorkoutExerciseSelectionContent({
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
+      else if (mode === 'replace') return new Set([id]);
       else if (next.size < 100) next.add(id); // Bound batch size for either PLAN or FACT selection.
       return next;
     });
-  }, [saving]);
+  }, [saving, mode]);
 
   const close = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
   const requestBack = useCallback(() => {
@@ -95,9 +97,10 @@ function WorkoutExerciseSelectionContent({
           />}
         </div>
         <footer className="workout-exercise-selection__footer">
-          {selectedIds.size === 100 ? <Text variant="footnote" tone="muted">Максимум 100 упражнений за раз</Text> : null}
+          {mode === 'add' && selectedIds.size === 100 ? <Text variant="footnote" tone="muted">Максимум 100 упражнений за раз</Text> : null}
           <Button disabled={saving || selectedIds.size === 0} onClick={() => onConfirm([...selectedIds])}>
-            {saving ? 'Добавляем…' : `Добавить упражнения (${selectedIds.size})`}
+            {mode === 'replace' ? (saving ? 'Заменяем…' : 'Заменить')
+              : (saving ? 'Добавляем…' : `Добавить упражнения (${selectedIds.size})`)}
           </Button>
         </footer>
       </section>
