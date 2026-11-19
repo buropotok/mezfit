@@ -3323,6 +3323,422 @@
         }
       ],
       "notes": "В исходной инструкции прямо указан EZ curl bar с обратным хватом при жиме вверх, а не обычная штанга."
+    },
+    {
+      "id": "fitnessprogramer:ez-bar-upright-row",
+      "source_path": "assets/work/shoulders/ez-bar-upright-row.json",
+      "source_blob_sha": "de4c15c3d2e3862d00b0f4d6a634f265b89e8073",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "supraspinatus",
+            "deltoid_anterior",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ez-bar-upright-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Независимо от исходного generic Barbell название обозначает EZ-гриф. Движение тяги к подбородку доминирует по средней дельте и верхней трапеции."
+        }
+      ],
+      "notes": "Независимо от исходного generic Barbell название обозначает EZ-гриф. Движение тяги к подбородку доминирует по средней дельте и верхней трапеции."
+    },
+    {
+      "id": "fitnessprogramer:face-pull",
+      "source_path": "assets/work/shoulders/face-pull.json",
+      "source_blob_sha": "d5196503c8efbb4da83be9a52673e4a886f9e6d5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "rhomboids",
+            "trapezius_middle",
+            "deltoid_lateral"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/face-pull/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция Face Pull допускает тросовый блок или ленту; в этой исходной карточке указан Cable. Наружные ротаторы участвуют в разведении, разгибатели спины сохраняют позицию стоя."
+        }
+      ],
+      "notes": "Инструкция Face Pull допускает тросовый блок или ленту; в этой исходной карточке указан Cable. Наружные ротаторы участвуют в разведении, разгибатели спины сохраняют позицию стоя."
+    },
+    {
+      "id": "fitnessprogramer:face-pull-with-resistance-band",
+      "source_path": "assets/work/shoulders/face-pull-with-resistance-band.json",
+      "source_blob_sha": "1738a9711521a0bed2f99dce52ce80afefe0f7d4",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/face-pull-with-resistance-band/"
+          ],
+          "confidence": "low",
+          "reason": "В отличие от общего Face Pull здесь по названию требуется резинка. Не переносим Gymstick как обязательное оборудование без подтверждения. В исходнике нет анатомии/техники."
+        }
+      ],
+      "notes": "В отличие от общего Face Pull здесь по названию требуется резинка. Не переносим Gymstick как обязательное оборудование без подтверждения. В исходнике нет анатомии/техники."
+    },
+    {
+      "id": "fitnessprogramer:farmers-walk",
+      "source_path": "assets/work/full-body/farmers-walk.json",
+      "source_blob_sha": "698e39e2f7ee779b6d8c716100dba98e396a4990",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "kettlebell"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_grip"
+          ],
+          "secondary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis",
+            "obliques",
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/farmers-walk/"
+          ],
+          "confidence": "medium",
+          "reason": "Перенос тяжестей: основные удерживающие мышцы хвата, работа ног при ходьбе и стабилизаторы вертикального корпуса. Гантели и гири — подтверждённые альтернативы, не одновременный обязательный комплект."
+        }
+      ],
+      "notes": "Перенос тяжестей: основные удерживающие мышцы хвата, работа ног при ходьбе и стабилизаторы вертикального корпуса. Гантели и гири — подтверждённые альтернативы, не одновременный обязательный комплект."
+    },
+    {
+      "id": "fitnessprogramer:fast-feet-run",
+      "source_path": "assets/work/cardio/fast-feet-run.json",
+      "source_blob_sha": "85a86e55f73ff923e1910cbfa3ceebba233745fe",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/fast-feet-run/"
+          ],
+          "confidence": "low",
+          "reason": "Fast Feet Run — кардио/координация; исходник не содержит техники или мышц. Не присваиваем произвольных силовых prime movers; все роли требуют проверки GIF."
+        }
+      ],
+      "notes": "Fast Feet Run — кардио/координация; исходник не содержит техники или мышц. Не присваиваем произвольных силовых prime movers; все роли требуют проверки GIF."
+    },
+    {
+      "id": "fitnessprogramer:feet-and-ankle-rotation",
+      "source_path": "assets/work/calf/feet-and-ankle-rotation.json",
+      "source_blob_sha": "ee3f19cbb97e3c0f2b45a3d0b85eba9b91071390",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/feet-and-ankle-rotation/"
+          ],
+          "confidence": "low",
+          "reason": "Вращение стоп/голеностопа — мобильность, в исходнике нет детализации; нельзя считать все мышцы голени силовыми движителями."
+        }
+      ],
+      "notes": "Вращение стоп/голеностопа — мобильность, в исходнике нет детализации; нельзя считать все мышцы голени силовыми движителями."
+    },
+    {
+      "id": "fitnessprogramer:finger-push-up",
+      "source_path": "assets/work/chest/finger-push-up.json",
+      "source_blob_sha": "7ba3587f71a3b3a0389bdd4a9df4ae1c0c087ee1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "forearm_grip",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/finger-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание на пальцах нагружает грудь и разгибатели локтя; поддержание веса на пальцах требует хвата/мышц кисти и стабилизации корпуса."
+        }
+      ],
+      "notes": "Отжимание на пальцах нагружает грудь и разгибатели локтя; поддержание веса на пальцах требует хвата/мышц кисти и стабилизации корпуса."
+    },
+    {
+      "id": "fitnessprogramer:fire-hydrant",
+      "source_path": "assets/work/hip/fire-hydrant.json",
+      "source_blob_sha": "3474f7ca150446b0f60491bff6337db4a5dc2d66",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "hip_external_rotators"
+          ],
+          "stabilizers": [
+            "obliques",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/fire-hydrant/"
+          ],
+          "confidence": "medium",
+          "reason": "Fire Hydrant — отведение и наружная ротация бедра на четвереньках, стабилизация туловища против ротации."
+        }
+      ],
+      "notes": "Fire Hydrant — отведение и наружная ротация бедра на четвереньках, стабилизация туловища против ротации."
+    },
+    {
+      "id": "fitnessprogramer:fish-pose",
+      "source_path": "assets/work/chest/fish-pose.json",
+      "source_blob_sha": "ad3b0a43e426c83705b7ad79c2e304ca1199c41c",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_extensors",
+            "erector_spinae"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "other"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/fish-pose/"
+          ],
+          "confidence": "low",
+          "reason": "Fish Pose — статическая йоговская поза с разгибанием позвоночника/шеи и раскрытием грудной клетки, но не силовая тренировка груди. Категория «Другое» и неопределённые синергисты; не переносить мышцы, которые лишь растягиваются."
+        }
+      ],
+      "notes": "Fish Pose — статическая йоговская поза с разгибанием позвоночника/шеи и раскрытием грудной клетки, но не силовая тренировка груди. Категория «Другое» и неопределённые синергисты; не переносить мышцы, которые лишь растягиваются."
+    },
+    {
+      "id": "fitnessprogramer:flat-bench-hyperextension",
+      "source_path": "assets/work/erector-spinae/flat-bench-hyperextension.json",
+      "source_blob_sha": "f9f73bc2d2118c3f98392dcb104f4ca936f87788",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/flat-bench-hyperextension/"
+          ],
+          "confidence": "medium",
+          "reason": "Вариант hyperextension на плоской скамье: она необходима, несмотря на исходное NO EQUIPMENT. Изолированная работа разгибателей позвоночника; ягодичные и задняя поверхность бедра участвуют в разгибании бедра."
+        }
+      ],
+      "notes": "Вариант hyperextension на плоской скамье: она необходима, несмотря на исходное NO EQUIPMENT. Изолированная работа разгибателей позвоночника; ягодичные и задняя поверхность бедра участвуют в разгибании бедра."
     }
   ]
 }
