@@ -183,7 +183,6 @@
         ],
         "muscles": {
           "primary": [
-            "triceps_long_head",
             "triceps_brachii"
           ],
           "secondary": [
@@ -206,10 +205,10 @@
             "https://fitnessprogramer.com/exercise/one-arm-high-pulley-overhead-tricep-extension/"
           ],
           "confidence": "medium",
-          "reason": "Разгибание локтя из-за головы с верхним блоком акцентирует длинную головку трицепса; активные синергисты/стабилизаторы отдельно не подтверждены."
+          "reason": "Разгибание локтя над головой с верхним блоком задействует весь трицепс с биомеханическим акцентом длинной головки; нельзя одновременно использовать родительский ID и его часть как два разных target."
         }
       ],
-      "notes": "Маркер other — специальное значение ревью, не анатомический ID."
+      "notes": "Верхнее положение плеча делает акцент на triceps_long_head, но этот ID не дублируется с родительским triceps_brachii; синергисты и стабилизаторы не установлены. Маркер other не является мышечным ID."
     },
     {
       "id": "fitnessprogramer:one-arm-kettlebell-chest-press-on-the-bench",
