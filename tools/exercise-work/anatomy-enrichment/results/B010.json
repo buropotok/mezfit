@@ -2615,23 +2615,27 @@
           "stabilizers": [
             "serratus_anterior"
           ]
-        }
+        },
+        "equipment": [
+          "other"
+        ]
       },
       "evidence": [
         {
           "fields": [
             "muscles.primary",
             "muscles.secondary",
-            "muscles.stabilizers"
+            "muscles.stabilizers",
+            "equipment"
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/side-plank-oblique-crunch/"
           ],
           "confidence": "low",
-          "reason": "Side plank oblique crunch — боковое скручивание в планке; исходные Bench+NO EQUIPMENT конфликтуют, без инструкции неясна обязательность скамьи, оборудование требует GIF."
+          "reason": "Side plank oblique crunch — боковое скручивание в планке; исходные Bench+NO EQUIPMENT конфликтуют, без инструкции неясна обязательность скамьи, оборудование требует GIF. В текущем review-результате тип опоры помечен «Другое оборудование», а не оставлен противоречивый набор Bench/NO EQUIPMENT."
         }
       ],
-      "notes": "Side plank oblique crunch — боковое скручивание в планке; исходные Bench+NO EQUIPMENT конфликтуют, без инструкции неясна обязательность скамьи, оборудование требует GIF."
+      "notes": "Side plank oblique crunch — боковое скручивание в планке; исходные Bench+NO EQUIPMENT конфликтуют, без инструкции неясна обязательность скамьи, оборудование требует GIF. В текущем review-результате тип опоры помечен «Другое оборудование», а не оставлен противоречивый набор Bench/NO EQUIPMENT."
     },
     {
       "id": "fitnessprogramer:side-plank-rotation",
