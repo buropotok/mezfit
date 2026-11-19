@@ -403,6 +403,411 @@
         }
       ],
       "notes": "Плиометрический tuck jump включает разгибание ног при взлёте и сгибание бедра в группировке; исходник не содержит техники, роли требуют GIF."
+    },
+    {
+      "id": "fitnessprogramer:turkish-get-up",
+      "source_path": "assets/work/full-body/turkish-get-up.json",
+      "source_blob_sha": "54a176bb1ca57317db18ff4056afdbde6b53ebe4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "kettlebell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "obliques",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rotator_cuff",
+            "transversus_abdominis",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/turkish-get-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Пошаговое вставание с грузом над плечом; инструкция прямо допускает гирю или гантель. Главные двигатели ног и плечевой пояс работают в разных фазах, стабилизирующие роли основания корпуса и плеча подтверждаются удержанием веса."
+        }
+      ],
+      "notes": "Пошаговое вставание с грузом над плечом; инструкция прямо допускает гирю или гантель. Главные двигатели ног и плечевой пояс работают в разных фазах, стабилизирующие роли основания корпуса и плеча подтверждаются удержанием веса."
+    },
+    {
+      "id": "fitnessprogramer:twist-down-up-with-resistance-band",
+      "source_path": "assets/work/abs/twist-down-up-with-resistance-band.json",
+      "source_blob_sha": "93df95546cc02d561fb79856a030acedf9db928c",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/twist-down-up-with-resistance-band/"
+          ],
+          "confidence": "low",
+          "reason": "Поворот/тяга резинки снизу вверх — предположительно диагональный паттерн работы косых; в исходной карточке нет описания, определить направление натяжения по GIF."
+        }
+      ],
+      "notes": "Поворот/тяга резинки снизу вверх — предположительно диагональный паттерн работы косых; в исходной карточке нет описания, определить направление натяжения по GIF."
+    },
+    {
+      "id": "fitnessprogramer:twist-with-resistance-band",
+      "source_path": "assets/work/abs/twist-with-resistance-band.json",
+      "source_blob_sha": "62291be4a6f28cc89260c75d7a9661fd7493c9c6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/twist-with-resistance-band/"
+          ],
+          "confidence": "low",
+          "reason": "Название предполагает вращение туловища с резинкой, однако не подтверждена амплитуда и исходная позиция; требуется GIF."
+        }
+      ],
+      "notes": "Название предполагает вращение туловища с резинкой, однако не подтверждена амплитуда и исходная позиция; требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:twisting-hyperextension",
+      "source_path": "assets/work/abs/twisting-hyperextension.json",
+      "source_blob_sha": "d5d21930877d4490a404cf7faa11096939d5d628",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "back_extension_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae",
+            "obliques"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/twisting-hyperextension/"
+          ],
+          "confidence": "low",
+          "reason": "Вращательная гиперэкстензия предполагает специальную опору для гиперэкстензии, но исходник содержит только generic Machine и не даёт техники. Проверить вид опоры и какую роль играют косые по GIF."
+        }
+      ],
+      "notes": "Вращательная гиперэкстензия предполагает специальную опору для гиперэкстензии, но исходник содержит только generic Machine и не даёт техники. Проверить вид опоры и какую роль играют косые по GIF."
+    },
+    {
+      "id": "fitnessprogramer:two-arm-dumbbell-front-raise",
+      "source_path": "assets/work/shoulders/two-arm-dumbbell-front-raise.json",
+      "source_blob_sha": "e915cfddf5e24eed9e17138d21b73d25429fe02e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_upper",
+            "forearm_extensors",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-arm-dumbbell-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция и перечень мышц конкретно относятся к подъёму обеих гантелей вперёд; запястье стабилизируется разгибателями."
+        }
+      ],
+      "notes": "Исходная инструкция и перечень мышц конкретно относятся к подъёму обеих гантелей вперёд; запястье стабилизируется разгибателями."
+    },
+    {
+      "id": "fitnessprogramer:two-dumbbell-preacher-curl",
+      "source_path": "assets/work/biceps/two-dumbbell-preacher-curl.json",
+      "source_blob_sha": "4de0fc6e3ccb61a38aa1e34b8cdec3e478361e50",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "secondary": [
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/two-dumbbell-preacher-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Сгибание рук с двумя гантелями на скамье Скотта; исходник не содержит инструкции и анатомии, поэтому конкретный хват и стабилизация нуждаются в проверке."
+        }
+      ],
+      "notes": "Сгибание рук с двумя гантелями на скамье Скотта; исходник не содержит инструкции и анатомии, поэтому конкретный хват и стабилизация нуждаются в проверке."
+    },
+    {
+      "id": "fitnessprogramer:unilateral-bridge",
+      "source_path": "assets/work/hip/unilateral-bridge.json",
+      "source_blob_sha": "74cef27e19eae89d526a27ddf1817646dd570ef3",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris_long",
+            "semitendinosus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/unilateral-bridge/"
+          ],
+          "confidence": "low",
+          "reason": "Одноногий ягодичный мост: разгибание бедра за счёт ягодичной мышцы, задней поверхности бедра; удержание таза от перекоса. В исходнике нет техники, проверить опору по GIF."
+        }
+      ],
+      "notes": "Одноногий ягодичный мост: разгибание бедра за счёт ягодичной мышцы, задней поверхности бедра; удержание таза от перекоса. В исходнике нет техники, проверить опору по GIF."
+    },
+    {
+      "id": "fitnessprogramer:unilateral-lat-stretch-on-the-wall",
+      "source_path": "assets/work/back/unilateral-lat-stretch-on-the-wall.json",
+      "source_blob_sha": "633187ebb082dbee43e363385cd864bb30b3111c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/unilateral-lat-stretch-on-the-wall/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжение широчайшей у стены — не доказанное силовое сокращение растягиваемой мышцы. Источник описывает ладонь на стене и удержание растяжки; неизвестные двигательные роли отмечены отдельно."
+        }
+      ],
+      "notes": "Растяжение широчайшей у стены — не доказанное силовое сокращение растягиваемой мышцы. Источник описывает ладонь на стене и удержание растяжки; неизвестные двигательные роли отмечены отдельно."
+    },
+    {
+      "id": "fitnessprogramer:upavistha-konasana",
+      "source_path": "assets/work/leg/upavistha-konasana.json",
+      "source_blob_sha": "a33d0593033becbf66bf63ccc08d2ded8c098cd8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/upavistha-konasana/"
+          ],
+          "confidence": "medium",
+          "reason": "Upavistha Konasana — сидячая поза на растяжку приводящих/задней поверхности бедра; исходная target-группа перечисляет растягиваемые ткани, а не prime movers."
+        }
+      ],
+      "notes": "Upavistha Konasana — сидячая поза на растяжку приводящих/задней поверхности бедра; исходная target-группа перечисляет растягиваемые ткани, а не prime movers."
+    },
+    {
+      "id": "fitnessprogramer:upper-back-stretch",
+      "source_path": "assets/work/back/upper-back-stretch.json",
+      "source_blob_sha": "8963a4c2fd5497f5b3447089164ffa717f4eb534",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/upper-back-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Upper Back Stretch — статическая растяжка верхней части спины: неопределённые силовые роли не следует выводить из области растяжения."
+        }
+      ],
+      "notes": "Upper Back Stretch — статическая растяжка верхней части спины: неопределённые силовые роли не следует выводить из области растяжения."
     }
   ]
 }
