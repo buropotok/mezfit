@@ -3458,6 +3458,616 @@
           "reason": "Классическое сгибание рук с гантелями: бицепс основной сгибатель, плечевая/плечелучевая помогают."
         }
       ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-curl-on-arm-blaster",
+      "source_path": "assets/work/biceps/dumbbell-curl-on-arm-blaster.json",
+      "source_blob_sha": "e416a3544542263cc09ab41bddba5defe4120ff9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "arm_blaster"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-curl-on-arm-blaster/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание гантелей с фиксатором рук Arm Blaster; приспособление ограничивает движение локтей и не эквивалентно скамье."
+        }
+      ],
+      "notes": "Маркер other — особая позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-deadlift",
+      "source_path": "assets/work/hip/dumbbell-deadlift.json",
+      "source_blob_sha": "d65864bc7c862b0e82a05d3f735ff2d4e26a1e8f",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "erector_spinae"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "latissimus_dorsi",
+            "forearm_grip",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-deadlift/",
+            "https://www.strengthlog.com/deadlift/"
+          ],
+          "confidence": "high",
+          "reason": "Становая тяга с гантелями: разгибатели тазобедренных/коленных суставов и спины; мышцы корпуса и хвата фиксируют нагрузку."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-decline-one-arm-hammer-press",
+      "source_path": "assets/work/chest/dumbbell-decline-one-arm-hammer-press.json",
+      "source_blob_sha": "9f8e23661c1e6f7f36ce2d51114132ec1a0ee724",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-decline-one-arm-hammer-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Односторонний жим гантели нейтральным хватом головой вниз нагружает нижние грудные, трицепс и переднюю дельту."
+        }
+      ],
+      "notes": "Маркер other — особая позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-devil-press",
+      "source_path": "assets/work/full-body/dumbbell-devil-press.json",
+      "source_blob_sha": "dcc0da863c1a38ee55d2186c90265dbbac85940c",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "deltoideus"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "pectoralis_major"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-devil-press/"
+          ],
+          "confidence": "low",
+          "reason": "Devil press сочетает бурпи и взрывной подъём гантелей над головой; многосуставная нагрузка на ноги, плечи, грудь и корпус."
+        }
+      ],
+      "notes": "По GIF необходимо проверить, содержит ли данная версия полноценный snatch/press и фазу отжимания."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-finger-curl",
+      "source_path": "assets/work/forearm/dumbbell-finger-curl.json",
+      "source_blob_sha": "bd8a68e68639244300ab0319f62420bb66c6ed93",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "forearm_grip"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-finger-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание пальцев с гантелью нагружает длинные сгибатели пальцев и мышцы хвата."
+        }
+      ],
+      "notes": "Маркер other — особая позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-floor-wipers",
+      "source_path": "assets/work/abs/dumbbell-floor-wipers.json",
+      "source_blob_sha": "b9bcb503ee96fbeea0313eea3ba5d2d71c8e0f24",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-floor-wipers/"
+          ],
+          "confidence": "medium",
+          "reason": "Floor wipers — повороты поднятых ног лёжа; косые мышцы контролируют ротацию таза, прямая мышца живота стабилизирует корпус."
+        }
+      ],
+      "notes": "Маркер other — особая позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-fly",
+      "source_path": "assets/work/chest/dumbbell-fly.json",
+      "source_blob_sha": "12c3b9801c2948bb307bca80cb0774feb12780f8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение гантелей лёжа на скамье: движение в плечевом суставе за счёт грудных, передняя дельта помогает."
+        }
+      ],
+      "notes": "Маркер other — особая позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-forward-leaning-lunge",
+      "source_path": "assets/work/hip/dumbbell-forward-leaning-lunge.json",
+      "source_blob_sha": "14b51c42961349c7e16c40349bc936fe95331d4d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-forward-leaning-lunge/"
+          ],
+          "confidence": "high",
+          "reason": "Выпад с наклоном туловища вперёд усиливает момент разгибания бедра; ягодичная и квадрицепсы выполняют движение."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-front-raise",
+      "source_path": "assets/work/shoulders/dumbbell-front-raise.json",
+      "source_blob_sha": "40ed42fb1a9461d36b28bd84c8bb95b17a402958",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "trapezius_upper",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-front-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Подъём гантелей перед собой — преимущественно передняя дельта; зубчатая и трапеция поддерживают вращение лопатки."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-glute-bridge",
+      "source_path": "assets/work/hip/dumbbell-glute-bridge.json",
+      "source_blob_sha": "6ba16f162669ad589dca4e619c611f1c5ed92895",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-glute-bridge/"
+          ],
+          "confidence": "high",
+          "reason": "Ягодичный мост с гантелью: разгибание таза большой ягодичной, задняя поверхность бедра синергирует."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-goblet-curtsey-lunge",
+      "source_path": "assets/work/leg/dumbbell-goblet-curtsey-lunge.json",
+      "source_blob_sha": "bef7e7e4cf83a6f035a3215465c483478871ec30",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-goblet-curtsey-lunge/"
+          ],
+          "confidence": "high",
+          "reason": "Curtsy lunge с гантелью в goblet-хвате: разгибатели ног и ягодичные, требуется стабилизация таза."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-goblet-squat",
+      "source_path": "assets/work/hip/dumbbell-goblet-squat.json",
+      "source_blob_sha": "a1ec885b70a43c57fe16572e9ee4b463092d7208",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-goblet-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Гоблет-присед с гантелью у груди: квадрицепсы разгибают колено, таз и корпус сохраняют вертикаль."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-good-morning",
+      "source_path": "assets/work/hip/dumbbell-good-morning.json",
+      "source_blob_sha": "205b389980eb0d20569baf5aa373103a8937ccf9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-good-morning/"
+          ],
+          "confidence": "high",
+          "reason": "Good morning с гантелью — сгибание/разгибание в тазобедренных суставах с напряжением задней поверхности бедра и ягодичных."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-high-curl",
+      "source_path": "assets/work/biceps/dumbbell-high-curl.json",
+      "source_blob_sha": "ec185cbaab4d4b4834d154ca8d7e3f82885188d7",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-high-curl/"
+          ],
+          "confidence": "low",
+          "reason": "High curl — сгибание локтя с гантелями при иной высоте плеча; без GIF нельзя подтвердить изменение набора двигателей."
+        }
+      ],
+      "notes": "Уточнить положение плеча и углы в упражнении dumbbell high curl по GIF. Маркер other — особая позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-incline-shrug",
+      "source_path": "assets/work/trapezius/dumbbell-incline-shrug.json",
+      "source_blob_sha": "d99eccceedfc155af07ab27b90d24eef508799df",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-incline-shrug/"
+          ],
+          "confidence": "high",
+          "reason": "Шраги с упором на наклонную скамью нагружают верхнюю трапецию; мышца, поднимающая лопатку, помогает."
+        }
+      ]
     }
   ]
 }
