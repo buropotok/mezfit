@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { VideoNoteRing, VIDEO_NOTE_RING_RADIUS } from './VideoNoteRing';
 import { useVideoOrientation } from '../media/useVideoOrientation';
+import { Text } from '../ui/primitives';
 
 function boundedFraction(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
@@ -44,6 +45,12 @@ export function CircularVideoPlayback({
 }: CircularVideoPlaybackProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const orientation = useVideoOrientation(videoRef, src, 'cover');
+  const reportOrientationError = useEffectEvent(() => {
+    onError('Не удалось воспроизвести записанное видео на этом устройстве.');
+  });
+  useEffect(() => {
+    if (orientation.error) reportOrientationError();
+  }, [orientation.error]);
   const railRef = useRef<SVGSVGElement>(null);
   const seekingPointerRef = useRef<number | null>(null);
   const wasPlayingRef = useRef(false);
@@ -253,7 +260,7 @@ export function CircularVideoPlayback({
         ref={videoRef}
         style={orientation.style}
         className="video-note-module__video"
-        src={src}
+        src={orientation.src}
         playsInline
         preload="auto"
         onLoadedMetadata={(event) => {
@@ -291,6 +298,7 @@ export function CircularVideoPlayback({
         onError={() => onError('Не удалось воспроизвести записанное видео на этом устройстве.')}
         aria-label="Записанный видеокружок"
       />
+      {orientation.pending && <Text variant="caption" className="video-note-playback__preparing">Подготавливаем видео…</Text>}
       {mode === 'preview' && previewControlHost !== undefined
         ? previewControlHost && createPortal(tapControl, previewControlHost)
         : tapControl}
