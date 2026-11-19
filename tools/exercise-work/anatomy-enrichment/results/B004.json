@@ -1778,6 +1778,627 @@
         }
       ],
       "notes": "Сгибания запястий со штангой за спиной; изолированная работа сгибателей предплечья, иные роли не установлены."
+    },
+    {
+      "id": "fitnessprogramer:behind-the-neck-pull-up",
+      "source_path": "assets/work/back/behind-the-neck-pull-up.json",
+      "source_blob_sha": "23040688bbc1c746cc1eb2a82055dce27868af5d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "biceps_brachii",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/behind-the-neck-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Подтягивание за голову требует турник; конкретный вариант траектории и стабилизации плеча по исходнику не описан."
+        }
+      ],
+      "notes": "Подтягивание за голову требует турник; конкретный вариант траектории и стабилизации плеча по исходнику не описан."
+    },
+    {
+      "id": "fitnessprogramer:belt-squat",
+      "source_path": "assets/work/hip/belt-squat.json",
+      "source_blob_sha": "a4b9393c6e0f192f94e498d1a43f81c02f11fab9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "belt-squat-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/belt-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция описывает поясную тягу к специализированному тренажёру или loading pin; proposal фиксирует конкретный belt squat machine, но альтернативная конфигурация требует визуальной проверки."
+        }
+      ],
+      "notes": "Инструкция описывает поясную тягу к специализированному тренажёру или loading pin; proposal фиксирует конкретный belt squat machine, но альтернативная конфигурация требует визуальной проверки."
+    },
+    {
+      "id": "fitnessprogramer:bench-dips",
+      "source_path": "assets/work/triceps/bench-dips.json",
+      "source_blob_sha": "663226b55c071021d3119b89c6d685576a487522",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-dips/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимания спиной к скамье: трицепс основной, грудная и передняя дельта вспомогательные. Перегруженная исходная анатомия сокращена."
+        }
+      ],
+      "notes": "Отжимания спиной к скамье: трицепс основной, грудная и передняя дельта вспомогательные. Перегруженная исходная анатомия сокращена."
+    },
+    {
+      "id": "fitnessprogramer:bench-dips-on-floor",
+      "source_path": "assets/work/triceps/bench-dips-on-floor.json",
+      "source_blob_sha": "e3003e4da51008e7262d2f1c72de68ba0c3212a8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-dips-on-floor/"
+          ],
+          "confidence": "medium",
+          "reason": "Для варианта с пятками на полу скамья остаётся опорой для рук, поэтому исходное оборудование Bench сохранено."
+        }
+      ],
+      "notes": "Для варианта с пятками на полу скамья остаётся опорой для рук, поэтому исходное оборудование Bench сохранено."
+    },
+    {
+      "id": "fitnessprogramer:bench-glute-flutter-kicks",
+      "source_path": "assets/work/hip/bench-glute-flutter-kicks.json",
+      "source_blob_sha": "42d43d24a9e06740b068c33c08f4a188503b9f02",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-glute-flutter-kicks/"
+          ],
+          "confidence": "medium",
+          "reason": "Несмотря на исходный NO EQUIPMENT, вариант Bench подразумевает опору туловища на скамью; выделены группы для разгибания и контроля бедра."
+        }
+      ],
+      "notes": "Несмотря на исходный NO EQUIPMENT, вариант Bench подразумевает опору туловища на скамью; выделены группы для разгибания и контроля бедра."
+    },
+    {
+      "id": "fitnessprogramer:bench-pike-push-up",
+      "source_path": "assets/work/shoulders/bench-pike-push-up.json",
+      "source_blob_sha": "33a71ec662646d5235ef65fbbc7ff87904998657",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-pike-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция подтверждает ноги на скамье/платформе, а не полное отсутствие оборудования; стабильные роли удержания лопаток детально не указаны."
+        }
+      ],
+      "notes": "Инструкция подтверждает ноги на скамье/платформе, а не полное отсутствие оборудования; стабильные роли удержания лопаток детально не указаны."
+    },
+    {
+      "id": "fitnessprogramer:bench-press",
+      "source_path": "assets/work/chest/bench-press.json",
+      "source_blob_sha": "5894555f5163b38a13a83a8048d314faa0b93520",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Лежачий жим штанги: устранён неканонический алиас Clavicular, а исходный Biceps Brachii не выдан за подтверждённый динамический стабилизатор."
+        }
+      ],
+      "notes": "Лежачий жим штанги: устранён неканонический алиас Clavicular, а исходный Biceps Brachii не выдан за подтверждённый динамический стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:bench-side-bend",
+      "source_path": "assets/work/abs/bench-side-bend.json",
+      "source_blob_sha": "057e76be1bc153ad2e399e3a6d8a67aa2f92c383",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "roman-chair"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-side-bend/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник прямо называет Roman chair для бокового сгибания; generic Machine заменяется конкретным римским стулом."
+        }
+      ],
+      "notes": "Источник прямо называет Roman chair для бокового сгибания; generic Machine заменяется конкретным римским стулом."
+    },
+    {
+      "id": "fitnessprogramer:bench-supported-dumbbell-external-rotation",
+      "source_path": "assets/work/shoulders/bench-supported-dumbbell-external-rotation.json",
+      "source_blob_sha": "053347971c816f149c6052d694aedfcb6861b528",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bench-supported-dumbbell-external-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Наружная ротация плеча с гантелью: задняя вращательная манжета; положение опоры на скамье требует GIF-подтверждения."
+        }
+      ],
+      "notes": "Наружная ротация плеча с гантелью: задняя вращательная манжета; положение опоры на скамье требует GIF-подтверждения."
+    },
+    {
+      "id": "fitnessprogramer:bent-arm-lateral-raise",
+      "source_path": "assets/work/shoulders/bent-arm-lateral-raise.json",
+      "source_blob_sha": "7736744bd07d8b4bcdc4324ff8573924df4358c4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "trapezius_upper",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-arm-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Отведение плеча с согнутым локтем; исходное агрегированное Front and Posterior Deltoid не выдаётся за единый мышечный ID."
+        }
+      ],
+      "notes": "Отведение плеча с согнутым локтем; исходное агрегированное Front and Posterior Deltoid не выдаётся за единый мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-barbell-reverse-raise",
+      "source_path": "assets/work/shoulders/bent-over-barbell-reverse-raise.json",
+      "source_blob_sha": "75c4ed53dcdc48bffd8b7b039fb1e5b13247eeb4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "trapezius_middle",
+            "rhomboids",
+            "infraspinatus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-barbell-reverse-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратное разведение штанги в наклоне: задняя дельта и ретракторы лопатки, а не исходные трицепс или широчайшие как динамические стабилизаторы."
+        }
+      ],
+      "notes": "Обратное разведение штанги в наклоне: задняя дельта и ретракторы лопатки, а не исходные трицепс или широчайшие как динамические стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-dumbbell-rear-delt-raise-with-head-on-bench",
+      "source_path": "assets/work/shoulders/bent-over-dumbbell-rear-delt-raise-with-head-on-bench.json",
+      "source_blob_sha": "3197c5ef50928801a7ec69ff40357f80ba406037",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "trapezius_middle",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-dumbbell-rear-delt-raise-with-head-on-bench/"
+          ],
+          "confidence": "medium",
+          "reason": "Поддержка головы на скамье исключает необходимость автоматически объявлять разгибатели позвоночника отдельными стабилизаторами."
+        }
+      ],
+      "notes": "Поддержка головы на скамье исключает необходимость автоматически объявлять разгибатели позвоночника отдельными стабилизаторами."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-dumbbell-row",
+      "source_path": "assets/work/back/bent-over-dumbbell-row.json",
+      "source_blob_sha": "11abf60ac9b9a2bbd79b6a074c7a4cf242ff7314",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-dumbbell-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга гантелей в наклоне: неканонический target Back заменён на конкретные мышцы; исключено приписывание грудных и трицепса как обязательных синергистов."
+        }
+      ],
+      "notes": "Тяга гантелей в наклоне: неканонический target Back заменён на конкретные мышцы; исключено приписывание грудных и трицепса как обязательных синергистов."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-lateral-raise",
+      "source_path": "assets/work/shoulders/bent-over-lateral-raise.json",
+      "source_blob_sha": "1d4ffaa2c46b7ac38b2e8e8edab5f338a8308783",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "trapezius_middle",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение гантелей в наклоне: задняя дельта, ротаторы плеча и мышцы лопатки, разгибатели позвоночника удерживают положение наклона."
+        }
+      ],
+      "notes": "Разведение гантелей в наклоне: задняя дельта, ротаторы плеча и мышцы лопатки, разгибатели позвоночника удерживают положение наклона."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-triceps-kick-back",
+      "source_path": "assets/work/triceps/bent-over-triceps-kick-back.json",
+      "source_blob_sha": "64195f484ab25be5d8e8a427a9d68bbfdb058f47",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-triceps-kick-back/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание локтей с гантелями в наклоне: корсет удерживает наклон; конкретные самостоятельные синергисты не выделены."
+        }
+      ],
+      "notes": "Разгибание локтей с гантелями в наклоне: корсет удерживает наклон; конкретные самостоятельные синергисты не выделены."
+    },
+    {
+      "id": "fitnessprogramer:bent-over-twist",
+      "source_path": "assets/work/abs/bent-over-twist.json",
+      "source_blob_sha": "1f9f7b37fded889a3ec1a695c0d07a9eb93c75f5",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Твист с гантелями в наклоне не имеет инструкции в исходнике; точные роли и амплитуда ротации требуют визуального подтверждения."
+        }
+      ],
+      "notes": "Твист с гантелями в наклоне не имеет инструкции в исходнике; точные роли и амплитуда ротации требуют визуального подтверждения."
     }
   ]
 }
