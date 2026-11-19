@@ -1291,6 +1291,414 @@
         }
       ],
       "notes": "Seated knee extension с резинкой — квадрицепс динамически разгибает колено, канонический band уже существует."
+    },
+    {
+      "id": "fitnessprogramer:seated-long-adductor-groin-stretch",
+      "source_path": "assets/work/leg/seated-long-adductor-groin-stretch.json",
+      "source_blob_sha": "eee4e9ac4e6133634c97e1394d70557e899b5c95",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-long-adductor-groin-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated long adductor/groin stretch — статическая растяжка внутреннего бедра, исходный длинный список описывает ткани растяжки, не первичные двигатели."
+        }
+      ],
+      "notes": "Seated long adductor/groin stretch — статическая растяжка внутреннего бедра, исходный длинный список описывает ткани растяжки, не первичные двигатели."
+    },
+    {
+      "id": "fitnessprogramer:seated-oblique-twist",
+      "source_path": "assets/work/abs/seated-oblique-twist.json",
+      "source_blob_sha": "d804f201cf86c614594384cf8135c2e198859018",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-oblique-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated oblique twist: исходные косые мышцы primary верны, прямая и поперечная поддерживают контроль туловища."
+        }
+      ],
+      "notes": "Seated oblique twist: исходные косые мышцы primary верны, прямая и поперечная поддерживают контроль туловища."
+    },
+    {
+      "id": "fitnessprogramer:seated-one-arm-dumbbell-triceps-extension",
+      "source_path": "assets/work/triceps/seated-one-arm-dumbbell-triceps-extension.json",
+      "source_blob_sha": "df9402cd7da84e096ae67236e45e70b5f18ffca4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-one-arm-dumbbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции one-arm overhead triceps extension используются гантель и сидячая скамья, разгибание выполняет трицепс."
+        }
+      ],
+      "notes": "В инструкции one-arm overhead triceps extension используются гантель и сидячая скамья, разгибание выполняет трицепс."
+    },
+    {
+      "id": "fitnessprogramer:seated-piriformis-stretch",
+      "source_path": "assets/work/hip/seated-piriformis-stretch.json",
+      "source_blob_sha": "3acfd80d3dac6eac0edfbbc007537b96b19469ba",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-piriformis-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated piriformis stretch — растяжение наружных ротаторов бедра, силовые роли не выделяются."
+        }
+      ],
+      "notes": "Seated piriformis stretch — растяжение наружных ротаторов бедра, силовые роли не выделяются."
+    },
+    {
+      "id": "fitnessprogramer:seated-rear-lateral-dumbbell-raise",
+      "source_path": "assets/work/shoulders/seated-rear-lateral-dumbbell-raise.json",
+      "source_blob_sha": "29cfd594b249ad7cc44eb9b4713cde224a57b45a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-rear-lateral-dumbbell-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated rear lateral raise: задняя дельта и вспомогательные rotator cuff из исходника оставлены, нет доказанной конкретной стабилизирующей роли."
+        }
+      ],
+      "notes": "Seated rear lateral raise: задняя дельта и вспомогательные rotator cuff из исходника оставлены, нет доказанной конкретной стабилизирующей роли."
+    },
+    {
+      "id": "fitnessprogramer:seated-scapular-retraction-exercise",
+      "source_path": "assets/work/shoulders/seated-scapular-retraction-exercise.json",
+      "source_blob_sha": "9dc4141558258bad5caa869a4d3ecbbe88731a7d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "back",
+        "muscles": {
+          "primary": [
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "trapezius_lower"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-scapular-retraction-exercise/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated scapular retraction по инструкции — сведение и опускание лопаток; Scapula, Shoulder, Chest в исходном target не являются допустимыми muscle IDs, главные ромбовидные и средняя трапеция."
+        }
+      ],
+      "notes": "Seated scapular retraction по инструкции — сведение и опускание лопаток; Scapula, Shoulder, Chest в исходном target не являются допустимыми muscle IDs, главные ромбовидные и средняя трапеция."
+    },
+    {
+      "id": "fitnessprogramer:seated-side-crunch",
+      "source_path": "assets/work/abs/seated-side-crunch.json",
+      "source_blob_sha": "93363381907b1a79806208508d79f1e52b5a7007",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-side-crunch/"
+          ],
+          "confidence": "low",
+          "reason": "Seated side crunch: основной obliques сохранён; описание неожиданно говорит 'wall seated' и изометрию ног без определения исходной опоры, требуется проверить GIF."
+        }
+      ],
+      "notes": "Seated side crunch: основной obliques сохранён; описание неожиданно говорит 'wall seated' и изометрию ног без определения исходной опоры, требуется проверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:seated-straight-leg-calf-stretch",
+      "source_path": "assets/work/leg/seated-straight-leg-calf-stretch.json",
+      "source_blob_sha": "7cc038bfd89b7b32d43310b199342602d350d7f3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-straight-leg-calf-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated straight leg calf stretch — растяжка икроножной мышцы с прямым коленом, не динамическое подошвенное сгибание."
+        }
+      ],
+      "notes": "Seated straight leg calf stretch — растяжка икроножной мышцы с прямым коленом, не динамическое подошвенное сгибание."
+    },
+    {
+      "id": "fitnessprogramer:seated-toe-touches",
+      "source_path": "assets/work/back/seated-toe-touches.json",
+      "source_blob_sha": "f2fc73a4e0e326a598829b83b51c93ff40631eb5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "legs",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-toe-touches/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated toe touches описывает растяжку задней поверхности ног и поясничной области; исходная категория back слишком узкая, первичная цель mobility ног."
+        }
+      ],
+      "notes": "Seated toe touches описывает растяжку задней поверхности ног и поясничной области; исходная категория back слишком узкая, первичная цель mobility ног."
+    },
+    {
+      "id": "fitnessprogramer:seated-twist-with-resistance-band",
+      "source_path": "assets/work/abs/seated-twist-with-resistance-band.json",
+      "source_blob_sha": "485d622043f513afd956b2005e00ed2a5acfd67d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-twist-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated twist with band: косые вращают корпус против натяжения эластичной ленты, разгибатели спины удерживают вертикальную позу."
+        }
+      ],
+      "notes": "Seated twist with band: косые вращают корпус против натяжения эластичной ленты, разгибатели спины удерживают вертикальную позу."
+    },
+    {
+      "id": "fitnessprogramer:seated-zottman-curl",
+      "source_path": "assets/work/biceps/seated-zottman-curl.json",
+      "source_blob_sha": "2a9e1fd811e69ab854e7c6324211de37cfbf439f",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-zottman-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated Zottman Curl: бицепс, brachioradialis и brachialis исходно корректны, пронаторы/экстензоры кисти стабилизируют поворот, normalize двух ненормированных wrist мышц."
+        }
+      ],
+      "notes": "Seated Zottman Curl: бицепс, brachioradialis и brachialis исходно корректны, пронаторы/экстензоры кисти стабилизируют поворот, normalize двух ненормированных wrist мышц."
+    },
+    {
+      "id": "fitnessprogramer:serratus-wall-slide-with-foam-roller",
+      "source_path": "assets/work/shoulders/serratus-wall-slide-with-foam-roller.json",
+      "source_blob_sha": "9e0a3182761caa252077b472f6a0a095cdfa3e6d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "serratus_anterior"
+          ],
+          "secondary": [
+            "trapezius_lower"
+          ],
+          "stabilizers": [
+            "rotator_cuff"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/serratus-wall-slide-with-foam-roller/"
+          ],
+          "confidence": "medium",
+          "reason": "Serratus wall slide с роликом: ролик прижат к стене предплечьями, serratus anterior выполняет протракцию/вращение лопатки, вращательная манжета удерживает сустав."
+        }
+      ],
+      "notes": "Serratus wall slide с роликом: ролик прижат к стене предплечьями, serratus anterior выполняет протракцию/вращение лопатки, вращательная манжета удерживает сустав."
     }
   ]
 }
