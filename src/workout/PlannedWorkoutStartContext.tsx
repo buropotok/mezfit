@@ -10,7 +10,9 @@ import { PlannedWorkoutConflictSheet } from './PlannedWorkoutConflictSheet';
 import { adHocErrorMessage, isActiveWorkoutError, WorkoutStartDismissed } from './adhoc-workout-errors';
 
 type CancellationPresentation = (id: string, commit: () => Promise<void>) => Promise<void>;
-export interface ProgramWorkoutStartInput { athleteUserId: string; programId?: string; dayId?: string }
+export type ProgramWorkoutStartInput =
+  | { athleteUserId: string; programId?: string; dayId?: string; independent?: false }
+  | { athleteUserId: string; programId: string; dayId: string; independent: true };
 type StartResult = { id: string; createdProgram: boolean };
 interface PlannedWorkoutStart {
   conflictActive: boolean;
@@ -145,7 +147,9 @@ function LocalWorkoutStartProvider({ role, enabled = true, onStarted, children }
   }, [repository, runStart]);
   const startFromProgram = useCallback((input: ProgramWorkoutStartInput, isCurrent?: () => boolean) => {
     if (!repository) return Promise.reject(new Error('Запуск тренировки недоступен'));
-    return runStart(() => repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), undefined, isCurrent);
+    return runStart(() => input.independent
+      ? repository.createIndependentFromProgramDay(input.athleteUserId, input.programId, input.dayId)
+      : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), undefined, isCurrent);
   }, [repository, runStart]);
   const showSession = useCallback((id: string) => onStartedRef.current(id), []);
   const value = useMemo(() => repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
