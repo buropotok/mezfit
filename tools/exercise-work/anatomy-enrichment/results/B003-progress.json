@@ -3,12 +3,12 @@
   "batch_id": "B003",
   "coordination_claim_id": "b003-20261119154806-cw8ffunslh",
   "completion_state": "in_progress",
-  "processed_exercise_count": 65,
-  "last_processed_index": 65,
+  "processed_exercise_count": 90,
+  "last_processed_index": 90,
   "total_exercises": 100,
-  "remaining_exercises": 35,
+  "remaining_exercises": 10,
   "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
-  "last_processed_id": "fitnessprogramer:band-pushdown",
+  "last_processed_id": "fitnessprogramer:banded-shoulder-flexion",
   "warning": "DRAFT ONLY. Not a completed batch. Do not integrate until all 100 records are reviewed and validated.",
-  "updated_at": "2026-11-19T16:17:48.197Z"
+  "updated_at": "2026-11-19T16:20:03.400Z"
 }
