@@ -2979,6 +2979,594 @@
         }
       ],
       "notes": "Spider hammer curl: нейтральный хват и грудная опора на наклонной скамье, характерные для spider curl, исходная техника отсутствует."
+    },
+    {
+      "id": "fitnessprogramer:single-heel-drop-calf-stretch",
+      "source_path": "assets/work/calf/single-heel-drop-calf-stretch.json",
+      "source_blob_sha": "1011fb80547abae5335abfb88f68ab24290b1e66",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-heel-drop-calf-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Single heel drop calf stretch требует края платформы для опускания пятки, но исходное NO EQUIPMENT и отсутствие инструкции не подтверждают конкретную опору; box — предварительная платформа до GIF."
+        }
+      ],
+      "notes": "Single heel drop calf stretch требует края платформы для опускания пятки, но исходное NO EQUIPMENT и отсутствие инструкции не подтверждают конкретную опору; box — предварительная платформа до GIF."
+    },
+    {
+      "id": "fitnessprogramer:single-knee-to-chest",
+      "source_path": "assets/work/hip/single-knee-to-chest.json",
+      "source_blob_sha": "adc1c4dd7a95514ebe068c596cde091cdb77c188",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-knee-to-chest/"
+          ],
+          "confidence": "medium",
+          "reason": "Single knee to chest — статическое подтягивание колена к груди для растяжки ягодичных и поясницы, силовые роли не устанавливаются."
+        }
+      ],
+      "notes": "Single knee to chest — статическое подтягивание колена к груди для растяжки ягодичных и поясницы, силовые роли не устанавливаются."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-box-jump",
+      "source_path": "assets/work/hip/single-leg-box-jump.json",
+      "source_blob_sha": "cd9c842853a0680fc6c14124ebcdb80df9ea348d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plyo box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-box-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg box jump из названия требует плиобокс, не безынвентарный прыжок; разгибатели одной ноги формируют толчок."
+        }
+      ],
+      "notes": "Single-leg box jump из названия требует плиобокс, не безынвентарный прыжок; разгибатели одной ноги формируют толчок."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-bridge",
+      "source_path": "assets/work/hip/single-leg-bridge.json",
+      "source_blob_sha": "56dec7c704f59151bc902f458917852f8e52b6a5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg bridge по инструкции разгибает бедро gluteus maximus, бицепс бедра помогает, стабилизаторы таза gluteus medius/obliques вместо длинного исходного списка."
+        }
+      ],
+      "notes": "Single-leg bridge по инструкции разгибает бедро gluteus maximus, бицепс бедра помогает, стабилизаторы таза gluteus medius/obliques вместо длинного исходного списка."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-broad-jump",
+      "source_path": "assets/work/leg/single-leg-broad-jump.json",
+      "source_blob_sha": "e4482c3f5af142ed1c8e3473526db5c65ab716b3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "gluteus_maximus",
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-broad-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg broad jump — горизонтальный толчок ногой, исходный quadriceps primary сохранён, ягодичная и икроножная участвуют."
+        }
+      ],
+      "notes": "Single-leg broad jump — горизонтальный толчок ногой, исходный quadriceps primary сохранён, ягодичная и икроножная участвуют."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-calf-raise",
+      "source_path": "assets/work/calf/single-leg-calf-raise.json",
+      "source_blob_sha": "6016a92c6ec0c0ba2e3a23444a3e3713fac03fb4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box",
+          "weight plate"
+        ],
+        "muscles": {
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg calf raise по инструкции допускает край ступени или блина как альтернативы для увеличения ROM; основные икроножные сохранены."
+        }
+      ],
+      "notes": "Single-leg calf raise по инструкции допускает край ступени или блина как альтернативы для увеличения ROM; основные икроножные сохранены."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-calves-stretch",
+      "source_path": "assets/work/calf/single-leg-calves-stretch.json",
+      "source_blob_sha": "dbcab3bd3755e79428b38e932c8e958a348f6fd2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-calves-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg calves stretch — растягивание икроножной мышцы, не силовые подъёмы на носки."
+        }
+      ],
+      "notes": "Single-leg calves stretch — растягивание икроножной мышцы, не силовые подъёмы на носки."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-deadlift-with-resistance-band",
+      "source_path": "assets/work/hip/single-leg-deadlift-with-resistance-band.json",
+      "source_blob_sha": "cece590ce15b36e9ae6b429059d1200f99b4dde5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-deadlift-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg deadlift с resistance band: задняя цепь разгибает бедро, поясница/таз удерживают баланс."
+        }
+      ],
+      "notes": "Single-leg deadlift с resistance band: задняя цепь разгибает бедро, поясница/таз удерживают баланс."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-donkey-calf-raise",
+      "source_path": "assets/work/calf/single-leg-donkey-calf-raise.json",
+      "source_blob_sha": "273aa63adf97f016e25dd5e90b9f9fa75efae2e8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-donkey-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg donkey calf raise — подъём пятки одной ногой с согнутым корпусом, gastrocnemius primary и soleus secondary."
+        }
+      ],
+      "notes": "Single-leg donkey calf raise — подъём пятки одной ногой с согнутым корпусом, gastrocnemius primary и soleus secondary."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-dumbbell-hip-thrust",
+      "source_path": "assets/work/hip/single-leg-dumbbell-hip-thrust.json",
+      "source_blob_sha": "eb989751512aac5b5f6d6dcf07c45a512fc914b7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-dumbbell-hip-thrust/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg dumbbell hip thrust: источник прямо указывает скамью под верх спины и гантель на тазу, большая ягодичная primary сохранена."
+        }
+      ],
+      "notes": "Single-leg dumbbell hip thrust: источник прямо указывает скамью под верх спины и гантель на тазу, большая ягодичная primary сохранена."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-dumbbell-side-bridge",
+      "source_path": "assets/work/abs/single-leg-dumbbell-side-bridge.json",
+      "source_blob_sha": "406c4660f260b2ea49097e0c75a1556a18f61fb9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-dumbbell-side-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg dumbbell side bridge — боковой упор на одном предплечье/стопе, гантель прижата к тазу. Исходный список Glutes/Shoulder Stabilizers не является корректными биологическими IDs."
+        }
+      ],
+      "notes": "Single-leg dumbbell side bridge — боковой упор на одном предплечье/стопе, гантель прижата к тазу. Исходный список Glutes/Shoulder Stabilizers не является корректными биологическими IDs."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-extension",
+      "source_path": "assets/work/leg/single-leg-extension.json",
+      "source_blob_sha": "d0aff270bca4c37ecfa84f38e04b5f6654aebfab",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-extension-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Single leg extension — разгибание одного колена на тренажёре, canonical тип лег-экстеншн уже определён в B008."
+        }
+      ],
+      "notes": "Single leg extension — разгибание одного колена на тренажёре, canonical тип лег-экстеншн уже определён в B008."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-hip-thrust-jump",
+      "source_path": "assets/work/hip/single-leg-hip-thrust-jump.json",
+      "source_blob_sha": "e4c5ce6505ff5f8efc524302a7886e0053879e1e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-hip-thrust-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg hip thrust jump — инструкция требует опору верхней спины на скамью/платформу; динамическое отталкивание одной ногой."
+        }
+      ],
+      "notes": "Single-leg hip thrust jump — инструкция требует опору верхней спины на скамью/платформу; динамическое отталкивание одной ногой."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-press",
+      "source_path": "assets/work/leg/single-leg-press.json",
+      "source_blob_sha": "57eb1fd7e19d8b615f8ad6be0165fe8db403d5f8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-press-machine"
+        ],
+        "muscles": {
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Single-leg press — односторонний жим ногой на специализированном тренажёре, не generic machine. Quad source target сохранён."
+        }
+      ],
+      "notes": "Single-leg press — односторонний жим ногой на специализированном тренажёре, не generic machine. Quad source target сохранён."
+    },
+    {
+      "id": "fitnessprogramer:single-leg-step-down",
+      "source_path": "assets/work/leg/single-leg-step-down.json",
+      "source_blob_sha": "141a26f94497199310303502ebf95e89f117c985",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-leg-step-down/"
+          ],
+          "confidence": "low",
+          "reason": "Single-leg step-down требует возвышенную платформу для контролируемого спуска, исходное Full Gym без объекта; box предварителен до визуальной проверки."
+        }
+      ],
+      "notes": "Single-leg step-down требует возвышенную платформу для контролируемого спуска, исходное Full Gym без объекта; box предварителен до визуальной проверки."
+    },
+    {
+      "id": "fitnessprogramer:sissy-squat",
+      "source_path": "assets/work/leg/sissy-squat.json",
+      "source_blob_sha": "f3ce3346a514f97ae6d010d4aaffcaea13a4e9de",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sissy-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Sissy squat: исходное Barbell противоречит инструкции — описан наклон назад от колен без снаряда; сохранён quadriceps primary, оборудование none для этой версии предварительно до GIF."
+        }
+      ],
+      "notes": "Sissy squat: исходное Barbell противоречит инструкции — описан наклон назад от колен без снаряда; сохранён quadriceps primary, оборудование none для этой версии предварительно до GIF."
     }
   ]
 }
