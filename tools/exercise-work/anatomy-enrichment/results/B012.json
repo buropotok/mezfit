@@ -16,13 +16,18 @@
         ],
         "muscles": {
           "primary": [
-            "other"
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "gastrocnemius"
           ],
           "secondary": [
-            "other"
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus",
+            "soleus"
           ],
           "stabilizers": [
-            "other"
+            "obliques"
           ]
         }
       },
@@ -38,10 +43,10 @@
             "https://fitnessprogramer.com/exercise/treadmill/"
           ],
           "confidence": "medium",
-          "reason": "Беговая дорожка подтверждена инструкцией. Ходьба и бег с разной скоростью/уклоном не допускают единого надёжного списка основных и стабилизирующих мышц."
+          "reason": "Источник Treadmill прямо перечисляет Quadriceps, Gluteus Maximus, Hamstrings, Calves и Obliques. Для локомоции мышцы ног распределены по основным/вспомогательным ролям, косые — стабилизация туловища. Соотношение ролей зависит от ходьбы/бега и уклона; не представлять эти роли как уникальный силовой паттерн."
         }
       ],
-      "notes": "Беговая дорожка подтверждена инструкцией. Ходьба и бег с разной скоростью/уклоном не допускают единого надёжного списка основных и стабилизирующих мышц."
+      "notes": "Источник Treadmill прямо перечисляет Quadriceps, Gluteus Maximus, Hamstrings, Calves и Obliques. Для локомоции мышцы ног распределены по основным/вспомогательным ролям, косые — стабилизация туловища. Соотношение ролей зависит от ходьбы/бега и уклона; не представлять эти роли как уникальный силовой паттерн."
     },
     {
       "id": "fitnessprogramer:triceps-dips",
