@@ -2102,6 +2102,477 @@
         }
       ],
       "notes": "Wide-knees adductor stretch — растяжка приводящих бедра в широкой постановке коленей, силовые роли неизвестны."
+    },
+    {
+      "id": "fitnessprogramer:standing-wide-leg-adductor-stretch",
+      "source_path": "assets/work/hip/standing-wide-leg-adductor-stretch.json",
+      "source_blob_sha": "053939e1e91506a6fc61424e7ef82f01bd31dc0c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-wide-leg-adductor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing wide-leg adductor stretch — растягивание внутреннего бедра в широкой стойке, не силовая работа."
+        }
+      ],
+      "notes": "Standing wide-leg adductor stretch — растягивание внутреннего бедра в широкой стойке, не силовая работа."
+    },
+    {
+      "id": "fitnessprogramer:static-lunge",
+      "source_path": "assets/work/hip/static-lunge.json",
+      "source_blob_sha": "62deef7a553febe5a294e985f1150b2a0e3d86fb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/static-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Static lunge: переднее колено сгибается/разгибается при неизменной стойке; source допускает гантели как вариант, bodyweight вариант без них."
+        }
+      ],
+      "notes": "Static lunge: переднее колено сгибается/разгибается при неизменной стойке; source допускает гантели как вариант, bodyweight вариант без них."
+    },
+    {
+      "id": "fitnessprogramer:stationary-bike-run",
+      "source_path": "assets/work/cardio/stationary-bike-run.json",
+      "source_blob_sha": "1d9f3b1bb7e1deebbb5e2900bcbd7954df0225ba",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bike"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stationary-bike-run/"
+          ],
+          "confidence": "medium",
+          "reason": "Stationary bike run — кардионагрузка на велотренажёре, исходный Machine заменён каноническим bike; конкретной силовой иерархии нет."
+        }
+      ],
+      "notes": "Stationary bike run — кардионагрузка на велотренажёре, исходный Machine заменён каноническим bike; конкретной силовой иерархии нет."
+    },
+    {
+      "id": "fitnessprogramer:step-behind-rotational-med-ball-throw",
+      "source_path": "assets/work/full-body/step-behind-rotational-med-ball-throw.json",
+      "source_blob_sha": "dc589df54599b4d284aa3e5994e1d29e21980dc0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/step-behind-rotational-med-ball-throw/"
+          ],
+          "confidence": "medium",
+          "reason": "Step-behind rotational med ball throw: инструкция с медболом и броском в стену или открытое пространство. Стена возможна, не обязательна; ротация таза/корпуса главный источник импульса."
+        }
+      ],
+      "notes": "Step-behind rotational med ball throw: инструкция с медболом и броском в стену или открытое пространство. Стена возможна, не обязательна; ротация таза/корпуса главный источник импульса."
+    },
+    {
+      "id": "fitnessprogramer:step-up-opposite-elbow-to-knee-twist",
+      "source_path": "assets/work/leg/step-up-opposite-elbow-to-knee-twist.json",
+      "source_blob_sha": "4ba3d384b9e71046bffdcd99a96f5abff77b4c5b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/step-up-opposite-elbow-to-knee-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Step-up with opposite elbow to knee twist требует возвышенную опору bench, подъём и ротация корпуса, категории legs достаточно."
+        }
+      ],
+      "notes": "Step-up with opposite elbow to knee twist требует возвышенную опору bench, подъём и ротация корпуса, категории legs достаточно."
+    },
+    {
+      "id": "fitnessprogramer:step-up-single-leg-balance-with-bicep-curl",
+      "source_path": "assets/work/hip/step-up-single-leg-balance-with-bicep-curl.json",
+      "source_blob_sha": "4c2dd9332f04a47d5913050d97a7b5cb6f920e8a",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/step-up-single-leg-balance-with-bicep-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Step-up single-leg balance with bicep curl совмещает опорную ступень и сгибание руки с гантелью, но исходная техника отсутствует; bench из названия step-up предполагается, требуется GIF."
+        }
+      ],
+      "notes": "Step-up single-leg balance with bicep curl совмещает опорную ступень и сгибание руки с гантелью, но исходная техника отсутствует; bench из названия step-up предполагается, требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:step-up-with-knee-raises",
+      "source_path": "assets/work/leg/step-up-with-knee-raises.json",
+      "source_blob_sha": "5296346598a7797d6c37038c9ddd9d3e40ee575d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/step-up-with-knee-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Step-up with knee raises: ступень/платформа логически необходима при step-up, но исходное NO EQUIPMENT конфликтует; выбрана box как тип платформы, нужно проверить GIF."
+        }
+      ],
+      "notes": "Step-up with knee raises: ступень/платформа логически необходима при step-up, но исходное NO EQUIPMENT конфликтует; выбрана box как тип платформы, нужно проверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:stiff-leg-deadlift",
+      "source_path": "assets/work/hip/stiff-leg-deadlift.json",
+      "source_blob_sha": "d1ddaba6f2a2d8fa10303b893de3014a5e421cdd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stiff-leg-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Stiff-leg deadlift со штангой — разгибание бедра задней цепью при минимальном сгибании коленей, erector spinae стабилизируют."
+        }
+      ],
+      "notes": "Stiff-leg deadlift со штангой — разгибание бедра задней цепью при минимальном сгибании коленей, erector spinae стабилизируют."
+    },
+    {
+      "id": "fitnessprogramer:straddle-planche",
+      "source_path": "assets/work/abs/straddle-planche.json",
+      "source_blob_sha": "a4f4445bfa0f00cfdb40b2f865127268523fda61",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "serratus_anterior",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/straddle-planche/"
+          ],
+          "confidence": "medium",
+          "reason": "Straddle planche — статический гимнастический баланс на руках с разведёнными ногами, категория full_body вместо abs, не вводится ложная динамическая иерархия силовых ролей."
+        }
+      ],
+      "notes": "Straddle planche — статический гимнастический баланс на руках с разведёнными ногами, категория full_body вместо abs, не вводится ложная динамическая иерархия силовых ролей."
+    },
+    {
+      "id": "fitnessprogramer:straight-bar-dip",
+      "source_path": "assets/work/chest/straight-bar-dip.json",
+      "source_blob_sha": "3d44e4a747584787143a8332437d06a47005a0f3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/straight-bar-dip/"
+          ],
+          "confidence": "medium",
+          "reason": "Straight-bar dip в инструкции прямо выполняется на одной горизонтальной перекладине, не на параллельных брусьях; грудь и трицепс динамические."
+        }
+      ],
+      "notes": "Straight-bar dip в инструкции прямо выполняется на одной горизонтальной перекладине, не на параллельных брусьях; грудь и трицепс динамические."
+    },
+    {
+      "id": "fitnessprogramer:straight-leg-kickback",
+      "source_path": "assets/work/hip/straight-leg-kickback.json",
+      "source_blob_sha": "8285019ffb9edf2a4b6ad8119a47b03ec652c93d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/straight-leg-kickback/"
+          ],
+          "confidence": "medium",
+          "reason": "Straight-leg kickback: прямое отведение ноги назад выполняет большая ягодичная, задняя бедра помогает."
+        }
+      ],
+      "notes": "Straight-leg kickback: прямое отведение ноги назад выполняет большая ягодичная, задняя бедра помогает."
+    },
+    {
+      "id": "fitnessprogramer:stretch-with-towel",
+      "source_path": "assets/work/back/stretch-with-towel.json",
+      "source_blob_sha": "182dea14bb51f5896259d40f5e22da6ad1ca5700",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "shoulders",
+        "equipment": [
+          "towel"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stretch-with-towel/"
+          ],
+          "confidence": "medium",
+          "reason": "Stretch with towel: по инструкции полотенце за спиной для растяжки плеча/трицепса, не силовая спина, отдельный тип towel вместо NO EQUIPMENT."
+        }
+      ],
+      "notes": "Stretch with towel: по инструкции полотенце за спиной для растяжки плеча/трицепса, не силовая спина, отдельный тип towel вместо NO EQUIPMENT."
     }
   ]
 }
