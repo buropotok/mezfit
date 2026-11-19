@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "batch_id": "B005",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:burpees",
+      "source_path": "assets/work/abs/burpees.json",
+      "source_blob_sha": "849b81e23073fa44498919900a13a58a78eea7b0",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior",
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/burpees/"
+          ],
+          "confidence": "high",
+          "reason": "Берпи объединяет приседание, планку/отжимание и прыжок; нагрузка распределена между ногами и верхом тела, мышцы корпуса удерживают положение."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:butt-kicks",
+      "source_path": "assets/work/cardio/butt-kicks.json",
+      "source_blob_sha": "66bfb856e028f2089088dc6bd8e21af49aa1c278",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/butt-kicks/"
+          ],
+          "confidence": "medium",
+          "reason": "Butt kicks — циклическое кардиодвижение; точная силовая и стабилизирующая роль отдельных мышц источником не установлена."
+        }
+      ],
+      "notes": "Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:butterfly-sit-up",
+      "source_path": "assets/work/abs/butterfly-sit-up.json",
+      "source_blob_sha": "c6678e83fe8031e344014edf7fade41809ca4084",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/butterfly-sit-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Butterfly sit-up выполняется сгибанием туловища; прямые и косые мышцы живота участвуют в движении."
+        }
+      ],
+      "notes": "Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:butterfly-stretch",
+      "source_path": "assets/work/hip/butterfly-stretch.json",
+      "source_blob_sha": "43c8ff73602d940ca8dfac62655cd11815994faa",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/butterfly-stretch/",
+            "https://www.acefitness.org/resources/everyone/exercise-library/216/seated-butterfly-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Butterfly stretch — растяжение приводящих мышц бедра, а не активная силовая фаза. Приводящие не выдаются за prime movers."
+        }
+      ],
+      "notes": "Растягиваемые структуры: hip_adductors; это не установленная роль главного двигателя. Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:calf-raise",
+      "source_path": "assets/work/calf/calf-raise.json",
+      "source_blob_sha": "c433c67781bce8b21ab3bbf4754700d2ec88543e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём на носки с гантелями: подошвенное сгибание голеностопа, главная роль икроножной, помощь камбаловидной и глубоких сгибателей."
+        }
+      ],
+      "notes": "Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:calf-raise-with-resistance-band",
+      "source_path": "assets/work/calf/calf-raise-with-resistance-band.json",
+      "source_blob_sha": "35645980083320cbc1d8163bfee5c9fafaeca0d0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/calf-raise-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём на носки с резинкой; в исходном описании указана фиксация эспандера, а не обязательный гимстик."
+        }
+      ],
+      "notes": "Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:calf-stretch-with-rope",
+      "source_path": "assets/work/calf/calf-stretch-with-rope.json",
+      "source_blob_sha": "1c0161e92cd930f554fe971b2ef7c75183d05465",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "rope"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/calf-stretch-with-rope/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжка икроножных с помощью верёвки; силовые мышцы-двигатели и стабилизаторы не определяются."
+        }
+      ],
+      "notes": "Источник также допускает resistance band; для названной версии используется канат/ремень, а не силовой тренажёр. Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:calves-stretch-static-position",
+      "source_path": "assets/work/calf/calves-stretch-static-position.json",
+      "source_blob_sha": "50a243337abdd05230e76324730317b81a44f318",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/calves-stretch-static-position/"
+          ],
+          "confidence": "medium",
+          "reason": "Статическая растяжка икроножных не имеет достоверной силовой prime-mover роли."
+        }
+      ],
+      "notes": "Растягиваются gastrocnemius и soleus; не считать их активными двигателями. Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:captains-chair-leg-raise",
+      "source_path": "assets/work/abs/captains-chair-leg-raise.json",
+      "source_blob_sha": "900f8eaeb980d11f982a350fb5f32460b836021b",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "captains_chair"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "latissimus_dorsi",
+            "trapezius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/captains-chair-leg-raise/"
+          ],
+          "confidence": "high",
+          "reason": "В подъёме ног на опоре работают сгибатели бедра и мышцы живота; широчайшие/трапеция помогают удерживать плечевой пояс, требуется стойка капитана."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cat-cow-pose",
+      "source_path": "assets/work/erector-spinae/cat-cow-pose.json",
+      "source_blob_sha": "3c3aad2cb03d905ffa6ad8caf2fff1d766c00877",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cat-cow-pose/"
+          ],
+          "confidence": "medium",
+          "reason": "Cat–cow: чередование сгибания и разгибания позвоночника; разгибатели спины и мышцы живота работают в противоположных фазах."
+        }
+      ],
+      "notes": "Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:chair-dips",
+      "source_path": "assets/work/triceps/chair-dips.json",
+      "source_blob_sha": "c5b840e14a8ab2fc689758d7d3c7dee4b32e81b5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "chair",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chair-dips/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратные отжимания от устойчивого стула или скамьи; разгибание локтя выполняют трицепсы."
+        }
+      ],
+      "notes": "Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:chest-and-front-of-shoulder-stretch",
+      "source_path": "assets/work/chest/chest-and-front-of-shoulder-stretch.json",
+      "source_blob_sha": "ba7419c3ce92705a255f2eac7c1e5869563f7248",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chest-and-front-of-shoulder-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Пассивная растяжка груди и передней поверхности плеча без установленной активной роли мышц."
+        }
+      ],
+      "notes": "Не подменять растягиваемые грудные мышцы и переднюю дельту силовыми двигателями. Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    }
+  ]
+}
