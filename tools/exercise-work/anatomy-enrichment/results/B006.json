@@ -1254,6 +1254,429 @@
         }
       ],
       "notes": "Reverse fly — горизонтальное отведение плеча; не приписаны недоказанные мышцы корпуса."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-reverse-grip-30-degrees-incline-bench-press",
+      "source_path": "assets/work/chest/dumbbell-reverse-grip-30-degrees-incline-bench-press.json",
+      "source_blob_sha": "ab3badfe20d5780acafcda3a66fb27e8e70f57c4",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-reverse-grip-30-degrees-incline-bench-press/"
+          ],
+          "confidence": "low",
+          "reason": "Исходная карточка не описывает технику. Название указывает обратный хват на скамье 30°; проверить разворот кисти/амплитуду и мышечный акцент на GIF."
+        }
+      ],
+      "notes": "Исходная карточка не описывает технику. Название указывает обратный хват на скамье 30°; проверить разворот кисти/амплитуду и мышечный акцент на GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-reverse-lunge",
+      "source_path": "assets/work/hip/dumbbell-reverse-lunge.json",
+      "source_blob_sha": "0dd4d2cf5a55146a3b654232e6b83d06f6061f01",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-reverse-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Из исходного списка оставлены обоснованные стабилизаторы таза и туловища, без механического копирования всех мышц."
+        }
+      ],
+      "notes": "Из исходного списка оставлены обоснованные стабилизаторы таза и туловища, без механического копирования всех мышц."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-romanian-deadlift",
+      "source_path": "assets/work/hip/dumbbell-romanian-deadlift.json",
+      "source_blob_sha": "d93c8688d09b1af5c701255bec053e17c7cb86de",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-romanian-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный target Erector Spinae уточнён: в Romanian deadlift основные производители разгибания тазобедренного сустава — ягодичные и задняя поверхность бедра; разгибатели позвоночника держат изометрию."
+        }
+      ],
+      "notes": "Исходный target Erector Spinae уточнён: в Romanian deadlift основные производители разгибания тазобедренного сустава — ягодичные и задняя поверхность бедра; разгибатели позвоночника держат изометрию."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-row",
+      "source_path": "assets/work/back/dumbbell-row.json",
+      "source_blob_sha": "f129f579bf0080d79661541a1b478da6c01fcc2a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle",
+            "teres_major",
+            "deltoid_posterior",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция требует опоры рукой и коленом на скамью. Исходный biceps в stabilizers по функции движения лучше относится к синергистам сгибания локтя; не перенесён в стабилизаторы."
+        }
+      ],
+      "notes": "Инструкция требует опоры рукой и коленом на скамью. Исходный biceps в stabilizers по функции движения лучше относится к синергистам сгибания локтя; не перенесён в стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-scaption",
+      "source_path": "assets/work/shoulders/dumbbell-scaption.json",
+      "source_blob_sha": "1a1e31c6216de714542c51bcc5670348945e84fc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "supraspinatus"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "deltoid_lateral",
+            "trapezius_upper",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-scaption/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный акцент на надостной мышце подтверждён описанием scaption; стабилизатор запястья указан динамическим в источнике."
+        }
+      ],
+      "notes": "Исходный акцент на надостной мышце подтверждён описанием scaption; стабилизатор запястья указан динамическим в источнике."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-scott-curl",
+      "source_path": "assets/work/biceps/dumbbell-scott-curl.json",
+      "source_blob_sha": "935501fe1a1e5a6c4691b81053dfbfcb1076fd01",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "secondary": [
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-scott-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Scott Curl подразумевает скамью Скотта, но техника и анатомия отсутствуют в карточке. Уточнить хват по GIF."
+        }
+      ],
+      "notes": "Scott Curl подразумевает скамью Скотта, но техника и анатомия отсутствуют в карточке. Уточнить хват по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-scott-hammer-curl",
+      "source_path": "assets/work/biceps/dumbbell-scott-hammer-curl.json",
+      "source_blob_sha": "6ba8a98aaa5f2ea5a1f51f278846eaac57b7307f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "brachioradialis",
+            "brachialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-scott-hammer-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция прямо называет preacher bench и нейтральный хват, исходные стабилизаторы предплечья приведены к таксономии."
+        }
+      ],
+      "notes": "Инструкция прямо называет preacher bench и нейтральный хват, исходные стабилизаторы предплечья приведены к таксономии."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-seal-row",
+      "source_path": "assets/work/back/dumbbell-seal-row.json",
+      "source_blob_sha": "4f29753c969299ded0419dcfb38ee6f61dfe65be",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "trapezius_middle",
+            "teres_major",
+            "deltoid_posterior",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-seal-row/"
+          ],
+          "confidence": "low",
+          "reason": "Seal row требует опоры грудью на горизонтальную приподнятую скамью. В исходнике нет техники и анатомии; сверить форму платформы/скамьи на GIF."
+        }
+      ],
+      "notes": "Seal row требует опоры грудью на горизонтальную приподнятую скамью. В исходнике нет техники и анатомии; сверить форму платформы/скамьи на GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-seated-alternate-front-raise",
+      "source_path": "assets/work/shoulders/dumbbell-seated-alternate-front-raise.json",
+      "source_blob_sha": "17d86151420980eb8667eb1dc1471c31e5884a73",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "pectoralis_clavicular",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-seated-alternate-front-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Отсутствует инструкция; для сидячего подъёма поочерёдно предположена опора на скамью, требуется визуальная проверка."
+        }
+      ],
+      "notes": "Отсутствует инструкция; для сидячего подъёма поочерёдно предположена опора на скамью, требуется визуальная проверка."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-seated-bent-over-rear-delt-row",
+      "source_path": "assets/work/shoulders/dumbbell-seated-bent-over-rear-delt-row.json",
+      "source_blob_sha": "fc25fd391ec93e5022500d2993f72c50299c8ea3",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-seated-bent-over-rear-delt-row/"
+          ],
+          "confidence": "low",
+          "reason": "Сидя в наклоне при тяге на задние дельты возможна опора на скамью, подтвердить вариант по GIF."
+        }
+      ],
+      "notes": "Сидя в наклоне при тяге на задние дельты возможна опора на скамью, подтвердить вариант по GIF."
     }
   ]
 }
