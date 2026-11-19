@@ -67,7 +67,7 @@ const page = (options: { readOnly?: boolean; onStartDay?: (id: string) => Promis
     program={program} phaseStatus="active" days={[day]} readOnly={options.readOnly ?? false}
     onStartDay={options.onStartDay} allowDirectStart={options.allowDirectStart} />;
 
-describe('program-day plan prompt and independent execution', () => {
+describe('program-day plan prompt and direct execution request', () => {
   it('explains why a program set cannot be filled, and creates an independent calendar draft on confirmation', async () => {
     render(page());
     fireEvent.click(screen.getByRole('button', { name: 'Подход 1' }));
@@ -84,13 +84,13 @@ describe('program-day plan prompt and independent execution', () => {
     await waitFor(() => expect(state.openDraft).toHaveBeenCalledWith('scheduled-draft', null));
   });
 
-  it('starts an independent workout directly, preserving program selection and navigating to FACT', async () => {
+  it('requests role-aware program start, preserving program selection and navigating to FACT', async () => {
     render(page({ readOnly: true }));
     const button = screen.getByRole('button', { name: 'Начать тренировку' });
     expect(button.hasAttribute('disabled')).toBe(false);
     fireEvent.click(button);
     await waitFor(() => expect(state.startFromProgram).toHaveBeenCalledWith({
-      athleteUserId: 'tg:101', programId: 'program', dayId: 'day', independent: true,
+      athleteUserId: 'tg:101', programId: 'program', dayId: 'day', sourceDayStart: true,
     }, expect.any(Function)));
     await waitFor(() => expect(state.showSession).toHaveBeenCalledWith('active-session'));
   });
