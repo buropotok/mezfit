@@ -548,7 +548,7 @@ export function App() {
           openDraft: (id, clientUserId = null) => { setRequestedScheduleClientId(clientUserId); setRequestedScheduleDraftId(id); changeDestination('today'); },
           clearDraft: () => setRequestedScheduleDraftId(null),
         }}>
-        <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
+        <PlannedWorkoutStartProvider role={state.activeRole} enabled={destination === 'today' || destination === 'training' || destination === 'programs'} onStarted={() => { setRequestedScheduleDraftId(null); changeDestination('training'); }}>
         <WorkoutCompletionProvider enabled={state.activeRole === 'coach' && (destination === 'today' || destination === 'training')}
           scope={state.activeRole + ':' + destination} onNavigationContextChange={setCompletionNavigation}>
         <DiscussionsProvider key={state.activeRole + state.me.user.telegramUserId} role={state.activeRole}
