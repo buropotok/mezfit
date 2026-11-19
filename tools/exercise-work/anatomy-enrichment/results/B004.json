@@ -1185,6 +1185,599 @@
         }
       ],
       "notes": "Антиразгибание корпуса при выкате со штангой, нагрузка передней брюшной стенки; точное разделение ролей мышц плечевого пояса требует видеоанализа."
+    },
+    {
+      "id": "fitnessprogramer:barbell-seated-calf-raise",
+      "source_path": "assets/work/calf/barbell-seated-calf-raise.json",
+      "source_blob_sha": "725d81ed730dc3e91334f2f788de6d034d2d5604",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "soleus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-seated-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция подтверждает скамью и возвышенную опору передней части стоп. Роли камбаловидной и икроножной мышц сохранены; самостоятельный стабилизатор не выявлен."
+        }
+      ],
+      "notes": "Инструкция подтверждает скамью и возвышенную опору передней части стоп. Роли камбаловидной и икроножной мышц сохранены; самостоятельный стабилизатор не выявлен."
+    },
+    {
+      "id": "fitnessprogramer:barbell-shoulder-press",
+      "source_path": "assets/work/shoulders/barbell-shoulder-press.json",
+      "source_blob_sha": "ae675bf202f2652e52e00266a34cd5d338a8038b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "serratus_anterior",
+            "supraspinatus",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Сидячий жим штанги: скамья подтверждена, опечатка Levatos Scapula не интерпретируется как обязательный стабилизатор."
+        }
+      ],
+      "notes": "Сидячий жим штанги: скамья подтверждена, опечатка Levatos Scapula не интерпретируется как обязательный стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:barbell-shrug",
+      "source_path": "assets/work/trapezius/barbell-shrug.json",
+      "source_blob_sha": "fa7f4041aceb46f489db0c5f1c363670a294d687",
+      "status": "unchanged",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Исходные трапециевидная верхняя, levator scapulae, трапеция средняя и erector spinae имеют точные ID при нормализации."
+    },
+    {
+      "id": "fitnessprogramer:barbell-side-bend",
+      "source_path": "assets/work/abs/barbell-side-bend.json",
+      "source_blob_sha": "95732ff9327011c2e41570173ce72ce24ff9a056",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-side-bend/"
+          ],
+          "confidence": "medium",
+          "reason": "Название не раскрывает хват/размещение штанги; боковое сгибание корпуса уверенно связано с косыми и квадратной мышцей поясницы, детали механики уточнить."
+        }
+      ],
+      "notes": "Название не раскрывает хват/размещение штанги; боковое сгибание корпуса уверенно связано с косыми и квадратной мышцей поясницы, детали механики уточнить."
+    },
+    {
+      "id": "fitnessprogramer:barbell-single-leg-deadlift",
+      "source_path": "assets/work/hip/barbell-single-leg-deadlift.json",
+      "source_blob_sha": "5ba9b83fbc51de308c3206b48a042a4dbc835749",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "erector_spinae"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-single-leg-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноногая тазобедренная тяга; конкретная форма коленного сгибания и глубина движения не описаны, задняя поверхность бедра отнесена к разгибателям бедра."
+        }
+      ],
+      "notes": "Одноногая тазобедренная тяга; конкретная форма коленного сгибания и глубина движения не описаны, задняя поверхность бедра отнесена к разгибателям бедра."
+    },
+    {
+      "id": "fitnessprogramer:barbell-single-leg-hip-thrust",
+      "source_path": "assets/work/hip/barbell-single-leg-hip-thrust.json",
+      "source_blob_sha": "b367e53bf363d153bec1bbf868c953d8573e4ec8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-single-leg-hip-thrust/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноногий hip thrust: для исходного пустого оборудования скамья следует из типичной схемы упражнения, но точная версия без инструкции требует GIF-ревью."
+        }
+      ],
+      "notes": "Одноногий hip thrust: для исходного пустого оборудования скамья следует из типичной схемы упражнения, но точная версия без инструкции требует GIF-ревью."
+    },
+    {
+      "id": "fitnessprogramer:barbell-snatch",
+      "source_path": "assets/work/full-body/barbell-snatch.json",
+      "source_blob_sha": "752e201ecf36e3dcc493eb5dc00cffcaebd87dc7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "trapezius_upper",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-snatch/"
+          ],
+          "confidence": "medium",
+          "reason": "Рывок штанги — составное взрывное движение; роли описывают фазовый вклад, а не измеренную интенсивность каждой мышцы."
+        }
+      ],
+      "notes": "Рывок штанги — составное взрывное движение; роли описывают фазовый вклад, а не измеренную интенсивность каждой мышцы."
+    },
+    {
+      "id": "fitnessprogramer:barbell-split-squat",
+      "source_path": "assets/work/leg/barbell-split-squat.json",
+      "source_blob_sha": "296e18b69ba7625d591e62d9b6195e6cdab8d27f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-split-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Сплит-приседание: разгибатели колена/бедра основные, мышцы таза и корпуса удерживают равновесие."
+        }
+      ],
+      "notes": "Сплит-приседание: разгибатели колена/бедра основные, мышцы таза и корпуса удерживают равновесие."
+    },
+    {
+      "id": "fitnessprogramer:barbell-step-up",
+      "source_path": "assets/work/hip/barbell-step-up.json",
+      "source_blob_sha": "f945b7f842ca96dddb0ce80212eb9ce83caaf8fb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-step-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Для зашагивания необходима устойчивая возвышенная платформа; высота и точный тип опоры в источнике не описаны."
+        }
+      ],
+      "notes": "Для зашагивания необходима устойчивая возвышенная платформа; высота и точный тип опоры в источнике не описаны."
+    },
+    {
+      "id": "fitnessprogramer:barbell-sumo-squat",
+      "source_path": "assets/work/hip/barbell-sumo-squat.json",
+      "source_blob_sha": "320ee22b68fe44fc1ab6cc5da5e9f1b070b715e3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-sumo-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Приседание с широкой постановкой: Adductor Magnus и прочие приводящие нормализованы в каноническую группу, без выдуманных отдельных ID."
+        }
+      ],
+      "notes": "Приседание с широкой постановкой: Adductor Magnus и прочие приводящие нормализованы в каноническую группу, без выдуманных отдельных ID."
+    },
+    {
+      "id": "fitnessprogramer:barbell-thruster",
+      "source_path": "assets/work/shoulders/barbell-thruster.json",
+      "source_blob_sha": "92377bb451b618ce83ccad6e1722cc94ee69a0a6",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_lateral"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-thruster/"
+          ],
+          "confidence": "medium",
+          "reason": "Thruster сочетает фронтальное приседание с жимом над головой; категория shoulders слишком узкая для движения всего тела."
+        }
+      ],
+      "notes": "Thruster сочетает фронтальное приседание с жимом над головой; категория shoulders слишком узкая для движения всего тела."
+    },
+    {
+      "id": "fitnessprogramer:barbell-upright-row",
+      "source_path": "assets/work/shoulders/barbell-upright-row.json",
+      "source_blob_sha": "b65c627d88f9e5a3103ed0ff8adeba2ed7a1fd13",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-upright-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга штанги к подбородку: основные средняя дельта и верх трапеции; исключён длинный список неустановленных сгибателей локтя и ротаторов."
+        }
+      ],
+      "notes": "Тяга штанги к подбородку: основные средняя дельта и верх трапеции; исключён длинный список неустановленных сгибателей локтя и ротаторов."
+    },
+    {
+      "id": "fitnessprogramer:battle-rope",
+      "source_path": "assets/work/back/battle-rope.json",
+      "source_blob_sha": "f084aa8f0b7fdcbfb5fe8b6fb54ba513eb491a25",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "primary_category": "cardio",
+        "equipment": [
+          "battle-rope"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/battle-rope/"
+          ],
+          "confidence": "medium",
+          "reason": "Battle ropes — оборудование для кондиционной работы, не гимнастический канат для лазания. Техника волн/ударов не уточнена; нельзя назначить силовые главные мышцы по одному названию."
+        }
+      ],
+      "notes": "Battle ropes — оборудование для кондиционной работы, не гимнастический канат для лазания. Техника волн/ударов не уточнена; нельзя назначить силовые главные мышцы по одному названию."
+    },
+    {
+      "id": "fitnessprogramer:bear-crawls",
+      "source_path": "assets/work/abs/bear-crawls.json",
+      "source_blob_sha": "b14b5ff4c25136095cff192a276dcbee0564773d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bear-crawls/"
+          ],
+          "confidence": "medium",
+          "reason": "Медвежья ходьба — локомоторный навык всего тела; кор стабилизирует положение позвоночника, силовые главные мышцы не назначены."
+        }
+      ],
+      "notes": "Медвежья ходьба — локомоторный навык всего тела; кор стабилизирует положение позвоночника, силовые главные мышцы не назначены."
+    },
+    {
+      "id": "fitnessprogramer:behind-the-back-barbell-shrug",
+      "source_path": "assets/work/trapezius/behind-the-back-barbell-shrug.json",
+      "source_blob_sha": "52ebaaf40320ee0d3e855d60f68e565eca80ac4f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/behind-the-back-barbell-shrug/"
+          ],
+          "confidence": "medium",
+          "reason": "Шраги со штангой за спиной; подъём лопаток верхней трапецией и levator scapulae. Исходная анатомия была пустой."
+        }
+      ],
+      "notes": "Шраги со штангой за спиной; подъём лопаток верхней трапецией и levator scapulae. Исходная анатомия была пустой."
+    },
+    {
+      "id": "fitnessprogramer:behind-the-back-barbell-wrist-curl",
+      "source_path": "assets/work/forearm/behind-the-back-barbell-wrist-curl.json",
+      "source_blob_sha": "400c5d8cb513586812b0ba44c937fdcfda11c0ac",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/behind-the-back-barbell-wrist-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибания запястий со штангой за спиной; изолированная работа сгибателей предплечья, иные роли не установлены."
+        }
+      ],
+      "notes": "Сгибания запястий со штангой за спиной; изолированная работа сгибателей предплечья, иные роли не установлены."
     }
   ]
 }
