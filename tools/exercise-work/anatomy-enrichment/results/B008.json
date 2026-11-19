@@ -452,6 +452,471 @@
         }
       ],
       "notes": "Одноручный военный жим гири над головой требует разгибателей локтя и передней дельты, косые противодействуют боковому наклону."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-pistol-squats",
+      "source_path": "assets/work/leg/kettlebell-pistol-squats.json",
+      "source_blob_sha": "e3c0dd22dc0dc6b8f478ebdb4aaaef9ff591e665",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-pistol-squats/"
+          ],
+          "confidence": "medium",
+          "reason": "Pistol squat с гирей — одностороннее приседание; бедро/колено выполняют подъём, боковые ягодичные контролируют равновесие."
+        }
+      ],
+      "notes": "Pistol squat с гирей — одностороннее приседание; бедро/колено выполняют подъём, боковые ягодичные контролируют равновесие."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-renegade-row",
+      "source_path": "assets/work/chest/kettlebell-renegade-row.json",
+      "source_blob_sha": "a8f479d9888b627156a114ec789285fc949a39bc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "back",
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-renegade-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Renegade row с гирями — тяга одной рукой из планки; основная динамика тяги приходится на мышцы спины, а пресс противодействует вращению."
+        }
+      ],
+      "notes": "Renegade row с гирями — тяга одной рукой из планки; основная динамика тяги приходится на мышцы спины, а пресс противодействует вращению."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-shoulder-press",
+      "source_path": "assets/work/shoulders/kettlebell-shoulder-press.json",
+      "source_blob_sha": "5a68cf5b606cb5b80b3824c7cf887f0bcfaeedb3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Плечевой жим гири — разгибание локтя и подъём плеча, без инструкции детали стабилизации не подтверждены."
+        }
+      ],
+      "notes": "Плечевой жим гири — разгибание локтя и подъём плеча, без инструкции детали стабилизации не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-single-leg-deadlift",
+      "source_path": "assets/work/hip/kettlebell-single-leg-deadlift.json",
+      "source_blob_sha": "55d0fcce2050f252f8ca4290ef8430a958b72b58",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-single-leg-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноногая становая тяга с гирей; исходная широкая группа Hamstring заменена конкретными мышцами, а ягодичная средняя стабилизирует таз."
+        }
+      ],
+      "notes": "Одноногая становая тяга с гирей; исходная широкая группа Hamstring заменена конкретными мышцами, а ягодичная средняя стабилизирует таз."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-split-snatch",
+      "source_path": "assets/work/shoulders/kettlebell-split-snatch.json",
+      "source_blob_sha": "5a383ad53b9d1ba77a73c9a345471f1cf992e16a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-split-snatch/"
+          ],
+          "confidence": "medium",
+          "reason": "Split snatch — взрывная тяга гири с переходом в разножку и фиксацией над головой. Категория full_body вместо изолированного плеча."
+        }
+      ],
+      "notes": "Split snatch — взрывная тяга гири с переходом в разножку и фиксацией над головой. Категория full_body вместо изолированного плеча."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-swings",
+      "source_path": "assets/work/shoulders/kettlebell-swings.json",
+      "source_blob_sha": "7959e6f3e356b87197fd4e984e8dc0fda58f7503",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "legs",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-swings/"
+          ],
+          "confidence": "medium",
+          "reason": "По пошаговой инструкции kettle swing — взрывное разгибание бедра, а не подъём гири передней дельтой; категория legs."
+        }
+      ],
+      "notes": "По пошаговой инструкции kettle swing — взрывное разгибание бедра, а не подъём гири передней дельтой; категория legs."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-thruster",
+      "source_path": "assets/work/shoulders/kettlebell-thruster.json",
+      "source_blob_sha": "c6b69257f2f6eecacdf8cf7986902e8ac1c127eb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-thruster/"
+          ],
+          "confidence": "medium",
+          "reason": "Thruster — связка приседания и вертикального жима, категория full_body."
+        }
+      ],
+      "notes": "Thruster — связка приседания и вертикального жима, категория full_body."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-windmill",
+      "source_path": "assets/work/shoulders/kettlebell-windmill.json",
+      "source_blob_sha": "2fdda86461a92ad294ba2af686b00deffe367aec",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "core",
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-windmill/"
+          ],
+          "confidence": "medium",
+          "reason": "Kettlebell windmill — боковой наклон/поворот туловища при фиксации гири над плечом; движение корпуса и контроль в плече, категория core."
+        }
+      ],
+      "notes": "Kettlebell windmill — боковой наклон/поворот туловища при фиксации гири над плечом; движение корпуса и контроль в плече, категория core."
+    },
+    {
+      "id": "fitnessprogramer:kicks-leg-bent",
+      "source_path": "assets/work/hip/kicks-leg-bent.json",
+      "source_blob_sha": "1024b3859746262bdb8ebe110a751abbcacc8e2e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kicks-leg-bent/"
+          ],
+          "confidence": "medium",
+          "reason": "Kicks leg bent, вероятно donkey kick с согнутым коленом; без пошаговой техники вторичные мышцы достоверно не выявлены."
+        }
+      ],
+      "notes": "Kicks leg bent, вероятно donkey kick с согнутым коленом; без пошаговой техники вторичные мышцы достоверно не выявлены."
+    },
+    {
+      "id": "fitnessprogramer:kipping-handstand-push-up",
+      "source_path": "assets/work/shoulders/kipping-handstand-push-up.json",
+      "source_blob_sha": "fadb9149f23279a186e18c52859905dbc596eddf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kipping-handstand-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Kipping handstand push-up по инструкции выполняется с опорой на стену и активным импульсом ног; wall — необходимая опора в описанной версии."
+        }
+      ],
+      "notes": "Kipping handstand push-up по инструкции выполняется с опорой на стену и активным импульсом ног; wall — необходимая опора в описанной версии."
+    },
+    {
+      "id": "fitnessprogramer:knee-circles",
+      "source_path": "assets/work/leg/knee-circles.json",
+      "source_blob_sha": "070b75f0835fc1d0326ce6f030aa21b77087fbb4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/knee-circles/"
+          ],
+          "confidence": "medium",
+          "reason": "Knee circles — суставная мобилизация коленей, не силовое изолированное упражнение."
+        }
+      ],
+      "notes": "Knee circles — суставная мобилизация коленей, не силовое изолированное упражнение."
+    },
+    {
+      "id": "fitnessprogramer:knee-push-up",
+      "source_path": "assets/work/chest/knee-push-up.json",
+      "source_blob_sha": "686e694ca9d39125f2959eeadfa5629e9ed6c310",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/knee-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Название Knee Push-Up стандартное, но исходный how_to описывает узкий diamond-хват: это вариант с акцентом на трицепс. Категория chest сохранена предварительно, нужна проверка GIF."
+        }
+      ],
+      "notes": "Название Knee Push-Up стандартное, но исходный how_to описывает узкий diamond-хват: это вариант с акцентом на трицепс. Категория chest сохранена предварительно, нужна проверка GIF."
     }
   ]
 }
