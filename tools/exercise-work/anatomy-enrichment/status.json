@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "batches": {
+    "B001": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B002": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B003": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B004": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B005": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B006": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B007": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B008": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B009": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B010": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B011": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    },
+    "B012": {
+      "status": "new",
+      "agent": null,
+      "claim_id": null,
+      "started_at": null,
+      "lease_until": null,
+      "completed_at": null,
+      "result_branch": null,
+      "result_commit": null,
+      "result_stats": null
+    }
+  }
+}
