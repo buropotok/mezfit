@@ -288,18 +288,16 @@ export function ExerciseCatalogContent({
     <section className="mezfit-public-exercises stack">
       {isPersonal && onCreateExercise ? <CoachExerciseCatalogFab onCreate={() => onCreateExercise(category)} /> : null}
       <div className="mezfit-public-exercises__tabs">
-        <div className="mezfit-public-exercises__tabs-content">
-          <LiquidGlassTextOnly tabs={scope === 'client' ? CLIENT_CATALOG_TABS : isPersonal ? PERSONAL_CATALOG_TABS : PUBLIC_CATALOG_TABS}
-            value={tab} hidden={false} glassPreset={glassPreset}
-            onValueChange={(value) => {
-              if (value !== 'main' && value !== 'favourites' && value !== 'mine'
-                && value !== 'trainer' && value !== 'all' && value !== 'base1' && value !== 'base2') return;
-              setTab(value);
-              setFilters({});
-              setCategory(null);
-              setVisibleLimit(PAGE_SIZE);
-            }} />
-        </div>
+        <LiquidGlassTextOnly tabs={scope === 'client' ? CLIENT_CATALOG_TABS : isPersonal ? PERSONAL_CATALOG_TABS : PUBLIC_CATALOG_TABS}
+          value={tab} hidden={false} fullWidth glassPreset={glassPreset}
+          onValueChange={(value) => {
+            if (value !== 'main' && value !== 'favourites' && value !== 'mine'
+              && value !== 'trainer' && value !== 'all' && value !== 'base1' && value !== 'base2') return;
+            setTab(value);
+            setFilters({});
+            setCategory(null);
+            setVisibleLimit(PAGE_SIZE);
+          }} />
       </div>
       <div className="mezfit-public-exercises__toolbar">
         <MezfitSearchbar
