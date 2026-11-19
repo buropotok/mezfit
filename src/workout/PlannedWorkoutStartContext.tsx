@@ -11,8 +11,8 @@ import { adHocErrorMessage, isActiveWorkoutError, WorkoutStartDismissed } from '
 
 type CancellationPresentation = (id: string, commit: () => Promise<void>) => Promise<void>;
 export type ProgramWorkoutStartInput =
-  | { athleteUserId: string; programId?: string; dayId?: string; independent?: false }
-  | { athleteUserId: string; programId: string; dayId: string; independent: true };
+  | { athleteUserId: string; programId?: string; dayId?: string; sourceDayStart?: false }
+  | { athleteUserId: string; programId: string; dayId: string; sourceDayStart: true };
 type StartResult = { id: string; createdProgram: boolean };
 interface PlannedWorkoutStart {
   conflictActive: boolean;
@@ -147,10 +147,14 @@ function LocalWorkoutStartProvider({ role, enabled = true, onStarted, children }
   }, [repository, runStart]);
   const startFromProgram = useCallback((input: ProgramWorkoutStartInput, isCurrent?: () => boolean) => {
     if (!repository) return Promise.reject(new Error('Запуск тренировки недоступен'));
-    return runStart(() => input.independent
-      ? repository.createIndependentFromProgramDay(input.athleteUserId, input.programId, input.dayId)
+    // Direct program starts follow the actor's mode: Coach leads a coached session,
+    // Client starts independent FACT. Both paths leave the source PLAN unchanged.
+    return runStart(() => input.sourceDayStart
+      ? role === 'client'
+        ? repository.createIndependentFromProgramDay(input.athleteUserId, input.programId, input.dayId)
+        : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId, { format: 'coached' })
       : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), undefined, isCurrent);
-  }, [repository, runStart]);
+  }, [repository, runStart, role]);
   const showSession = useCallback((id: string) => onStartedRef.current(id), []);
   const value = useMemo(() => repository ? { start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflictOccurrence: conflict, dismissConflict } : null, [repository, role, start, startQuick, startFromProgram, showSession, cancel, registerCancellationPresentation, conflictActive, conflict, dismissConflict]);
   return <Context.Provider value={value}>

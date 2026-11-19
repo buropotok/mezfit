@@ -472,7 +472,8 @@ export class AdHocWorkoutRepository {
     });
   }
 
-  createForAthlete(athleteUserId: string, programId?: string, dayId?: string): Promise<{ id: string; createdProgram: boolean }> {
+  createForAthlete(athleteUserId: string, programId?: string, dayId?: string,
+    options?: { format: 'coached' }): Promise<{ id: string; createdProgram: boolean }> {
     if (this.clientExecution) return Promise.reject(new Error('CLIENT_SOURCE_PLAN_FORBIDDEN'));
     if (typeof athleteUserId !== 'string' || !/^tg:[1-9]\d*$/.test(athleteUserId)
       || (programId !== undefined && (typeof programId !== 'string' || !programId))
@@ -505,6 +506,7 @@ export class AdHocWorkoutRepository {
         realmId: program.realmId, owner: program.realmId, athleteUserId,
         coachUserId: program.coachUserId, clientUserId: program.clientUserId, creatorUserId: this.actorUserId,
         name: sessionName, comment: null, programId: selectedProgramId, dayId: selectedDayId, programName: program.name,
+        ...(options?.format ? { format: options.format } : {}),
         autoCreatedProgram: createdProgram, startedAt: timestamp, completedAt: null,
         status: 'active', createdAt: timestamp, updatedAt: timestamp,
       });

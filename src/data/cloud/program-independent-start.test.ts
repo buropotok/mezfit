@@ -108,6 +108,27 @@ describe('direct independent workout start from program', () => {
     expect(await db.table('workoutOccurrences').count()).toBe(0);
   });
 
+  it('persists coached format for Coach direct Start without altering source PLAN or creating a calendar event', async () => {
+    const { db, coach, programId, dayId, exercise, sourceSet } = await fixture();
+    const beforePlan = await db.table('trainingPlans').get(programId);
+    const beforeExercise = await db.table('programExercises').get(exercise.id);
+    const beforeSet = await db.table('programSets').get(sourceSet.id);
+    const result = await coach.createForAthlete('tg:202', programId, dayId, { format: 'coached' });
+    const session = await coach.get(result.id);
+    expect(result.createdProgram).toBe(false);
+    expect(await coach.getRow(result.id)).toMatchObject({ format: 'coached',
+      athleteUserId: 'tg:202', creatorUserId: 'tg:101', programId, dayId });
+    expect(session?.format).toBe('coached');
+    expect(session?.occurrenceId).toBeNull();
+    expect(session?.exercises[0].sets[0]).toMatchObject({
+      plan: null, fact: { metrics: { reps: null, weightKg: null } },
+    });
+    expect(await db.table('workoutOccurrences').count()).toBe(0);
+    expect(await db.table('trainingPlans').get(programId)).toEqual(beforePlan);
+    expect(await db.table('programExercises').get(exercise.id)).toEqual(beforeExercise);
+    expect(await db.table('programSets').get(sourceSet.id)).toEqual(beforeSet);
+  });
+
   it('rejects a foreign athlete or missing client execution grants without creating a session', async () => {
     const { db, client, programId, dayId } = await fixture(false);
     await expect(client.createIndependentFromProgramDay('tg:101', programId, dayId))

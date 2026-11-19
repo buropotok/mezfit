@@ -41,20 +41,23 @@ permissions; Client Start never creates an automatic program/template. When the
 Client completes an older Coach-created auto-program session, its pending
 save-template decision remains for the Coach who owns that source program.
 
-**Direct start from a program day:** The Programs screen may launch
-`createIndependentFromProgramDay` through the shared Start owner. It creates an
-explicitly `independent` FACT session for the selected athlete in one local
-transaction, using the authorized program's exercise snapshots and structural
-set types. No calendar occurrence or automatic program is created. Numeric
-PLAN prescriptions are not copied; each executed set starts with empty FACT
+**Direct start from a program day:** The Programs screen delegates to the
+shared Start owner, which selects the execution path by active app role. In
+**Client** mode, `createIndependentFromProgramDay` creates an explicitly
+`independent` FACT session from the athlete's own visible program. In
+**Coach** mode, direct Start reuses `createForAthlete` for the selected
+source day, persisting `format: coached` for the started session
+(«С клиентом в зале»), including when the Coach opens a personal source
+program. Both paths clone the source exercises and structural
+set types in one local transaction, without creating a calendar occurrence.
+Numeric PLAN prescriptions are not copied; execution starts with empty FACT
 metrics and `plan: null`. Existing program/day/set rows remain unchanged,
-including their recommendations. An assigned Client may start only their own,
-non-draft visible program/phase, subject to the existing shared FACT ACL.
-A Coach may initiate the corresponding independent session for their authorized
-athlete, subject to the current single-active-workout rules. Missing program
+including their recommendations. Client source access remains restricted to
+their own non-draft visible program/phase and the installed shared FACT ACL;
+Coach starts retain existing authoring and active-session checks. Missing program
 access, insufficient grants and duplicate activity fail without partial inserts.
 Existing sessions without an explicit format retain their legacy projection;
-new independent starts persist the format on the session header.
+new Client independent starts persist the format on the session header.
 
 Start takes the accepted local occurrence PLAN, never rebuilds it from a cloud
 program, and copies its full execution graph in one transaction. Client Start
