@@ -3065,6 +3065,612 @@
         }
       ],
       "notes": "Неизвестна конструкция опоры (скамья, платформа или специальный тренажёр); по источнику достоверна только резина; требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-seated-shoulder-press",
+      "source_path": "assets/work/shoulders/resistance-band-seated-shoulder-press.json",
+      "source_blob_sha": "577fd4976f2191c5f73e5349486fcd5173cfdb87",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-seated-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим резины сидя: передняя/средняя дельта и трицепс разгибают руки; конкретные стабилизаторы сидячего варианта не установлены."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:resistance-band-toe-touch",
+      "source_path": "assets/work/hip/resistance-band-toe-touch.json",
+      "source_blob_sha": "4d423a7e1fd3ac52d6eaa967fc9573550a6a3fa6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/resistance-band-toe-touch/"
+          ],
+          "confidence": "low",
+          "reason": "Toe touch с эспандером — растяжка/контроль диапазона движений; отсутствуют инструкция и подтверждённые активные силовые роли."
+        }
+      ],
+      "notes": "Проверить GIF: может быть динамическая тяга, а не пассивная растяжка. Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-chest-stretch",
+      "source_path": "assets/work/chest/reverse-chest-stretch.json",
+      "source_blob_sha": "9421a9660c502b7256932d9ad3714defac97829e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-chest-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Reverse chest stretch — упражнение на растяжение груди, без подтверждённого силового target."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-crunch",
+      "source_path": "assets/work/abs/reverse-crunch.json",
+      "source_blob_sha": "58e3ce7ea3ee3840bb6d6c5a8730e2eaeef38278",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратные скручивания: задний наклон таза и приближение таза к грудной клетке работают за счёт прямой мышцы живота."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-dips",
+      "source_path": "assets/work/chest/reverse-dips.json",
+      "source_blob_sha": "75097e07f4d408111b765451e323e1f941463105",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-dips/"
+          ],
+          "confidence": "low",
+          "reason": "Reverse dips предположительно вариант обратных отжиманий с опорой; источник не указывает предметы оборудования."
+        }
+      ],
+      "notes": "Сверить GIF и наличие опоры (стул/скамья/брусья); не заявлять их достоверными без визуального подтверждения. Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-barbell-row",
+      "source_path": "assets/work/back/reverse-grip-barbell-row.json",
+      "source_blob_sha": "40bc48aac0d36342bd26081f4693d27fee590ec8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "teres_major",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-barbell-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга штанги супинированным хватом в наклоне: широчайшие и приводящие лопатку мышцы; разгибатели спины удерживают наклон."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-dumbbell-bench-press",
+      "source_path": "assets/work/chest/reverse-grip-dumbbell-bench-press.json",
+      "source_blob_sha": "1a29d14b14230cd1c637d97cdd7acd192b910a08",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-dumbbell-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим гантелей лёжа на горизонтальной скамье обратным хватом, акцент верхней груди и передней дельты."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-ez-bar-curl",
+      "source_path": "assets/work/biceps/reverse-grip-ez-bar-curl.json",
+      "source_blob_sha": "e6ed4b7e9efd7291ab00ff47238b5f53abd49c53",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar"
+        ],
+        "muscles": {
+          "primary": [
+            "brachioradialis",
+            "brachialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-ez-bar-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратное сгибание рук с EZ-грифом: плечелучевая и плечевая, разгибатели кисти удерживают пронированный хват."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-incline-dumbbell-press",
+      "source_path": "assets/work/chest/reverse-grip-incline-dumbbell-press.json",
+      "source_blob_sha": "50a8b47e2cb2f40de522d97f8afaa905f38a5c9c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-incline-dumbbell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим гантелей на наклонной скамье обратным хватом; цель — ключичная порция большой грудной."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-pull-up",
+      "source_path": "assets/work/back/reverse-grip-pull-up.json",
+      "source_blob_sha": "74ed721d4ebca2078dd09ec24170d03a1b3cae37",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Подтягивание на турнике обратным хватом не требует специализированного тренажёра, хотя исходное оборудование ошибочно Machine."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-pushdown",
+      "source_path": "assets/work/triceps/reverse-grip-pushdown.json",
+      "source_blob_sha": "ef21756068aea3796d8fd33887d328a795f85ad3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-pushdown/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание трицепса на верхнем блоке супинированным хватом; мышцы предплечья поддерживают хват."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-hack-squat",
+      "source_path": "assets/work/hip/reverse-hack-squat.json",
+      "source_blob_sha": "4fcd1157f4d94638ae95f251caf389425214f4b7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "hack_squat_machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-hack-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Reverse hack squat на гакк-тренажёре лицом к опорам; это тот же тип тренажёра, что и стандартный hack squat, без дублирующего ID."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:reverse-hyperextensions",
+      "source_path": "assets/work/hip/reverse-hyperextensions.json",
+      "source_blob_sha": "8a14ed1e108f0ed90a9c3094befffa77616a5412",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-hyperextensions/"
+          ],
+          "confidence": "low",
+          "reason": "Страница называет вариант Frog Reverse Hyperextension и указывает no equipment; разгибание бедра ягодичными и задней группой бедра."
+        }
+      ],
+      "notes": "Нужна GIF-проверка положения тела и опоры: не выдавать неподтверждённый reverse-hyper machine за обязательное оборудование."
+    },
+    {
+      "id": "fitnessprogramer:reverse-lat-pulldown",
+      "source_path": "assets/work/back/reverse-lat-pulldown.json",
+      "source_blob_sha": "7a496db1b600d031998d346cbf6a63cbf81b561d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "teres_major",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-lat-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга верхнего блока обратным хватом — широчайшие и сгибатели локтя; универсальный тросовый блок достаточен."
+        }
+      ],
+      "notes": "Маркер other относится к неопределённой роли, а не к анатомии."
+    },
+    {
+      "id": "fitnessprogramer:reverse-lunge",
+      "source_path": "assets/work/hip/reverse-lunge.json",
+      "source_blob_sha": "b887bc8ae9717299cebd282bfa5f74baa7156157",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Выпад назад с собственным весом: квадрицепс и ягодичная разгибают ногу, средняя ягодичная стабилизирует таз."
+        }
+      ]
     }
   ]
 }
