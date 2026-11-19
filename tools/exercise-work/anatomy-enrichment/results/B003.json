@@ -750,6 +750,1286 @@
         }
       ],
       "notes": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки. Разгибатели позвоночника подтверждены в отдельной роли Stabilizers исходной страницы."
+    },
+    {
+      "id": "fitnessprogramer:5-dot-drills",
+      "source_path": "assets/work/hip/5-dot-drills.json",
+      "source_blob_sha": "b37a1e46f8331e4a89e80a158a862ba14829f950",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "gastrocnemius",
+            "soleus"
+          ],
+          "secondary": [
+            "iliopsoas",
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "ankle_stabilizers"
+          ]
+        },
+        "primary_category": "cardio"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/5-dot-drills/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/5-dot-drills/"
+          ],
+          "confidence": "medium",
+          "reason": "Быстрые многоплоскостные прыжки по пяти отметкам: источник прямо перечисляет квадрицепс, ягодичную, сгибатели бедра, заднюю поверхность бедра и икры, а также контроль приземления голеностопом. Назначение — координация и кардиоподготовка, категория cardio, а не legs."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/5-dot-drills/"
+          ],
+          "confidence": "medium",
+          "reason": "Быстрые многоплоскостные прыжки по пяти отметкам: источник прямо перечисляет квадрицепс, ягодичную, сгибатели бедра, заднюю поверхность бедра и икры, а также контроль приземления голеностопом. Назначение — координация и кардиоподготовка, категория cardio, а не legs."
+        }
+      ],
+      "notes": "Быстрые многоплоскостные прыжки по пяти отметкам: источник прямо перечисляет квадрицепс, ягодичную, сгибатели бедра, заднюю поверхность бедра и икры, а также контроль приземления голеностопом. Назначение — координация и кардиоподготовка, категория cardio, а не legs."
+    },
+    {
+      "id": "fitnessprogramer:90-90-hip-stretch",
+      "source_path": "assets/work/hip/90-90-hip-stretch.json",
+      "source_blob_sha": "5d62ad90f751f78fb9fe8cdffcbea2c2da05edf6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/90-90-hip-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/90-90-hip-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "90/90 — статическая мобилизация тазобедренных суставов; мышцы наружной/внутренней ротации растягиваются, но роль силовых движителей у этой вариации не выделена."
+        }
+      ],
+      "notes": "90/90 — статическая мобилизация тазобедренных суставов; мышцы наружной/внутренней ротации растягиваются, но роль силовых движителей у этой вариации не выделена."
+    },
+    {
+      "id": "fitnessprogramer:ab-roller-crunch",
+      "source_path": "assets/work/abs/ab-roller-crunch.json",
+      "source_blob_sha": "01f55687a2a99cd3982cdb6bab07e7015380a2a6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ab-roller-crunch-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-roller-crunch/"
+          ],
+          "confidence": "low",
+          "reason": "Указанный в названии/инструкции конкретный тип не имеет собственного ID в действующем EQUIPMENT_LABELS; создано предложение в B003-equipment-proposals.json, это не runtime-фильтр."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-roller-crunch/"
+          ],
+          "confidence": "low",
+          "reason": "В источнике указана Machine и упражнение Ab Roller Crunch. Отнесено к специализированному тренажёру скручиваний с роликовым механизмом; точная конструкция по текстовому описанию не уточнена, необходим просмотр GIF перед интеграцией."
+        }
+      ],
+      "notes": "В источнике указана Machine и упражнение Ab Roller Crunch. Отнесено к специализированному тренажёру скручиваний с роликовым механизмом; точная конструкция по текстовому описанию не уточнена, необходим просмотр GIF перед интеграцией."
+    },
+    {
+      "id": "fitnessprogramer:ab-straps-leg-raise",
+      "source_path": "assets/work/abs/ab-straps-leg-raise.json",
+      "source_blob_sha": "fbd2fd0e2abda287ee13e93f120ad06b5d25891c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ab-straps",
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_abdominis_lower_zone",
+            "obliques",
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-straps-leg-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Указанный в названии/инструкции конкретный тип не имеет собственного ID в действующем EQUIPMENT_LABELS; создано предложение в B003-equipment-proposals.json, это не runtime-фильтр."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-straps-leg-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём ног в подвесных локтевых петлях: сгибание бедра обеспечивается iliopsoas, мышцы живота участвуют при подкручивании таза. Для закрепления петель необходима верхняя перекладина. Исходные отдельные hip flexor мышцы, которых нет в таксономии, не подменялись произвольными ID."
+        }
+      ],
+      "notes": "Подъём ног в подвесных локтевых петлях: сгибание бедра обеспечивается iliopsoas, мышцы живота участвуют при подкручивании таза. Для закрепления петель необходима верхняя перекладина. Исходные отдельные hip flexor мышцы, которых нет в таксономии, не подменялись произвольными ID."
+    },
+    {
+      "id": "fitnessprogramer:ab-wheel-rollout",
+      "source_path": "assets/work/abs/ab-wheel-rollout.json",
+      "source_blob_sha": "08fca725fec1089d6e6cbf4c3f9f2cd536c1d45a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ab-wheel"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas",
+            "latissimus_dorsi",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "triceps_brachii"
+          ]
+        },
+        "primary_category": "core"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-wheel-rollout/"
+          ],
+          "confidence": "medium",
+          "reason": "Указанный в названии/инструкции конкретный тип не имеет собственного ID в действующем EQUIPMENT_LABELS; создано предложение в B003-equipment-proposals.json, это не runtime-фильтр."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-wheel-rollout/"
+          ],
+          "confidence": "medium",
+          "reason": "Ab Wheel Rollout — преимущественно антиэкстензионная нагрузка корпуса, несмотря на исходный target Iliopsoas. Исходная страница одновременно указывает мышцы живота как стабилизаторы, что конфликтует с функциональной ролью; требуется визуальное подтверждение целевой разметки."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ab-wheel-rollout/"
+          ],
+          "confidence": "medium",
+          "reason": "Ab Wheel Rollout — преимущественно антиэкстензионная нагрузка корпуса, несмотря на исходный target Iliopsoas. Исходная страница одновременно указывает мышцы живота как стабилизаторы, что конфликтует с функциональной ролью; требуется визуальное подтверждение целевой разметки."
+        }
+      ],
+      "notes": "Ab Wheel Rollout — преимущественно антиэкстензионная нагрузка корпуса, несмотря на исходный target Iliopsoas. Исходная страница одновременно указывает мышцы живота как стабилизаторы, что конфликтует с функциональной ролью; требуется визуальное подтверждение целевой разметки."
+    },
+    {
+      "id": "fitnessprogramer:above-head-chest-stretch",
+      "source_path": "assets/work/chest/above-head-chest-stretch.json",
+      "source_blob_sha": "45cdd2b940b75e7cf1e9ba7aec33558e0af46cf1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/above-head-chest-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/above-head-chest-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Above Head Chest Stretch — пассивная растяжка грудных мышц; не записываем растягиваемую мышцу как главный двигательный мускул. В данной схеме отдельного поля для мышц-мишеней растяжки нет."
+        }
+      ],
+      "notes": "Above Head Chest Stretch — пассивная растяжка грудных мышц; не записываем растягиваемую мышцу как главный двигательный мускул. В данной схеме отдельного поля для мышц-мишеней растяжки нет."
+    },
+    {
+      "id": "fitnessprogramer:across-chest-shoulder-stretch",
+      "source_path": "assets/work/back/across-chest-shoulder-stretch.json",
+      "source_blob_sha": "87a3fb9710204e6aa55b47e5e6676d9a57bec8a2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "shoulders"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/across-chest-shoulder-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/across-chest-shoulder-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Across Chest Shoulder Stretch — растяжение задней поверхности плеча поперёк груди; исходная back-категория неоднозначна, основная цель — подвижность плеча. Пассивные растягиваемые ткани не отражаются как силовые движители."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/across-chest-shoulder-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Across Chest Shoulder Stretch — растяжение задней поверхности плеча поперёк груди; исходная back-категория неоднозначна, основная цель — подвижность плеча. Пассивные растягиваемые ткани не отражаются как силовые движители."
+        }
+      ],
+      "notes": "Across Chest Shoulder Stretch — растяжение задней поверхности плеча поперёк груди; исходная back-категория неоднозначна, основная цель — подвижность плеча. Пассивные растягиваемые ткани не отражаются как силовые движители."
+    },
+    {
+      "id": "fitnessprogramer:adductor-magnus-stretch",
+      "source_path": "assets/work/hip/adductor-magnus-stretch.json",
+      "source_blob_sha": "9ad580d9c5e71f777ddc9bd49c60d7868ea24028",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/adductor-magnus-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/adductor-magnus-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Adductor Magnus Stretch / Thigh Fly: раскрытие ног без внешнего сопротивления ради растяжения приводящих; hip_adductors — цель растяжения, а не подтверждённая основная силовая роль в этой статической вариации."
+        }
+      ],
+      "notes": "Adductor Magnus Stretch / Thigh Fly: раскрытие ног без внешнего сопротивления ради растяжения приводящих; hip_adductors — цель растяжения, а не подтверждённая основная силовая роль в этой статической вариации."
+    },
+    {
+      "id": "fitnessprogramer:all-fours-squad-stretch",
+      "source_path": "assets/work/leg/all-fours-squad-stretch.json",
+      "source_blob_sha": "babc3d4f23e45487501df0add24592eafa8e3f1f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/all-fours-squad-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/all-fours-squad-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "All Fours Squad Stretch — растягивание передней поверхности бедра в положении на четвереньках. Источник не описывает активных двигателей и стабилизаторов по ролям."
+        }
+      ],
+      "notes": "All Fours Squad Stretch — растягивание передней поверхности бедра в положении на четвереньках. Источник не описывает активных двигателей и стабилизаторов по ролям."
+    },
+    {
+      "id": "fitnessprogramer:alternate-dumbbell-bench-press",
+      "source_path": "assets/work/chest/alternate-dumbbell-bench-press.json",
+      "source_blob_sha": "41d378c2ff8e7bb5fd6bbcaf1ddf1ac32ddf4275",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbells",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-dumbbell-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-dumbbell-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Исходная инструкция прямо подтверждает горизонтальный жим гантелей на скамье с чередованием рук и перечисляет целевую грудную мышцу, синергистов и динамический бицепс-стабилизатор. Отдельная скамья необходима."
+        }
+      ],
+      "notes": "Исходная инструкция прямо подтверждает горизонтальный жим гантелей на скамье с чередованием рук и перечисляет целевую грудную мышцу, синергистов и динамический бицепс-стабилизатор. Отдельная скамья необходима."
+    },
+    {
+      "id": "fitnessprogramer:alternate-dumbbell-lateral-raise",
+      "source_path": "assets/work/shoulders/alternate-dumbbell-lateral-raise.json",
+      "source_blob_sha": "0ce74538d444c05aafaf97bd2b5825930f987439",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbells"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-dumbbell-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-dumbbell-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Попеременное отведение плеча с гантелью: средняя дельта — главный двигатель, надостная инициирует отведение. Исходный источник не указывает стабилизаторов; маркер other оставлен."
+        }
+      ],
+      "notes": "Попеременное отведение плеча с гантелью: средняя дельта — главный двигатель, надостная инициирует отведение. Исходный источник не указывает стабилизаторов; маркер other оставлен."
+    },
+    {
+      "id": "fitnessprogramer:alternate-leg-raises",
+      "source_path": "assets/work/abs/alternate-leg-raises.json",
+      "source_blob_sha": "3886aebe30ab0064f2f8b3ea94bdf0fbe939190d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-leg-raises/"
+          ],
+          "confidence": "low",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-leg-raises/"
+          ],
+          "confidence": "low",
+          "reason": "По названию чередующиеся подъёмы ног предполагают сгибание бедра и удержание поясницы животом. Однако исходная карточка без инструкции и без анатомии: требуется проверить GIF, в том числе позицию корпуса."
+        }
+      ],
+      "notes": "По названию чередующиеся подъёмы ног предполагают сгибание бедра и удержание поясницы животом. Однако исходная карточка без инструкции и без анатомии: требуется проверить GIF, в том числе позицию корпуса."
+    },
+    {
+      "id": "fitnessprogramer:alternate-lying-floor-leg-raise",
+      "source_path": "assets/work/abs/alternate-lying-floor-leg-raise.json",
+      "source_blob_sha": "1ac391781f53a95307aca1ca555ce5f97d682ffd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-lying-floor-leg-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternate-lying-floor-leg-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Источник прямо перечисляет Rectus Abdominis и Obliques для попеременного подъёма ног лёжа. Точные стабилизаторы не названы; не добавляем их автоматически."
+        }
+      ],
+      "notes": "Источник прямо перечисляет Rectus Abdominis и Obliques для попеременного подъёма ног лёжа. Точные стабилизаторы не названы; не добавляем их автоматически."
+    },
+    {
+      "id": "fitnessprogramer:alternating-dumbbell-front-raise",
+      "source_path": "assets/work/shoulders/alternating-dumbbell-front-raise.json",
+      "source_blob_sha": "053598e13e3507514df25bfaa3dd2ff78969129e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbells"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_upper",
+            "forearm_extensors",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternating-dumbbell-front-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternating-dumbbell-front-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Подъём гантелей вперёд до 90 градусов; целевая передняя дельта и перечисленные исходником синергисты/стабилизаторы нормализованы по таксономии. Не дублируем трапецию целиком и верхний пучок в разных ролях."
+        }
+      ],
+      "notes": "Подъём гантелей вперёд до 90 градусов; целевая передняя дельта и перечисленные исходником синергисты/стабилизаторы нормализованы по таксономии. Не дублируем трапецию целиком и верхний пучок в разных ролях."
+    },
+    {
+      "id": "fitnessprogramer:alternating-lying-dumbbell-triceps-extension",
+      "source_path": "assets/work/triceps/alternating-lying-dumbbell-triceps-extension.json",
+      "source_blob_sha": "ea8953959331ff1688c231f168a0a16c37c61cf5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbells",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternating-lying-dumbbell-triceps-extension/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/alternating-lying-dumbbell-triceps-extension/"
+          ],
+          "confidence": "high",
+          "reason": "Разгибание рук лёжа поочерёдно с гантелями на скамье: локтевой разгибатель — трицепс. Для синергистов/стабилизаторов источник не даёт конкретных подтверждений."
+        }
+      ],
+      "notes": "Разгибание рук лёжа поочерёдно с гантелями на скамье: локтевой разгибатель — трицепс. Для синергистов/стабилизаторов источник не даёт конкретных подтверждений."
+    },
+    {
+      "id": "fitnessprogramer:archer-pull-up",
+      "source_path": "assets/work/back/archer-pull-up.json",
+      "source_blob_sha": "57e7a0a7ab98f053471b19559937ebb1d6ae32bd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/archer-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/archer-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Archer Pull-up — асимметричное подтягивание, основной двигатель — широчайшие, сгибатели локтя и ретракторы лопаток помогают. Исходная карточка не перечисляет мышцы, точную фазовую активность проверить по GIF."
+        }
+      ],
+      "notes": "Archer Pull-up — асимметричное подтягивание, основной двигатель — широчайшие, сгибатели локтя и ретракторы лопаток помогают. Исходная карточка не перечисляет мышцы, точную фазовую активность проверить по GIF."
+    },
+    {
+      "id": "fitnessprogramer:archer-push-up",
+      "source_path": "assets/work/chest/archer-push-up.json",
+      "source_blob_sha": "73346d8ff96c9bb2f7c648b0885e919b1d069691",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/archer-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/archer-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Исходная инструкция Archer Push-Up подтверждает перенос нагрузки на одну руку; первичны грудные, помогают трицепс и передняя дельта, а живот и передняя зубчатая удерживают стабильность корпуса/лопатки. Не переносим мышцы из antagonist в stabilizers."
+        }
+      ],
+      "notes": "Исходная инструкция Archer Push-Up подтверждает перенос нагрузки на одну руку; первичны грудные, помогают трицепс и передняя дельта, а живот и передняя зубчатая удерживают стабильность корпуса/лопатки. Не переносим мышцы из antagonist в stabilizers."
+    },
+    {
+      "id": "fitnessprogramer:arm-blaster-hammer-curl",
+      "source_path": "assets/work/biceps/arm-blaster-hammer-curl.json",
+      "source_blob_sha": "b5350737b699843bc948680dd30e01be8f7a5503",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbells",
+          "arm-blaster"
+        ],
+        "muscles": {
+          "primary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-blaster-hammer-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Указанный в названии/инструкции конкретный тип не имеет собственного ID в действующем EQUIPMENT_LABELS; создано предложение в B003-equipment-proposals.json, это не runtime-фильтр."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-blaster-hammer-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Hammer Curl с Arm Blaster требует гантели и упор-изолятор под локти; нейтральный хват акцентирует плечевую и плечелучевую мышцы, бицепс ассистирует. В исходном equipment изолятор пропущен; уверенность роли умеренная."
+        }
+      ],
+      "notes": "Hammer Curl с Arm Blaster требует гантели и упор-изолятор под локти; нейтральный хват акцентирует плечевую и плечелучевую мышцы, бицепс ассистирует. В исходном equipment изолятор пропущен; уверенность роли умеренная."
+    },
+    {
+      "id": "fitnessprogramer:arm-circles",
+      "source_path": "assets/work/shoulders/arm-circles.json",
+      "source_blob_sha": "2b3d251bb51930f2568fc85871630485dca86a59",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-circles/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-circles/"
+          ],
+          "confidence": "medium",
+          "reason": "Arm Circles — динамическая разминка и мобильность плечевых суставов без внешнего сопротивления. Нельзя выдавать все вовлечённые мышцы за достоверные основные, вспомогательные и стабилизаторы."
+        }
+      ],
+      "notes": "Arm Circles — динамическая разминка и мобильность плечевых суставов без внешнего сопротивления. Нельзя выдавать все вовлечённые мышцы за достоверные основные, вспомогательные и стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:arm-leg-raises",
+      "source_path": "assets/work/hip/arm-leg-raises.json",
+      "source_blob_sha": "92570340135d90740f683279a9e0d0f8acf43e9b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis",
+            "erector_spinae",
+            "obliques"
+          ]
+        },
+        "primary_category": "core"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-leg-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-leg-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Bird-dog (Arm Leg Raises): вынос руки вперёд и ноги назад, главные двигатели — передняя дельта/большая ягодичная; анти-ротационная стабилизация корпусом. Упражнение описано как баланс и укрепление корпуса, поэтому category core."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-leg-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Bird-dog (Arm Leg Raises): вынос руки вперёд и ноги назад, главные двигатели — передняя дельта/большая ягодичная; анти-ротационная стабилизация корпусом. Упражнение описано как баланс и укрепление корпуса, поэтому category core."
+        }
+      ],
+      "notes": "Bird-dog (Arm Leg Raises): вынос руки вперёд и ноги назад, главные двигатели — передняя дельта/большая ягодичная; анти-ротационная стабилизация корпусом. Упражнение описано как баланс и укрепление корпуса, поэтому category core."
+    },
+    {
+      "id": "fitnessprogramer:arm-scissors",
+      "source_path": "assets/work/chest/arm-scissors.json",
+      "source_blob_sha": "a60bb13ee1f37a53ee1d2250b891c6c1d0428745",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-scissors/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arm-scissors/"
+          ],
+          "confidence": "medium",
+          "reason": "Arm Scissors — горизонтальное приведение рук перед грудью, активны большая грудная и передняя дельта. Источник также называет плечи и трапецию, но их вторичные роли в данной разминке не доказаны."
+        }
+      ],
+      "notes": "Arm Scissors — горизонтальное приведение рук перед грудью, активны большая грудная и передняя дельта. Источник также называет плечи и трапецию, но их вторичные роли в данной разминке не доказаны."
+    },
+    {
+      "id": "fitnessprogramer:arnold-press",
+      "source_path": "assets/work/shoulders/arnold-press.json",
+      "source_blob_sha": "6e3fa1a2cc71866ddb7028442e0fbb6b3dbe2040",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbells"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "supraspinatus",
+            "serratus_anterior",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arnold-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/arnold-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Arnold Press: вращение и жим гантелей над головой, передняя/средняя дельты как главные двигатели, трицепс и мышцы вращения лопатки помогают; источник отдельно указывает levator scapulae как стабилизатор."
+        }
+      ],
+      "notes": "Arnold Press: вращение и жим гантелей над головой, передняя/средняя дельты как главные двигатели, трицепс и мышцы вращения лопатки помогают; источник отдельно указывает levator scapulae как стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:asisted-triceps-dips",
+      "source_path": "assets/work/triceps/asisted-triceps-dips.json",
+      "source_blob_sha": "0adf4040281294e64dae10ccc960230550129c7b",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "assisted-dip-pull-up-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "trapezius_lower"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/asisted-triceps-dips/"
+          ],
+          "confidence": "high",
+          "reason": "Указанный в названии/инструкции конкретный тип не имеет собственного ID в действующем EQUIPMENT_LABELS; создано предложение в B003-equipment-proposals.json, это не runtime-фильтр."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/asisted-triceps-dips/"
+          ],
+          "confidence": "high",
+          "reason": "Ассистированные отжимания на брусьях: исходная инструкция требует регулируемую платформу/противовес на отдельном тренажёре; тип — гравитрон. Целевая мышца — трицепс, стабилизатор нижняя трапеция из исходной dynamic разметки."
+        }
+      ],
+      "notes": "Ассистированные отжимания на брусьях: исходная инструкция требует регулируемую платформу/противовес на отдельном тренажёре; тип — гравитрон. Целевая мышца — трицепс, стабилизатор нижняя трапеция из исходной dynamic разметки."
+    },
+    {
+      "id": "fitnessprogramer:assault-air-runner",
+      "source_path": "assets/work/cardio/assault-air-runner.json",
+      "source_blob_sha": "e5ddf8018d073b1f3891dd740e9b7b3f94903e62",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "treadmill"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/assault-air-runner/"
+          ],
+          "confidence": "high",
+          "reason": "Нормализация исходного equipment по реально используемому снаряду и существующим фильтрам; Full Gym исключён как несуществующее оборудование."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/assault-air-runner/"
+          ],
+          "confidence": "high",
+          "reason": "Manual Treadmill / Assault AirRunner — безмоторная беговая дорожка; вид относится к существующему фильтру treadmill. Кардио-нагрузка не предусматривает достоверного разделения силовых мышц по трём ролям в источнике."
+        }
+      ],
+      "notes": "Manual Treadmill / Assault AirRunner — безмоторная беговая дорожка; вид относится к существующему фильтру treadmill. Кардио-нагрузка не предусматривает достоверного разделения силовых мышц по трём ролям в источнике."
+    },
+    {
+      "id": "fitnessprogramer:assault-airbike",
+      "source_path": "assets/work/cardio/assault-airbike.json",
+      "source_blob_sha": "f424daa61b20393ad2fc7ec27b6197e82df758ae",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "air-bike"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/assault-airbike/"
+          ],
+          "confidence": "high",
+          "reason": "Указанный в названии/инструкции конкретный тип не имеет собственного ID в действующем EQUIPMENT_LABELS; создано предложение в B003-equipment-proposals.json, это не runtime-фильтр."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/assault-airbike/"
+          ],
+          "confidence": "high",
+          "reason": "Assault AirBike — аэробайк с воздушным сопротивлением и движущимися рукоятками; вид отличается от классического велотренажёра и предлагается отдельным оборудованием. Для кардио-работы роли силовых мышц не установлены."
+        }
+      ],
+      "notes": "Assault AirBike — аэробайк с воздушным сопротивлением и движущимися рукоятками; вид отличается от классического велотренажёра и предлагается отдельным оборудованием. Для кардио-работы роли силовых мышц не установлены."
     }
   ]
 }
