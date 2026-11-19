@@ -1,0 +1,68 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { KonstaProvider } from 'konsta/react';
+import { afterEach, expect, it, vi } from 'vitest';
+import { DiscussionMedia } from './DiscussionMedia';
+import { CircularVideoPlayback } from '../settings/CircularVideoPlayback';
+import { readVideoOrientation } from '../media/videoOrientation';
+
+vi.mock('./useDiscussionMediaSource', () => ({
+  useDiscussionMediaSource: (src: string) => ({ url: src, container: undefined, tryR2Fallback: vi.fn() }),
+}));
+vi.mock('../media/videoOrientation', async importOriginal => ({
+  ...await importOriginal<typeof import('../media/videoOrientation')>(),
+  readVideoOrientation: vi.fn(),
+}));
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.resetAllMocks(); });
+
+function load(video: HTMLVideoElement, width: number, height: number) {
+  Object.defineProperties(video, {
+    videoWidth: { configurable: true, value: width },
+    videoHeight: { configurable: true, value: height },
+    duration: { configurable: true, value: 10 },
+  });
+  fireEvent.loadedMetadata(video);
+}
+
+it('corrects ordinary video while keeping playback and seeking controls upright', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
+  const { container } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:video" type="video" mode="viewer" />
+  </KonstaProvider>);
+  const video = container.querySelector('video')!;
+  expect(video.controls).toBe(true);
+  load(video, 480, 488);
+  await waitFor(() => expect(video.style.transform).toContain('rotate(90deg)'));
+  expect(video.controls).toBe(false);
+  const play = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+  fireEvent.click(screen.getByRole('button', { name: 'Воспроизвести' }));
+  expect(play).toHaveBeenCalledOnce();
+  fireEvent.input(screen.getByRole('slider', { name: 'Перемотка видео' }), { target: { value: '50' } });
+  expect(video.currentTime).toBe(5);
+});
+
+it('uses the same correction for circular playback without changing its tap control', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 270 });
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  const { container } = render(<CircularVideoPlayback src="blob:circle" fallbackDuration={10} onError={vi.fn()} />);
+  const video = container.querySelector('video')!;
+  load(video, 480, 488);
+  await waitFor(() => expect(video.style.transform).toContain('rotate(270deg)'));
+  expect(screen.getAllByRole('button')).toHaveLength(1);
+});
+
+it('preserves native controls for already-correct and square videos', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
+  const { container, rerender } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:correct" type="video" mode="viewer" />
+  </KonstaProvider>);
+  const video = container.querySelector('video')!;
+  load(video, 488, 480);
+  await waitFor(() => expect(readVideoOrientation).toHaveBeenCalledOnce());
+  expect(video.style.transform).toBe('');
+  expect(video.controls).toBe(true);
+  rerender(<KonstaProvider theme="ios" dark><DiscussionMedia src="blob:square" type="video" mode="viewer" /></KonstaProvider>);
+  load(video, 480, 480);
+  expect(readVideoOrientation).toHaveBeenCalledOnce();
+  expect(video.controls).toBe(true);
+});
