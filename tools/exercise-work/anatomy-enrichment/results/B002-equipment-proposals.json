@@ -37,6 +37,27 @@
         "seated lat pulldown"
       ],
       "existing_equipment_match_checked": true
+    },
+    {
+      "id": "neck-harness",
+      "label_ru": "Шейная лямка для тренировки мышц шеи",
+      "definition_ru": "Мягкая головная лямка с креплением троса, передающая сопротивление блочного тренажёра при сгибании или разгибании шеи.",
+      "exercise_ids": [
+        "fitnessprogramer:cable-seated-neck-extension-with-head-harness",
+        "fitnessprogramer:cable-seated-neck-flexion-with-head-harness"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/cable-seated-neck-extension-with-head-harness/",
+        "https://fitnessprogramer.com/exercise/cable-seated-neck-flexion-with-head-harness/",
+        "https://elitefts.com/blogs/training/watch-product-feature-with-josh-bryant-neck-harness-training"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "head harness",
+        "neck harness",
+        "neck strap"
+      ],
+      "existing_equipment_match_checked": true
     }
   ]
 }

@@ -2298,6 +2298,1487 @@
         }
       ],
       "notes": "Источник не содержит подробной инструкции, не следует угадывать конкретные стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:cable-seated-neck-extension-with-head-harness",
+      "source_path": "assets/work/neck/cable-seated-neck-extension-with-head-harness.json",
+      "source_blob_sha": "497fbb7d08181579b924aab172a137254f5bacc7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "neck-harness"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-neck-extension-with-head-harness/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: установлены конкретные компоненты по названию и инструкции. Тросовое разгибание головы против сопротивления головной лямки нагружает разгибатели шеи. Тип головной лямки подтверждается названием. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-neck-extension-with-head-harness/",
+            "https://elitefts.com/blogs/training/watch-product-feature-with-josh-bryant-neck-harness-training"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Тросовое разгибание головы против сопротивления головной лямки нагружает разгибатели шеи. Тип головной лямки подтверждается названием. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-neck-extension-with-head-harness/",
+            "https://elitefts.com/blogs/training/watch-product-feature-with-josh-bryant-neck-harness-training"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-seated-neck-flexion-with-head-harness",
+      "source_path": "assets/work/neck/cable-seated-neck-flexion-with-head-harness.json",
+      "source_blob_sha": "1d47c24c05111231d698b789394035ad521c90aa",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "neck-harness"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-neck-flexion-with-head-harness/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: установлены конкретные компоненты по названию и инструкции. Тросовое сгибание головы с головной лямкой нагружает сгибатели шеи, специальная лямка необходима. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-neck-flexion-with-head-harness/",
+            "https://elitefts.com/blogs/training/watch-product-feature-with-josh-bryant-neck-harness-training"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Тросовое сгибание головы с головной лямкой нагружает сгибатели шеи, специальная лямка необходима. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-neck-flexion-with-head-harness/",
+            "https://elitefts.com/blogs/training/watch-product-feature-with-josh-bryant-neck-harness-training"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-seated-pullover",
+      "source_path": "assets/work/back/cable-seated-pullover.json",
+      "source_blob_sha": "b1b2684c567ebc9fde016d3676d514586a448fda",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "pectoralis_sternal",
+            "triceps_long_head"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-pullover/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. В сидячем пуловере под тросовой нагрузкой производится приведение/разгибание плеча: основная широчайшая, содействуют большая круглая, грудная и длинная головка трицепса. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-pullover/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: В сидячем пуловере под тросовой нагрузкой производится приведение/разгибание плеча: основная широчайшая, содействуют большая круглая, грудная и длинная головка трицепса. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-pullover/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ],
+      "notes": "Описание источника пусто; конкретный тип сиденья/лавки достоверно не установлен."
+    },
+    {
+      "id": "fitnessprogramer:cable-seated-shoulder-internal-rotation",
+      "source_path": "assets/work/shoulders/cable-seated-shoulder-internal-rotation.json",
+      "source_blob_sha": "3d849e079b78e05e940f1b3080ab0d22ad0186df",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "subscapularis"
+          ],
+          "secondary": [
+            "teres_major",
+            "latissimus_dorsi",
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-shoulder-internal-rotation/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Внутренняя ротация плеча сидя: подлопаточная является специализированным двигателем, синергисты соответствуют анатомическим внутренним ротаторам. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-shoulder-internal-rotation/",
+            "https://www.ncbi.nlm.nih.gov/sites/books/NBK537018/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Внутренняя ротация плеча сидя: подлопаточная является специализированным двигателем, синергисты соответствуют анатомическим внутренним ротаторам. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-shoulder-internal-rotation/",
+            "https://www.ncbi.nlm.nih.gov/sites/books/NBK537018/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-seated-twist-on-floor",
+      "source_path": "assets/work/abs/cable-seated-twist-on-floor.json",
+      "source_blob_sha": "744fc44fecc9b0fa72f59c8e958c3e5efff39e21",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-twist-on-floor/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Повороты корпуса сидя на полу на блоке — задача косых мышц живота; дополнительные роли не подтверждены. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-twist-on-floor/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Повороты корпуса сидя на полу на блоке — задача косых мышц живота; дополнительные роли не подтверждены. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-seated-twist-on-floor/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-shoulder-press",
+      "source_path": "assets/work/shoulders/cable-shoulder-press.json",
+      "source_blob_sha": "7048db44b1012e3a254af4f04bc01dabb2628a80",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "supraspinatus",
+            "triceps_brachii",
+            "trapezius",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Жим блока над головой: основной передняя дельта, синергисты приведены в исходной анатомии; исходник также указывает динамический biceps brachii. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Роли мышц: Жим блока над головой: основной передняя дельта, синергисты приведены в исходной анатомии; исходник также указывает динамический biceps brachii. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Жим блока над головой: основной передняя дельта, синергисты приведены в исходной анатомии; исходник также указывает динамический biceps brachii."
+        }
+      ],
+      "notes": "Неоднозначный исходный Levatos Scapula не назначен отдельным стабилизатором без подтверждения; band не подтверждён инструкцией."
+    },
+    {
+      "id": "fitnessprogramer:cable-shrug",
+      "source_path": "assets/work/trapezius/cable-shrug.json",
+      "source_blob_sha": "443d70a55f33918088975792dd2344b4669905c4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-shrug/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. В шрагах основная нагрузка на верхнюю трапецию; levator scapulae помогает подъёму лопаток, erector spinae стабилизирует туловище — всё указано источником. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-shrug/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: В шрагах основная нагрузка на верхнюю трапецию; levator scapulae помогает подъёму лопаток, erector spinae стабилизирует туловище — всё указано источником. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-shrug/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: В шрагах основная нагрузка на верхнюю трапецию; levator scapulae помогает подъёму лопаток, erector spinae стабилизирует туловище — всё указано источником."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-side-bend",
+      "source_path": "assets/work/abs/cable-side-bend.json",
+      "source_blob_sha": "f850e6b5d2b40fc1f9af0272f69b3059ccfd77de",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-side-bend/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Наклон корпуса в сторону против троса: косые мышцы живота и квадратная поясничная выполняют латеральное сгибание. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-side-bend/",
+            "https://www.hercules-gym.com/exercises/cable-side-bend"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Наклон корпуса в сторону против троса: косые мышцы живота и квадратная поясничная выполняют латеральное сгибание. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-side-bend/",
+            "https://www.hercules-gym.com/exercises/cable-side-bend"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-side-triceps-extension",
+      "source_path": "assets/work/triceps/cable-side-triceps-extension.json",
+      "source_blob_sha": "3236897986523719956518163052c056b8db5934",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-side-triceps-extension/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Разгибание локтя одной рукой в сторону — односуставная работа трицепса при фиксированном плече; другие мышцы в исходнике не назначены. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-side-triceps-extension/"
+          ],
+          "confidence": "high",
+          "reason": "Роли мышц: Разгибание локтя одной рукой в сторону — односуставная работа трицепса при фиксированном плече; другие мышцы в исходнике не назначены. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-side-triceps-extension/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-single-arm-hammer-curl",
+      "source_path": "assets/work/biceps/cable-single-arm-hammer-curl.json",
+      "source_blob_sha": "073edbe2e5de94bae4eeaa780251f3cb0dbba9f0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "brachioradialis",
+            "brachialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-single-arm-hammer-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Одноручный нейтральный хват: плечелучевая и плечевая ведут сгибание локтя; источником перечислены бицепс и FCR/ECR, нормализованные на группы сгибателей и разгибателей кисти. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-single-arm-hammer-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Одноручный нейтральный хват: плечелучевая и плечевая ведут сгибание локтя; источником перечислены бицепс и FCR/ECR, нормализованные на группы сгибателей и разгибателей кисти. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-single-arm-hammer-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Одноручный нейтральный хват: плечелучевая и плечевая ведут сгибание локтя; источником перечислены бицепс и FCR/ECR, нормализованные на группы сгибателей и разгибателей кисти."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-squat",
+      "source_path": "assets/work/hip/cable-squat.json",
+      "source_blob_sha": "af0296b6b6c73a4f130e6cdbb3bd3d98b5974f5e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus",
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "tibialis_anterior",
+            "rectus_abdominis",
+            "obliques",
+            "erector_spinae",
+            "deltoid_anterior",
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Присед с рукоятью у груди: исходник называет квадрицепс основным, ягодичные/приводящие/икроножные — синергистами; корпус и верхние конечности удерживают трос. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Роли мышц: Присед с рукоятью у груди: исходник называет квадрицепс основным, ягодичные/приводящие/икроножные — синергистами; корпус и верхние конечности удерживают трос. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Присед с рукоятью у груди: исходник называет квадрицепс основным, ягодичные/приводящие/икроножные — синергистами; корпус и верхние конечности удерживают трос."
+        }
+      ],
+      "notes": "Исходные Hamstrings и неопределённые Scapular Stabilizers не перенесены автоматически в анатомические ID; антагонисты не объявлены стабилизаторами."
+    },
+    {
+      "id": "fitnessprogramer:cable-straight-arm-pulldown",
+      "source_path": "assets/work/back/cable-straight-arm-pulldown.json",
+      "source_blob_sha": "bab53d3d04ac092b7233b4a3f39e533157c71a2a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "triceps_long_head",
+            "teres_major",
+            "deltoid_posterior",
+            "rhomboids",
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "pectoralis_clavicular",
+            "rectus_abdominis",
+            "obliques",
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-straight-arm-pulldown/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Тяга прямыми руками: исходник прямо фиксирует широчайшую, синергистов и динамическую стабилизацию брюшной стенки/предплечья. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-straight-arm-pulldown/"
+          ],
+          "confidence": "high",
+          "reason": "Роли мышц: Тяга прямыми руками: исходник прямо фиксирует широчайшую, синергистов и динамическую стабилизацию брюшной стенки/предплечья. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-straight-arm-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Тяга прямыми руками: исходник прямо фиксирует широчайшую, синергистов и динамическую стабилизацию брюшной стенки/предплечья."
+        }
+      ],
+      "notes": "Исходный triceps brachii как стабилизатор не дублируется с triceps_long_head в синергистах: роли перекрывают часть и целую мышцу."
+    },
+    {
+      "id": "fitnessprogramer:cable-tricep-kickback",
+      "source_path": "assets/work/triceps/cable-tricep-kickback.json",
+      "source_blob_sha": "6a48e11808756b2f6371436cbfb15e0b6281ba66",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-tricep-kickback/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Кикбэк с нижнего блока: зафиксированное плечо, разгибание предплечья за счёт трицепса. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-tricep-kickback/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Кикбэк с нижнего блока: зафиксированное плечо, разгибание предплечья за счёт трицепса. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-tricep-kickback/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-twisting-standing-high-row",
+      "source_path": "assets/work/back/cable-twisting-standing-high-row.json",
+      "source_blob_sha": "5892857d0f12e272f51f10190de10305d8edc427",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "obliques"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "trapezius",
+            "teres_major",
+            "rhomboids",
+            "brachioradialis",
+            "brachialis",
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-twisting-standing-high-row/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: установлены конкретные компоненты по названию и инструкции. Высокая тяга с поворотом корпуса задействует широчайшие и косые как двигатели, синергистов тяги/поворота и разгибатели спины в стабилизации. В описании прямо указана альтернатива cable or resistance band. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-twisting-standing-high-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Высокая тяга с поворотом корпуса задействует широчайшие и косые как двигатели, синергистов тяги/поворота и разгибатели спины в стабилизации. В описании прямо указана альтернатива cable or resistance band. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-twisting-standing-high-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Высокая тяга с поворотом корпуса задействует широчайшие и косые как двигатели, синергистов тяги/поворота и разгибатели спины в стабилизации. В описании прямо указана альтернатива cable or resistance band."
+        }
+      ],
+      "notes": "Исходный непомерно длинный список содержит TFL без канонического ID и дубли erector spinae; не перенесены без проверки."
+    },
+    {
+      "id": "fitnessprogramer:cable-two-arm-curl-on-incline-bench",
+      "source_path": "assets/work/biceps/cable-two-arm-curl-on-incline-bench.json",
+      "source_blob_sha": "706bbede145b6f77710813170933947af80d466b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-two-arm-curl-on-incline-bench/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: установлены конкретные компоненты по названию и инструкции. Сгибание обеих рук лёжа/сидя на наклонной скамье; бицепс главный, плечевые сгибатели содействуют, наклонная скамья указана названием. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-two-arm-curl-on-incline-bench/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Сгибание обеих рук лёжа/сидя на наклонной скамье; бицепс главный, плечевые сгибатели содействуют, наклонная скамья указана названием. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-two-arm-curl-on-incline-bench/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-upper-chest-crossovers",
+      "source_path": "assets/work/chest/cable-upper-chest-crossovers.json",
+      "source_blob_sha": "f38fe3519b75ce9d12c17987ce51bde344475a9f",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "biceps_short_head"
+          ],
+          "stabilizers": [
+            "brachialis",
+            "triceps_brachii",
+            "forearm_flexors",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upper-chest-crossovers/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Исходник указывает pectoralis sternal как основной; high-to-low траектория из инструкции согласуется с грудной средней/нижней частью, а не с названием Upper Chest. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upper-chest-crossovers/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Исходник указывает pectoralis sternal как основной; high-to-low траектория из инструкции согласуется с грудной средней/нижней частью, а не с названием Upper Chest. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upper-chest-crossovers/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Исходник указывает pectoralis sternal как основной; high-to-low траектория из инструкции согласуется с грудной средней/нижней частью, а не с названием Upper Chest."
+        }
+      ],
+      "notes": "Противоречие: название Upper Chest Crossovers, но тросы установлены высоко и руки ведутся вниз, к передней поверхности тела. Не делать clavicular primary до визуального просмотра GIF; источником biceps brachii дополнительно назван стабилизатор, но не дублируем родительскую группу с biceps_short_head."
+    },
+    {
+      "id": "fitnessprogramer:cable-upright",
+      "source_path": "assets/work/shoulders/cable-upright.json",
+      "source_blob_sha": "faa40cc558353d6f172b44c80176b9cb6f0c1f70",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "trapezius",
+            "supraspinatus",
+            "deltoid_anterior",
+            "brachialis",
+            "brachioradialis",
+            "biceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upright/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Тяга блока к подбородку: lateral deltoid и trapezius главные двигатели плечевого пояса; прочие синергисты и levator scapulae указаны источником. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upright/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Тяга блока к подбородку: lateral deltoid и trapezius главные двигатели плечевого пояса; прочие синергисты и levator scapulae указаны источником. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upright/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Тяга блока к подбородку: lateral deltoid и trapezius главные двигатели плечевого пояса; прочие синергисты и levator scapulae указаны источником."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-upright/"
+          ],
+          "confidence": "high",
+          "reason": "Категория проанализирована по биомеханике: Тяга блока к подбородку: lateral deltoid и trapezius главные двигатели плечевого пояса; прочие синергисты и levator scapulae указаны источником."
+        }
+      ],
+      "notes": "Исходные infraspinatus и teres minor не подтверждены как синергисты вертикальной тяги; category shoulders подтверждена несмотря на участие трапеций."
+    },
+    {
+      "id": "fitnessprogramer:cable-y-raise",
+      "source_path": "assets/work/shoulders/cable-y-raise.json",
+      "source_blob_sha": "8dc983648af90528a0df3307a748ddd7942bfb91",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "trapezius_lower",
+            "trapezius_upper",
+            "serratus_anterior",
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-y-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Y-подъём рук по диагонали на блоках: плечо отводят средняя и передняя дельтовидные; лопатка вращается трапецией/зубчатой, надостная содействует. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-y-raise/",
+            "https://letsworkout.app/exercises/cable-y-raise/",
+            "https://www.kovofitness.com/exercises/cable-standing-y-raise"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Y-подъём рук по диагонали на блоках: плечо отводят средняя и передняя дельтовидные; лопатка вращается трапецией/зубчатой, надостная содействует. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-y-raise/",
+            "https://letsworkout.app/exercises/cable-y-raise/",
+            "https://www.kovofitness.com/exercises/cable-standing-y-raise"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-y-raise/",
+            "https://letsworkout.app/exercises/cable-y-raise/",
+            "https://www.kovofitness.com/exercises/cable-standing-y-raise"
+          ],
+          "confidence": "medium",
+          "reason": "Категория проанализирована по биомеханике: Y-подъём рук по диагонали на блоках: плечо отводят средняя и передняя дельтовидные; лопатка вращается трапецией/зубчатой, надостная содействует."
+        }
+      ],
+      "notes": "Специализированные источники расходятся в распределении акцента между нижней трапецией и дельтой; нужна визуальная проверка конкретной траектории GIF. category shoulders пока соответствует названию и движению."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-cable-row",
+      "source_path": "assets/work/back/close-grip-cable-row.json",
+      "source_blob_sha": "6bc9bd9cde93eb5fb2e87f764657df4dfaa47800",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "trapezius",
+            "teres_major",
+            "rhomboids",
+            "brachioradialis",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-cable-row/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Узкая горизонтальная тяга: широчайшая и мышцы сведения лопатки, сгибатели локтя; разгибатели спины удерживают торс. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-cable-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Узкая горизонтальная тяга: широчайшая и мышцы сведения лопатки, сгибатели локтя; разгибатели спины удерживают торс. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-cable-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Узкая горизонтальная тяга: широчайшая и мышцы сведения лопатки, сгибатели локтя; разгибатели спины удерживают торс."
+        }
+      ],
+      "notes": "В исходнике rotator cuff и levator scapulae указаны синергистами без объяснения точной динамической роли; не перенесены."
+    },
+    {
+      "id": "fitnessprogramer:cross-cable-face-pull",
+      "source_path": "assets/work/shoulders/cross-cable-face-pull.json",
+      "source_blob_sha": "ce4df387c071c398e12eab6d56eecc140c5cf04d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "deltoid_lateral",
+            "trapezius",
+            "rhomboids",
+            "brachioradialis",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-cable-face-pull/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Перекрёстный face pull: задняя дельта и вращательная манжета, трапеция/ромбовидные, сгибатели локтя; исходная карточка подтверждает erector spinae как стабилизатор. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-cable-face-pull/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Перекрёстный face pull: задняя дельта и вращательная манжета, трапеция/ромбовидные, сгибатели локтя; исходная карточка подтверждает erector spinae как стабилизатор. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-cable-face-pull/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Перекрёстный face pull: задняя дельта и вращательная манжета, трапеция/ромбовидные, сгибатели локтя; исходная карточка подтверждает erector spinae как стабилизатор."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cross-cable-face-pull/"
+          ],
+          "confidence": "high",
+          "reason": "Категория проанализирована по биомеханике: Перекрёстный face pull: задняя дельта и вращательная манжета, трапеция/ромбовидные, сгибатели локтя; исходная карточка подтверждает erector spinae как стабилизатор."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:decline-cable-fly",
+      "source_path": "assets/work/chest/decline-cable-fly.json",
+      "source_blob_sha": "f6e27a7871e53c81daac0fc205df5d03828f562c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "biceps_brachii",
+            "triceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-cable-fly/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Сведение ручек сверху вниз к бёдрам указывает на нижнюю часть большой грудной мышцы, в поддержке участвуют передняя дельта и руки. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Сведение ручек сверху вниз к бёдрам указывает на нижнюю часть большой грудной мышцы, в поддержке участвуют передняя дельта и руки. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Сведение ручек сверху вниз к бёдрам указывает на нижнюю часть большой грудной мышцы, в поддержке участвуют передняя дельта и руки."
+        }
+      ],
+      "notes": "В исходнике target пуст и triceps записан в synergists; при почти неподвижном локте его функция ближе к удержанию угла, поэтому переведён в стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:double-cable-front-raise",
+      "source_path": "assets/work/shoulders/double-cable-front-raise.json",
+      "source_blob_sha": "16a065750776bf23e9d6e3b82c0c621469e747cc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "trapezius",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-cable-front-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Двусторонний фронтальный подъём: источник описывает главную переднюю дельту, синергистов и Wrist Extensors, нормализованные до канонических групп. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-cable-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Двусторонний фронтальный подъём: источник описывает главную переднюю дельту, синергистов и Wrist Extensors, нормализованные до канонических групп. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-cable-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизация: Двусторонний фронтальный подъём: источник описывает главную переднюю дельту, синергистов и Wrist Extensors, нормализованные до канонических групп."
+        }
+      ],
+      "notes": "Levatos Scapula не скопирован в стабилизаторы без анатомического подтверждения."
+    },
+    {
+      "id": "fitnessprogramer:double-cable-neutral-grip-lat-pulldown-on-floor",
+      "source_path": "assets/work/back/double-cable-neutral-grip-lat-pulldown-on-floor.json",
+      "source_blob_sha": "03c419e85343e07c87e97e42d1f04e02d8e45396",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "biceps_brachii",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-cable-neutral-grip-lat-pulldown-on-floor/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. Сидя на полу, два верхних блока тянут нейтральным хватом: широчайшая основной двигатель, большая круглая и локтевые сгибатели — синергисты. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-cable-neutral-grip-lat-pulldown-on-floor/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: Сидя на полу, два верхних блока тянут нейтральным хватом: широчайшая основной двигатель, большая круглая и локтевые сгибатели — синергисты. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-cable-neutral-grip-lat-pulldown-on-floor/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ],
+      "notes": "Источник не содержит анатомии и инструкции; отдельные стабилизаторы не установлены."
+    },
+    {
+      "id": "fitnessprogramer:half-kneeling-cable-external-rotation",
+      "source_path": "assets/work/shoulders/half-kneeling-cable-external-rotation.json",
+      "source_blob_sha": "7d581cc903d0bb95f4d3fd28e5f7444dc9d6bd66",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-cable-external-rotation/"
+          ],
+          "confidence": "high",
+          "reason": "Оборудование: блок cable подтверждён названием и источником. В полуколене выполняется наружная ротация плеча; подостная и малая круглая осуществляют основной момент наружной ротации. Full Gym не является конкретным типом."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-cable-external-rotation/",
+            "https://www.ncbi.nlm.nih.gov/books/NBK546633/"
+          ],
+          "confidence": "medium",
+          "reason": "Роли мышц: В полуколене выполняется наружная ротация плеча; подостная и малая круглая осуществляют основной момент наружной ротации. При отсутствующих достоверных данных other используется как специальный маркер."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-cable-external-rotation/",
+            "https://www.ncbi.nlm.nih.gov/books/NBK546633/"
+          ],
+          "confidence": "low",
+          "reason": "Невозможно достоверно выделить конкретные мышцы-стабилизаторы указанной версии; временный маркер other."
+        }
+      ],
+      "notes": "В исходнике пустая анатомия; синергисты/стабилизаторы именно положения в полуколене не подтверждены."
     }
   ]
 }
