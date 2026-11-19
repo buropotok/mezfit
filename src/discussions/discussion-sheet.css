@@ -352,6 +352,7 @@
   padding: 0;
   background: transparent;
   color: white;
+  overflow: hidden;
 }
 
 .discussion-media__open > :is(img, video) {
@@ -361,6 +362,33 @@
   min-width: min(7rem, 66.666vw);
   min-height: 4rem;
   object-fit: contain;
+}
+
+.discussion-media__orientation-controls {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: calc(12px + var(--discussion-media-safe-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: rgb(0 0 0 / 0.75);
+}
+
+.discussion-media__orientation-time {
+  flex-shrink: 0;
+}
+
+.discussion-media__orientation-seek {
+  flex: 1;
+  min-width: 0;
+}
+
+.discussion-media__orientation-error {
+  position: absolute;
+  bottom: 100%;
+  inset-inline: 0;
+  background: #000;
 }
 
 .discussion-media__play,

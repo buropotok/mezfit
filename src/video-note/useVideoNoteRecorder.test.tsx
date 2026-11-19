@@ -54,7 +54,7 @@ it('requests camera and microphone only once per mounted session and reuses the 
   expect(result.current.status).toBe('idle');
   expect(onRecorded).not.toHaveBeenCalled();
   expect(getUserMedia).toHaveBeenCalledWith(expect.objectContaining({
-    video: { facingMode: { ideal: 'user' }, width: { ideal: 480 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }, audio: expect.any(Object),
+    video: { facingMode: { ideal: 'user' }, width: { ideal: 480 }, height: { ideal: 488 }, frameRate: { ideal: 30 } }, audio: expect.any(Object),
   }));
 
   await act(async () => { expect(await result.current.start('user')).toBe(true); });

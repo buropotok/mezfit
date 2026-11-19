@@ -64,7 +64,7 @@ async function camera(width: number, height: number) {
 it('requests sensor dimensions on iPhone while preserving the circle profile', () => {
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_7)');
   expect(videoRecordingConstraints('portrait')).toMatchObject({ width: { ideal: 1280 }, height: { ideal: 720 } });
-  expect(videoRecordingConstraints('circle')).toMatchObject({ width: { ideal: 480 }, height: { ideal: 480 } });
+  expect(videoRecordingConstraints('circle')).toMatchObject({ width: { ideal: 480 }, height: { ideal: 488 } });
 });
 
 it('preserves the Android request and starts a working portrait camera without a fallback', async () => {

@@ -4,6 +4,8 @@ import { FloatingActionButton, IconButton, Text } from '../ui';
 import { DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { copyAnnotationImage } from './discussion-annotation';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
+import { useVideoOrientation } from '../media/useVideoOrientation';
+import { OrientedVideoControls } from './OrientedVideoControls';
 
 export interface DiscussionMediaSource {
   src: string;
@@ -47,6 +49,8 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   );
   const crossOrigin = mode === 'viewer' && !autoPlay && !usePlainSource && mediaSrc?.startsWith('https:')
     ? 'anonymous' : undefined;
+  const orientation = useVideoOrientation(player, type === 'video' ? mediaSrc : undefined, 'contain',
+    `${usePlainSource}:${failed}:${retry}:${mode}`);
   function handleError() {
     setImageReady(false);
     setFrameReady(false);
@@ -70,7 +74,9 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     const seconds = video?.currentTime;
     try {
       setCaptureError(false);
-      onAnnotate(copyAnnotationImage(source), seconds);
+      const image = video && orientation.rotation
+        ? copyAnnotationImage(source, orientation.rotation) : copyAnnotationImage(source);
+      onAnnotate(image, seconds);
     } catch {
       setCaptureError(true);
     }
@@ -81,7 +87,8 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     ? <img key={String(usePlainSource)} ref={photo} crossOrigin={crossOrigin} src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onLoad={() => setImageReady(true)} onError={handleError} />
     : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
-        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail} controlsList="nofullscreen" preload={mode === 'viewer' ? 'auto' : 'metadata'}
+        style={orientation.style}
+        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail && !orientation.rotation} controlsList="nofullscreen" preload={mode === 'viewer' ? 'auto' : 'metadata'}
         onLoadedData={() => setFrameReady(true)} onSeeking={() => setFrameReady(false)} onSeeked={() => setFrameReady(true)}
         onLoadedMetadata={event => {
           const video = event.currentTarget;
@@ -118,6 +125,8 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
         </Text>}
       </>}
     </a> : content}
+    {!thumbnail && !failed && orientation.rotation !== 0 &&
+      <OrientedVideoControls player={player} source={mediaSrc} />}
     {onComment && paused && !failed && <div className="discussion-media__comment" data-hint={showCommentHint || undefined}>
       {showCommentHint && <Text variant="footnote" className="discussion-media__comment-hint">
         Нажмите, чтобы прокомментировать стопкадр.

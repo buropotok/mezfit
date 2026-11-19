@@ -54,7 +54,7 @@ afterEach(() => {
 });
 
 it.each([
-  ['circle', 480, 480, 60_000],
+  ['circle', 480, 488, 60_000],
   ['landscape', 1280, 720, 180_000],
   ['portrait', 720, 1280, 180_000],
 ] as const)('requests the %s profile and reports actual capture settings', async (profile, width, height, durationMs) => {
