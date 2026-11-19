@@ -396,7 +396,7 @@
     {
       "id": "fitnessprogramer:barbell-glute-bridge-two-legs-on-bench",
       "source_path": "assets/work/hip/barbell-glute-bridge-two-legs-on-bench.json",
-      "source_blob_sha": "e476d24e6fe7db5608042ff72887f164c3c33a5",
+      "source_blob_sha": "e476d24e6fe7db5608042ff72887f164c3c33a5c",
       "status": "partial",
       "category_verified": true,
       "patch": {
@@ -864,7 +864,7 @@
     {
       "id": "fitnessprogramer:barbell-pin-squat",
       "source_path": "assets/work/hip/barbell-pin-squat.json",
-      "source_blob_sha": "b71d913efaff87be1d3db5b83ded8fe6628a4",
+      "source_blob_sha": "b71d913efaff87be1d3db5b83ded8fe6628a4e09",
       "status": "verified",
       "category_verified": true,
       "patch": {
@@ -3684,7 +3684,7 @@
           ],
           "secondary": [
             "gastrocnemius",
-            "triceps_brachii"
+            "soleus"
           ],
           "stabilizers": [
             "rectus_abdominis",
