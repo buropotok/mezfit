@@ -1778,6 +1778,446 @@
         }
       ],
       "notes": "Висячие дворники — перенос ног в стороны на турнике. Движение корпуса и хвата отделено от вспомогательной роли сгибателей бедра."
+    },
+    {
+      "id": "fitnessprogramer:happy-baby-pose",
+      "source_path": "assets/work/hip/happy-baby-pose.json",
+      "source_blob_sha": "9de414fa1d100877d076acd602187bb26deb0f8c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/happy-baby-pose/"
+          ],
+          "confidence": "medium",
+          "reason": "Happy Baby — статическая йога-растяжка области таза; растягиваемые ткани не идентичны активным силовым мышцам."
+        }
+      ],
+      "notes": "Happy Baby — статическая йога-растяжка области таза; растягиваемые ткани не идентичны активным силовым мышцам."
+    },
+    {
+      "id": "fitnessprogramer:hawaiian-squat",
+      "source_path": "assets/work/leg/hawaiian-squat.json",
+      "source_blob_sha": "512ae0c9dba785d77fcf9463882a5945fcc194ee",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hawaiian-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Hawaiian squat — балансирующее одностороннее приседание; исходные главные quadriceps и синергисты сохраняются, уточняются стабилизаторы таза."
+        }
+      ],
+      "notes": "Hawaiian squat — балансирующее одностороннее приседание; исходные главные quadriceps и синергисты сохраняются, уточняются стабилизаторы таза."
+    },
+    {
+      "id": "fitnessprogramer:heaving-snatch-balance",
+      "source_path": "assets/work/full-body/heaving-snatch-balance.json",
+      "source_blob_sha": "8ba2bcbda5fa12b717e8d7617a620057a619482f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/heaving-snatch-balance/"
+          ],
+          "confidence": "medium",
+          "reason": "Heaving snatch balance — взрывное движение под штангу со стабилизацией веса над головой; без GIF невозможно детализировать отдельные фазы."
+        }
+      ],
+      "notes": "Heaving snatch balance — взрывное движение под штангу со стабилизацией веса над головой; без GIF невозможно детализировать отдельные фазы."
+    },
+    {
+      "id": "fitnessprogramer:heel-elevated-goblet-squat",
+      "source_path": "assets/work/hip/heel-elevated-goblet-squat.json",
+      "source_blob_sha": "eae95b915328cf2b75d7d89b1e424f62d3108537",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "kettlebell",
+          "weight plate",
+          "squat-wedge"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/heel-elevated-goblet-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция: goblet squat с гантелью ИЛИ гирей, пятки на блинах ИЛИ клине; все указанные виды — подтверждённые альтернативы, а не одновременные обязательные предметы."
+        }
+      ],
+      "notes": "Инструкция: goblet squat с гантелью ИЛИ гирей, пятки на блинах ИЛИ клине; все указанные виды — подтверждённые альтернативы, а не одновременные обязательные предметы."
+    },
+    {
+      "id": "fitnessprogramer:heel-touch",
+      "source_path": "assets/work/abs/heel-touch.json",
+      "source_blob_sha": "d70954b4ad5dd5b02917a6f7c4b2acf10070e408",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/heel-touch/"
+          ],
+          "confidence": "medium",
+          "reason": "Heel touch — боковое скручивание с тянущейся к пятке рукой, obliques исходного target сохранены; прямой пресс помогает сгибанию туловища."
+        }
+      ],
+      "notes": "Heel touch — боковое скручивание с тянущейся к пятке рукой, obliques исходного target сохранены; прямой пресс помогает сгибанию туловища."
+    },
+    {
+      "id": "fitnessprogramer:heel-touch-side-kick-squat",
+      "source_path": "assets/work/leg/heel-touch-side-kick-squat.json",
+      "source_blob_sha": "8be69781f5d17f6c87c14cc5edeea9097994d034",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/heel-touch-side-kick-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Комбинация приседания, касания пятки и бокового удара ногой; без пошаговой техники отдельные фазы требуют визуальной проверки."
+        }
+      ],
+      "notes": "Комбинация приседания, касания пятки и бокового удара ногой; без пошаговой техники отдельные фазы требуют визуальной проверки."
+    },
+    {
+      "id": "fitnessprogramer:hell-slide",
+      "source_path": "assets/work/abs/hell-slide.json",
+      "source_blob_sha": "ad1bf152fa67a5f8064ed7b00a764bc407be955c",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "primary_category": "core",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hell-slide/"
+          ],
+          "confidence": "low",
+          "reason": "Hell Slide фактически описывает heel slide: сгибание колена скольжением пятки без смещения таза. Тренировка контроля таза/поясницы, а не силовое упражнение на заднюю поверхность бедра; исходные Multifi­dus и Calves некорректно использовать как primary."
+        }
+      ],
+      "notes": "Hell Slide фактически описывает heel slide: сгибание колена скольжением пятки без смещения таза. Тренировка контроля таза/поясницы, а не силовое упражнение на заднюю поверхность бедра; исходные Multifi­dus и Calves некорректно использовать как primary."
+    },
+    {
+      "id": "fitnessprogramer:high-chest-fly-with-resistance-band",
+      "source_path": "assets/work/chest/high-chest-fly-with-resistance-band.json",
+      "source_blob_sha": "d753e51ac9ba52c6ead98608ee33953d6fbb52b3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-chest-fly-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "High chest fly с эластичной лентой; исходный Gymstick не доказан как необходимый при этой версии, оставлена конкретная резинка."
+        }
+      ],
+      "notes": "High chest fly с эластичной лентой; исходный Gymstick не доказан как необходимый при этой версии, оставлена конкретная резинка."
+    },
+    {
+      "id": "fitnessprogramer:high-knee-lunge-on-bosu-ball",
+      "source_path": "assets/work/hip/high-knee-lunge-on-bosu-ball.json",
+      "source_blob_sha": "a20eac2ca0fdf01112bd86a2dd5518f27a6ae4af",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bosu-balance-trainer"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-knee-lunge-on-bosu-ball/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник явно описывает обратный выпад на плоской стороне BOSU с высоким подъёмом колена; это полусфера, не обычный фитбол."
+        }
+      ],
+      "notes": "Источник явно описывает обратный выпад на плоской стороне BOSU с высоким подъёмом колена; это полусфера, не обычный фитбол."
+    },
+    {
+      "id": "fitnessprogramer:high-knee-run",
+      "source_path": "assets/work/hip/high-knee-run.json",
+      "source_blob_sha": "7074c6b2a7cc31ea602e9f6830869cf6de80503d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-knee-run/"
+          ],
+          "confidence": "medium",
+          "reason": "High Knee Run — кардиопрыжки с высоким подъёмом коленей; исходный перечень разных мышц не подтверждает иерархию силовых ролей."
+        }
+      ],
+      "notes": "High Knee Run — кардиопрыжки с высоким подъёмом коленей; исходный перечень разных мышц не подтверждает иерархию силовых ролей."
+    },
+    {
+      "id": "fitnessprogramer:high-knee-skips",
+      "source_path": "assets/work/abs/high-knee-skips.json",
+      "source_blob_sha": "ec7ff2f4e9461b97bff8eceb330006bb521ee39e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-knee-skips/"
+          ],
+          "confidence": "medium",
+          "reason": "High Knee Skips — прыжковая кардио-координация, категория core из исходного каталога не соответствует цели. Не приписываются силовые primary."
+        }
+      ],
+      "notes": "High Knee Skips — прыжковая кардио-координация, категория core из исходного каталога не соответствует цели. Не приписываются силовые primary."
+    },
+    {
+      "id": "fitnessprogramer:high-knee-squat",
+      "source_path": "assets/work/abs/high-knee-squat.json",
+      "source_blob_sha": "829c02e723f3da91a6d0299b815b8668e92ede13",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "primary_category": "legs",
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-knee-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Название указывает на squat с подъёмом колена, но техника не описана: legs — предварительная категория, подлежит визуальной проверке."
+        }
+      ],
+      "notes": "Название указывает на squat с подъёмом колена, но техника не описана: legs — предварительная категория, подлежит визуальной проверке."
     }
   ]
 }
