@@ -1,0 +1,116 @@
+{
+  "batch_id": "B010",
+  "proposals": [
+    {
+      "id": "gymnastic-rings",
+      "label_ru": "Гимнастические кольца",
+      "definition_ru": "Пара подвесных гимнастических колец на регулируемых стропах для тяги в наклоне и других упражнений; кольца отличаются от рукоятей подвесного тренажёра TRX.",
+      "exercise_ids": [
+        "fitnessprogramer:ring-inverted-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ring-inverted-row/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "trx",
+        "suspension trainer",
+        "gymnastic rings"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "cable-rope-handle",
+      "label_ru": "Канатная рукоять для блочного тренажёра",
+      "definition_ru": "Короткая двухконцевая канатная рукоятка с креплением к тросовому блоку для pushdown и straight-arm pulldown; не канат для лазания.",
+      "exercise_ids": [
+        "fitnessprogramer:rope-pushdown",
+        "fitnessprogramer:rope-straight-arm-pulldown"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/rope-pushdown/",
+        "https://fitnessprogramer.com/exercise/rope-straight-arm-pulldown/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "rope",
+        "cable",
+        "cable machine",
+        "triceps rope attachment"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "seated-back-extension-machine",
+      "label_ru": "Сидячий тренажёр для разгибания спины",
+      "definition_ru": "Специализированный силовой тренажёр с сиденьем и подвижным рычажным/грузоблочным сопротивлением разгибанию позвоночника; не римский стул и не generic machine.",
+      "exercise_ids": [
+        "fitnessprogramer:seated-back-extension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/seated-back-extension/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "roman-chair",
+        "machine",
+        "back extension machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-curl-machine",
+      "label_ru": "Тренажёр для сгибания ног",
+      "definition_ru": "Специализированный сидячий или лежачий тренажёр с рычагом сопротивления для сгибания коленного сустава; совпадает с самостоятельным предложением B008.",
+      "exercise_ids": [
+        "fitnessprogramer:seated-leg-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/seated-leg-curl/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "seated leg curl",
+        "lying leg curl"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-extension-machine",
+      "label_ru": "Тренажёр для разгибания ног",
+      "definition_ru": "Специализированный сидячий тренажёр с рычагом и валиком под голень для разгибания колена; совпадает с предложением B008.",
+      "exercise_ids": [
+        "fitnessprogramer:single-leg-extension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/single-leg-extension/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "single-leg extension",
+        "leg extension"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-press-machine",
+      "label_ru": "Тренажёр для жима ногами",
+      "definition_ru": "Силовой тренажёр с опорной спинкой и платформой для выполнения жима ногами, в том числе одной ногой; совпадает с предложением B008.",
+      "exercise_ids": [
+        "fitnessprogramer:single-leg-press"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/single-leg-press/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "single leg press",
+        "horizontal-leg-press-machine"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
