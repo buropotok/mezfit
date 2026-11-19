@@ -149,8 +149,10 @@ function LocalWorkoutStartProvider({ role, enabled = true, onStarted, children }
     if (!repository) return Promise.reject(new Error('Запуск тренировки недоступен'));
     // Direct program starts follow the actor's mode: Coach leads a coached session,
     // Client starts independent FACT. Both paths leave the source PLAN unchanged.
-    return runStart(() => input.sourceDayStart && role === 'client'
-      ? repository.createIndependentFromProgramDay(input.athleteUserId, input.programId, input.dayId)
+    return runStart(() => input.sourceDayStart
+      ? role === 'client'
+        ? repository.createIndependentFromProgramDay(input.athleteUserId, input.programId, input.dayId)
+        : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId, { format: 'coached' })
       : repository.createForAthlete(input.athleteUserId, input.programId, input.dayId), undefined, isCurrent);
   }, [repository, runStart, role]);
   const showSession = useCallback((id: string) => onStartedRef.current(id), []);
