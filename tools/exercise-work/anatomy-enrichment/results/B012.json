@@ -2466,6 +2466,413 @@
         }
       ],
       "notes": "Reverse-grip wide bench press означает жим штанги супинированным хватом; источник не даёт инструкции/анатомии. Акцент на верхней груди требует проверки по GIF."
+    },
+    {
+      "id": "fitnessprogramer:wrist-circles-stretch",
+      "source_path": "assets/work/forearm/wrist-circles-stretch.json",
+      "source_blob_sha": "15a57f461b18fe55ef91501284660c47a7e17d3b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wrist-circles-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Dynamic wrist stretches подразумевают круговые активные движения кисти, исходный список target прямо включает сгибатели и разгибатели запястья. Отдельных синергистов/стабилизаторов источник не устанавливает."
+        }
+      ],
+      "notes": "Dynamic wrist stretches подразумевают круговые активные движения кисти, исходный список target прямо включает сгибатели и разгибатели запястья. Отдельных синергистов/стабилизаторов источник не устанавливает."
+    },
+    {
+      "id": "fitnessprogramer:wrist-curl",
+      "source_path": "assets/work/forearm/wrist-curl.json",
+      "source_blob_sha": "fb49f0eb60590e18a015e07f77d111f46c398f7d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wrist-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная карточка прямо разрешает штангу или гантель; при сгибании запястья prime movers — flexor group. Мышцы кисти удерживают снаряд."
+        }
+      ],
+      "notes": "Исходная карточка прямо разрешает штангу или гантель; при сгибании запястья prime movers — flexor group. Мышцы кисти удерживают снаряд."
+    },
+    {
+      "id": "fitnessprogramer:wrist-roller",
+      "source_path": "assets/work/forearm/wrist-roller.json",
+      "source_blob_sha": "731a2465a44c5a968ebf85bb3efc62a956f7a1b8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wrist_roller"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ],
+          "secondary": [
+            "forearm_grip"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "brachialis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wrist-roller/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник подробно описывает специальный валик с шнуром и грузом: вращение рукояти запястьями с подъёмом груза, а не generic Full Gym. Роли предплечья динамические, плечо удерживает руки."
+        }
+      ],
+      "notes": "Источник подробно описывает специальный валик с шнуром и грузом: вращение рукояти запястьями с подъёмом груза, а не generic Full Gym. Роли предплечья динамические, плечо удерживает руки."
+    },
+    {
+      "id": "fitnessprogramer:wrist-rotations",
+      "source_path": "assets/work/forearm/wrist-rotations.json",
+      "source_blob_sha": "bd69a4f6e95946d3412218cc1974595c2d22ebff",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ],
+          "secondary": [
+            "forearm_pronators",
+            "forearm_supinators"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wrist-rotations/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция описывает круги кистью без груза; исходник включает flexors/extensors и pronator/supinators. Вклад пронации/супинации может меняться, стабилизаторы не подтверждены."
+        }
+      ],
+      "notes": "Инструкция описывает круги кистью без груза; исходник включает flexors/extensors и pronator/supinators. Вклад пронации/супинации может меняться, стабилизаторы не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:wrist-stretch",
+      "source_path": "assets/work/forearm/wrist-stretch.json",
+      "source_blob_sha": "11460c8fb66b0dd6cf1834ea4c8bedec33cc311a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wrist-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Wrist Stretch — растяжка тканей запястья без отягощения. Исходный файл без техники; не назначаем растягиваемую мышцу как силовой двигатель."
+        }
+      ],
+      "notes": "Wrist Stretch — растяжка тканей запястья без отягощения. Исходный файл без техники; не назначаем растягиваемую мышцу как силовой двигатель."
+    },
+    {
+      "id": "fitnessprogramer:wrist-ulnar-deviator-and-extensor-stretch",
+      "source_path": "assets/work/forearm/wrist-ulnar-deviator-and-extensor-stretch.json",
+      "source_blob_sha": "a587940f4fcc954b4ec8fbe4e7431bc9facdca0c",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wrist-ulnar-deviator-and-extensor-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Ulnar Deviator and Extensor Stretch — растяжение мышц со стороны локтя/запястья. Нет инструкции, роли двигателей/синергистов/стабилизаторов не доказаны."
+        }
+      ],
+      "notes": "Ulnar Deviator and Extensor Stretch — растяжение мышц со стороны локтя/запястья. Нет инструкции, роли двигателей/синергистов/стабилизаторов не доказаны."
+    },
+    {
+      "id": "fitnessprogramer:z-bar-curl",
+      "source_path": "assets/work/biceps/z-bar-curl.json",
+      "source_blob_sha": "d2581182f5d52b0a19461966d6cdb116f73350d5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "secondary": [
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/z-bar-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Z-Bar имеет изогнутый EZ-гриф, а не обычную прямую штангу. Полусупинированный хват включает бицепс и плечевую мышцу, исходный динамический стабилизатор Flexors нормализован."
+        }
+      ],
+      "notes": "Z-Bar имеет изогнутый EZ-гриф, а не обычную прямую штангу. Полусупинированный хват включает бицепс и плечевую мышцу, исходный динамический стабилизатор Flexors нормализован."
+    },
+    {
+      "id": "fitnessprogramer:z-bar-preacher-curl",
+      "source_path": "assets/work/biceps/z-bar-preacher-curl.json",
+      "source_blob_sha": "f144b5ecb1c2a7a15e37437046a2e4ce6bafea3c",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "secondary": [
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/z-bar-preacher-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция прямо подтверждает EZ-гриф и наклонную опору скамьи Скотта; оба инструмента нужны. Исходный generic Barbell исправлен."
+        }
+      ],
+      "notes": "Инструкция прямо подтверждает EZ-гриф и наклонную опору скамьи Скотта; оба инструмента нужны. Исходный generic Barbell исправлен."
+    },
+    {
+      "id": "fitnessprogramer:zercher-carry",
+      "source_path": "assets/work/full-body/zercher-carry.json",
+      "source_blob_sha": "b125953df8f4bc05cd5d22a9cb73d78b9cbf9a48",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis",
+            "biceps_brachii",
+            "brachialis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/zercher-carry/"
+          ],
+          "confidence": "medium",
+          "reason": "Перенос штанги в сгибах локтей включает шаговую работу ног и сильную изометрию корпуса и сгибателей локтя. Исходное оборудование Barbell корректно, дополнительных тренажёров не требуется."
+        }
+      ],
+      "notes": "Перенос штанги в сгибах локтей включает шаговую работу ног и сильную изометрию корпуса и сгибателей локтя. Исходное оборудование Barbell корректно, дополнительных тренажёров не требуется."
+    },
+    {
+      "id": "fitnessprogramer:zercher-deadlift",
+      "source_path": "assets/work/hip/zercher-deadlift.json",
+      "source_blob_sha": "448a25b4aae526b619e1b6a2bec75fdac8e86be6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "biceps_femoris_long"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/zercher-deadlift/"
+          ],
+          "confidence": "low",
+          "reason": "Зерчер-тяга — подъём штанги в сгибах локтей с разгибанием колена и тазобедренного сустава; исходной техники нет, проверить направление тяги/упор по GIF."
+        }
+      ],
+      "notes": "Зерчер-тяга — подъём штанги в сгибах локтей с разгибанием колена и тазобедренного сустава; исходной техники нет, проверить направление тяги/упор по GIF."
     }
   ]
 }
