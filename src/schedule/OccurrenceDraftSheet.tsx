@@ -207,18 +207,8 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
   const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
   const [setDeletionNavigation, setSetDeletionNavigation] = useState<NavigationContext | null>(null);
+  const [selectionNavigation, setSelectionNavigation] = useState<NavigationContext | null>(null);
   const hasNavigation = useRef(false);
-  useEffect(() => {
-    if (!onNavigationContextChange) return;
-    const report = onNavigationContextChange;
-    const current = setDeletionNavigation ?? discussionNavigation ?? editorNavigation;
-    // Multiple collapsed planned cards share one host: only the open child may own Back.
-    if (current) { hasNavigation.current = true; report(current); }
-    else if (hasNavigation.current) { hasNavigation.current = false; report(null); }
-    return () => {
-      if (hasNavigation.current) { hasNavigation.current = false; report(null); }
-    };
-  }, [onNavigationContextChange, setDeletionNavigation, discussionNavigation, editorNavigation]);
   const discussionTarget = draft ? plannedDiscussionTarget(draft) : null;
   const getDiscussionTarget = (exerciseId: string, setId?: string): EntityDiscussionTarget | null => {
     if (!draft) return null;
@@ -285,12 +275,33 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [replacementChoice, setReplacementChoice] = useState<{
     exerciseId: string; snapshot: CloudProgramExerciseSnapshot; compatible: boolean;
   } | null>(null);
+  const dismissExercisePicker = useCallback(() => {
+    setExercisePickerOpened(false); setReplaceExerciseId(null);
+  }, []);
   const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string; trackingType: ExerciseTrackingType } | null>(null);
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!onNavigationContextChange) return;
+    const report = onNavigationContextChange;
+    const replacementNavigation: NavigationContext | null = replacementChoice
+      ? { level: 2, title: 'Замена упражнения', onBack: () => {
+        if (busy) return;
+        setReplacementChoice(null); setReplaceExerciseId(null);
+      } } : null;
+    const current = setDeletionNavigation ?? discussionNavigation ?? replacementNavigation
+      ?? selectionNavigation ?? editorNavigation;
+    // Multiple collapsed planned cards share one host: only the open child may own Back.
+    if (current) { hasNavigation.current = true; report(current); }
+    else if (hasNavigation.current) { hasNavigation.current = false; report(null); }
+    return () => {
+      if (hasNavigation.current) { hasNavigation.current = false; report(null); }
+    };
+  }, [onNavigationContextChange, setDeletionNavigation, discussionNavigation, selectionNavigation,
+    replacementChoice, busy, editorNavigation]);
   const starting = useRef(false);
   const startAlive = useRef(true);
   useEffect(() => {
@@ -809,7 +820,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         personalCatalogueRole={draft.coachUserId === draft.actorUserId ? 'coach' : 'client'}
         mode={replaceExerciseId ? 'replace' : 'add'} saving={busy}
         onConfirm={ids => { void selectExercises(ids); }}
-        onClose={() => { setExercisePickerOpened(false); setReplaceExerciseId(null); }} />
+        onClose={dismissExercisePicker} onNavigationContextChange={setSelectionNavigation} />
       <ExerciseReplacementDialog opened={replacementChoice !== null}
         compatible={replacementChoice?.compatible ?? false} busy={busy} error={error}
         onCancel={() => { setReplacementChoice(null); setReplaceExerciseId(null); }}
