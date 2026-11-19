@@ -1,0 +1,430 @@
+{
+  "schema_version": 1,
+  "batch_id": "B011",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:sit-ups",
+      "source_path": "assets/work/abs/sit-ups.json",
+      "source_blob_sha": "911063cb0c57c59b406d8e02ab55d69c1855be97",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sit-ups/"
+          ],
+          "confidence": "medium",
+          "reason": "Классические sit-ups: исходные rectus abdominis primary и obliques secondary сохранены; поперечная мышца поддерживает корпус."
+        }
+      ],
+      "notes": "Классические sit-ups: исходные rectus abdominis primary и obliques secondary сохранены; поперечная мышца поддерживает корпус."
+    },
+    {
+      "id": "fitnessprogramer:sitting-rotation-hip-stretch",
+      "source_path": "assets/work/hip/sitting-rotation-hip-stretch.json",
+      "source_blob_sha": "3de254316e782203ccae605fe88ef64ec15509ce",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sitting-rotation-hip-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Sitting rotation hip stretch — растяжка тазобедренного сустава сидя; активные силовые мышцы по инструкции не установлены."
+        }
+      ],
+      "notes": "Sitting rotation hip stretch — растяжка тазобедренного сустава сидя; активные силовые мышцы по инструкции не установлены."
+    },
+    {
+      "id": "fitnessprogramer:sitting-wide-leg-adductor-stretch",
+      "source_path": "assets/work/hip/sitting-wide-leg-adductor-stretch.json",
+      "source_blob_sha": "5981cdd9941eb295a982a8474c63b3ee1562f7b0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sitting-wide-leg-adductor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Wide-leg adductor stretch сидя — растяжение приводящих мышц, это не динамическая силовая работа этих мышц."
+        }
+      ],
+      "notes": "Wide-leg adductor stretch сидя — растяжение приводящих мышц, это не динамическая силовая работа этих мышц."
+    },
+    {
+      "id": "fitnessprogramer:skater",
+      "source_path": "assets/work/hip/skater.json",
+      "source_blob_sha": "8616701241e3dead3fb6da8ebb384f5fbc4acdbf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/skater/"
+          ],
+          "confidence": "medium",
+          "reason": "Skater: источник описывает аэробные боковые прыжки с переносом веса; primary cardio вместо legs, нет подтверждённой иерархии силовых ролей."
+        }
+      ],
+      "notes": "Skater: источник описывает аэробные боковые прыжки с переносом веса; primary cardio вместо legs, нет подтверждённой иерархии силовых ролей."
+    },
+    {
+      "id": "fitnessprogramer:skater-squat",
+      "source_path": "assets/work/leg/skater-squat.json",
+      "source_blob_sha": "de898ffe2efae4b2a2025149b7965d85d7564074",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/skater-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Skater squat — одноногий вариант приседания, разгибатели бедра и колена ведут подъём, боковые ягодичные стабилизируют таз."
+        }
+      ],
+      "notes": "Skater squat — одноногий вариант приседания, разгибатели бедра и колена ведут подъём, боковые ягодичные стабилизируют таз."
+    },
+    {
+      "id": "fitnessprogramer:ski-ergometer",
+      "source_path": "assets/work/full-body/ski-ergometer.json",
+      "source_blob_sha": "c30b15c364899a74bbd6bd8c9ac565439ffbcbed",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ski-ergometer"
+        ],
+        "muscles": {
+          "secondary": [
+            "triceps_brachii",
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ski-ergometer/"
+          ],
+          "confidence": "medium",
+          "reason": "Ski ergometer по инструкции — специальный вертикальный лыжный тренажёр с двумя рукоятями и тяговым сопротивлением; широчайшая исходного target сохранена."
+        }
+      ],
+      "notes": "Ski ergometer по инструкции — специальный вертикальный лыжный тренажёр с двумя рукоятями и тяговым сопротивлением; широчайшая исходного target сохранена."
+    },
+    {
+      "id": "fitnessprogramer:ski-step",
+      "source_path": "assets/work/cardio/ski-step.json",
+      "source_blob_sha": "d3468f8e9a3d3b5615d5d8e07b6fb355b2141c5a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ski-step/"
+          ],
+          "confidence": "medium",
+          "reason": "Ski step — ритмическая аэробная имитация лыжного шага, точные силовые роли без инструкции не установлены."
+        }
+      ],
+      "notes": "Ski step — ритмическая аэробная имитация лыжного шага, точные силовые роли без инструкции не установлены."
+    },
+    {
+      "id": "fitnessprogramer:snap-jumps",
+      "source_path": "assets/work/abs/snap-jumps.json",
+      "source_blob_sha": "7a266cd5a477322f40e04899070cf3b56dbbe19d",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/snap-jumps/"
+          ],
+          "confidence": "low",
+          "reason": "Snap jumps в Benefits названы взрывной аэробной плиометрикой, не изолированным прессом. Из-за отсутствия техники точный вариант snap jump требует GIF."
+        }
+      ],
+      "notes": "Snap jumps в Benefits названы взрывной аэробной плиометрикой, не изолированным прессом. Из-за отсутствия техники точный вариант snap jump требует GIF."
+    },
+    {
+      "id": "fitnessprogramer:sphinx-stretch",
+      "source_path": "assets/work/erector-spinae/sphinx-stretch.json",
+      "source_blob_sha": "9294bd8610cf9a0e212ab80a5c4f59fe1c867274",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sphinx-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Sphinx stretch — удерживаемая йога-поза разгибания грудного отдела, erector spinae из исходного target поддерживает позу, а не является подтверждённым динамическим primary."
+        }
+      ],
+      "notes": "Sphinx stretch — удерживаемая йога-поза разгибания грудного отдела, erector spinae из исходного target поддерживает позу, а не является подтверждённым динамическим primary."
+    },
+    {
+      "id": "fitnessprogramer:spider-plank",
+      "source_path": "assets/work/abs/spider-plank.json",
+      "source_blob_sha": "fe043cba31f21016c0b742f7a02c95feb24a040b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/spider-plank/"
+          ],
+          "confidence": "medium",
+          "reason": "Spider plank: косые и прямая мышцы контролируют корпус при колене к локтю, iliopsoas сгибает бедро, serratus stabilizes плечевую опору."
+        }
+      ],
+      "notes": "Spider plank: косые и прямая мышцы контролируют корпус при колене к локтю, iliopsoas сгибает бедро, serratus stabilizes плечевую опору."
+    },
+    {
+      "id": "fitnessprogramer:split-jacks",
+      "source_path": "assets/work/cardio/split-jacks.json",
+      "source_blob_sha": "dda0b9910ed067d126e9b288648f5abec02eb2cc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/split-jacks/"
+          ],
+          "confidence": "medium",
+          "reason": "Split jacks — ритмичная кардио-плиометрика с чередованием ног, не однозначное упражнение на одну мышцу."
+        }
+      ],
+      "notes": "Split jacks — ритмичная кардио-плиометрика с чередованием ног, не однозначное упражнение на одну мышцу."
+    },
+    {
+      "id": "fitnessprogramer:split-squat",
+      "source_path": "assets/work/hip/split-squat.json",
+      "source_blob_sha": "ead73dc8b01a13cb795a5f110740ff7ac0ec23af",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/split-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Исходный split-squat описывает прыжок со сменой ног в воздухе, тогда как название обычно означает статический split squat; нужен визуальный контроль варианта и категории."
+        }
+      ],
+      "notes": "Исходный split-squat описывает прыжок со сменой ног в воздухе, тогда как название обычно означает статический split squat; нужен визуальный контроль варианта и категории."
+    }
+  ]
+}
