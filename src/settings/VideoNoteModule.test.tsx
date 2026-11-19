@@ -140,7 +140,7 @@ describe('VideoNoteModule', () => {
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
     expect(trackStop).toHaveBeenCalledOnce();
     expect(getUserMedia).toHaveBeenLastCalledWith(expect.objectContaining({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 480 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 480 }, height: { ideal: 488 }, frameRate: { ideal: 30 } },
     }));
   });
 
