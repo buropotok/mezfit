@@ -3671,6 +3671,409 @@
           "reason": "Выпад назад с собственным весом: квадрицепс и ягодичная разгибают ногу, средняя ягодичная стабилизирует таз."
         }
       ]
+    },
+    {
+      "id": "fitnessprogramer:reverse-lunge-knee",
+      "source_path": "assets/work/hip/reverse-lunge-knee.json",
+      "source_blob_sha": "c6d17f199fa22b821aa69de42690c6953dd1b6b4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "iliopsoas",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-lunge-knee/"
+          ],
+          "confidence": "medium",
+          "reason": "Выпад назад с последующим подъёмом колена: разгибатели ног и сгибатель бедра, стабилизация таза во время одноопорной фазы."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:reverse-plank",
+      "source_path": "assets/work/abs/reverse-plank.json",
+      "source_blob_sha": "6b004c946fc83b8d4870c58989995ebbe17c341d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "erector_spinae"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "triceps_brachii",
+            "deltoid_posterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-plank/"
+          ],
+          "confidence": "low",
+          "reason": "Обратная статическая планка удерживает разгибание бедра и корпуса на руках; задняя поверхность тела работает изометрически."
+        }
+      ],
+      "notes": "Исходная метка Abs/Hip при основном акценте задней цепи требует GIF-подтверждения категории core vs legs."
+    },
+    {
+      "id": "fitnessprogramer:reverse-plank-kicks",
+      "source_path": "assets/work/abs/reverse-plank-kicks.json",
+      "source_blob_sha": "0f09dbf28df1791c3b24e05e31c461776cc6c7d3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques",
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "triceps_brachii",
+            "deltoid_posterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-plank-kicks/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратная планка с попеременным подъёмом ноги: мышцы корпуса удерживают туловище, сгибатели бедра поднимают ногу."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:reverse-push-up",
+      "source_path": "assets/work/chest/reverse-push-up.json",
+      "source_blob_sha": "cec7216d02813bb98b5764531956fcd5162db914",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Reverse push-up назван вариантом отжимания и отнесён источником к Chest/Triceps, но техника не описана."
+        }
+      ],
+      "notes": "GIF обязателен для уточнения, означает ли reverse обратную постановку рук, положение корпуса или иную траекторию. Маркер other — специальная позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:reverse-wrist-curl",
+      "source_path": "assets/work/forearm/reverse-wrist-curl.json",
+      "source_blob_sha": "3e97a2fefe53917da53d08a0d9bcd6b689f72775",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-wrist-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратное сгибание кистей с прямым или гантельным отягощением: разгибатели предплечья основные; в исходном описании оба инструмента — варианты."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:reverse-wrist-stretch",
+      "source_path": "assets/work/forearm/reverse-wrist-stretch.json",
+      "source_blob_sha": "06807d0c2583f6df6303e81a1a2e4008c962c839",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-wrist-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжение разгибателей запястья не является силовым сгибанием или разгибанием с установленными движителями."
+        }
+      ],
+      "notes": "Растягиваемые forearm_extensors не должны автоматически назначаться основными силовыми мышцами. Маркер other — специальная позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:riding-outdoor-bicycle",
+      "source_path": "assets/work/cardio/riding-outdoor-bicycle.json",
+      "source_blob_sha": "305ac46ee65cf96ac9404d75151eb6c4ce65dbe5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bicycle"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/riding-outdoor-bicycle/"
+          ],
+          "confidence": "medium",
+          "reason": "Езда на уличном велосипеде требует велосипеда, отличного от уже существующего фильтра велотренажёра; это кардио."
+        }
+      ],
+      "notes": "Новый bike-type bicycle не объявляется существующим фильтром приложения. Маркер other — специальная позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:right-cross",
+      "source_path": "assets/work/cardio/right-cross.json",
+      "source_blob_sha": "93c9285d3f49ec81aaf1374798d79f37505b7aa4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/right-cross/"
+          ],
+          "confidence": "medium",
+          "reason": "Right cross — боксёрское движение на координацию/кардио, без установленной нагрузки на отдельные силовые мышечные роли."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:right-uppercut",
+      "source_path": "assets/work/cardio/right-uppercut.json",
+      "source_blob_sha": "83efcfef386423a2ab3e0242847703c40475d244",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/right-uppercut/"
+          ],
+          "confidence": "medium",
+          "reason": "Right uppercut — технический боксёрский удар, не следует подменять двигательные/стабилизирующие роли неподтверждённым списком мышц."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не анатомическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:ring-dips",
+      "source_path": "assets/work/chest/ring-dips.json",
+      "source_blob_sha": "9811dd2f02da173b0b25c64b7f26ba6611489ad1",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymnastic_rings"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rotator_cuff",
+            "forearm_grip",
+            "obliques"
+          ]
+        },
+        "primary_category": "arms"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ring-dips/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимания на гимнастических кольцах — преимущественно разгибание локтя и приведение плеча, нестабильные кольца повышают требования к хвату и плечевому поясу."
+        }
+      ],
+      "notes": "Это кольца, а не подвесные петли TRX; требуется новый конкретный ID."
     }
   ]
 }
