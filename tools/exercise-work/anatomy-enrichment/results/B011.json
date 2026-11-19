@@ -425,6 +425,421 @@
         }
       ],
       "notes": "Исходный split-squat описывает прыжок со сменой ног в воздухе, тогда как название обычно означает статический split squat; нужен визуальный контроль варианта и категории."
+    },
+    {
+      "id": "fitnessprogramer:sprint",
+      "source_path": "assets/work/cardio/sprint.json",
+      "source_blob_sha": "ddef7a59e3a7344be488e66cfefd66adf25ebdf5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/sprint/"
+          ],
+          "confidence": "medium",
+          "reason": "Sprint — кардиобег на максимальной скорости с комплексной работой мышц; нет одной силовой иерархии."
+        }
+      ],
+      "notes": "Sprint — кардиобег на максимальной скорости с комплексной работой мышц; нет одной силовой иерархии."
+    },
+    {
+      "id": "fitnessprogramer:squat",
+      "source_path": "assets/work/hip/squat.json",
+      "source_blob_sha": "ff31f389269d8b75cde409544cdfb1063111d33f",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "power-rack"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Squat: инструкция требует штангу на спине и стойку для снятия грифа; ягодичные и квадрицепс разгибают бедро и колено."
+        }
+      ],
+      "notes": "Squat: инструкция требует штангу на спине и стойку для снятия грифа; ягодичные и квадрицепс разгибают бедро и колено."
+    },
+    {
+      "id": "fitnessprogramer:squat-hold-calf-raise",
+      "source_path": "assets/work/calf/squat-hold-calf-raise.json",
+      "source_blob_sha": "3d9d2416c513e6bdfb016a97173dc988f1b09ce5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "soleus",
+            "quadriceps_femoris"
+          ],
+          "stabilizers": [
+            "gluteus_maximus",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/squat-hold-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Squat hold calf raise: икроножная и камбаловидная выполняют подошвенное сгибание, квадрицепс удерживает присед, корпус статичен."
+        }
+      ],
+      "notes": "Squat hold calf raise: икроножная и камбаловидная выполняют подошвенное сгибание, квадрицепс удерживает присед, корпус статичен."
+    },
+    {
+      "id": "fitnessprogramer:squat-mobility-complex",
+      "source_path": "assets/work/hip/squat-mobility-complex.json",
+      "source_blob_sha": "99dd953f63736338fab56ebfb3d32115ef5dde6b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/squat-mobility-complex/"
+          ],
+          "confidence": "medium",
+          "reason": "Комплекс мобильности в приседе — вариативные движения суставов, силовые роли без техники не устанавливаются."
+        }
+      ],
+      "notes": "Комплекс мобильности в приседе — вариативные движения суставов, силовые роли без техники не устанавливаются."
+    },
+    {
+      "id": "fitnessprogramer:squat-tuck-jump",
+      "source_path": "assets/work/cardio/squat-tuck-jump.json",
+      "source_blob_sha": "b6a285b881401eb4e81d353cf7d3fcb820e3df48",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/squat-tuck-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Squat tuck jump — взрывной многосуставной кардиопрыжок, а не изолированное упражнение на одну мышцу."
+        }
+      ],
+      "notes": "Squat tuck jump — взрывной многосуставной кардиопрыжок, а не изолированное упражнение на одну мышцу."
+    },
+    {
+      "id": "fitnessprogramer:stability-ball-decline-push-up",
+      "source_path": "assets/work/chest/stability-ball-decline-push-up.json",
+      "source_blob_sha": "cf17473c6c5cecd59ef149fbda7ef9c7350a4e16",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stability-ball-decline-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Decline push-up с ногами на фитболе; исходные ключичная грудная и синергисты сохранены, некорректные biceps/quads заменены поддержкой плечевого пояса и корпуса."
+        }
+      ],
+      "notes": "Decline push-up с ногами на фитболе; исходные ключичная грудная и синергисты сохранены, некорректные biceps/quads заменены поддержкой плечевого пояса и корпуса."
+    },
+    {
+      "id": "fitnessprogramer:stability-ball-knee-tuck",
+      "source_path": "assets/work/abs/stability-ball-knee-tuck.json",
+      "source_blob_sha": "b412665cf83b9f63f7c098bb4cd20dcfae2718e8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stability-ball-knee-tuck/"
+          ],
+          "confidence": "medium",
+          "reason": "Knee tuck на фитболе из высокой планки: сгибатели бедра подтягивают колени, пресс предотвращает переразгибание туловища."
+        }
+      ],
+      "notes": "Knee tuck на фитболе из высокой планки: сгибатели бедра подтягивают колени, пресс предотвращает переразгибание туловища."
+    },
+    {
+      "id": "fitnessprogramer:stability-ball-push-up",
+      "source_path": "assets/work/chest/stability-ball-push-up.json",
+      "source_blob_sha": "cf96566bf1e77fc07b594fbda67122756fc1c0ae",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stability-ball-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Push-up с ладонями на фитболе, грудные primary из источника и трицепс помогают; нестабильная опора нагружает корпус."
+        }
+      ],
+      "notes": "Push-up с ладонями на фитболе, грудные primary из источника и трицепс помогают; нестабильная опора нагружает корпус."
+    },
+    {
+      "id": "fitnessprogramer:stability-ball-v-up",
+      "source_path": "assets/work/abs/stability-ball-v-up.json",
+      "source_blob_sha": "9b4b23337cd3734c8bb6f894bf8e4ab0b4cce6d5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/stability-ball-v-up/"
+          ],
+          "confidence": "medium",
+          "reason": "V-up с фитболом и передачей из рук в ноги, подъём туловища прессом и сгибание бедра, дополнительных стабилизаторов нет."
+        }
+      ],
+      "notes": "V-up с фитболом и передачей из рук в ноги, подъём туловища прессом и сгибание бедра, дополнительных стабилизаторов нет."
+    },
+    {
+      "id": "fitnessprogramer:standing-alternating-dumbbell-shoulder-press",
+      "source_path": "assets/work/shoulders/standing-alternating-dumbbell-shoulder-press.json",
+      "source_blob_sha": "76177e9f127d74176ed824f43035f24c775e5792",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_extensors",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-alternating-dumbbell-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing alternating dumbbell press — передняя дельта исходная primary, корпус противостоит боковому наклону, запястья фиксируют гантели."
+        }
+      ],
+      "notes": "Standing alternating dumbbell press — передняя дельта исходная primary, корпус противостоит боковому наклону, запястья фиксируют гантели."
+    },
+    {
+      "id": "fitnessprogramer:standing-banded-row",
+      "source_path": "assets/work/back/standing-banded-row.json",
+      "source_blob_sha": "6aecf7f54d1cb2003331f2786e0aa9550447e8bf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-banded-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing banded row — тяга резинки с фиксацией корпуса, latissimus/rhomboids приводят плечо и лопатки."
+        }
+      ],
+      "notes": "Standing banded row — тяга резинки с фиксацией корпуса, latissimus/rhomboids приводят плечо и лопатки."
+    },
+    {
+      "id": "fitnessprogramer:standing-barbell-calf-raise",
+      "source_path": "assets/work/calf/standing-barbell-calf-raise.json",
+      "source_blob_sha": "be4ea5e7387e8a4e3bed2516b79ad5e44d7f452e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "box"
+        ],
+        "muscles": {
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-barbell-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing barbell calf raise: инструкция прямо требует штангу и повышенную устойчивую платформу; икроножные исходно primary."
+        }
+      ],
+      "notes": "Standing barbell calf raise: инструкция прямо требует штангу и повышенную устойчивую платформу; икроножные исходно primary."
     }
   ]
 }
