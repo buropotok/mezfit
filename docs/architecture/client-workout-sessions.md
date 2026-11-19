@@ -46,8 +46,9 @@ shared Start owner, which selects the execution path by active app role. In
 **Client** mode, `createIndependentFromProgramDay` creates an explicitly
 `independent` FACT session from the athlete's own visible program. In
 **Coach** mode, direct Start reuses `createForAthlete` for the selected
-source day, creating a coached session for the assigned athlete
-(«С клиентом в зале»). Both paths clone the source exercises and structural
+source day, persisting `format: coached` for the started session
+(«С клиентом в зале»), including when the Coach opens a personal source
+program. Both paths clone the source exercises and structural
 set types in one local transaction, without creating a calendar occurrence.
 Numeric PLAN prescriptions are not copied; execution starts with empty FACT
 metrics and `plan: null`. Existing program/day/set rows remain unchanged,
