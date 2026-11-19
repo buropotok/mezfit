@@ -52,3 +52,23 @@ it('opens Base 2 categories and selects an exercise before the first GIF is avai
   fireEvent.click(screen.getByRole('button', { name: /Жим лёжа/ }));
   expect(select).toHaveBeenCalledWith(exercise.id);
 });
+
+it.each(['public', 'coach', 'client'] as const)('opens both bases in the first tab for %s', (scope) => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const base1 = { ...exercise, id: 'base1-press', name_ru: 'Жим гантелей', media_id: '' };
+
+  render(<KonstaProvider theme="ios" dark>
+    <ExerciseCatalogContent snapshot={{ ...snapshot, exercises: [base1] }} scope={scope} />
+  </KonstaProvider>);
+
+  expect(screen.getAllByRole('button')[0].textContent).toBe('Все');
+  fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+  expect(screen.getByRole('button', { name: /Жим гантелей/ })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /Жим лёжа/ })).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'База 1' }));
+  fireEvent.click(screen.getByRole('button', { name: /Грудь/ }));
+  expect(screen.getByRole('button', { name: /Жим гантелей/ })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /Жим лёжа/ })).toBeNull();
+});
