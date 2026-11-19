@@ -3443,6 +3443,170 @@
         }
       ],
       "notes": "Toes to bar: в инструкции прямо требуется турник; сгибатели бедра и пресс поднимают ноги к перекладине, хват удерживает вис."
+    },
+    {
+      "id": "fitnessprogramer:top-half-pull-up",
+      "source_path": "assets/work/back/top-half-pull-up.json",
+      "source_blob_sha": "ff68140877ff36eb207d4931f0623d7df96aebdd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar",
+          "box"
+        ],
+        "muscles": {
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/top-half-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Top half pull-up: турник обязателен по инструкции, box допустим как стартовая опора; исходная latissimus primary сохранена, чрезмерные синергисты сокращены."
+        }
+      ],
+      "notes": "Top half pull-up: турник обязателен по инструкции, box допустим как стартовая опора; исходная latissimus primary сохранена, чрезмерные синергисты сокращены."
+    },
+    {
+      "id": "fitnessprogramer:towel-leg-curl",
+      "source_path": "assets/work/hip/towel-leg-curl.json",
+      "source_blob_sha": "c86ba12747e9c8f81ffad232392e6cca436aa2ff",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "towel"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/towel-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Towel leg curl выполняется скольжением пяток по полотенцу с коленным сгибанием, исходное NO EQUIPMENT исправлено на towel; без инструкции уверенность средняя."
+        }
+      ],
+      "notes": "Towel leg curl выполняется скольжением пяток по полотенцу с коленным сгибанием, исходное NO EQUIPMENT исправлено на towel; без инструкции уверенность средняя."
+    },
+    {
+      "id": "fitnessprogramer:trap-bar-deadlift",
+      "source_path": "assets/work/leg/trap-bar-deadlift.json",
+      "source_blob_sha": "0941cd7b44005ce9ac79940840143ae6d6f2cca5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "trap bar"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/trap-bar-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Trap bar deadlift требует шестигранный trap bar, а не обычную прямую штангу; основные разгибатели колена и бедра, корпус стабилизирует."
+        }
+      ],
+      "notes": "Trap bar deadlift требует шестигранный trap bar, а не обычную прямую штангу; основные разгибатели колена и бедра, корпус стабилизирует."
+    },
+    {
+      "id": "fitnessprogramer:trap-bar-jump-squat",
+      "source_path": "assets/work/hip/trap-bar-jump-squat.json",
+      "source_blob_sha": "c7fdcb2e1401c957061f7c1f691677c4c3b7aa37",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "trap bar"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/trap-bar-jump-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Trap bar jump squat по названию прыжковое приседание с шестигранным грифом, исходное Barbell неконкретно; основные разгибатели ног."
+        }
+      ],
+      "notes": "Trap bar jump squat по названию прыжковое приседание с шестигранным грифом, исходное Barbell неконкретно; основные разгибатели ног."
     }
   ]
 }
