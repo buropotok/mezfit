@@ -1677,6 +1677,417 @@
         }
       ],
       "notes": "Сидя в наклоне при тяге на задние дельты возможна опора на скамью, подтвердить вариант по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-seated-cuban-press",
+      "source_path": "assets/work/shoulders/dumbbell-seated-cuban-press.json",
+      "source_blob_sha": "06e3677f2b216e4f8dc3e478a10343d14f9f628a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-seated-cuban-press/"
+          ],
+          "confidence": "low",
+          "reason": "Cuban press сочетает наружную ротацию и жим; исходник без описания. Проверить амплитуду и положение сидя по GIF."
+        }
+      ],
+      "notes": "Cuban press сочетает наружную ротацию и жим; исходник без описания. Проверить амплитуду и положение сидя по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-seated-front-and-back-tate-press",
+      "source_path": "assets/work/triceps/dumbbell-seated-front-and-back-tate-press.json",
+      "source_blob_sha": "081cbfe812df0e7e38bdbdb27ac57384493bce2c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-seated-front-and-back-tate-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция указывает сидение на плоской скамье, triceps как target, а бицепс как динамический стабилизатор; не переносим антагонистов."
+        }
+      ],
+      "notes": "Инструкция указывает сидение на плоской скамье, triceps как target, а бицепс как динамический стабилизатор; не переносим антагонистов."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-seated-neutral-wrist-curl",
+      "source_path": "assets/work/forearm/dumbbell-seated-neutral-wrist-curl.json",
+      "source_blob_sha": "9d71ae479ca960d059fe5d3cb6da5737b4c3c059",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-seated-neutral-wrist-curl/"
+          ],
+          "confidence": "low",
+          "reason": "В названии wrist curl с нейтральным хватом нет ясности о плоскости движения; предварительно сгибатели кисти, необходимо сверить GIF."
+        }
+      ],
+      "notes": "В названии wrist curl с нейтральным хватом нет ясности о плоскости движения; предварительно сгибатели кисти, необходимо сверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-shoulder-press",
+      "source_path": "assets/work/shoulders/dumbbell-shoulder-press.json",
+      "source_blob_sha": "22040dcf23167144937389336820252a6de72b92",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "supraspinatus",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция допускает вариант стоя и сидя: скамья необязательна. Из исходных динамических стабилизаторов оставлена подтверждённая мышца лопатки."
+        }
+      ],
+      "notes": "Инструкция допускает вариант стоя и сидя: скамья необязательна. Из исходных динамических стабилизаторов оставлена подтверждённая мышца лопатки."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-shrug",
+      "source_path": "assets/work/trapezius/dumbbell-shrug.json",
+      "source_blob_sha": "af091c16bbab365c82df7e524d3cf17dbec9ec49",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-shrug/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём плечевого пояса вызывает работу верхней трапеции и поднимающей лопатку мышцы. Отсечена неподтверждённая латеральная дельта как динамический стабилизатор."
+        }
+      ],
+      "notes": "Подъём плечевого пояса вызывает работу верхней трапеции и поднимающей лопатку мышцы. Отсечена неподтверждённая латеральная дельта как динамический стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-side-bend",
+      "source_path": "assets/work/abs/dumbbell-side-bend.json",
+      "source_blob_sha": "f3547c115fd7a8eef8881eb945621a349b96122b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-side-bend/"
+          ],
+          "confidence": "medium",
+          "reason": "Боковое сгибание туловища: косые и квадратная поясницы. Исходное NO EQUIPMENT противоречит инструкции с гантелью, не учитывается как обязательный вариант."
+        }
+      ],
+      "notes": "Боковое сгибание туловища: косые и квадратная поясницы. Исходное NO EQUIPMENT противоречит инструкции с гантелью, не учитывается как обязательный вариант."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-side-lying-rear-delt-raise",
+      "source_path": "assets/work/shoulders/dumbbell-side-lying-rear-delt-raise.json",
+      "source_blob_sha": "f0c279c63dc171c4aab38ab601bddba17ce7487c",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-side-lying-rear-delt-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Отсутствуют техника и мышцы. Вариант лёжа на боку требует проверки по GIF; дополнительные стабилизаторы не установлены."
+        }
+      ],
+      "notes": "Отсутствуют техника и мышцы. Вариант лёжа на боку требует проверки по GIF; дополнительные стабилизаторы не установлены."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-single-arm-lateral-raise",
+      "source_path": "assets/work/shoulders/dumbbell-single-arm-lateral-raise.json",
+      "source_blob_sha": "8457547813851a071f8be3ee313cefeeb79aa55a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-single-arm-lateral-raise/"
+          ],
+          "confidence": "low",
+          "reason": "В исходной карточке отсутствуют инструкция и мышцы, оценка роли основана на термине single-arm lateral raise."
+        }
+      ],
+      "notes": "В исходной карточке отсутствуют инструкция и мышцы, оценка роли основана на термине single-arm lateral raise."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-single-leg-deadlift",
+      "source_path": "assets/work/hip/dumbbell-single-leg-deadlift.json",
+      "source_blob_sha": "e116bdff44af7ab4caecffc268bc73881447873b",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-single-leg-deadlift/"
+          ],
+          "confidence": "low",
+          "reason": "Single-leg hip hinge предполагает разгибатели бедра и стабилизацию таза. Требуется проверить положение опорной ноги на GIF."
+        }
+      ],
+      "notes": "Single-leg hip hinge предполагает разгибатели бедра и стабилизацию таза. Требуется проверить положение опорной ноги на GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-skull-crusher",
+      "source_path": "assets/work/triceps/dumbbell-skull-crusher.json",
+      "source_blob_sha": "cbd93651154a8a37091ca3db477874ea81398dbf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-skull-crusher/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции указаны горизонтальная скамья и разгибание локтей с фиксированными плечами."
+        }
+      ],
+      "notes": "В инструкции указаны горизонтальная скамья и разгибание локтей с фиксированными плечами."
     }
   ]
 }
