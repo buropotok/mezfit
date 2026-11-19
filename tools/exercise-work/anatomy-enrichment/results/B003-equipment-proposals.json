@@ -79,10 +79,14 @@
       "label_ru": "Гравитрон",
       "definition_ru": "Тренажёр с противовесом, подвижной платформой под колени/ступни и брусьями для отжиманий и/или турником для подтягиваний.",
       "exercise_ids": [
-        "fitnessprogramer:asisted-triceps-dips"
+        "fitnessprogramer:asisted-triceps-dips",
+        "fitnessprogramer:assisted-chest-dip",
+        "fitnessprogramer:assisted-pull-up"
       ],
       "source_urls": [
-        "https://fitnessprogramer.com/exercise/asisted-triceps-dips/"
+        "https://fitnessprogramer.com/exercise/asisted-triceps-dips/",
+        "https://fitnessprogramer.com/exercise/assisted-chest-dip/",
+        "https://fitnessprogramer.com/exercise/assisted-pull-up/"
       ],
       "confidence": "high",
       "aliases_considered": [
