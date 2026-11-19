@@ -58,7 +58,7 @@ describe('direct Start from a program day uses the actor role', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' }));
     await waitFor(() => expect(done).toHaveBeenCalledWith(completed));
     expect(state.coachProgram).toHaveBeenCalledOnce();
-    expect(state.coachProgram).toHaveBeenCalledWith('tg:202', 'program', 'day');
+    expect(state.coachProgram).toHaveBeenCalledWith('tg:202', 'program', 'day', { format: 'coached' });
     expect(state.coachIndependent).not.toHaveBeenCalled();
     expect(state.clientIndependent).not.toHaveBeenCalled();
     expect(state.clientProgram).not.toHaveBeenCalled();
