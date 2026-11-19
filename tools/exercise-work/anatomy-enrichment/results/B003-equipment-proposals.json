@@ -3,8 +3,8 @@
   "proposals": [
     {
       "id": "ab-roller-crunch-machine",
-      "label_ru": "Тренажёр для скручиваний с роликовым механизмом",
-      "definition_ru": "Специализированный тренажёр для скручиваний пресса, идентифицированный источником как Ab Roller Crunch (Machine); механизм нуждается в уточнении по GIF.",
+      "label_ru": "Тренажёр Ab Roller Crunch для скручиваний",
+      "definition_ru": "Специализированное оборудование, которое FitnessProgramer называет Ab Roller Crunch и относит к категории Machine. Точная конструкция не установлена по тексту страницы; исследовательское предложение требует подтверждения по GIF и не является утверждённым фильтром.",
       "exercise_ids": [
         "fitnessprogramer:ab-roller-crunch"
       ],
