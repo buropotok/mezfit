@@ -3092,6 +3092,467 @@
         }
       ],
       "notes": "Medicine-ball overhead throw — бросок медбола над головой с подключением ног/корпуса, категория full_body вместо chest. Слова Shoulder/Chest/Triceps заменены каноническими ID."
+    },
+    {
+      "id": "fitnessprogramer:medicine-ball-push-up",
+      "source_path": "assets/work/chest/medicine-ball-push-up.json",
+      "source_blob_sha": "846f49d14ee8368fec256b21a256a3b8c1f7220a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/medicine-ball-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Medicine Ball Push-Up: инструкция требует упор двумя ладонями на медбол, а не фитбол; грудные/трицепс исходно подтверждены, стабилизация корпуса."
+        }
+      ],
+      "notes": "Medicine Ball Push-Up: инструкция требует упор двумя ладонями на медбол, а не фитбол; грудные/трицепс исходно подтверждены, стабилизация корпуса."
+    },
+    {
+      "id": "fitnessprogramer:medicine-ball-rotational-throw",
+      "source_path": "assets/work/abs/medicine-ball-rotational-throw.json",
+      "source_blob_sha": "d686627213ef992481cd1298b1a470cdfb7baa9f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "rectus_abdominis",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/medicine-ball-rotational-throw/"
+          ],
+          "confidence": "medium",
+          "reason": "Medicine ball rotational throw: по инструкции бросок медбола в стену со взрывным поворотом таза и корпуса; исходный перечень объединял несколько неканонических тканей в primary."
+        }
+      ],
+      "notes": "Medicine ball rotational throw: по инструкции бросок медбола в стену со взрывным поворотом таза и корпуса; исходный перечень объединял несколько неканонических тканей в primary."
+    },
+    {
+      "id": "fitnessprogramer:medicine-ball-sit-up-throw",
+      "source_path": "assets/work/abs/medicine-ball-sit-up-throw.json",
+      "source_blob_sha": "e553bb5d2ed833d0a0c35cdb1695c4386cb029e2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/medicine-ball-sit-up-throw/"
+          ],
+          "confidence": "low",
+          "reason": "Sit-up throw с медболом: корпус сгибается при подъёме и броске, но подробная техника отсутствует; средство — именно медбол."
+        }
+      ],
+      "notes": "Sit-up throw с медболом: корпус сгибается при подъёме и броске, но подробная техника отсутствует; средство — именно медбол."
+    },
+    {
+      "id": "fitnessprogramer:middle-chest-fly-with-resistance-band",
+      "source_path": "assets/work/chest/middle-chest-fly-with-resistance-band.json",
+      "source_blob_sha": "3437a4bf83f66b7cc980347d83a105e288428301",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/middle-chest-fly-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Middle chest fly с лентой; Gymstick из исходных тегов не обязателен, сопротивление создаёт резиновая лента."
+        }
+      ],
+      "notes": "Middle chest fly с лентой; Gymstick из исходных тегов не обязателен, сопротивление создаёт резиновая лента."
+    },
+    {
+      "id": "fitnessprogramer:modified-hindu-push-up",
+      "source_path": "assets/work/chest/modified-hindu-push-up.json",
+      "source_blob_sha": "b48e094d2c082d6510bd1d04f26ebef88190d97c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/modified-hindu-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Модифицированные Hindu push-ups — отжимания с движением плеч/таза, исходная версия без пошаговой техники; категория chest предварительная."
+        }
+      ],
+      "notes": "Модифицированные Hindu push-ups — отжимания с движением плеч/таза, исходная версия без пошаговой техники; категория chest предварительная."
+    },
+    {
+      "id": "fitnessprogramer:mountain-climber",
+      "source_path": "assets/work/abs/mountain-climber.json",
+      "source_blob_sha": "9f75af95c8c5abcf202e3ddff7f061d4620fe7dd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/mountain-climber/"
+          ],
+          "confidence": "medium",
+          "reason": "Mountain climber — быстрое чередование ног в опоре на руках; основная цель кардиокондиция, rectus abdominis здесь стабилизирует, исходный список Iliopsoas/Quadriceps нельзя целиком копировать как динамические стабилизаторы."
+        }
+      ],
+      "notes": "Mountain climber — быстрое чередование ног в опоре на руках; основная цель кардиокондиция, rectus abdominis здесь стабилизирует, исходный список Iliopsoas/Quadriceps нельзя целиком копировать как динамические стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:muscle-snatch",
+      "source_path": "assets/work/full-body/muscle-snatch.json",
+      "source_blob_sha": "9a70c9f8ed0a28536340ea251bd5c1242c29d26a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/muscle-snatch/"
+          ],
+          "confidence": "medium",
+          "reason": "Muscle snatch со штангой — взрывное разгибание ног и выведение снаряда над головой без фазы низкого подседа; силовое многосуставное движение."
+        }
+      ],
+      "notes": "Muscle snatch со штангой — взрывное разгибание ног и выведение снаряда над головой без фазы низкого подседа; силовое многосуставное движение."
+    },
+    {
+      "id": "fitnessprogramer:muscle-up",
+      "source_path": "assets/work/back/muscle-up.json",
+      "source_blob_sha": "85cab74cc80509696ed9550566c4f7abacc23004",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "triceps_brachii",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/muscle-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Muscle-up по инструкции включает подтягивание, переход над перекладиной и отжимание на прямых руках; категория full_body и обязательный турник."
+        }
+      ],
+      "notes": "Muscle-up по инструкции включает подтягивание, переход над перекладиной и отжимание на прямых руках; категория full_body и обязательный турник."
+    },
+    {
+      "id": "fitnessprogramer:narrow-grip-wall-push-up",
+      "source_path": "assets/work/chest/narrow-grip-wall-push-up.json",
+      "source_blob_sha": "3b317e01a964378f5edf7cfbe930d7d36fcf049e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/narrow-grip-wall-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Narrow grip wall push-up: по инструкции опора ладонями на стену, близкий хват повышает вклад трицепса."
+        }
+      ],
+      "notes": "Narrow grip wall push-up: по инструкции опора ладонями на стену, близкий хват повышает вклад трицепса."
+    },
+    {
+      "id": "fitnessprogramer:navy-seal-burpee",
+      "source_path": "assets/work/cardio/navy-seal-burpee.json",
+      "source_blob_sha": "5acab11da4a216104e78e01d1660c6921706eab8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/navy-seal-burpee/"
+          ],
+          "confidence": "medium",
+          "reason": "Navy Seal Burpee включает несколько отжиманий, knee-drive, прыжок; это кардио-комплекс с фазами и без однозначной одной силовой иерархии мышц."
+        }
+      ],
+      "notes": "Navy Seal Burpee включает несколько отжиманий, knee-drive, прыжок; это кардио-комплекс с фазами и без однозначной одной силовой иерархии мышц."
+    },
+    {
+      "id": "fitnessprogramer:neck-rotation-stretch",
+      "source_path": "assets/work/neck/neck-rotation-stretch.json",
+      "source_blob_sha": "178f5fac59ae763ec42b68fe5ecb56e095113285",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/neck-rotation-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Neck Rotation Stretch по инструкции — растяжение/мобилизация шеи, исходные анатомические названия не выдаются за силовые двигатели."
+        }
+      ],
+      "notes": "Neck Rotation Stretch по инструкции — растяжение/мобилизация шеи, исходные анатомические названия не выдаются за силовые двигатели."
+    },
+    {
+      "id": "fitnessprogramer:neutral-grip-pull-up",
+      "source_path": "assets/work/back/neutral-grip-pull-up.json",
+      "source_blob_sha": "020413f6d0ca01caa0206615fce52f827e34eefd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/neutral-grip-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Neutral grip pull-up: турник с параллельными рукоятями, подтягивание спиной и сгибателями локтя, корпус удерживается."
+        }
+      ],
+      "notes": "Neutral grip pull-up: турник с параллельными рукоятями, подтягивание спиной и сгибателями локтя, корпус удерживается."
     }
   ]
 }
