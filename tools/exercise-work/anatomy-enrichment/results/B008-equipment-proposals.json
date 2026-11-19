@@ -1,0 +1,152 @@
+{
+  "batch_id": "B008",
+  "proposals": [
+    {
+      "id": "lat-pulldown-machine",
+      "label_ru": "Тренажёр верхней тяги с упорами для бёдер",
+      "definition_ru": "Специализированный блочный тренажёр для верхней тяги сидя с регулируемыми упорами для колен и широкой рукоятью; в отличие от универсальной кабельной станции.",
+      "exercise_ids": [
+        "fitnessprogramer:lat-pulldown"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lat-pulldown/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "cable",
+        "cable machine",
+        "lat pulldown"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "towel",
+      "label_ru": "Полотенце для упражнений",
+      "definition_ru": "Обычное плотное полотенце, используемое как нескользящая контактная или вспомогательная поверхность между рукой и стеной; не гимнастическая лента.",
+      "exercise_ids": [
+        "fitnessprogramer:lateral-raise-with-towel-on-wall"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lateral-raise-with-towel-on-wall/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "mat",
+        "band",
+        "wall"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-curl-machine",
+      "label_ru": "Тренажёр для сгибания ног",
+      "definition_ru": "Силовой тренажёр с валиком/рычагом для сгибания коленного сустава с сопротивлением; варианты сидя и лёжа объединены в один тип.",
+      "exercise_ids": [
+        "fitnessprogramer:leg-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/leg-curl/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "leg curl",
+        "seated leg curl"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-extension-machine",
+      "label_ru": "Тренажёр для разгибания ног",
+      "definition_ru": "Сидячий рычажный силовой тренажёр с мягким валиком на передней части голеней, предназначенный для разгибания коленей.",
+      "exercise_ids": [
+        "fitnessprogramer:leg-extension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/leg-extension/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "leg extension"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-press-machine",
+      "label_ru": "Тренажёр для жима ногами",
+      "definition_ru": "Силовой тренажёр с опорной спинкой и платформой для ног; объединяет горизонтальные и наклонные конструктивные варианты одной функции до необходимости отдельной детализации.",
+      "exercise_ids": [
+        "fitnessprogramer:leg-press",
+        "fitnessprogramer:leg-press-calf-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/leg-press/",
+        "https://fitnessprogramer.com/exercise/leg-press-calf-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "leg press",
+        "horizontal-leg-press-machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "strongman-log",
+      "label_ru": "Силовое бревно для стронгмена",
+      "definition_ru": "Цилиндрический тяжелоатлетический снаряд strongman log с внутренними рукоятями для подъёма/толчка, отличен от стандартной штанги.",
+      "exercise_ids": [
+        "fitnessprogramer:log-lift"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/log-lift/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "barbell",
+        "strongman log",
+        "log bar"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "head-harness",
+      "label_ru": "Шейная упряжь для отягощений",
+      "definition_ru": "Ременная упряжь, фиксируемая на голове для подвешивания диска или другого груза при упражнениях на шею, не налобная повязка.",
+      "exercise_ids": [
+        "fitnessprogramer:lying-weighted-lateral-neck-flexion"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lying-weighted-lateral-neck-flexion/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "weight plate",
+        "neck harness",
+        "head strap"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "nordic-curl-bench",
+      "label_ru": "Скамья Nordic Curl с фиксаторами голеней",
+      "definition_ru": "Специализированная низкая скамья или платформа с регулируемой фиксацией голеностопа для эксцентрических сгибаний Nordic Curl; конкретная конфигурация исходного GIF остаётся не подтверждённой.",
+      "exercise_ids": [
+        "fitnessprogramer:nordic-hamstring-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/nordic-hamstring-curl/",
+        "https://blog.performancelab16.com/nordic-hamstring-e-test-isocinetico/"
+      ],
+      "confidence": "low",
+      "aliases_considered": [
+        "machine",
+        "leg-curl-machine",
+        "roman-chair",
+        "nordic hamstring trainer"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
