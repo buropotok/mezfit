@@ -486,6 +486,540 @@
         }
       ],
       "notes": "Не подменять растягиваемые грудные мышцы и переднюю дельту силовыми двигателями. Неопределённые или невыделенные роли отмечены специальным исследовательским маркером other; он не является мышечным ID."
+    },
+    {
+      "id": "fitnessprogramer:chest-dips",
+      "source_path": "assets/work/chest/chest-dips.json",
+      "source_blob_sha": "9107b000ea5ab8779f03a3ccbd153decf44ffbc6",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dip bars"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_lower",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chest-dips/"
+          ],
+          "confidence": "high",
+          "reason": "Наклон вперёд на брусьях акцентирует большую грудную; трицепс разгибает локоть, нижняя трапеция и корпус стабилизируют опору."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:chest-supported-dumbbell-front-raises",
+      "source_path": "assets/work/shoulders/chest-supported-dumbbell-front-raises.json",
+      "source_blob_sha": "ffe93af4a4a3fdd0239d8ccbc5f2b5e9b3917e2e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chest-supported-dumbbell-front-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём гантелей перед собой с упором грудью нагружает переднюю дельту; опора грудью требует наклонной скамьи."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:chest-tap-push-up",
+      "source_path": "assets/work/chest/chest-tap-push-up.json",
+      "source_blob_sha": "5987e10e55201b6e67587a74cccc8986d4873141",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chest-tap-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Отжимание с касанием груди — вариант отжимания от пола, грудные и трицепс выполняют жим; корпус удерживается изометрически."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:chin-tuck",
+      "source_path": "assets/work/neck/chin-tuck.json",
+      "source_blob_sha": "432e88a4f0a0727e40c8db5e0921eba483cea82d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chin-tuck/"
+          ],
+          "confidence": "medium",
+          "reason": "Подбородок отводится назад при нейтральном взгляде; глубокие сгибатели шеи обеспечивают контролируемую ретракцию."
+        }
+      ],
+      "notes": "Исходные перечисленные мышцы шеи не заменяются произвольными несопоставимыми ID. Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:chin-up",
+      "source_path": "assets/work/back/chin-up.json",
+      "source_blob_sha": "97b2de2a1cd5228cd889a76577f311778f5ecf56",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "brachioradialis",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chin-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Подтягивание супинированным хватом: приведение плеча широчайшими и сгибание локтя бицепсом/брахиалисом; нужен турник."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:chin-up-around-the-bar",
+      "source_path": "assets/work/back/chin-up-around-the-bar.json",
+      "source_blob_sha": "15c00a83dd155ee83548bcd6169a3fbe2db8e8f5",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/chin-up-around-the-bar/"
+          ],
+          "confidence": "low",
+          "reason": "Движение вокруг перекладины относится к подтягиванию на турнике, но исходная карточка не содержит инструкции о траектории."
+        }
+      ],
+      "notes": "Проверить GIF: траектория 'around the bar' может менять плечевые роли относительно обычного chin-up. Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:clap-push-up",
+      "source_path": "assets/work/chest/clap-push-up.json",
+      "source_blob_sha": "2f4735e4b3e7291771750b4d830c91ab39d22b7a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/clap-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Взрывной жим в отжимании с хлопком выполняют грудные и трицепсы; корпус сохраняет прямую линию."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:clean-and-jerk",
+      "source_path": "assets/work/full-body/clean-and-jerk.json",
+      "source_blob_sha": "d85cb95b424635162a12430b2ced294295dae04a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "triceps_brachii",
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/clean-and-jerk/"
+          ],
+          "confidence": "high",
+          "reason": "Толчок со взятием штанги: разгибание ног и таза, затем жим/выброс веса над головой; мышцы корпуса держат нагрузку."
+        }
+      ],
+      "notes": "Многосуставное двухфазное движение; при визуальном ревью подтвердить, что отражены обе фазы."
+    },
+    {
+      "id": "fitnessprogramer:climbing-monkey-bars",
+      "source_path": "assets/work/back/climbing-monkey-bars.json",
+      "source_blob_sha": "e7fbf5d585be50a4f8c5c4546ddb785b72ced3d4",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "monkey_bars"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_grip",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/climbing-monkey-bars/"
+          ],
+          "confidence": "low",
+          "reason": "Передвижение по рукоходу требует постоянного хвата и попеременного подтягивания плеча; нужен рукоход, а не пустое оборудование."
+        }
+      ],
+      "notes": "Проверить GIF: характер горизонтального перемещения может менять участие мышц и категорию. Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-barbell-curl",
+      "source_path": "assets/work/biceps/close-grip-barbell-curl.json",
+      "source_blob_sha": "b420e0168ab08aee15cab5736c313f341d3a1f5f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-barbell-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание рук с узким хватом на прямой штанге нагружает сгибатели локтя."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-bench-press",
+      "source_path": "assets/work/chest/close-grip-bench-press.json",
+      "source_blob_sha": "046eeedd56db50a5bc2353535a0724f257fc4f09",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "arms"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-bench-press/",
+            "https://www.strengthlog.com/close-grip-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Узкий жим лёжа переносит акцент на трёхглавую мышцу плеча; штанга и скамья обязательны; профильная литература подтверждает акцент трицепса."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-chin-up",
+      "source_path": "assets/work/back/close-grip-chin-up.json",
+      "source_blob_sha": "746092609deceff9ec976b1c3738a3851b07f1cc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-chin-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Подтягивание узким хватом на турнике, а не на неопределённом машинном тренажёре."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
+    },
+    {
+      "id": "fitnessprogramer:close-grip-dumbbell-press",
+      "source_path": "assets/work/chest/close-grip-dumbbell-press.json",
+      "source_blob_sha": "17cf56010ababfc91abbe53f902fcab572b345b7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/close-grip-dumbbell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Гантели с нейтральным близким хватом выжимаются на горизонтальной скамье; грудные и трицепсы — движители."
+        }
+      ],
+      "notes": "Маркер other — специальная позиция ревью, не мышечный ID."
     }
   ]
 }
