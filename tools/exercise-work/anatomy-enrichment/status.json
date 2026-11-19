@@ -258,11 +258,11 @@
       "result_stats": null
     },
     "B009": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-fitness-b009-xoqnnl9tuf",
+      "claim_id": "b009-mwnt52hj-xoqnnl9tuf",
+      "started_at": "2026-11-19T17:11:52.279Z",
+      "lease_until": "2026-11-19T19:11:52.279Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
