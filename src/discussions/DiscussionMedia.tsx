@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { Button } from 'konsta/react';
 import { FloatingActionButton, IconButton, Text } from '../ui';
 import { DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
@@ -65,17 +65,22 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
       });
     }
   }
+  const reportOrientationError = useEffectEvent(handleError);
+  useEffect(() => {
+    if (orientation.error) reportOrientationError();
+  }, [orientation.error]);
   const annotate = () => {
     const video = type === 'video' ? player.current : null;
     const source = type === 'photo' ? photo.current : video;
     if (!source || !onAnnotate) return;
+    if (video && video.videoWidth > 0 && orientation.pending) return;
     if (video && (!video.paused || video.seeking || video.readyState < 2
       || !Number.isFinite(video.currentTime) || video.currentTime < 0)) return;
     const seconds = video?.currentTime;
     try {
       setCaptureError(false);
-      const image = video && orientation.rotation
-        ? copyAnnotationImage(source, orientation.rotation) : copyAnnotationImage(source);
+      const image = video && orientation.flip ? copyAnnotationImage(source, orientation.rotation, true)
+        : video && orientation.rotation ? copyAnnotationImage(source, orientation.rotation) : copyAnnotationImage(source);
       onAnnotate(image, seconds);
     } catch {
       setCaptureError(true);
@@ -86,9 +91,9 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const content = type === 'photo'
     ? <img key={String(usePlainSource)} ref={photo} crossOrigin={crossOrigin} src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onLoad={() => setImageReady(true)} onError={handleError} />
-    : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={mediaSrc} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
+    : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={orientation.src} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
         style={orientation.style}
-        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail && !orientation.rotation} controlsList="nofullscreen" preload={mode === 'viewer' ? 'auto' : 'metadata'}
+        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail && !orientation.rotation && !orientation.flip} controlsList="nofullscreen" preload={mode === 'viewer' ? 'auto' : 'metadata'}
         onLoadedData={() => setFrameReady(true)} onSeeking={() => setFrameReady(false)} onSeeked={() => setFrameReady(true)}
         onLoadedMetadata={event => {
           const video = event.currentTarget;
@@ -125,8 +130,11 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
         </Text>}
       </>}
     </a> : content}
-    {!thumbnail && !failed && orientation.rotation !== 0 &&
-      <OrientedVideoControls player={player} source={mediaSrc} />}
+    {type === 'video' && orientation.pending && !failed && <div className="discussion-media__preparing">
+      <Text variant="caption">Подготавливаем видео…</Text>
+    </div>}
+    {!thumbnail && !failed && (orientation.rotation !== 0 || orientation.flip) &&
+      <OrientedVideoControls player={player} source={orientation.src} />}
     {onComment && paused && !failed && <div className="discussion-media__comment" data-hint={showCommentHint || undefined}>
       {showCommentHint && <Text variant="footnote" className="discussion-media__comment-hint">
         Нажмите, чтобы прокомментировать стопкадр.
@@ -137,7 +145,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     {onAnnotate && !failed && (type === 'photo' ? imageReady : paused) &&
       <div className="discussion-media__annotate">
         <IconButton icon="chart-dots-3" label="Рисовать на изображении"
-          disabled={type === 'video' && !frameReady} onClick={annotate} />
+          disabled={type === 'video' && (!frameReady || Boolean(player.current?.videoWidth && orientation.pending))} onClick={annotate} />
         {captureError && <Text variant="footnote" role="alert">{usePlainSource
           ? 'Источник недоступен для разметки.'
           : 'Не удалось скопировать изображение. Повторите попытку.'}</Text>}

@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { DiscussionMedia } from './DiscussionMedia';
 import { CircularVideoPlayback } from '../settings/CircularVideoPlayback';
 import { readVideoOrientation } from '../media/videoOrientation';
 import * as annotation from './discussion-annotation';
+import { loadVideoPlaybackCopy } from '../media/videoPlaybackCopy';
 
 vi.mock('./useDiscussionMediaSource', () => ({
   useDiscussionMediaSource: (src: string) => ({ url: src, container: undefined, tryR2Fallback: vi.fn() }),
@@ -14,7 +15,15 @@ vi.mock('../media/videoOrientation', async importOriginal => ({
   ...await importOriginal<typeof import('../media/videoOrientation')>(),
   readVideoOrientation: vi.fn(),
 }));
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.resetAllMocks(); });
+vi.mock('../media/videoPlaybackCopy', () => ({ loadVideoPlaybackCopy: vi.fn() }));
+beforeEach(() => {
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:neutral');
+    static revokeObjectURL = vi.fn();
+  });
+  vi.mocked(loadVideoPlaybackCopy).mockResolvedValue(new Blob(['copy'], { type: 'video/mp4' }));
+});
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.resetAllMocks(); vi.unstubAllGlobals(); });
 
 function load(video: HTMLVideoElement, width: number, height: number) {
   Object.defineProperties(video, {
@@ -74,23 +83,40 @@ it('passes the missing rotation when copying a compensated video frame for annot
   load(video, 480, 488);
   await waitFor(() => expect(video.style.transform).toContain('rotate(90deg)'));
   fireEvent.loadedData(video);
+  await waitFor(() => expect(video.style.visibility).toBe(''));
   fireEvent.click(screen.getByRole('button', { name: 'Рисовать на изображении' }));
   expect(copy).toHaveBeenCalledWith(video, 90);
   expect(onAnnotate).toHaveBeenCalledWith(image, 0);
 });
 
-it('preserves native controls for already-correct and square videos', async () => {
-  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
+it('preserves native controls for square videos with zero rotation metadata', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 480, rotation: 0 });
   const { container, rerender } = render(<KonstaProvider theme="ios" dark>
     <DiscussionMedia src="blob:correct" type="video" mode="viewer" />
   </KonstaProvider>);
   const video = container.querySelector('video')!;
-  load(video, 488, 480);
+  load(video, 480, 480);
   await waitFor(() => expect(readVideoOrientation).toHaveBeenCalledOnce());
   expect(video.style.transform).toBe('');
   expect(video.controls).toBe(true);
   rerender(<KonstaProvider theme="ios" dark><DiscussionMedia src="blob:square" type="video" mode="viewer" /></KonstaProvider>);
   load(video, 480, 480);
-  expect(readVideoOrientation).toHaveBeenCalledOnce();
+  await waitFor(() => expect(readVideoOrientation).toHaveBeenCalledTimes(2));
   expect(video.controls).toBe(true);
+});
+
+it('shows a normalized square thumbnail with the same angle as the viewer', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 480, rotation: 90 });
+  const { container, rerender } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:square" type="video" mode="thumbnail" />
+  </KonstaProvider>);
+  const video = container.querySelector('video')!;
+  load(video, 480, 480);
+  await waitFor(() => expect(video.getAttribute('src')).toBe('blob:neutral'));
+  expect(video.style.transform).toContain('rotate(90deg)');
+  rerender(<KonstaProvider theme="ios" dark><DiscussionMedia src="blob:square" type="video" mode="viewer" /></KonstaProvider>);
+  const viewer = container.querySelector('video')!;
+  load(viewer, 480, 480);
+  await waitFor(() => expect(viewer.getAttribute('src')).toBe('blob:neutral'));
+  expect(viewer.style.transform).toContain('rotate(90deg)');
 });

@@ -1,22 +1,7 @@
 // @ts-expect-error Production tsconfig intentionally omits Node globals.
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { missingVideoRotation, readVideoOrientation, rotatedVideoScale } from './videoOrientation';
-
-it.each([90, 270])('compensates missing %s° rotation and leaves native rotation intact', rotation => {
-  const track = { width: 480, height: 488, rotation };
-  expect(missingVideoRotation(480, 488, track)).toBe(rotation);
-  expect(missingVideoRotation(488, 480, track)).toBe(0);
-});
-
-it('skips square, unknown-size, unrotated and ambiguous half-turn frames', () => {
-  expect(missingVideoRotation(480, 480, { width: 480, height: 480, rotation: 90 })).toBe(0);
-  expect(missingVideoRotation(0, 0, { width: 480, height: 488, rotation: 90 })).toBe(0);
-  expect(missingVideoRotation(240, 244, { width: 480, height: 488, rotation: 90 })).toBe(0);
-  for (const rotation of [0, 180]) {
-    expect(missingVideoRotation(480, 488, { width: 480, height: 488, rotation })).toBe(0);
-  }
-});
+import { readVideoOrientation, rotatedVideoScale } from './videoOrientation';
 
 it('fits the rotated frame inside an ordinary viewer and fills a circular crop', () => {
   expect(rotatedVideoScale(720, 1280, 1280, 720, 'contain')).toBeCloseTo(1280 / 720);
@@ -40,7 +25,7 @@ it.each([90, 270])('reads the actual %s° tkhd matrix from fragmented MP4 withou
   expect(await readVideoOrientation(url, new AbortController().signal)).toEqual({ width: 32, height: 48, rotation });
 });
 
-it('leaves playback available when metadata is malformed or reading is cancelled', async () => {
+it('reports unavailable metadata when input is malformed or reading is cancelled', async () => {
   const controller = new AbortController();
   controller.abort();
   expect(await readVideoOrientation('data:video/mp4;base64,AAAA', controller.signal)).toBeNull();

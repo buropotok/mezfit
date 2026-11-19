@@ -103,7 +103,7 @@ export function drawAnnotation(context: CanvasRenderingContext2D, image: HTMLCan
   context.restore();
 }
 
-export function copyAnnotationImage(source: HTMLImageElement | HTMLVideoElement, rotation = 0): HTMLCanvasElement {
+export function copyAnnotationImage(source: HTMLImageElement | HTMLVideoElement, rotation = 0, flip = false): HTMLCanvasElement {
   const width = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
   const height = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
   if (!width || !height) throw new Error('ANNOTATION_IMAGE_NOT_READY');
@@ -114,8 +114,9 @@ export function copyAnnotationImage(source: HTMLImageElement | HTMLVideoElement,
   canvas.height = Math.max(1, Math.round((quarterTurn ? width : height) * scale));
   const context = canvas.getContext('2d');
   if (!context) throw new Error('ANNOTATION_CANVAS_UNAVAILABLE');
-  if (rotation) {
+  if (rotation || flip) {
     context.translate(canvas.width / 2, canvas.height / 2);
+    if (flip) context.scale(-1, 1);
     context.rotate(rotation * Math.PI / 180);
     context.drawImage(source, -width * scale / 2, -height * scale / 2, width * scale, height * scale);
   } else context.drawImage(source, 0, 0, canvas.width, canvas.height);

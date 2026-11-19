@@ -4,14 +4,7 @@ export interface VideoOrientation {
   width: number;
   height: number;
   rotation: number;
-}
-
-/** Only compensate a provably unrotated, non-square quarter-turn frame. */
-export function missingVideoRotation(width: number, height: number, track: VideoOrientation): number {
-  if (width === height || track.width === track.height || width <= 0 || height <= 0) return 0;
-  if (track.rotation !== 90 && track.rotation !== 270) return 0;
-  if (width === track.height && height === track.width) return 0;
-  return width === track.width && height === track.height ? track.rotation : 0;
+  flip?: boolean;
 }
 
 /** Metadata only, using the same resolved local/signed URL as native playback. */
@@ -33,11 +26,11 @@ export async function readVideoOrientation(src: string, signal: AbortSignal): Pr
     }) });
     const track = await input.getPrimaryVideoTrack();
     if (!track) return null;
-    const [width, height, rotation] = await Promise.all([
-      track.getSquarePixelWidth(), track.getSquarePixelHeight(), track.getRotation(),
+    const [width, height, rotation, flip] = await Promise.all([
+      track.getSquarePixelWidth(), track.getSquarePixelHeight(), track.getRotation(), track.getFlip(),
     ]);
     signal.throwIfAborted();
-    return { width, height, rotation };
+    return { width, height, rotation, ...(flip ? { flip } : {}) };
   } catch {
     // CORS, unsupported containers or cancelled metadata reads must not stop playback.
     return null;

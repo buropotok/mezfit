@@ -42,6 +42,14 @@
   object-fit: cover;
 }
 
+.video-note-playback__preparing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
 .video-note-module__placeholder {
   max-width: 70%;
   text-align: center;
