@@ -1,0 +1,2799 @@
+{
+  "schema_version": 1,
+  "batch_id": "B001",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:donkey-kick-on-smith-machine",
+      "source_path": "assets/work/hip/donkey-kick-on-smith-machine.json",
+      "source_blob_sha": "168effaca50e61d32c69942e3876f509dc115200",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/donkey-kick-on-smith-machine/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/donkey-kick-on-smith-machine/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-behind-neck-press",
+      "source_path": "assets/work/shoulders/smith-machine-behind-neck-press.json",
+      "source_blob_sha": "253fd5b909047fc21505fb706b3c38e0c0ced287",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "deltoid_posterior",
+            "supraspinatus",
+            "triceps_brachii",
+            "pectoralis_clavicular",
+            "trapezius",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "levator_scapulae",
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-behind-neck-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-behind-neck-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-behind-neck-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_lateral, deltoid_posterior, supraspinatus, triceps_brachii, pectoralis_clavicular, trapezius, serratus_anterior) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-behind-neck-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (levator_scapulae, biceps_brachii) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-bench-press",
+      "source_path": "assets/work/chest/smith-machine-bench-press.json",
+      "source_blob_sha": "78b831e4c8719ec6cc6ca463eada48ba2f70e2a3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii",
+            "pectoralis_clavicular"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-bench-press/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior, triceps_brachii, pectoralis_clavicular) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-bent-over-row",
+      "source_path": "assets/work/back/smith-machine-bent-over-row.json",
+      "source_blob_sha": "f7365d6a57148b58c248df9255aec5dbacb264a6",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-bent-over-row/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-decline-bench-press",
+      "source_path": "assets/work/chest/smith-machine-decline-bench-press.json",
+      "source_blob_sha": "1c170a84bdf26befa4342db88e952748545bcbb4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-decline-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-good-morning",
+      "source_path": "assets/work/hip/smith-machine-good-morning.json",
+      "source_blob_sha": "9a2428a6618544ce0396a04e672c98467a00ecc4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-good-morning/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-good-morning/",
+            "https://www.acefitness.org/resources/pros/expert-articles/9015/the-hamstrings-blueprint-evidence-based-exercises-for-better-function/",
+            "https://www.acefitness.org/continuing-education/certified/may-2025/8865/the-ace-do-it-better-series-the-romanian-deadlift/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-good-morning/",
+            "https://www.acefitness.org/continuing-education/certified/may-2025/8865/the-ace-do-it-better-series-the-romanian-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория legs подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ],
+      "notes": "Исходный Adductor Magnus не имеет отдельного ID: групповая замена без потери специфичности не подтверждена."
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-hex-press",
+      "source_path": "assets/work/chest/smith-machine-hex-press.json",
+      "source_blob_sha": "c5eff1686416b39026dc97c0a7e73689f545ebf9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-hex-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-hip-thrust",
+      "source_path": "assets/work/hip/smith-machine-hip-thrust.json",
+      "source_blob_sha": "1aa4ba17e3f81efff764a42c355981a2578f3817",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-hip-thrust/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-hip-thrust/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-incline-bench-press",
+      "source_path": "assets/work/chest/smith-machine-incline-bench-press.json",
+      "source_blob_sha": "0e07f20f7e33806b7c4fd506bac37b8502d67566",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-incline-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-leg-press",
+      "source_path": "assets/work/leg/smith-machine-leg-press.json",
+      "source_blob_sha": "9ffc9bdcb08a61dfb1dc287dbc088470df36c1f7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-leg-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-leg-press/",
+            "https://www.nasm.org/resource-center/exercise-library/leg-press",
+            "https://cdn.muscleandstrength.com/exercises/smith-machine-leg-press"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (quadriceps_femoris) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-lunge",
+      "source_path": "assets/work/hip/smith-machine-lunge.json",
+      "source_blob_sha": "041740a279a3ded8de0a028122f1e1cfd31b965d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-lunge/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-lunge/",
+            "https://www.nasm.org/resource-center/exercise-library/leg-press"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (quadriceps_femoris) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Исходные Adductor Magnus и Hamstrings не имеют прямого единственного соответствия в справочнике."
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-reverse-kickback",
+      "source_path": "assets/work/hip/smith-machine-reverse-kickback.json",
+      "source_blob_sha": "ab9628858a458006c56ee20037cf4f1f1e833616",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "gluteus_medius",
+            "gluteus_minimus",
+            "erector_spinae",
+            "obliques",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-reverse-kickback/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-reverse-kickback/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_medius, gluteus_minimus, erector_spinae, obliques, quadratus_lumborum) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Исходный Adductor Magnus требует отдельного решения о групповом представлении."
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-shoulder-press",
+      "source_path": "assets/work/shoulders/smith-machine-shoulder-press.json",
+      "source_blob_sha": "b51664171d2770946a0880f719493e492962e506",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine",
+          "bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "triceps_brachii",
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "trapezius",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "levator_scapulae",
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-shoulder-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (triceps_brachii, pectoralis_clavicular, deltoid_lateral, trapezius, serratus_anterior) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-shoulder-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (levator_scapulae, biceps_brachii) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-shrug",
+      "source_path": "assets/work/trapezius/smith-machine-shrug.json",
+      "source_blob_sha": "f31d534a1c1470efcb56b7a838399f54ac561a5e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-shrug/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-shrug/",
+            "https://www.strengthlog.com/trapezius-muscle-exercises-workout/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (trapezius_upper) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:smith-machine-squat",
+      "source_path": "assets/work/hip/smith-machine-squat.json",
+      "source_blob_sha": "67870681342e9de750bd9831f6264302ff34aaa6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/smith-machine-squat/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        }
+      ],
+      "notes": "Исходные Adductor Magnus и Hamstrings не имеют прямого единственного соответствия."
+    },
+    {
+      "id": "fitnessprogramer:standing-smith-machine-shoulder-press",
+      "source_path": "assets/work/shoulders/standing-smith-machine-shoulder-press.json",
+      "source_blob_sha": "64781cfa436f0e156fd058a3f5b84cae8700cc35",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "smith machine"
+        ],
+        "muscles": {
+          "secondary": [
+            "supraspinatus",
+            "triceps_brachii",
+            "deltoid_lateral",
+            "trapezius",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-smith-machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "В названии и исходной технике прямо указан тренажёр Смита; канонический ID smith machine заменяет слишком общий Machine."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-smith-machine-shoulder-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (supraspinatus, triceps_brachii, deltoid_lateral, trapezius, serratus_anterior) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-smith-machine-shoulder-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (levator_scapulae) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:ab-coaster-machine",
+      "source_path": "assets/work/abs/ab-coaster-machine.json",
+      "source_blob_sha": "8e188a8f32f6f281b710d3be6561efba956b90a0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:bench-press-machine-standing-calf-raise",
+      "source_path": "assets/work/calf/bench-press-machine-standing-calf-raise.json",
+      "source_blob_sha": "598878c387bd26a045c7de99ff9e5fa1453f51dc",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Plantaris, длинные сгибатели пальцев, intrinsic foot muscles и peroneus представлены в исходнике, но не имеют отдельных точных ID в таксономии."
+    },
+    {
+      "id": "fitnessprogramer:bicep-curl-machine",
+      "source_path": "assets/work/biceps/bicep-curl-machine.json",
+      "source_blob_sha": "534ce7d1b4029bbb8ae302c114f673be4c317fd3",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "machine"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bicep-curl-machine/"
+          ],
+          "confidence": "medium",
+          "reason": "Название упражнения указывает на тренажёр, а не исходные Dumbbells; точный специализированный тип оставлен на проверку."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bicep-curl-machine/",
+            "https://www.acefitness.org/resources/everyone/exercise-library/44/seated-biceps-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_brachii) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. В исходнике указано Dumbbells, хотя название указывает на тренажёр для сгибания рук; точный тип тренажёра не утверждён."
+    },
+    {
+      "id": "fitnessprogramer:chest-press-machine",
+      "source_path": "assets/work/chest/chest-press-machine.json",
+      "source_blob_sha": "5e0a29eb8ddd829f28e8ecb8c7604690fc904b83",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:decline-chest-press-machine",
+      "source_path": "assets/work/chest/decline-chest-press-machine.json",
+      "source_blob_sha": "08f0a37e07bc9172292f853e949ace78713d47f3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-chest-press-machine/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (pectoralis_sternal) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:donkey-kick-on-leg-extension-machine",
+      "source_path": "assets/work/hip/donkey-kick-on-leg-extension-machine.json",
+      "source_blob_sha": "620ba2934292967e6be25303a596ea10c91ebe6d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/donkey-kick-on-leg-extension-machine/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Движение на тренажёре разгибания ног необычно, техника в исходнике недостаточно описана; разметка ограничена надёжным главным движением."
+    },
+    {
+      "id": "fitnessprogramer:elliptical-machine",
+      "source_path": "assets/work/cardio/elliptical-machine.json",
+      "source_blob_sha": "997a9d7b6a8113bf1bfba867647259684e0a99c9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Кардиодвижение: новые искусственные силовые primary не назначались."
+    },
+    {
+      "id": "fitnessprogramer:full-crunch-machine",
+      "source_path": "assets/work/abs/full-crunch-machine.json",
+      "source_blob_sha": "f88430b32947f49fe1afb83e5c86a5f7a88eba41",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/full-crunch-machine/",
+            "https://www.strengthlog.com/machine-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (rectus_abdominis) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:glute-kickback-machine",
+      "source_path": "assets/work/hip/glute-kickback-machine.json",
+      "source_blob_sha": "b846e1effbfa08bc72801ec632b2fd67d036b1a8",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Исходный Adductor Magnus не имеет отдельного ID; не заменён произвольным."
+    },
+    {
+      "id": "fitnessprogramer:hack-machine-one-leg-calf-raise",
+      "source_path": "assets/work/calf/hack-machine-one-leg-calf-raise.json",
+      "source_blob_sha": "8ed020bf1894a629ddac1515b3ad812614c45417",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gastrocnemius",
+            "soleus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hack-machine-one-leg-calf-raise/",
+            "https://www.strengthlog.com/standing-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gastrocnemius, soleus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:hack-squats-machine",
+      "source_path": "assets/work/leg/hack-squats-machine.json",
+      "source_blob_sha": "099a467bfd380d1b86a7674c9b4ed5f5ef790199",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Исходные Adductor Magnus и Hamstrings требуют ручного согласования с таксономией."
+    },
+    {
+      "id": "fitnessprogramer:hip-abduction-machine",
+      "source_path": "assets/work/hip/hip-abduction-machine.json",
+      "source_blob_sha": "2e285aa5d1cb1f075dc4c3b6ad781d1cccf3eea7",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hip-abduction-machine/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3594/muscles-that-move-the-leg/",
+            "https://www.acefitness.org/resources/everyone/blog/7335/enhance-your-running-game-by-strengthening-your-hips/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_medius, gluteus_minimus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Источник ошибочно объединяет отведение и приведение бедра: из основных мышц исключены приводящие и другие неспецифичные элементы; отдельные роли требуют проверки."
+    },
+    {
+      "id": "fitnessprogramer:hip-adduction-machine",
+      "source_path": "assets/work/hip/hip-adduction-machine.json",
+      "source_blob_sha": "bf4f2cd0ec9c73930523f0fd86a858bcc55b177a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "hip_adductors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hip-adduction-machine/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3594/muscles-that-move-the-leg/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (hip_adductors) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:hip-thrust-machine",
+      "source_path": "assets/work/hip/hip-thrust-machine.json",
+      "source_blob_sha": "13fce0679c8cdf61247d4751f55205bc30bfd4c0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hip-thrust-machine/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:hip-thrust-on-the-leg-extension-machine",
+      "source_path": "assets/work/hip/hip-thrust-on-the-leg-extension-machine.json",
+      "source_blob_sha": "6d00b23e6fb18e7d5d6b81784e3695e28be31977",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hip-thrust-on-the-leg-extension-machine/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Нестандартная техника hip thrust на тренажёре разгибания ног требует проверки по демонстрации."
+    },
+    {
+      "id": "fitnessprogramer:incline-chest-fly-machine",
+      "source_path": "assets/work/chest/incline-chest-fly-machine.json",
+      "source_blob_sha": "d60e1963fa7ac78f72e0bc7ff3c467a717830cbd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-chest-fly-machine/",
+            "https://www.strengthlog.com/training-program-for-seniors/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal, deltoid_anterior, triceps_brachii) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:incline-chest-press-machine",
+      "source_path": "assets/work/chest/incline-chest-press-machine.json",
+      "source_blob_sha": "7bcd1e0f7823fd34d5f505b7e93b767d9f62cc82",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-chest-press-machine/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_clavicular) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Pectoralis Minor исключён из основной роли: это не главный двигатель жима; исходное утверждение конфликтует с биомеханикой."
+    },
+    {
+      "id": "fitnessprogramer:inner-chest-press-machine",
+      "source_path": "assets/work/chest/inner-chest-press-machine.json",
+      "source_blob_sha": "a0b2b5eadf5b53752b95416e74fd29f04076cda5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lateral-raise-machine",
+      "source_path": "assets/work/shoulders/lateral-raise-machine.json",
+      "source_blob_sha": "a7f2882288973b276bfeb802b5e8eab5caf28dbc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "serratus_anterior",
+            "trapezius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lateral-raise-machine/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_lateral) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lateral-raise-machine/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (supraspinatus, serratus_anterior, trapezius) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lying-chest-press-machine",
+      "source_path": "assets/work/chest/lying-chest-press-machine.json",
+      "source_blob_sha": "0bbe013003466884718bf8e8d52a3a8cc8f35a0b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii",
+            "pectoralis_clavicular"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-chest-press-machine/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior, triceps_brachii, pectoralis_clavicular) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:machine-fly",
+      "source_path": "assets/work/chest/machine-fly.json",
+      "source_blob_sha": "032bfb4a5b335d333f353a87f76e411c06d001e3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:rear-delt-machine-fly",
+      "source_path": "assets/work/shoulders/rear-delt-machine-fly.json",
+      "source_blob_sha": "8a6e919d44589e9f8e2b8f1e0044616ac8559dc3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "deltoid_lateral",
+            "trapezius",
+            "rhomboids"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rear-delt-machine-fly/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (infraspinatus, teres_minor, deltoid_lateral, trapezius, rhomboids) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rear-delt-machine-fly/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория shoulders подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:reverse-grip-machine-row",
+      "source_path": "assets/work/back/reverse-grip-machine-row.json",
+      "source_blob_sha": "7bc68e04fdb2c34f54eb1866406248052430c9e3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-grip-machine-row/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:reverse-hyperextension-machine",
+      "source_path": "assets/work/hip/reverse-hyperextension-machine.json",
+      "source_blob_sha": "045f28121b7a9e5fbf0dd40674cf8c078d7a6661",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/reverse-hyperextension-machine/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория legs подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Исходный Hamstring не является отдельным каноническим ID, оставлен для уточнения."
+    },
+    {
+      "id": "fitnessprogramer:rowing-machine",
+      "source_path": "assets/work/cardio/rowing-machine.json",
+      "source_blob_sha": "e55f3c9f09a18200d1340808124e58333fb72fa0",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "rowing machine"
+        ],
+        "muscles": {
+          "primary": []
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rowing-machine/",
+            "https://www.concept2.com/ergs/rowerg"
+          ],
+          "confidence": "high",
+          "reason": "Гребной эргометр соответствует существующему отдельному фильтру rowing machine; общий Machine недостаточен."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rowing-machine/",
+            "https://www.concept2.com/ergs/rowerg"
+          ],
+          "confidence": "high",
+          "reason": "Для кардиотренажёра не подходит исходный перечень из десятков якобы главных мышц; вместо него силовой primary оставлен пустым."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rowing-machine/",
+            "https://www.concept2.com/ergs/rowerg"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория cardio подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ],
+      "notes": "Исходник приписывает 30+ мышцам роль primary, включая дубли и функциональные ярлыки; для кардио это недостоверная силовая классификация."
+    },
+    {
+      "id": "fitnessprogramer:seated-ab-crunch-machine",
+      "source_path": "assets/work/abs/seated-ab-crunch-machine.json",
+      "source_blob_sha": "83e9d095e93cc0720e034cd05d859c0566d85e24",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-ab-crunch-machine/",
+            "https://www.strengthlog.com/machine-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (rectus_abdominis) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:seated-calf-press-on-leg-press-machine",
+      "source_path": "assets/work/calf/seated-calf-press-on-leg-press-machine.json",
+      "source_blob_sha": "348cefe2aa896d7bc4264c14bdb2d27af7ed10ee",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "soleus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-calf-press-on-leg-press-machine/",
+            "https://www.strengthlog.com/how-many-exercises-per-muscle-group/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (soleus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:seated-crunch-machine",
+      "source_path": "assets/work/abs/seated-crunch-machine.json",
+      "source_blob_sha": "6774aa766f5b5b99cfd7bcdb42844dfef0f4c9ab",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-crunch-machine/",
+            "https://www.strengthlog.com/machine-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (rectus_abdominis) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:seated-row-machine",
+      "source_path": "assets/work/back/seated-row-machine.json",
+      "source_blob_sha": "f155dddc8e2c8b5678950510c6b364da9262975b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:seated-twist-machine",
+      "source_path": "assets/work/abs/seated-twist-machine.json",
+      "source_blob_sha": "d41dde175d61e5e618656ed39b88b706631be571",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-twist-machine/",
+            "https://www.strengthlog.com/strength-training-for-football/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (obliques) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:single-calf-raise-on-leg-press-machine",
+      "source_path": "assets/work/calf/single-calf-raise-on-leg-press-machine.json",
+      "source_blob_sha": "bf828980c015ca0750cd41022c40385497cb27e2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gastrocnemius",
+            "soleus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/single-calf-raise-on-leg-press-machine/",
+            "https://www.strengthlog.com/standing-calf-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gastrocnemius, soleus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:squat-on-the-abductor-machine",
+      "source_path": "assets/work/hip/squat-on-the-abductor-machine.json",
+      "source_blob_sha": "62b6ab28f9a6cde3cd3872ab90c69a493c435b93",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Squat on the Abductor Machine: недостаточно описана техника, чтобы уверенно определить режим нагрузки и целевые мышцы."
+    },
+    {
+      "id": "fitnessprogramer:stair-climber-machine",
+      "source_path": "assets/work/cardio/stair-climber-machine.json",
+      "source_blob_sha": "854dbb78311d9bf3b12bac1bce1b1f3f7faf6eb7",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. В исходных вспомогательных/стабилизирующих мышцах имеются Adductor Magnus и Hamstrings без однозначного одиночного ID. Кардиодвижение: новые искусственные силовые primary не назначались."
+    },
+    {
+      "id": "fitnessprogramer:standing-single-leg-curl-machine",
+      "source_path": "assets/work/leg/standing-single-leg-curl-machine.json",
+      "source_blob_sha": "bcd5d456caa037d82fe36e210eafc282a39cb26c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-single-leg-curl-machine/",
+            "https://www.acefitness.org/resources/pros/expert-articles/9015/the-hamstrings-blueprint-evidence-based-exercises-for-better-function/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:standing-twist-machine",
+      "source_path": "assets/work/abs/standing-twist-machine.json",
+      "source_blob_sha": "26c7f01ff00b04c640d21dda998aeea5fa445ade",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-twist-machine/",
+            "https://www.strengthlog.com/strength-training-for-football/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (obliques) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:triceps-dip-machine",
+      "source_path": "assets/work/triceps/triceps-dip-machine.json",
+      "source_blob_sha": "53e7e15e17dc1a29c54e9cace42039837768ba9e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_major",
+            "rhomboids",
+            "levator_scapulae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/triceps-dip-machine/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior, pectoralis_major, rhomboids, levator_scapulae, latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:triceps-extension-machine",
+      "source_path": "assets/work/triceps/triceps-extension-machine.json",
+      "source_blob_sha": "4f0140796add3878da977529b5ff2fdab0a063fa",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:walk-wave-machine",
+      "source_path": "assets/work/cardio/walk-wave-machine.json",
+      "source_blob_sha": "adb685706c03e51c3065900d252c085ff6ad65a8",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Точный тип Walk Wave Machine не идентифицирован и отсутствует как фильтр. Кардиодвижение: новые искусственные силовые primary не назначались."
+    },
+    {
+      "id": "fitnessprogramer:back-lever",
+      "source_path": "assets/work/back/back-lever.json",
+      "source_blob_sha": "46a721f27f0379f39b26f10e8f0edef84d20ba40",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {},
+      "evidence": [],
+      "notes": "Back lever может выполняться на кольцах и перекладине; исходник пуст, а однозначное оборудование/приоритет категории не подтверждены. Сохраняется предварительная категория back без подтверждения; необходим контроль техники, категории и оборудования."
+    },
+    {
+      "id": "fitnessprogramer:front-lever-pull-up",
+      "source_path": "assets/work/back/front-lever-pull-up.json",
+      "source_blob_sha": "1b9598748e30d3dd7334451562139309fa8e767c",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-lever-pull-up/",
+            "https://gym-daze.com/exercises/front-lever"
+          ],
+          "confidence": "medium",
+          "reason": "Для подтягивания в положении front lever необходима перекладина; исходное NO EQUIPMENT неверно для указанной техники."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-lever-pull-up/",
+            "https://gym-daze.com/exercises/front-lever"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-lever-pull-up/",
+            "https://gym-daze.com/exercises/front-lever"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория back подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:lever-assisted-single-leg-press",
+      "source_path": "assets/work/leg/lever-assisted-single-leg-press.json",
+      "source_blob_sha": "175b730956734d881666d29a1836d61085ed248b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-assisted-single-leg-press/",
+            "https://www.nasm.org/resource-center/exercise-library/leg-press"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (quadriceps_femoris) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-biceps-curl",
+      "source_path": "assets/work/biceps/lever-biceps-curl.json",
+      "source_blob_sha": "ca4dc8247a6d8c56fdba9dc509f2a621325495a9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-biceps-curl/",
+            "https://www.acefitness.org/resources/everyone/exercise-library/44/seated-biceps-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_brachii) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-cable-rear-pulldown",
+      "source_path": "assets/work/back/lever-cable-rear-pulldown.json",
+      "source_blob_sha": "5a0a257c0726116e2c8e674e0625fa201a02cd60",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-cable-rear-pulldown/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-chest-press",
+      "source_path": "assets/work/chest/lever-chest-press.json",
+      "source_blob_sha": "20d69ecba76e2878586eba8d7b6ce7ce9f69d92c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-chest-press/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (pectoralis_sternal) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-crossovers",
+      "source_path": "assets/work/chest/lever-crossovers.json",
+      "source_blob_sha": "88fa3e9de1b7c972aba55889854d46e3595bc7af",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "rhomboids",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-crossovers/",
+            "https://www.strengthlog.com/standing-cable-chest-fly/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_clavicular, deltoid_anterior, rhomboids, levator_scapulae) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-deadlift",
+      "source_path": "assets/work/leg/lever-deadlift.json",
+      "source_blob_sha": "d309e0622c3dc741d3011b3084910b4dd04ad4bb",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Adductor Magnus и Hamstrings отсутствуют как единые точные ID; Hamstrings продублирован между ролями."
+    },
+    {
+      "id": "fitnessprogramer:lever-decline-chest-press",
+      "source_path": "assets/work/chest/lever-decline-chest-press.json",
+      "source_blob_sha": "d6cc5a558e95d9878adb654228f817e8af650b34",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-decline-chest-press/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (pectoralis_sternal) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-donkey-calf-raise",
+      "source_path": "assets/work/calf/lever-donkey-calf-raise.json",
+      "source_blob_sha": "ed2a70aaa428f0ca41087c2ed8e17abf53d1214b",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Исходник содержит Plantaris и отдельные глубокие мышцы стопы, для которых в Базе 1 нет точных ID."
+    },
+    {
+      "id": "fitnessprogramer:lever-front-pulldown",
+      "source_path": "assets/work/back/lever-front-pulldown.json",
+      "source_blob_sha": "7ef17770b3708968655a2df0d09095d36170f490",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-gripless-shrug",
+      "source_path": "assets/work/trapezius/lever-gripless-shrug.json",
+      "source_blob_sha": "a4385fcf49bea3d178930475b945f37af4c7c962",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae",
+            "trapezius_middle"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-gripless-shrug/",
+            "https://www.strengthlog.com/trapezius-muscle-exercises-workout/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (trapezius_upper) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-gripless-shrug/",
+            "https://www.strengthlog.com/trapezius-muscle-exercises-workout/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (levator_scapulae, trapezius_middle) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-high-row",
+      "source_path": "assets/work/back/lever-high-row.json",
+      "source_blob_sha": "a1b1aa47703f356a147725bef70110200d58859f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-high-row/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-high-row/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория back подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-incline-chest-press",
+      "source_path": "assets/work/chest/lever-incline-chest-press.json",
+      "source_blob_sha": "f1f38b6f088931185da0233d61947eeb5ea1e37d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-incline-hammer-chest-press",
+      "source_path": "assets/work/chest/lever-incline-hammer-chest-press.json",
+      "source_blob_sha": "258bc7c0df0c555309af272ca3cfc25bf17d34ed",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-incline-hammer-chest-press/",
+            "https://www.strengthlog.com/training-program-for-seniors/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal, deltoid_anterior, triceps_brachii) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-kneeling-leg-curl",
+      "source_path": "assets/work/leg/lever-kneeling-leg-curl.json",
+      "source_blob_sha": "5bc374a689bcd0ac24f58891e612c4376b4272aa",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-kneeling-leg-curl/",
+            "https://www.acefitness.org/resources/pros/expert-articles/9015/the-hamstrings-blueprint-evidence-based-exercises-for-better-function/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-lateral-raise",
+      "source_path": "assets/work/shoulders/lever-lateral-raise.json",
+      "source_blob_sha": "fb5cce100df1faacb1831d3e670cd7b68f71722c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "serratus_anterior",
+            "trapezius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-lateral-raise/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_lateral) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-lateral-raise/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (supraspinatus, serratus_anterior, trapezius) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-lying-crunch",
+      "source_path": "assets/work/abs/lever-lying-crunch.json",
+      "source_blob_sha": "e2bea9f57c9545d58afa31d2192f157bbc443db1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-lying-crunch/",
+            "https://www.strengthlog.com/machine-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (rectus_abdominis) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-neck-extension-plate-loaded",
+      "source_path": "assets/work/neck/lever-neck-extension-plate-loaded.json",
+      "source_blob_sha": "b3b76b7860278b69285aee94bb16f03dc589208c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "cervical_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-neck-extension-plate-loaded/",
+            "https://www.acefitness.org/resources/everyone/exercise-library/204/neck-flexion-and-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (cervical_extensors) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-neck-right-side-flexion-plate-loaded",
+      "source_path": "assets/work/neck/lever-neck-right-side-flexion-plate-loaded.json",
+      "source_blob_sha": "a4f91d330b4823a8b0740c06089f8b936ad80221",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Боковое сгибание шеи не тождественно общей категории cervical_flexors; мышечный ID не назначен."
+    },
+    {
+      "id": "fitnessprogramer:lever-one-arm-chest-press",
+      "source_path": "assets/work/chest/lever-one-arm-chest-press.json",
+      "source_blob_sha": "2d0609c76884254ecc25d41c3150a0aaf276ad9b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii",
+            "pectoralis_clavicular"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-one-arm-chest-press/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior, triceps_brachii, pectoralis_clavicular) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-preacher-curl",
+      "source_path": "assets/work/biceps/lever-preacher-curl.json",
+      "source_blob_sha": "b17db266cf076333b5a394aa6b4ad26a26d072b4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-pullover",
+      "source_path": "assets/work/back/lever-pullover.json",
+      "source_blob_sha": "6277aa5635622def88268a7ce338e88e6d27d4b2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-pullover/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-reverse-shoulder-press",
+      "source_path": "assets/work/shoulders/lever-reverse-shoulder-press.json",
+      "source_blob_sha": "517031dc70938c21774df1f424521f811fc09ba9",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Lever Reverse Shoulder Press: исходное описание и целевые мышцы пусты; нельзя уверенно отождествлять с обычным жимом."
+    },
+    {
+      "id": "fitnessprogramer:lever-reverse-t-bar-row",
+      "source_path": "assets/work/back/lever-reverse-t-bar-row.json",
+      "source_blob_sha": "2cd3b8a47ed576a5339341fc82c470aee489cd8e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-seated-calf-raise",
+      "source_path": "assets/work/calf/lever-seated-calf-raise.json",
+      "source_blob_sha": "7b04a4521e87a723b0279be6835b3a7446c6be26",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-shoulder-press",
+      "source_path": "assets/work/shoulders/lever-shoulder-press.json",
+      "source_blob_sha": "01062aa4ebd3f9459dc9e42f5a101c5e7ee7dca3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "deltoid_lateral",
+            "supraspinatus",
+            "pectoralis_clavicular",
+            "triceps_brachii",
+            "trapezius",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "biceps_brachii",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-shoulder-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_lateral, supraspinatus, pectoralis_clavicular, triceps_brachii, trapezius, serratus_anterior) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-shoulder-press/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (biceps_brachii, levator_scapulae) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-shoulder-press-hammer-grip",
+      "source_path": "assets/work/shoulders/lever-shoulder-press-hammer-grip.json",
+      "source_blob_sha": "82aba9c8e8b104cd3af07215286a4d76f9272d8c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-shoulder-press-hammer-grip/",
+            "https://www.strengthlog.com/machine-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (deltoid_anterior) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-shrug",
+      "source_path": "assets/work/trapezius/lever-shrug.json",
+      "source_blob_sha": "9c3996c06a34bfb130cd57ffa593c9adbf6eba8b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-side-hip-abduction",
+      "source_path": "assets/work/hip/lever-side-hip-abduction.json",
+      "source_blob_sha": "2a9a7d23ca8166b819a975a2c71306a0400c4c7e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-side-hip-abduction/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3594/muscles-that-move-the-leg/",
+            "https://www.acefitness.org/resources/everyone/blog/7335/enhance-your-running-game-by-strengthening-your-hips/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_medius, gluteus_minimus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-side-hip-adduction",
+      "source_path": "assets/work/hip/lever-side-hip-adduction.json",
+      "source_blob_sha": "160f33d8be2fcf2f2ffd6de8a12969552614d7dd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "hip_adductors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-side-hip-adduction/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3594/muscles-that-move-the-leg/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (hip_adductors) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-single-leg-curl",
+      "source_path": "assets/work/leg/lever-single-leg-curl.json",
+      "source_blob_sha": "d2d24cc27889727354b6948f2b6942815031d39f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-single-leg-curl/",
+            "https://www.acefitness.org/resources/pros/expert-articles/9015/the-hamstrings-blueprint-evidence-based-exercises-for-better-function/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-standing-hip-extension",
+      "source_path": "assets/work/hip/lever-standing-hip-extension.json",
+      "source_blob_sha": "d967d1ca6158180ce1b15d6a37811c004a4c6d41",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-standing-hip-extension/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-standing-leg-raise",
+      "source_path": "assets/work/leg/lever-standing-leg-raise.json",
+      "source_blob_sha": "9377c87a5b80467b3f69cfd76f7cf7e7df67139e",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Lever Standing Leg Raise: направление подъёма ноги не описано; неясно, выполняется ли сгибание или отведение бедра."
+    },
+    {
+      "id": "fitnessprogramer:lever-standing-rear-kick",
+      "source_path": "assets/work/hip/lever-standing-rear-kick.json",
+      "source_blob_sha": "aa7cd9e5536170e96e3b142544fc468af49bcc8a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-standing-rear-kick/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-t-bar-row",
+      "source_path": "assets/work/back/lever-t-bar-row.json",
+      "source_blob_sha": "69f4a79521e5c00f11b884395a4c3de1df9f10bc",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. В исходных стабилизаторах представлены Hamstrings и Adductor Magnus, а Erector Spinae повторяется в другой роли."
+    },
+    {
+      "id": "fitnessprogramer:lever-triceps-dip",
+      "source_path": "assets/work/triceps/lever-triceps-dip.json",
+      "source_blob_sha": "0a8dffbd138e706ed55b75d08f44b57fc37f7c54",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_major",
+            "rhomboids",
+            "levator_scapulae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lever-triceps-dip/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior, pectoralis_major, rhomboids, levator_scapulae, latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:lever-triceps-extension",
+      "source_path": "assets/work/triceps/lever-triceps-extension.json",
+      "source_blob_sha": "ee828b79c848a5cae8722f5a73fc579927e23613",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+    },
+    {
+      "id": "fitnessprogramer:90-degree-cable-external-rotation",
+      "source_path": "assets/work/shoulders/90-degree-cable-external-rotation.json",
+      "source_blob_sha": "6954c5338cac40c65ae5aa4bab5d081a1e9527ce",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "resistance band"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/90-degree-cable-external-rotation/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/90-degree-cable-external-rotation/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (infraspinatus, teres_minor) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:90-degree-cable-internal-rotation",
+      "source_path": "assets/work/shoulders/90-degree-cable-internal-rotation.json",
+      "source_blob_sha": "cf4fec7e54d7ace5b626718ad3dc0c437eb7b386",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "resistance band"
+        ],
+        "muscles": {
+          "primary": [
+            "subscapularis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/90-degree-cable-internal-rotation/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/90-degree-cable-internal-rotation/",
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (subscapularis) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:bent-over-reverse-cable-fly",
+      "source_path": "assets/work/shoulders/bent-over-reverse-cable-fly.json",
+      "source_blob_sha": "5c1adfee8577b02d74cd50f67371910144d293b3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "resistance band"
+        ],
+        "muscles": {
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "deltoid_lateral",
+            "trapezius",
+            "rhomboids"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-reverse-cable-fly/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        },
+        {
+          "fields": [
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-reverse-cable-fly/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (infraspinatus, teres_minor, deltoid_lateral, trapezius, rhomboids) без произвольных стабилизаторов."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bent-over-reverse-cable-fly/",
+            "https://www.strengthlog.com/how-to-build-big-shoulders/"
+          ],
+          "confidence": "medium",
+          "reason": "Основная категория shoulders подтверждена характером движения, приоритет проверен относительно альтернативных исходных разделов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-bent-over-row",
+      "source_path": "assets/work/back/cable-bent-over-row.json",
+      "source_blob_sha": "aeeec4005c117365aa727278fe6be9e976ae96d5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-bent-over-row/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-bent-over-row/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-concentration-curl",
+      "source_path": "assets/work/biceps/cable-concentration-curl.json",
+      "source_blob_sha": "f15536e8277dbaf9efae4d3ef795ed2586c97f28",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-concentration-curl/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-concentration-extension-on-knee",
+      "source_path": "assets/work/triceps/cable-concentration-extension-on-knee.json",
+      "source_blob_sha": "a79a5b6d8bdeb58879520abdb374a2d67b01cecb",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ]
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-concentration-extension-on-knee/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-crossover",
+      "source_path": "assets/work/chest/cable-crossover.json",
+      "source_blob_sha": "0484817b9c536b968b92844c1cb103e5d4d94f76",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-crossover/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-crossover/",
+            "https://www.strengthlog.com/smith-machine-bench-press/"
+          ],
+          "confidence": "high",
+          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal) без произвольных стабилизаторов."
+        }
+      ],
+      "notes": "Clavicular and Lower Head — смешанный термин из исходника без однозначной связи с одним каноническим ID."
+    },
+    {
+      "id": "fitnessprogramer:cable-crossover-lat-pulldown",
+      "source_path": "assets/work/back/cable-crossover-lat-pulldown.json",
+      "source_blob_sha": "5904ade687be33936a0a01d00e88d9bdc9c637b8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-crossover-lat-pulldown/"
+          ],
+          "confidence": "high",
+          "reason": "В исходной карточке указан Cable; исключён не являющийся предметом оборудования Full Gym, применены действующие ID фильтров."
+        },
+        {
+          "fields": [
+            "muscles.primary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-crossover-lat-pulldown/",
+            "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
+          ],
+          "confidence": "medium",
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
+        }
+      ]
+    }
+  ]
+}
