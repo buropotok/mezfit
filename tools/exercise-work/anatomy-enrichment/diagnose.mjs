@@ -77,6 +77,11 @@ async function run() {
   const equipmentLabels = readLiteralMap(equipmentSource, 'export const EQUIPMENT_LABELS', 30);
   const muscleAliases = readLiteralMap(catalogueSource, 'const muscleAliases', 10);
   const equipmentAliases = readLiteralMap(catalogueSource, 'const equipmentAliases', 1);
+  // Same Russian filter label may be exposed through several source IDs. Flag
+  // non-canonical variants for review; never silently choose new filter IDs.
+  const firstIdByLabel = {};
+  for (const [id, label] of Object.entries(equipmentLabels))
+    if (!Object.hasOwn(firstIdByLabel, label)) firstIdByLabel[label] = id;
   if (equipmentLabels['smith machine'] !== 'Тренажёр Смита')
     fail('SMITH_MACHINE_LABEL_CONTRACT_CHANGED');
   const muscleId = raw => muscleAliases[lower(raw)]
@@ -86,6 +91,7 @@ async function run() {
     primary_muscles_empty: 0, exercises_with_unmapped_muscles: 0, unmapped_muscle_terms: 0,
     equipment_empty: 0, generic_machine: 0,
     exercises_with_unknown_equipment: 0, unknown_equipment_terms: 0,
+    exercises_with_equipment_aliases: 0, equipment_alias_terms: 0,
     cross_category_review_required: 0, exercises_requiring_attention: 0,
     exercises_without_detected_vocabulary_problems: 0,
   };
@@ -118,10 +124,15 @@ async function run() {
     const equipment = card.equipment.map(lower).filter(raw => raw !== 'full gym');
     const unknownEquipment = unique(equipment
       .filter(raw => !Object.hasOwn(equipmentLabels, equipmentAliases[raw] ?? raw)));
+    const aliasesToReview = unique(equipment.filter(raw => {
+      const id = equipmentAliases[raw] ?? raw;
+      const label = equipmentLabels[id];
+      return label && (raw !== id || firstIdByLabel[label] !== id);
+    }));
     const genericMachine = equipment.some(raw => raw === 'machine' || raw === 'machines');
     const equipmentEmpty = equipment.length === 0;
     const attention = anatomyEmpty || primaryEmpty || unknownMuscles.length > 0
-      || unknownEquipment.length > 0 || genericMachine || equipmentEmpty
+      || unknownEquipment.length > 0 || aliasesToReview.length > 0 || genericMachine || equipmentEmpty
       || row.category_review_required;
     metrics.unique_exercises++;
     metrics.anatomy_completely_empty += Number(anatomyEmpty);
@@ -132,6 +143,8 @@ async function run() {
     metrics.generic_machine += Number(genericMachine);
     metrics.exercises_with_unknown_equipment += Number(unknownEquipment.length > 0);
     metrics.unknown_equipment_terms += unknownEquipment.length;
+    metrics.exercises_with_equipment_aliases += Number(aliasesToReview.length > 0);
+    metrics.equipment_alias_terms += aliasesToReview.length;
     metrics.cross_category_review_required += Number(row.category_review_required);
     metrics.exercises_requiring_attention += Number(attention);
     metrics.exercises_without_detected_vocabulary_problems += Number(!attention);
@@ -141,6 +154,7 @@ async function run() {
       anatomy_empty: anatomyEmpty, primary_muscles_empty: primaryEmpty,
       unknown_muscles: unknownMuscles, equipment_empty: equipmentEmpty,
       generic_machine: genericMachine, unknown_equipment: unknownEquipment,
+      equipment_aliases_to_review: aliasesToReview,
       needs_attention: attention,
     });
   }
