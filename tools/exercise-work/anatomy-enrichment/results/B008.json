@@ -1776,6 +1776,447 @@
         }
       ],
       "notes": "Landmine twist — ротация корпуса и перевод фиксированного грифа из стороны в сторону, исходные obliques верны, уточняется контроль позвоночника."
+    },
+    {
+      "id": "fitnessprogramer:lat-pulldown",
+      "source_path": "assets/work/back/lat-pulldown.json",
+      "source_blob_sha": "f61e29f23f963c4a8115f0a267960006e9854bcc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "lat-pulldown-machine"
+        ],
+        "muscles": {
+          "secondary": [
+            "teres_major",
+            "rhomboids",
+            "biceps_brachii",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lat-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "Lat Pulldown: в инструкции прямо назван lat pulldown machine с упорами для бёдер — конкретный блочный тренажёр, отличен от универсального cable. Основной latissimus исходника сохранён."
+        }
+      ],
+      "notes": "Lat Pulldown: в инструкции прямо назван lat pulldown machine с упорами для бёдер — конкретный блочный тренажёр, отличен от универсального cable. Основной latissimus исходника сохранён."
+    },
+    {
+      "id": "fitnessprogramer:lateral-leg-swings",
+      "source_path": "assets/work/hip/lateral-leg-swings.json",
+      "source_blob_sha": "95173b0d48e512d6c8a676cbfd57d06177429c81",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lateral-leg-swings/"
+          ],
+          "confidence": "medium",
+          "reason": "Lateral leg swings — динамическая мобилизация отведения и приведения ноги, не изолированная силовая работа; стенка как опора по инструкции необязательна."
+        }
+      ],
+      "notes": "Lateral leg swings — динамическая мобилизация отведения и приведения ноги, не изолированная силовая работа; стенка как опора по инструкции необязательна."
+    },
+    {
+      "id": "fitnessprogramer:lateral-raise-with-towel-on-wall",
+      "source_path": "assets/work/shoulders/lateral-raise-with-towel-on-wall.json",
+      "source_blob_sha": "79f01fe8e84f0c5e50911f5ae91ea55d0871bbe2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "towel",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lateral-raise-with-towel-on-wall/"
+          ],
+          "confidence": "medium",
+          "reason": "Lateral raise with towel on wall: в названии указаны полотенце и стена, в инструкции — поднятие руки в сторону. Тканевое полотенце не равно резиновому эспандеру."
+        }
+      ],
+      "notes": "Lateral raise with towel on wall: в названии указаны полотенце и стена, в инструкции — поднятие руки в сторону. Тканевое полотенце не равно резиновому эспандеру."
+    },
+    {
+      "id": "fitnessprogramer:lateral-speed-step",
+      "source_path": "assets/work/leg/lateral-speed-step.json",
+      "source_blob_sha": "610b386c7ebd8d6a509813d256b3a34bd468988e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lateral-speed-step/"
+          ],
+          "confidence": "low",
+          "reason": "Lateral speed step по исходному описанию — ловкость, скорость и ритмичные перемещения в стороны, а не изолированное разгибание колена; категория cardio."
+        }
+      ],
+      "notes": "Lateral speed step по исходному описанию — ловкость, скорость и ритмичные перемещения в стороны, а не изолированное разгибание колена; категория cardio."
+    },
+    {
+      "id": "fitnessprogramer:lateral-step-up",
+      "source_path": "assets/work/leg/lateral-step-up.json",
+      "source_blob_sha": "5b345f36aeef8cc9c01cc69e47dce85bb8c404c6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lateral-step-up/"
+          ],
+          "confidence": "low",
+          "reason": "Lateral step-up — подъём боком на устойчивую скамью/ступень, исходное Bench подтверждает опору; стабилизация таза."
+        }
+      ],
+      "notes": "Lateral step-up — подъём боком на устойчивую скамью/ступень, исходное Bench подтверждает опору; стабилизация таза."
+    },
+    {
+      "id": "fitnessprogramer:leaning-single-arm-dumbbell-lateral-raise",
+      "source_path": "assets/work/shoulders/leaning-single-arm-dumbbell-lateral-raise.json",
+      "source_blob_sha": "6be16fa39baefc0d2bc6042a7b3f2d03cee9aaff",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leaning-single-arm-dumbbell-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Латеральное поднятие гантели с наклоном, исходные латеральная дельта и помощники соответствуют движению; точная стабилизирующая роль не определяется."
+        }
+      ],
+      "notes": "Латеральное поднятие гантели с наклоном, исходные латеральная дельта и помощники соответствуют движению; точная стабилизирующая роль не определяется."
+    },
+    {
+      "id": "fitnessprogramer:leg-curl",
+      "source_path": "assets/work/leg/leg-curl.json",
+      "source_blob_sha": "3ff2b08ac8a769ed4f5729926b1bd44cfefa24bd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-curl-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Leg Curl — специализированный тренажёр для сгибания колена (сидя/лёжа не указано); исходное Hamstrings нормализовано к конкретным группам заднего бедра."
+        }
+      ],
+      "notes": "Leg Curl — специализированный тренажёр для сгибания колена (сидя/лёжа не указано); исходное Hamstrings нормализовано к конкретным группам заднего бедра."
+    },
+    {
+      "id": "fitnessprogramer:leg-curl-on-stability-ball",
+      "source_path": "assets/work/leg/leg-curl-on-stability-ball.json",
+      "source_blob_sha": "da6359f3359c8abe197f1c2b614f4437dbc72769",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-curl-on-stability-ball/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание ног на фитболе: разгибание таза удерживается ягодичной, сгибание колена выполняют задние мышцы бедра; exercise ball уже canonical."
+        }
+      ],
+      "notes": "Сгибание ног на фитболе: разгибание таза удерживается ягодичной, сгибание колена выполняют задние мышцы бедра; exercise ball уже canonical."
+    },
+    {
+      "id": "fitnessprogramer:leg-extension",
+      "source_path": "assets/work/leg/leg-extension.json",
+      "source_blob_sha": "4456b7ee9e045bfd248a021a7d82e7cd07a45ccf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-extension-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Leg Extension — тренажёр с рычагом и передней подушкой под голени для разгибания коленей, точный тип определён из инструкции."
+        }
+      ],
+      "notes": "Leg Extension — тренажёр с рычагом и передней подушкой под голени для разгибания коленей, точный тип определён из инструкции."
+    },
+    {
+      "id": "fitnessprogramer:leg-press",
+      "source_path": "assets/work/leg/leg-press.json",
+      "source_blob_sha": "ab13a5d76868b832af600092c7b47bb711daa70e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-press-machine"
+        ],
+        "muscles": {
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Leg Press: специализированный тренажёр со спинкой и платформой, тип жима ногами подтверждён; исходные hamstrings в динамических стабилизаторах не гарантированы."
+        }
+      ],
+      "notes": "Leg Press: специализированный тренажёр со спинкой и платформой, тип жима ногами подтверждён; исходные hamstrings в динамических стабилизаторах не гарантированы."
+    },
+    {
+      "id": "fitnessprogramer:leg-press-calf-raise",
+      "source_path": "assets/work/calf/leg-press-calf-raise.json",
+      "source_blob_sha": "4442496583c91623eef400ea24963aa6ec0e9464",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-press-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-press-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём на носки на тренажёре для жима ногами, тип оборудования явно указан, фокус подошвенного сгибания."
+        }
+      ],
+      "notes": "Подъём на носки на тренажёре для жима ногами, тип оборудования явно указан, фокус подошвенного сгибания."
+    },
+    {
+      "id": "fitnessprogramer:leg-pull-in-knee-ups",
+      "source_path": "assets/work/abs/leg-pull-in-knee-ups.json",
+      "source_blob_sha": "88ac3b0a62a93fcedd000a189566b378039c321e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-pull-in-knee-ups/"
+          ],
+          "confidence": "medium",
+          "reason": "Лёжа подтягивание коленей с контролем поясничного отдела, исходные rectus abdominis/obliques сохранены; неспецифичные стабилизаторы не добавляются."
+        }
+      ],
+      "notes": "Лёжа подтягивание коленей с контролем поясничного отдела, исходные rectus abdominis/obliques сохранены; неспецифичные стабилизаторы не добавляются."
     }
   ]
 }
