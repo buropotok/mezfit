@@ -2500,6 +2500,421 @@
         }
       ],
       "notes": "Инструкция прямо требует напрягать корпус и ягодицы для стабилизации при разгибании рук над головой."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-upright-row",
+      "source_path": "assets/work/shoulders/dumbbell-upright-row.json",
+      "source_blob_sha": "331aa946d02871f80c9b79139265b2cd4b300c7d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "supraspinatus",
+            "deltoid_anterior",
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-upright-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга к подбородку в первую очередь нагружает среднюю дельту с участием верхней трапеции; не дублируем ротаторную манжету без отдельного доказательства."
+        }
+      ],
+      "notes": "Тяга к подбородку в первую очередь нагружает среднюю дельту с участием верхней трапеции; не дублируем ротаторную манжету без отдельного доказательства."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-upward-fly",
+      "source_path": "assets/work/chest/dumbbell-upward-fly.json",
+      "source_blob_sha": "31da508a2543e0c051b03351ebd414a1a1d03085",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-upward-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходное target уточняет ключичную часть большой грудной; синергист передняя дельта. Бицепс/трицепс не принимаются автоматически как двигатели при сведении."
+        }
+      ],
+      "notes": "Исходное target уточняет ключичную часть большой грудной; синергист передняя дельта. Бицепс/трицепс не принимаются автоматически как двигатели при сведении."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-v-up",
+      "source_path": "assets/work/abs/dumbbell-v-up.json",
+      "source_blob_sha": "426c45e28424c2ca56e093065dc1d38321ea1418",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-v-up/"
+          ],
+          "confidence": "medium",
+          "reason": "V-up включает сгибание туловища и бедра. Разрозненные мышцы приводящей группы исходника не добавляются только ради заполнения."
+        }
+      ],
+      "notes": "V-up включает сгибание туловища и бедра. Разрозненные мышцы приводящей группы исходника не добавляются только ради заполнения."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-w-press",
+      "source_path": "assets/work/shoulders/dumbbell-w-press.json",
+      "source_blob_sha": "e780e420b3efb7558c4afbaff93678730f8c4981",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-w-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Основной жимовой акцент передняя дельта, синергисты включают разгибатели локтя и переднюю зубчатую мышцу."
+        }
+      ],
+      "notes": "Основной жимовой акцент передняя дельта, синергисты включают разгибатели локтя и переднюю зубчатую мышцу."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-walking-lunge",
+      "source_path": "assets/work/hip/dumbbell-walking-lunge.json",
+      "source_blob_sha": "f65c1f0e8cd80ffc8b7c7621657e2d66f8cbb105",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-walking-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Шагающие выпады — последовательная работа одной ноги; стабилизация таза и корпуса, без копирования полного избыточного исходного списка."
+        }
+      ],
+      "notes": "Шагающие выпады — последовательная работа одной ноги; стабилизация таза и корпуса, без копирования полного избыточного исходного списка."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-windmill",
+      "source_path": "assets/work/shoulders/dumbbell-windmill.json",
+      "source_blob_sha": "2fd8055b2e3a79cf688c9849654b5c4fdc4adf25",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "rotator_cuff",
+            "gluteus_medius"
+          ]
+        },
+        "primary_category": "core"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-windmill/"
+          ],
+          "confidence": "low",
+          "reason": "Windmill сочетает наклон/ротацию туловища, тазобедренное движение и фиксацию руки над головой. Исходник без анатомии/техники, категория «Корпус» предварительно требует просмотра GIF."
+        }
+      ],
+      "notes": "Windmill сочетает наклон/ротацию туловища, тазобедренное движение и фиксацию руки над головой. Исходник без анатомии/техники, категория «Корпус» предварительно требует просмотра GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-wrist-curl",
+      "source_path": "assets/work/forearm/dumbbell-wrist-curl.json",
+      "source_blob_sha": "98849dc9a0448c66a6e316b3713745ca71f58fa6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-wrist-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Источник не даёт анатомию и инструкцию: сгибатели кисти предположены по wrist curl, требуется проверка положения предплечий."
+        }
+      ],
+      "notes": "Источник не даёт анатомию и инструкцию: сгибатели кисти предположены по wrist curl, требуется проверка положения предплечий."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-z-press",
+      "source_path": "assets/work/shoulders/dumbbell-z-press.json",
+      "source_blob_sha": "9db7fe3cec391b128eb4d136b1230e2bf57895d5",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-z-press/"
+          ],
+          "confidence": "low",
+          "reason": "Z press — жим сидя на полу с вытянутыми ногами; мышцы корпуса противодействуют потере вертикали. В исходнике нет инструкции, подтвердить движение."
+        }
+      ],
+      "notes": "Z press — жим сидя на полу с вытянутыми ногами; мышцы корпуса противодействуют потере вертикали. В исходнике нет инструкции, подтвердить движение."
+    },
+    {
+      "id": "fitnessprogramer:dynamic-chest-stretch",
+      "source_path": "assets/work/chest/dynamic-chest-stretch.json",
+      "source_blob_sha": "b6552cd71615902f7c4a4a53d5273cd0f60e78f0",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dynamic-chest-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Dynamic chest stretch — упражнение на мобильность, а не подтверждённый силовой паттерн. Нельзя назначить грудные мышцы как главные двигатели только из-за области растяжения."
+        }
+      ],
+      "notes": "Dynamic chest stretch — упражнение на мобильность, а не подтверждённый силовой паттерн. Нельзя назначить грудные мышцы как главные двигатели только из-за области растяжения."
+    },
+    {
+      "id": "fitnessprogramer:eccentric-pull-up",
+      "source_path": "assets/work/back/eccentric-pull-up.json",
+      "source_blob_sha": "28463b01ce7482b5981f431ec22bcb04456f7aa4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachioradialis",
+            "rhomboids",
+            "trapezius_middle",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/eccentric-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Потребность в турнике следует из техники эксцентрического подтягивания, хотя исходное оборудование ошибочно NO EQUIPMENT; ящик/прыжок для старта альтернативны и не обязательны."
+        }
+      ],
+      "notes": "Потребность в турнике следует из техники эксцентрического подтягивания, хотя исходное оборудование ошибочно NO EQUIPMENT; ящик/прыжок для старта альтернативны и не обязательны."
     }
   ]
 }
