@@ -375,6 +375,14 @@
   background: rgb(0 0 0 / 0.75);
 }
 
+.discussion-media__preparing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
 .discussion-media__orientation-time {
   flex-shrink: 0;
 }
