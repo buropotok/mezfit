@@ -39,7 +39,7 @@
             "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (latissimus_dorsi) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -145,7 +145,7 @@
             "https://www.strengthlog.com/machine-shoulder-press/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (deltoid_anterior) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (deltoid_anterior) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -185,7 +185,7 @@
             "https://www.acefitness.org/resources/everyone/blog/7335/enhance-your-running-game-by-strengthening-your-hips/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_medius, gluteus_minimus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_medius, gluteus_minimus) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -213,7 +213,7 @@
             "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3594/muscles-that-move-the-leg/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (hip_adductors) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (hip_adductors) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -243,7 +243,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/9015/the-hamstrings-blueprint-evidence-based-exercises-for-better-function/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -271,7 +271,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_maximus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -309,7 +309,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_maximus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -404,7 +404,7 @@
             "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (infraspinatus, teres_minor) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (infraspinatus, teres_minor) без произвольных стабилизаторов."
         }
       ]
     },
@@ -445,7 +445,7 @@
             "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (subscapularis) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (subscapularis) без произвольных стабилизаторов."
         }
       ]
     },
@@ -541,7 +541,7 @@
             "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (latissimus_dorsi) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
         }
       ]
     },
@@ -670,7 +670,7 @@
             "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (latissimus_dorsi) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
         }
       ]
     }
