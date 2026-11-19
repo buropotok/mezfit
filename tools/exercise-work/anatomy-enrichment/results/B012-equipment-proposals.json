@@ -1,0 +1,183 @@
+{
+  "batch_id": "B012",
+  "proposals": [
+    {
+      "id": "back_extension_bench",
+      "label_ru": "Скамья для гиперэкстензии",
+      "definition_ru": "Специальная станция с опорой для таза и фиксацией ног при наклонах, разгибании и вращении туловища; конкретный угол и конструкция требуют проверки по изображению исходного упражнения.",
+      "confidence": "low",
+      "aliases_considered": [
+        "Roman chair",
+        "hyperextension bench",
+        "back extension station",
+        "45 degree hyperextension"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:twisting-hyperextension",
+        "fitnessprogramer:weighted-back-extension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/twisting-hyperextension/",
+        "https://fitnessprogramer.com/exercise/weighted-back-extension/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "preacher_bench",
+      "label_ru": "Скамья Скотта",
+      "definition_ru": "Специализированная скамья с наклонной опорой под плечо для сгибаний рук; не обычная горизонтальная или регулируемая скамья.",
+      "confidence": "high",
+      "aliases_considered": [
+        "Scott bench",
+        "preacher curl bench",
+        "preacher bench"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:two-dumbbell-preacher-curl",
+        "fitnessprogramer:z-bar-preacher-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/two-dumbbell-preacher-curl/",
+        "https://fitnessprogramer.com/exercise/z-bar-preacher-curl/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "v_bar_attachment",
+      "label_ru": "V-образная рукоять для блока",
+      "definition_ru": "Сменная рукоять V-образной формы, обеспечивающая нейтральный хват на тяговом тросовом тренажёре; не равна самому тренажёру и не заменяет ID cable.",
+      "confidence": "high",
+      "aliases_considered": [
+        "V-bar",
+        "V grip",
+        "close grip V attachment",
+        "neutral grip handle"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:v-bar-lat-pulldown",
+        "fitnessprogramer:v-bar-pushdown"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/v-bar-lat-pulldown/",
+        "https://fitnessprogramer.com/exercise/v-bar-pushdown/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "vibration_plate",
+      "label_ru": "Вибрационная платформа",
+      "definition_ru": "Специализированная тренажёрная платформа, создающая механические колебания, на которой выполняют упражнения или удержание поз; не обычная балансировочная платформа.",
+      "confidence": "high",
+      "aliases_considered": [
+        "vibration plate",
+        "whole body vibration platform",
+        "vibration machine"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:vibration-plate"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/vibration-plate/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "water_bottle",
+      "label_ru": "Бутылка с водой",
+      "definition_ru": "Заполненная водой бутылка, используемая как ручной предмет для силового сопротивления при сгибании рук; не спортивная гантель.",
+      "confidence": "high",
+      "aliases_considered": [
+        "water bottle",
+        "bottle weight",
+        "improvised bottle dumbbell"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:water-bottle-hammer-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/water-bottle-hammer-curl/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "neck_harness",
+      "label_ru": "Шейная лямка для отягощений",
+      "definition_ru": "Регулируемая головная лямка с цепью или ремнём для подвешивания внешнего груза при сгибании/разгибании шеи; не канат и не обычная тренировочная резинка.",
+      "confidence": "high",
+      "aliases_considered": [
+        "neck harness",
+        "head harness",
+        "weighted neck strap"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:weighted-lying-neck-extension",
+        "fitnessprogramer:weighted-lying-neck-flexion",
+        "fitnessprogramer:weighted-neck-harness-extension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/weighted-lying-neck-extension/",
+        "https://fitnessprogramer.com/exercise/weighted-lying-neck-flexion/",
+        "https://fitnessprogramer.com/exercise/weighted-neck-harness-extension/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "dip_belt",
+      "label_ru": "Пояс для подвешивания отягощений",
+      "definition_ru": "Утяжелительный пояс с цепью/ремнём, позволяющий подвесить груз при подтягиваниях, отжиманиях на брусьях и muscle-up; не утяжелённый жилет.",
+      "confidence": "high",
+      "aliases_considered": [
+        "dip belt",
+        "weight belt with chain",
+        "weighted pull-up belt"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:weighted-muscle-up"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/weighted-muscle-up/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "weighted_vest",
+      "label_ru": "Утяжелённый жилет",
+      "definition_ru": "Носимый на туловище жилет со встроенными или съёмными утяжелителями для упражнений с собственным весом; отличается от пояса с подвесным грузом.",
+      "confidence": "high",
+      "aliases_considered": [
+        "weighted vest",
+        "weight vest",
+        "load vest"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:weighted-muscle-up",
+        "fitnessprogramer:weighted-push-up",
+        "fitnessprogramer:weighted-vest-push-up"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/weighted-muscle-up/",
+        "https://fitnessprogramer.com/exercise/weighted-push-up/",
+        "https://fitnessprogramer.com/exercise/weighted-vest-push-up/"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "wrist_roller",
+      "label_ru": "Роллер для предплечий",
+      "definition_ru": "Устройство с вращающейся рукоятью и тросом, на который подвешен вес; тренируется сгибание и разгибание запястья при наматывании троса.",
+      "confidence": "high",
+      "aliases_considered": [
+        "wrist roller",
+        "forearm roller",
+        "wrist rolling device"
+      ],
+      "exercise_ids": [
+        "fitnessprogramer:wrist-roller"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/wrist-roller/"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
