@@ -74,7 +74,9 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     const seconds = video?.currentTime;
     try {
       setCaptureError(false);
-      onAnnotate(copyAnnotationImage(source, video ? orientation.rotation : 0), seconds);
+      const image = video && orientation.rotation
+        ? copyAnnotationImage(source, orientation.rotation) : copyAnnotationImage(source);
+      onAnnotate(image, seconds);
     } catch {
       setCaptureError(true);
     }
