@@ -3154,6 +3154,624 @@
         }
       ],
       "notes": "Incline Landmine Press может быть жимом по наклонной траектории без скамьи; исходный Landmine уже канонический. Разделение chest/shoulders и точная позиция требуют GIF."
+    },
+    {
+      "id": "fitnessprogramer:incline-leg-hip-raise",
+      "source_path": "assets/work/abs/incline-leg-hip-raise.json",
+      "source_blob_sha": "a73c7ab49fdde20da81684a3467aa855f5c741a2",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "incline bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-leg-hip-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline Leg Hip Raise: наклонная скамья прямо указана; подъём таза/ног при сгибании корпуса, сгибатели бедра как синергисты."
+        }
+      ],
+      "notes": "Incline Leg Hip Raise: наклонная скамья прямо указана; подъём таза/ног при сгибании корпуса, сгибатели бедра как синергисты."
+    },
+    {
+      "id": "fitnessprogramer:incline-push-up",
+      "source_path": "assets/work/chest/incline-push-up.json",
+      "source_blob_sha": "693f90d39d91166fe6b6d50baafe2eafb29ce1f3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline push-up требует возвышения рук: источник допускает скамью или стену как альтернативы. В этой геометрии основную нагрузку несёт большая грудная, но не обязательно акцент ключичной части."
+        }
+      ],
+      "notes": "Incline push-up требует возвышения рук: источник допускает скамью или стену как альтернативы. В этой геометрии основную нагрузку несёт большая грудная, но не обязательно акцент ключичной части."
+    },
+    {
+      "id": "fitnessprogramer:incline-reverse-grip-dumbbell-row",
+      "source_path": "assets/work/back/incline-reverse-grip-dumbbell-row.json",
+      "source_blob_sha": "d676a9d0f22e9e91b573eb36a15741771c49057a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-reverse-grip-dumbbell-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline reverse-grip dumbbell row — тяга обратным хватом с грудной поддержкой наклонной скамьи; исходная страница без инструкции, детали траектории требуют просмотра."
+        }
+      ],
+      "notes": "Incline reverse-grip dumbbell row — тяга обратным хватом с грудной поддержкой наклонной скамьи; исходная страница без инструкции, детали траектории требуют просмотра."
+    },
+    {
+      "id": "fitnessprogramer:incline-treadmill",
+      "source_path": "assets/work/cardio/incline-treadmill.json",
+      "source_blob_sha": "ddd7ff73ff07f1212d809580b02ac7234e26a082",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "treadmill"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-treadmill/"
+          ],
+          "confidence": "medium",
+          "reason": "Incline treadmill — кардиоходьба/лёгкий бег на дорожке с уклоном по инструкции. Не вводим гипертрофическую иерархию для многосуставной кардиоактивности."
+        }
+      ],
+      "notes": "Incline treadmill — кардиоходьба/лёгкий бег на дорожке с уклоном по инструкции. Не вводим гипертрофическую иерархию для многосуставной кардиоактивности."
+    },
+    {
+      "id": "fitnessprogramer:inner-thigh-side-stretch",
+      "source_path": "assets/work/hip/inner-thigh-side-stretch.json",
+      "source_blob_sha": "8c971d966d87d1506874da90ea8a1455b72b8c9d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/inner-thigh-side-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Inner thigh side stretch растягивает приводящие бедра; перечень Adductor Magnus, Gracilis, Pectineus — растягиваемые ткани, а не силовые primary."
+        }
+      ],
+      "notes": "Inner thigh side stretch растягивает приводящие бедра; перечень Adductor Magnus, Gracilis, Pectineus — растягиваемые ткани, а не силовые primary."
+    },
+    {
+      "id": "fitnessprogramer:inverted-row",
+      "source_path": "assets/work/back/inverted-row.json",
+      "source_blob_sha": "dfb837f37eae9b3e3ea5d5776a9ccb503f3b9ef4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "power-rack",
+          "smith machine",
+          "trx"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/inverted-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция inverted row прямо перечисляет низкую перекладину в стойке, Smith machine и подвесные ремни TRX как альтернативы; они не требуются одновременно."
+        }
+      ],
+      "notes": "Инструкция inverted row прямо перечисляет низкую перекладину в стойке, Smith machine и подвесные ремни TRX как альтернативы; они не требуются одновременно."
+    },
+    {
+      "id": "fitnessprogramer:isometric-pull-up",
+      "source_path": "assets/work/back/isometric-pull-up.json",
+      "source_blob_sha": "4cd0342e2eef48d9726af648ae2fb5727cf257d9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/isometric-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Isometric pull-up: источник предписывает турник и неподвижное удержание после подтягивания; несколько мелких мышц не выданы за отдельные основные."
+        }
+      ],
+      "notes": "Isometric pull-up: источник предписывает турник и неподвижное удержание после подтягивания; несколько мелких мышц не выданы за отдельные основные."
+    },
+    {
+      "id": "fitnessprogramer:jab-boxing",
+      "source_path": "assets/work/cardio/jab-boxing.json",
+      "source_blob_sha": "80f8d43b05d83677c959cbb47babb9741352e306",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jab-boxing/"
+          ],
+          "confidence": "medium",
+          "reason": "Jab Boxing — одиночный удар рукой в кардиоритме; без инструкции нет доказанной анатомической иерархии."
+        }
+      ],
+      "notes": "Jab Boxing — одиночный удар рукой в кардиоритме; без инструкции нет доказанной анатомической иерархии."
+    },
+    {
+      "id": "fitnessprogramer:jack-burpee",
+      "source_path": "assets/work/cardio/jack-burpee.json",
+      "source_blob_sha": "33877b9d1797daefcd235c7ef8583a81e191104d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jack-burpee/"
+          ],
+          "confidence": "medium",
+          "reason": "Jack Burpee — кардио-комплекс с прыжками, источник описывает аэробный характер, но не детализирует фазы для подтверждённых мышечных ролей."
+        }
+      ],
+      "notes": "Jack Burpee — кардио-комплекс с прыжками, источник описывает аэробный характер, но не детализирует фазы для подтверждённых мышечных ролей."
+    },
+    {
+      "id": "fitnessprogramer:jackknife-sit-ups",
+      "source_path": "assets/work/abs/jackknife-sit-ups.json",
+      "source_blob_sha": "26602a88c989972c15c13082aaa73212fd82ba0a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jackknife-sit-ups/"
+          ],
+          "confidence": "medium",
+          "reason": "Jackknife sit-ups: V-образное сгибание корпуса и бедер, прямая мышца живота основная, сгибатели бедра/косые вспомогательные. Некаконические исходные ткани не копируются."
+        }
+      ],
+      "notes": "Jackknife sit-ups: V-образное сгибание корпуса и бедер, прямая мышца живота основная, сгибатели бедра/косые вспомогательные. Некаконические исходные ткани не копируются."
+    },
+    {
+      "id": "fitnessprogramer:jefferson-squat",
+      "source_path": "assets/work/hip/jefferson-squat.json",
+      "source_blob_sha": "d3d93f5b67f15c404fdf141166f6aa95e1793f7d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "obliques",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jefferson-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Jefferson squat — разноименная постановка ног вокруг штанги и подъём разгибателями бедра/колена; точная техника не дана, требуется визуальная проверка."
+        }
+      ],
+      "notes": "Jefferson squat — разноименная постановка ног вокруг штанги и подъём разгибателями бедра/колена; точная техника не дана, требуется визуальная проверка."
+    },
+    {
+      "id": "fitnessprogramer:jump-rope",
+      "source_path": "assets/work/cardio/jump-rope.json",
+      "source_blob_sha": "a8a1982806420024dbbe4397f8c76b40a2f61722",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "jump rope"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jump-rope/"
+          ],
+          "confidence": "medium",
+          "reason": "Скакалка явно требуется по инструкции (в исходном equipment ошибочно NO EQUIPMENT). Кардиодвижение не означает одну достоверную силовую primary-мышцу."
+        }
+      ],
+      "notes": "Скакалка явно требуется по инструкции (в исходном equipment ошибочно NO EQUIPMENT). Кардиодвижение не означает одну достоверную силовую primary-мышцу."
+    },
+    {
+      "id": "fitnessprogramer:jump-squats",
+      "source_path": "assets/work/hip/jump-squats.json",
+      "source_blob_sha": "b4063194f2399eb59489785c482ae0bd7f0f897a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jump-squats/"
+          ],
+          "confidence": "medium",
+          "reason": "Jump squats: динамическое отталкивание после приседания включает разгибание колена/бедра и голеностопа; категория legs приоритетна над cardio."
+        }
+      ],
+      "notes": "Jump squats: динамическое отталкивание после приседания включает разгибание колена/бедра и голеностопа; категория legs приоритетна над cardio."
+    },
+    {
+      "id": "fitnessprogramer:jumping-jack",
+      "source_path": "assets/work/leg/jumping-jack.json",
+      "source_blob_sha": "d5274a13a91c3bf1f2c2ba399f54aa5681a56aa4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "cardio",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jumping-jack/"
+          ],
+          "confidence": "medium",
+          "reason": "Jumping jack: цель ритмическое кардио движение рук и ног, а не изолированная силовая тренировка квадрицепса; основная категория должна быть cardio."
+        }
+      ],
+      "notes": "Jumping jack: цель ритмическое кардио движение рук и ног, а не изолированная силовая тренировка квадрицепса; основная категория должна быть cardio."
+    },
+    {
+      "id": "fitnessprogramer:jumping-pull-up",
+      "source_path": "assets/work/back/jumping-pull-up.json",
+      "source_blob_sha": "faec47f89c99181b3fc2629e2ac3de6917f2fc96",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/jumping-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Jumping pull-up требует перекладину, прыжок облегчает подтягивание; без инструкции вклад ног нельзя количественно назначить."
+        }
+      ],
+      "notes": "Jumping pull-up требует перекладину, прыжок облегчает подтягивание; без инструкции вклад ног нельзя количественно назначить."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-arnold-press",
+      "source_path": "assets/work/shoulders/kettlebell-arnold-press.json",
+      "source_blob_sha": "447001255f368831421dc5be6341e02a5aafe611",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-arnold-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Arnold press с гирей — жим с вращением плеча; конкретные стабилизаторы не установлены, исходный Kettlebell уже канонический."
+        }
+      ],
+      "notes": "Arnold press с гирей — жим с вращением плеча; конкретные стабилизаторы не установлены, исходный Kettlebell уже канонический."
     }
   ]
 }
