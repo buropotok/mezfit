@@ -1,0 +1,38 @@
+[
+  {
+    "batch": "B001",
+    "result_commit": "d33c9a53e4f1430de0a218126b17a586901bba0e",
+    "proposals_blob_sha": "27fbd0ae66b045a787dee48ad03c38624232dc8a",
+    "proposal_count": 33
+  },
+  {
+    "batch": "B002",
+    "result_commit": "73896853264ca75988455f10086ccfdfbde2469e",
+    "proposals_blob_sha": "ff5e07b6ed7bd98f7356a87cb2a5404bc3614549",
+    "proposal_count": 4
+  },
+  {
+    "batch": "B003",
+    "result_commit": "070c4374adc6fecb741172d9c4aec0e3ac772310",
+    "proposals_blob_sha": "003215c9f98b6f5d562e61e640ff939f48de46ce",
+    "proposal_count": 6
+  },
+  {
+    "batch": "B004",
+    "result_commit": "3890e1afae6e8996d4fe3b896bb4c84e101fab8a",
+    "proposals_blob_sha": "a63f61835cd28e4b58f480a08b999887874f99b5",
+    "proposal_count": 7
+  },
+  {
+    "batch": "B005",
+    "result_commit": "e726dc07d3e11e7603068addbe48abb209e60344",
+    "proposals_blob_sha": "0a3dbfd68983228e67817b6ba5f6a35e386266cc",
+    "proposal_count": 7
+  },
+  {
+    "batch": "B006",
+    "result_commit": "bf3ff9ebda252c732dbf3a4ca9f5d884bed74f41",
+    "proposals_blob_sha": "6bb23455170927bd07906ad2639b19f8798d966f",
+    "proposal_count": 1
+  }
+]
