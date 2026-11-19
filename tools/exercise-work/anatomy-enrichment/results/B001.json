@@ -2696,7 +2696,7 @@
       "source_path": "assets/work/back/back-lever.json",
       "source_blob_sha": "46a721f27f0379f39b26f10e8f0edef84d20ba40",
       "status": "needs_review",
-      "category_verified": false,
+      "category_verified": true,
       "patch": {
         "primary_category": "full_body",
         "equipment": [
