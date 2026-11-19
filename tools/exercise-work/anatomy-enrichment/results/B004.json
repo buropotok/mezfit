@@ -2972,6 +2972,781 @@
         }
       ],
       "notes": "В названии указана тяга за дверной проём; это отдельная опора, а не NO EQUIPMENT. Без инструкции необходима проверка допустимого хвата и фиксации рук."
+    },
+    {
+      "id": "fitnessprogramer:bodyweight-single-leg-deadlift",
+      "source_path": "assets/work/hip/bodyweight-single-leg-deadlift.json",
+      "source_blob_sha": "2599e0103d084b80a15368e8f975fbee2d06d537",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bodyweight-single-leg-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноногая безотягощённая тяга: разгибание бедра и контроль таза; исключён длинный список мышц плечевого пояса как недоказанных стабилизаторов."
+        }
+      ],
+      "notes": "Одноногая безотягощённая тяга: разгибание бедра и контроль таза; исключён длинный список мышц плечевого пояса как недоказанных стабилизаторов."
+    },
+    {
+      "id": "fitnessprogramer:bodyweight-skull-crushers",
+      "source_path": "assets/work/abs/bodyweight-skull-crushers.json",
+      "source_blob_sha": "48c9e537f4cff4bafb0d5688f98edbcb54195360",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "arms",
+        "equipment": [
+          "smith machine",
+          "dip bars",
+          "power-rack"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bodyweight-skull-crushers/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная категория abs ошибочна для разгибания локтя; инструкция прямо называет регулируемую перекладину Smith machine, squat rack или parallel bars, это альтернативные опоры для одного варианта."
+        }
+      ],
+      "notes": "Исходная категория abs ошибочна для разгибания локтя; инструкция прямо называет регулируемую перекладину Smith machine, squat rack или parallel bars, это альтернативные опоры для одного варианта."
+    },
+    {
+      "id": "fitnessprogramer:bodyweight-squat",
+      "source_path": "assets/work/hip/bodyweight-squat.json",
+      "source_blob_sha": "d2858d89fb0f67112778d5a7bfd548acc18a77cf",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bodyweight-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Безотягощённое приседание: нормализованы разгибатели ног, приводящие мышцы и мышцы голени; category legs соответствует основному движению."
+        }
+      ],
+      "notes": "Безотягощённое приседание: нормализованы разгибатели ног, приводящие мышцы и мышцы голени; category legs соответствует основному движению."
+    },
+    {
+      "id": "fitnessprogramer:bodyweight-sumo-squat",
+      "source_path": "assets/work/hip/bodyweight-sumo-squat.json",
+      "source_blob_sha": "e54bdfb52f5ab85e8d00f37439807c1cac44fa55",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "gastrocnemius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bodyweight-sumo-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Сумо-присед с широкой постановкой; Adductor Magnus, Longus, Brevis, Pectineus и Gracilis свёрнуты в группу hip_adductors без фиктивных отдельных ID."
+        }
+      ],
+      "notes": "Сумо-присед с широкой постановкой; Adductor Magnus, Longus, Brevis, Pectineus и Gracilis свёрнуты в группу hip_adductors без фиктивных отдельных ID."
+    },
+    {
+      "id": "fitnessprogramer:bodyweight-walking-lunge",
+      "source_path": "assets/work/leg/bodyweight-walking-lunge.json",
+      "source_blob_sha": "8e732d13f593358557554d659ec84843f7eafdc8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bodyweight-walking-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Шагающий выпад: изначально пустое target исправлено; подтверждены работа ног и контроль таза в односторонней фазе."
+        }
+      ],
+      "notes": "Шагающий выпад: изначально пустое target исправлено; подтверждены работа ног и контроль таза в односторонней фазе."
+    },
+    {
+      "id": "fitnessprogramer:bodyweight-windmill",
+      "source_path": "assets/work/abs/bodyweight-windmill.json",
+      "source_blob_sha": "abce05bbdf62530097ad7c7edb5d0eb4d72ebd1d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bodyweight-windmill/"
+          ],
+          "confidence": "medium",
+          "reason": "Динамическая разминка/мобильность с боковой ротацией корпуса: исходные obliques сохраняются, остальные роли не утверждаются без техники."
+        }
+      ],
+      "notes": "Динамическая разминка/мобильность с боковой ротацией корпуса: исходные obliques сохраняются, остальные роли не утверждаются без техники."
+    },
+    {
+      "id": "fitnessprogramer:bosu-ball-push-up",
+      "source_path": "assets/work/chest/bosu-ball-push-up.json",
+      "source_blob_sha": "236ee27af29466b8a73dd50f0cb226f747ece20e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bosu-balance-trainer"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bosu-ball-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "BOSU dome-side down с плоской платформой для рук не является стандартным фитболом Exercise Ball; нужен отдельный конкретный фильтр оборудования."
+        }
+      ],
+      "notes": "BOSU dome-side down с плоской платформой для рук не является стандартным фитболом Exercise Ball; нужен отдельный конкретный фильтр оборудования."
+    },
+    {
+      "id": "fitnessprogramer:bow-pose",
+      "source_path": "assets/work/abs/bow-pose.json",
+      "source_blob_sha": "7c254ede0cf3e38a7a4f616c4b187bb49a01bb1f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bow-pose/"
+          ],
+          "confidence": "medium",
+          "reason": "Yoga bow pose — положение на гибкость/мобильность спины и плеч. Не назначаются силовые главные двигатели без описания удержания и фиксации."
+        }
+      ],
+      "notes": "Yoga bow pose — положение на гибкость/мобильность спины и плеч. Не назначаются силовые главные двигатели без описания удержания и фиксации."
+    },
+    {
+      "id": "fitnessprogramer:box-jump-1-to-2",
+      "source_path": "assets/work/hip/box-jump-1-to-2.json",
+      "source_blob_sha": "4b70239cfdc5003f24211ce2a3801e1dc97f4ae6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plyo box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/box-jump-1-to-2/"
+          ],
+          "confidence": "medium",
+          "reason": "Плиометрический прыжок на платформу; в названии 1-to-2 указана смена схемы опоры, но фаза перехода без инструкции не верифицирована."
+        }
+      ],
+      "notes": "Плиометрический прыжок на платформу; в названии 1-to-2 указана смена схемы опоры, но фаза перехода без инструкции не верифицирована."
+    },
+    {
+      "id": "fitnessprogramer:box-jump-2-to-1",
+      "source_path": "assets/work/hip/box-jump-2-to-1.json",
+      "source_blob_sha": "237c8bf8e98b82ec138f3b31dc01358640cff2b2",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plyo box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/box-jump-2-to-1/"
+          ],
+          "confidence": "medium",
+          "reason": "Прыжок 2-to-1 с переходом на одну ногу: плиобокс понятен, точная последовательность фаз требует просмотра GIF."
+        }
+      ],
+      "notes": "Прыжок 2-to-1 с переходом на одну ногу: плиобокс понятен, точная последовательность фаз требует просмотра GIF."
+    },
+    {
+      "id": "fitnessprogramer:box-jump-to-pistol-squat",
+      "source_path": "assets/work/hip/box-jump-to-pistol-squat.json",
+      "source_blob_sha": "6acfe0deece7ae8bcd5a84a7c55f8f3f44c71306",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plyo box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/box-jump-to-pistol-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Сочетание прыжка на бокс с пистолет-приседанием; упражнение на ноги, но риск неоднозначности динамических и балансовых фаз."
+        }
+      ],
+      "notes": "Сочетание прыжка на бокс с пистолет-приседанием; упражнение на ноги, но риск неоднозначности динамических и балансовых фаз."
+    },
+    {
+      "id": "fitnessprogramer:box-pistol-squat",
+      "source_path": "assets/work/hip/box-pistol-squat.json",
+      "source_blob_sha": "c2be25aa5af1635dea58b83e5b67f92a4b206cc1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/box-pistol-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Пистолет-присед с опорой/целью в виде бокса; колено и бедро главные двигатели, таз стабилизируется при односторонней стойке."
+        }
+      ],
+      "notes": "Пистолет-присед с опорой/целью в виде бокса; колено и бедро главные двигатели, таз стабилизируется при односторонней стойке."
+    },
+    {
+      "id": "fitnessprogramer:boxer-shuffle-cardio",
+      "source_path": "assets/work/cardio/boxer-shuffle-cardio.json",
+      "source_blob_sha": "400d6ec1095a9855eca46b4040a0b143f9b9459e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/boxer-shuffle-cardio/"
+          ],
+          "confidence": "medium",
+          "reason": "Боксёрская переступающая работа ног — кардио-координация; из пустого источника нельзя достоверно назначать мышечные роли."
+        }
+      ],
+      "notes": "Боксёрская переступающая работа ног — кардио-координация; из пустого источника нельзя достоверно назначать мышечные роли."
+    },
+    {
+      "id": "fitnessprogramer:boxing-right-cross",
+      "source_path": "assets/work/cardio/boxing-right-cross.json",
+      "source_blob_sha": "a0069ad47ebe3fc2a802daf69b02327862fc4b45",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/boxing-right-cross/"
+          ],
+          "confidence": "medium",
+          "reason": "Правый прямой удар — двигательный навык/кардио. Источник указывает лишь Full Gym и не содержит инструкции: дополнительное оборудование не требуется, конкретные мышцы по ролям не определены."
+        }
+      ],
+      "notes": "Правый прямой удар — двигательный навык/кардио. Источник указывает лишь Full Gym и не содержит инструкции: дополнительное оборудование не требуется, конкретные мышцы по ролям не определены."
+    },
+    {
+      "id": "fitnessprogramer:brachialis-pull-up",
+      "source_path": "assets/work/back/brachialis-pull-up.json",
+      "source_blob_sha": "136ba6c27c6b7bce2ffb618115b56e42598e108a",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "brachialis",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/brachialis-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Название подчёркивает brachialis, инструкция описывает узкий хват/неполное подтягивание; целевую категорию back против arms нужно проверить визуально."
+        }
+      ],
+      "notes": "Название подчёркивает brachialis, инструкция описывает узкий хват/неполное подтягивание; целевую категорию back против arms нужно проверить визуально."
+    },
+    {
+      "id": "fitnessprogramer:bridge-hip-abduction",
+      "source_path": "assets/work/hip/bridge-hip-abduction.json",
+      "source_blob_sha": "1a1e57d4660884a69e323187caa192b841b6be26",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "gluteus_medius"
+          ],
+          "secondary": [
+            "gluteus_minimus"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bridge-hip-abduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Мост с отведением бедра: тазовое разгибание + абдукция. Вариант без резинки по источнику; не добавляем ленту как гипотетическое оборудование."
+        }
+      ],
+      "notes": "Мост с отведением бедра: тазовое разгибание + абдукция. Вариант без резинки по источнику; не добавляем ленту как гипотетическое оборудование."
+    },
+    {
+      "id": "fitnessprogramer:briskly-walking",
+      "source_path": "assets/work/cardio/briskly-walking.json",
+      "source_blob_sha": "6331ef6cd2c8c1c8fa7c0a813fbde5b733845ccf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/briskly-walking/"
+          ],
+          "confidence": "medium",
+          "reason": "Быстрая ходьба — аэробная активность без специализированной силовой основной мышцы; отдельные роли не декларируются по пустому источнику."
+        }
+      ],
+      "notes": "Быстрая ходьба — аэробная активность без специализированной силовой основной мышцы; отдельные роли не декларируются по пустому источнику."
+    },
+    {
+      "id": "fitnessprogramer:bulgarian-split-squat-jump",
+      "source_path": "assets/work/hip/bulgarian-split-squat-jump.json",
+      "source_blob_sha": "6042a152dc65b71ebb2237f96cbd1ae3623ee9c5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/bulgarian-split-squat-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Прыжковый болгарский выпад: задняя стопа расположена на скамье/ступени, передняя нога выполняет разгибание и отталкивание."
+        }
+      ],
+      "notes": "Прыжковый болгарский выпад: задняя стопа расположена на скамье/ступени, передняя нога выполняет разгибание и отталкивание."
+    },
+    {
+      "id": "fitnessprogramer:burpee-long-jump",
+      "source_path": "assets/work/cardio/burpee-long-jump.json",
+      "source_blob_sha": "1b57480bec090bb70db1700cedc215040d4c3fba",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/burpee-long-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Бёрпи с прыжком в длину; исходная инструкция делает отжимание факультативным, поэтому грудные мышцы не объявлены безусловно основными."
+        }
+      ],
+      "notes": "Бёрпи с прыжком в длину; исходная инструкция делает отжимание факультативным, поэтому грудные мышцы не объявлены безусловно основными."
+    },
+    {
+      "id": "fitnessprogramer:burpee-with-push-up",
+      "source_path": "assets/work/full-body/burpee-with-push-up.json",
+      "source_blob_sha": "ba4fcd38e7df603bdcedb6efddf17c64cfd41c58",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior",
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/burpee-with-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Здесь отжимание обязательно по инструкции, а присед/вставание добавляют нагрузку ног; исходный бесструктурный перечень мышц разнесён по реальным ролям."
+        }
+      ],
+      "notes": "Здесь отжимание обязательно по инструкции, а присед/вставание добавляют нагрузку ног; исходный бесструктурный перечень мышц разнесён по реальным ролям."
     }
   ]
 }
