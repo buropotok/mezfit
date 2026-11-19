@@ -1,6 +1,6 @@
 {
   "batch_id": "B002",
-  "status": "in_progress",
+  "status": "research_complete",
   "claim_id": "b002-mwnq47y6-eceohwdg9f",
   "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
   "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
@@ -9,6 +9,8 @@
   "last_processed_id": "fitnessprogramer:down-to-up-twist-gymstick",
   "last_processed_index": 100,
   "remaining_exercises": 0,
-  "not_final": true,
-  "note_ru": "Промежуточный результат. Все B002 ещё не обработаны. Не считать completed."
+  "not_final": false,
+  "note_ru": "Все 100 исходных карточек сверены по Git blob SHA, результаты соответствуют JSON Schema v1, категории и пять характеристик непусты после patch, анатомические ID проверены, 4 новых конкретных типа оборудования вынесены в локальный словарь предложений. Исследование завершено; координационный completed выставляется отдельно по CAS.",
+  "reviewed_at_utc": "2026-11-19T16:55:40.468Z",
+  "reviewed_exercises": 100
 }
