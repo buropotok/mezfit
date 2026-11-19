@@ -371,11 +371,11 @@
       "result_stats": null
     },
     "B012": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-enrich-b012-7m42xoz0gi",
+      "claim_id": "b012-mwnwgw7d-7m42xoz0gi",
+      "started_at": "2026-11-19T18:45:02.857Z",
+      "lease_until": "2026-11-19T20:45:02.857Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
