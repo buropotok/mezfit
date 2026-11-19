@@ -156,7 +156,7 @@ export class AdHocWorkoutRepository {
         && occurrence.athleteUserId === row.athleteUserId && occurrence.coachUserId === row.coachUserId
         && occurrence.clientUserId === row.clientUserId
         && (!occurrence.workoutSessionId || occurrence.workoutSessionId === row.id);
-      result.push({ ...row, format: linked ? occurrence.format : row.coachUserId ? 'coached' : 'independent' });
+      result.push({ ...row, format: linked ? occurrence.format : row.format ?? (row.coachUserId ? 'coached' : 'independent') });
     }
     return result;
   }
@@ -404,11 +404,11 @@ export class AdHocWorkoutRepository {
     return this.programs.listForScheduling(athleteUserId);
   }
   private async assertStartAvailable(athleteUserId: string, timestamp: string,
-    occurrenceId?: string, workspace?: readonly CloudWorkoutOccurrenceRow[]): Promise<void> {
+    occurrenceId?: string, workspace?: readonly CloudWorkoutOccurrenceRow[], independent = false): Promise<void> {
     const rows = workspace ?? await new WorkoutSchedulingRepository(this.db, this.actorUserId).listWorkspace();
     // Client Start occupies the athlete, never the client as a fictitious Coach.
     const conflicts = currentStartConflicts({ id: occurrenceId, athleteUserId,
-      coachUserId: this.clientExecution ? null : this.actorUserId }, rows, timestamp);
+      coachUserId: independent || this.clientExecution ? null : this.actorUserId }, rows, timestamp);
     if (conflicts.length) throw new PlannedWorkoutConflict(conflicts);
   }
   createQuick(): Promise<{ id: string; createdProgram: boolean }> {
@@ -425,6 +425,53 @@ export class AdHocWorkoutRepository {
       return { id, createdProgram: false };
     });
   }
+  /** Start a self-directed FACT from an accessible source day, without creating or editing PLAN. */
+  async createIndependentFromProgramDay(athleteUserId: string, programId: string,
+    dayId: string): Promise<{ id: string; createdProgram: false }> {
+    if (!/^tg:[1-9]\d*$/.test(athleteUserId) || typeof programId !== 'string' || !programId
+      || typeof dayId !== 'string' || !dayId) throw new Error('ADHOC_INVALID_TARGET');
+    return this.write(['workoutOccurrences', 'roles', ...programTables, ...this.catalogueTables], async () => {
+      const details = this.clientExecution
+        ? await this.programs.athleteDetails(programId) : await this.programs.details(programId);
+      if (!details) throw new Error('ADHOC_PROGRAM_NOT_FOUND');
+      const program = details.program;
+      const intendedAthlete = program.clientUserId ?? program.athleteUserId;
+      if (athleteUserId !== intendedAthlete
+        || (this.clientExecution
+          ? this.actorUserId !== athleteUserId
+          : program.coachUserId ? program.coachUserId !== this.actorUserId
+            : program.realmId !== this.actorUserId))
+        throw new Error('ADHOC_WRITE_FORBIDDEN');
+      const day = details.days?.find(item => item.day.id === dayId);
+      if (!day) throw new Error('ADHOC_DAY_NOT_FOUND');
+      if (this.clientExecution) await this.requireClientExecutionGrant(program.realmId);
+      await this.requireNoActiveSession(athleteUserId);
+      const timestamp = now();
+      // Independent execution occupies only the athlete, not a Coach's calendar time.
+      await this.assertStartAvailable(athleteUserId, timestamp, undefined, undefined, true);
+      const id = await this.db.adHocSessions.add({
+        realmId: program.realmId, owner: program.realmId, athleteUserId,
+        coachUserId: program.coachUserId, clientUserId: program.clientUserId,
+        creatorUserId: this.actorUserId, name: day.day.name, comment: null,
+        format: 'independent', programId, dayId, programName: program.name,
+        autoCreatedProgram: false, startedAt: timestamp, completedAt: null, status: 'active',
+        createdAt: timestamp, updatedAt: timestamp,
+      });
+      const session = await this.require(id);
+      for (const [position, item] of day.exercises.entries()) {
+        const snapshot = await this.resolveSnapshot(item.exercise.exercise);
+        const exerciseId = await this.db.adHocExercises.add({
+          realmId: session.realmId, owner: owner(session), sessionId: id,
+          position, exercise: snapshot, notes: null, deletedAt: null,
+        });
+        // Program sets provide structure and technique only; numeric PLAN stays untouched.
+        for (const [setPosition, set] of item.sets.entries())
+          await this.insertSet(session, exerciseId, setPosition, set.setType ?? null);
+      }
+      return { id, createdProgram: false };
+    });
+  }
+
   createForAthlete(athleteUserId: string, programId?: string, dayId?: string): Promise<{ id: string; createdProgram: boolean }> {
     if (this.clientExecution) return Promise.reject(new Error('CLIENT_SOURCE_PLAN_FORBIDDEN'));
     if (typeof athleteUserId !== 'string' || !/^tg:[1-9]\d*$/.test(athleteUserId)
@@ -796,7 +843,7 @@ export class AdHocWorkoutRepository {
       ...(workoutAnchor ? { discussion: { scope, anchor: workoutAnchor } } : {}),
       ...(plannedTiming ? { plannedTiming } : {}),
       format: planned && planned.realmId === session.realmId && planned.workoutSessionId === session.id
-        ? planned.format : session.coachUserId ? 'coached' : 'independent',
+        ? planned.format : session.format ?? (session.coachUserId ? 'coached' : 'independent'),
       sessionId: session.id, occurrenceId: session.occurrenceId ?? null, status: session.status,
       workoutDate: localWorkoutDate(session.startedAt), startedAt: session.startedAt, completedAt: session.completedAt,
       program: session.programId ? { id: session.programId, name: session.programName ?? '' } : null,

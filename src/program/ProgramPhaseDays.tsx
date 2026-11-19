@@ -8,7 +8,7 @@ import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { planAuthorUserId } from '../data/cloud/program-ownership';
 import { CloudContactAvatar } from '../contacts/CloudContactAvatar';
 import { AvatarProfileLink } from '../profile/AvatarProfileLink';
-import { Avatar, Text } from '../ui';
+import { Avatar, Icon, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import { WorkoutSessionCard } from '../workout/WorkoutSessionCard';
 import { ProgramDayDialog } from './ProgramDayDialog';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
@@ -20,12 +20,16 @@ import type { ProgramActor } from './ProgramSummary';
 import { usePhaseDayMotion } from './usePhaseDayMotion';
 import { ProgramDayExercisePicker } from './ProgramDayExercisePicker';
 import { programMutationMessage } from './programPresentation';
+import { usePlannedWorkoutStart } from '../workout/PlannedWorkoutStartContext';
+import { adHocErrorMessage, WorkoutStartDismissed } from '../workout/adhoc-workout-errors';
 
 const ProgramExerciseInformationSheet = lazy(() => import('./ProgramExerciseInformationSheet')
   .then(module => ({ default: module.ProgramExerciseInformationSheet })));
 
-export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft', onActivateForScheduling, onMutationAttempt, onStartDay }: {
+export function ProgramPhaseDays({ repository, program, days, readOnly, actor, collapsed = false, bodyId, onNavigationContextChange, viewerRole = 'coach', phaseStatus = 'draft', onActivateForScheduling, onMutationAttempt, onStartDay, allowDirectStart = true }: {
   onStartDay?: (dayId: string) => Promise<void>;
+  /** Normal program pages may start FACT directly; source-selection sheets own Start separately. */
+  allowDirectStart?: boolean;
   onMutationAttempt?: () => void;
   onActivateForScheduling?: (phaseId: string, onActivated: () => Promise<void>) => void;
   repository: ProgramManagementRepository;
@@ -49,9 +53,11 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   useSpotlightHintPause(exerciseInformation !== null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
   const [deletingSet, setDeletingSet] = useState<{ dayId: string; exerciseId: string; setId: string } | null>(null);
+  const [setPromptDayId, setSetPromptDayId] = useState<string | null>(null);
   const [optimisticExerciseOrders, setOptimisticExerciseOrders] = useState<Record<string, { previous: string[]; next: string[] }>>({});
   const cloud = useCloudConnections();
   const planning = useSchedulePlanning();
+  const workoutStart = usePlannedWorkoutStart();
   const athlete = useWorkoutPerson(program.clientUserId ?? program.athleteUserId ?? null, program.realmId, actor);
   const authorId = planAuthorUserId(program);
   const self = authorId === repository.actorUserId;
@@ -77,6 +83,11 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     return () => { alive.current = false; animations.current.forEach((animation) => animation.cancel()); };
   }, []);
   usePhaseDayMotion(collapsed, viewport, content, nodes);
+  useEffect(() => {
+    if (!setPromptDayId || !onNavigationContextChange) return;
+    onNavigationContextChange({ level: 2, title: 'Планирование тренировки', onBack: () => setSetPromptDayId(null) });
+    return () => onNavigationContextChange(null);
+  }, [setPromptDayId, onNavigationContextChange]);
   useEffect(() => {
     setOptimisticExerciseOrders((current) => {
       const next = { ...current };
@@ -134,7 +145,8 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const schedule = async (item: CloudProgramDayOutline, format: WorkoutScheduleFormat, activated = false) => {
     if (running.current || !alive.current || !cloud || !planning) return;
     if (!activated && (program.status !== 'active' || phaseStatus !== 'active')) {
-      onActivateForScheduling?.(item.day.programPhaseId, () => schedule(item, format, true));
+      if (onActivateForScheduling) onActivateForScheduling(item.day.programPhaseId, () => schedule(item, format, true));
+      else if (alive.current) setError('Программа и фаза должны быть активны для планирования');
       return;
     }
     running.current = true;
@@ -167,6 +179,24 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     catch (reason) { if (alive.current) setError(programMutationMessage(reason)); }
     finally { running.current = false; if (alive.current) setBusy(false); }
   };
+  const directStart = async (item: CloudProgramDayOutline) => {
+    if (running.current || !workoutStart || !alive.current) return;
+    running.current = true; setBusy(true); setError('');
+    try {
+      const athleteUserId = program.clientUserId ?? program.athleteUserId ?? repository.actorUserId;
+      const result = await workoutStart.startFromProgram({
+        athleteUserId, programId: program.id, dayId: item.day.id, independent: true,
+      }, () => alive.current);
+      if (alive.current) workoutStart.showSession(result.id);
+    } catch (reason) {
+      if (alive.current && !(reason instanceof WorkoutStartDismissed))
+        setError(adHocErrorMessage(reason, 'Не удалось начать тренировку'));
+    } finally {
+      running.current = false;
+      if (alive.current) setBusy(false);
+    }
+  };
+  const promptedDay = days.find(item => item.day.id === setPromptDayId);
   const selected = dialog?.item.day;
   return <>
     <div ref={viewport} id={bodyId} className="cloud-plan-days-viewport" aria-hidden={collapsed} inert={collapsed}>
@@ -195,7 +225,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
           });
         }} creatorName={creatorName} creatorAvatar={creatorAvatar} athleteName={athlete.name} athleteAvatar={athlete.avatar}
         readOnly={readOnly} onMutationAttempt={onMutationAttempt} busy={busy || exerciseDayId !== null}
-        onStart={onStartDay ? () => { void start(item.day.id); } : undefined}
+        onStart={onStartDay ? () => { void start(item.day.id); }
+          : allowDirectStart && workoutStart ? () => { void directStart(item); } : undefined}
+        onOpenSet={() => { if (!running.current) setSetPromptDayId(item.day.id); }}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
           && program.clientUserId !== null} onSchedule={!onStartDay && planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
         onAddExercise={() => { setReplacingExercise(null); setExerciseDayId(item.day.id); }}
@@ -217,6 +249,21 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     </div>)}
     </div>
     </div>
+    {promptedDay ? <MezfitDialog opened title="Для ввода значений запланируйте тренировку."
+      onBackdropClick={() => { if (!running.current) setSetPromptDayId(null); }}
+      buttons={<>
+        <MezfitDialogButton disabled={busy} onClick={() => setSetPromptDayId(null)}>Отмена</MezfitDialogButton>
+        <MezfitDialogButton strong disabled={busy || !planning} onClick={() => {
+          if (running.current) return;
+          setSetPromptDayId(null);
+          void schedule(promptedDay, 'independent');
+        }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-block', width: 20, height: 20 }}><Icon name="calendar-plus" /></span>
+            <Text variant="body">Запланировать</Text>
+          </span>
+        </MezfitDialogButton>
+      </>} /> : null}
     {!readOnly ? <ProgramDayExercisePicker repository={repository} program={program}
       dayId={exerciseDayId} catalogueRole={viewerRole}
       replacement={replacingExercise?.dayId === exerciseDayId ? replacingExercise : null}

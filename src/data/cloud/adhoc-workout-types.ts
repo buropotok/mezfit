@@ -17,6 +17,8 @@ export interface AdHocSessionRow {
   creatorUserId: string;
   name: string;
   comment: string | null;
+  /** Explicit format for program-sourced ad-hoc execution; absent on older sessions. */
+  format?: 'independent' | 'coached';
   /** Scheduled execution: immutable link and complete accepted PLAN. */
   occurrenceId?: string;
   occurrencePlan?: WorkoutOccurrencePlan;
@@ -97,7 +99,9 @@ export function adHocSessionValidationIssue(value: unknown): AdHocSessionValidat
     || !(value.coachUserId === null || user(value.coachUserId))
     || !(value.clientUserId === null || user(value.clientUserId))) return 'ADHOC_INVALID_PARTICIPANTS';
   if (!(typeof value.name === 'string' && value.name.trim().length > 0 && value.name.length <= 120)
-    || !nullableText(value.comment, 4000)) return 'ADHOC_INVALID_TITLE';
+    || !nullableText(value.comment, 4000)
+    || (value.format !== undefined && value.format !== 'independent' && value.format !== 'coached'))
+    return 'ADHOC_INVALID_TITLE';
   if (!(value.programId === undefined || id(value.programId))
     || !(value.dayId === undefined || (id(value.dayId) && id(value.programId)))
     || !(value.programId === undefined ? value.programName === null

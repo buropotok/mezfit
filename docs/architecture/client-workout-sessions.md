@@ -41,6 +41,21 @@ permissions; Client Start never creates an automatic program/template. When the
 Client completes an older Coach-created auto-program session, its pending
 save-template decision remains for the Coach who owns that source program.
 
+**Direct start from a program day:** The Programs screen may launch
+`createIndependentFromProgramDay` through the shared Start owner. It creates an
+explicitly `independent` FACT session for the selected athlete in one local
+transaction, using the authorized program's exercise snapshots and structural
+set types. No calendar occurrence or automatic program is created. Numeric
+PLAN prescriptions are not copied; each executed set starts with empty FACT
+metrics and `plan: null`. Existing program/day/set rows remain unchanged,
+including their recommendations. An assigned Client may start only their own,
+non-draft visible program/phase, subject to the existing shared FACT ACL.
+A Coach may initiate the corresponding independent session for their authorized
+athlete, subject to the current single-active-workout rules. Missing program
+access, insufficient grants and duplicate activity fail without partial inserts.
+Existing sessions without an explicit format retain their legacy projection;
+new independent starts persist the format on the session header.
+
 Start takes the accepted local occurrence PLAN, never rebuilds it from a cloud
 program, and copies its full execution graph in one transaction. Client Start
 updates only `status`, `workoutSessionId`, `updatedAt` on the occurrence; it does
