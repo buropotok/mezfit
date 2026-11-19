@@ -58,6 +58,24 @@
         "neck strap"
       ],
       "existing_equipment_match_checked": true
+    },
+    {
+      "id": "decline-bench",
+      "label_ru": "Скамья с отрицательным наклоном",
+      "definition_ru": "Регулируемая скамья с положением спинки ниже горизонтали (decline), с фиксаторами ног для жимов и разведений лёжа под отрицательным углом.",
+      "exercise_ids": [
+        "fitnessprogramer:one-arm-decline-cable-fly"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/one-arm-decline-cable-fly/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "decline bench",
+        "decline weight bench",
+        "negative incline bench"
+      ],
+      "existing_equipment_match_checked": true
     }
   ]
 }

@@ -3779,6 +3779,1451 @@
         }
       ],
       "notes": "В исходнике пустая анатомия; синергисты/стабилизаторы именно положения в полуколене не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:half-kneeling-high-cable-row-rope",
+      "source_path": "assets/work/shoulders/half-kneeling-high-cable-row-rope.json",
+      "source_blob_sha": "307e8225b2659e1990270faecd694fcd060ab17a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "deltoid_lateral",
+            "trapezius",
+            "brachioradialis",
+            "brachialis",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-high-cable-row-rope/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-high-cable-row-rope/"
+          ],
+          "confidence": "medium",
+          "reason": "В высокой тяге с канатной рукоятью в полуколене задняя дельта — основной акцент, синергисты и erectores spinae перечислены источником."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-high-cable-row-rope/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: В высокой тяге с канатной рукоятью в полуколене задняя дельта — основной акцент, синергисты и erectores spinae перечислены источником."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/half-kneeling-high-cable-row-rope/"
+          ],
+          "confidence": "high",
+          "reason": "Проверка предварительной категории: В высокой тяге с канатной рукоятью в полуколене задняя дельта — основной акцент, синергисты и erectores spinae перечислены источником."
+        }
+      ],
+      "notes": "Категория shoulders проверена: при вовлечении спины упражнение нацелено на задние дельтовидные, что подтверждено исходной анатомией."
+    },
+    {
+      "id": "fitnessprogramer:high-cable-crossover",
+      "source_path": "assets/work/chest/high-cable-crossover.json",
+      "source_blob_sha": "36c4afad5512e2f9b3c509aed7281680f049cecc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "biceps_brachii",
+            "brachialis",
+            "triceps_brachii",
+            "forearm_flexors",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-cable-crossover/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-cable-crossover/"
+          ],
+          "confidence": "medium",
+          "reason": "Тросы вверху, сведение рук вниз: исходник прямо отмечает нижний грудинный отдел большой грудной; в стабилизаторах указаны бицепс, брахиалис, трицепс и брюшная стенка."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-cable-crossover/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Тросы вверху, сведение рук вниз: исходник прямо отмечает нижний грудинный отдел большой грудной; в стабилизаторах указаны бицепс, брахиалис, трицепс и брюшная стенка."
+        }
+      ],
+      "notes": "Синергисты rhomboids, levator scapulae и latissimus из исходника не показаны как двигатели сведения плеча, без дополнительной верификации не копируются."
+    },
+    {
+      "id": "fitnessprogramer:high-cable-single-arm-bicep-curl",
+      "source_path": "assets/work/biceps/high-cable-single-arm-bicep-curl.json",
+      "source_blob_sha": "f61098405e6cd219847674a2fa3b8ef31de5dd20",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-cable-single-arm-bicep-curl/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-cable-single-arm-bicep-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Одноручное сгибание предплечья с верхнего блока; исходник напрямую перечисляет biceps, brachialis, brachioradialis и wrist flexors."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-cable-single-arm-bicep-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Одноручное сгибание предплечья с верхнего блока; исходник напрямую перечисляет biceps, brachialis, brachioradialis и wrist flexors."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:incline-cable-fly",
+      "source_path": "assets/work/chest/incline-cable-fly.json",
+      "source_blob_sha": "6f7e52c3776d4cbd5bf650009047c23b588bb8d1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "brachialis",
+            "triceps_brachii",
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-cable-fly/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable, incline bench. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Сведение рук на блоках лёжа на наклонной скамье: ключично-грудная часть основная по исходнику, синергисты и стабилизаторы перечислены."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Сведение рук на блоках лёжа на наклонной скамье: ключично-грудная часть основная по исходнику, синергисты и стабилизаторы перечислены."
+        }
+      ],
+      "notes": "Существующий фильтр incline bench более точен, чем общий bench исходника."
+    },
+    {
+      "id": "fitnessprogramer:incline-cable-row",
+      "source_path": "assets/work/back/incline-cable-row.json",
+      "source_blob_sha": "1c19af04f50272dd6fc00c77340579688b9807ce",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius",
+            "teres_major",
+            "deltoid_posterior",
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-cable-row/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable, incline bench. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-cable-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга блока с опорой на наклонную скамью: широчайшая главная, мышцы сведения лопаток и сгибания локтя содействуют."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/incline-cable-row/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Исходник не содержит инструкции и анатомии, поэтому стабилизаторы не выделены; наличие наклонной опоры подтверждено названием."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-cable-crunch",
+      "source_path": "assets/work/abs/kneeling-cable-crunch.json",
+      "source_blob_sha": "06af1d2f2ebd7efd535b5e485510606db46b379c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-crunch/"
+          ],
+          "confidence": "high",
+          "reason": "Стоя на коленях выполняется сгибание позвоночника: rectus abdominis первичен, obliques помогают, erector spinae динамически стабилизируют — исходник."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Стоя на коленях выполняется сгибание позвоночника: rectus abdominis первичен, obliques помогают, erector spinae динамически стабилизируют — исходник."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:kneeling-cable-shoulder-press",
+      "source_path": "assets/work/shoulders/kneeling-cable-shoulder-press.json",
+      "source_blob_sha": "e36c3a4ca9f72a6f5efbb97eb91114f4738af5d7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "supraspinatus",
+            "trapezius",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-shoulder-press/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим блока над головой с колен: передняя дельта ведущая, трицепс разгибает локоть, средняя дельта/вращатели лопаток содействуют."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-shoulder-press/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Без инструкции для kneeling-версии отдельные стабилизаторы не установлены."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-cable-triceps-extension",
+      "source_path": "assets/work/triceps/kneeling-cable-triceps-extension.json",
+      "source_blob_sha": "82c68b8f516265a1fa392aa250f9abef3a07475d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable, bench. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Кабельное разгибание на трицепс с упором локтями: исходная инструкция прямо указывает закрепить локти на скамье."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "В названии скамья не указана, но она обязательна по инструкции источника."
+    },
+    {
+      "id": "fitnessprogramer:kneeling-cable-triceps-extension-2",
+      "source_path": "assets/work/triceps/kneeling-cable-triceps-extension-2.json",
+      "source_blob_sha": "931cd4656410b02f910e73f63e2f511ca50c668d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension-2/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension-2/"
+          ],
+          "confidence": "high",
+          "reason": "Кабельное разгибание предплечий из-за головы стоя на коленях: исходная инструкция подтверждает трицепс и тросовый блок."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kneeling-cable-triceps-extension-2/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:leaning-cable-lateral-raise",
+      "source_path": "assets/work/shoulders/leaning-cable-lateral-raise.json",
+      "source_blob_sha": "8e4103bf69b5ae430bca7b6b0adba7aafe5f9682",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus",
+            "serratus_anterior",
+            "deltoid_anterior",
+            "trapezius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leaning-cable-lateral-raise/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leaning-cable-lateral-raise/"
+          ],
+          "confidence": "high",
+          "reason": "Отведение плеча одной рукой с наклоном корпуса: средняя дельта основная, supraspinatus, serratus, anterior deltoid и trapezius синергисты исходника."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leaning-cable-lateral-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:low-cable-crossover",
+      "source_path": "assets/work/chest/low-cable-crossover.json",
+      "source_blob_sha": "c02fefe06e604ece5f0fba44287271b76949c9b5",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior",
+            "biceps_short_head"
+          ],
+          "stabilizers": [
+            "brachialis",
+            "triceps_brachii",
+            "forearm_flexors",
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-cable-crossover/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-cable-crossover/",
+            "https://macrosinc.net/exercises/chest/low-cable-crossover/"
+          ],
+          "confidence": "medium",
+          "reason": "Тросы снизу, руки поднимаются по дуге вверх и к центру: механически акцент на ключичной части большой грудной."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-cable-crossover/",
+            "https://macrosinc.net/exercises/chest/low-cable-crossover/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Тросы снизу, руки поднимаются по дуге вверх и к центру: механически акцент на ключичной части большой грудной."
+        }
+      ],
+      "notes": "Исходное поле target=Pectoralis Major, Sternal противоречит low-to-high траектории и специализированному описанию верхней груди. Выбрана clavicular с низкой уверенностью до просмотра GIF."
+    },
+    {
+      "id": "fitnessprogramer:low-cable-tricep-kickback",
+      "source_path": "assets/work/triceps/low-cable-tricep-kickback.json",
+      "source_blob_sha": "b2135e9c3160dce060bb61d407035f3a52c42f4b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-cable-tricep-kickback/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-cable-tricep-kickback/"
+          ],
+          "confidence": "high",
+          "reason": "Кикбэк одной руки с нижнего блока: инструкция фиксирует неподвижное плечо и разгибание предплечья трицепсом."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-cable-tricep-kickback/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:lying-cable-curl",
+      "source_path": "assets/work/biceps/lying-cable-curl.json",
+      "source_blob_sha": "eaf54c9a9b6e347804e78596d2f74f6979c1cb2e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-curl/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable, bench. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание рук лёжа: источник прямо требует горизонтальную скамью, описывает biceps, brachialis, brachioradialis и FCR/ECR."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Сгибание рук лёжа: источник прямо требует горизонтальную скамью, описывает biceps, brachialis, brachioradialis и FCR/ECR."
+        }
+      ],
+      "notes": "Отдельные FCR/ECR представлены каноническими группами сгибателей/разгибателей предплечья."
+    },
+    {
+      "id": "fitnessprogramer:lying-cable-fly",
+      "source_path": "assets/work/chest/lying-cable-fly.json",
+      "source_blob_sha": "cfa76800ccab19dc170fa9519155f2d770a13c49",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "brachialis",
+            "triceps_brachii",
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-fly/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable, bench. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-fly/"
+          ],
+          "confidence": "high",
+          "reason": "Лёжа на горизонтальной скамье выполняется сведение рук по дуге; исходник указывает sternal pec и перечисленных синергистов/стабилизаторов."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Лёжа на горизонтальной скамье выполняется сведение рук по дуге; исходник указывает sternal pec и перечисленных синергистов/стабилизаторов."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:lying-cable-reverse-fly",
+      "source_path": "assets/work/shoulders/lying-cable-reverse-fly.json",
+      "source_blob_sha": "d9bd4a150b87b60edab8346849cd595338a95377",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "infraspinatus",
+            "teres_minor",
+            "deltoid_lateral",
+            "trapezius",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "triceps_brachii",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-reverse-fly/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-reverse-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратное разведение лёжа: в исходнике target posterior deltoid, а синергисты и стабилизаторы (triceps и wrist extensors) явно перечислены."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-cable-reverse-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Обратное разведение лёжа: в исходнике target posterior deltoid, а синергисты и стабилизаторы (triceps и wrist extensors) явно перечислены."
+        }
+      ],
+      "notes": "Тип опоры для положения лёжа в исходнике не уточнён, скамья не добавлена автоматически."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-bent-over-cable-lateral-raise",
+      "source_path": "assets/work/shoulders/one-arm-bent-over-cable-lateral-raise.json",
+      "source_blob_sha": "5c0885c36fd640abdb0fe4d7fdd2be80b3d58159",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-bent-over-cable-lateral-raise/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-bent-over-cable-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение одной руки в наклоне приводит плечо назад и сводит лопатки; задняя дельта ведущая, средняя трапеция и ромбовидные содействуют."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-bent-over-cable-lateral-raise/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Исходный файл пуст по анатомии и инструкции. Не следует автоматически назначать всем наклонным упражнениям erector spinae в стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-cable-bicep-curl",
+      "source_path": "assets/work/biceps/one-arm-cable-bicep-curl.json",
+      "source_blob_sha": "dbd277501b7f609b9979ad095d154d7c8abc3627",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-bicep-curl/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-bicep-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное сгибание локтя с нижнего блока: бицепс с синергистами плечевой и плечелучевой мышцами."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-bicep-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Исходник допускает Resistance Band, но конкретная техника с резинкой не подтверждена: не добавлена как обязательное оборудование."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-cable-chest-press",
+      "source_path": "assets/work/chest/one-arm-cable-chest-press.json",
+      "source_blob_sha": "80768b300e5cd5740d1d41db92ace3091b8c0323",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "quadratus_lumborum",
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-chest-press/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-chest-press/",
+            "https://www.acefitness.org/continuing-education/certified/special-dec-2018-issue/7142/the-buzz-about-anti-rotation-core-training/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный жим от груди: грудная основная, передняя дельта, трицепс и передняя зубчатая двигают плечевой пояс; брюшные и тазовые стабилизируют против вращения."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-chest-press/",
+            "https://www.acefitness.org/continuing-education/certified/special-dec-2018-issue/7142/the-buzz-about-anti-rotation-core-training/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Одноручный жим от груди: грудная основная, передняя дельта, трицепс и передняя зубчатая двигают плечевой пояс; брюшные и тазовые стабилизируют против вращения."
+        }
+      ],
+      "notes": "Исходный обширный список относит анти-ротационные мышцы к синергистам; перенесены в стабилизаторы по характеру упражнения. Не включены TFL и частные iliocostalis без точного ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-cable-curl",
+      "source_path": "assets/work/biceps/one-arm-cable-curl.json",
+      "source_blob_sha": "f20e37ad405f1ad4282391fb8110fbde3d04ef87",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-curl/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Одноручный кабельный сгиб: прямой список исходника нормализован в biceps_brachii, brachialis, brachioradialis и forearm_flexors."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Одноручный кабельный сгиб: прямой список исходника нормализован в biceps_brachii, brachialis, brachioradialis и forearm_flexors."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-cable-row",
+      "source_path": "assets/work/back/one-arm-cable-row.json",
+      "source_blob_sha": "092500d7468d422bc17ed463755bada09d38225e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "trapezius",
+            "rhomboids",
+            "deltoid_posterior",
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-row/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручная тяга к поясу: широчайшая, ромбовидные и трапеция ведут/помогают сведению лопатки, плечевые сгибатели выполняют тяговую работу."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-cable-row/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Исходное target=Back не канонический мышечный ID; мышцы вращательной манжеты из исходных synergists не перенесены без доказательства роли."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-decline-cable-fly",
+      "source_path": "assets/work/chest/one-arm-decline-cable-fly.json",
+      "source_blob_sha": "1f13a4a9c02cd252c355f6f74c368ac8c02ba1e5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "decline-bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "biceps_brachii",
+            "triceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-decline-cable-fly/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable, decline-bench. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-decline-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное сведение на скамье с отрицательным наклоном 15–30°; скамья и блок подтверждены точной инструкцией; акцент нижней грудной."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-decline-cable-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Одноручное сведение на скамье с отрицательным наклоном 15–30°; скамья и блок подтверждены точной инструкцией; акцент нижней грудной."
+        }
+      ],
+      "notes": "Исходник относил трёхглавую к синергистам, однако при фиксированном локте она ближе к стабилизатору. decline-bench — новый исследовательский тип."
+    },
+    {
+      "id": "fitnessprogramer:overhead-cable-curl",
+      "source_path": "assets/work/biceps/overhead-cable-curl.json",
+      "source_blob_sha": "409c037903667b3e1ff6641c8d817682adf63c67",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-cable-curl/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-cable-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Сгибание рук на двух верхних блоках: источник явно описывает бицепс, плечевую, плечелучевую и сгибатели запястья."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-cable-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Стабилизирующие мышцы сверены с инструкцией и движением: Сгибание рук на двух верхних блоках: источник явно описывает бицепс, плечевую, плечелучевую и сгибатели запястья."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:seated-cable-chest-press",
+      "source_path": "assets/work/chest/seated-cable-chest-press.json",
+      "source_blob_sha": "9084423b3ef70952a1dbde9f80993ae51e06dc9e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-chest-press/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-chest-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим от груди сидя с сопротивлением троса: sternal pec основной, остальные мышцы горизонтального жима — синергисты."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-chest-press/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Инструкция и анатомия в исходнике отсутствуют; нельзя устанавливать конкретный тип сиденья или стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:seated-cable-close-grip-chest-press",
+      "source_path": "assets/work/chest/seated-cable-close-grip-chest-press.json",
+      "source_blob_sha": "435b4572ffebdcb68b48f825fe4a1fe30a4dfc05",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-close-grip-chest-press/"
+          ],
+          "confidence": "high",
+          "reason": "По исходной карточке и конкретной инструкции подтверждено оборудование cable. Общий Full Gym исключён."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-close-grip-chest-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Узкий хват жима сидя изменяет участие трицепса, но основной характер нагрузки остаётся грудным жимом."
+        },
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-cable-close-grip-chest-press/"
+          ],
+          "confidence": "low",
+          "reason": "Именно эта версия упражнения не имеет доказанного перечня стабилизаторов: сохранён специальный маркер other."
+        }
+      ],
+      "notes": "Без инструкции/анатомии исходника точный вклад двух основных мышц требует проверки на GIF; стабилизаторы не установлены."
     }
   ]
 }
