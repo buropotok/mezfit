@@ -3298,6 +3298,1239 @@
         }
       ],
       "notes": "Band Pushdown: в исходной инструкции разгибание локтей резиной с верхней фиксацией; целевая трёхглавая мышца прямо указана, дополнительные мышцы поимённо не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:band-seated-hip-external-rotation",
+      "source_path": "assets/work/hip/band-seated-hip-external-rotation.json",
+      "source_blob_sha": "fbe98a4eddbc3b930291ad7a5482dd57ba5b3123",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "hip_external_rotators"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-seated-hip-external-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-seated-hip-external-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Наружная ротация бедра сидя с сопротивлением ленты: глубокие ротаторы таза основная функциональная группа, большая ягодичная может помогать в данной позиции. Конкретные стабилизаторы в исходной карточке отсутствуют."
+        }
+      ],
+      "notes": "Наружная ротация бедра сидя с сопротивлением ленты: глубокие ротаторы таза основная функциональная группа, большая ягодичная может помогать в данной позиции. Конкретные стабилизаторы в исходной карточке отсутствуют."
+    },
+    {
+      "id": "fitnessprogramer:band-seated-hip-internal-rotation",
+      "source_path": "assets/work/hip/band-seated-hip-internal-rotation.json",
+      "source_blob_sha": "fb1c8fa34889154610d7b67cd8c457e9849bd319",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-seated-hip-internal-rotation/"
+          ],
+          "confidence": "low",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-seated-hip-internal-rotation/"
+          ],
+          "confidence": "low",
+          "reason": "Внутренняя ротация бедра сидя: функция известна, но отдельной группы hip_internal_rotators в 69-ID таксономии нет, а конкретные волокна ягодичных/напрягателя фасции по GIF не установлены. Не заменять их анатомически соседним ID."
+        }
+      ],
+      "notes": "Внутренняя ротация бедра сидя: функция известна, но отдельной группы hip_internal_rotators в 69-ID таксономии нет, а конкретные волокна ягодичных/напрягателя фасции по GIF не установлены. Не заменять их анатомически соседним ID."
+    },
+    {
+      "id": "fitnessprogramer:band-seated-row",
+      "source_path": "assets/work/back/band-seated-row.json",
+      "source_blob_sha": "bfa3e7ccd9b3592325c90b444dacc1da175746d4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-seated-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-seated-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Горизонтальная тяга сидя с резиной: широчайшая и ромбовидные обеспечивают тягу/ретракцию, бицепс и средняя трапеция помогают; стабилизация корпуса зависит от позы и не конкретизирована."
+        }
+      ],
+      "notes": "Горизонтальная тяга сидя с резиной: широчайшая и ромбовидные обеспечивают тягу/ретракцию, бицепс и средняя трапеция помогают; стабилизация корпуса зависит от позы и не конкретизирована."
+    },
+    {
+      "id": "fitnessprogramer:band-side-lying-clam",
+      "source_path": "assets/work/hip/band-side-lying-clam.json",
+      "source_blob_sha": "82a56a3d2cb4ccb6aaaf5f9f673a77ac7b34873c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "hip_external_rotators"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-side-lying-clam/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-side-lying-clam/"
+          ],
+          "confidence": "medium",
+          "reason": "Side Lying Clam: разгибание/наружная ротация бедра с согнутыми коленями, средняя ягодичная и глубокие внешние ротаторы работают против натяжения резины; дополнительные стабилизаторы не установлены."
+        }
+      ],
+      "notes": "Side Lying Clam: разгибание/наружная ротация бедра с согнутыми коленями, средняя ягодичная и глубокие внешние ротаторы работают против натяжения резины; дополнительные стабилизаторы не установлены."
+    },
+    {
+      "id": "fitnessprogramer:band-side-lying-leg-lift",
+      "source_path": "assets/work/hip/band-side-lying-leg-lift.json",
+      "source_blob_sha": "d4cfaa9407ccbbfb01d25204ef80808fc737e453",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius"
+          ],
+          "secondary": [
+            "gluteus_minimus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-side-lying-leg-lift/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-side-lying-leg-lift/"
+          ],
+          "confidence": "medium",
+          "reason": "Отведение верхней ноги лёжа на боку с резиной: средняя ягодичная основной отводящий двигатель, малая ягодичная помогает. Другие роли в исходной карточке не подтверждены."
+        }
+      ],
+      "notes": "Отведение верхней ноги лёжа на боку с резиной: средняя ягодичная основной отводящий двигатель, малая ягодичная помогает. Другие роли в исходной карточке не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:band-single-arm-shoulder-press",
+      "source_path": "assets/work/shoulders/band-single-arm-shoulder-press.json",
+      "source_blob_sha": "6e72fa0a264aec87173b36e0eef1d8b95d2cde04",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-single-arm-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-single-arm-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим резины одной рукой над головой: дельтовидные поднимают плечо, трицепс выпрямляет локоть, передняя зубчатая вращает лопатку. Антиротационные стабилизаторы корпуса для данной версии не перечислены."
+        }
+      ],
+      "notes": "Жим резины одной рукой над головой: дельтовидные поднимают плечо, трицепс выпрямляет локоть, передняя зубчатая вращает лопатку. Антиротационные стабилизаторы корпуса для данной версии не перечислены."
+    },
+    {
+      "id": "fitnessprogramer:band-skull-crusher",
+      "source_path": "assets/work/triceps/band-skull-crusher.json",
+      "source_blob_sha": "9c6a226266909a0538666baaafc87584d4f7270c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-skull-crusher/"
+          ],
+          "confidence": "high",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-skull-crusher/"
+          ],
+          "confidence": "high",
+          "reason": "Band Skull Crusher: источник даёт только разгибание локтя, опциональные поверхности лежа — пол, коврик или скамья. Поэтому обязательное оборудование только band, не приписывается bench как необходимая деталь."
+        }
+      ],
+      "notes": "Band Skull Crusher: источник даёт только разгибание локтя, опциональные поверхности лежа — пол, коврик или скамья. Поэтому обязательное оборудование только band, не приписывается bench как необходимая деталь."
+    },
+    {
+      "id": "fitnessprogramer:band-standing-chest-press",
+      "source_path": "assets/work/chest/band-standing-chest-press.json",
+      "source_blob_sha": "abf928eaac954a3e28bf7813cd2407e91a759cba",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-standing-chest-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/band-standing-chest-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим грудью стоя против эластичного сопротивления: грудная основная, передняя дельта/трицепс помогают. Исходная карточка ошибочно содержит Cable вместе с Resistance Band, кабель не обязателен."
+        }
+      ],
+      "notes": "Жим грудью стоя против эластичного сопротивления: грудная основная, передняя дельта/трицепс помогают. Исходная карточка ошибочно содержит Cable вместе с Resistance Band, кабель не обязателен."
+    },
+    {
+      "id": "fitnessprogramer:banded-behind-head-military-press",
+      "source_path": "assets/work/shoulders/banded-behind-head-military-press.json",
+      "source_blob_sha": "58f76ea515eb5d26f966917145e9702836857ae5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-behind-head-military-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник явно помечает Gymstick вместе с интегрированными резиновыми тяжами; использован канонический ID gymstick, не добавлена отдельная резина без подтверждения."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-behind-head-military-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Behind the Head Military Press | Gymstick: источник называет устройство Gymstick — единый комплект палки и эластичных тяг; отдельная band не обязательна. Плечевой жим за голову нагружает дельты и трицепс."
+        }
+      ],
+      "notes": "Behind the Head Military Press | Gymstick: источник называет устройство Gymstick — единый комплект палки и эластичных тяг; отдельная band не обязательна. Плечевой жим за голову нагружает дельты и трицепс."
+    },
+    {
+      "id": "fitnessprogramer:banded-donkey-kicks",
+      "source_path": "assets/work/hip/banded-donkey-kicks.json",
+      "source_blob_sha": "7d430017e350dd57b34414a03e3e98bfb40dc9cc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-donkey-kicks/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-donkey-kicks/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Donkey Kicks: разгибание бедра с согнутым коленом против резины; главным двигателем считается большая ягодичная. Не приписаны недоказанные мышцы корпуса."
+        }
+      ],
+      "notes": "Banded Donkey Kicks: разгибание бедра с согнутым коленом против резины; главным двигателем считается большая ягодичная. Не приписаны недоказанные мышцы корпуса."
+    },
+    {
+      "id": "fitnessprogramer:banded-fire-hydrant",
+      "source_path": "assets/work/hip/banded-fire-hydrant.json",
+      "source_blob_sha": "73680653d74dce292189ce9e29b9dadd4867358a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius"
+          ],
+          "secondary": [
+            "hip_external_rotators",
+            "gluteus_minimus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-fire-hydrant/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-fire-hydrant/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Fire Hydrant — отведение и наружная ротация бедра на четвереньках против резины. Целевая средняя ягодичная; глубокие ротаторы и малая ягодичная содействуют."
+        }
+      ],
+      "notes": "Banded Fire Hydrant — отведение и наружная ротация бедра на четвереньках против резины. Целевая средняя ягодичная; глубокие ротаторы и малая ягодичная содействуют."
+    },
+    {
+      "id": "fitnessprogramer:banded-glute-bridge",
+      "source_path": "assets/work/hip/banded-glute-bridge.json",
+      "source_blob_sha": "4e6e2e1ea7fe4074f85a9d20dccaa796b1a8abe8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-glute-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-glute-bridge/"
+          ],
+          "confidence": "medium",
+          "reason": "Мостик с лентой: большая ягодичная разгибает бедро, задняя поверхность бедра ассистирует, средняя ягодичная удерживает отведение коленей при натяжении резины. Стабилизаторы без отдельного источника не назначены."
+        }
+      ],
+      "notes": "Мостик с лентой: большая ягодичная разгибает бедро, задняя поверхность бедра ассистирует, средняя ягодичная удерживает отведение коленей при натяжении резины. Стабилизаторы без отдельного источника не назначены."
+    },
+    {
+      "id": "fitnessprogramer:banded-glute-kickbacks",
+      "source_path": "assets/work/hip/banded-glute-kickbacks.json",
+      "source_blob_sha": "a5f52a368a734962d7946dd0dcc774667b2c52e8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-glute-kickbacks/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-glute-kickbacks/"
+          ],
+          "confidence": "medium",
+          "reason": "Мах ногой назад в сопротивлении резины: большая ягодичная отвечает за разгибание бедра, вторичные мышцы/стабилизаторы не раскрыты для точной версии."
+        }
+      ],
+      "notes": "Мах ногой назад в сопротивлении резины: большая ягодичная отвечает за разгибание бедра, вторичные мышцы/стабилизаторы не раскрыты для точной версии."
+    },
+    {
+      "id": "fitnessprogramer:banded-jack-knife-sit-up",
+      "source_path": "assets/work/abs/banded-jack-knife-sit-up.json",
+      "source_blob_sha": "f1b09820d4f7e7db32427b665a8e5d5a91a8269a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-jack-knife-sit-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник явно помечает Gymstick вместе с интегрированными резиновыми тяжами; использован канонический ID gymstick, не добавлена отдельная резина без подтверждения."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-jack-knife-sit-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Jack Knife Sit-up с пометкой Gymstick и Resistance Band: используется Gymstick как интегрированный с эластичными тяжами снаряд. Складка корпуса задействует пресс и сгибатели бедра; стабилизаторы неизвестны."
+        }
+      ],
+      "notes": "Banded Jack Knife Sit-up с пометкой Gymstick и Resistance Band: используется Gymstick как интегрированный с эластичными тяжами снаряд. Складка корпуса задействует пресс и сгибатели бедра; стабилизаторы неизвестны."
+    },
+    {
+      "id": "fitnessprogramer:banded-kettlebell-goblet-squat",
+      "source_path": "assets/work/hip/banded-kettlebell-goblet-squat.json",
+      "source_blob_sha": "26cd05dfb8fe96e191cff6c834d2c7f93be31df3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band",
+          "kettlebell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-kettlebell-goblet-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-kettlebell-goblet-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Kettlebell Goblet Squat: и гиря, и резина явно требуются названием/исходным equipment; приседание требует разгибателей колена/бедра, gluteus medius при ленте над коленями удерживает отведение, позвоночник стабилизируется разгибателями."
+        }
+      ],
+      "notes": "Banded Kettlebell Goblet Squat: и гиря, и резина явно требуются названием/исходным equipment; приседание требует разгибателей колена/бедра, gluteus medius при ленте над коленями удерживает отведение, позвоночник стабилизируется разгибателями."
+    },
+    {
+      "id": "fitnessprogramer:banded-leg-curl",
+      "source_path": "assets/work/leg/banded-leg-curl.json",
+      "source_blob_sha": "33c6c57da173154431033552693f96db330f0015",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание колена против эластичной ленты: группа подколенных разгибателей бедра обеспечивает сгибание колена, икроножная помогает; без положения тела точные стабилизаторы не подтверждены."
+        }
+      ],
+      "notes": "Сгибание колена против эластичной ленты: группа подколенных разгибателей бедра обеспечивает сгибание колена, икроножная помогает; без положения тела точные стабилизаторы не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:banded-lunge",
+      "source_path": "assets/work/leg/banded-lunge.json",
+      "source_blob_sha": "76dc0e1008027ee7735ee13c753f736458d01fe1",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Выпад с резиной: разгибатели колена/бедра работают как основные, приводящие помогают, средняя ягодичная стабилизирует фронтальную плоскость таза."
+        }
+      ],
+      "notes": "Выпад с резиной: разгибатели колена/бедра работают как основные, приводящие помогают, средняя ягодичная стабилизирует фронтальную плоскость таза."
+    },
+    {
+      "id": "fitnessprogramer:banded-lying-leg-and-hip-raise",
+      "source_path": "assets/work/abs/banded-lying-leg-and-hip-raise.json",
+      "source_blob_sha": "b70ff2b82098638187e90d4e7971be466b406dd2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis_lower_zone",
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-lying-leg-and-hip-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник явно помечает Gymstick вместе с интегрированными резиновыми тяжами; использован канонический ID gymstick, не добавлена отдельная резина без подтверждения."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-lying-leg-and-hip-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Lying Leg and Hip Raise: источник перечисляет Gymstick и его эластичные тяги, а не абстрактный Full Gym. Подъём таза/ног включает нижнюю зону пресса и сгибатели бедра; другие стабилизаторы не установлены."
+        }
+      ],
+      "notes": "Banded Lying Leg and Hip Raise: источник перечисляет Gymstick и его эластичные тяги, а не абстрактный Full Gym. Подъём таза/ног включает нижнюю зону пресса и сгибатели бедра; другие стабилизаторы не установлены."
+    },
+    {
+      "id": "fitnessprogramer:banded-lying-leg-curl",
+      "source_path": "assets/work/leg/banded-lying-leg-curl.json",
+      "source_blob_sha": "78da1bd10609482bd4a9a1e25af0a1fd7c9a51a4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-lying-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник явно помечает Gymstick вместе с интегрированными резиновыми тяжами; использован канонический ID gymstick, не добавлена отдельная резина без подтверждения."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-lying-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Lying Leg Curl: исходная карточка указывает Gymstick с резиной. Сгибание колена обеспечивают задние мышцы бедра, икроножная помогает; тип укладки креплений нуждается в визуальной проверке."
+        }
+      ],
+      "notes": "Banded Lying Leg Curl: исходная карточка указывает Gymstick с резиной. Сгибание колена обеспечивают задние мышцы бедра, икроножная помогает; тип укладки креплений нуждается в визуальной проверке."
+    },
+    {
+      "id": "fitnessprogramer:banded-overhead-triceps-extension",
+      "source_path": "assets/work/triceps/banded-overhead-triceps-extension.json",
+      "source_blob_sha": "0bb07793a88e9f7468f09baa3912737c0028bb7c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymstick"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-overhead-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник явно помечает Gymstick вместе с интегрированными резиновыми тяжами; использован канонический ID gymstick, не добавлена отдельная резина без подтверждения."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-overhead-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Banded Overhead Triceps Extension: карточка указывает Gymstick и встроенную резину, используем Gymstick вместо дублирования двух самостоятельных устройств. Главный разгибатель локтя — трицепс."
+        }
+      ],
+      "notes": "Banded Overhead Triceps Extension: карточка указывает Gymstick и встроенную резину, используем Gymstick вместо дублирования двух самостоятельных устройств. Главный разгибатель локтя — трицепс."
+    },
+    {
+      "id": "fitnessprogramer:banded-seated-hip-abduction",
+      "source_path": "assets/work/hip/banded-seated-hip-abduction.json",
+      "source_blob_sha": "c9d2b3ce16c076a51c9a8bf0337443cba39f1421",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-seated-hip-abduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-seated-hip-abduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Отведение бёдер сидя против эластичной ленты: основные двигатели — средняя/малая ягодичные, верхние волокна большой ягодичной могут помогать. Исходная инструкция «1» неполная — не выдаём недоказанных стабилизаторов."
+        }
+      ],
+      "notes": "Отведение бёдер сидя против эластичной ленты: основные двигатели — средняя/малая ягодичные, верхние волокна большой ягодичной могут помогать. Исходная инструкция «1» неполная — не выдаём недоказанных стабилизаторов."
+    },
+    {
+      "id": "fitnessprogramer:banded-shoulder-adduction",
+      "source_path": "assets/work/chest/banded-shoulder-adduction.json",
+      "source_blob_sha": "99c115fcf8afbde40709cd4e163a44f6a18ba564",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "back"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-adduction/"
+          ],
+          "confidence": "low",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-adduction/"
+          ],
+          "confidence": "low",
+          "reason": "Приведение плеча с резиной выполняется широчайшей, большой грудной и большой круглой. Исходная категория chest неоднозначна, но для движения adduction основной двигательный паттерн задней/широчайшей группы, предложена back; проверить направление движения на GIF."
+        },
+        {
+          "fields": [
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-adduction/"
+          ],
+          "confidence": "low",
+          "reason": "Приведение плеча с резиной выполняется широчайшей, большой грудной и большой круглой. Исходная категория chest неоднозначна, но для движения adduction основной двигательный паттерн задней/широчайшей группы, предложена back; проверить направление движения на GIF."
+        }
+      ],
+      "notes": "Приведение плеча с резиной выполняется широчайшей, большой грудной и большой круглой. Исходная категория chest неоднозначна, но для движения adduction основной двигательный паттерн задней/широчайшей группы, предложена back; проверить направление движения на GIF."
+    },
+    {
+      "id": "fitnessprogramer:banded-shoulder-extension",
+      "source_path": "assets/work/back/banded-shoulder-extension.json",
+      "source_blob_sha": "84fd18a2964315915c620be5dc0fa7403e8aa23c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание плеча с резиной: широчайшая и задняя дельта перемещают плечо назад, большая круглая помогает. Исходные группы Back/Shoulders, одна основная категория back подтверждается движением."
+        }
+      ],
+      "notes": "Разгибание плеча с резиной: широчайшая и задняя дельта перемещают плечо назад, большая круглая помогает. Исходные группы Back/Shoulders, одна основная категория back подтверждается движением."
+    },
+    {
+      "id": "fitnessprogramer:banded-shoulder-external-rotation",
+      "source_path": "assets/work/shoulders/banded-shoulder-external-rotation.json",
+      "source_blob_sha": "fc4b200911a6a948f55b3f5527d6e71eeb7e4a01",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-external-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-external-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Наружная ротация плеча против резины: целевые наружные ротаторы — подостная и малая круглая, надёжная отдельная роль синергистов/стабилизаторов не определена."
+        }
+      ],
+      "notes": "Наружная ротация плеча против резины: целевые наружные ротаторы — подостная и малая круглая, надёжная отдельная роль синергистов/стабилизаторов не определена."
+    },
+    {
+      "id": "fitnessprogramer:banded-shoulder-flexion",
+      "source_path": "assets/work/shoulders/banded-shoulder-flexion.json",
+      "source_blob_sha": "6d7e80bfb98a4a92338b957f25e2304021c30938",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-flexion/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходный снаряд приведён к существующим каноническим EQUIPMENT_LABELS; нет неоснованного Full Gym или generic Machine."
+        },
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/banded-shoulder-flexion/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание плеча против резины: передняя дельта как основной движитель, ключичная часть большой грудной помогает. Стабилизаторы в исходнике не установлены."
+        }
+      ],
+      "notes": "Сгибание плеча против резины: передняя дельта как основной движитель, ключичная часть большой грудной помогает. Стабилизаторы в исходнике не установлены."
     }
   ]
 }
