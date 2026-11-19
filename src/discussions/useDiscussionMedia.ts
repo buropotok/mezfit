@@ -22,8 +22,8 @@ interface PendingMedia {
   error: string;
 }
 
-// Stable, non-sensitive support codes for failures in the media send flow.
-// 1/2/3 identify the failed network request: signer, PUT, or retry HEAD.
+// Canonical identifiers are logged; legacy numeric display IDs are preserved
+// for existing support messages and contract tests. See docs/operations/error-codes.md.
 function sendFailureCode(reason: unknown, savingFile: boolean, aborted: boolean) {
   if (aborted || (reason instanceof MediaUploadError && reason.code === 'CANCELLED')) return APP_ERROR_CODES.MEDIA_SEND_CANCELLED;
   if (reason instanceof MediaUploadError) {
@@ -42,20 +42,31 @@ function sendFailureCode(reason: unknown, savingFile: boolean, aborted: boolean)
   return savingFile ? APP_ERROR_CODES.MEDIA_SEND_LOCAL_SAVE : APP_ERROR_CODES.MEDIA_SEND_MESSAGE;
 }
 
+/** Stable mapping: an existing support screenshot with Код 1…12 stays actionable. */
+const legacyMediaCodes: Record<ReturnType<typeof sendFailureCode>, number> = {
+  MEDIA_SEND_NETWORK_SIGNER: 1, MEDIA_SEND_NETWORK_PUT: 2,
+  MEDIA_SEND_NETWORK_HEAD: 3, MEDIA_SEND_NETWORK_OTHER: 4,
+  MEDIA_SEND_TIMEOUT: 5, MEDIA_SEND_AUTH: 6,
+  MEDIA_SEND_SIGNER_UNAVAILABLE: 7, MEDIA_SEND_STORAGE_HTTP: 8,
+  MEDIA_SEND_STORAGE_UNKNOWN: 9, MEDIA_SEND_LOCAL_SAVE: 10,
+  MEDIA_SEND_MESSAGE: 11, MEDIA_SEND_CANCELLED: 12,
+};
+
 function describeSendError(reason: unknown, savingFile: boolean, aborted: boolean): string {
   const code = sendFailureCode(reason, savingFile, aborted);
-  if (code === APP_ERROR_CODES.MEDIA_SEND_CANCELLED) return withErrorCode('Загрузка отменена. Можно повторить отправку', code);
+  const visible = (message: string) => message + ' (Код ' + legacyMediaCodes[code] + ')';
+  if (code === APP_ERROR_CODES.MEDIA_SEND_CANCELLED) return visible('Загрузка отменена. Можно повторить отправку');
   if (reason instanceof MediaUploadError) {
     if (reason.code === 'NETWORK' || reason.code === 'TIMEOUT') {
-      return withErrorCode('Mezfit облако недоступно. Проверьте сеть и повторите отправку', code);
+      return visible('Mezfit облако недоступно. Проверьте сеть и повторите отправку');
     }
-    if (reason.code === 'SIGNER_AUTH') return withErrorCode('Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram', code);
-    if (reason.code === 'SIGNER_UNAVAILABLE') return withErrorCode('Не удалось получить ссылку для загрузки. Повторите отправку', code);
-    return withErrorCode('Хранилище не приняло файл. Повторите отправку', code);
+    if (reason.code === 'SIGNER_AUTH') return visible('Mezfit облако не разрешило загрузку. Переоткройте Mezfit в Telegram');
+    if (reason.code === 'SIGNER_UNAVAILABLE') return visible('Не удалось получить ссылку для загрузки. Повторите отправку');
+    return visible('Хранилище не приняло файл. Повторите отправку');
   }
-  return withErrorCode(savingFile
+  return visible(savingFile
     ? 'Не удалось сохранить файл на устройстве. Освободите место и попробуйте ещё раз'
-    : 'Не удалось сохранить сообщение. Повторите отправку', code);
+    : 'Не удалось сохранить сообщение. Повторите отправку');
 }
 
 export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType<typeof useDiscussionDraft>, enabled = true) {
@@ -297,8 +308,9 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         resume.current = () => { retryPending(message.id); };
       }
       const errorText = describeSendError(reason, savingFile, controller.signal.aborted);
-      if (sendFailureCode(reason, savingFile, controller.signal.aborted) !== APP_ERROR_CODES.MEDIA_SEND_CANCELLED) {
-        reportVideoRecordingFailure(sendFailureCode(reason, savingFile, controller.signal.aborted), 'media', {
+      const failureCode = sendFailureCode(reason, savingFile, controller.signal.aborted);
+      if (failureCode !== APP_ERROR_CODES.MEDIA_SEND_CANCELLED) {
+        reportVideoRecordingFailure(failureCode, 'media', {
           mediaMimeType: selected.metadata.mimeType,
           mediaSizeBytes: String(selected.metadata.sizeBytes),
           ...(reason instanceof MediaUploadError ? {

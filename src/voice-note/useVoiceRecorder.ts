@@ -41,7 +41,8 @@ function audioContextConstructor(): typeof AudioContext | undefined {
  * Standalone mic session and recording API:
  * start() -> stop() yields a Blob + real waveform; cancel()/release() discard.
  * The chat opts into a shared WebView permission session.
- * It never uploads media or starts capture at import/mount time.
+ * It never uploads recorded media or starts capture at import/mount time.
+ * Only allowlisted best-effort technical failure codes are reported.
  */
 export function useVoiceRecorder({ session = false, onSample }: {
   session?: boolean; onSample?: (level: number) => void;

@@ -1,4 +1,5 @@
-import { APP_ERROR_CODES, withErrorCode, type AppErrorCode } from '../../shared/app-error-codes';
+import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
+import type { VideoRecordingErrorCode } from '../../shared/video-recording-diagnostic';
 import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
@@ -33,7 +34,7 @@ function probe(url: string, video: boolean, signal: AbortSignal, mimeType: strin
       movie?.load();
       if (message) reject(new Error(message)); else resolve(duration);
     };
-    const failed = (code: AppErrorCode, message = 'Устройство не смогло открыть этот формат или кодек') => {
+    const failed = (code: VideoRecordingErrorCode, message = 'Устройство не смогло открыть этот формат или кодек') => {
       if (completed) return;
       reportVideoRecordingFailure(code, 'media', {
         mediaMimeType: mimeType,

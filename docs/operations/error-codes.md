@@ -1,6 +1,9 @@
 # Mezfit support error codes — initial registry and audit
 
-**Format:** Every newly migrated user-visible error ends with `(Код: STABLE_CODE)`.
+**Format:** New user-visible errors end with `(Код: STABLE_CODE)`.
+Existing media send errors keep their original `(Код N)` wording until an
+explicit test/compatibility migration is approved; their semantic codes are
+already used in telemetry.
 The explanation remains in Russian; the code is stable, ASCII uppercase, without
 identifiers or runtime values. Constants and formatter: `shared/app-error-codes.ts`.
 
@@ -8,7 +11,7 @@ identifiers or runtime values. Constants and formatter: `shared/app-error-codes.
 
 | Existing family | Current owner | Current state |
 | --- | --- | --- |
-| Numeric `Код 1` … `Код 12` | `src/discussions/useDiscussionMedia.ts` | Migrated to semantic `MEDIA_SEND_*` |
+| Numeric `Код 1` … `Код 12` | `src/discussions/useDiscussionMedia.ts` | Preserved in UI and mapped to semantic `MEDIA_SEND_*` for telemetry |
 | `ADHOC_*` | `src/workout/adhoc-workout-errors.ts` | Retained; already embeds business validation IDs |
 | Numeric organization diagnostics | Discussion inbox / organization | Retained, not converted to unrelated media codes |
 | `HTTP_4xx/5xx`, `NETWORK_ERROR`, `CLOUD_LICENSE`, `OTHER_SYNC_ERROR` | Dexie sync diagnostic | Retained for infrastructure compatibility |
