@@ -1,0 +1,224 @@
+{
+  "batch_id": "B009",
+  "proposals": [
+    {
+      "id": "pec_deck_machine",
+      "label_ru": "Тренажёр «Бабочка»",
+      "definition_ru": "Специализированный сидячий тренажёр с рычажными рукоятями или подушками предплечий для горизонтального сведения плеч, pec deck fly.",
+      "exercise_ids": [
+        "fitnessprogramer:pec-deck-fly"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/pec-deck-fly/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "cable machine",
+        "cable"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "pendulum_squat_machine",
+      "label_ru": "Маятниковый тренажёр для приседаний",
+      "definition_ru": "Платформенный рычажный тренажёр, перемещающий опоры по дуговой маятниковой траектории при приседании; не равен гакк-тренажёру.",
+      "exercise_ids": [
+        "fitnessprogramer:pendulum-squat"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/pendulum-squat/",
+        "https://vprava.me/exercises/pendulum-squat-machine"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "hack_squat_machine",
+        "smith machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "chair",
+      "label_ru": "Стул",
+      "definition_ru": "Устойчивая мебель с сиденьем, используемая как опора для упражнения (в данном случае два стула для pike push-up).",
+      "exercise_ids": [
+        "fitnessprogramer:pike-push-up-between-chairs"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/pike-push-up-between-chairs/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bench",
+        "box",
+        "no equipment"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "power_rack",
+      "label_ru": "Силовая рама со страховочными упорами",
+      "definition_ru": "Регулируемая силовая стойка/рама со штырями безопасности, поддерживающими штангу на заданной высоте при pin squat и rack pull.",
+      "exercise_ids": [
+        "fitnessprogramer:pin-squat",
+        "fitnessprogramer:rack-pull"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/pin-squat/",
+        "https://fitnessprogramer.com/exercise/rack-pull/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "barbell",
+        "smith machine",
+        "bench"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "plate_loaded_seated_row_machine",
+      "label_ru": "Рычажный тренажёр для горизонтальной тяги",
+      "definition_ru": "Сидячий рычажный тренажёр с посадкой и рукоятями для горизонтальной тяги, нагружаемый свободными дисками (plate-loaded row).",
+      "exercise_ids": [
+        "fitnessprogramer:plate-loaded-seated-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/plate-loaded-seated-row/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "cable",
+        "rowing machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "plate_loaded_shoulder_press_machine",
+      "label_ru": "Рычажный тренажёр для жима плечами",
+      "definition_ru": "Силовой сидячий тренажёр с рычагами для жима над головой, нагружаемый дисками (plate-loaded shoulder press).",
+      "exercise_ids": [
+        "fitnessprogramer:plate-loaded-shoulder-press"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/plate-loaded-shoulder-press/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "smith machine",
+        "cable machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "push_up_bars",
+      "label_ru": "Упоры для отжиманий",
+      "definition_ru": "Пара низких напольных поручней для нейтрального хвата и увеличения амплитуды отжимания; не брусья для отжиманий на весу.",
+      "exercise_ids": [
+        "fitnessprogramer:push-up-with-push-up-bars"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/push-up-with-push-up-bars/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "dip bars",
+        "parallel bars",
+        "no equipment"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "pvc_pipe",
+      "label_ru": "ПВХ-палка для тренировки движений",
+      "definition_ru": "Лёгкая жёсткая ПВХ-трубка или тренерская палка, прикладываемая к спине для обратной связи при hip hinge.",
+      "exercise_ids": [
+        "fitnessprogramer:pvc-hip-hinge"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/pvc-hip-hinge/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "gymstick",
+        "barbell",
+        "no equipment"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "reaction_ball",
+      "label_ru": "Реакционный мяч",
+      "definition_ru": "Небольшой мяч с нерегулярной формой/отскоком для упражнений на реакцию после броска в стену; не фитбол или обычный медбол.",
+      "exercise_ids": [
+        "fitnessprogramer:reaction-ball-throw"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/reaction-ball-throw/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "exercise ball",
+        "medicine ball",
+        "stability ball"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hack_squat_machine",
+      "label_ru": "Гакк-тренажёр",
+      "definition_ru": "Наклонный тренажёр для приседания на движущейся платформе с направляющими и опорами; reverse hack squat — вариант исполнения лицом к опорам на том же типе.",
+      "exercise_ids": [
+        "fitnessprogramer:reverse-hack-squat"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/reverse-hack-squat/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "smith machine",
+        "pendulum_squat_machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "bicycle",
+      "label_ru": "Велосипед",
+      "definition_ru": "Передвижной двухколёсный велосипед для езды на улице, в отличие от стационарного велотренажёра.",
+      "exercise_ids": [
+        "fitnessprogramer:riding-outdoor-bicycle"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/riding-outdoor-bicycle/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bike",
+        "stationary bike",
+        "treadmill"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "gymnastic_rings",
+      "label_ru": "Гимнастические кольца",
+      "definition_ru": "Пара независимо подвешенных жёстких гимнастических колец для отжиманий в висе; отличается от подвесных петель TRX.",
+      "exercise_ids": [
+        "fitnessprogramer:ring-dips"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ring-dips/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "trx",
+        "suspension trainer",
+        "dip bars"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
