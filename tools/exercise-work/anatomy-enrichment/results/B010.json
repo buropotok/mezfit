@@ -877,6 +877,420 @@
         }
       ],
       "notes": "Seated Biceps Curl с гантелями: исходный бицепс, брахиалис и brachioradialis корректны; Wrist Flexors нормализовано к каноническому ID."
+    },
+    {
+      "id": "fitnessprogramer:seated-chest-stretch",
+      "source_path": "assets/work/chest/seated-chest-stretch.json",
+      "source_blob_sha": "3641965c794f6e8cc5b7fbcf3e7e92896fc617b5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-chest-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated Chest Stretch — статическое раскрытие грудного отдела/плеч, исходные Anterior Deltoid и Biceps относятся к растягиваемым тканям, не динамическим силовым primary."
+        }
+      ],
+      "notes": "Seated Chest Stretch — статическое раскрытие грудного отдела/плеч, исходные Anterior Deltoid и Biceps относятся к растягиваемым тканям, не динамическим силовым primary."
+    },
+    {
+      "id": "fitnessprogramer:seated-close-grip-concentration-curl",
+      "source_path": "assets/work/biceps/seated-close-grip-concentration-curl.json",
+      "source_blob_sha": "3bc11d571d8ce327f84512865643059e4e7371cc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-close-grip-concentration-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Close-grip concentration curl: согласно инструкции сидя на скамье со штангой, brachialis исходно primary, biceps/ brachioradialis синергисты."
+        }
+      ],
+      "notes": "Close-grip concentration curl: согласно инструкции сидя на скамье со штангой, brachialis исходно primary, biceps/ brachioradialis синергисты."
+    },
+    {
+      "id": "fitnessprogramer:seated-dumbbell-front-raise",
+      "source_path": "assets/work/shoulders/seated-dumbbell-front-raise.json",
+      "source_blob_sha": "357dca337155b974d4a55c58c4a26eb2bdea6650",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral"
+          ],
+          "stabilizers": [
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-dumbbell-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated dumbbell front raise — подъём прямых рук вперед, передняя дельта основная."
+        }
+      ],
+      "notes": "Seated dumbbell front raise — подъём прямых рук вперед, передняя дельта основная."
+    },
+    {
+      "id": "fitnessprogramer:seated-dumbbell-lateral-raise",
+      "source_path": "assets/work/shoulders/seated-dumbbell-lateral-raise.json",
+      "source_blob_sha": "6aafd9b45397e64c996638226e998bdd8bc64ed9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "supraspinatus",
+            "serratus_anterior",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-dumbbell-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated lateral raise — боковое поднятие гантелей, lateral deltoid исходный target сохранён, устранено его ошибочное дублирование в synergists."
+        }
+      ],
+      "notes": "Seated lateral raise — боковое поднятие гантелей, lateral deltoid исходный target сохранён, устранено его ошибочное дублирование в synergists."
+    },
+    {
+      "id": "fitnessprogramer:seated-dumbbell-triceps-extension",
+      "source_path": "assets/work/triceps/seated-dumbbell-triceps-extension.json",
+      "source_blob_sha": "f28e9a29a13cabd28935b9a34a9e0829abef2371",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-dumbbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated dumbbell triceps extension по инструкции выполняется с опорной скамьёй и одной гантелью, единственный dynamic primary — triceps."
+        }
+      ],
+      "notes": "Seated dumbbell triceps extension по инструкции выполняется с опорной скамьёй и одной гантелью, единственный dynamic primary — triceps."
+    },
+    {
+      "id": "fitnessprogramer:seated-ez-bar-overhead-triceps-extension",
+      "source_path": "assets/work/triceps/seated-ez-bar-overhead-triceps-extension.json",
+      "source_blob_sha": "df33f595de0decd4c5dd72874c940e366a57f6e0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar",
+          "bench"
+        ],
+        "muscles": {
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-ez-bar-overhead-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated EZ-bar overhead triceps extension: в исходном equipment Barbell ошибочно не указан EZ-гриф, инструкция явно требует EZ-bar и скамью."
+        }
+      ],
+      "notes": "Seated EZ-bar overhead triceps extension: в исходном equipment Barbell ошибочно не указан EZ-гриф, инструкция явно требует EZ-bar и скамью."
+    },
+    {
+      "id": "fitnessprogramer:seated-flutter-kick",
+      "source_path": "assets/work/abs/seated-flutter-kick.json",
+      "source_blob_sha": "7e0d2baa6a160c24a1a56bfcbe3b70d9f20b4107",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_abdominis",
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-flutter-kick/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated flutter kick на скамье — чередующееся сгибание бедра с удержанием корпуса."
+        }
+      ],
+      "notes": "Seated flutter kick на скамье — чередующееся сгибание бедра с удержанием корпуса."
+    },
+    {
+      "id": "fitnessprogramer:seated-hammer-curl",
+      "source_path": "assets/work/biceps/seated-hammer-curl.json",
+      "source_blob_sha": "416c941bad91534698a0c9635d53fc6f47fc5d46",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-hammer-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Seated hammer curl: исходные brachioradialis target и brachialis/biceps помощники верны, мелкие wrist muscles нормализованы к существующим группам."
+        }
+      ],
+      "notes": "Seated hammer curl: исходные brachioradialis target и brachialis/biceps помощники верны, мелкие wrist muscles нормализованы к существующим группам."
+    },
+    {
+      "id": "fitnessprogramer:seated-hamstring-stretch",
+      "source_path": "assets/work/leg/seated-hamstring-stretch.json",
+      "source_blob_sha": "4e2e8c03d9843c6708df4ca42ed18920408456ff",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-hamstring-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated hamstring stretch — растяжение задней поверхности бедра, не силовая нагрузка на исходные широкие группы мышц."
+        }
+      ],
+      "notes": "Seated hamstring stretch — растяжение задней поверхности бедра, не силовая нагрузка на исходные широкие группы мышц."
+    },
+    {
+      "id": "fitnessprogramer:seated-incline-dumbbell-curl",
+      "source_path": "assets/work/biceps/seated-incline-dumbbell-curl.json",
+      "source_blob_sha": "7de778bcb3e4137db12c7c95984c2dbb60a9fa91",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-incline-dumbbell-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Incline dumbbell curl сидя по инструкции требует скамью 45° и гантели. Исходные бицепс и локтевые сгибатели верны."
+        }
+      ],
+      "notes": "Incline dumbbell curl сидя по инструкции требует скамью 45° и гантели. Исходные бицепс и локтевые сгибатели верны."
+    },
+    {
+      "id": "fitnessprogramer:seated-leg-curl",
+      "source_path": "assets/work/leg/seated-leg-curl.json",
+      "source_blob_sha": "a18e733bc317ec479a0cb187b51a096ffd9e1784",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "leg-curl-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated leg curl — специальный сидячий тренажёр для сгибания коленей; тот же тип leg-curl-machine, что в соседней исследовательской пачке, не generic machine."
+        }
+      ],
+      "notes": "Seated leg curl — специальный сидячий тренажёр для сгибания коленей; тот же тип leg-curl-machine, что в соседней исследовательской пачке, не generic machine."
+    },
+    {
+      "id": "fitnessprogramer:seated-leg-extension-with-resistance-band",
+      "source_path": "assets/work/leg/seated-leg-extension-with-resistance-band.json",
+      "source_blob_sha": "13038e517e46aa57be0847da63d08856e85c38cc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/seated-leg-extension-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Seated knee extension с резинкой — квадрицепс динамически разгибает колено, канонический band уже существует."
+        }
+      ],
+      "notes": "Seated knee extension с резинкой — квадрицепс динамически разгибает колено, канонический band уже существует."
     }
   ]
 }
