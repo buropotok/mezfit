@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { VideoNoteRing, VIDEO_NOTE_RING_RADIUS } from './VideoNoteRing';
+import { useVideoOrientation } from '../media/useVideoOrientation';
 
 function boundedFraction(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
@@ -42,6 +43,7 @@ export function CircularVideoPlayback({
   onReturnToPreview,
 }: CircularVideoPlaybackProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const orientation = useVideoOrientation(videoRef, src, 'cover');
   const railRef = useRef<SVGSVGElement>(null);
   const seekingPointerRef = useRef<number | null>(null);
   const wasPlayingRef = useRef(false);
@@ -249,6 +251,7 @@ export function CircularVideoPlayback({
     <div className={`video-note-playback${mode === 'preview' ? ' video-note-playback--preview' : playing ? '' : ' video-note-playback--paused'}`}>
       <video
         ref={videoRef}
+        style={orientation.style}
         className="video-note-module__video"
         src={src}
         playsInline
