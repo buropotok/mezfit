@@ -1,0 +1,646 @@
+{
+  "batch_id": "B001",
+  "proposals": [
+    {
+      "id": "v-grip-attachment",
+      "label_ru": "V-образная рукоять",
+      "definition_ru": "Накладная V-образная рукоять для узкого нейтрального хвата при жиме в тренажёре Смита.",
+      "exercise_ids": [
+        "fitnessprogramer:smith-machine-hex-press"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/smith-machine-hex-press/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "ab-coaster-machine",
+      "label_ru": "Тренажёр Ab Coaster",
+      "definition_ru": "Специализированный тренажёр для сгибания корпуса с перемещением коленной платформы.",
+      "exercise_ids": [
+        "fitnessprogramer:ab-coaster-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ab-coaster-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "chest-press-machine",
+      "label_ru": "Тренажёр для жима от груди",
+      "definition_ru": "Рычажный либо направляемый тренажёр для жима от груди; варианты наклона и хвата относятся к одному типу.",
+      "exercise_ids": [
+        "fitnessprogramer:bench-press-machine-standing-calf-raise",
+        "fitnessprogramer:chest-press-machine",
+        "fitnessprogramer:decline-chest-press-machine",
+        "fitnessprogramer:incline-chest-press-machine",
+        "fitnessprogramer:inner-chest-press-machine",
+        "fitnessprogramer:lying-chest-press-machine",
+        "fitnessprogramer:lever-chest-press",
+        "fitnessprogramer:lever-decline-chest-press",
+        "fitnessprogramer:lever-incline-chest-press",
+        "fitnessprogramer:lever-incline-hammer-chest-press",
+        "fitnessprogramer:lever-one-arm-chest-press"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/bench-press-machine-standing-calf-raise/",
+        "https://fitnessprogramer.com/exercise/chest-press-machine/",
+        "https://fitnessprogramer.com/exercise/decline-chest-press-machine/",
+        "https://fitnessprogramer.com/exercise/incline-chest-press-machine/",
+        "https://fitnessprogramer.com/exercise/inner-chest-press-machine/",
+        "https://fitnessprogramer.com/exercise/lying-chest-press-machine/",
+        "https://fitnessprogramer.com/exercise/lever-chest-press/",
+        "https://fitnessprogramer.com/exercise/lever-decline-chest-press/",
+        "https://fitnessprogramer.com/exercise/lever-incline-chest-press/",
+        "https://fitnessprogramer.com/exercise/lever-incline-hammer-chest-press/",
+        "https://fitnessprogramer.com/exercise/lever-one-arm-chest-press/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "biceps-curl-machine",
+      "label_ru": "Тренажёр для сгибания рук",
+      "definition_ru": "Тренажёр для локтевого сгибания, включая вариант с пюпитром (скамьёй Скотта).",
+      "exercise_ids": [
+        "fitnessprogramer:bicep-curl-machine",
+        "fitnessprogramer:lever-biceps-curl",
+        "fitnessprogramer:lever-preacher-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/bicep-curl-machine/",
+        "https://fitnessprogramer.com/exercise/lever-biceps-curl/",
+        "https://fitnessprogramer.com/exercise/lever-preacher-curl/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-extension-machine",
+      "label_ru": "Тренажёр для разгибания ног",
+      "definition_ru": "Сидячий тренажёр с рычажным валиком для разгибания колена; иногда используется альтернативно для ягодичных движений.",
+      "exercise_ids": [
+        "fitnessprogramer:donkey-kick-on-leg-extension-machine",
+        "fitnessprogramer:hip-thrust-on-the-leg-extension-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/donkey-kick-on-leg-extension-machine/",
+        "https://fitnessprogramer.com/exercise/hip-thrust-on-the-leg-extension-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "elliptical-trainer",
+      "label_ru": "Эллиптический тренажёр",
+      "definition_ru": "Кардиотренажёр с эллиптической траекторией педалей.",
+      "exercise_ids": [
+        "fitnessprogramer:elliptical-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/elliptical-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "ab-crunch-machine",
+      "label_ru": "Тренажёр для скручиваний",
+      "definition_ru": "Специализированный тренажёр для сгибания туловища и упражнений на прямую мышцу живота.",
+      "exercise_ids": [
+        "fitnessprogramer:full-crunch-machine",
+        "fitnessprogramer:seated-ab-crunch-machine",
+        "fitnessprogramer:seated-crunch-machine",
+        "fitnessprogramer:lever-lying-crunch"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/full-crunch-machine/",
+        "https://fitnessprogramer.com/exercise/seated-ab-crunch-machine/",
+        "https://fitnessprogramer.com/exercise/seated-crunch-machine/",
+        "https://fitnessprogramer.com/exercise/lever-lying-crunch/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "glute-kickback-machine",
+      "label_ru": "Тренажёр для отведения ноги назад",
+      "definition_ru": "Специализированный рычажный тренажёр для разгибания бедра и ягодичных махов.",
+      "exercise_ids": [
+        "fitnessprogramer:glute-kickback-machine",
+        "fitnessprogramer:lever-standing-hip-extension",
+        "fitnessprogramer:lever-standing-rear-kick"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/glute-kickback-machine/",
+        "https://fitnessprogramer.com/exercise/lever-standing-hip-extension/",
+        "https://fitnessprogramer.com/exercise/lever-standing-rear-kick/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hack-squat-machine",
+      "label_ru": "Гакк-тренажёр",
+      "definition_ru": "Наклонный тренажёр для гакк-приседаний с направляемой платформой и опорой плеч/спины.",
+      "exercise_ids": [
+        "fitnessprogramer:hack-machine-one-leg-calf-raise",
+        "fitnessprogramer:hack-squats-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hack-machine-one-leg-calf-raise/",
+        "https://fitnessprogramer.com/exercise/hack-squats-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hip-abduction-machine",
+      "label_ru": "Тренажёр для отведения бёдер",
+      "definition_ru": "Тренажёр с регулируемыми рычагами/упорами для отведения бёдер против сопротивления.",
+      "exercise_ids": [
+        "fitnessprogramer:hip-abduction-machine",
+        "fitnessprogramer:squat-on-the-abductor-machine",
+        "fitnessprogramer:lever-side-hip-abduction"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hip-abduction-machine/",
+        "https://fitnessprogramer.com/exercise/squat-on-the-abductor-machine/",
+        "https://fitnessprogramer.com/exercise/lever-side-hip-abduction/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hip-adduction-machine",
+      "label_ru": "Тренажёр для приведения бёдер",
+      "definition_ru": "Тренажёр с регулируемыми рычагами/упорами для приведения бёдер против сопротивления.",
+      "exercise_ids": [
+        "fitnessprogramer:hip-adduction-machine",
+        "fitnessprogramer:lever-side-hip-adduction"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hip-adduction-machine/",
+        "https://fitnessprogramer.com/exercise/lever-side-hip-adduction/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hip-thrust-machine",
+      "label_ru": "Тренажёр для ягодичного моста",
+      "definition_ru": "Специализированный тренажёр для ягодичного моста / hip thrust с фиксацией туловища и нагружаемым рычагом.",
+      "exercise_ids": [
+        "fitnessprogramer:hip-thrust-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/hip-thrust-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "pec-deck-machine",
+      "label_ru": "Тренажёр «Бабочка»",
+      "definition_ru": "Рычажный тренажёр для сведения рук перед грудью, включая реверсивную настройку для задних дельт.",
+      "exercise_ids": [
+        "fitnessprogramer:incline-chest-fly-machine",
+        "fitnessprogramer:machine-fly",
+        "fitnessprogramer:rear-delt-machine-fly",
+        "fitnessprogramer:lever-crossovers"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/incline-chest-fly-machine/",
+        "https://fitnessprogramer.com/exercise/machine-fly/",
+        "https://fitnessprogramer.com/exercise/rear-delt-machine-fly/",
+        "https://fitnessprogramer.com/exercise/lever-crossovers/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "lateral-raise-machine",
+      "label_ru": "Тренажёр для махов в стороны",
+      "definition_ru": "Тренажёр для отведения плеч с боковыми рычагами и опорами под локти либо кисти.",
+      "exercise_ids": [
+        "fitnessprogramer:lateral-raise-machine",
+        "fitnessprogramer:lever-lateral-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lateral-raise-machine/",
+        "https://fitnessprogramer.com/exercise/lever-lateral-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "seated-row-machine",
+      "label_ru": "Тренажёр для горизонтальной тяги",
+      "definition_ru": "Рычажный или блочный тренажёр для тяги к туловищу в горизонтальной плоскости.",
+      "exercise_ids": [
+        "fitnessprogramer:reverse-grip-machine-row",
+        "fitnessprogramer:seated-row-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/reverse-grip-machine-row/",
+        "https://fitnessprogramer.com/exercise/seated-row-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "reverse-hyperextension-machine",
+      "label_ru": "Тренажёр для обратной гиперэкстензии",
+      "definition_ru": "Тренажёр с опорой туловища и движением ног назад/вверх для разгибания бедра.",
+      "exercise_ids": [
+        "fitnessprogramer:reverse-hyperextension-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/reverse-hyperextension-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-press-machine",
+      "label_ru": "Тренажёр для жима ногами",
+      "definition_ru": "Тренажёр с направляемой платформой или рычагом для жима ногами, включая подъёмы на носки на этой платформе.",
+      "exercise_ids": [
+        "fitnessprogramer:seated-calf-press-on-leg-press-machine",
+        "fitnessprogramer:single-calf-raise-on-leg-press-machine",
+        "fitnessprogramer:lever-assisted-single-leg-press"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/seated-calf-press-on-leg-press-machine/",
+        "https://fitnessprogramer.com/exercise/single-calf-raise-on-leg-press-machine/",
+        "https://fitnessprogramer.com/exercise/lever-assisted-single-leg-press/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "torso-rotation-machine",
+      "label_ru": "Тренажёр для вращения корпуса",
+      "definition_ru": "Тренажёр для ротационных движений туловища против сопротивления.",
+      "exercise_ids": [
+        "fitnessprogramer:seated-twist-machine",
+        "fitnessprogramer:standing-twist-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/seated-twist-machine/",
+        "https://fitnessprogramer.com/exercise/standing-twist-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "stair-climber-machine",
+      "label_ru": "Лестничный кардиотренажёр",
+      "definition_ru": "Кардиотренажёр с имитацией подъёма по ступеням; не предполагается тождество компактному степперу без проверки.",
+      "exercise_ids": [
+        "fitnessprogramer:stair-climber-machine"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/stair-climber-machine/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "leg-curl-machine",
+      "label_ru": "Тренажёр для сгибания ног",
+      "definition_ru": "Рычажный тренажёр для сгибания колена в положении стоя, сидя, лёжа или на колене.",
+      "exercise_ids": [
+        "fitnessprogramer:standing-single-leg-curl-machine",
+        "fitnessprogramer:lever-kneeling-leg-curl",
+        "fitnessprogramer:lever-single-leg-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/standing-single-leg-curl-machine/",
+        "https://fitnessprogramer.com/exercise/lever-kneeling-leg-curl/",
+        "https://fitnessprogramer.com/exercise/lever-single-leg-curl/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "dip-machine",
+      "label_ru": "Тренажёр для отжиманий на брусьях",
+      "definition_ru": "Силовой рычажный тренажёр для выполнения вертикального жима вниз в варианте дипов.",
+      "exercise_ids": [
+        "fitnessprogramer:triceps-dip-machine",
+        "fitnessprogramer:lever-triceps-dip"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/triceps-dip-machine/",
+        "https://fitnessprogramer.com/exercise/lever-triceps-dip/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "triceps-extension-machine",
+      "label_ru": "Тренажёр для разгибания рук",
+      "definition_ru": "Изолирующий рычажный тренажёр для разгибания локтя.",
+      "exercise_ids": [
+        "fitnessprogramer:triceps-extension-machine",
+        "fitnessprogramer:lever-triceps-extension"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/triceps-extension-machine/",
+        "https://fitnessprogramer.com/exercise/lever-triceps-extension/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "lat-pulldown-machine",
+      "label_ru": "Тренажёр для вертикальной тяги",
+      "definition_ru": "Специализированный рычажный тренажёр для вертикального подтягивания рукоятей к корпусу.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-cable-rear-pulldown",
+        "fitnessprogramer:lever-front-pulldown"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-cable-rear-pulldown/",
+        "https://fitnessprogramer.com/exercise/lever-front-pulldown/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "deadlift-machine",
+      "label_ru": "Тренажёр для становой тяги",
+      "definition_ru": "Рычажный тренажёр, воспроизводящий разгибание таза и коленей в становой тяге.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-deadlift"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-deadlift/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "donkey-calf-raise-machine",
+      "label_ru": "Тренажёр для ослиных подъёмов на носки",
+      "definition_ru": "Тренажёр с поясничной/тазовой опорой для наклонных подъёмов на носки.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-donkey-calf-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-donkey-calf-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "shrug-machine",
+      "label_ru": "Тренажёр для шрагов",
+      "definition_ru": "Тренажёр для подъёма плечевого пояса, включая вариант с опорами под предплечья без хвата.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-gripless-shrug",
+        "fitnessprogramer:lever-shrug"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-gripless-shrug/",
+        "https://fitnessprogramer.com/exercise/lever-shrug/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "high-row-machine",
+      "label_ru": "Тренажёр для высокой тяги",
+      "definition_ru": "Рычажный тренажёр с наклонной нисходящей траекторией тяги к грудной клетке.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-high-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-high-row/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "neck-training-machine",
+      "label_ru": "Тренажёр для мышц шеи",
+      "definition_ru": "Рычажный тренажёр для шейных разгибаний/наклонов с фиксатором головы.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-neck-extension-plate-loaded",
+        "fitnessprogramer:lever-neck-right-side-flexion-plate-loaded"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-neck-extension-plate-loaded/",
+        "https://fitnessprogramer.com/exercise/lever-neck-right-side-flexion-plate-loaded/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "pullover-machine",
+      "label_ru": "Тренажёр для пуловера",
+      "definition_ru": "Рычажный тренажёр для движения плеча из положения над головой к туловищу.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-pullover"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-pullover/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "shoulder-press-machine",
+      "label_ru": "Тренажёр для жима плечами",
+      "definition_ru": "Рычажный тренажёр для жима вверх, включая обратный и молотковый хват.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-reverse-shoulder-press",
+        "fitnessprogramer:lever-shoulder-press",
+        "fitnessprogramer:lever-shoulder-press-hammer-grip"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-reverse-shoulder-press/",
+        "https://fitnessprogramer.com/exercise/lever-shoulder-press/",
+        "https://fitnessprogramer.com/exercise/lever-shoulder-press-hammer-grip/"
+      ],
+      "confidence": "medium",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "t-bar-row-machine",
+      "label_ru": "Тренажёр для Т-грифа",
+      "definition_ru": "Рычажный тренажёр для тяги Т-грифа, в том числе с изменённой ориентацией хвата.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-reverse-t-bar-row",
+        "fitnessprogramer:lever-t-bar-row"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-reverse-t-bar-row/",
+        "https://fitnessprogramer.com/exercise/lever-t-bar-row/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "seated-calf-raise-machine",
+      "label_ru": "Тренажёр для подъёмов на носки сидя",
+      "definition_ru": "Тренажёр с опорой на бёдра для сгибания стопы сидя с согнутыми коленями.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-seated-calf-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-seated-calf-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hip-flexion-machine",
+      "label_ru": "Тренажёр для подъёма ноги вперёд",
+      "definition_ru": "Рычажный тренажёр для сгибания бедра стоя против сопротивления.",
+      "exercise_ids": [
+        "fitnessprogramer:lever-standing-leg-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/lever-standing-leg-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "machines"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
