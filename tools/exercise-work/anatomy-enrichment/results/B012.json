@@ -2050,6 +2050,422 @@
         }
       ],
       "notes": "Исходная инструкция предлагает класть на спину диск при помощи партнёра либо надевать утяжелённый жилет; обе альтернативы реальны. Грудь и трицепс двигают, корпус удерживает планку."
+    },
+    {
+      "id": "fitnessprogramer:weighted-round-arm",
+      "source_path": "assets/work/shoulders/weighted-round-arm.json",
+      "source_blob_sha": "7b28851358d85ca027edf2f7eb6b882ac87ff381",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_upper",
+            "forearm_extensors",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-round-arm/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная карточка описывает Weighted Round Arm как сгибание плеча с акцентом на переднюю дельту; это подъём гантели, а не отдельный аппарат."
+        }
+      ],
+      "notes": "Исходная карточка описывает Weighted Round Arm как сгибание плеча с акцентом на переднюю дельту; это подъём гантели, а не отдельный аппарат."
+    },
+    {
+      "id": "fitnessprogramer:weighted-seated-calf-raise",
+      "source_path": "assets/work/calf/weighted-seated-calf-raise.json",
+      "source_blob_sha": "bd4c03be54e504553487ba3be95c4979334d2be3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "soleus"
+          ],
+          "secondary": [
+            "gastrocnemius"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-seated-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Сидячий подъём пяток: инструкция прямо требует гантель на бедрах, скамью и платформу для носков. При согнутом колене акцент на камбаловидной мышце."
+        }
+      ],
+      "notes": "Сидячий подъём пяток: инструкция прямо требует гантель на бедрах, скамью и платформу для носков. При согнутом колене акцент на камбаловидной мышце."
+    },
+    {
+      "id": "fitnessprogramer:weighted-side-bend-on-stability-ball",
+      "source_path": "assets/work/abs/weighted-side-bend-on-stability-ball.json",
+      "source_blob_sha": "393fe8f8027fc51b2f4a9413b08bfb7776f84ae9",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "stability ball",
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-side-bend-on-stability-ball/"
+          ],
+          "confidence": "low",
+          "reason": "В названии боковое сгибание туловища на фитболе с весом; точное отягощение и стабилизирующие роли не установлены — проверить GIF."
+        }
+      ],
+      "notes": "В названии боковое сгибание туловища на фитболе с весом; точное отягощение и стабилизирующие роли не установлены — проверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:weighted-sit-ups",
+      "source_path": "assets/work/abs/weighted-sit-ups.json",
+      "source_blob_sha": "8b8ab124692cf6907b56c6eb068c4968a5e4cc0f",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "other"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-sit-ups/"
+          ],
+          "confidence": "low",
+          "reason": "Исходник подтверждает дополнительное отягощение при sit-ups, но не называет его вид. Вспомогательное сгибание бедра биомеханически возможно; проверить движение по GIF."
+        }
+      ],
+      "notes": "Исходник подтверждает дополнительное отягощение при sit-ups, но не называет его вид. Вспомогательное сгибание бедра биомеханически возможно; проверить движение по GIF."
+    },
+    {
+      "id": "fitnessprogramer:weighted-vest-push-up",
+      "source_path": "assets/work/chest/weighted-vest-push-up.json",
+      "source_blob_sha": "2b12b86e2838e297fc03fc53166cd1e8c711a6b7",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "weighted_vest"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/weighted-vest-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Weighted Vest Push-up предполагает конкретный утяжелённый жилет, а не исходное NO EQUIPMENT. В исходнике нет описания мышц/техники, требуется GIF."
+        }
+      ],
+      "notes": "Weighted Vest Push-up предполагает конкретный утяжелённый жилет, а не исходное NO EQUIPMENT. В исходнике нет описания мышц/техники, требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:wheel-run",
+      "source_path": "assets/work/cardio/wheel-run.json",
+      "source_blob_sha": "cd4deb8226c1663db252179930a562071bc7b745",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wheel-run/"
+          ],
+          "confidence": "low",
+          "reason": "Wheel Run указан как кардио без оборудования. Название недостаточно для определения конкретной техники и мышечных ролей; не путать с ab wheel rollout, проверить оригинальный GIF."
+        }
+      ],
+      "notes": "Wheel Run указан как кардио без оборудования. Название недостаточно для определения конкретной техники и мышечных ролей; не путать с ab wheel rollout, проверить оригинальный GIF."
+    },
+    {
+      "id": "fitnessprogramer:wide-grip-alternate-barbell-bent-over-row-plus",
+      "source_path": "assets/work/back/wide-grip-alternate-barbell-bent-over-row-plus.json",
+      "source_blob_sha": "a3ef46e449a8686ca8e83d91d9bddce32ae81a46",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wide-grip-alternate-barbell-bent-over-row-plus/"
+          ],
+          "confidence": "low",
+          "reason": "Wide Grip Alternate Barbell Bent Over Row Plus: тяга штанги в наклоне; по названию предполагается попеременная работа, но значение Plus и плоскость движения нужно проверить по GIF."
+        }
+      ],
+      "notes": "Wide Grip Alternate Barbell Bent Over Row Plus: тяга штанги в наклоне; по названию предполагается попеременная работа, но значение Plus и плоскость движения нужно проверить по GIF."
+    },
+    {
+      "id": "fitnessprogramer:wide-grip-barbell-bent-over-row-plus",
+      "source_path": "assets/work/back/wide-grip-barbell-bent-over-row-plus.json",
+      "source_blob_sha": "7e6a693086fdfba678a4ad62961f9e4d5e554884",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "teres_major",
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wide-grip-barbell-bent-over-row-plus/"
+          ],
+          "confidence": "low",
+          "reason": "Тяга штанги к корпусу широким хватом с акцентом на сведение лопаток; компонент Plus в исходной карточке не расшифрован и требует визуального контроля."
+        }
+      ],
+      "notes": "Тяга штанги к корпусу широким хватом с акцентом на сведение лопаток; компонент Plus в исходной карточке не расшифрован и требует визуального контроля."
+    },
+    {
+      "id": "fitnessprogramer:wide-grip-bench-press",
+      "source_path": "assets/work/chest/wide-grip-bench-press.json",
+      "source_blob_sha": "d0f382b13937512b2a9f737a6009b5a99cff64db",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wide-grip-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция явно требует горизонтальную жимовую скамью и штангу с широким хватом. Роль грудной мышцы первична, трицепс и передняя дельта синергисты."
+        }
+      ],
+      "notes": "Инструкция явно требует горизонтальную жимовую скамью и штангу с широким хватом. Роль грудной мышцы первична, трицепс и передняя дельта синергисты."
+    },
+    {
+      "id": "fitnessprogramer:wide-grip-reverse-bench-press",
+      "source_path": "assets/work/chest/wide-grip-reverse-bench-press.json",
+      "source_blob_sha": "7409f5ff1f68a7e432d1af2bec0511e7bac3e988",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wide-grip-reverse-bench-press/"
+          ],
+          "confidence": "low",
+          "reason": "Reverse-grip wide bench press означает жим штанги супинированным хватом; источник не даёт инструкции/анатомии. Акцент на верхней груди требует проверки по GIF."
+        }
+      ],
+      "notes": "Reverse-grip wide bench press означает жим штанги супинированным хватом; источник не даёт инструкции/анатомии. Акцент на верхней груди требует проверки по GIF."
     }
   ]
 }
