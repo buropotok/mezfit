@@ -428,7 +428,7 @@ export class AdHocWorkoutRepository {
   /** Start a self-directed FACT from an accessible source day, without creating or editing PLAN. */
   async createIndependentFromProgramDay(athleteUserId: string, programId: string,
     dayId: string): Promise<{ id: string; createdProgram: false }> {
-    if (!/^tg:[1-9]\\d*$/.test(athleteUserId) || typeof programId !== 'string' || !programId
+    if (!/^tg:[1-9]\d*$/.test(athleteUserId) || typeof programId !== 'string' || !programId
       || typeof dayId !== 'string' || !dayId) throw new Error('ADHOC_INVALID_TARGET');
     return this.write(['workoutOccurrences', 'roles', ...programTables, ...this.catalogueTables], async () => {
       const details = this.clientExecution
