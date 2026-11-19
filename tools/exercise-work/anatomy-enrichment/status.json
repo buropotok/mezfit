@@ -178,11 +178,11 @@
       }
     },
     "B007": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-anatomy-2026-11-19",
+      "claim_id": "b007-mwnrsmgr-6ys3s9nen",
+      "started_at": "2026-11-19T16:34:12.027Z",
+      "lease_until": "2026-11-19T18:34:12.027Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
