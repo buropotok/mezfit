@@ -808,6 +808,417 @@
         }
       ],
       "notes": "Upper Back Stretch — статическая растяжка верхней части спины: неопределённые силовые роли не следует выводить из области растяжения."
+    },
+    {
+      "id": "fitnessprogramer:upside-down-pull-up",
+      "source_path": "assets/work/back/upside-down-pull-up.json",
+      "source_blob_sha": "0d6686bb890fc19d4d83f933805462805431c31e",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/upside-down-pull-up/"
+          ],
+          "confidence": "low",
+          "reason": "Inverted pull-up требует подвешивания, предположительно за турник; исходная карточка без инструкции и оборудования. Тип опоры и механика нуждаются в проверке GIF."
+        }
+      ],
+      "notes": "Inverted pull-up требует подвешивания, предположительно за турник; исходная карточка без инструкции и оборудования. Тип опоры и механика нуждаются в проверке GIF."
+    },
+    {
+      "id": "fitnessprogramer:v-bar-lat-pulldown",
+      "source_path": "assets/work/back/v-bar-lat-pulldown.json",
+      "source_blob_sha": "194a1d0b6ccf8d36c5779dff03440bcaff171fc8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "v_bar_attachment"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "brachioradialis",
+            "rhomboids",
+            "teres_major",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/v-bar-lat-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции указан V-Bar с нейтральным хватом на верхнем тросовом блоке; продольная тяга плеча + сгибание локтя. Отдельная V-рукоять предлагается как узкий тип принадлежности."
+        }
+      ],
+      "notes": "В инструкции указан V-Bar с нейтральным хватом на верхнем тросовом блоке; продольная тяга плеча + сгибание локтя. Отдельная V-рукоять предлагается как узкий тип принадлежности."
+    },
+    {
+      "id": "fitnessprogramer:v-bar-pushdown",
+      "source_path": "assets/work/triceps/v-bar-pushdown.json",
+      "source_blob_sha": "1150f40aa58abd1fe4bbba380ebef27b6bd59010",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "v_bar_attachment"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/v-bar-pushdown/"
+          ],
+          "confidence": "medium",
+          "reason": "V-рукоять на верхнем блоке для разгибания локтей; инструкция описывает фиксированные локти и напряжение корпуса."
+        }
+      ],
+      "notes": "V-рукоять на верхнем блоке для разгибания локтей; инструкция описывает фиксированные локти и напряжение корпуса."
+    },
+    {
+      "id": "fitnessprogramer:vertical-mountain-climber",
+      "source_path": "assets/work/cardio/vertical-mountain-climber.json",
+      "source_blob_sha": "6fd862e1d626d406a0fbcccc785bdeecf8db8acc",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/vertical-mountain-climber/"
+          ],
+          "confidence": "low",
+          "reason": "Vertical Mountain Climber — кардио-координационное движение; в исходнике нет техники или конкретных мышц, не выдумывать силовых prime movers."
+        }
+      ],
+      "notes": "Vertical Mountain Climber — кардио-координационное движение; в исходнике нет техники или конкретных мышц, не выдумывать силовых prime movers."
+    },
+    {
+      "id": "fitnessprogramer:vibration-plate",
+      "source_path": "assets/work/cardio/vibration-plate.json",
+      "source_blob_sha": "5a0c73bc985c4acb4585dca706b4bc91ad3bbd32",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "vibration_plate"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/vibration-plate/"
+          ],
+          "confidence": "low",
+          "reason": "Специальное оборудование — вибрационная платформа, а не generic Machine. Источник не уточняет позу/движение на ней; роли мышц нельзя установить."
+        }
+      ],
+      "notes": "Специальное оборудование — вибрационная платформа, а не generic Machine. Источник не уточняет позу/движение на ней; роли мышц нельзя установить."
+    },
+    {
+      "id": "fitnessprogramer:waiter-curl",
+      "source_path": "assets/work/biceps/waiter-curl.json",
+      "source_blob_sha": "88af22b36434472ecf9a85772ba00796ee8cd9cb",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/waiter-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Waiter curl с вертикальной гантелью, охват блина двумя ладонями, сгибание локтя; роли прямо подтверждены в исходных данных."
+        }
+      ],
+      "notes": "Waiter curl с вертикальной гантелью, охват блина двумя ладонями, сгибание локтя; роли прямо подтверждены в исходных данных."
+    },
+    {
+      "id": "fitnessprogramer:walking",
+      "source_path": "assets/work/cardio/walking.json",
+      "source_blob_sha": "75c2fbd8ac1bbe5e404780fc79c26136ff6607f8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/walking/"
+          ],
+          "confidence": "medium",
+          "reason": "Walking описан как кардио, но не заданы темп и наклон, ведущие двигательные мышцы/стабилизаторы индивидуально не определены; без оборудования."
+        }
+      ],
+      "notes": "Walking описан как кардио, но не заданы темп и наклон, ведущие двигательные мышцы/стабилизаторы индивидуально не определены; без оборудования."
+    },
+    {
+      "id": "fitnessprogramer:walking-high-knee-lunges",
+      "source_path": "assets/work/cardio/walking-high-knee-lunges.json",
+      "source_blob_sha": "2cf22258698184cbd7fafee77e1159b143f28594",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "iliopsoas",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/walking-high-knee-lunges/"
+          ],
+          "confidence": "low",
+          "reason": "Шагающие выпады с высоким коленом: разгибание опорной ноги и подъём бедра. Исходник не содержит инструкции и мышечных ролей; проверить GIF."
+        }
+      ],
+      "notes": "Шагающие выпады с высоким коленом: разгибание опорной ноги и подъём бедра. Исходник не содержит инструкции и мышечных ролей; проверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:wall-ball",
+      "source_path": "assets/work/shoulders/wall-ball.json",
+      "source_blob_sha": "8b8f320ebcc43febbcbb879044587bd0dc4db27e",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "medicine ball",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wall-ball/"
+          ],
+          "confidence": "low",
+          "reason": "Wall Ball интерпретирован как приседание и бросок утяжелённого мяча в стену; исходное Exercise Ball не является синонимом медбола. Вариант упражнения и единая категория требуют просмотра GIF."
+        }
+      ],
+      "notes": "Wall Ball интерпретирован как приседание и бросок утяжелённого мяча в стену; исходное Exercise Ball не является синонимом медбола. Вариант упражнения и единая категория требуют просмотра GIF."
+    },
+    {
+      "id": "fitnessprogramer:wall-push-up",
+      "source_path": "assets/work/chest/wall-push-up.json",
+      "source_blob_sha": "7bcd5b2f2b6ddf1c317c9b92fef72b1b9bd02dc9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/wall-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимания от стены нагружают грудные и трёхглавую мышцы, при этом напрягается корпус. Исходный NO EQUIPMENT неполон: стена обязательна; категория грудь обоснована для обычного широкого хвата."
+        }
+      ],
+      "notes": "Отжимания от стены нагружают грудные и трёхглавую мышцы, при этом напрягается корпус. Исходный NO EQUIPMENT неполон: стена обязательна; категория грудь обоснована для обычного широкого хвата."
     }
   ]
 }
