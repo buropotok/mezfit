@@ -625,6 +625,623 @@
         }
       ],
       "notes": "Маркер other — специальное значение ревью, не анатомический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-arm-single-leg-bench-dips",
+      "source_path": "assets/work/triceps/one-arm-single-leg-bench-dips.json",
+      "source_blob_sha": "66614815c9bbe9449bc72079b67979c6815ec006",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_sternal"
+          ],
+          "stabilizers": [
+            "obliques",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-single-leg-bench-dips/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручные обратные отжимания с поднятой ногой: локтевое разгибание трицепсом, корпус удерживает асимметричную опору."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:one-arm-triceps-pushdown",
+      "source_path": "assets/work/triceps/one-arm-triceps-pushdown.json",
+      "source_blob_sha": "e9166f440735378f5bedf4e828a35540da526df5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-arm-triceps-pushdown/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручное разгибание на верхнем блоке пронированным хватом; отдельные синергисты и стабилизаторы не подтверждены."
+        }
+      ],
+      "notes": "other — временный специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:one-leg-push-up",
+      "source_path": "assets/work/chest/one-leg-push-up.json",
+      "source_blob_sha": "ed4746a2044e281dcd0ff690a5bb0da63c034db7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "obliques",
+            "gluteus_medius",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/one-leg-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание с поднятой ногой: грудь и трицепс обеспечивают жим, корпус и таз контролируют одностороннюю опору."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:overhead-shrug",
+      "source_path": "assets/work/trapezius/overhead-shrug.json",
+      "source_blob_sha": "5d23f94836c9d34b333549bf40c3c0636ebaf506",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper",
+            "serratus_anterior"
+          ],
+          "secondary": [
+            "trapezius_lower"
+          ],
+          "stabilizers": [
+            "rotator_cuff",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-shrug/"
+          ],
+          "confidence": "medium",
+          "reason": "Шраги со штангой над головой: поднимание и верхнее вращение лопатки при удержании штанги."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:overhead-squat",
+      "source_path": "assets/work/full-body/overhead-squat.json",
+      "source_blob_sha": "0eeb7062516e53f1d6146c4bd5322dcd2cd5b9bd",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rotator_cuff",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/overhead-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Присед со штангой над головой: ноги выполняют присед, плечевой пояс фиксирует штангу, корпус стабилизирует."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:parallel-bar-dips",
+      "source_path": "assets/work/chest/parallel-bar-dips.json",
+      "source_blob_sha": "8e9c52acd7385ae92eab497180d0ff91110f2a71",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "dip bars"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "trapezius_lower",
+            "rectus_abdominis"
+          ]
+        },
+        "primary_category": "other"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/parallel-bar-dips/"
+          ],
+          "confidence": "low",
+          "reason": "На странице описаны два варианта на брусьях — с акцентом груди и с акцентом трицепса; без конкретного GIF нельзя однозначно подтвердить единственную ведущую категорию."
+        }
+      ],
+      "notes": "Проверить исходный GIF и выбрать chest/arms; временно категория other для исследовательского ревью."
+    },
+    {
+      "id": "fitnessprogramer:pec-deck-fly",
+      "source_path": "assets/work/chest/pec-deck-fly.json",
+      "source_blob_sha": "6c0dbdd099c1ac67bb0183a0520797f47e071ec2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pec_deck_machine"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pec-deck-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Pec Deck Fly выполняется на специализированном тренажёре «Бабочка» с сиденьем и рычажными рукоятями, а не на универсальном Machine."
+        }
+      ],
+      "notes": "other — временный специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:pelvic-tilt",
+      "source_path": "assets/work/hip/pelvic-tilt.json",
+      "source_blob_sha": "df9a4b308c780a32eb7b7734b04732f1dbaedc59",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pelvic-tilt/"
+          ],
+          "confidence": "low",
+          "reason": "Pelvic tilt — контролируемый наклон таза мышцами живота и ягодиц; в исходном JSON нет техники для уточнения варианта."
+        }
+      ],
+      "notes": "Проверить GIF: передний и задний наклон таза имеют разные доминирующие мышцы. other — временный специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:pendulum-lunge",
+      "source_path": "assets/work/hip/pendulum-lunge.json",
+      "source_blob_sha": "6d9c017f3c761a13093e6038a3734830f7e381a6",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pendulum-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Маятниковый выпад чередует задний и передний шаг с подъемом колена: разгибатели ног и стабилизаторы таза."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:pendulum-squat",
+      "source_path": "assets/work/hip/pendulum-squat.json",
+      "source_blob_sha": "b3ffbd304d5fbbcc792a7b27228d05e6f5b1485a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pendulum_squat_machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pendulum-squat/",
+            "https://vprava.me/exercises/pendulum-squat-machine"
+          ],
+          "confidence": "medium",
+          "reason": "Маятниковые приседания выполняются на отдельном рычажном тренажёре с дуговой траекторией; это не универсальная машина."
+        }
+      ],
+      "notes": "other — временный специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:pike-push-up",
+      "source_path": "assets/work/chest/pike-push-up.json",
+      "source_blob_sha": "93970bf4ccda02ae054fefd52d1e2b454993b90d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "pectoralis_clavicular",
+            "deltoid_lateral"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis"
+          ]
+        },
+        "primary_category": "shoulders"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pike-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Pike push-up — вертикализированный жим с акцентом передней дельты; в исходной межкатегориальной классификации грудь ошибочно приоритетна."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:pike-push-up-between-chairs",
+      "source_path": "assets/work/chest/pike-push-up-between-chairs.json",
+      "source_blob_sha": "018d41b954a593c1d4ac99e615c38d5e7cfb65ad",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "chair"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "obliques"
+          ]
+        },
+        "primary_category": "shoulders"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pike-push-up-between-chairs/"
+          ],
+          "confidence": "medium",
+          "reason": "Pike push-up между двумя устойчивыми стульями — плечевой жим на возвышенных опорах."
+        }
+      ],
+      "notes": "Требуются два устойчивых стула; это отдельный тип оборудования, не отсутствие оборудования."
+    },
+    {
+      "id": "fitnessprogramer:pin-squat",
+      "source_path": "assets/work/hip/pin-squat.json",
+      "source_blob_sha": "ba2cc1aab96f69bde92e775355a5ee405117ac56",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "power_rack"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pin-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Pin squat: присед со штангой от страховочных штырей силовой рамы; одних блинов или штанги недостаточно."
+        }
+      ],
+      "notes": "Исходная карточка не содержит техники; проверить высоту ограничителей и вариант rack vs blocks по GIF."
+    },
+    {
+      "id": "fitnessprogramer:piriformis-stretch",
+      "source_path": "assets/work/hip/piriformis-stretch.json",
+      "source_blob_sha": "ea09ba0921e37895827a99dc1ba4382e84cf635d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/piriformis-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Piriformis stretch — растяжка глубокой наружной ротаторной группы бедра; активные силовые роли не установлены."
+        }
+      ],
+      "notes": "Растягиваемые мышцы относятся к hip_external_rotators, но не должны подменять активные prime movers. other — временный специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:pistol-squat",
+      "source_path": "assets/work/leg/pistol-squat.json",
+      "source_blob_sha": "0cdf69e738d03dba77f1b1dd86a15c769bcd764d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pistol-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Пистолетик — односторонний присед: квадрицепс разгибает колено, ягодичные и приводящие помогают, корпус и таз удерживают баланс."
+        }
+      ]
     }
   ]
 }
