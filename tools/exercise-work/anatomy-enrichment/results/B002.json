@@ -1,0 +1,502 @@
+{
+  "schema_version": 1,
+  "batch_id": "B002",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:cable-crossover-triceps-extension",
+      "source_path": "assets/work/triceps/cable-crossover-triceps-extension.json",
+      "source_blob_sha": "d66f6e2592ef991d0098c821fbb46a1c0f122285",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-crossover-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-crossover-triceps-extension и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Синергисты и стабилизаторы не установлены для данной вариации."
+    },
+    {
+      "id": "fitnessprogramer:cable-curl",
+      "source_path": "assets/work/biceps/cable-curl.json",
+      "source_blob_sha": "b2f88839d3bc99ed7390a1ef65bc7520255fa5c5",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-curl/",
+            "https://www.strengthlog.com/biceps-exercises/"
+          ],
+          "confidence": "high",
+          "reason": "Биомеханика варианта cable-curl и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:cable-donkey-kickback",
+      "source_path": "assets/work/hip/cable-donkey-kickback.json",
+      "source_blob_sha": "9e1b42a70a07de155e37e51ae6417a677ba3b439",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-donkey-kickback/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-donkey-kickback и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Согнутая нога при разгибании бедра: другие роли не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:cable-external-shoulder-rotation",
+      "source_path": "assets/work/shoulders/cable-external-shoulder-rotation.json",
+      "source_blob_sha": "6ed45358d59f51aac59fe33c9a263c20c1f05585",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-external-shoulder-rotation/",
+            "https://www.strengthlog.com/cable-external-shoulder-rotation/",
+            "https://www.orthoinfo.org/bodypart/shoulder/rotator-cuff-and-shoulder-conditioning-program/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-external-shoulder-rotation и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Специфические стабилизаторы не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:cable-forward-lunge",
+      "source_path": "assets/work/hip/cable-forward-lunge.json",
+      "source_blob_sha": "8da4b547ec3262f648726ae01ff27bf7a6c7cde3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-forward-lunge/",
+            "https://www.acefitness.org/resources/everyone/exercise-library/94/forward-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-forward-lunge и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Неизвестны конкретные синергисты и стабилизаторы именно с кабельной нагрузкой."
+    },
+    {
+      "id": "fitnessprogramer:cable-front-raise",
+      "source_path": "assets/work/shoulders/cable-front-raise.json",
+      "source_blob_sha": "540bb82fefe9279506aab486c2c5e3112fa316bb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "trapezius",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-front-raise/",
+            "https://www.strengthlog.com/cable-front-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-front-raise и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Levatos Scapula из исходника — ошибочно написанный и не подтверждённый как стабилизатор элемент."
+    },
+    {
+      "id": "fitnessprogramer:cable-front-squat",
+      "source_path": "assets/work/hip/cable-front-squat.json",
+      "source_blob_sha": "7a724fe20b1e37b5ec8f24c5ee2fdcb21a35b76f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-front-squat/",
+            "https://www.strengthlog.com/front-squat/",
+            "https://www.strengthlog.com/squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-front-squat и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Анатомия основана на аналогичных фронтальных приседаниях; детали нагрузки кабельной версии требуют визуальной сверки."
+    },
+    {
+      "id": "fitnessprogramer:cable-half-kneeling-pallof-press",
+      "source_path": "assets/work/chest/cable-half-kneeling-pallof-press.json",
+      "source_blob_sha": "f57b266e11c7c5144d45006869015bda159684c6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "transversus_abdominis",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "core"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers",
+            "primary_category"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-half-kneeling-pallof-press/",
+            "https://tonal.com/pages/resource-hub-exercises/pallof-press-with-cables",
+            "https://www.underarmour.com/en-us/t/playbooks/training/pallof-press-how-to-do-it-benefits-variations/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим Паллофа в полуколене — антиротационная стабилизация корпуса; исходная категория груди неверна. Биомеханика варианта cable-half-kneeling-pallof-press и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Антиротационное изометрическое удержание: категория chest была ошибочной; другие роли не установлены."
+    },
+    {
+      "id": "fitnessprogramer:cable-hip-abduction",
+      "source_path": "assets/work/hip/cable-hip-abduction.json",
+      "source_blob_sha": "c10f6af325ea33211e044c11eab10809db924024",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_medius",
+            "gluteus_minimus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-hip-abduction/",
+            "https://www.acefitness.org/resources/everyone/blog/7335/enhance-your-running-game-by-strengthening-your-hips/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-hip-abduction и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "TFL не имеет отдельного ID среди 69 мышц; исходный gluteus maximus и детализацию необходимо проверить визуально."
+    },
+    {
+      "id": "fitnessprogramer:cable-hip-adduction",
+      "source_path": "assets/work/hip/cable-hip-adduction.json",
+      "source_blob_sha": "aa5925f511adfebdb813335761113efc6d53e8f0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "hip_adductors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-hip-adduction/",
+            "https://www.acefitness.org/resources/everyone/exercise-library/104/standing-hip-adduction/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-hip-adduction и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Дополнительные роли не установлены."
+    },
+    {
+      "id": "fitnessprogramer:cable-hip-extension",
+      "source_path": "assets/work/hip/cable-hip-extension.json",
+      "source_blob_sha": "1a3aff5480f17b1f9b04ceb874b4e7beebd4699c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-hip-extension/",
+            "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-hip-extension и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Изолированное разгибание бедра: другие роли не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:cable-incline-biceps-curl",
+      "source_path": "assets/work/biceps/cable-incline-biceps-curl.json",
+      "source_blob_sha": "aadb78e81ad31045f48d39b3d837d802d7337619",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/cable-incline-biceps-curl/",
+            "https://www.strengthlog.com/biceps-exercises/"
+          ],
+          "confidence": "medium",
+          "reason": "Биомеханика варианта cable-incline-biceps-curl и источники подтверждают указанные известные мышцы. Тросовый блок — существующий фильтр cable, Full Gym не тип оборудования. Маркер other применён только к неустановленным ролям."
+        }
+      ],
+      "notes": "Конкретные стабилизаторы наклонной вариации не установлены."
+    }
+  ]
+}
