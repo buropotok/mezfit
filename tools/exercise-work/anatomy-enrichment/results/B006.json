@@ -419,6 +419,422 @@
         }
       ],
       "notes": "Отбрасываем широкий исходный перечень стабилизаторов без привязки к конкретной фазе движения."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lying-external-shoulder-rotation",
+      "source_path": "assets/work/shoulders/dumbbell-lying-external-shoulder-rotation.json",
+      "source_blob_sha": "601e15c42ddd32815fa97e10c6dddd5e9bf12e8f",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lying-external-shoulder-rotation/"
+          ],
+          "confidence": "low",
+          "reason": "В исходнике отсутствуют мышцы и техника; первичные наружные ротаторы определены по биомеханике. Нужна проверка GIF."
+        }
+      ],
+      "notes": "В исходнике отсутствуют мышцы и техника; первичные наружные ротаторы определены по биомеханике. Нужна проверка GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lying-one-arm-rear-lateral-raise",
+      "source_path": "assets/work/shoulders/dumbbell-lying-one-arm-rear-lateral-raise.json",
+      "source_blob_sha": "ad733b299175ddd4629b6cc9b0451e592b5cf0c4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "rhomboids",
+            "infraspinatus",
+            "teres_minor",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lying-one-arm-rear-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция не позволяет подтвердить вид опоры; не добавляем скамью без проверки."
+        }
+      ],
+      "notes": "Исходная инструкция не позволяет подтвердить вид опоры; не добавляем скамью без проверки."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-lying-rear-lateral-raise",
+      "source_path": "assets/work/shoulders/dumbbell-lying-rear-lateral-raise.json",
+      "source_blob_sha": "4a990ed242cd5d3ec1c46a224ff2080528ed83e1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "rhomboids",
+            "infraspinatus",
+            "teres_minor",
+            "trapezius_middle"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-lying-rear-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная карточка даёт роль задней дельты и синергистов, опора не подтверждена."
+        }
+      ],
+      "notes": "Исходная карточка даёт роль задней дельты и синергистов, опора не подтверждена."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-one-arm-reverse-grip-press",
+      "source_path": "assets/work/chest/dumbbell-one-arm-reverse-grip-press.json",
+      "source_blob_sha": "bcf579cb14e19ee30b9113e41419e86d6a2e1554",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-one-arm-reverse-grip-press/"
+          ],
+          "confidence": "low",
+          "reason": "Отсутствуют инструкция и анатомия. Для reverse-grip press требуется проверить на GIF направление жима и наличие скамьи."
+        }
+      ],
+      "notes": "Отсутствуют инструкция и анатомия. Для reverse-grip press требуется проверить на GIF направление жима и наличие скамьи."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-one-arm-shoulder-press",
+      "source_path": "assets/work/shoulders/dumbbell-one-arm-shoulder-press.json",
+      "source_blob_sha": "2b076e3ca8bf9546fca8d388c3ae67d4c787ebf0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "serratus_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "forearm_extensors",
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-one-arm-shoulder-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Динамические стабилизаторы нормализованы из явно указанного исходного списка, другие мышцы корпуса не добавлялись."
+        }
+      ],
+      "notes": "Динамические стабилизаторы нормализованы из явно указанного исходного списка, другие мышцы корпуса не добавлялись."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-pistol-squat",
+      "source_path": "assets/work/leg/dumbbell-pistol-squat.json",
+      "source_blob_sha": "d07364b8d7a619a9451749b2214b6060c6b6e39d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-pistol-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Источник не перечисляет анатомию и технику; для варианта pistol squat требуется проверка опоры/хвата по GIF."
+        }
+      ],
+      "notes": "Источник не перечисляет анатомию и технику; для варианта pistol squat требуется проверка опоры/хвата по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-power-clean",
+      "source_path": "assets/work/full-body/dumbbell-power-clean.json",
+      "source_blob_sha": "04e7e0c6a12617505aaf503679257644b3fc13c3",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-power-clean/"
+          ],
+          "confidence": "low",
+          "reason": "Техника power clean подразумевает взрывное разгибание бедра/колена и протяжку. В исходнике анатомия и техника отсутствуют; сверить GIF."
+        }
+      ],
+      "notes": "Техника power clean подразумевает взрывное разгибание бедра/колена и протяжку. В исходнике анатомия и техника отсутствуют; сверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-preacher-curl",
+      "source_path": "assets/work/biceps/dumbbell-preacher-curl.json",
+      "source_blob_sha": "7a4940e4a198e0ac082ada17a31cce42155a1ed1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "secondary": [
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-preacher-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция прямо называет preacher curl bench, отдельного канонического фильтра нет. Бицепс добавлен как основной сгибатель при супинированном хвате."
+        }
+      ],
+      "notes": "Инструкция прямо называет preacher curl bench, отдельного канонического фильтра нет. Бицепс добавлен как основной сгибатель при супинированном хвате."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-preacher-hammer-curl",
+      "source_path": "assets/work/biceps/dumbbell-preacher-hammer-curl.json",
+      "source_blob_sha": "2163f18d1d5fedab2a39eea3cb61ac4890b1c32a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "preacher_bench"
+        ],
+        "muscles": {
+          "primary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-preacher-hammer-curl/"
+          ],
+          "confidence": "low",
+          "reason": "Наименование Scott hammer curl указывает на нейтральный хват и опору плеча на скамью Скотта; в исходнике нет инструкции, нужен контроль GIF."
+        }
+      ],
+      "notes": "Наименование Scott hammer curl указывает на нейтральный хват и опору плеча на скамью Скотта; в исходнике нет инструкции, нужен контроль GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-press",
+      "source_path": "assets/work/chest/dumbbell-press.json",
+      "source_blob_sha": "84e816589d8f2ffd5257d51c8732394d1f00602b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная карточка содержит технику жима лёжа на горизонтальной скамье и отдельно называет динамическую стабилизацию бицепсом."
+        }
+      ],
+      "notes": "Исходная карточка содержит технику жима лёжа на горизонтальной скамье и отдельно называет динамическую стабилизацию бицепсом."
     }
   ]
 }
