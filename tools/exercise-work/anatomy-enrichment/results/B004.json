@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "batch_id": "B004",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:barbell-clean-and-press",
+      "source_path": "assets/work/shoulders/barbell-clean-and-press.json",
+      "source_blob_sha": "e7d93dc1c4c2c8f04652d2b9a96d5fc7447078e0",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-clean-and-press/",
+            "https://www.muscleandfitness.com/exercise/workouts/leg-exercises/clean-and-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Составное движение: clean + overhead press. Исходная категория shoulders не охватывает значительную нагрузку ног; дополнена на full_body."
+        }
+      ],
+      "notes": "Составное движение: clean + overhead press. Исходная категория shoulders не охватывает значительную нагрузку ног; дополнена на full_body."
+    },
+    {
+      "id": "fitnessprogramer:barbell-curl",
+      "source_path": "assets/work/biceps/barbell-curl.json",
+      "source_blob_sha": "c4dea9eea0bc0f84a3b04ec35d88b017a6f46526",
+      "status": "unchanged",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Исходные Biceps/Brachialis/Brachioradialis/Wrist Flexors нормализуются действующими алиасами без изменения карточки."
+    },
+    {
+      "id": "fitnessprogramer:barbell-curl-on-arm-blaster",
+      "source_path": "assets/work/biceps/barbell-curl-on-arm-blaster.json",
+      "source_blob_sha": "303d03b2dbdb388967919187c04918206a5bfc66",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "arm-blaster"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-curl-on-arm-blaster/",
+            "https://pmc.ncbi.nlm.nih.gov/articles/PMC10054060/"
+          ],
+          "confidence": "medium",
+          "reason": "Упор для локтей arm blaster — отдельный тип оборудования; локальная страница не содержит подробных инструкций, роли синергистов основаны на механике сгибания локтя."
+        }
+      ],
+      "notes": "Упор для локтей arm blaster — отдельный тип оборудования; локальная страница не содержит подробных инструкций, роли синергистов основаны на механике сгибания локтя."
+    },
+    {
+      "id": "fitnessprogramer:barbell-curtsey-lunge",
+      "source_path": "assets/work/leg/barbell-curtsey-lunge.json",
+      "source_blob_sha": "91e22ddf4b76be73d164b54fb97e283b5457ce15",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-curtsey-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Диагональный выпад нагружает разгибатели бедра/колена; конкретные стабилизаторы из пустой исходной карточки не подтверждены."
+        }
+      ],
+      "notes": "Диагональный выпад нагружает разгибатели бедра/колена; конкретные стабилизаторы из пустой исходной карточки не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:barbell-decline-bent-arm-pullover",
+      "source_path": "assets/work/back/barbell-decline-bent-arm-pullover.json",
+      "source_blob_sha": "c8473284371ed07c9a108ff857024c996e7679ed",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "teres_major"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-decline-bent-arm-pullover/",
+            "https://weighttraining.guide/exercises/decline-barbell-pullover/",
+            "https://pubmed.ncbi.nlm.nih.gov/21975179/"
+          ],
+          "confidence": "medium",
+          "reason": "Пуловер на наклонной вниз скамье; источник относит к спине, но ЭМГ-исследование обычного пуловера выявляет значительную роль грудной мышцы. Конкретная версия требует визуального ревью."
+        }
+      ],
+      "notes": "Пуловер на наклонной вниз скамье; источник относит к спине, но ЭМГ-исследование обычного пуловера выявляет значительную роль грудной мышцы. Конкретная версия требует визуального ревью."
+    },
+    {
+      "id": "fitnessprogramer:barbell-drag-curl",
+      "source_path": "assets/work/biceps/barbell-drag-curl.json",
+      "source_blob_sha": "c47c8ab2e661eed7366c57851c9564b0f27ef826",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-drag-curl/",
+            "https://pmc.ncbi.nlm.nih.gov/articles/PMC10054060/"
+          ],
+          "confidence": "medium",
+          "reason": "Drag curl: активное сгибание локтя при смещении локтей назад; при отсутствии подробной инструкции не выделяем головки бицепса."
+        }
+      ],
+      "notes": "Drag curl: активное сгибание локтя при смещении локтей назад; при отсутствии подробной инструкции не выделяем головки бицепса."
+    },
+    {
+      "id": "fitnessprogramer:barbell-finger-curl",
+      "source_path": "assets/work/forearm/barbell-finger-curl.json",
+      "source_blob_sha": "d2c6c6200783322c6f20ad7c1a826874782199a0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "forearm_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-finger-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Finger curl направлен на сгибатели пальцев; отдельные вторичные мышцы и стабилизаторы по источнику не установлены."
+        }
+      ],
+      "notes": "Finger curl направлен на сгибатели пальцев; отдельные вторичные мышцы и стабилизаторы по источнику не установлены."
+    },
+    {
+      "id": "fitnessprogramer:barbell-floor-press",
+      "source_path": "assets/work/chest/barbell-floor-press.json",
+      "source_blob_sha": "99f4ae5032e6f0eef298cbbe9961ff11eb9128c7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-floor-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим штанги лёжа на полу: основные грудная и трицепс, передняя дельта вспомогательная; не установлены отдельные стабилизаторы."
+        }
+      ],
+      "notes": "Жим штанги лёжа на полу: основные грудная и трицепс, передняя дельта вспомогательная; не установлены отдельные стабилизаторы."
+    }
+  ]
+}
