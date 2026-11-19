@@ -2873,6 +2873,133 @@
         }
       ],
       "notes": "Зерчер-тяга — подъём штанги в сгибах локтей с разгибанием колена и тазобедренного сустава; исходной техники нет, проверить направление тяги/упор по GIF."
+    },
+    {
+      "id": "fitnessprogramer:zercher-squat",
+      "source_path": "assets/work/hip/zercher-squat.json",
+      "source_blob_sha": "376a09fd53cd3d106234ed6c390aeb128a93457f",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "obliques",
+            "biceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/zercher-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Приседание Zercher со штангой в локтевых сгибах; основной момент разгибания коленей/бедра. В исходной карточке нет мышц и инструкции, точный присед требует GIF."
+        }
+      ],
+      "notes": "Приседание Zercher со штангой в локтевых сгибах; основной момент разгибания коленей/бедра. В исходной карточке нет мышц и инструкции, точный присед требует GIF."
+    },
+    {
+      "id": "fitnessprogramer:zig-zag-hops-plyometric",
+      "source_path": "assets/work/leg/zig-zag-hops-plyometric.json",
+      "source_blob_sha": "24782794058fd059c4fb1d347755664fb6b1eca1",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "gastrocnemius",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "ankle_stabilizers"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/zig-zag-hops-plyometric/"
+          ],
+          "confidence": "low",
+          "reason": "Плиометрические прыжки zig-zag преимущественно нагружают нижние конечности и контроль приземления. Исходник не содержит инструкции/анатомии; категория Legs предварительно сохранена, нужно проверить cardio intent."
+        }
+      ],
+      "notes": "Плиометрические прыжки zig-zag преимущественно нагружают нижние конечности и контроль приземления. Исходник не содержит инструкции/анатомии; категория Legs предварительно сохранена, нужно проверить cardio intent."
+    },
+    {
+      "id": "fitnessprogramer:zottman-curl",
+      "source_path": "assets/work/biceps/zottman-curl.json",
+      "source_blob_sha": "917957333ffde779b0da4f38805d0572f16d5c0d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachioradialis"
+          ],
+          "secondary": [
+            "brachialis",
+            "forearm_pronators"
+          ],
+          "stabilizers": [
+            "forearm_flexors",
+            "forearm_extensors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/zottman-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Zottman curl: подъём с супинацией включает бицепс, опускание с пронацией нагружает плечелучевую и пронаторы; разгибатели/сгибатели кисти стабилизируют. Прямо подтверждено инструкцией."
+        }
+      ],
+      "notes": "Zottman curl: подъём с супинацией включает бицепс, опускание с пронацией нагружает плечелучевую и пронаторы; разгибатели/сгибатели кисти стабилизируют. Прямо подтверждено инструкцией."
     }
   ]
 }
