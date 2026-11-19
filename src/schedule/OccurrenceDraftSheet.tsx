@@ -3,11 +3,12 @@ import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useStat
 import { STARTED_PLAN_MESSAGE as lockedPlanMessage } from '../data/cloud/planned-session-policy';
 import { createPortal } from 'react-dom';
 import { Toast, Button as KonstaButton } from 'konsta/react';
-import type { CloudProgramDayOutline } from '../data/cloud/workout-foundation-types';
+import type { CloudProgramDayOutline, CloudProgramExerciseSnapshot } from '../data/cloud/workout-foundation-types';
 import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import { isWorkoutEditRejected, type WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { appendOccurrenceExercise, appendOccurrenceSet, occurrenceTemplateChanged,
-  removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises } from '../data/cloud/workout-occurrence-edit';
+  removeOccurrenceExercise, removeOccurrenceSet, reorderOccurrenceExercises,
+  replaceOccurrenceExercise } from '../data/cloud/workout-occurrence-edit';
 import { readProgramCatalogueExercise, programExerciseSnapshot } from '../data/cloud/program-exercise-selection';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { WorkoutPlanCard, WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
@@ -15,6 +16,7 @@ import { StartWorkoutButton } from '../workout/StartWorkoutButton';
 import { SetEntry } from '../workout/SetEntry';
 import type { ExerciseTrackingType } from '../data/exercises/publicExerciseTypes';
 import { WorkoutExerciseSelectionSheet } from '../workout/WorkoutExerciseSelectionSheet';
+import { ExerciseReplacementDialog } from '../workout/ExerciseReplacementDialog';
 import { Button, DatePicker, MezfitBottomSheet, MezfitDialog, MezfitDialogButton,
   Badge, Text, TimePicker, GlassSurface, Icon, IconButton, LiquidPopover, type LocalDate, type LocalTime } from '../ui';
 import { localScheduleInstant, localScheduleEnd } from './calendar-time';
@@ -279,6 +281,10 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [timeSelection, setTimeSelection] = useState<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const timeSelectionRef = useRef<{ kind: 'start' | 'end'; value: LocalTime } | null>(null);
   const [exercisePickerOpened, setExercisePickerOpened] = useState(false);
+  const [replaceExerciseId, setReplaceExerciseId] = useState<string | null>(null);
+  const [replacementChoice, setReplacementChoice] = useState<{
+    exerciseId: string; snapshot: CloudProgramExerciseSnapshot; compatible: boolean;
+  } | null>(null);
   const [exerciseInformationId, setExerciseInformationId] = useState<string | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string; trackingType: ExerciseTrackingType } | null>(null);
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
@@ -502,10 +508,21 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     if (mutationBlocked() || !draft || !cloud || busy || starting.current) return;
     setBusy(true); setError('');
     try {
-      const selected = await Promise.all(ids.map(async id => programExerciseSnapshot(
-        await readProgramCatalogueExercise(cloud.db, draft.actorUserId, id), draft.actorUserId)));
+      const rows = await Promise.all(ids.map(id =>
+        readProgramCatalogueExercise(cloud.db, draft.actorUserId, id)));
+      const selected = rows.map(row => programExerciseSnapshot(row, draft.actorUserId));
       await flushEdits();
       if (mutationBlocked()) return;
+      if (replaceExerciseId) {
+        const previous = draft.plan.exercises.find(item => item.id === replaceExerciseId);
+        if (!previous || !planner) throw new Error('Упражнение недоступно');
+        const type = await planner.programs.trackingTypeForExercise(previous.exercise);
+        if (mutationBlocked()) return;
+        setReplacementChoice({ exerciseId: replaceExerciseId, snapshot: selected[0],
+          compatible: type !== null && type === rows[0].tracking_type });
+        setExercisePickerOpened(false);
+        return;
+      }
       const writing = drafts.enqueueEdit(draft.id, current => {
         if (mutationBlocked()) return current;
         return { ...current, plan: selected.reduce(appendOccurrenceExercise, current.plan) };
@@ -514,6 +531,24 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       await writing;
     } catch (reason) {
       reportPlanError(reason, 'Не удалось добавить упражнения');
+    } finally { setBusy(false); }
+  };
+  const confirmReplacement = async (preserveSets: boolean) => {
+    if (!replacementChoice || mutationBlocked() || !draft || busy || starting.current) return;
+    setBusy(true); setError('');
+    try {
+      await flushEdits();
+      if (mutationBlocked()) return;
+      const choice = replacementChoice;
+      await drafts.enqueueEdit(draft.id, current => {
+        if (mutationBlocked()) return current;
+        return { ...current, plan: replaceOccurrenceExercise(current.plan,
+          choice.exerciseId, choice.snapshot, preserveSets) };
+      });
+      setReplacementChoice(null);
+      setReplaceExerciseId(null);
+    } catch (reason) {
+      reportPlanError(reason, 'Не удалось заменить упражнение');
     } finally { setBusy(false); }
   };
   const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
@@ -696,13 +731,18 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               if (!write) setOptimisticOrder(null);
               else void write.catch(() => setOptimisticOrder((current) => current?.next === ids ? null : current));
             } : undefined}
-            onAddExercise={mayEditStructure ? () => { if (!mutationBlocked()) setExercisePickerOpened(true); } : undefined}
+            onAddExercise={mayEditStructure ? () => { if (!mutationBlocked()) {
+              setReplaceExerciseId(null); setExercisePickerOpened(true);
+            } } : undefined}
             onAddSet={mayEditStructure ? id => edit(current => ({
               ...current, plan: appendOccurrenceSet(current.plan, id),
             })) : undefined}
             onDeleteExercise={mayEditStructure ? id => edit(current => ({
               ...current, plan: removeOccurrenceExercise(current.plan, id),
             })) : undefined}
+            onReplaceExercise={mayEditStructure ? id => { if (!mutationBlocked()) {
+              setReplaceExerciseId(id); setExercisePickerOpened(true);
+            } } : undefined}
             onDeleteSet={mayEditStructure ? (exerciseId, setId) => edit(current => ({
               ...current, plan: removeOccurrenceSet(current.plan, exerciseId, setId),
             })) : undefined}
@@ -767,9 +807,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
         onChange={time => chooseTime('end', time)} />
       <WorkoutExerciseSelectionSheet opened={exercisePickerOpened} initData=""
         personalCatalogueRole={draft.coachUserId === draft.actorUserId ? 'coach' : 'client'}
-        saving={busy}
+        mode={replaceExerciseId ? 'replace' : 'add'} saving={busy}
         onConfirm={ids => { void selectExercises(ids); }}
-        onClose={() => setExercisePickerOpened(false)} />
+        onClose={() => { setExercisePickerOpened(false); setReplaceExerciseId(null); }} />
+      <ExerciseReplacementDialog opened={replacementChoice !== null}
+        compatible={replacementChoice?.compatible ?? false} busy={busy} error={error}
+        onCancel={() => { setReplacementChoice(null); setReplaceExerciseId(null); }}
+        onConfirm={preserveSets => { void confirmReplacement(preserveSets); }} />
       {activeExercise && activeSet && editingSet ? <SetEntry
         key={activeSet.id} mode="occurrence-plan" isOpen readOnly={!mayEditStructure || planLocked}
         onNavigationContextChange={setEditorNavigation}
