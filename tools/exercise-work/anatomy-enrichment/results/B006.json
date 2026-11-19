@@ -121,14 +121,13 @@
             "muscles.stabilizers"
           ],
           "source_urls": [
-            "https://fitnessprogramer.com/exercise/dumbbell-iron-cross/",
-            "https://tviky.com/en/exercises/dumbbell-iron-cross/"
+            "https://fitnessprogramer.com/exercise/dumbbell-iron-cross/"
           ],
           "confidence": "low",
           "reason": "В исходной карточке нет инструкции/анатомии. Внешняя демонстрация описывает сочетание приседания и отведения рук. Проверить точную версию на GIF перед интеграцией. Источник: Dumbbell Iron Cross."
         }
       ],
-      "notes": "В исходной карточке нет инструкции/анатомии. Внешняя демонстрация описывает сочетание приседания и отведения рук. Проверить точную версию на GIF перед интеграцией."
+      "notes": "В исходной карточке нет инструкции/анатомии. Внешняя демонстрация описывает сочетание приседания и отведения рук. Проверить точную версию на GIF перед интеграцией. Дополнительные внешние URL не подтверждены и исключены из evidence; для решения необходим визуальный контроль исходного упражнения."
     },
     {
       "id": "fitnessprogramer:dumbbell-jefferson-curl",
@@ -327,14 +326,13 @@
             "muscles.stabilizers"
           ],
           "source_urls": [
-            "https://fitnessprogramer.com/exercise/dumbbell-lateral-step-up/",
-            "https://www.muscleandfitness.com/exercise/workouts/leg-exercises/lateral-dumbbell-step/"
+            "https://fitnessprogramer.com/exercise/dumbbell-lateral-step-up/"
           ],
           "confidence": "low",
           "reason": "В исходнике нет описания; платформа необходима по специфике step-up, проверить высоту/вариант по GIF. Источник: Dumbbell Lateral Step Up."
         }
       ],
-      "notes": "В исходнике нет описания; платформа необходима по специфике step-up, проверить высоту/вариант по GIF."
+      "notes": "В исходнике нет описания; платформа необходима по специфике step-up, проверить высоту/вариант по GIF. Дополнительные внешние URL не подтверждены и исключены из evidence; для решения необходим визуальный контроль исходного упражнения."
     },
     {
       "id": "fitnessprogramer:dumbbell-lateral-to-front-raise",
@@ -2985,14 +2983,13 @@
             "muscles.stabilizers"
           ],
           "source_urls": [
-            "https://fitnessprogramer.com/exercise/elbow-reverse-push-up/",
-            "https://www.tetsu.fitness/exercises/elbow-lift-reverse-push-up/"
+            "https://fitnessprogramer.com/exercise/elbow-reverse-push-up/"
           ],
           "confidence": "low",
           "reason": "Обратное отжимание с опорой на локти поднимает верхнюю часть туловища за счёт мышц верхней спины; это не обычное отжимание на трицепс. Движение требует проверки GIF."
         }
       ],
-      "notes": "Обратное отжимание с опорой на локти поднимает верхнюю часть туловища за счёт мышц верхней спины; это не обычное отжимание на трицепс. Движение требует проверки GIF."
+      "notes": "Обратное отжимание с опорой на локти поднимает верхнюю часть туловища за счёт мышц верхней спины; это не обычное отжимание на трицепс. Движение требует проверки GIF. Дополнительные внешние URL не подтверждены и исключены из evidence; для решения необходим визуальный контроль исходного упражнения."
     },
     {
       "id": "fitnessprogramer:elbow-to-knee-twists",
@@ -3645,11 +3642,11 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/fire-hydrant/"
           ],
-          "confidence": "medium",
-          "reason": "Fire Hydrant — отведение и наружная ротация бедра на четвереньках, стабилизация туловища против ротации."
+          "confidence": "low",
+          "reason": "В исходной карточке отсутствуют инструкция и анатомия; заданное движение Fire Hydrant предварительно сопоставлено с отведением/наружной ротацией бедра. Подтвердить роли по исходному GIF."
         }
       ],
-      "notes": "Fire Hydrant — отведение и наружная ротация бедра на четвереньках, стабилизация туловища против ротации."
+      "notes": "В исходной карточке отсутствуют инструкция и анатомия; заданное движение Fire Hydrant предварительно сопоставлено с отведением/наружной ротацией бедра. Подтвердить роли по исходному GIF."
     },
     {
       "id": "fitnessprogramer:fish-pose",
