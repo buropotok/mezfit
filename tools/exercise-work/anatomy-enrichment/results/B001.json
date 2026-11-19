@@ -1005,8 +1005,7 @@
         "muscles": {
           "secondary": [
             "pectoralis_sternal",
-            "deltoid_anterior",
-            "triceps_brachii"
+            "deltoid_anterior"
           ]
         }
       },
@@ -1017,13 +1016,13 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/incline-chest-fly-machine/",
-            "https://www.strengthlog.com/training-program-for-seniors/"
+            "https://www.strengthlog.com/machine-chest-fly/"
           ],
           "confidence": "high",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal, deltoid_anterior, triceps_brachii) без произвольных стабилизаторов."
+          "reason": "При сведении рук (fly) ведущая роль у грудных мышц; передняя дельта помогает, но трицепс не выполняет динамического разгибания локтя и исключён из вспомогательных."
         }
       ],
-      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
+      "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Из исходных synergists удалён Triceps Brachii: fly представляет собой горизонтальное приведение плеча без основного разгибания локтя."
     },
     {
       "id": "fitnessprogramer:incline-chest-press-machine",
@@ -1339,7 +1338,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/seated-calf-press-on-leg-press-machine/",
-            "https://www.strengthlog.com/how-many-exercises-per-muscle-group/"
+            "https://www.strengthlog.com/seated-calf-raise/"
           ],
           "confidence": "medium",
           "reason": "Добавлена основная мышечная роль с каноническими ID (soleus) без произвольных стабилизаторов."
@@ -1405,7 +1404,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/seated-twist-machine/",
-            "https://www.strengthlog.com/strength-training-for-football/"
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3562/core-anatomy-muscles-of-the-core/"
           ],
           "confidence": "high",
           "reason": "Добавлена основная мышечная роль с каноническими ID (obliques) без произвольных стабилизаторов."
@@ -1512,7 +1511,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/standing-twist-machine/",
-            "https://www.strengthlog.com/strength-training-for-football/"
+            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3562/core-anatomy-muscles-of-the-core/"
           ],
           "confidence": "high",
           "reason": "Добавлена основная мышечная роль с каноническими ID (obliques) без произвольных стабилизаторов."
@@ -1949,7 +1948,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/lever-incline-hammer-chest-press/",
-            "https://www.strengthlog.com/training-program-for-seniors/"
+            "https://www.strengthlog.com/machine-chest-press/"
           ],
           "confidence": "high",
           "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal, deltoid_anterior, triceps_brachii) без произвольных стабилизаторов."
@@ -2522,7 +2521,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/90-degree-cable-external-rotation/",
-            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
+            "https://www.acefitness.org/resources/everyone/exercise-library/352/rotator-cuff-external-rotation/"
           ],
           "confidence": "medium",
           "reason": "Добавлена основная мышечная роль с каноническими ID (infraspinatus, teres_minor) без произвольных стабилизаторов."
@@ -2563,7 +2562,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/90-degree-cable-internal-rotation/",
-            "https://www.acefitness.org/fitness-certifications/ace-answers/exam-preparation-blog/3535/muscles-that-move-the-arm/"
+            "https://www.acefitness.org/resources/everyone/exercise-library/351/rotator-cuff-internal-rotation/"
           ],
           "confidence": "medium",
           "reason": "Добавлена основная мышечная роль с каноническими ID (subscapularis) без произвольных стабилизаторов."
