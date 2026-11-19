@@ -411,7 +411,7 @@ export function CloudProgramDetailsPage({
             {selectionMode && !onStartDay && readOnly && !schedulingUnavailable && phase.status !== 'active'
               ? <Text variant="footnote">Из этой фазы пока нельзя запланировать тренировку. Фазу должен активировать тренер.</Text> : null}
             <ProgramPhaseDays key={`${planId}:${phase.id}`} repository={repository} program={details.program}
-            onStartDay={onStartDay}
+            onStartDay={onStartDay} allowDirectStart={!selectionMode}
             onActivateForScheduling={onStartDay ? undefined : (phaseId, onActivated) => {
               const target = details.phases.find(item => item.id === phaseId);
               if (!target || readOnly || busy) return;
