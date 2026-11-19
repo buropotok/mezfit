@@ -51,6 +51,7 @@ export interface WorkoutPlanCardProps {
   onAddExercise?: () => void;
   onAddSet?: (programExerciseId: string) => void;
   onDeleteExercise?: (programExerciseId: string) => void;
+  onReplaceExercise?: (programExerciseId: string) => void;
   onOpenSet?: (programExerciseId: string, setId: string) => void;
   onDeleteSet?: (programExerciseId: string, setId: string) => void | Promise<void>;
   /** Only scheduled occurrence cards supply scoped discussion targets. */
@@ -136,7 +137,7 @@ export function WorkoutPlanCard({
   onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
   creatorName, creatorAvatar, athleteName, athleteAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
-  onDeleteExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
+  onDeleteExercise, onReplaceExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
   discussionTargetFor, onOpenDiscussion, onNavigationContextChange, onSetDeletionNavigationContextChange,
   focusExerciseId, focusSetId, focusReady,
 }: WorkoutPlanCardProps) {
@@ -198,6 +199,8 @@ export function WorkoutPlanCard({
         return onDeleteSet?.(item.exercise.id, setId);
       } : undefined}
       onDelete={authoringVisible && (onMutationAttempt || onDeleteExercise) ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
+      onReplace={authoringVisible && (onMutationAttempt || onDeleteExercise) && (onMutationAttempt || onReplaceExercise)
+        ? () => mutate(() => onReplaceExercise?.(item.exercise.id)) : undefined}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
