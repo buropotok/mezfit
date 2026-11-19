@@ -25,7 +25,8 @@ it('selects exactly one replacement and changes the existing sheet action', () =
   expect(screen.getByRole('button', { name: '0001' }).getAttribute('aria-pressed')).toBe('false');
   expect(screen.getByRole('button', { name: '0002' }).getAttribute('aria-pressed')).toBe('true');
   fireEvent.click(screen.getByRole('button', { name: 'Заменить' }));
-  expect(onConfirm).toHaveBeenCalledExactlyOnceWith(['0002']);
+  expect(onConfirm).toHaveBeenCalledTimes(1);
+  expect(onConfirm).toHaveBeenCalledWith(['0002']);
 });
 
 it('does not submit a duplicate replacement while saving', () => {
