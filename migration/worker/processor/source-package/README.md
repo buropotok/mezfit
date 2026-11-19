@@ -23,7 +23,8 @@ appointments[id,subject,program,day,date,plan]; history[id,subject,program,
 appointment,date,frozenPlan,performed[id,definition,sets[id,planSet,metrics]]].
 Plan entries are [id,definition,programExercise,sets[id,programSet,metrics]].
 Metrics are [reps,weight,weightUnit,duration,durationUnit,distance,distanceUnit].
-Null references mean proven none; '?' means unknown. An absent plan is null;
+History rows explicitly represent completed source workouts. Keys are globally
+unique per entity type in this synthetic format. Null references mean proven none; '?' means unknown. An absent plan is null;
 '?' means unknown snapshot. Source numbers in templates become typed attributes
 and issues, never PLAN. Measures are omitted with an explicit count.
 Names/keys/attributes remain only in private R2; telemetry uses codes/counts.

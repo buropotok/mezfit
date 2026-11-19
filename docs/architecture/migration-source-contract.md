@@ -427,13 +427,13 @@ interface OmittedDataSummary {
 
 ## 11. Физические артефакты и MIG-03
 
-Сегодня `migration/worker/processor/contracts.ts` определяет только транспортное `NormalizedPayload` (коллекции плоских скалярных записей). Действующий `result.json` по `results/<job-id>/v1/result.json` и synthetic fixture/nested schema v1/v2 — **не `SourceImportPackage`**.
+Legacy `NormalizedPayload` остаётся транспортом плоских скалярных коллекций. Synthetic fixture/nested schema v1/v2 — **не `SourceImportPackage`**. MIG-04 добавляет отдельный discriminant schema v3 с `sourcePackage`; package schemaVersion остаётся 1. Result key `results/<job-id>/v1/result.json`, processor version и D1 execution identity сохранены.
 
-Следующий MIG-04 реализует отдельную версию output contract / manifest, runtime validation и synthetic adapter, **не переписывая существующий result schema v1/v2**. Ограничения текущего processor `8192 bytes input / 1024 bytes result` и `256 records` несовместимы с реальными клиентскими архивами без нового архитектурного решения. Для больших источников допустим versioned manifest + проверенные bounded chunks в приватном R2; конкретный размер chunk и ключи/retention пока **не утверждены**. D1 хранит только техническую оркестрацию/ссылки/checksums, никогда содержимое тренировочной истории.
+MIG-04 реализует runtime types/validator и reviewed synthetic-training adapter, **не переписывая существующий result schema v1/v2**. Один private JSON object: 65536 bytes для v3; 1024 bytes для legacy; input 8192 bytes. Конкретные структурные caps описаны в `migration/worker/processor/source-package/README.md`. Эти пределы несовместимы с большими реальными архивами без нового решения. Для больших источников допустим versioned manifest + проверенные bounded chunks в приватном R2; конкретный размер chunk и ключи/retention пока **не утверждены**. D1 хранит только техническую оркестрацию/ссылки/checksums, никогда содержимое тренировочной истории.
 
 Текущий статический reviewed registry не запускает AI-generated код. Его возможное расширение — отдельный review-gated этап; это не причина менять данные контракта, утверждать Python/Yandex или давать сгенерированному коду доступ к Dexie.
 
-### MIG-04: проверяемые сценарии будущей реализации
+### MIG-04: проверяемые сценарии
 
 | Сценарий | Ожидаемое поведение |
 | --- | --- |

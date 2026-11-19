@@ -5,6 +5,7 @@ import type { SourceImportPackageV1, SourceImportIssue, SourceRef, SourceSetMetr
 type Node = { type: string; key: string; parent: string | null; program: string | null; day: string | null;
   subject: string | null; definition: string | null; owner: string | null };
 const linked = (ref: SourceRef) => ref.state === 'linked' ? ref.sourceKey : null;
+const metricUnits = { weight: ['kg', 'g', 'lb', 'lbs'], duration: ['s', 'sec', 'ms', 'min', 'h'], distance: ['m', 'km', 'cm', 'mi', 'ft'] };
 const invalid = () => { throw new ProcessingFailure('SOURCE_PACKAGE_INVALID_REFERENCE'); };
 
 export function requiredSourceIssues(pkg: SourceImportPackageV1): SourceImportIssue[] {
@@ -32,17 +33,22 @@ export function requiredSourceIssues(pkg: SourceImportPackageV1): SourceImportIs
   function attributes(attrs: SourceAttribute[], node: Node, programSet = false) {
     if (new Set(attrs.map(attr => attr.name)).size !== attrs.length) invalid();
     for (const attr of attrs) {
-      if (attr.kind === 'number' && attr.unit === null) report('UNKNOWN_UNIT', node, attr.name);
+      if (attr.kind === 'number') {
+        const units = attr.name === 'source_planned_weight' ? metricUnits.weight
+          : attr.name === 'source_planned_duration' ? metricUnits.duration
+            : attr.name === 'source_planned_distance' ? metricUnits.distance
+              : attr.name === 'source_planned_reps' ? ['reps'] : null;
+        if (attr.unit === null || units && !units.includes(attr.unit)) report('UNKNOWN_UNIT', node, attr.name);
+      }
       if (programSet && attr.kind === 'number' && attr.name.startsWith('source_planned_')) {
         report('SOURCE_PROGRAM_NUMERIC_PRESCRIPTION', node, attr.name);
       }
     }
   }
   function metrics(value: SourceSetMetrics, node: Node) {
-    const units = { weight: ['kg', 'g', 'lb', 'lbs'], duration: ['s', 'sec', 'ms', 'min', 'h'], distance: ['m', 'km', 'cm', 'mi', 'ft'] };
     for (const field of ['weight', 'duration', 'distance'] as const) {
       const measurement = value[field];
-      if (measurement && (measurement.unit === null || !units[field].includes(measurement.unit))) {
+      if (measurement && (measurement.unit === null || !metricUnits[field].includes(measurement.unit))) {
         report('UNKNOWN_UNIT', node, field);
       }
     }
@@ -136,19 +142,23 @@ export function requiredSourceIssues(pkg: SourceImportPackageV1): SourceImportIs
     reference(owner, workout.subjectRef, 'subject', 'subjectRef');
     reference(owner, workout.programRef, 'program', 'programRef');
     if ('programDayRef' in workout) reference(owner, workout.programDayRef, 'day', 'programDayRef', { program: owner.program });
+    let scheduled: Node | null = null;
     if (isSession) {
-      const scheduled = reference(owner, workout.scheduledWorkoutRef, 'scheduledWorkout', 'scheduledWorkoutRef');
+      scheduled = reference(owner, workout.scheduledWorkoutRef, 'scheduledWorkout', 'scheduledWorkoutRef');
       if (scheduled && owner.program && scheduled.program && owner.program !== scheduled.program) invalid();
     }
     const plan = isSession ? workout.frozenPlan : workout.plan;
+    const expectedProgram = owner.program ?? scheduled?.program ?? null;
+    const expectedDay = owner.day ?? scheduled?.day ?? null;
+    const expectedSubject = owner.subject ?? scheduled?.subject ?? null;
     if (plan.state === 'present') for (const exercise of plan.exercises) {
-      const from = node('planExercise', exercise.sourceKey);
+      const from = { ...node('planExercise', exercise.sourceKey), subject: expectedSubject };
       reference(from, ref(exercise.exerciseSourceKey), 'exercise', 'exerciseSourceKey');
       const target = reference(from, exercise.sourceProgramExerciseRef, 'programExercise', 'sourceProgramExerciseRef',
-        { program: owner.program, day: owner.day, definition: exercise.exerciseSourceKey });
-      for (const set of exercise.sets) reference(node('planSet', set.sourceKey), set.sourceProgramSetRef, 'programSet',
+        { program: expectedProgram, day: expectedDay, definition: exercise.exerciseSourceKey });
+      for (const set of exercise.sets) reference({ ...node('planSet', set.sourceKey), subject: expectedSubject }, set.sourceProgramSetRef, 'programSet',
         'sourceProgramSetRef', { parent: target?.key ?? linked(exercise.sourceProgramExerciseRef),
-          program: owner.program, day: owner.day, definition: exercise.exerciseSourceKey });
+          program: expectedProgram, day: expectedDay, definition: exercise.exerciseSourceKey });
     }
     if (isSession) for (const exercise of workout.performedExercises) {
       reference(node('performedExercise', exercise.sourceKey), ref(exercise.exerciseSourceKey), 'exercise', 'exerciseSourceKey');
@@ -166,6 +176,9 @@ export function isSourceImportPackage(value: unknown, expected?: ExpectedSource)
   if (expected && (value.provenance.adapterId !== expected.adapterId || value.provenance.adapterVersion !== expected.adapterVersion
     || value.provenance.formatFamily !== expected.formatFamily || value.provenance.inputSha256 !== expected.inputSha256)) return false;
   try {
+    for (const field of ['subjects', 'sourceExercises', 'programs', 'scheduledWorkouts', 'sessions'] as const) {
+      if (value.coverage[field] === 'not_in_export' && value[field].length) return false;
+    }
     const required = requiredSourceIssues(value);
     return required.every(issue => value.issues.some(found => found.code === issue.code && found.severity === issue.severity
       && found.entityType === issue.entityType && found.sourceKey === issue.sourceKey && found.field === issue.field));

@@ -30,6 +30,7 @@ describe('SourceImportPackage v1 runtime boundary', () => {
   });
 
   it.each([
+    ['coverage contradiction', value => { value.coverage.programs = 'not_in_export'; }],
     ['root extra', value => { value.unknown = 1; }],
     ['version', value => { value.schemaVersion = 3; }],
     ['completion state', value => { value.sessions[0].completionState = 'published'; }],
@@ -112,6 +113,19 @@ describe('SourceImportPackage v1 runtime boundary', () => {
     expect(value.sessions[0].scheduledWorkoutRef).toEqual({ state: 'none' });
   });
 
+  it('rejects a frozen PLAN linked to another day of the same program and exercise', () => {
+    const value = pkg();
+    const other = clone(value.programs[0].days[0]);
+    other.sourceKey = 'day:other'; other.position = 1;
+    other.exercises[0].sourceKey = 'programExercise:other';
+    other.exercises[0].sets[0].sourceKey = 'programSet:other';
+    value.programs[0].days.push(other);
+    reissue(value);
+    value.sessions[0].frozenPlan.exercises[0].sourceProgramExerciseRef.sourceKey = 'programExercise:other';
+    value.sessions[0].frozenPlan.exercises[0].sets[0].sourceProgramSetRef.sourceKey = 'programSet:other';
+    expect(isSourceImportPackage(value)).toBe(false);
+  });
+
   it('preserves an incompatible source unit only with an issue, without converting values', () => {
     const value = pkg();
     factSet(value).metrics.weight = { value: 20, unit: 'seconds' };
@@ -169,6 +183,18 @@ describe('reviewed synthetic-training adapter through the common engine', () => 
     await expect(processFile(encode(source), emit)).rejects.toThrow();
     const trace = JSON.stringify(emit.mock.calls);
     for (const privateText of ['Synthetic Person', 'Source press', 'subject:q', 'program:p1', 'source_planned_weight']) expect(trace).not.toContain(privateText);
+  });
+
+  it('enforces the v3 byte ceiling independently of valid shape and graph limits', async () => {
+    const result = await process(trainingFixture());
+    const value = result.sourcePackage;
+    while (value.subjects.length < 32) value.subjects.push({ ...clone(value.subjects[0]), sourceKey: 'subject:extra' + value.subjects.length });
+    while (value.sourceExercises.length < 32) value.sourceExercises.push({ ...clone(value.sourceExercises[0]), sourceKey: 'exercise:extra' + value.sourceExercises.length });
+    for (const subject of value.subjects) subject.displayName = 'x'.repeat(1000);
+    for (const exercise of value.sourceExercises) exercise.sourceName = 'x'.repeat(1000);
+    expect(isSourceImportPackage(value)).toBe(true);
+    expect(encode(result).byteLength).toBeGreaterThan(SOURCE_PACKAGE_RESULT_LIMIT);
+    expect(isResult(result)).toBe(false);
   });
 
   it('keeps reviewed registration pinned and preserves technical v1 identities', () => {

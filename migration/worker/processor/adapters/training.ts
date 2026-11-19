@@ -125,7 +125,7 @@ function parse(input: AdapterInput): AdapterData {
             notes: null, sets: array(sets).map((entry, position) => {
               const [id, planId, values] = tuple(entry, 3);
               return { sourceKey: key('factSet', id), position, planSetRef: ref('planSet', planId),
-                sourceSetType: null, sourceSetLabel: null, metrics: metrics(reps, weight, unit),
+                sourceSetType: null, sourceSetLabel: null, metrics: metrics(values),
                 setStatus: 'completed', rpe: null, comment: null, sourceAttributes: [] };
             }) };
         }), sourceAttributes: [] };

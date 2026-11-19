@@ -76,7 +76,7 @@ export function canonicalSourceJson(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(canonicalSourceJson).join(',') + ']';
   if (value !== null && typeof value === 'object') return '{' + Object.entries(value).sort(([a], [b]) => a.localeCompare(b))
     .map(([key, item]) => JSON.stringify(key) + ':' + canonicalSourceJson(item)).join(',') + '}';
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? 'null';
 }
 export function matchesTrainingFixture(result: Success): boolean {
   return result.schemaVersion === 3 && result.detectedFormat === TRAINING_FORMAT
