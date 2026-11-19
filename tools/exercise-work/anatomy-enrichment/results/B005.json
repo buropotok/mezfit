@@ -2236,6 +2236,614 @@
         }
       ],
       "notes": "Маркер other означает неизвестную роль, а не мышцу."
+    },
+    {
+      "id": "fitnessprogramer:decline-dumbbell-triceps-extension",
+      "source_path": "assets/work/triceps/decline-dumbbell-triceps-extension.json",
+      "source_blob_sha": "caa3eb8714f6d53373cb1ec3e276aed22e4d19fd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-dumbbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание локтя с гантелями лёжа головой вниз направлено на трицепс; используется наклонная вниз скамья."
+        }
+      ],
+      "notes": "other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:decline-hammer-press",
+      "source_path": "assets/work/chest/decline-hammer-press.json",
+      "source_blob_sha": "610e29192c0c9a34be076957b62d8a88bb6854b5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_lower"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-hammer-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Decline hammer press в исходной карточке отмечен как Dumbbells; нейтральный хват при жиме головой вниз, а не отдельная Hammer Strength машина."
+        }
+      ],
+      "notes": "Отдельно проверить GIF на случай аппаратного жима, хотя исходное оборудование — Dumbbells. other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:decline-push-up",
+      "source_path": "assets/work/chest/decline-push-up.json",
+      "source_blob_sha": "6f9e0292b756daa22df52de47006bc5d88d5775a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "При decline push-up ноги ставятся выше рук на скамью/платформу, что увеличивает долю верхнего отдела груди и передней дельты."
+        }
+      ],
+      "notes": "Bench и box — подтверждённые альтернативные возвышения из инструкции."
+    },
+    {
+      "id": "fitnessprogramer:decline-sit-up",
+      "source_path": "assets/work/abs/decline-sit-up.json",
+      "source_blob_sha": "7ba51447f8292081682df3f5f30bf5fabce04354",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/decline-sit-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Скручивание на наклонной вниз скамье: сгибание туловища мышцами живота с участием сгибателей бедра."
+        }
+      ],
+      "notes": "other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:depth-jump-to-hurdle-hop",
+      "source_path": "assets/work/hip/depth-jump-to-hurdle-hop.json",
+      "source_blob_sha": "14d636ee9bf359a9e75887cca18d26d1b620f8ee",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box",
+          "hurdle"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "soleus"
+          ],
+          "stabilizers": [
+            "ankle_stabilizers"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/depth-jump-to-hurdle-hop/",
+            "https://fitnessprogramer.com/exercise/depth-jump-to-hurdle-hop/"
+          ],
+          "confidence": "high",
+          "reason": "Depth jump to hurdle hop требует схода с платформы и прыжков через барьер; разгибание колена, бедра и голеностопа."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dhanurasana-rocking-bow-pose",
+      "source_path": "assets/work/abs/dhanurasana-rocking-bow-pose.json",
+      "source_blob_sha": "df1d6046555155111ea463b9b9f91c70a201378e",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        },
+        "primary_category": "other"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dhanurasana-rocking-bow-pose/"
+          ],
+          "confidence": "low",
+          "reason": "Dhanurasana rocking bow pose — йогическое покачивание; нет конкретного описания фаз или подтверждённой роли силовых мышц."
+        }
+      ],
+      "notes": "Проверить GIF: категория могла бы быть спина или корпус; пока нейтральная категория other. other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:diamond-push-up",
+      "source_path": "assets/work/chest/diamond-push-up.json",
+      "source_blob_sha": "bf6dd59458d8e534b5a3d22a4076a3f8f31de2cb",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "serratus_anterior"
+          ]
+        },
+        "primary_category": "arms"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/diamond-push-up/"
+          ],
+          "confidence": "high",
+          "reason": "Алмазная постановка ладоней в отжимании повышает нагрузку на трицепс при сохранении работы грудных."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:dip-shrugs-serratus-shrugs",
+      "source_path": "assets/work/trapezius/dip-shrugs-serratus-shrugs.json",
+      "source_blob_sha": "5593d69d9acfb0fa0b52dda0f9011760fe28d503",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dip bars"
+        ],
+        "muscles": {
+          "primary": [
+            "serratus_anterior",
+            "trapezius_lower"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dip-shrugs-serratus-shrugs/"
+          ],
+          "confidence": "low",
+          "reason": "Dip shrugs — движение лопаток на брусьях, а не обычный жим грудью; определены передняя зубчатая и нижняя трапеция."
+        }
+      ],
+      "notes": "Проверить GIF: если выполняется только депрессия лопатки без протракции, акцент serratus anterior требует уточнения. other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:dips-between-chairs",
+      "source_path": "assets/work/chest/dips-between-chairs.json",
+      "source_blob_sha": "8073794a1be1fd2a7a6adb33f8acbe446eefba29",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "chair"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        },
+        "primary_category": "arms"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dips-between-chairs/"
+          ],
+          "confidence": "high",
+          "reason": "Отжимания между двумя устойчивыми стульями: локтевое разгибание трицепсом, грудные и дельта помогают; стулья реальное необходимое оборудование."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:donkey-calf-raise",
+      "source_path": "assets/work/calf/donkey-calf-raise.json",
+      "source_blob_sha": "1fccd4ff9b7759d956b1c8e4b23146196cf40faa",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "gastrocnemius"
+          ],
+          "secondary": [
+            "soleus",
+            "tibialis_posterior",
+            "peroneals"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/donkey-calf-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Donkey calf raise выполняется с носками на приподнятом крае/блоке; икроножная и камбаловидная выполняют подошвенное сгибание."
+        }
+      ],
+      "notes": "other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:donkey-kicks",
+      "source_path": "assets/work/hip/donkey-kicks.json",
+      "source_blob_sha": "b1cff4f5baf1bb9506ca4eddfcb23b75263d0c62",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "obliques",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/donkey-kicks/"
+          ],
+          "confidence": "high",
+          "reason": "Donkey kicks: разгибание бедра большой ягодичной, удержание таза средними ягодичными и корпусом."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:doorway-pec-and-shoulder-stretch",
+      "source_path": "assets/work/chest/doorway-pec-and-shoulder-stretch.json",
+      "source_blob_sha": "a79b6de2be78b1e97077f078173645f8bb216352",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "door_frame"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/doorway-pec-and-shoulder-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжка груди/плеч выполняется руками на косяке дверного проёма; нельзя относить растягиваемые мышцы к активным двигателям."
+        }
+      ],
+      "notes": "Растягиваются pectoralis_major и передняя область плеча, но это не силовые роли. other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:double-arm-dumbbell-curl",
+      "source_path": "assets/work/biceps/double-arm-dumbbell-curl.json",
+      "source_blob_sha": "0e5818a97aaaea2c9d3095c9b9a083798e6e9509",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-arm-dumbbell-curl/"
+          ],
+          "confidence": "high",
+          "reason": "Одновременное сгибание рук с гантелями: бицепс основной, плечевая и плечелучевая помогают."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:double-crunches",
+      "source_path": "assets/work/abs/double-crunches.json",
+      "source_blob_sha": "c36b4c3b512c09d82968abc04c350eda24b7ce10",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-crunches/"
+          ],
+          "confidence": "medium",
+          "reason": "Двойное скручивание сгибает корпус и подтягивает таз: прямая мышца живота и косые."
+        }
+      ],
+      "notes": "other — специальная позиция ревью, не биологическая мышца."
+    },
+    {
+      "id": "fitnessprogramer:double-leg-stretch",
+      "source_path": "assets/work/abs/double-leg-stretch.json",
+      "source_blob_sha": "cb3b2912e50cc33396e5c7018daef22053afe42d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/double-leg-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Double leg stretch включает удержание позы с управляемым разгибанием рук и ног, основная работа мышц живота."
+        }
+      ],
+      "notes": "other — специальная позиция ревью, не биологическая мышца."
     }
   ]
 }
