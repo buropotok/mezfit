@@ -33,22 +33,28 @@ function TablerStar({ filled }: { filled: boolean }) {
     strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></svg>;
 }
 
+const ALL_EXERCISES_TAB = { value: 'all', label: 'Все' } as const;
+const BASE_CATALOG_TABS = [
+  { value: 'base1', label: 'База 1' },
+  { value: 'base2', label: 'База 2' },
+] as const;
 const PERSONAL_CATALOG_TABS = [
+  ALL_EXERCISES_TAB,
   { value: 'main', label: 'Основные' },
   { value: 'favourites', label: 'Избранное' },
   { value: 'mine', label: 'Мои упражнения' },
-  { value: 'all', label: 'База 1' },
-  { value: 'base2', label: 'База 2' },
+  ...BASE_CATALOG_TABS,
 ] as const;
 const CLIENT_CATALOG_TABS = [
+  ALL_EXERCISES_TAB,
   { value: 'main', label: 'Основные' },
   { value: 'favourites', label: 'Избранное' },
   { value: 'mine', label: 'Мои упражнения' },
   { value: 'trainer', label: 'Тренерские' },
-  { value: 'all', label: 'База 1' },
-  { value: 'base2', label: 'База 2' },
+  ...BASE_CATALOG_TABS,
 ] as const;
-const PUBLIC_CATALOG_TABS = PERSONAL_CATALOG_TABS.slice(-2);
+const PUBLIC_CATALOG_TABS = [ALL_EXERCISES_TAB, ...BASE_CATALOG_TABS] as const;
+type CatalogueTab = typeof CLIENT_CATALOG_TABS[number]['value'];
 const EMPTY_FAVOURITES: ReadonlySet<string> = new Set();
 
 const categories = Object.fromEntries(PUBLIC_EXERCISE_CATEGORIES) as Record<string, string>;
@@ -194,7 +200,7 @@ export function ExerciseCatalogContent({
   const [filterDialogGroup, setFilterDialogGroup] = useState<FilterGroup | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
-  const [tab, setTab] = useState<'main' | 'favourites' | 'mine' | 'trainer' | 'all' | 'base2'>(initialTab);
+  const [tab, setTab] = useState<CatalogueTab>(initialTab);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const requestBackTransition = useNavigationBackTransition();
 
@@ -223,16 +229,18 @@ export function ExerciseCatalogContent({
   }, [category, categoryLabel, onNavigationContextChange, requestBackTransition, selected, selectedId]);
 
   const tabExercises = useMemo<readonly CatalogueExerciseRow[]>(() => {
-    if (tab === 'base2') return base2.exercises ?? [];
-    if (!isPersonal) return exercises;
+    if (tab === 'all' || tab === 'base1' || tab === 'base2') {
+      if (tab === 'base2') return base2.exercises ?? [];
+      const base1 = exercises.filter(row =>
+        row.realmId === 'rlm-public' && row.owner === null && !isFitnessProgramerExerciseId(row.id));
+      return tab === 'all' && base2.exercises ? [...base1, ...base2.exercises] : base1;
+    }
     if (tab === 'main') return [];
     if (tab === 'mine') return exercises.filter(row => personalIds.has(row.id));
     if (tab === 'trainer') return scope === 'client'
       ? exercises.filter(row => assignedIds.has(row.id)) : [];
-    if (tab === 'favourites') return exercises.filter(row => favouriteIds.has(row.id));
-    // Base 1 contains the original public catalogue.
-    return exercises.filter(row => row.realmId === 'rlm-public' && row.owner === null && !isFitnessProgramerExerciseId(row.id));
-  }, [exercises, isPersonal, scope, tab, personalIds, assignedIds, favouriteIds, base2.exercises]);
+    return exercises.filter(row => favouriteIds.has(row.id));
+  }, [exercises, scope, tab, personalIds, assignedIds, favouriteIds, base2.exercises]);
 
   const selectedEntries = FILTER_GROUPS.flatMap(({ id, label }) =>
     (filters[id] ?? []).map((value) => {
@@ -285,7 +293,7 @@ export function ExerciseCatalogContent({
             value={tab} hidden={false} glassPreset={glassPreset}
             onValueChange={(value) => {
               if (value !== 'main' && value !== 'favourites' && value !== 'mine'
-                && value !== 'trainer' && value !== 'all' && value !== 'base2') return;
+                && value !== 'trainer' && value !== 'all' && value !== 'base1' && value !== 'base2') return;
               setTab(value);
               setFilters({});
               setCategory(null);
@@ -333,7 +341,7 @@ export function ExerciseCatalogContent({
         </Surface>
       ) : isPersonal && tab === 'main' ? (
         <Surface><Text variant="body">Раздел «Основные» будет доступен позже.</Text></Surface>
-      ) : !category && !query.trim() && selectedEntries.length === 0 && (!isPersonal || tab === 'all' || tab === 'base2') ? (
+      ) : !category && !query.trim() && selectedEntries.length === 0 && (tab === 'all' || tab === 'base1' || tab === 'base2') ? (
         <List className="mezfit-public-exercises__category-list">
           {PUBLIC_EXERCISE_CATEGORIES.map(([id, label]) => (
             <ListItem
