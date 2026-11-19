@@ -44,7 +44,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/burpees/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Берпи объединяет приседание, планку/отжимание и прыжок; нагрузка распределена между ногами и верхом тела, мышцы корпуса удерживают положение."
         }
       ]
@@ -362,7 +362,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/captains-chair-leg-raise/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "В подъёме ног на опоре работают сгибатели бедра и мышцы живота; широчайшие/трапеция помогают удерживать плечевой пояс, требуется стойка капитана."
         }
       ]
@@ -522,7 +522,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/chest-dips/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Наклон вперёд на брусьях акцентирует большую грудную; трицепс разгибает локоть, нижняя трапеция и корпус стабилизируют опору."
         }
       ]
@@ -602,7 +602,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/chest-tap-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Отжимание с касанием груди — вариант отжимания от пола, грудные и трицепс выполняют жим; корпус удерживается изометрически."
         }
       ]
@@ -766,7 +766,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/clap-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Взрывной жим в отжимании с хлопком выполняют грудные и трицепсы; корпус сохраняет прямую линию."
         }
       ]
@@ -809,7 +809,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/clean-and-jerk/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Толчок со взятием штанги: разгибание ног и таза, затем жим/выброс веса над головой; мышцы корпуса держат нагрузку."
         }
       ],
@@ -1056,7 +1056,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/close-grip-dumbbell-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Отжимание узким хватом с опорой рук на одной гантели; большой грудной и трицепс выполняют жим, корпус стабилен."
         }
       ]
@@ -1136,7 +1136,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/close-grip-knee-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Отжимание узким хватом с колен — облегчённый жим, нагрузка на трицепс и грудь."
         }
       ],
@@ -1378,7 +1378,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/concentration-curl/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Концентрированное сгибание с гантелью главным образом развивает бицепс; исходный brachialis не должен заменять бицепс как единственную главную мышцу."
         }
       ]
@@ -1458,7 +1458,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/cossack-squat/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Боковой присед казака: разгибание колена и бедра, контроль таза и корпуса, натяжение приводящих бедра."
         }
       ]
@@ -1539,7 +1539,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/cross-arm-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Перекрёстная постановка рук в отжимании повышает акцент на трицепс; грудные помогают, корпус удерживается."
         }
       ]
@@ -1578,7 +1578,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/cross-body-mountain-climber/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "В cross-body mountain climber колено приводится к противоположному локтю за счёт сгибания бедра и ротационного контроля корпуса."
         }
       ]
@@ -1860,7 +1860,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/curtsy-squat/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Curtsy squat: квадрицепсы разгибают колено, ягодичные и приводящие помогают, мышцы таза и корпуса стабилизируют."
         }
       ]
@@ -1986,7 +1986,7 @@
             "https://fitnessprogramer.com/exercise/deadlift/",
             "https://www.strengthlog.com/deadlift/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Классическая становая тяга: разгибатели таза/коленей и спины выполняют подъём, хват, широчайшие и пресс стабилизируют штангу."
         }
       ]
@@ -2354,7 +2354,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/decline-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "При decline push-up ноги ставятся выше рук на скамью/платформу, что увеличивает долю верхнего отдела груди и передней дельты."
         }
       ],
@@ -2437,7 +2437,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/depth-jump-to-hurdle-hop/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Depth jump to hurdle hop требует схода с платформы и прыжков через барьер; разгибание колена, бедра и голеностопа."
         }
       ]
@@ -2521,7 +2521,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/diamond-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Алмазная постановка ладоней в отжимании повышает нагрузку на трицепс при сохранении работы грудных."
         }
       ]
@@ -2602,7 +2602,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dips-between-chairs/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Отжимания между двумя устойчивыми стульями: локтевое разгибание трицепсом, грудные и дельта помогают; стулья реальное необходимое оборудование."
         }
       ]
@@ -2683,7 +2683,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/donkey-kicks/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Donkey kicks: разгибание бедра большой ягодичной, удержание таза средними ягодичными и корпусом."
         }
       ]
@@ -2761,7 +2761,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/double-arm-dumbbell-curl/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Одновременное сгибание рук с гантелями: бицепс основной, плечевая и плечелучевая помогают."
         }
       ]
@@ -2920,7 +2920,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/drop-push-up/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Drop push-up — плиометрическое отжимание между двумя опорами: грудь и трицепсы выполняют жим, корпус стабилизирует положение."
         }
       ]
@@ -2960,7 +2960,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/duck-walk/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Duck walk — передвижение в глубоком приседе с активной работой квадрицепсов и ягодичных."
         }
       ]
@@ -3121,7 +3121,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-bench-squat/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Присед с гантелями до скамьи: разгибатели коленей и таза основные, скамья задаёт глубину."
         }
       ]
@@ -3205,7 +3205,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-bulgarian-split-squat/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Болгарский сплит-присед с гантелями: опора задней ноги на скамье, ведущая нагрузка на квадрицепс передней ноги."
         }
       ]
@@ -3246,7 +3246,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-burpees/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Burpee с гантелями: динамическое кардио с приседом/отжиманием; основной характер — повышение ЧСС при комплексной нагрузке."
         }
       ]
@@ -3330,7 +3330,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-cossack-squat/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Cossack squat с гантелью — боковой присед с разгибанием колена и бедра и стабилизацией таза."
         }
       ]
@@ -3453,7 +3453,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-curl/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Классическое сгибание рук с гантелями: бицепс основной сгибатель, плечевая/плечелучевая помогают."
         }
       ]
@@ -3538,7 +3538,7 @@
             "https://fitnessprogramer.com/exercise/dumbbell-deadlift/",
             "https://www.strengthlog.com/deadlift/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Становая тяга с гантелями: разгибатели тазобедренных/коленных суставов и спины; мышцы корпуса и хвата фиксируют нагрузку."
         }
       ]
@@ -3781,7 +3781,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-forward-leaning-lunge/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Выпад с наклоном туловища вперёд усиливает момент разгибания бедра; ягодичная и квадрицепсы выполняют движение."
         }
       ]
@@ -3822,7 +3822,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-front-raise/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Подъём гантелей перед собой — преимущественно передняя дельта; зубчатая и трапеция поддерживают вращение лопатки."
         }
       ]
@@ -3861,7 +3861,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-glute-bridge/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Ягодичный мост с гантелью: разгибание таза большой ягодичной, задняя поверхность бедра синергирует."
         }
       ]
@@ -3901,7 +3901,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-goblet-curtsey-lunge/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Curtsy lunge с гантелью в goblet-хвате: разгибатели ног и ягодичные, требуется стабилизация таза."
         }
       ]
@@ -3943,7 +3943,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-goblet-squat/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Гоблет-присед с гантелью у груди: квадрицепсы разгибают колено, таз и корпус сохраняют вертикаль."
         }
       ]
@@ -3984,7 +3984,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-good-morning/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Good morning с гантелью — сгибание/разгибание в тазобедренных суставах с напряжением задней поверхности бедра и ягодичных."
         }
       ]
@@ -4063,7 +4063,7 @@
           "source_urls": [
             "https://fitnessprogramer.com/exercise/dumbbell-incline-shrug/"
           ],
-          "confidence": "high",
+          "confidence": "medium",
           "reason": "Шраги с упором на наклонную скамью нагружают верхнюю трапецию; мышца, поднимающая лопатку, помогает."
         }
       ]
