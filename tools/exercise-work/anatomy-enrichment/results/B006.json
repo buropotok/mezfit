@@ -2088,6 +2088,418 @@
         }
       ],
       "notes": "В инструкции указаны горизонтальная скамья и разгибание локтей с фиксированными плечами."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-split-jump",
+      "source_path": "assets/work/hip/dumbbell-split-jump.json",
+      "source_blob_sha": "52d555015cf1768efba88a36517df344519270c6",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-split-jump/"
+          ],
+          "confidence": "low",
+          "reason": "Прыжковые выпады с гантелями; в исходнике нет описания/анатомии. Проверить разгибание тазобедренного сустава и фазы приземления по GIF."
+        }
+      ],
+      "notes": "Прыжковые выпады с гантелями; в исходнике нет описания/анатомии. Проверить разгибание тазобедренного сустава и фазы приземления по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-squat",
+      "source_path": "assets/work/hip/dumbbell-squat.json",
+      "source_blob_sha": "5a29b55df762b36b0b636ae0ad0406922f1ce5d5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходная инструкция допускает гантели по бокам и goblet-вариант; обе версии используют один существующий тип оборудования."
+        }
+      ],
+      "notes": "Исходная инструкция допускает гантели по бокам и goblet-вариант; обе версии используют один существующий тип оборудования."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-standing-palms-in-press",
+      "source_path": "assets/work/shoulders/dumbbell-standing-palms-in-press.json",
+      "source_blob_sha": "0ee025fc0a524ac222593c710a8137da68823887",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-standing-palms-in-press/"
+          ],
+          "confidence": "low",
+          "reason": "Нейтральный хват при жиме стоя. Исходник не даёт техники и анатомии; требуется проверить вариант overhead press по GIF."
+        }
+      ],
+      "notes": "Нейтральный хват при жиме стоя. Исходник не даёт техники и анатомии; требуется проверить вариант overhead press по GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-step-up",
+      "source_path": "assets/work/hip/dumbbell-step-up.json",
+      "source_blob_sha": "85e7f28d1d9dbf046349647709d8f1db339f4c82",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-step-up/"
+          ],
+          "confidence": "low",
+          "reason": "Для step-up необходима возвышенная поверхность; исходник указывает bench. Анатомия не указана, сверить технику на GIF."
+        }
+      ],
+      "notes": "Для step-up необходима возвышенная поверхность; исходник указывает bench. Анатомия не указана, сверить технику на GIF."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-straight-arm-pullover-knees-at-90-degrees",
+      "source_path": "assets/work/chest/dumbbell-straight-arm-pullover-knees-at-90-degrees.json",
+      "source_blob_sha": "630fa815e4d2155fcd9f094b67887277f87e7b2b",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "triceps_long_head"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-straight-arm-pullover-knees-at-90-degrees/"
+          ],
+          "confidence": "low",
+          "reason": "Источник не даёт инструкции/анатомии. Пуловер с поднятыми коленями 90° может создавать антиэкстензионную задачу для живота; проверить положение спины и ног."
+        }
+      ],
+      "notes": "Источник не даёт инструкции/анатомии. Пуловер с поднятыми коленями 90° может создавать антиэкстензионную задачу для живота; проверить положение спины и ног."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-straight-leg-deadlift",
+      "source_path": "assets/work/back/dumbbell-straight-leg-deadlift.json",
+      "source_blob_sha": "e628ae52d849cbc465ac5f8e463ae31b811e2c3a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        },
+        "primary_category": "legs"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-straight-leg-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Straight-leg deadlift — преимущественно тазобедренное разгибание с растяжением задней поверхности бедра; исходный target «Erector Spinae» скорректирован до стабилизирующей роли."
+        }
+      ],
+      "notes": "Straight-leg deadlift — преимущественно тазобедренное разгибание с растяжением задней поверхности бедра; исходный target «Erector Spinae» скорректирован до стабилизирующей роли."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-sumo-deadlift",
+      "source_path": "assets/work/hip/dumbbell-sumo-deadlift.json",
+      "source_blob_sha": "106ec299eb6a2821f74d3836bfe1345b64cad2fb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-sumo-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Широкая постановка sumo deadlift подтверждена инструкцией; исчерпывающий список мышц лопатки не переносился без подтверждения."
+        }
+      ],
+      "notes": "Широкая постановка sumo deadlift подтверждена инструкцией; исчерпывающий список мышц лопатки не переносился без подтверждения."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-sumo-squat",
+      "source_path": "assets/work/hip/dumbbell-sumo-squat.json",
+      "source_blob_sha": "9efd6d7014d495b1bf58c974225930435e007d62",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-sumo-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Sumo squat включает квадрицепс, ягодичную группу и приводящие бедра; подтипы приводящих объединены в существующий ID."
+        }
+      ],
+      "notes": "Sumo squat включает квадрицепс, ягодичную группу и приводящие бедра; подтипы приводящих объединены в существующий ID."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-tate-press",
+      "source_path": "assets/work/triceps/dumbbell-tate-press.json",
+      "source_blob_sha": "b16cef8e9b260ff8933e365178fd43a1a7b45c5d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-tate-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Tate press выполняется с гантелями лёжа на скамье или на полу, скамья альтернативна и не записана как необходимая."
+        }
+      ],
+      "notes": "Tate press выполняется с гантелями лёжа на скамье или на полу, скамья альтернативна и не записана как необходимая."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-triceps-extension",
+      "source_path": "assets/work/triceps/dumbbell-triceps-extension.json",
+      "source_blob_sha": "8f09985f7b1c139a5e0a74a3671d3abfd98ae485",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция прямо требует напрягать корпус и ягодицы для стабилизации при разгибании рук над головой."
+        }
+      ],
+      "notes": "Инструкция прямо требует напрягать корпус и ягодицы для стабилизации при разгибании рук над головой."
     }
   ]
 }
