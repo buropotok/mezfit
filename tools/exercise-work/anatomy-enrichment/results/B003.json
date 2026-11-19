@@ -251,7 +251,7 @@
       "id": "fitnessprogramer:single-leg-reverse-hyperextension-gymstick",
       "source_path": "assets/work/hip/single-leg-reverse-hyperextension-gymstick.json",
       "source_blob_sha": "d9dcf17eeee4f4c3236cf4b74441db670a925090",
-      "status": "verified",
+      "status": "partial",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -299,7 +299,7 @@
       "id": "fitnessprogramer:skier-gymstick",
       "source_path": "assets/work/shoulders/skier-gymstick.json",
       "source_blob_sha": "2db01a2815f7c34619a643d149ea56a453b95e66",
-      "status": "partial",
+      "status": "needs_review",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -348,7 +348,7 @@
       "id": "fitnessprogramer:split-squat-gymstick",
       "source_path": "assets/work/hip/split-squat-gymstick.json",
       "source_blob_sha": "82e6ee3013e543cd6bcd802c238455b773e0fbfa",
-      "status": "verified",
+      "status": "partial",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -397,7 +397,7 @@
       "id": "fitnessprogramer:squat-gymstick",
       "source_path": "assets/work/hip/squat-gymstick.json",
       "source_blob_sha": "420e9661c93e473f3d2fc3c7e80100edb4592402",
-      "status": "verified",
+      "status": "partial",
       "category_verified": true,
       "patch": {
         "equipment": [
@@ -710,7 +710,7 @@
             "biceps_brachii"
           ],
           "stabilizers": [
-            "other"
+            "erector_spinae"
           ]
         },
         "primary_category": "back"
@@ -736,7 +736,7 @@
             "https://fitnessprogramer.com/exercise/45-degree-incline-row/"
           ],
           "confidence": "medium",
-          "reason": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки."
+          "reason": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки. Разгибатели позвоночника подтверждены в отдельной роли Stabilizers исходной страницы."
         },
         {
           "fields": [
@@ -749,7 +749,7 @@
           "reason": "Текст обзора описывает верхнюю и среднюю спину как основную область тяги, хотя рубрика источника содержит Shoulders/Trapezius; оставить человеку окончательное решение."
         }
       ],
-      "notes": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки."
+      "notes": "Цель из источника — задняя дельта. Biceps Brachii при тяге сгибает локоть; нельзя без доказательств считать его, как и трицепс, стабилизатором. Сайт относит упражнение к плечам, но описание называет тягу на верх спины: категория back требует визуальной проверки. Разгибатели позвоночника подтверждены в отдельной роли Stabilizers исходной страницы."
     }
   ]
 }
