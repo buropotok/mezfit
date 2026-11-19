@@ -71,6 +71,7 @@ interface SessionExerciseSharedProps<Id extends string | number = number> {
   onDeleteSet?: (sessionSetId: Id) => Promise<void>;
   onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
   onDeleteExercise?: (sessionExerciseId: Id) => void;
+  onReplaceExercise?: (sessionExerciseId: Id) => void;
   onInformation?: () => void;
   onOpenHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
@@ -109,6 +110,7 @@ export interface ProgramSessionExerciseProps {
   onCollapsedChange?: (collapsed: boolean) => void;
   onAddSet?: () => void;
   onDelete?: () => void;
+  onReplace?: () => void;
   onInformation?: () => void;
   onOpenSet?: (setId: string) => void;
   onDeleteSet?: (setId: string) => void | Promise<void>;
