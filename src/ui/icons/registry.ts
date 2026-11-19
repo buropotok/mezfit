@@ -68,6 +68,7 @@ import usersFilledUrl from './liquid-glass-users-filled.svg';
 import usersOutlineUrl from './liquid-glass-users-outline.svg';
 
 import tablerPencilPlusUrl from './tabler-pencil-plus.svg';
+import tablerReplaceUrl from './tabler-replace.svg';
 import tablerLetterIUrl from './tabler-letter-i.svg';
 import tablerNumber0Url from './tabler-number-0.svg';
 import tablerNumber1Url from './tabler-number-1.svg';
@@ -88,6 +89,7 @@ const uiIconRegistry = {
   lock: { outline: lockUrl, filled: lockUrl },
   'lock-open': { outline: lockOpenUrl, filled: lockOpenUrl },
   'pencil-plus': { outline: tablerPencilPlusUrl, filled: tablerPencilPlusUrl },
+  replace: { outline: tablerReplaceUrl, filled: tablerReplaceUrl },
   'letter-i': { outline: tablerLetterIUrl, filled: tablerLetterIUrl },
   'number-0': { outline: tablerNumber0Url, filled: tablerNumber0Url },
   'number-1': { outline: tablerNumber1Url, filled: tablerNumber1Url },

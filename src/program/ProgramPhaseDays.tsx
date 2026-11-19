@@ -42,6 +42,9 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
   const viewport = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const [exerciseDayId, setExerciseDayId] = useState<string | null>(null);
+  const [replacingExercise, setReplacingExercise] = useState<{
+    dayId: string; exerciseId: string; snapshot: CloudProgramDayOutline['exercises'][number]['exercise']['exercise'];
+  } | null>(null);
   const [exerciseInformation, setExerciseInformation] = useState<{ dayId: string; exerciseId: string } | null>(null);
   useSpotlightHintPause(exerciseInformation !== null);
   const [deletingExercise, setDeletingExercise] = useState<{ dayId: string; exerciseId: string } | null>(null);
@@ -195,10 +198,16 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
         onStart={onStartDay ? () => { void start(item.day.id); } : undefined}
         canScheduleCoached={viewerRole === 'coach' && program.coachUserId === repository.actorUserId
           && program.clientUserId !== null} onSchedule={!onStartDay && planning && ((program.status === 'active' && phaseStatus === 'active') || (!readOnly && onActivateForScheduling)) ? format => { void schedule(item, format); } : undefined} canMoveUp={index > 0} canMoveDown={index < days.length - 1}
-        onAddExercise={() => setExerciseDayId(item.day.id)}
+        onAddExercise={() => { setReplacingExercise(null); setExerciseDayId(item.day.id); }}
         onAddSet={(exerciseId) => { void run(() => repository.addExerciseSet(program.id, item.day.id, exerciseId)); }}
         onDeleteSet={!readOnly ? (exerciseId, setId) => setDeletingSet({ dayId: item.day.id, exerciseId, setId }) : undefined}
         onDeleteExercise={!readOnly ? exerciseId => setDeletingExercise({ dayId: item.day.id, exerciseId }) : undefined}
+        onReplaceExercise={!readOnly ? exerciseId => {
+          const target = item.exercises.find(row => row.exercise.id === exerciseId);
+          if (!target) return;
+          setReplacingExercise({ dayId: item.day.id, exerciseId, snapshot: target.exercise.exercise });
+          setExerciseDayId(item.day.id);
+        } : undefined}
         onExerciseInformation={exerciseId => setExerciseInformation({ dayId: item.day.id, exerciseId })}
         onEdit={() => setDialog({ kind: 'edit', item })}
         onComment={() => setDialog({ kind: 'comment', item })}
@@ -209,7 +218,10 @@ export function ProgramPhaseDays({ repository, program, days, readOnly, actor, c
     </div>
     </div>
     {!readOnly ? <ProgramDayExercisePicker repository={repository} program={program}
-      dayId={exerciseDayId} catalogueRole={viewerRole} onNavigationContextChange={onNavigationContextChange} onClose={() => setExerciseDayId(null)} /> : null}
+      dayId={exerciseDayId} catalogueRole={viewerRole}
+      replacement={replacingExercise?.dayId === exerciseDayId ? replacingExercise : null}
+      onNavigationContextChange={onNavigationContextChange}
+      onClose={() => { setExerciseDayId(null); setReplacingExercise(null); }} /> : null}
     {dialog && selected && dialog.kind !== 'delete' ? <ProgramDayDialog key={`${dialog.kind}:${selected.id}`}
       title={dialog.kind === 'edit' ? 'Изменить день' : 'Комментарий к тренировке'}
       name={selected.name} comment={selected.comment ?? ''}

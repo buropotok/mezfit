@@ -28,6 +28,30 @@ export function appendOccurrenceExercise(
   }] };
 }
 
+/** A changed exercise is a new PLAN identity; source links and saved history remain immutable. */
+export function replaceOccurrenceExercise(plan: WorkoutOccurrencePlan, exerciseId: string,
+  snapshot: CloudProgramExerciseSnapshot, preserveSets: boolean): WorkoutOccurrencePlan {
+  if (!plan.exercises.some(exercise => exercise.id === exerciseId))
+    throw new Error('OCCURRENCE_EXERCISE_NOT_FOUND');
+  return { ...plan, exercises: plan.exercises.map(exercise => {
+    if (exercise.id !== exerciseId) return exercise;
+    const sourceSets = preserveSets && exercise.sets.length ? exercise.sets : [null];
+    return {
+      ...exercise, id: crypto.randomUUID(), sourceProgramExerciseId: null,
+      exercise: structuredClone(snapshot), notes: preserveSets ? exercise.notes : null,
+      sets: sourceSets.map((set, position) => ({
+        id: crypto.randomUUID(), sourceProgramSetId: null, position,
+        setType: set?.setType ?? null, setLabel: set?.setLabel ?? null,
+        comment: set?.comment ?? null, materialLinks: [...(set?.materialLinks ?? [])],
+        chatLinks: [...(set?.chatLinks ?? [])], plannedReps: set?.plannedReps ?? null,
+        plannedWeightKg: set?.plannedWeightKg ?? null,
+        plannedDurationSeconds: set?.plannedDurationSeconds ?? null,
+        plannedDistanceMeters: set?.plannedDistanceMeters ?? null,
+      })),
+    };
+  }) };
+}
+
 export function removeOccurrenceExercise(
   plan: WorkoutOccurrencePlan, id: string,
 ): WorkoutOccurrencePlan {

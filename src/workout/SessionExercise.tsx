@@ -370,7 +370,9 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
       focusHeader={props.focusHeader} focusReady={props.focusReady}
       actions={<ExerciseActionsMenu busy={props.busy} discussionTarget={props.discussionTarget}
         onOpenDiscussion={props.onOpenDiscussion} onNavigationContextChange={props.onNavigationContextChange}
-        onDelete={props.editable !== false ? props.onDelete : undefined} onInformation={props.onInformation} />}
+        onDelete={props.editable !== false ? props.onDelete : undefined}
+        onReplace={props.editable !== false && props.onDelete ? props.onReplace : undefined}
+        onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
     >
       <ProgramExerciseSets sets={sets} onOpenSet={props.onOpenSet} onDeleteSet={props.onDeleteSet}
@@ -475,6 +477,7 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
     onCollapsedChange,
     onOpenExerciseMenu,
     onDeleteExercise,
+    onReplaceExercise,
     onInformation,
     onOpenHistory,
     onOpenChat,
@@ -515,6 +518,8 @@ function WorkoutExercise<Id extends string | number>(props: WorkoutExerciseViewP
           anchor: data.discussionAnchor, name: exerciseName } : null}
         onNavigationContextChange={onNavigationContextChange} onOpenDiscussion={onOpenDiscussion}
         onDelete={editable && onDeleteExercise ? () => onDeleteExercise(data.sessionExerciseId) : undefined}
+        onReplace={editable && onDeleteExercise && onReplaceExercise
+          ? () => onReplaceExercise(data.sessionExerciseId) : undefined}
         onInformation={onInformation} /> : undefined}
       onOpenExerciseMenu={onDeleteExercise || onInformation || (discussionScope && data.discussionAnchor) ? undefined
         : onOpenExerciseMenu ? () => onOpenExerciseMenu(data.sessionExerciseId) : undefined}

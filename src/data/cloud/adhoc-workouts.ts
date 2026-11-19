@@ -608,6 +608,52 @@ export class AdHocWorkoutRepository {
       await this.touch(sessionId);
     });
   }
+  /** Match picker metadata to the executed exercise without exposing Dexie to React. */
+  async replacementTrackingType(definitionId: string): Promise<CloudWorkoutExerciseSnapshot['trackingType']> {
+    const row = await readProgramCatalogueExercise(this.db, this.actorUserId, definitionId);
+    if (!isExerciseTrackingType(row.tracking_type)) throw new Error('ADHOC_EXERCISE_TRACKING_REQUIRED');
+    return row.tracking_type;
+  }
+
+  /** Replace one mutable FACT exercise in a single local transaction. Old IDs remain tombstoned. */
+  async replaceExercise(sessionId: string, exerciseId: string, definitionId: string,
+    preserveSets: boolean): Promise<void> {
+    if (typeof exerciseId !== 'string' || !exerciseId || typeof definitionId !== 'string' || !definitionId
+      || typeof preserveSets !== 'boolean') throw new Error('ADHOC_INVALID_EXERCISE_IDS');
+    await this.write(exerciseSelectionTables([definitionId]), async () => {
+      const session = await this.require(sessionId);
+      const previous = await this.exercise(session, exerciseId);
+      if (session.occurrenceId && previous.occurrenceExerciseId) throw new Error(STARTED_PLAN_MESSAGE);
+      const row = await readProgramCatalogueExercise(this.db, this.actorUserId, definitionId);
+      if (!isExerciseTrackingType(row.tracking_type)) throw new Error('ADHOC_EXERCISE_TRACKING_REQUIRED');
+      if (preserveSets && previous.exercise.trackingType !== row.tracking_type)
+        throw new Error('ADHOC_EXERCISE_TRACKING_MISMATCH');
+      const snapshot = programExerciseSnapshot(row, this.actorUserId);
+      if (snapshot.catalogueDefinition) snapshot.catalogueDefinition.tracking_type = row.tracking_type;
+      const replacementId = await this.db.adHocExercises.add({
+        realmId: session.realmId, owner: owner(session), sessionId, position: previous.position,
+        notes: preserveSets ? previous.notes : null, deletedAt: null,
+        exercise: { ...snapshot, trackingType: row.tracking_type },
+      });
+      const sets = (await this.sets(session)).filter(set => set.exerciseId === exerciseId);
+      if (preserveSets && sets.length) {
+        for (const [position, set] of sets.entries()) {
+          await this.db.adHocSets.add({
+            realmId: session.realmId, owner: owner(session), sessionId, exerciseId: replacementId,
+            position, deletedAt: null, setType: set.setType, actualReps: set.actualReps,
+            actualWeightKg: set.actualWeightKg, actualDurationSeconds: set.actualDurationSeconds,
+            actualDistanceMeters: set.actualDistanceMeters, setLabel: set.setLabel, rpe: set.rpe,
+            comment: set.comment, bands: [...set.bands], setStatus: set.setStatus,
+          });
+        }
+      } else await this.insertSet(session, replacementId, 0, null);
+      const timestamp = now();
+      await this.db.adHocExercises.update(exerciseId, { deletedAt: timestamp });
+      for (const set of sets) await this.db.adHocSets.update(set.id, { deletedAt: timestamp });
+      await this.touch(sessionId);
+    });
+  }
+
   async addSet(sessionId: string, exerciseId: string): Promise<void> {
     await this.write([], async () => {
       const session = await this.require(sessionId);

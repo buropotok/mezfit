@@ -552,6 +552,64 @@ export class ProgramManagementRepository {
     });
   }
 
+  async replacementTrackingType(definitionId: string): Promise<ExerciseTrackingType> {
+    const row = await readProgramCatalogueExercise(this.db, this.actorUserId, definitionId);
+    if (!isExerciseTrackingType(row.tracking_type)) throw new Error('Не удалось определить тип учёта упражнения');
+    return row.tracking_type;
+  }
+
+  /** Retain historical PLAN IDs and copy sets only for compatible tracking types. */
+  async replaceDayExercise(id: string, dayId: string, exerciseId: string, definitionId: string,
+    preserveSets: boolean): Promise<void> {
+    if (!definitionId || !exerciseId || typeof preserveSets !== 'boolean')
+      throw new Error('Некорректное упражнение для замены');
+    const plan = await this.writable(id);
+    await this.dayAuthoringReady(plan);
+    // Include only the catalogue dependencies of the old and new definitions.
+    // FitnessProgramer stores are optional in older/offline fixture schemas.
+    const source = await this.db.programExercises.get(exerciseId);
+    const definitionIds = [definitionId, ...(source?.exercise.exerciseDefinitionId
+      ? [source.exercise.exerciseDefinitionId] : [])];
+    await this.write(['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets',
+      ...exerciseSelectionTables(definitionIds)], async () => {
+      const current = await this.currentParent(plan);
+      await this.currentDay(current, dayId);
+      const previous = await this.db.programExercises.get(exerciseId);
+      if (!previous || previous.programDayId !== dayId || !belongsToPlan(previous, current)
+        || previous.status !== 'active'
+        || previous.exercise.exerciseDefinitionId !== source?.exercise.exerciseDefinitionId)
+        throw new Error('Упражнение изменилось. Повторите выбор.');
+      const selected = await readProgramCatalogueExercise(this.db, this.actorUserId, definitionId);
+      if (!isExerciseTrackingType(selected.tracking_type)) throw new Error('Не удалось определить тип учёта упражнения');
+      if (preserveSets && (await this.trackingTypeForExercise(previous.exercise)) !== selected.tracking_type)
+        throw new Error('Типы учёта упражнений не совпадают');
+      const snapshot = programExerciseSnapshot(selected, this.actorUserId);
+      if (!isProgramExerciseSnapshot(snapshot)) throw new Error('Некорректные данные упражнения');
+      const previousSets = orderedPlanRows((await this.db.programSets.where('programExerciseId').equals(exerciseId).toArray())
+        .filter(set => belongsToPlan(set, current) && set.status === 'active'));
+      await this.beginChange(current);
+      const replacementId = await this.db.programExercises.add({
+        realmId: current.realmId, owner: this.ownerForRealm(current.realmId), programDayId: dayId,
+        exercise: snapshot, position: previous.position, status: 'active',
+        notes: preserveSets ? previous.notes : null,
+      });
+      const nextSets = preserveSets && previousSets.length ? previousSets : [null];
+      for (const [position, set] of nextSets.entries()) {
+        await this.db.programSets.add({
+          realmId: current.realmId, owner: this.ownerForRealm(current.realmId),
+          programExerciseId: replacementId, position, status: 'active',
+          setType: set?.setType ?? null, setLabel: set?.setLabel ?? null,
+          comment: set?.comment ?? null,
+          materialLinks: [...(set?.materialLinks ?? [])], chatLinks: [...(set?.chatLinks ?? [])],
+          plannedReps: set?.plannedReps ?? null, plannedWeightKg: set?.plannedWeightKg ?? null,
+          plannedDurationSeconds: set?.plannedDurationSeconds ?? null,
+          plannedDistanceMeters: set?.plannedDistanceMeters ?? null,
+        });
+      }
+      await this.db.programExercises.update(exerciseId, { status: 'deprecated' });
+    });
+  }
+
   async reorderDayExercises(id: string, dayId: string, ids: readonly string[]): Promise<void> {
     if (!Array.isArray(ids) || ids.some(value => typeof value !== 'string')
       || new Set(ids).size !== ids.length) throw new Error('Некорректный порядок упражнений');

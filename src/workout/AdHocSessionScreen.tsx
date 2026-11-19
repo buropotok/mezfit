@@ -12,6 +12,7 @@ import { useWorkoutCompletionReview } from './WorkoutCompletionContext';
 
 import type { ProgramExerciseInformation } from '../data/cloud/program-management';
 import { WorkoutExerciseSelectionSheet } from './WorkoutExerciseSelectionSheet';
+import { ExerciseReplacementDialog } from './ExerciseReplacementDialog';
 import type { ActiveWorkoutSession } from './workoutSessionTypes';
 import type { PreviousSet } from './setEntryTypes';
 import { useWorkoutPerson } from '../schedule/WorkoutPerson';
@@ -28,7 +29,8 @@ export type AdHocPreviousSets = Readonly<Record<string, readonly (PreviousSet | 
 /** Public session capabilities consumed by the screen, independent of storage internals. */
 export type AdHocSessionRepository = Pick<AdHocWorkoutRepository,
   'actorUserId' | 'observe' | 'reorder' | 'saveSet' | 'addSet' | 'deleteSet' |
-  'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>;
+  'rename' | 'comment' | 'addExercises' | 'complete' | 'resolveTemplate' | 'deleteExercise'>
+  & Partial<Pick<AdHocWorkoutRepository, 'replacementTrackingType' | 'replaceExercise'>>;
 
 function localSessionDate(instant: string): string {
   const date = new Date(instant);
@@ -76,6 +78,10 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const [selection, setSelection] = useState(false);
   const [finishConfirm, setFinishConfirm] = useState(false);
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
+  const [replaceExerciseId, setReplaceExerciseId] = useState<string | null>(null);
+  const [replacementChoice, setReplacementChoice] = useState<{
+    exerciseId: string; definitionId: string; compatible: boolean;
+  } | null>(null);
   const [informationExerciseId, setInformationExerciseId] = useState<string | null>(null);
   const [nestedNavigation, setNestedNavigation] = useState<NavigationContext | null>(null);
   const alive = useRef(true);
@@ -83,7 +89,8 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const queue = useRef<Promise<void>>(Promise.resolve());
   const availableSession = useRef<ActiveWorkoutSession<string> | null>(null);
   const clearEditingSurfaces = useCallback(() => {
-    setSelection(false); setFinishConfirm(false); setDeleteExerciseId(null); setInformationExerciseId(null);
+    setSelection(false); setFinishConfirm(false); setDeleteExerciseId(null);
+    setReplaceExerciseId(null); setReplacementChoice(null); setInformationExerciseId(null);
   }, []);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
@@ -131,10 +138,11 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
     setNestedNavigation(null);
   }, [clearEditingSurfaces]);
   useEffect(() => {
-    onNavigationContextChange(nestedNavigation ?? (selection || finishConfirm || deleteExerciseId || informationExerciseId
+    onNavigationContextChange(nestedNavigation ?? (selection || finishConfirm || deleteExerciseId || replaceExerciseId || replacementChoice || informationExerciseId
       ? { level: 2, title: selection ? 'Упражнения' : 'Тренировка', onBack: closeOverlay } : null));
     return () => onNavigationContextChange(null);
-  }, [nestedNavigation, selection, finishConfirm, deleteExerciseId, informationExerciseId, closeOverlay, onNavigationContextChange]);
+  }, [nestedNavigation, selection, finishConfirm, deleteExerciseId, replaceExerciseId, replacementChoice,
+    informationExerciseId, closeOverlay, onNavigationContextChange]);
   const loadExerciseInformation = useCallback(() => {
     if (!informationExerciseId || !onExerciseInformation)
       return Promise.reject(new Error('Упражнение недоступно'));
@@ -208,10 +216,13 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         focusExerciseId={focusExerciseId} focusSetId={focusSetId} athleteName={athlete.name} athleteAvatar={athlete.avatar} session={displaySession} title={row?.name} comment={row?.comment}
         onReorderExerciseIds={ids => { void mutate(() => repository.reorder(sessionId, ids)).catch(report); }}
         onSaveSet={input => mutate(() => repository.saveSet(sessionId, input.sessionSetId, input.fact))}
-        onAddExercise={() => { if (!pending.current) { setError(''); setSelection(true); } }}
+        onAddExercise={() => { if (!pending.current) { setError(''); setReplaceExerciseId(null); setSelection(true); } }}
         onAddSet={id => { if (!pending.current) void mutate(() => repository.addSet(sessionId, id)).catch(report); }}
         onDeleteSet={id => mutate(() => repository.deleteSet(sessionId, id))}
         onDeleteExercise={id => { if (!pending.current) setDeleteExerciseId(id); }}
+        onReplaceExercise={repository.replaceExercise && repository.replacementTrackingType ? id => {
+          if (!pending.current) { setError(''); setReplaceExerciseId(id); setSelection(true); }
+        } : undefined}
         onExerciseInformation={onExerciseInformation ? id => {
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
@@ -229,12 +240,39 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
     {error ? <><Text variant="footnote" role="alert">{error}</Text>
       {!session ? <Button rounded tonal onClick={() => setRetry(value => value + 1)}>Повторить</Button> : null}</> : null}
     <WorkoutExerciseSelectionSheet opened={selection} initData={initData} personalCatalogueRole={personalCatalogueRole}
+      mode={replaceExerciseId ? 'replace' : 'add'}
       saving={busy} actionError={error} onNavigationContextChange={setNestedNavigation}
       onClose={closeOverlay} onConfirm={ids => {
         if (!ids.length || pending.current) return;
+        if (replaceExerciseId && repository.replacementTrackingType) {
+          const exerciseId = replaceExerciseId;
+          void mutate(async () => {
+            const previous = availableSession.current?.exercises.find(item => item.sessionExerciseId === exerciseId);
+            if (!previous) throw new Error('Упражнение недоступно');
+            const trackingType = await repository.replacementTrackingType!(ids[0]);
+            if (alive.current) {
+              setReplacementChoice({ exerciseId, definitionId: ids[0],
+                compatible: previous.exercise.tracking_type === trackingType });
+              setSelection(false);
+              setNestedNavigation(null);
+            }
+          }).catch(report);
+        } else {
+          void mutate(async () => {
+            await repository.addExercises(sessionId, ids);
+            if (alive.current) { setSelection(false); setNestedNavigation(null); }
+          }).catch(report);
+        }
+      }} />
+    <ExerciseReplacementDialog opened={replacementChoice !== null}
+      compatible={replacementChoice?.compatible ?? false} busy={busy} error={error}
+      onCancel={closeOverlay}
+      onConfirm={preserveSets => {
+        if (!replacementChoice || pending.current || !repository.replaceExercise) return;
+        const choice = replacementChoice;
         void mutate(async () => {
-          await repository.addExercises(sessionId, ids);
-          if (alive.current) { setSelection(false); setNestedNavigation(null); }
+          await repository.replaceExercise!(sessionId, choice.exerciseId, choice.definitionId, preserveSets);
+          if (alive.current) { clearEditingSurfaces(); setNestedNavigation(null); }
         }).catch(report);
       }} />
     {informationExerciseId && onExerciseInformation ? (
