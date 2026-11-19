@@ -13,12 +13,13 @@ const state = vi.hoisted(() => ({
 vi.mock('../data/cloud/CloudConnectionsProvider', () => ({
   useCloudConnections: () => ({ db: state.db, actorUserId: 'tg:101' }),
 }));
-vi.mock('./ClientWorkoutContext', () => ({
-  useClientWorkout: () => ({ repository: {
+vi.mock('./ClientWorkoutContext', () => {
+  const repository = {
     createForAthlete: state.clientProgram,
     createIndependentFromProgramDay: state.clientIndependent,
-  } }),
-}));
+  };
+  return { useClientWorkout: () => ({ repository }) };
+});
 vi.mock('../data/cloud/adhoc-workouts', () => ({
   AdHocWorkoutRepository: class {
     createForAthlete = state.coachProgram;
