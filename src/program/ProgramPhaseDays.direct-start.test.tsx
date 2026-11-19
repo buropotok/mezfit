@@ -98,7 +98,7 @@ describe('program-day plan prompt and independent execution', () => {
   it('keeps source-picker start callback independent of the new direct-start action', async () => {
     const onStartDay = vi.fn(async () => {});
     render(page({ onStartDay, allowDirectStart: false }));
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' })));
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Начать тренировку' })); });
     expect(onStartDay).toHaveBeenCalledWith('day');
     expect(state.startFromProgram).not.toHaveBeenCalled();
   });
