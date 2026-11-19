@@ -2915,6 +2915,414 @@
         }
       ],
       "notes": "Потребность в турнике следует из техники эксцентрического подтягивания, хотя исходное оборудование ошибочно NO EQUIPMENT; ящик/прыжок для старта альтернативны и не обязательны."
+    },
+    {
+      "id": "fitnessprogramer:elbow-flexion",
+      "source_path": "assets/work/biceps/elbow-flexion.json",
+      "source_blob_sha": "61ff203e9a9947c29137cfebbfea79cf0bac6fb1",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "secondary": [
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/elbow-flexion/"
+          ],
+          "confidence": "low",
+          "reason": "Без нагрузки движение elbow flexion активирует сгибатели локтя; отсутствует техника/уточнение хвата, необходим визуальный контроль."
+        }
+      ],
+      "notes": "Без нагрузки движение elbow flexion активирует сгибатели локтя; отсутствует техника/уточнение хвата, необходим визуальный контроль."
+    },
+    {
+      "id": "fitnessprogramer:elbow-reverse-push-up",
+      "source_path": "assets/work/back/elbow-reverse-push-up.json",
+      "source_blob_sha": "ef09071f0f340fdcd4e213924f64d180d02e308a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/elbow-reverse-push-up/",
+            "https://www.tetsu.fitness/exercises/elbow-lift-reverse-push-up/"
+          ],
+          "confidence": "low",
+          "reason": "Обратное отжимание с опорой на локти поднимает верхнюю часть туловища за счёт мышц верхней спины; это не обычное отжимание на трицепс. Движение требует проверки GIF."
+        }
+      ],
+      "notes": "Обратное отжимание с опорой на локти поднимает верхнюю часть туловища за счёт мышц верхней спины; это не обычное отжимание на трицепс. Движение требует проверки GIF."
+    },
+    {
+      "id": "fitnessprogramer:elbow-to-knee-twists",
+      "source_path": "assets/work/cardio/elbow-to-knee-twists.json",
+      "source_blob_sha": "4e05ce5645add53d3eb054c1dd8672cf3d629879",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/elbow-to-knee-twists/"
+          ],
+          "confidence": "low",
+          "reason": "Динамические скручивания локоть-к-колену включают косые мышцы и сгибание бедра, категория Cardio оставлена как назначение исходного упражнения. Нет исходной техники."
+        }
+      ],
+      "notes": "Динамические скручивания локоть-к-колену включают косые мышцы и сгибание бедра, категория Cardio оставлена как назначение исходного упражнения. Нет исходной техники."
+    },
+    {
+      "id": "fitnessprogramer:exercise-ball-frog-crunch",
+      "source_path": "assets/work/abs/exercise-ball-frog-crunch.json",
+      "source_blob_sha": "05f16b6940878048b353ab4d91da34cbcca3322d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "stability ball"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/exercise-ball-frog-crunch/"
+          ],
+          "confidence": "low",
+          "reason": "Frog crunch на фитболе предполагает сгибание туловища; в исходнике отсутствуют техника и анатомия, требуется GIF."
+        }
+      ],
+      "notes": "Frog crunch на фитболе предполагает сгибание туловища; в исходнике отсутствуют техника и анатомия, требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:exercise-ball-triceps-extension",
+      "source_path": "assets/work/triceps/exercise-ball-triceps-extension.json",
+      "source_blob_sha": "2d17dacf2ade4ffee57eca11a82ce8fc359e345c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "stability ball"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "gluteus_maximus"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/exercise-ball-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция прямо требует гантели, хотя equipment сообщает лишь Exercise Ball; опора лопатками на фитбол и напряжение корпуса определяют стабилизирующую роль."
+        }
+      ],
+      "notes": "Инструкция прямо требует гантели, хотя equipment сообщает лишь Exercise Ball; опора лопатками на фитбол и напряжение корпуса определяют стабилизирующую роль."
+    },
+    {
+      "id": "fitnessprogramer:exercise-ball-wall-squat",
+      "source_path": "assets/work/hip/exercise-ball-wall-squat.json",
+      "source_blob_sha": "980ea615c4a214d151a6a933d597e82fb8031069",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "stability ball",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/exercise-ball-wall-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Фитбол между спиной и стеной, приседание с опорой; в исходнике не перечислены мышцы и инструкция. Стена необходима для варианта wall squat."
+        }
+      ],
+      "notes": "Фитбол между спиной и стеной, приседание с опорой; в исходнике не перечислены мышцы и инструкция. Стена необходима для варианта wall squat."
+    },
+    {
+      "id": "fitnessprogramer:ez-bar-bent-arm-pullover",
+      "source_path": "assets/work/back/ez-bar-bent-arm-pullover.json",
+      "source_blob_sha": "c66f113f984b5b176281082f69cf7c5e6a29fd3f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "teres_major",
+            "triceps_long_head"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ez-bar-bent-arm-pullover/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходник ошибочно относит EZ-гриф к общему Barbell; инструкция явно называет EZ-Bar и скамью. Длинная головка трицепса участвует в разгибании плеча."
+        }
+      ],
+      "notes": "Исходник ошибочно относит EZ-гриф к общему Barbell; инструкция явно называет EZ-Bar и скамью. Длинная головка трицепса участвует в разгибании плеча."
+    },
+    {
+      "id": "fitnessprogramer:ez-bar-incline-front-raise",
+      "source_path": "assets/work/shoulders/ez-bar-incline-front-raise.json",
+      "source_blob_sha": "50f4025a7db552ace5935c86612641cbf9d45a24",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ez-bar-incline-front-raise/"
+          ],
+          "confidence": "low",
+          "reason": "По названию EZ-Bar Incline Front Raise нужны EZ-гриф и наклонная скамья; в исходнике equipment=Barbell, нет техники/анатомии; проверить GIF."
+        }
+      ],
+      "notes": "По названию EZ-Bar Incline Front Raise нужны EZ-гриф и наклонная скамья; в исходнике equipment=Barbell, нет техники/анатомии; проверить GIF."
+    },
+    {
+      "id": "fitnessprogramer:ez-bar-lying-close-grip-triceps-extension-behind-head",
+      "source_path": "assets/work/triceps/ez-bar-lying-close-grip-triceps-extension-behind-head.json",
+      "source_blob_sha": "eac7fa18c287612db5ed9baf5763303aeb9197b1",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ez-bar-lying-close-grip-triceps-extension-behind-head/"
+          ],
+          "confidence": "low",
+          "reason": "Лежачее разгибание на трицепс с EZ-грифом. В исходнике есть только generic Barbell без описания/мышц, подтвердить опору по GIF."
+        }
+      ],
+      "notes": "Лежачее разгибание на трицепс с EZ-грифом. В исходнике есть только generic Barbell без описания/мышц, подтвердить опору по GIF."
+    },
+    {
+      "id": "fitnessprogramer:ez-bar-underhand-press",
+      "source_path": "assets/work/shoulders/ez-bar-underhand-press.json",
+      "source_blob_sha": "ce22ff75bbb45a29573dd81fc6516f7883783253",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "ez bar"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "pectoralis_clavicular",
+            "supraspinatus",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ez-bar-underhand-press/"
+          ],
+          "confidence": "medium",
+          "reason": "В исходной инструкции прямо указан EZ curl bar с обратным хватом при жиме вверх, а не обычная штанга."
+        }
+      ],
+      "notes": "В исходной инструкции прямо указан EZ curl bar с обратным хватом при жиме вверх, а не обычная штанга."
     }
   ]
 }
