@@ -4,11 +4,11 @@
   "claim_id": "b002-mwnq47y6-eceohwdg9f",
   "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
   "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
-  "processed_exercises": 12,
+  "processed_exercises": 36,
   "expected_exercises": 100,
-  "last_processed_id": "fitnessprogramer:cable-incline-biceps-curl",
-  "last_processed_index": 12,
-  "remaining_exercises": 88,
+  "last_processed_id": "fitnessprogramer:cable-seated-cross-arm-twist",
+  "last_processed_index": 36,
+  "remaining_exercises": 64,
   "not_final": true,
   "note_ru": "Промежуточный результат. Все B002 ещё не обработаны. Не считать completed."
 }

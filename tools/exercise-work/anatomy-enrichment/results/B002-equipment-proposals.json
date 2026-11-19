@@ -1,0 +1,42 @@
+{
+  "batch_id": "B002",
+  "proposals": [
+    {
+      "id": "preacher-bench",
+      "label_ru": "Скамья Скотта",
+      "definition_ru": "Специализированная скамья с наклонным упором для плеч при сгибаниях рук на бицепс на тросовом блоке; не синоним обычной лавки.",
+      "exercise_ids": [
+        "fitnessprogramer:cable-preacher-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/cable-preacher-curl/",
+        "https://www.muscleandfitness.com/exercise/workouts/arm-exercises/preacher-curl-cable/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "preacher curl bench",
+        "preacher pad",
+        "preacher bench"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "lat-pulldown-machine",
+      "label_ru": "Тренажёр для вертикальной тяги",
+      "definition_ru": "Силовой тренажёр верхнего блока с сиденьем и фиксаторами бёдер для выполнения вертикальной тяги за голову или к груди.",
+      "exercise_ids": [
+        "fitnessprogramer:cable-rear-pulldown"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/cable-rear-pulldown/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "lat pulldown machine",
+        "pulldown station",
+        "seated lat pulldown"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
