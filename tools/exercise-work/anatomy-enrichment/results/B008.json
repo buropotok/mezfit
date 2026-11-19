@@ -2652,6 +2652,446 @@
         }
       ],
       "notes": "Lying hamstring stretch — растяжка задней поверхности бедра; исходный Hamstring и Calf Muscles отмечают растягиваемую ткань, не двигательные роли."
+    },
+    {
+      "id": "fitnessprogramer:lying-high-bench-barbell-curl",
+      "source_path": "assets/work/biceps/lying-high-bench-barbell-curl.json",
+      "source_blob_sha": "f275ff0ad49dce604715a6fb7b01b4eff792d72d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-high-bench-barbell-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Lying high bench barbell curl — источник требует плоскую скамью и штангу, локтевое сгибание бицепсом; стабилизация хвата, трапеция как динамический стабилизатор не подтверждена."
+        }
+      ],
+      "notes": "Lying high bench barbell curl — источник требует плоскую скамью и штангу, локтевое сгибание бицепсом; стабилизация хвата, трапеция как динамический стабилизатор не подтверждена."
+    },
+    {
+      "id": "fitnessprogramer:lying-knee-raise",
+      "source_path": "assets/work/abs/lying-knee-raise.json",
+      "source_blob_sha": "3f6c47a571990356cc0640f9d98ce6d032186ca5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-knee-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Лёжа сгибание бедра/подъём коленей, прямая мышца живота участвует в контроле таза и поясницы, iliopsoas сгибает бедро."
+        }
+      ],
+      "notes": "Лёжа сгибание бедра/подъём коленей, прямая мышца живота участвует в контроле таза и поясницы, iliopsoas сгибает бедро."
+    },
+    {
+      "id": "fitnessprogramer:lying-scissor-kick",
+      "source_path": "assets/work/abs/lying-scissor-kick.json",
+      "source_blob_sha": "d7eb81e8f8c0703b73a6c8230ffeb76573acc060",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-scissor-kick/"
+          ],
+          "confidence": "medium",
+          "reason": "Lying scissor kick: исходный Abdominal не является точным каноническим ID; поднятие ног обусловлено сгибателями бедра, пресс стабилизирует таз."
+        }
+      ],
+      "notes": "Lying scissor kick: исходный Abdominal не является точным каноническим ID; поднятие ног обусловлено сгибателями бедра, пресс стабилизирует таз."
+    },
+    {
+      "id": "fitnessprogramer:lying-shoulder-press",
+      "source_path": "assets/work/shoulders/lying-shoulder-press.json",
+      "source_blob_sha": "5bc82f656c80559c7146b055a62937960bfed6e5",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-shoulder-press/"
+          ],
+          "confidence": "low",
+          "reason": "Lying Shoulder Press с гантелями: без инструкции невозможно отличить необычный горизонтальный жим от shoulder press на наклонной скамье, GIF нужен прежде чем добавлять bench."
+        }
+      ],
+      "notes": "Lying Shoulder Press с гантелями: без инструкции невозможно отличить необычный горизонтальный жим от shoulder press на наклонной скамье, GIF нужен прежде чем добавлять bench."
+    },
+    {
+      "id": "fitnessprogramer:lying-toe-touches",
+      "source_path": "assets/work/abs/lying-toe-touches.json",
+      "source_blob_sha": "8962e8402defdde82472312c85a21f59e60f97bd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-toe-touches/"
+          ],
+          "confidence": "medium",
+          "reason": "Lying toe touches: сгибание туловища к поднятым стопам, rectus abdominis основная мышца."
+        }
+      ],
+      "notes": "Lying toe touches: сгибание туловища к поднятым стопам, rectus abdominis основная мышца."
+    },
+    {
+      "id": "fitnessprogramer:lying-upper-body-rotation",
+      "source_path": "assets/work/chest/lying-upper-body-rotation.json",
+      "source_blob_sha": "b6bfa137babbb1a24d119cace8b365ead366255f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "back",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-upper-body-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Lying upper body rotation по инструкции — боковая ротационная мобилизация грудного отдела, а не работа груди как основных силовых мышц; категория back."
+        }
+      ],
+      "notes": "Lying upper body rotation по инструкции — боковая ротационная мобилизация грудного отдела, а не работа груди как основных силовых мышц; категория back."
+    },
+    {
+      "id": "fitnessprogramer:lying-weighted-lateral-neck-flexion",
+      "source_path": "assets/work/neck/lying-weighted-lateral-neck-flexion.json",
+      "source_blob_sha": "1e56f386d791dab53069845dfaa0aed165e188e0",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "head-harness",
+          "weight plate",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_flexors",
+            "cervical_extensors"
+          ],
+          "secondary": [
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-weighted-lateral-neck-flexion/"
+          ],
+          "confidence": "medium",
+          "reason": "По пошаговой инструкции голова в подвесной упряжи с утяжеляющим блином, тело лежит боком на наклонной скамье; оборудование head harness отличен от гантели."
+        }
+      ],
+      "notes": "По пошаговой инструкции голова в подвесной упряжи с утяжеляющим блином, тело лежит боком на наклонной скамье; оборудование head harness отличен от гантели."
+    },
+    {
+      "id": "fitnessprogramer:lying-weighted-neck-extension",
+      "source_path": "assets/work/neck/lying-weighted-neck-extension.json",
+      "source_blob_sha": "20a5d2c3e747c63786b3873dc0dac65105dd42d8",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "cervical_extensors"
+          ],
+          "secondary": [
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-weighted-neck-extension/"
+          ],
+          "confidence": "low",
+          "reason": "Weighted neck extension: разгибатели шеи основные; исходный dumbbells без инструкции не подтверждает способ удержания веса, equipment оставлено без дополнительной гипотезы."
+        }
+      ],
+      "notes": "Weighted neck extension: разгибатели шеи основные; исходный dumbbells без инструкции не подтверждает способ удержания веса, equipment оставлено без дополнительной гипотезы."
+    },
+    {
+      "id": "fitnessprogramer:lying-weighted-neck-flexion",
+      "source_path": "assets/work/neck/lying-weighted-neck-flexion.json",
+      "source_blob_sha": "c215f6716702b5e6ae47e701b419fba3f7f8f63d",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "cervical_flexors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-weighted-neck-flexion/"
+          ],
+          "confidence": "low",
+          "reason": "Weighted neck flexion: сгибатели шеи основные; исходный dumbbells может быть неправильно размечен, способ крепления неизвестен до GIF."
+        }
+      ],
+      "notes": "Weighted neck flexion: сгибатели шеи основные; исходный dumbbells может быть неправильно размечен, способ крепления неизвестен до GIF."
+    },
+    {
+      "id": "fitnessprogramer:medicine-ball-crunch",
+      "source_path": "assets/work/abs/medicine-ball-crunch.json",
+      "source_blob_sha": "8f9a4a469413190a1db0c5572d66df5c8f54fd6a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/medicine-ball-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Источник говорит medicine ball во время скручивания, тогда как исходное Exercise Ball обозначает фитбол. Нужен канонический медбол."
+        }
+      ],
+      "notes": "Источник говорит medicine ball во время скручивания, тогда как исходное Exercise Ball обозначает фитбол. Нужен канонический медбол."
+    },
+    {
+      "id": "fitnessprogramer:medicine-ball-overhead-slam",
+      "source_path": "assets/work/back/medicine-ball-overhead-slam.json",
+      "source_blob_sha": "a7f878f8e6b0ffec41ef317b5b194d2da264d2df",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/medicine-ball-overhead-slam/"
+          ],
+          "confidence": "medium",
+          "reason": "Overhead slam — бросок медбола вниз за счёт сгибания плеча и корпуса, исходная категория back слишком узкая, отличаем медбол от фитбола."
+        }
+      ],
+      "notes": "Overhead slam — бросок медбола вниз за счёт сгибания плеча и корпуса, исходная категория back слишком узкая, отличаем медбол от фитбола."
+    },
+    {
+      "id": "fitnessprogramer:medicine-ball-overhead-throw",
+      "source_path": "assets/work/chest/medicine-ball-overhead-throw.json",
+      "source_blob_sha": "f25acb1b6a6a4a02bdc31185a9ea35ae8cf6d3c3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "rectus_abdominis",
+            "quadriceps_femoris"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/medicine-ball-overhead-throw/"
+          ],
+          "confidence": "medium",
+          "reason": "Medicine-ball overhead throw — бросок медбола над головой с подключением ног/корпуса, категория full_body вместо chest. Слова Shoulder/Chest/Triceps заменены каноническими ID."
+        }
+      ],
+      "notes": "Medicine-ball overhead throw — бросок медбола над головой с подключением ног/корпуса, категория full_body вместо chest. Слова Shoulder/Chest/Triceps заменены каноническими ID."
     }
   ]
 }
