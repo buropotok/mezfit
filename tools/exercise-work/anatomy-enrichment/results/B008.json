@@ -1,0 +1,457 @@
+{
+  "schema_version": 1,
+  "batch_id": "B008",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:kettlebell-bent-over-row",
+      "source_path": "assets/work/back/kettlebell-bent-over-row.json",
+      "source_blob_sha": "31e44e6b3c05d7fa3b3968373e189934a726fb76",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-bent-over-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Наклонная тяга гири: разгибание плеча и приведение лопаток, сгибатели локтя помогают; по названию подтверждена гиря."
+        }
+      ],
+      "notes": "Наклонная тяга гири: разгибание плеча и приведение лопаток, сгибатели локтя помогают; по названию подтверждена гиря."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-chest-press-on-the-floor",
+      "source_path": "assets/work/chest/kettlebell-chest-press-on-the-floor.json",
+      "source_blob_sha": "48d2722570b49e596aa46686551eaa26790111bd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "pectoralis_clavicular",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-chest-press-on-the-floor/"
+          ],
+          "confidence": "medium",
+          "reason": "Floor press с гирями в каждой руке: исходные pectoralis major sternal остаются primary; Biceps Brachii не подтверждён как динамический стабилизатор."
+        }
+      ],
+      "notes": "Floor press с гирями в каждой руке: исходные pectoralis major sternal остаются primary; Biceps Brachii не подтверждён как динамический стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-clean-and-jerk",
+      "source_path": "assets/work/shoulders/kettlebell-clean-and-jerk.json",
+      "source_blob_sha": "c5ee770a1da3aaa9cc64038fb1eb63db9459c617",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-clean-and-jerk/"
+          ],
+          "confidence": "medium",
+          "reason": "Clean and jerk с гирей — подъём на грудь и толчок ногами/плечами; основная категория full_body вместо плеч, задняя цепь и ноги формируют импульс."
+        }
+      ],
+      "notes": "Clean and jerk с гирей — подъём на грудь и толчок ногами/плечами; основная категория full_body вместо плеч, задняя цепь и ноги формируют импульс."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-clean-and-press",
+      "source_path": "assets/work/shoulders/kettlebell-clean-and-press.json",
+      "source_blob_sha": "bae78b777920aeec4afe191a7e32b925c8bd728c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-clean-and-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Clean and press — подъём гири в rack с последующим жимом над головой, многосуставное движение всего тела, не изоляция плеч."
+        }
+      ],
+      "notes": "Clean and press — подъём гири в rack с последующим жимом над головой, многосуставное движение всего тела, не изоляция плеч."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-deadlift",
+      "source_path": "assets/work/hip/kettlebell-deadlift.json",
+      "source_blob_sha": "be26ab369561566371429bea17c44097a86145e4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "quadriceps_femoris",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции становая тяга гири между ногами с разгибанием бедра и колена; erector spinae не sole primary, а стабилизатор позвоночника."
+        }
+      ],
+      "notes": "В инструкции становая тяга гири между ногами с разгибанием бедра и колена; erector spinae не sole primary, а стабилизатор позвоночника."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-deep-push-up",
+      "source_path": "assets/work/chest/kettlebell-deep-push-up.json",
+      "source_blob_sha": "113eb29f665f2a8b762908e540072ca5d81b0c8b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-deep-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Глубокие отжимания с ладонями на гирях, увеличенная амплитуда грудных/трицепса; источник без пошаговой техники, не указан иной дополнительный инвентарь."
+        }
+      ],
+      "notes": "Глубокие отжимания с ладонями на гирях, увеличенная амплитуда грудных/трицепса; источник без пошаговой техники, не указан иной дополнительный инвентарь."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-figure-8",
+      "source_path": "assets/work/abs/kettlebell-figure-8.json",
+      "source_blob_sha": "8f979f0199cd0795afb99ac1b022566b66b84b90",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "obliques",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-figure-8/"
+          ],
+          "confidence": "low",
+          "reason": "Kettlebell Figure 8 — передача гири между ногами восьмёркой; динамические мышцы зависят от версии swing/passing, GIF необходим для категории core и ролей."
+        }
+      ],
+      "notes": "Kettlebell Figure 8 — передача гири между ногами восьмёркой; динамические мышцы зависят от версии swing/passing, GIF необходим для категории core и ролей."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-front-squat",
+      "source_path": "assets/work/hip/kettlebell-front-squat.json",
+      "source_blob_sha": "cf6c349033089127b0cc18a377f337078bfb0a9d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-front-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Front squat с двумя гирями в front-rack по инструкции; не переносить исходные совместные названия вроде Rectus Abdominis, Obliques как один ID."
+        }
+      ],
+      "notes": "Front squat с двумя гирями в front-rack по инструкции; не переносить исходные совместные названия вроде Rectus Abdominis, Obliques как один ID."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-goblet-squat",
+      "source_path": "assets/work/hip/kettlebell-goblet-squat.json",
+      "source_blob_sha": "94a3d66c9fa8215b8d37604681bfa7e84a6f265d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-goblet-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Goblet squat с гирей удерживаемой перед грудью; бедро/колено главные разгибатели."
+        }
+      ],
+      "notes": "Goblet squat с гирей удерживаемой перед грудью; бедро/колено главные разгибатели."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-hang-clean",
+      "source_path": "assets/work/full-body/kettlebell-hang-clean.json",
+      "source_blob_sha": "51d285f06a5748acaa602fa95352f301bf60249f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-hang-clean/"
+          ],
+          "confidence": "medium",
+          "reason": "Hang clean из положения вис/бедра — взрывное разгибание таза и коленей, затем приём гири в rack; в исходной инструкции неоднозначно описана стартовая стойка."
+        }
+      ],
+      "notes": "Hang clean из положения вис/бедра — взрывное разгибание таза и коленей, затем приём гири в rack; в исходной инструкции неоднозначно описана стартовая стойка."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-lateral-raise",
+      "source_path": "assets/work/shoulders/kettlebell-lateral-raise.json",
+      "source_blob_sha": "430d240c69ba7324434e6c3fcbc847760cd800a1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "supraspinatus"
+          ],
+          "stabilizers": [
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-lateral-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Латеральное поднятие гири отводит плечо; трапеция удерживает/вращает лопатку."
+        }
+      ],
+      "notes": "Латеральное поднятие гири отводит плечо; трапеция удерживает/вращает лопатку."
+    },
+    {
+      "id": "fitnessprogramer:kettlebell-one-arm-military-press",
+      "source_path": "assets/work/shoulders/kettlebell-one-arm-military-press.json",
+      "source_blob_sha": "c37e2673512e79b05255e46a74da520d7d89ee55",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/kettlebell-one-arm-military-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный военный жим гири над головой требует разгибателей локтя и передней дельты, косые противодействуют боковому наклону."
+        }
+      ],
+      "notes": "Одноручный военный жим гири над головой требует разгибателей локтя и передней дельты, косые противодействуют боковому наклону."
+    }
+  ]
+}
