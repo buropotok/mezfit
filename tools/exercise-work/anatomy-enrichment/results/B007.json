@@ -2218,6 +2218,463 @@
         }
       ],
       "notes": "Название указывает на squat с подъёмом колена, но техника не описана: legs — предварительная категория, подлежит визуальной проверке."
+    },
+    {
+      "id": "fitnessprogramer:high-knees-against-wall",
+      "source_path": "assets/work/cardio/high-knees-against-wall.json",
+      "source_blob_sha": "88c23cdfa08faffa567d6571c42b41bc72f538bc",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-knees-against-wall/"
+          ],
+          "confidence": "medium",
+          "reason": "High knees against wall выполняется с упором на стену; cardio-ритм нельзя разметить как изолированное силовое упражнение."
+        }
+      ],
+      "notes": "High knees against wall выполняется с упором на стену; cardio-ритм нельзя разметить как изолированное силовое упражнение."
+    },
+    {
+      "id": "fitnessprogramer:high-knees-lift-run",
+      "source_path": "assets/work/cardio/high-knees-lift-run.json",
+      "source_blob_sha": "ad318ec8cdb92fd148f8f8c7bced7c9c0cdab27b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-knees-lift-run/"
+          ],
+          "confidence": "medium",
+          "reason": "High-knees lift run — аэробный бег на месте с высоким подъёмом бедра; конкретная анатомическая иерархия не следует из пустого источника."
+        }
+      ],
+      "notes": "High-knees lift run — аэробный бег на месте с высоким подъёмом бедра; конкретная анатомическая иерархия не следует из пустого источника."
+    },
+    {
+      "id": "fitnessprogramer:high-plank",
+      "source_path": "assets/work/abs/high-plank.json",
+      "source_blob_sha": "c362f8bdf020a10b1a52401768fd5f3e801ffc2d",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-plank/"
+          ],
+          "confidence": "high",
+          "reason": "High plank удерживает корпус от разгибания и плечи в опоре; удалены несуществующие мышечные ID High Plank Variations/Plank."
+        }
+      ],
+      "notes": "High plank удерживает корпус от разгибания и плечи в опоре; удалены несуществующие мышечные ID High Plank Variations/Plank."
+    },
+    {
+      "id": "fitnessprogramer:high-pulley-overhead-tricep-extension",
+      "source_path": "assets/work/triceps/high-pulley-overhead-tricep-extension.json",
+      "source_blob_sha": "8190149bd615c85c95017e9acb522640d8400303",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/high-pulley-overhead-tricep-extension/"
+          ],
+          "confidence": "high",
+          "reason": "Разгибание трицепса над головой на верхнем блоке; без самостоятельного синергиста, мышцы корпуса удерживают позу. Triceps canonical через алиас."
+        }
+      ],
+      "notes": "Разгибание трицепса над головой на верхнем блоке; без самостоятельного синергиста, мышцы корпуса удерживают позу. Triceps canonical через алиас."
+    },
+    {
+      "id": "fitnessprogramer:hindu-push-ups",
+      "source_path": "assets/work/shoulders/hindu-push-ups.json",
+      "source_blob_sha": "2801ddb6d0f570c7dcd91592e2795796702e0e34",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hindu-push-ups/"
+          ],
+          "confidence": "medium",
+          "reason": "Hindu push-ups — динамические отжимания с переходом из собаки мордой вниз; Shoulder в исходном target не является допустимым биологическим ID."
+        }
+      ],
+      "notes": "Hindu push-ups — динамические отжимания с переходом из собаки мордой вниз; Shoulder в исходном target не является допустимым биологическим ID."
+    },
+    {
+      "id": "fitnessprogramer:hip-circles",
+      "source_path": "assets/work/hip/hip-circles.json",
+      "source_blob_sha": "57cf0c384daf3192055ad2688728a582bb5799c4",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hip-circles/"
+          ],
+          "confidence": "medium",
+          "reason": "Hip circles — круговые движения тазом для мобильности, не целевая силовая тренировка adductors, несмотря на исходный target."
+        }
+      ],
+      "notes": "Hip circles — круговые движения тазом для мобильности, не целевая силовая тренировка adductors, несмотря на исходный target."
+    },
+    {
+      "id": "fitnessprogramer:hip-extension-on-bench",
+      "source_path": "assets/work/hip/hip-extension-on-bench.json",
+      "source_blob_sha": "14a2a845503c0c93081e95aeb6d370ddb77d4acf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hip-extension-on-bench/"
+          ],
+          "confidence": "medium",
+          "reason": "Hip extension on bench: названа обязательная опора bench, исходное NO EQUIPMENT конфликтует с ней; точный способ фиксации без инструкции требует GIF."
+        }
+      ],
+      "notes": "Hip extension on bench: названа обязательная опора bench, исходное NO EQUIPMENT конфликтует с ней; точный способ фиксации без инструкции требует GIF."
+    },
+    {
+      "id": "fitnessprogramer:hook-kick",
+      "source_path": "assets/work/cardio/hook-kick.json",
+      "source_blob_sha": "6271b42c9db2f643ae91c929c47d390f2971e75d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hook-kick/"
+          ],
+          "confidence": "medium",
+          "reason": "Hook kick — координационно-кардиодвижение с ударом ногой, источник без инструкции не позволяет назначить силовую анатомическую иерархию."
+        }
+      ],
+      "notes": "Hook kick — координационно-кардиодвижение с ударом ногой, источник без инструкции не позволяет назначить силовую анатомическую иерархию."
+    },
+    {
+      "id": "fitnessprogramer:horizontal-leg-press",
+      "source_path": "assets/work/leg/horizontal-leg-press.json",
+      "source_blob_sha": "158acd2dfdf09cd8d975056b6def13a8580fad68",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "horizontal-leg-press-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/horizontal-leg-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Horizontal leg press — горизонтальный жим ногами на отдельном тренажёре, отличен от generic machine; вариант с опорной спинкой не требует выдуманных стабилизаторов."
+        }
+      ],
+      "notes": "Horizontal leg press — горизонтальный жим ногами на отдельном тренажёре, отличен от generic machine; вариант с опорной спинкой не требует выдуманных стабилизаторов."
+    },
+    {
+      "id": "fitnessprogramer:human-flag",
+      "source_path": "assets/work/full-body/human-flag.json",
+      "source_blob_sha": "058065b47dc74dfcf13451ca6f5fc38b8ff0a95a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "vertical-pole"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "latissimus_dorsi",
+            "obliques",
+            "deltoid_anterior",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/human-flag/"
+          ],
+          "confidence": "medium",
+          "reason": "Human flag — силово-балансовый навык на вертикальной шестовой опоре, источник прямо требует pole/bar. Для навыка не создаётся ложное primary/secondary; контроль тела обеспечивают подтверждённые группы."
+        }
+      ],
+      "notes": "Human flag — силово-балансовый навык на вертикальной шестовой опоре, источник прямо требует pole/bar. Для навыка не создаётся ложное primary/secondary; контроль тела обеспечивают подтверждённые группы."
+    },
+    {
+      "id": "fitnessprogramer:hyperextension",
+      "source_path": "assets/work/erector-spinae/hyperextension.json",
+      "source_blob_sha": "37f9830810a138221d44e4aec6201650205293b0",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "roman-chair"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hyperextension/"
+          ],
+          "confidence": "high",
+          "reason": "Hyperextension выполняется на римском стуле с опорами для ног, явно названном в инструкции; выпрямители позвоночника/разгибатели бедра динамические двигатели."
+        }
+      ],
+      "notes": "Hyperextension выполняется на римском стуле с опорами для ног, явно названном в инструкции; выпрямители позвоночника/разгибатели бедра динамические двигатели."
+    },
+    {
+      "id": "fitnessprogramer:impossible-dips",
+      "source_path": "assets/work/triceps/impossible-dips.json",
+      "source_blob_sha": "6a62c156b658145256f04fba53a37a9e2bf9f33e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dip bars"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/impossible-dips/"
+          ],
+          "confidence": "high",
+          "reason": "Impossible dips в инструкции прямо выполняются между parallel bars; изоляция трицепса и контроль корпуса, категория arms подтверждена."
+        }
+      ],
+      "notes": "Impossible dips в инструкции прямо выполняются между parallel bars; изоляция трицепса и контроль корпуса, категория arms подтверждена."
     }
   ]
 }
