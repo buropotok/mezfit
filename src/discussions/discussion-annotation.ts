@@ -103,17 +103,22 @@ export function drawAnnotation(context: CanvasRenderingContext2D, image: HTMLCan
   context.restore();
 }
 
-export function copyAnnotationImage(source: HTMLImageElement | HTMLVideoElement): HTMLCanvasElement {
+export function copyAnnotationImage(source: HTMLImageElement | HTMLVideoElement, rotation = 0): HTMLCanvasElement {
   const width = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
   const height = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
   if (!width || !height) throw new Error('ANNOTATION_IMAGE_NOT_READY');
   const canvas = document.createElement('canvas');
   const scale = Math.min(1, 4096 / Math.max(width, height));
-  canvas.width = Math.max(1, Math.round(width * scale));
-  canvas.height = Math.max(1, Math.round(height * scale));
+  const quarterTurn = rotation === 90 || rotation === 270;
+  canvas.width = Math.max(1, Math.round((quarterTurn ? height : width) * scale));
+  canvas.height = Math.max(1, Math.round((quarterTurn ? width : height) * scale));
   const context = canvas.getContext('2d');
   if (!context) throw new Error('ANNOTATION_CANVAS_UNAVAILABLE');
-  context.drawImage(source, 0, 0, canvas.width, canvas.height);
+  if (rotation) {
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate(rotation * Math.PI / 180);
+    context.drawImage(source, -width * scale / 2, -height * scale / 2, width * scale, height * scale);
+  } else context.drawImage(source, 0, 0, canvas.width, canvas.height);
   // Check whether the original permits canvas access while still in the viewer.
   context.getImageData(0, 0, 1, 1);
   return canvas;
