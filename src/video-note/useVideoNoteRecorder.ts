@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { withErrorCode } from '../../shared/app-error-codes';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
 import { recordingOptionsCandidates, usesSensorCameraDimensions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
@@ -136,7 +137,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         resolve(null);
         reportFailure('RECORDER_STOP_FAILED');
         release();
-        setError('Не удалось завершить запись. Попробуйте ещё раз.');
+        setError(withErrorCode('Не удалось завершить запись. Попробуйте ещё раз.', 'RECORDER_STOP_FAILED'));
         updateStatus('error');
       }
     });
@@ -150,7 +151,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     if (statusRef.current !== 'idle' && statusRef.current !== 'error') return false;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       reportFailure('MEDIA_API_UNAVAILABLE');
-      setError('Этот Telegram WebView не поддерживает запись видео через камеру.');
+      setError(withErrorCode('Этот Telegram WebView не поддерживает запись видео через камеру.', 'MEDIA_API_UNAVAILABLE'));
       updateStatus('error');
       return false;
     }
@@ -160,7 +161,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     if (!candidates.length) {
       reportFailure('UNSUPPORTED_MP4_AVC', { preferredFormat: preference });
       setError(preference === 'webm'
-        ? 'Этот Telegram WebView не поддерживает выбранную запись VP8/VP9 в WebM.'
+        ? withErrorCode('Этот Telegram WebView не поддерживает выбранную запись VP8/VP9 в WebM.', 'UNSUPPORTED_MP4_AVC')
         : UNSUPPORTED_AVC);
       updateStatus('error');
       return false;
@@ -175,7 +176,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       catch (cause) {
         if (mountedRef.current && epoch === epochRef.current) {
           reportFailure('CAMERA_ACCESS_FAILED', { errorName: cause instanceof DOMException ? cause.name : 'unknown' });
-          setError(cameraError(cause));
+          setError(withErrorCode(cameraError(cause), 'CAMERA_ACCESS_FAILED'));
           updateStatus('error');
         }
         return false;
@@ -186,7 +187,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     if (!source) {
       if (mountedRef.current && epoch === epochRef.current) {
         reportFailure('CAMERA_INTERRUPTED');
-        setError('Получение камеры было прервано. Включите её повторно.');
+        setError(withErrorCode('Получение камеры было прервано. Включите её повторно.', 'CAMERA_INTERRUPTED'));
         updateStatus('error');
       }
       return false;
@@ -216,7 +217,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       if (!video || !frameReady) {
         previewAbortRef.current = null;
         reportFailure('CAMERA_PREVIEW_NOT_READY');
-        setError('Дождитесь изображения с камеры и повторите попытку.');
+        setError(withErrorCode('Дождитесь изображения с камеры и повторите попытку.', 'CAMERA_PREVIEW_NOT_READY'));
         updateStatus('error');
         return false;
       }
@@ -248,7 +249,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         reportFailure('CAMERA_ORIENTATION', {
           cameraPreviewSize: `${video.videoWidth}x${video.videoHeight}`,
         });
-        setError(`Камера Telegram не отдаёт ${orientation} кадр. Можно выбрать готовое видео из галереи.`);
+        setError(withErrorCode(`Камера Telegram не отдаёт ${orientation} кадр. Можно выбрать готовое видео из галереи.`, 'CAMERA_ORIENTATION'));
         updateStatus('error');
         return false;
       }
@@ -286,7 +287,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
           attemptedFormat: candidates.map(item => item.mimeType).join(', '),
         });
         release();
-        setError('Ни один доступный формат видеозаписи не удалось запустить.');
+        setError(withErrorCode('Ни один доступный формат видеозаписи не удалось запустить.', 'RECORDER_START_FAILED'));
         updateStatus('error');
         return false;
       }
@@ -318,7 +319,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         reportFailure('RECORDER_RUNTIME_FAILED', { recorderMimeType: activeRecorder.mimeType,
           selectedFormat: options.mimeType });
         release();
-        setError('Произошла ошибка видеозаписи. Попробуйте ещё раз.');
+        setError(withErrorCode('Произошла ошибка видеозаписи. Попробуйте ещё раз.', 'RECORDER_RUNTIME_FAILED'));
         updateStatus('error');
       };
       activeRecorder.onstop = () => {
@@ -369,11 +370,12 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
               recorderVideoBitsPerSecond: String(activeRecorder.videoBitsPerSecond),
             });
             release();
-            setError(interrupted ? 'Камера прервала запись. Попробуйте ещё раз.'
+            setError(withErrorCode(interrupted ? 'Камера прервала запись. Попробуйте ещё раз.'
               : !validType ? (isWebm
                 ? 'Устройство вернуло несовместимый формат видеозаписи.'
                 : 'Устройство не вернуло запись H.264 в MP4.')
-              : 'Запись оказалась пустой. Попробуйте ещё раз.');
+              : 'Запись оказалась пустой. Попробуйте ещё раз.',
+              interrupted ? 'RECORDER_INTERRUPTED' : !validType ? 'RECORDED_FORMAT_INVALID' : 'RECORDING_EMPTY'));
             updateStatus('error');
           } else {
             const clip = { blob, mimeType, durationMs,
@@ -401,7 +403,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         try { recorder.stop(); } catch { /* Startup already failed. */ }
       }
       release();
-      setError('Формат записи не поддерживается этим устройством.');
+      setError(withErrorCode('Формат записи не поддерживается этим устройством.', 'RECORDER_START_FAILED'));
       updateStatus('error');
       return false;
     }
@@ -426,7 +428,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
 
   const unsupportedFormat = recordingError === UNSUPPORTED_AVC;
   const error = unsupportedFormat
-    ? 'Этот Telegram WebView не поддерживает запись H.264 в MP4 или VP8/VP9 в WebM.'
+    ? withErrorCode('Этот Telegram WebView не поддерживает запись H.264 в MP4 или VP8/VP9 в WebM.', 'UNSUPPORTED_MP4_AVC')
     : recordingError;
   return { start, stop, cancel, release, status, error, unsupportedFormat, dismissUnsupportedFormat, stream, elapsedMs,
     progress: Math.min(1, elapsedMs / maxDurationMs),

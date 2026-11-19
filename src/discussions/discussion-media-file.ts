@@ -1,3 +1,6 @@
+import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
+import type { VideoRecordingErrorCode } from '../../shared/video-recording-diagnostic';
+import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import { createDirectMediaKey, MediaUploadError, validateDirectMedia } from '../media/directMediaUpload';
@@ -9,14 +12,19 @@ const extensionTypes = new Map([
   ['mov', 'video/quicktime'], ['webm', 'video/webm'],
 ]);
 
-function probe(url: string, video: boolean, signal: AbortSignal): Promise<number | null> {
+/**
+ * Browser decode probe. Do not change validation decisions in this diagnostic-only phase:
+ * distinguish browser media errors, metadata rejection, frame rejection and timeout.
+ */
+function probe(url: string, video: boolean, signal: AbortSignal, mimeType: string, sizeBytes: number): Promise<number | null> {
   return new Promise((resolve, reject) => {
     const element = video ? document.createElement('video') : new Image();
     const movie = element instanceof HTMLVideoElement ? element : null;
-    const failed = () => finish(null, 'Устройство не смогло открыть этот формат или кодек');
-    const cancelled = () => finish(null, 'Проверка файла отменена');
-    const timer = setTimeout(failed, 15_000);
-    const finish = (duration: number | null, error?: string) => {
+    let completed = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const finish = (duration: number | null, message?: string) => {
+      if (completed) return;
+      completed = true;
       clearTimeout(timer);
       signal.removeEventListener('abort', cancelled);
       element.onerror = null;
@@ -24,20 +32,38 @@ function probe(url: string, video: boolean, signal: AbortSignal): Promise<number
       if (movie) { movie.onloadeddata = null; movie.onloadedmetadata = null; }
       element.removeAttribute('src');
       movie?.load();
-      if (error) reject(new Error(error)); else resolve(duration);
+      if (message) reject(new Error(message)); else resolve(duration);
     };
-    element.onerror = failed;
+    const failed = (code: VideoRecordingErrorCode, message = 'Устройство не смогло открыть этот формат или кодек') => {
+      if (completed) return;
+      reportVideoRecordingFailure(code, 'media', {
+        mediaMimeType: mimeType,
+        mediaSizeBytes: String(sizeBytes),
+        ...(movie ? {
+          mediaErrorCode: String(movie.error?.code ?? 0),
+          mediaReadyState: String(movie.readyState),
+          mediaNetworkState: String(movie.networkState),
+        } : {}),
+      });
+      finish(null, withErrorCode(message, code));
+    };
+    const cancelled = () => finish(null, withErrorCode('Проверка файла отменена', APP_ERROR_CODES.MEDIA_CHECK_CANCELLED));
+    timer = setTimeout(() => failed(APP_ERROR_CODES.MEDIA_CHECK_TIMEOUT), 15_000);
+    element.onerror = () => failed(video ? APP_ERROR_CODES.MEDIA_VIDEO_DECODE_FAILED : APP_ERROR_CODES.MEDIA_PHOTO_DECODE_FAILED);
     if (movie) {
       movie.preload = 'auto';
       movie.playsInline = true;
       movie.muted = true;
       movie.onloadedmetadata = () => {
-        if (movie.duration > 180) finish(null, 'Видео должно быть не длиннее 3 минут');
-        else if (!Number.isFinite(movie.duration) || movie.duration <= 0 || !movie.videoWidth) failed();
+        if (movie.duration > 180) finish(null, withErrorCode('Видео должно быть не длиннее 3 минут', APP_ERROR_CODES.MEDIA_VIDEO_TOO_LONG));
+        else if (!Number.isFinite(movie.duration) || movie.duration <= 0 || !movie.videoWidth) {
+          failed(APP_ERROR_CODES.MEDIA_VIDEO_METADATA_INVALID);
+        }
       };
       movie.onloadeddata = () => {
-        if (Number.isFinite(movie.duration) && movie.duration > 0 && movie.duration <= 180 && movie.videoWidth) finish(movie.duration);
-        else failed();
+        if (Number.isFinite(movie.duration) && movie.duration > 0 && movie.duration <= 180 && movie.videoWidth) {
+          finish(movie.duration);
+        } else failed(APP_ERROR_CODES.MEDIA_VIDEO_FRAME_INVALID);
       };
     } else {
       element.onload = () => finish(null);
@@ -62,14 +88,14 @@ export async function inspectDiscussionMedia(original: File, signal: AbortSignal
     if (!DISCUSSION_MEDIA_ACCEPT.split(',').includes(mimeType)) throw new MediaUploadError('INVALID_TYPE');
   } catch (reason) {
     if (reason instanceof MediaUploadError && reason.code === 'INVALID_SIZE') {
-      throw new Error('Файл пустой или превышает лимит. Фото до 20 МБ, видео до 250 МБ');
+      throw new Error(withErrorCode('Файл пустой или превышает лимит. Фото до 20 МБ, видео до 250 МБ', APP_ERROR_CODES.MEDIA_INVALID_SIZE));
     }
-    throw new Error('Этот формат фото или видео не поддерживается');
+    throw new Error(withErrorCode('Этот формат фото или видео не поддерживается', APP_ERROR_CODES.MEDIA_INVALID_FORMAT));
   }
   const video = mimeType.startsWith('video/');
   const url = URL.createObjectURL(file);
   try {
-    const durationSeconds = await probe(url, video, signal);
+    const durationSeconds = await probe(url, video, signal, mimeType, file.size);
     const metadata: DiscussionMediaDraft = {
       id: crypto.randomUUID(), storageKey: createDirectMediaKey(), mediaType: video ? 'video' : 'photo',
       mimeType, sizeBytes: file.size, durationSeconds, fileName: file.name,

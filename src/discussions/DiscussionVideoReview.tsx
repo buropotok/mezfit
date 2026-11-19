@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
 import { Button, FloatingActionButton, Text } from '../ui';
 import { inspectVideoTrim, MIN_VIDEO_TRIM_SECONDS, trimRecordedMp4,
   type VideoTrimInfo, type VideoTrimRange } from '../media/videoTrim';
@@ -46,7 +47,8 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, onTrimFallback, p
     }, () => {
       if (!controller.signal.aborted) {
         if (clip.mimeType === 'video/webm') reportVideoRecordingFailure('WEBM_TRIM_INSPECTION_FAILED', profile);
-        setError('Обрезка этой записи недоступна. Можно использовать исходное видео.');
+        reportVideoRecordingFailure(APP_ERROR_CODES.MEDIA_REVIEW_INSPECTION_FAILED, 'media', { mediaMimeType: clip.mimeType });
+        setError(withErrorCode('Обрезка этой записи недоступна. Можно использовать исходное видео.', APP_ERROR_CODES.MEDIA_REVIEW_INSPECTION_FAILED));
       }
     });
     return () => {
@@ -106,7 +108,8 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, onTrimFallback, p
         if (clip.mimeType === 'video/webm') reportVideoRecordingFailure('WEBM_TRIM_FAILED', profile, {
           selectedFormat: 'video/webm', trimRequested: range.start.toFixed(3) + '..' + range.end.toFixed(3),
         });
-        setError('Не удалось обрезать видео. Исходная запись доступна.');
+        reportVideoRecordingFailure(APP_ERROR_CODES.MEDIA_REVIEW_TRIM_FAILED, 'media', { mediaMimeType: clip.mimeType });
+        setError(withErrorCode('Не удалось обрезать видео. Исходная запись доступна.', APP_ERROR_CODES.MEDIA_REVIEW_TRIM_FAILED));
       }
     } finally {
       if (exportRequest.current === controller) exportRequest.current = null;
@@ -145,7 +148,17 @@ export function DiscussionVideoReview({ clip, onUse, onRetake, onTrimFallback, p
             void player.play().catch(() => {});
           }
         }}
-        onError={() => { playAfterSeek.current = false; }}
+        onError={event => {
+          playAfterSeek.current = false;
+          reportVideoRecordingFailure(APP_ERROR_CODES.MEDIA_REVIEW_PLAYBACK_FAILED, 'media', {
+            mediaMimeType: clip.mimeType,
+            mediaSizeBytes: String(clip.blob.size),
+            mediaErrorCode: String(event.currentTarget.error?.code ?? 0),
+            mediaReadyState: String(event.currentTarget.readyState),
+            mediaNetworkState: String(event.currentTarget.networkState),
+          });
+          setError(withErrorCode('Не удалось воспроизвести записанное видео на этом устройстве.', APP_ERROR_CODES.MEDIA_REVIEW_PLAYBACK_FAILED));
+        }}
         onTimeUpdate={event => {
           const player = event.currentTarget;
           if (trimmedPreview && !player.paused && !player.seeking) {
