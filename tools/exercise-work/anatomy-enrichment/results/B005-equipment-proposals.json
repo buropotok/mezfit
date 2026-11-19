@@ -1,0 +1,126 @@
+{
+  "batch_id": "B005",
+  "proposals": [
+    {
+      "id": "captains_chair",
+      "label_ru": "Тренажёр «Капитанский стул»",
+      "definition_ru": "Вертикальная стойка со спинкой и опорами под предплечья, позволяющая поднимать ноги в висе с поддержкой корпуса; не равна простым брусьям.",
+      "exercise_ids": [
+        "fitnessprogramer:captains-chair-leg-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/captains-chair-leg-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "dip bars",
+        "machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "chair",
+      "label_ru": "Стул",
+      "definition_ru": "Устойчивый стул, сиденье которого используется как опора для отжиманий; не тождественен спортивной скамье, хотя скамья может выступать альтернативой.",
+      "exercise_ids": [
+        "fitnessprogramer:chair-dips",
+        "fitnessprogramer:dips-between-chairs"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/chair-dips/",
+        "https://fitnessprogramer.com/exercise/dips-between-chairs/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bench",
+        "no equipment"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "monkey_bars",
+      "label_ru": "Рукоход",
+      "definition_ru": "Ряд горизонтальных перекладин для передвижения в висе с попеременным переносом хвата; отличается от одиночного турника.",
+      "exercise_ids": [
+        "fitnessprogramer:climbing-monkey-bars"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/climbing-monkey-bars/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "pull-up bar",
+        "dip bars"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "hurdle",
+      "label_ru": "Барьер для прыжков",
+      "definition_ru": "Низкий спортивный барьер (препятствие), через который выполняют прыжки в плиометрической серии; не равен стартовой платформе.",
+      "exercise_ids": [
+        "fitnessprogramer:depth-jump-to-hurdle-hop"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/depth-jump-to-hurdle-hop/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "box",
+        "plyo box"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "door_frame",
+      "label_ru": "Дверной проём",
+      "definition_ru": "Дверной косяк или проём, на который опираются руками для растяжения передней поверхности плеч и груди; не обычная плоскость стены.",
+      "exercise_ids": [
+        "fitnessprogramer:doorway-pec-and-shoulder-stretch"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/doorway-pec-and-shoulder-stretch/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "wall",
+        "no equipment"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "preacher_bench",
+      "label_ru": "Скамья Скотта",
+      "definition_ru": "Скамья с наклонной подушкой-пюпитром для упора плеча при сгибании рук; отличается от обычной наклонной скамьи.",
+      "exercise_ids": [
+        "fitnessprogramer:dumbbell-alternate-preacher-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/dumbbell-alternate-preacher-curl/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bench",
+        "incline bench"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "arm_blaster",
+      "label_ru": "Фиксатор рук Arm Blaster",
+      "definition_ru": "Носимый жёсткий фиксатор для ограничения движения плечевых частей рук и локтей при сгибании; не является скамьёй Скотта.",
+      "exercise_ids": [
+        "fitnessprogramer:dumbbell-curl-on-arm-blaster"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/dumbbell-curl-on-arm-blaster/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bench",
+        "other"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
