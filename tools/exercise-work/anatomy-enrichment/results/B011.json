@@ -1666,6 +1666,442 @@
         }
       ],
       "notes": "Standing rotation: плавная ротация корпуса по инструкции, исходный obliques primary корректен, мышцы спины поддерживают ось."
+    },
+    {
+      "id": "fitnessprogramer:standing-side-bend",
+      "source_path": "assets/work/back/standing-side-bend.json",
+      "source_blob_sha": "c0dbd9e2675c997dc668544e5f07b97a351cd411",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "core",
+        "muscles": {
+          "primary": [
+            "obliques",
+            "quadratus_lumborum"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-side-bend/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing side bend — боковое сгибание корпуса стоя без сопротивления, основные мышцы косые и квадратная поясницы; категория core вместо back."
+        }
+      ],
+      "notes": "Standing side bend — боковое сгибание корпуса стоя без сопротивления, основные мышцы косые и квадратная поясницы; категория core вместо back."
+    },
+    {
+      "id": "fitnessprogramer:standing-side-bend-stretch",
+      "source_path": "assets/work/back/standing-side-bend-stretch.json",
+      "source_blob_sha": "f1e293cbebad37c3ead00d7848cd50dfdc8e91b6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-side-bend-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing side bend stretch — растяжка боковой части туловища, не силовая нагрузка."
+        }
+      ],
+      "notes": "Standing side bend stretch — растяжка боковой части туловища, не силовая нагрузка."
+    },
+    {
+      "id": "fitnessprogramer:standing-side-toe-touching",
+      "source_path": "assets/work/leg/standing-side-toe-touching.json",
+      "source_blob_sha": "f8a6d8307d1c9f418ef4f09a61be2903e69d2398",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-side-toe-touching/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing side toe touching — наклон в сторону к стопе для мобильности задней цепи, без техники активные мышцы не определены."
+        }
+      ],
+      "notes": "Standing side toe touching — наклон в сторону к стопе для мобильности задней цепи, без техники активные мышцы не определены."
+    },
+    {
+      "id": "fitnessprogramer:standing-stomach-vacuum",
+      "source_path": "assets/work/abs/standing-stomach-vacuum.json",
+      "source_blob_sha": "3483dadf4e2745899085b2833bad920d3a52b6f6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-stomach-vacuum/"
+          ],
+          "confidence": "medium",
+          "reason": "Stomach vacuum: втягивание живота на выдохе активирует transversus abdominis. Исходный target Multifidus/Diaphragm/Variations не представляет динамические первичные мышцы."
+        }
+      ],
+      "notes": "Stomach vacuum: втягивание живота на выдохе активирует transversus abdominis. Исходный target Multifidus/Diaphragm/Variations не представляет динамические первичные мышцы."
+    },
+    {
+      "id": "fitnessprogramer:standing-straight-leg-raise-with-resistance-band",
+      "source_path": "assets/work/leg/standing-straight-leg-raise-with-resistance-band.json",
+      "source_blob_sha": "bbd59f8070ae255c8c911f130174ebc9597c4ed4",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-straight-leg-raise-with-resistance-band/"
+          ],
+          "confidence": "low",
+          "reason": "Straight-leg raise with band в названии не указывает направление подъёма; предположено сгибание бедра, но GIF необходим перед окончательным решением."
+        }
+      ],
+      "notes": "Straight-leg raise with band в названии не указывает направление подъёма; предположено сгибание бедра, но GIF необходим перед окончательным решением."
+    },
+    {
+      "id": "fitnessprogramer:standing-toe-flexor-stretch",
+      "source_path": "assets/work/calf/standing-toe-flexor-stretch.json",
+      "source_blob_sha": "39217e56e13d6e10b9e0983e0f8f4131d536b809",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-toe-flexor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing toe flexor stretch по инструкции выполняется у стены с опорой пальцами, растяжка, не силовая работа."
+        }
+      ],
+      "notes": "Standing toe flexor stretch по инструкции выполняется у стены с опорой пальцами, растяжка, не силовая работа."
+    },
+    {
+      "id": "fitnessprogramer:standing-toe-touch",
+      "source_path": "assets/work/abs/standing-toe-touch.json",
+      "source_blob_sha": "f7ea1ef8be01029c3bbaf60734c334f3a37ab64c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-toe-touch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing toe touch — последовательный наклон позвоночника/таза к стопам с короткой задержкой, статическая мобильность, core категория исходная предварительна."
+        }
+      ],
+      "notes": "Standing toe touch — последовательный наклон позвоночника/таза к стопам с короткой задержкой, статическая мобильность, core категория исходная предварительна."
+    },
+    {
+      "id": "fitnessprogramer:standing-toe-touches",
+      "source_path": "assets/work/leg/standing-toe-touches.json",
+      "source_blob_sha": "ee6efff552087720d7f86bda90a178ae1c317c04",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-toe-touches/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing toe touches — наклоны к стопам для гибкости ног/спины, недоказана силовая анатомическая иерархия."
+        }
+      ],
+      "notes": "Standing toe touches — наклоны к стопам для гибкости ног/спины, недоказана силовая анатомическая иерархия."
+    },
+    {
+      "id": "fitnessprogramer:standing-toe-up-achilles-stretch",
+      "source_path": "assets/work/calf/standing-toe-up-achilles-stretch.json",
+      "source_blob_sha": "7263e3fb77a27ca17b43dc9fe8d5436315af0fce",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "box"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-toe-up-achilles-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Toe up Achilles stretch: шаг/платформа явно требуются инструкцией, но Gastrocnemius/Soleus растягиваются, а не создают движение как primary."
+        }
+      ],
+      "notes": "Toe up Achilles stretch: шаг/платформа явно требуются инструкцией, но Gastrocnemius/Soleus растягиваются, а не создают движение как primary."
+    },
+    {
+      "id": "fitnessprogramer:standing-triceps-stretch",
+      "source_path": "assets/work/triceps/standing-triceps-stretch.json",
+      "source_blob_sha": "eaaac0d3fd525d91bf1976ee79dfd9a62ddb5d4b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-triceps-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing triceps stretch — статическое вытяжение разгибателя локтя, не динамическое разгибание."
+        }
+      ],
+      "notes": "Standing triceps stretch — статическое вытяжение разгибателя локтя, не динамическое разгибание."
+    },
+    {
+      "id": "fitnessprogramer:standing-wall-calf-stretch",
+      "source_path": "assets/work/calf/standing-wall-calf-stretch.json",
+      "source_blob_sha": "38e7d537d7501df163b6c8a13699c5af1cbe76e5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-wall-calf-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Wall calf stretch: стена прямо названа в инструкции, икроножная/камбаловидная растягиваются, не являются главными силовыми двигателями."
+        }
+      ],
+      "notes": "Wall calf stretch: стена прямо названа в инструкции, икроножная/камбаловидная растягиваются, не являются главными силовыми двигателями."
+    },
+    {
+      "id": "fitnessprogramer:standing-wide-knees-adductor-stretch",
+      "source_path": "assets/work/hip/standing-wide-knees-adductor-stretch.json",
+      "source_blob_sha": "28ee9a8a8b62e9672a0c00483bc9bd80f122835b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-wide-knees-adductor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Wide-knees adductor stretch — растяжка приводящих бедра в широкой постановке коленей, силовые роли неизвестны."
+        }
+      ],
+      "notes": "Wide-knees adductor stretch — растяжка приводящих бедра в широкой постановке коленей, силовые роли неизвестны."
     }
   ]
 }
