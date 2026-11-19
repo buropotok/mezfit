@@ -4,11 +4,11 @@
   "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
   "batches": {
     "B001": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-fitness-b001-20261119",
+      "claim_id": "b001-mwnmt4ic-pw1tvwtm8d",
+      "started_at": "2026-11-19T14:14:37.332Z",
+      "lease_until": "2026-11-19T16:14:37.332Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
