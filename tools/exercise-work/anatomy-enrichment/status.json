@@ -83,11 +83,11 @@
       "result_stats": null
     },
     "B006": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-enrichment-b006-ledyk7wf5x",
+      "claim_id": "b006-mwnq6qtm-a3crctsh1u",
+      "started_at": "2026-11-19T15:49:11.627Z",
+      "lease_until": "2026-11-19T17:49:11.627Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
