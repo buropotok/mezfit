@@ -2217,6 +2217,441 @@
         }
       ],
       "notes": "Лёжа подтягивание коленей с контролем поясничного отдела, исходные rectus abdominis/obliques сохранены; неспецифичные стабилизаторы не добавляются."
+    },
+    {
+      "id": "fitnessprogramer:leg-raise",
+      "source_path": "assets/work/abs/leg-raise.json",
+      "source_blob_sha": "30690081691921e244f2f9b6b3db4d7e083635db",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Supine leg raise: исходные rectus abdominis primary подтверждены, добавлена роль сгибателя бедра и антиразгибательная стабилизация корпуса."
+        }
+      ],
+      "notes": "Supine leg raise: исходные rectus abdominis primary подтверждены, добавлена роль сгибателя бедра и антиразгибательная стабилизация корпуса."
+    },
+    {
+      "id": "fitnessprogramer:leg-scissors",
+      "source_path": "assets/work/abs/leg-scissors.json",
+      "source_blob_sha": "4c00dbee72a426ed486192e6e167009cc5f8b48a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_abdominis",
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-scissors/"
+          ],
+          "confidence": "medium",
+          "reason": "Leg scissors лёжа — чередование прямых ног со сгибанием бедра, контроль положения поясницы."
+        }
+      ],
+      "notes": "Leg scissors лёжа — чередование прямых ног со сгибанием бедра, контроль положения поясницы."
+    },
+    {
+      "id": "fitnessprogramer:leg-swings-front-to-back",
+      "source_path": "assets/work/hip/leg-swings-front-to-back.json",
+      "source_blob_sha": "644ff6270d6d14f6cfea4b28f0a8a94e6cbe4c2b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/leg-swings-front-to-back/"
+          ],
+          "confidence": "medium",
+          "reason": "Front-to-back leg swings — динамическая мобилизация тазобедренного сустава; исходные Hamstrings/Quadriceps/Adductors перечисляют ткани без доказанного распределения силовых ролей."
+        }
+      ],
+      "notes": "Front-to-back leg swings — динамическая мобилизация тазобедренного сустава; исходные Hamstrings/Quadriceps/Adductors перечисляют ткани без доказанного распределения силовых ролей."
+    },
+    {
+      "id": "fitnessprogramer:log-lift",
+      "source_path": "assets/work/full-body/log-lift.json",
+      "source_blob_sha": "771fa84c9e66be801e213da84be3096c492b303e",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "strongman-log",
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/log-lift/"
+          ],
+          "confidence": "low",
+          "reason": "Log lift: в инструкции указаны специальное силовое бревно ИЛИ штанга; сильные стороны упражнения схожи с clean, но точный вариант (подъём до плеча или над головой) в описании противоречив и требует GIF."
+        }
+      ],
+      "notes": "Log lift: в инструкции указаны специальное силовое бревно ИЛИ штанга; сильные стороны упражнения схожи с clean, но точный вариант (подъём до плеча или над головой) в описании противоречив и требует GIF."
+    },
+    {
+      "id": "fitnessprogramer:long-arm-crunch",
+      "source_path": "assets/work/abs/long-arm-crunch.json",
+      "source_blob_sha": "aa8a605034d74825ed5fe815d933db18fb5efb0d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/long-arm-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Long arm crunch — вариант скручивания с вытянутыми руками, основной двигатель прямая мышца живота."
+        }
+      ],
+      "notes": "Long arm crunch — вариант скручивания с вытянутыми руками, основной двигатель прямая мышца живота."
+    },
+    {
+      "id": "fitnessprogramer:long-jump",
+      "source_path": "assets/work/leg/long-jump.json",
+      "source_blob_sha": "62b3501bbb5cde1d0ca216e93454364e111f958f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/long-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "Long jump — прыжок в длину с разгибанием бедра/колена/голеностопа. Основная категория legs корректна как нижняя динамическая цепь."
+        }
+      ],
+      "notes": "Long jump — прыжок в длину с разгибанием бедра/колена/голеностопа. Основная категория legs корректна как нижняя динамическая цепь."
+    },
+    {
+      "id": "fitnessprogramer:low-chest-fly-with-resistance-band",
+      "source_path": "assets/work/chest/low-chest-fly-with-resistance-band.json",
+      "source_blob_sha": "3fed91366b47b940f6aad7120956fa19128e62be",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_clavicular"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/low-chest-fly-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Разведение рук с нижней лентой, название resistance band определяет эластичную ленту; наличие Gymstick в исходных тегах не подтверждает его обязательность."
+        }
+      ],
+      "notes": "Разведение рук с нижней лентой, название resistance band определяет эластичную ленту; наличие Gymstick в исходных тегах не подтверждает его обязательность."
+    },
+    {
+      "id": "fitnessprogramer:lunging-straight-leg-calf-stretch",
+      "source_path": "assets/work/calf/lunging-straight-leg-calf-stretch.json",
+      "source_blob_sha": "98e6267a3a977facb93fdbb1b73c2d974a15629f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lunging-straight-leg-calf-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Растяжка икроножных на прямой ноге в выпаде — mobility, не силовое подошвенное сгибание."
+        }
+      ],
+      "notes": "Растяжка икроножных на прямой ноге в выпаде — mobility, не силовое подошвенное сгибание."
+    },
+    {
+      "id": "fitnessprogramer:lying-barbell-triceps-extension",
+      "source_path": "assets/work/triceps/lying-barbell-triceps-extension.json",
+      "source_blob_sha": "a3ff8ae5ac1f401f1f8748b1853ad9715a53486c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-barbell-triceps-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции skull-crusher лёжа на плоской скамье с прямой штангой: triceps выполняет разгибание, мышцы хвата удерживают гриф; equipment Bench+Barbell исходно верно."
+        }
+      ],
+      "notes": "В инструкции skull-crusher лёжа на плоской скамье с прямой штангой: triceps выполняет разгибание, мышцы хвата удерживают гриф; equipment Bench+Barbell исходно верно."
+    },
+    {
+      "id": "fitnessprogramer:lying-dumbbell-leg-curl",
+      "source_path": "assets/work/leg/lying-dumbbell-leg-curl.json",
+      "source_blob_sha": "a07a1f6073321d0966e296cfc52e2f25929b40d0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-dumbbell-leg-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание коленей лёжа с гантелью между стоп — задняя поверхность бедра; не приписываем скамью без источника."
+        }
+      ],
+      "notes": "Сгибание коленей лёжа с гантелью между стоп — задняя поверхность бедра; не приписываем скамью без источника."
+    },
+    {
+      "id": "fitnessprogramer:lying-glute-stretch",
+      "source_path": "assets/work/hip/lying-glute-stretch.json",
+      "source_blob_sha": "3583c9a0f6e7f222c22124d31c533e772d7cfd9b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-glute-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Lying glute stretch — растяжение ягодичной области, не силовая роль большой ягодичной."
+        }
+      ],
+      "notes": "Lying glute stretch — растяжение ягодичной области, не силовая роль большой ягодичной."
+    },
+    {
+      "id": "fitnessprogramer:lying-hamstring-stretch",
+      "source_path": "assets/work/leg/lying-hamstring-stretch.json",
+      "source_blob_sha": "0bad9a05394976f068df3265c9f053d73bdbf6e1",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/lying-hamstring-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Lying hamstring stretch — растяжка задней поверхности бедра; исходный Hamstring и Calf Muscles отмечают растягиваемую ткань, не двигательные роли."
+        }
+      ],
+      "notes": "Lying hamstring stretch — растяжка задней поверхности бедра; исходный Hamstring и Calf Muscles отмечают растягиваемую ткань, не двигательные роли."
     }
   ]
 }
