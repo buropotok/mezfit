@@ -60,24 +60,6 @@
       "existing_equipment_match_checked": true
     },
     {
-      "id": "decline-bench",
-      "label_ru": "Скамья с отрицательным наклоном",
-      "definition_ru": "Регулируемая скамья с положением спинки ниже горизонтали (decline), с фиксаторами ног для жимов и разведений лёжа под отрицательным углом.",
-      "exercise_ids": [
-        "fitnessprogramer:one-arm-decline-cable-fly"
-      ],
-      "source_urls": [
-        "https://fitnessprogramer.com/exercise/one-arm-decline-cable-fly/"
-      ],
-      "confidence": "high",
-      "aliases_considered": [
-        "decline bench",
-        "decline weight bench",
-        "negative incline bench"
-      ],
-      "existing_equipment_match_checked": true
-    },
-    {
       "id": "seated-cable-row-machine",
       "label_ru": "Тренажёр для горизонтальной тяги сидя",
       "definition_ru": "Специализированный тросовый тренажёр для горизонтальной тяги с сиденьем, низким блоком и опорной платформой для стоп.",
