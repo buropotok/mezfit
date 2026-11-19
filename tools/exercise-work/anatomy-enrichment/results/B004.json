@@ -592,6 +592,599 @@
         }
       ],
       "notes": "JM press на плоской скамье: главная функция разгибание локтя; грудная и передняя дельта помогают в жимовом движении, мышцы предплечья удерживают запястье."
+    },
+    {
+      "id": "fitnessprogramer:barbell-jump-squat",
+      "source_path": "assets/work/hip/barbell-jump-squat.json",
+      "source_blob_sha": "f94e349271e30b378281575b23905a43a8adda7c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-jump-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Прыжковое приседание: усилие разгибателей колена и бедра; данных для отделения мышц по фазам нет."
+        }
+      ],
+      "notes": "Прыжковое приседание: усилие разгибателей колена и бедра; данных для отделения мышц по фазам нет."
+    },
+    {
+      "id": "fitnessprogramer:barbell-lateral-lunge",
+      "source_path": "assets/work/hip/barbell-lateral-lunge.json",
+      "source_blob_sha": "e3653fa319c9747bb63e5fcf291786cb2010d599",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "quadriceps_femoris",
+            "hip_adductors"
+          ],
+          "secondary": [
+            "gluteus_medius"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-lateral-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Боковой выпад: приводящие бедра и разгибатели колена/бедра; отобраны лишь биомеханически уместные стабилизаторы."
+        }
+      ],
+      "notes": "Боковой выпад: приводящие бедра и разгибатели колена/бедра; отобраны лишь биомеханически уместные стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:barbell-lunge",
+      "source_path": "assets/work/leg/barbell-lunge.json",
+      "source_blob_sha": "f120ea5ef56fa8a64e9818090b155c4b82986674",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "erector_spinae",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Выпад со штангой; исходный длинный список динамических стабилизаторов сужен до ролей удержания корпуса и таза."
+        }
+      ],
+      "notes": "Выпад со штангой; исходный длинный список динамических стабилизаторов сужен до ролей удержания корпуса и таза."
+    },
+    {
+      "id": "fitnessprogramer:barbell-lying-back-of-the-head-tricep-extension",
+      "source_path": "assets/work/triceps/barbell-lying-back-of-the-head-tricep-extension.json",
+      "source_blob_sha": "bbf334a66ae4f040c651a2050736c1372fbb1946",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-lying-back-of-the-head-tricep-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "В инструкции подтверждена плоская скамья; сгибание-разгибание локтя. Для вспомогательной роли нет достоверно самостоятельной мышцы."
+        }
+      ],
+      "notes": "В инструкции подтверждена плоская скамья; сгибание-разгибание локтя. Для вспомогательной роли нет достоверно самостоятельной мышцы."
+    },
+    {
+      "id": "fitnessprogramer:barbell-military-press",
+      "source_path": "assets/work/shoulders/barbell-military-press.json",
+      "source_blob_sha": "2a74df1f14c837e0ed17c43a5fd6e2f9f42299a3",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "trapezius_upper",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-military-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Вертикальный жим: дельтовидная и трицепс; неканонические 'Lateral and Posterior Deltoid' и 'Levatos Scapula' не перенесены дословно."
+        }
+      ],
+      "notes": "Вертикальный жим: дельтовидная и трицепс; неканонические 'Lateral and Posterior Deltoid' и 'Levatos Scapula' не перенесены дословно."
+    },
+    {
+      "id": "fitnessprogramer:barbell-one-arm-floor-press",
+      "source_path": "assets/work/chest/barbell-one-arm-floor-press.json",
+      "source_blob_sha": "27145b03c12ba5aaec6770911dd984eb641717f0",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-one-arm-floor-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Одноручный жим полноразмерной штанги на полу требует проверки GIF и характера опоры; источник выделяет трицепс, категория chest предварительно допустима."
+        }
+      ],
+      "notes": "Одноручный жим полноразмерной штанги на полу требует проверки GIF и характера опоры; источник выделяет трицепс, категория chest предварительно допустима."
+    },
+    {
+      "id": "fitnessprogramer:barbell-pendlay-row",
+      "source_path": "assets/work/back/barbell-pendlay-row.json",
+      "source_blob_sha": "40255cf474bee399ea52b66b43729892a4385c28",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "deltoid_posterior",
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-pendlay-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга Пендлея из наклона с пола: несуществующий анатомический ID Back заменён на конкретные тяговые мышцы; мышцы корпуса не объявлены движущими."
+        }
+      ],
+      "notes": "Тяга Пендлея из наклона с пола: несуществующий анатомический ID Back заменён на конкретные тяговые мышцы; мышцы корпуса не объявлены движущими."
+    },
+    {
+      "id": "fitnessprogramer:barbell-pin-squat",
+      "source_path": "assets/work/hip/barbell-pin-squat.json",
+      "source_blob_sha": "b71d913efaff87be1d3db5b83ded8fe6628a4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "power-rack"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-pin-squat/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция требует safety pins in a power rack; силовую стойку необходимо предложить отдельным оборудованием вместо generic gym."
+        }
+      ],
+      "notes": "Инструкция требует safety pins in a power rack; силовую стойку необходимо предложить отдельным оборудованием вместо generic gym."
+    },
+    {
+      "id": "fitnessprogramer:barbell-pullover",
+      "source_path": "assets/work/chest/barbell-pullover.json",
+      "source_blob_sha": "295ba1c390aab7e79a4816ce065557efd29fd5a0",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "triceps_long_head"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-pullover/",
+            "https://pubmed.ncbi.nlm.nih.gov/21975179/"
+          ],
+          "confidence": "medium",
+          "reason": "Источники относят пуловер и к груди, и к спине; эксперимент с ЭМГ обычного пуловера поддерживает грудную активность, но не исключает широчайшую. Итог chest требует визуальной проверки."
+        }
+      ],
+      "notes": "Источники относят пуловер и к груди, и к спине; эксперимент с ЭМГ обычного пуловера поддерживает грудную активность, но не исключает широчайшую. Итог chest требует визуальной проверки."
+    },
+    {
+      "id": "fitnessprogramer:barbell-rear-delt-raise",
+      "source_path": "assets/work/shoulders/barbell-rear-delt-raise.json",
+      "source_blob_sha": "d67cb85c12d473592063537c7f55047f5928a551",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "trapezius_middle",
+            "rhomboids",
+            "infraspinatus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-rear-delt-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Вариант rear delt raise со штангой; исключены исходные мышцы сгибания локтя без подтверждённой динамической роли."
+        }
+      ],
+      "notes": "Вариант rear delt raise со штангой; исключены исходные мышцы сгибания локтя без подтверждённой динамической роли."
+    },
+    {
+      "id": "fitnessprogramer:barbell-reverse-close-grip-bench-press",
+      "source_path": "assets/work/chest/barbell-reverse-close-grip-bench-press.json",
+      "source_blob_sha": "11fc1d9374256007d4ba90c488b366e134bc76c9",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii",
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-reverse-close-grip-bench-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим узким обратным хватом на плоской скамье; не делаем Forearm основной мышцей, исключаем Biceps Brachii как основной движитель."
+        }
+      ],
+      "notes": "Жим узким обратным хватом на плоской скамье; не делаем Forearm основной мышцей, исключаем Biceps Brachii как основной движитель."
+    },
+    {
+      "id": "fitnessprogramer:barbell-reverse-curl",
+      "source_path": "assets/work/forearm/barbell-reverse-curl.json",
+      "source_blob_sha": "24dc3babab6620db66289dce08a6bf49631f5306",
+      "status": "unchanged",
+      "category_verified": true,
+      "patch": {},
+      "evidence": [],
+      "notes": "Исходные роли brachioradialis, brachialis, biceps brachii, передняя дельта и разгибатели кисти имеют канонические ID через текущие алиасы."
+    },
+    {
+      "id": "fitnessprogramer:barbell-reverse-grip-skullcrusher",
+      "source_path": "assets/work/triceps/barbell-reverse-grip-skullcrusher.json",
+      "source_blob_sha": "9e0519222d1cc032d7a84be9a00fbbd8937ebd0f",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-reverse-grip-skullcrusher/"
+          ],
+          "confidence": "medium",
+          "reason": "Название reverse grip противоречит описанию 'overhand grip' в источнике. Тип хвата нужно уточнить по GIF, не додумывая различия мышечной активации."
+        }
+      ],
+      "notes": "Название reverse grip противоречит описанию 'overhand grip' в источнике. Тип хвата нужно уточнить по GIF, не додумывая различия мышечной активации."
+    },
+    {
+      "id": "fitnessprogramer:barbell-reverse-wrist-curl",
+      "source_path": "assets/work/forearm/barbell-reverse-wrist-curl.json",
+      "source_blob_sha": "3a82dab7a3da561b75074d58a1052f38c337d002",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "forearm_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-reverse-wrist-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание запястья прямым хватом; первичные разгибатели предплечья установлены, дополнительные роли не подтверждены."
+        }
+      ],
+      "notes": "Разгибание запястья прямым хватом; первичные разгибатели предплечья установлены, дополнительные роли не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:barbell-reverse-wrist-curl-over-a-bench",
+      "source_path": "assets/work/forearm/barbell-reverse-wrist-curl-over-a-bench.json",
+      "source_blob_sha": "008eb81b952fcebfaada7f0c9cffe176b73a8d95",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-reverse-wrist-curl-over-a-bench/"
+          ],
+          "confidence": "medium",
+          "reason": "Поддержка предплечий на скамье уточняет оборудование, не меняет основную группу разгибателей запястья."
+        }
+      ],
+      "notes": "Поддержка предплечий на скамье уточняет оборудование, не меняет основную группу разгибателей запястья."
+    },
+    {
+      "id": "fitnessprogramer:barbell-rollout",
+      "source_path": "assets/work/abs/barbell-rollout.json",
+      "source_blob_sha": "8d23098a43741e1defdd58ed547e65b831a987d3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/barbell-rollout/"
+          ],
+          "confidence": "medium",
+          "reason": "Антиразгибание корпуса при выкате со штангой, нагрузка передней брюшной стенки; точное разделение ролей мышц плечевого пояса требует видеоанализа."
+        }
+      ],
+      "notes": "Антиразгибание корпуса при выкате со штангой, нагрузка передней брюшной стенки; точное разделение ролей мышц плечевого пояса требует видеоанализа."
     }
   ]
 }
