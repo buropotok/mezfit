@@ -1851,6 +1851,621 @@
         }
       ],
       "notes": "other обозначает отсутствие установленной мышцы в данной роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:power-snatch",
+      "source_path": "assets/work/full-body/power-snatch.json",
+      "source_blob_sha": "1cd6c9ea6f2690aa6e2b8d4b186300c7ee44ed23",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus",
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "trapezius_upper"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/power-snatch/"
+          ],
+          "confidence": "medium",
+          "reason": "Power snatch — быстрый рывок штанги с разгибанием ног и таза и надголовной фиксацией."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:prone-cervical-extension",
+      "source_path": "assets/work/neck/prone-cervical-extension.json",
+      "source_blob_sha": "5e51d643828b38c24826a5a81107c18d34929110",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "cervical_extensors"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/prone-cervical-extension/"
+          ],
+          "confidence": "medium",
+          "reason": "Разгибание шеи лёжа лицом вниз нагружает разгибатели шейного отдела; вспомогательные мышцы не установлены."
+        }
+      ],
+      "notes": "other — специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:prone-incline-biceps-curl",
+      "source_path": "assets/work/biceps/prone-incline-biceps-curl.json",
+      "source_blob_sha": "ce8e1047b1e9df67ed9fd895557c330e7261bfb8",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/prone-incline-biceps-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Сгибание рук со штангой лицом вниз на наклонной скамье: бицепс основной сгибатель, мышцы хвата фиксируют гриф."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:prone-incline-shrug",
+      "source_path": "assets/work/trapezius/prone-incline-shrug.json",
+      "source_blob_sha": "a0ddc6803fb9b1ed7089082bef7188a249fd6cba",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/prone-incline-shrug/"
+          ],
+          "confidence": "low",
+          "reason": "Подъём лопаток с гантелями на наклонной скамье; положение корпуса может смещать нагрузку между частями трапеции."
+        }
+      ],
+      "notes": "По GIF проверить вертикальную или ретракционную траекторию лопаток; не назначать среднюю трапецию без подтверждения. other — специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:pull-through-with-resistance-band",
+      "source_path": "assets/work/hip/pull-through-with-resistance-band.json",
+      "source_blob_sha": "080b098f15df2216ee9a594da8bc9adcf532c4d7",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "semimembranosus",
+            "semitendinosus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pull-through-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Pull-through с резиной: разгибание бедра ягодичными и задней поверхностью бедра при сохранении нейтральной спины."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:pull-up",
+      "source_path": "assets/work/back/pull-up.json",
+      "source_blob_sha": "499939644c3760e063f9f002e7b68d82befa723a",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "biceps_brachii",
+            "brachialis",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Подтягивание широким/прямым хватом на турнике; широчайшая выполняет тягу, сгибатели локтя помогают."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:punches",
+      "source_path": "assets/work/cardio/punches.json",
+      "source_blob_sha": "30e8d98d22e643400d6654e9dc1d41348785ff46",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/punches/"
+          ],
+          "confidence": "medium",
+          "reason": "Punches — кардио-боксирование без заданной нагрузки; мышечные роли отдельных движений нельзя устойчиво классифицировать."
+        }
+      ],
+      "notes": "other — специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:push-down",
+      "source_path": "assets/work/triceps/push-down.json",
+      "source_blob_sha": "8a494a411d0742fd7b6653fd1c4b200827cda0d3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-down/"
+          ],
+          "confidence": "medium",
+          "reason": "Triceps push-down с верхним блоком: разгибание локтя трицепсом, отдельные вспомогательные/стабилизирующие роли не подтверждены."
+        }
+      ],
+      "notes": "other — специальный маркер роли, не биологический ID."
+    },
+    {
+      "id": "fitnessprogramer:push-press",
+      "source_path": "assets/work/shoulders/push-press.json",
+      "source_blob_sha": "6c4120cb075705d5f81e48034e38a6bbd191bad1",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_lateral"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Push press использует короткий толчок ног для ускорения штанги и последующий жим плечами; силовой акцент — плечи."
+        }
+      ],
+      "notes": "Категория shoulders оставлена, хотя движение многосуставное; источник указывает плечи и всё тело."
+    },
+    {
+      "id": "fitnessprogramer:push-up",
+      "source_path": "assets/work/chest/push-up.json",
+      "source_blob_sha": "2b25e53df22fc8bab9665d130da8c56ecc00bdec",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание от пола: горизонтальное приведение плеча грудными и разгибание локтя трицепсом, корпус сохраняет прямую линию."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:push-up-medicine-ball",
+      "source_path": "assets/work/chest/push-up-medicine-ball.json",
+      "source_blob_sha": "85fc406e2f5cb0fb2e47b78ae8e8ef6b76f80bf4",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up-medicine-ball/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание с одной рукой на медболе: грудные и трицепс работают в жиме, асимметрия повышает стабилизацию корпуса."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:push-up-plus",
+      "source_path": "assets/work/chest/push-up-plus.json",
+      "source_blob_sha": "57b59b78c742b3c5879535afe513597917f6039e",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "serratus_anterior"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up-plus/"
+          ],
+          "confidence": "medium",
+          "reason": "Push-up plus добавляет активную протракцию лопаток после жима, выраженная работа передней зубчатой; не дублировать serratus в стабилизаторах."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:push-up-to-renegade-row",
+      "source_path": "assets/work/chest/push-up-to-renegade-row.json",
+      "source_blob_sha": "13b09e5ff1c0405061a79e323eb18dd43b635a40",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "biceps_brachii",
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "obliques",
+            "transversus_abdominis"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up-to-renegade-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Комбинация отжимания и тяги гантели в планке — полноценная грудная и спинная нагрузка с сильной анти-ротацией корпуса."
+        }
+      ]
+    },
+    {
+      "id": "fitnessprogramer:push-up-toe-touch",
+      "source_path": "assets/work/cardio/push-up-toe-touch.json",
+      "source_blob_sha": "97b4e0ee41926dbe3f4fc213db4686b40845ab2d",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "no equipment"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        },
+        "primary_category": "full_body"
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up-toe-touch/"
+          ],
+          "confidence": "low",
+          "reason": "Push-up toe touch сочетает отжимание и касание стопы, но исходная карточка не содержит техники; пульсовая категория не подтверждает одиночный target."
+        }
+      ],
+      "notes": "По GIF проверить фазу toe touch и необходимость возвращения категории cardio."
+    },
+    {
+      "id": "fitnessprogramer:push-up-with-push-up-bars",
+      "source_path": "assets/work/chest/push-up-with-push-up-bars.json",
+      "source_blob_sha": "425a830475eee32130c0b79b1c30ed67ea0ec476",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "push_up_bars"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "triceps_brachii",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/push-up-with-push-up-bars/"
+          ],
+          "confidence": "medium",
+          "reason": "Отжимание на специальных напольных упорах для отжиманий; это не обычные брусья или отсутствие оборудования."
+        }
+      ]
     }
   ]
 }
