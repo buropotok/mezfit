@@ -98,7 +98,6 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
       {!hideProgramName ? <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
         {programName}
       </Text> : null}
-      {status}
     </div>
     {scheduledTiming ? <div className="workout-session-card__time">
       <Text variant="footnote">{scheduledTiming.date}</Text>
@@ -118,6 +117,7 @@ export function WorkoutPlanCardHeader({ name, programName = 'Без програ
     <div className="workout-plan-card__avatar" aria-label={athleteName ? `Атлет: ${athleteName}` : `Автор: ${creatorName}`}>
       {athleteAvatar ?? creatorAvatar ?? <Avatar name={athleteName ?? creatorName} />}
     </div>
+    {status ? <div className="workout-session-card__status-row">{status}</div> : null}
   </div>;
 }
 

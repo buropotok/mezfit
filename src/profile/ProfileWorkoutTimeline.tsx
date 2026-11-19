@@ -70,7 +70,6 @@ function SessionRow({ session, programName, actor, onOpen }: {
         <Text variant="footnote" tone="muted" className="workout-session-card__program-name">
           {programName}
         </Text>
-        <Badge color="gray" textVariant="caption">{completed ? 'Завершена' : 'В процессе'}</Badge>
       </div>
       <div className="workout-session-card__time">
         <Text variant="footnote">{dateLabel(localDate(session.startedAt))}</Text>
@@ -79,6 +78,9 @@ function SessionRow({ session, programName, actor, onOpen }: {
       <span className="workout-plan-card__chevron"><Icon name="chevron-right" /></span>
       <div className="workout-plan-card__avatar" aria-label={`Атлет: ${athlete.name}`}>
         {athlete.passiveAvatar ?? <Avatar name={athlete.name} />}
+      </div>
+      <div className="workout-session-card__status-row">
+        <Badge color="gray" textVariant="caption">{completed ? 'Завершена' : 'В процессе'}</Badge>
       </div>
     </div>
   </GlassSurface>;
