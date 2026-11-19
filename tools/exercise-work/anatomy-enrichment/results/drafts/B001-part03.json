@@ -29,7 +29,7 @@
             "https://www.strengthlog.com/strength-training-for-football/"
           ],
           "confidence": "high",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (obliques) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (obliques) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -130,11 +130,10 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/front-lever-pull-up/",
-            "https://www.strengthlog.com/cable-back-workout/",
             "https://gym-daze.com/exercises/front-lever"
           ],
           "confidence": "high",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (latissimus_dorsi) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
         },
         {
           "fields": [
@@ -172,7 +171,7 @@
             "https://www.nasm.org/resource-center/exercise-library/leg-press"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (quadriceps_femoris) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (quadriceps_femoris) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -200,7 +199,7 @@
             "https://www.acefitness.org/resources/everyone/exercise-library/44/seated-biceps-curl/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (biceps_brachii) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_brachii) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -228,7 +227,7 @@
             "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (latissimus_dorsi) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -256,7 +255,7 @@
             "https://www.strengthlog.com/smith-machine-bench-press/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (pectoralis_sternal) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -284,7 +283,7 @@
           ],
           "source_urls": [
             "https://fitnessprogramer.com/exercise/lever-crossovers/",
-            "https://www.strengthlog.com/cable-back-workout/"
+            "https://www.strengthlog.com/standing-cable-chest-fly/"
           ],
           "confidence": "high",
           "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_clavicular, deltoid_anterior, rhomboids, levator_scapulae) без произвольных стабилизаторов."
@@ -325,7 +324,7 @@
             "https://www.strengthlog.com/smith-machine-bench-press/"
           ],
           "confidence": "high",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (pectoralis_sternal) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -416,7 +415,7 @@
             "https://www.strengthlog.com/lat-pulldown-with-pronated-grip/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (latissimus_dorsi) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (latissimus_dorsi) без произвольных стабилизаторов."
         },
         {
           "fields": [
@@ -497,7 +496,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/9015/the-hamstrings-blueprint-evidence-based-exercises-for-better-function/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_femoris, semitendinosus, semimembranosus) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -569,7 +568,7 @@
             "https://www.strengthlog.com/machine-crunch/"
           ],
           "confidence": "high",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (rectus_abdominis) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (rectus_abdominis) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -597,7 +596,7 @@
             "https://www.acefitness.org/resources/everyone/exercise-library/204/neck-flexion-and-extension/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (cervical_extensors) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (cervical_extensors) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
