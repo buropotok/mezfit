@@ -1241,6 +1241,431 @@
         }
       ],
       "notes": "Standing hip extension: gluteus maximus исходная primary верна, задняя бедра помогает разгибать, корпус удерживается."
+    },
+    {
+      "id": "fitnessprogramer:standing-incline-chest-press-with-resistance-band",
+      "source_path": "assets/work/chest/standing-incline-chest-press-with-resistance-band.json",
+      "source_blob_sha": "0f03ec623936acbf53927d7575cc2963327353d6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "pectoralis_clavicular"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-incline-chest-press-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing incline press with band: эластичная лента сопротивляется передневерхнему жиму груди, конкретная стабилизация без техники неизвестна."
+        }
+      ],
+      "notes": "Standing incline press with band: эластичная лента сопротивляется передневерхнему жиму груди, конкретная стабилизация без техники неизвестна."
+    },
+    {
+      "id": "fitnessprogramer:standing-knee-hugs",
+      "source_path": "assets/work/hip/standing-knee-hugs.json",
+      "source_blob_sha": "2225e406bc86a3d9ab715d17a8f2e73496a9ba32",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-knee-hugs/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing knee hugs — попеременная статическая растяжка бедра/ягодиц коленом к груди, исходный длинный список описывает растягиваемые ткани."
+        }
+      ],
+      "notes": "Standing knee hugs — попеременная статическая растяжка бедра/ягодиц коленом к груди, исходный длинный список описывает растягиваемые ткани."
+    },
+    {
+      "id": "fitnessprogramer:standing-leg-circles",
+      "source_path": "assets/work/hip/standing-leg-circles.json",
+      "source_blob_sha": "c96ce70b38f7fea2a1188daf199fa40f1fc8019a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-leg-circles/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing leg circles — суставная мобилизация тазобедренного сустава с круговыми движениями, не силовое упражнение на отдельную мышцу."
+        }
+      ],
+      "notes": "Standing leg circles — суставная мобилизация тазобедренного сустава с круговыми движениями, не силовое упражнение на отдельную мышцу."
+    },
+    {
+      "id": "fitnessprogramer:standing-leg-curl-with-resistance-band",
+      "source_path": "assets/work/leg/standing-leg-curl-with-resistance-band.json",
+      "source_blob_sha": "f278a6abec35f4c9fae33b30d9605affd0ed0bb5",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-leg-curl-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing leg curl with band: сгибание колена задней поверхностью бедра, стабилизация таза при стоянии."
+        }
+      ],
+      "notes": "Standing leg curl with band: сгибание колена задней поверхностью бедра, стабилизация таза при стоянии."
+    },
+    {
+      "id": "fitnessprogramer:standing-leg-extension-with-resistance-band",
+      "source_path": "assets/work/leg/standing-leg-extension-with-resistance-band.json",
+      "source_blob_sha": "4d3c806a67f2c476c53dec73e2392eb24d686beb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-leg-extension-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing leg extension with band: квадрицепс разгибает колено, опорная нога удерживает таз."
+        }
+      ],
+      "notes": "Standing leg extension with band: квадрицепс разгибает колено, опорная нога удерживает таз."
+    },
+    {
+      "id": "fitnessprogramer:standing-leg-raise-with-resistance-band",
+      "source_path": "assets/work/leg/standing-leg-raise-with-resistance-band.json",
+      "source_blob_sha": "e48114ff461de408ffd4e3da74020ee51bf508c2",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "iliopsoas",
+            "rectus_femoris"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-leg-raise-with-resistance-band/"
+          ],
+          "confidence": "low",
+          "reason": "Standing leg raise with band: предполагается подъём выпрямленной ноги вперёд, но название не определяет направление (перед/бок), GIF нужен для уверенной анатомии."
+        }
+      ],
+      "notes": "Standing leg raise with band: предполагается подъём выпрямленной ноги вперёд, но название не определяет направление (перед/бок), GIF нужен для уверенной анатомии."
+    },
+    {
+      "id": "fitnessprogramer:standing-medicine-ball-chest-pass",
+      "source_path": "assets/work/chest/standing-medicine-ball-chest-pass.json",
+      "source_blob_sha": "b120062a4f8f69f168189a37ecb2ed9f8e52a2f7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "medicine ball"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-medicine-ball-chest-pass/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing medicine-ball chest pass: исходный Exercise Ball обозначал фитбол, инструкция явно требует бросок медбола от груди. Мышцы разгибания рук и горизонтального приведения плеча."
+        }
+      ],
+      "notes": "Standing medicine-ball chest pass: исходный Exercise Ball обозначал фитбол, инструкция явно требует бросок медбола от груди. Мышцы разгибания рук и горизонтального приведения плеча."
+    },
+    {
+      "id": "fitnessprogramer:standing-one-arm-chest-stretch",
+      "source_path": "assets/work/chest/standing-one-arm-chest-stretch.json",
+      "source_blob_sha": "91b5c81e8de18bc76219ffc8cb8d3bbca2858bc7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-one-arm-chest-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing one-arm chest stretch — растяжка грудных/бицепса, не активный силовой жим, техника в карточке отсутствует."
+        }
+      ],
+      "notes": "Standing one-arm chest stretch — растяжка грудных/бицепса, не активный силовой жим, техника в карточке отсутствует."
+    },
+    {
+      "id": "fitnessprogramer:standing-quadriceps-stretch",
+      "source_path": "assets/work/leg/standing-quadriceps-stretch.json",
+      "source_blob_sha": "2523e8af68841002f4001fed88a2f83340c1d2e0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-quadriceps-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing quadriceps stretch — растяжка переднего бедра, а не силовая тренировка квадрицепса."
+        }
+      ],
+      "notes": "Standing quadriceps stretch — растяжка переднего бедра, а не силовая тренировка квадрицепса."
+    },
+    {
+      "id": "fitnessprogramer:standing-reach-up-back-rotation-stretch",
+      "source_path": "assets/work/back/standing-reach-up-back-rotation-stretch.json",
+      "source_blob_sha": "677ec39e1f2adc2c98368cbebcce85d0e3424f22",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-reach-up-back-rotation-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing reach-up back rotation stretch — ротационная мобилизация грудного отдела с руками вверх, исходные Shoulder/Back/Chest — не названия отдельных мышц."
+        }
+      ],
+      "notes": "Standing reach-up back rotation stretch — ротационная мобилизация грудного отдела с руками вверх, исходные Shoulder/Back/Chest — не названия отдельных мышц."
+    },
+    {
+      "id": "fitnessprogramer:standing-reverse-shoulder-stretch",
+      "source_path": "assets/work/shoulders/standing-reverse-shoulder-stretch.json",
+      "source_blob_sha": "d5c8396b35e941772a84140d9d6ec79435a33ab7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-reverse-shoulder-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing reverse shoulder stretch — растяжка плеча/груди, исходные Shoulder/Arms/Chest не относятся к силовым ролям."
+        }
+      ],
+      "notes": "Standing reverse shoulder stretch — растяжка плеча/груди, исходные Shoulder/Arms/Chest не относятся к силовым ролям."
+    },
+    {
+      "id": "fitnessprogramer:standing-rotation",
+      "source_path": "assets/work/abs/standing-rotation.json",
+      "source_blob_sha": "0c539a0d5912a8aa8b2fb323477c7623262f69a7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/standing-rotation/"
+          ],
+          "confidence": "medium",
+          "reason": "Standing rotation: плавная ротация корпуса по инструкции, исходный obliques primary корректен, мышцы спины поддерживают ось."
+        }
+      ],
+      "notes": "Standing rotation: плавная ротация корпуса по инструкции, исходный obliques primary корректен, мышцы спины поддерживают ось."
     }
   ]
 }
