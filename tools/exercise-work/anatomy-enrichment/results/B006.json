@@ -3739,6 +3739,399 @@
         }
       ],
       "notes": "Вариант hyperextension на плоской скамье: она необходима, несмотря на исходное NO EQUIPMENT. Изолированная работа разгибателей позвоночника; ягодичные и задняя поверхность бедра участвуют в разгибании бедра."
+    },
+    {
+      "id": "fitnessprogramer:flexor-incline-dumbbell-curls",
+      "source_path": "assets/work/biceps/flexor-incline-dumbbell-curls.json",
+      "source_blob_sha": "4135dea68aa96bb6e189ce7cbea1e3678bde5e56",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "incline bench"
+        ],
+        "muscles": {
+          "primary": [
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/flexor-incline-dumbbell-curls/"
+          ],
+          "confidence": "low",
+          "reason": "Incline dumbbell curl подразумевает наклонную скамью и растянутое положение двуглавой мышцы. Техника/анатомия отсутствуют в исходнике, требуется GIF."
+        }
+      ],
+      "notes": "Incline dumbbell curl подразумевает наклонную скамью и растянутое положение двуглавой мышцы. Техника/анатомия отсутствуют в исходнике, требуется GIF."
+    },
+    {
+      "id": "fitnessprogramer:floor-crunch",
+      "source_path": "assets/work/abs/floor-crunch.json",
+      "source_blob_sha": "65d5b3b03fe19307e983db1268d2be02bace90ca",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/floor-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "Напольный crunch — сгибание верхней части туловища, исходник прямо называет rectus abdominis и obliques. Коврик в описании допустим, но не обязательный элемент упражнения."
+        }
+      ],
+      "notes": "Напольный crunch — сгибание верхней части туловища, исходник прямо называет rectus abdominis и obliques. Коврик в описании допустим, но не обязательный элемент упражнения."
+    },
+    {
+      "id": "fitnessprogramer:floor-hyperextension",
+      "source_path": "assets/work/erector-spinae/floor-hyperextension.json",
+      "source_blob_sha": "22867044cd004838802a6c83256d0a1be9eb4c8b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "erector_spinae"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/floor-hyperextension/"
+          ],
+          "confidence": "medium",
+          "reason": "Floor hyperextension с подъёмом верхней части тела лёжа на животе, по инструкции доминируют разгибатели позвоночника. Категория «Спина» подтверждена."
+        }
+      ],
+      "notes": "Floor hyperextension с подъёмом верхней части тела лёжа на животе, по инструкции доминируют разгибатели позвоночника. Категория «Спина» подтверждена."
+    },
+    {
+      "id": "fitnessprogramer:flutter-kick",
+      "source_path": "assets/work/abs/flutter-kick.json",
+      "source_blob_sha": "2192b3905928fca6c84bd50e61e9ffb142d53de8",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/flutter-kick/"
+          ],
+          "confidence": "low",
+          "reason": "В flutter kicks динамическое движение ног — сгибание бедра (iliopsoas), прямая мышца живота удерживает таз и поясницу; исходный target rectus abdominis переведён в стабилизаторы."
+        }
+      ],
+      "notes": "В flutter kicks динамическое движение ног — сгибание бедра (iliopsoas), прямая мышца живота удерживает таз и поясницу; исходный target rectus abdominis переведён в стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-back-stretch",
+      "source_path": "assets/work/back/foam-roller-back-stretch.json",
+      "source_blob_sha": "62c6e3ee0444660c3b6ba5cb2450703c8c9ae895",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-back-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Foam Roller Back Stretch — мобилизация грудного отдела на ролике; растягиваемая область не является доказанной силовой ролью primary/secondary/stabilizers."
+        }
+      ],
+      "notes": "Foam Roller Back Stretch — мобилизация грудного отдела на ролике; растягиваемая область не является доказанной силовой ролью primary/secondary/stabilizers."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-calves",
+      "source_path": "assets/work/calf/foam-roller-calves.json",
+      "source_blob_sha": "6aa319968f7f864f067ee8db776c1032145234ea",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-calves/"
+          ],
+          "confidence": "medium",
+          "reason": "Foam Roller Calves — самомассаж икроножной мышцы на ролике, а не силовое её сокращение. В отсутствие установленной роли мышц используется other."
+        }
+      ],
+      "notes": "Foam Roller Calves — самомассаж икроножной мышцы на ролике, а не силовое её сокращение. В отсутствие установленной роли мышц используется other."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-chest-stretch",
+      "source_path": "assets/work/chest/foam-roller-chest-stretch.json",
+      "source_blob_sha": "0e95e80100fcd902803ab1293f4bdbe9ca3c8e34",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-chest-stretch/"
+          ],
+          "confidence": "low",
+          "reason": "Foam Roller Chest Stretch — растяжение грудной области на ролике; исходник не уточняет мышцы и технику, роли other, до визуального просмотра GIF."
+        }
+      ],
+      "notes": "Foam Roller Chest Stretch — растяжение грудной области на ролике; исходник не уточняет мышцы и технику, роли other, до визуального просмотра GIF."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-front-shoulder-and-chest",
+      "source_path": "assets/work/chest/foam-roller-front-shoulder-and-chest.json",
+      "source_blob_sha": "4845fd8ea539f44f09a14d9b5727afc792d9dad2",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-front-shoulder-and-chest/"
+          ],
+          "confidence": "low",
+          "reason": "Foam Roller Front Shoulder and Chest — самомобилизация передней поверхности плеча/груди, а не упражнение на движение этих мышц под сопротивлением."
+        }
+      ],
+      "notes": "Foam Roller Front Shoulder and Chest — самомобилизация передней поверхности плеча/груди, а не упражнение на движение этих мышц под сопротивлением."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-glutes",
+      "source_path": "assets/work/hip/foam-roller-glutes.json",
+      "source_blob_sha": "8119a0a34f7d6c4f1d8081a89516d1d139c911fe",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-glutes/"
+          ],
+          "confidence": "medium",
+          "reason": "Foam Roller Glutes — самомассаж ягодичных мышц, подтверждённый инструкцией прокатывания; их нельзя записывать как основные двигательные мышцы."
+        }
+      ],
+      "notes": "Foam Roller Glutes — самомассаж ягодичных мышц, подтверждённый инструкцией прокатывания; их нельзя записывать как основные двигательные мышцы."
+    },
+    {
+      "id": "fitnessprogramer:foam-roller-hamstrings",
+      "source_path": "assets/work/leg/foam-roller-hamstrings.json",
+      "source_blob_sha": "a3bd6c3176358d84f3b985cc0b26c086c7c5ba59",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "foam roller"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/foam-roller-hamstrings/"
+          ],
+          "confidence": "low",
+          "reason": "Foam Roller Hamstrings — миофасциальное воздействие на заднюю поверхность бедра; инструкция отсутствует, не выдумываем двигательную роль мышц."
+        }
+      ],
+      "notes": "Foam Roller Hamstrings — миофасциальное воздействие на заднюю поверхность бедра; инструкция отсутствует, не выдумываем двигательную роль мышц."
     }
   ]
 }
