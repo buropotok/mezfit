@@ -425,6 +425,459 @@
         }
       ],
       "notes": "Вариант frog crunch, разгибание/сгибание туловища и скручивание; без подробной техники дополнительных стабилизаторов не выделяем."
+    },
+    {
+      "id": "fitnessprogramer:frog-pose",
+      "source_path": "assets/work/hip/frog-pose.json",
+      "source_blob_sha": "226aa2ee5ad2f6be5d814b9f710226405c205325",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/frog-pose/"
+          ],
+          "confidence": "medium",
+          "reason": "Frog pose — статическая растяжка приводящих бедра; растягиваемые ткани не являются подтверждёнными силовыми двигательными мышцами."
+        }
+      ],
+      "notes": "Frog pose — статическая растяжка приводящих бедра; растягиваемые ткани не являются подтверждёнными силовыми двигательными мышцами."
+    },
+    {
+      "id": "fitnessprogramer:frog-pump",
+      "source_path": "assets/work/hip/frog-pump.json",
+      "source_blob_sha": "42af5dc6cbcb88df746ccb00475505e0a542cbbe",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/frog-pump/"
+          ],
+          "confidence": "medium",
+          "reason": "Frog pump — ягодичный подъём таза с развёрнутыми коленями; большая ягодичная разгибает бедро, дополнительные роли отмечены с ограниченной уверенностью."
+        }
+      ],
+      "notes": "Frog pump — ягодичный подъём таза с развёрнутыми коленями; большая ягодичная разгибает бедро, дополнительные роли отмечены с ограниченной уверенностью."
+    },
+    {
+      "id": "fitnessprogramer:front-and-back-neck-stretch",
+      "source_path": "assets/work/neck/front-and-back-neck-stretch.json",
+      "source_blob_sha": "a9f98a247be7502a4da753ad62f173d3806c330d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-and-back-neck-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Front/back neck stretch с ручным сопротивлением: исходный перечень микромышц не нормализуется как будто это первичные силовые движения; упражнение растяжки шеи, роли неизвестны."
+        }
+      ],
+      "notes": "Front/back neck stretch с ручным сопротивлением: исходный перечень микромышц не нормализуется как будто это первичные силовые движения; упражнение растяжки шеи, роли неизвестны."
+    },
+    {
+      "id": "fitnessprogramer:front-plank-with-arm-and-leg-lift",
+      "source_path": "assets/work/abs/front-plank-with-arm-and-leg-lift.json",
+      "source_blob_sha": "c1e493c2909b73d871734eb9506ffb87e899c2db",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-plank-with-arm-and-leg-lift/"
+          ],
+          "confidence": "medium",
+          "reason": "Планка с одновременным подъёмом руки и ноги создаёт антиразгибательную нагрузку корпуса и контроль опоры плеча; техника не детализирована в источнике."
+        }
+      ],
+      "notes": "Планка с одновременным подъёмом руки и ноги создаёт антиразгибательную нагрузку корпуса и контроль опоры плеча; техника не детализирована в источнике."
+    },
+    {
+      "id": "fitnessprogramer:front-plank-with-arm-lift",
+      "source_path": "assets/work/abs/front-plank-with-arm-lift.json",
+      "source_blob_sha": "2b967f5032409fc59ff6ca3e4b92ebf760b25be2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "serratus_anterior",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-plank-with-arm-lift/"
+          ],
+          "confidence": "medium",
+          "reason": "Планка с подъёмом руки: сопротивление ротации корпуса, стабилизация лопатки; индивидуальная синергия ног достоверно не выделяется."
+        }
+      ],
+      "notes": "Планка с подъёмом руки: сопротивление ротации корпуса, стабилизация лопатки; индивидуальная синергия ног достоверно не выделяется."
+    },
+    {
+      "id": "fitnessprogramer:front-rack-pvc-stretch",
+      "source_path": "assets/work/shoulders/front-rack-pvc-stretch.json",
+      "source_blob_sha": "46df4de66d9b48139cb43e7ea0001fe945be1a35",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pvc-pipe"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-rack-pvc-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Инструкция прямо требует PVC pipe при front-rack растяжке. Это гладкая пластиковая гимнастическая палка, не Gymstick с резинками. Растяжение не равно мышцам-двигателям."
+        }
+      ],
+      "notes": "Инструкция прямо требует PVC pipe при front-rack растяжке. Это гладкая пластиковая гимнастическая палка, не Gymstick с резинками. Растяжение не равно мышцам-двигателям."
+    },
+    {
+      "id": "fitnessprogramer:front-squat",
+      "source_path": "assets/work/leg/front-squat.json",
+      "source_blob_sha": "286975b839a8dd81c0d29aad7c57fee081c2d6a6",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "barbell",
+          "power-rack"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "hip_adductors",
+            "soleus"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "trapezius_upper"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-squat/"
+          ],
+          "confidence": "high",
+          "reason": "Front squat: инструкция требует стойку со штангой, основные разгибатели колена/бедра, корпус и верх спины поддерживают фронтальную фиксацию; исходная длинная цепочка сократилась."
+        }
+      ],
+      "notes": "Front squat: инструкция требует стойку со штангой, основные разгибатели колена/бедра, корпус и верх спины поддерживают фронтальную фиксацию; исходная длинная цепочка сократилась."
+    },
+    {
+      "id": "fitnessprogramer:front-to-side-plank",
+      "source_path": "assets/work/abs/front-to-side-plank.json",
+      "source_blob_sha": "fa19fcc7788766388188f24f4ccb535c31cd3fff",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "obliques"
+          ],
+          "secondary": [
+            "transversus_abdominis"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/front-to-side-plank/"
+          ],
+          "confidence": "medium",
+          "reason": "Переход из передней в боковую планку — удержание корпуса против разгибания и бокового сгибания; исходные flexors/quad не включаются автоматически в стабилизаторы."
+        }
+      ],
+      "notes": "Переход из передней в боковую планку — удержание корпуса против разгибания и бокового сгибания; исходные flexors/quad не включаются автоматически в стабилизаторы."
+    },
+    {
+      "id": "fitnessprogramer:full-planche",
+      "source_path": "assets/work/abs/full-planche.json",
+      "source_blob_sha": "4daab19749aef63c4b803c066a702e345dbb5870",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "full_body",
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "serratus_anterior",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/full-planche/"
+          ],
+          "confidence": "medium",
+          "reason": "Full planche — статический координационно-силовой навык всего тела, а не изолированное упражнение на пресс; три роли не превращаются в ложную иерархию гипертрофии."
+        }
+      ],
+      "notes": "Full planche — статический координационно-силовой навык всего тела, а не изолированное упражнение на пресс; три роли не превращаются в ложную иерархию гипертрофии."
+    },
+    {
+      "id": "fitnessprogramer:full-range-of-motion-lat-pulldown",
+      "source_path": "assets/work/back/full-range-of-motion-lat-pulldown.json",
+      "source_blob_sha": "1210490f249ed0bc7051e031e2ff9da16319d097",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "teres_major",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/full-range-of-motion-lat-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "Пулдаун с полным ROM обычно выполняется на верхнем тросовом блоке, но точная техника в карточке отсутствует; без просмотра GIF дополнительных стабилизаторов нет."
+        }
+      ],
+      "notes": "Пулдаун с полным ROM обычно выполняется на верхнем тросовом блоке, но точная техника в карточке отсутствует; без просмотра GIF дополнительных стабилизаторов нет."
+    },
+    {
+      "id": "fitnessprogramer:gittleson-shrug",
+      "source_path": "assets/work/trapezius/gittleson-shrug.json",
+      "source_blob_sha": "45c97e3de7118c4ff771993e20c2e96152b51099",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_upper"
+          ],
+          "secondary": [
+            "levator_scapulae"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/gittleson-shrug/"
+          ],
+          "confidence": "medium",
+          "reason": "Gittleson shrug: в инструкции указаны гантель и скамья/стул, одна рука поддерживает тело, другая выполняет подъём плеча; категория back подтверждается трапециевидной."
+        }
+      ],
+      "notes": "Gittleson shrug: в инструкции указаны гантель и скамья/стул, одна рука поддерживает тело, другая выполняет подъём плеча; категория back подтверждается трапециевидной."
+    },
+    {
+      "id": "fitnessprogramer:glute-bridge",
+      "source_path": "assets/work/abs/glute-bridge.json",
+      "source_blob_sha": "3f15e20665d06566545c108044c9146bfc55bde6",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "legs",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/glute-bridge/"
+          ],
+          "confidence": "high",
+          "reason": "Glute bridge направлен на разгибание бедра, а не прямое сгибание корпуса; категория legs вместо предварительного core. Неподтверждённые источником стабилизаторы исключены."
+        }
+      ],
+      "notes": "Glute bridge направлен на разгибание бедра, а не прямое сгибание корпуса; категория legs вместо предварительного core. Неподтверждённые источником стабилизаторы исключены."
     }
   ]
 }
