@@ -1333,6 +1333,451 @@
         }
       ],
       "notes": "Hammer curl: нейтральный хват, brachioradialis и сгибатели локтя; Flexor/Extensor Carpi Radialis нормализованы к существующим группам предплечья."
+    },
+    {
+      "id": "fitnessprogramer:hammer-curl-with-resistance-band",
+      "source_path": "assets/work/biceps/hammer-curl-with-resistance-band.json",
+      "source_blob_sha": "f8197c012f0def79ad4f27fa0730514aa26794f9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "brachioradialis"
+          ],
+          "secondary": [
+            "brachialis",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hammer-curl-with-resistance-band/"
+          ],
+          "confidence": "medium",
+          "reason": "Hammer curl с резинкой: нейтральное положение кисти нагружает brachioradialis и сгибатели локтя. Не вводим второй фильтр для Resistance Band."
+        }
+      ],
+      "notes": "Hammer curl с резинкой: нейтральное положение кисти нагружает brachioradialis и сгибатели локтя. Не вводим второй фильтр для Resistance Band."
+    },
+    {
+      "id": "fitnessprogramer:hammer-press",
+      "source_path": "assets/work/chest/hammer-press.json",
+      "source_blob_sha": "76e6cf286a29815009f7bcb17e40f3c8b4c83a07",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hammer-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Hammer Press здесь — жим гантелей на скамье, а не тренажёр Hammer Strength (исходное equipment Bench, Dumbbells). Biceps Brachii не подтверждён как динамический стабилизатор."
+        }
+      ],
+      "notes": "Hammer Press здесь — жим гантелей на скамье, а не тренажёр Hammer Strength (исходное equipment Bench, Dumbbells). Biceps Brachii не подтверждён как динамический стабилизатор."
+    },
+    {
+      "id": "fitnessprogramer:hand-gripper",
+      "source_path": "assets/work/forearm/hand-gripper.json",
+      "source_blob_sha": "a43734428f5c767aecdaf19cb822267eeccc40a6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "hand-gripper"
+        ],
+        "muscles": {
+          "primary": [
+            "forearm_flexors",
+            "forearm_grip"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hand-gripper/"
+          ],
+          "confidence": "medium",
+          "reason": "Hand gripper — отдельный механический кистевой эспандер, не generic machine и не резинка. Основные мышцы сгибания пальцев/хвата."
+        }
+      ],
+      "notes": "Hand gripper — отдельный механический кистевой эспандер, не generic machine и не резинка. Основные мышцы сгибания пальцев/хвата."
+    },
+    {
+      "id": "fitnessprogramer:hands-bike",
+      "source_path": "assets/work/cardio/hands-bike.json",
+      "source_blob_sha": "f7fda264b95cef13fe4ed4ba08b8eb45f500d240",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "upper-body-ergometer"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hands-bike/"
+          ],
+          "confidence": "medium",
+          "reason": "Hands bike — кардиотренажёр ручного вращения (arm ergometer), отличен от обычного велотренажёра. Точная мускульная роль без описания не устанавливается."
+        }
+      ],
+      "notes": "Hands bike — кардиотренажёр ручного вращения (arm ergometer), отличен от обычного велотренажёра. Точная мускульная роль без описания не устанавливается."
+    },
+    {
+      "id": "fitnessprogramer:hands-in-air-dead-bug",
+      "source_path": "assets/work/abs/hands-in-air-dead-bug.json",
+      "source_blob_sha": "0ffff597bf0e5167e129d97adbdd07c4a489c76c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hands-in-air-dead-bug/"
+          ],
+          "confidence": "medium",
+          "reason": "Dead bug с руками вверх и попеременным опусканием стоп; брюшные мышцы предотвращают разгибание позвоночника, iliopsoas управляет сгибанием бедра."
+        }
+      ],
+      "notes": "Dead bug с руками вверх и попеременным опусканием стоп; брюшные мышцы предотвращают разгибание позвоночника, iliopsoas управляет сгибанием бедра."
+    },
+    {
+      "id": "fitnessprogramer:handstand",
+      "source_path": "assets/work/full-body/handstand.json",
+      "source_blob_sha": "6f0dc0c4885f479a2c01130fe2f750f1538da8b9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "serratus_anterior",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/handstand/"
+          ],
+          "confidence": "medium",
+          "reason": "Handstand — балансирующий навык в перевёрнутой стойке; нельзя выдавать изометрические мышцы за силовые primary/secondary. Стена в инструкции лишь опциональна."
+        }
+      ],
+      "notes": "Handstand — балансирующий навык в перевёрнутой стойке; нельзя выдавать изометрические мышцы за силовые primary/secondary. Стена в инструкции лишь опциональна."
+    },
+    {
+      "id": "fitnessprogramer:handstand-push-up",
+      "source_path": "assets/work/shoulders/handstand-push-up.json",
+      "source_blob_sha": "aa4754ef6bd1438a32c51afb06d976109a83b31f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_clavicular",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "transversus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/handstand-push-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Handstand push-up — динамическое разгибание локтей и жим плечами; опытный вариант может выполняться без стены, поэтому wall не обязательное оборудование."
+        }
+      ],
+      "notes": "Handstand push-up — динамическое разгибание локтей и жим плечами; опытный вариант может выполняться без стены, поэтому wall не обязательное оборудование."
+    },
+    {
+      "id": "fitnessprogramer:handstand-push-ups-between-benches",
+      "source_path": "assets/work/shoulders/handstand-push-ups-between-benches.json",
+      "source_blob_sha": "657b5ef1e8a6342295a4f045aeaf663921c9a758",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "bench",
+          "wall"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/handstand-push-ups-between-benches/"
+          ],
+          "confidence": "high",
+          "reason": "Установлены две скамьи/паралетсы и опорная стена: source how_to явно требует benches and stable wall; плечи и трицепсы динамические двигатели."
+        }
+      ],
+      "notes": "Установлены две скамьи/паралетсы и опорная стена: source how_to явно требует benches and stable wall; плечи и трицепсы динамические двигатели."
+    },
+    {
+      "id": "fitnessprogramer:handstand-walk",
+      "source_path": "assets/work/full-body/handstand-walk.json",
+      "source_blob_sha": "2a08a7b064dc7a6501d6fab9b0b61e0490bc9bc8",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "deltoid_anterior",
+            "serratus_anterior",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/handstand-walk/"
+          ],
+          "confidence": "medium",
+          "reason": "Handstand walk — координационный навык, движение происходит на руках. Не подменяем силовые роли стабилизацией; стена лишь обучающая опора."
+        }
+      ],
+      "notes": "Handstand walk — координационный навык, движение происходит на руках. Не подменяем силовые роли стабилизацией; стена лишь обучающая опора."
+    },
+    {
+      "id": "fitnessprogramer:hanging-knee-raises",
+      "source_path": "assets/work/abs/hanging-knee-raises.json",
+      "source_blob_sha": "e65239b826a6164ba57ffd887a42463c00dbeee2",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "secondary": [
+            "obliques",
+            "iliopsoas"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hanging-knee-raises/"
+          ],
+          "confidence": "high",
+          "reason": "В инструкции Hanging Knee Raises явно указан chin-up bar; неполный Hip Flexor заменён каноническим iliopsoas, obliques сохранены."
+        }
+      ],
+      "notes": "В инструкции Hanging Knee Raises явно указан chin-up bar; неполный Hip Flexor заменён каноническим iliopsoas, obliques сохранены."
+    },
+    {
+      "id": "fitnessprogramer:hanging-side-knee-raises",
+      "source_path": "assets/work/abs/hanging-side-knee-raises.json",
+      "source_blob_sha": "82b7fa5d6c5136971898d678db174a25831939c2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hanging-side-knee-raises/"
+          ],
+          "confidence": "medium",
+          "reason": "Подъём коленей в сторону в висе: требует перекладину, ротацию/наклон таза выполняют косые; работа хвата поддерживает вис."
+        }
+      ],
+      "notes": "Подъём коленей в сторону в висе: требует перекладину, ротацию/наклон таза выполняют косые; работа хвата поддерживает вис."
+    },
+    {
+      "id": "fitnessprogramer:hanging-windshield-wiper",
+      "source_path": "assets/work/abs/hanging-windshield-wiper.json",
+      "source_blob_sha": "7a3dcd620ee79952f327e8679a39635d6871d120",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/hanging-windshield-wiper/"
+          ],
+          "confidence": "medium",
+          "reason": "Висячие дворники — перенос ног в стороны на турнике. Движение корпуса и хвата отделено от вспомогательной роли сгибателей бедра."
+        }
+      ],
+      "notes": "Висячие дворники — перенос ног в стороны на турнике. Движение корпуса и хвата отделено от вспомогательной роли сгибателей бедра."
     }
   ]
 }
