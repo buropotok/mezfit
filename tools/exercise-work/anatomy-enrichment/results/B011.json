@@ -3008,6 +3008,441 @@
         }
       ],
       "notes": "Swing 360 по инструкции требует турник с висом и раскачиванием тела, а не упражнения без оборудования; основной навык координационно-гимнастический."
+    },
+    {
+      "id": "fitnessprogramer:swiss-ball-rollout",
+      "source_path": "assets/work/abs/swiss-ball-rollout.json",
+      "source_blob_sha": "3f33cbe5c6656363a23efadacc9a92a1e8f5ae89",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ],
+          "secondary": [
+            "latissimus_dorsi"
+          ],
+          "stabilizers": [
+            "serratus_anterior"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/swiss-ball-rollout/"
+          ],
+          "confidence": "medium",
+          "reason": "Swiss ball rollout — выкатывание предплечий по фитболу в коленях, мышцы корпуса предотвращают разгибание позвоночника."
+        }
+      ],
+      "notes": "Swiss ball rollout — выкатывание предплечий по фитболу в коленях, мышцы корпуса предотвращают разгибание позвоночника."
+    },
+    {
+      "id": "fitnessprogramer:t-bar-row",
+      "source_path": "assets/work/back/t-bar-row.json",
+      "source_blob_sha": "199953ef31686979bf81a6274460353237917db2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "landmine",
+          "barbell",
+          "t-bar-row-machine"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids",
+            "trapezius_middle"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/t-bar-row/"
+          ],
+          "confidence": "medium",
+          "reason": "T-bar row: инструкция указывает специализированный T-bar тренажёр ИЛИ штангу в landmine, эти варианты перечислены как альтернативы, латы и лопаточные мышцы primary."
+        }
+      ],
+      "notes": "T-bar row: инструкция указывает специализированный T-bar тренажёр ИЛИ штангу в landmine, эти варианты перечислены как альтернативы, латы и лопаточные мышцы primary."
+    },
+    {
+      "id": "fitnessprogramer:t-cross-sit-up",
+      "source_path": "assets/work/abs/t-cross-sit-up.json",
+      "source_blob_sha": "9335280c690312b3652606691c28e9705974cec6",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/t-cross-sit-up/"
+          ],
+          "confidence": "medium",
+          "reason": "T-cross sit-up — варианты sit-up с поворотом, rectus abdominis и obliques source уже корректны, transversus фиксирует корпус."
+        }
+      ],
+      "notes": "T-cross sit-up — варианты sit-up с поворотом, rectus abdominis и obliques source уже корректны, transversus фиксирует корпус."
+    },
+    {
+      "id": "fitnessprogramer:table-inverted-row",
+      "source_path": "assets/work/back/table-inverted-row.json",
+      "source_blob_sha": "b86fa8bdfd3b83678f01ff35b46b72a477f0568f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "table"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/table-inverted-row/"
+          ],
+          "confidence": "low",
+          "reason": "Table inverted row требует прочный стол с доступом к краю; исходное NO EQUIPMENT не отражает снаряд, а мышцы спины выполняют тягу."
+        }
+      ],
+      "notes": "Table inverted row требует прочный стол с доступом к краю; исходное NO EQUIPMENT не отражает снаряд, а мышцы спины выполняют тягу."
+    },
+    {
+      "id": "fitnessprogramer:tall-kneeling-one-arm-kettlebell-press",
+      "source_path": "assets/work/shoulders/tall-kneeling-one-arm-kettlebell-press.json",
+      "source_blob_sha": "97b4b5577077c0d3f5243aa74d618eea3bca74cf",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "forearm_extensors",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/tall-kneeling-one-arm-kettlebell-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Tall kneeling one arm kettlebell press: передняя дельта исходная primary, корпус противодействует боковому отклонению, кисть стабилизирует гирю."
+        }
+      ],
+      "notes": "Tall kneeling one arm kettlebell press: передняя дельта исходная primary, корпус противодействует боковому отклонению, кисть стабилизирует гирю."
+    },
+    {
+      "id": "fitnessprogramer:teaser-pilates",
+      "source_path": "assets/work/abs/teaser-pilates.json",
+      "source_blob_sha": "6c7dec6d0ef3c96ca48bef201b6ed21283ab1d97",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "transversus_abdominis",
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/teaser-pilates/"
+          ],
+          "confidence": "medium",
+          "reason": "Teaser pilates — управляемый V-образный баланс туловища и ног; исходный Transvers Abdominus написан некорректно и нормализован к существующему ID."
+        }
+      ],
+      "notes": "Teaser pilates — управляемый V-образный баланс туловища и ног; исходный Transvers Abdominus написан некорректно и нормализован к существующему ID."
+    },
+    {
+      "id": "fitnessprogramer:the-box-jump",
+      "source_path": "assets/work/hip/the-box-jump.json",
+      "source_blob_sha": "0bc4149f6f17f04e96d463fe76c983a20249b3f0",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "plyo box"
+        ],
+        "muscles": {
+          "secondary": [
+            "gluteus_maximus",
+            "gastrocnemius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/the-box-jump/"
+          ],
+          "confidence": "medium",
+          "reason": "The Box Jump по названию требует плиобокс, не generic bench или NO EQUIPMENT; квадрицепс source primary сохранён, разгибатели бедра/голеностопа помогают."
+        }
+      ],
+      "notes": "The Box Jump по названию требует плиобокс, не generic bench или NO EQUIPMENT; квадрицепс source primary сохранён, разгибатели бедра/голеностопа помогают."
+    },
+    {
+      "id": "fitnessprogramer:tire-flip",
+      "source_path": "assets/work/full-body/tire-flip.json",
+      "source_blob_sha": "7c31a250c011d78745e50092543f4a9d70fce172",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "tractor-tire"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "pectoralis_major",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/tire-flip/"
+          ],
+          "confidence": "medium",
+          "reason": "Tire flip по инструкции требует тяжёлую покрышку и выполняется разгибанием бедра/колена с последующим толчком, не generic тренажёр."
+        }
+      ],
+      "notes": "Tire flip по инструкции требует тяжёлую покрышку и выполняется разгибанием бедра/колена с последующим толчком, не generic тренажёр."
+    },
+    {
+      "id": "fitnessprogramer:tire-sledge-hammer",
+      "source_path": "assets/work/full-body/tire-sledge-hammer.json",
+      "source_blob_sha": "1b00276a5398e0fe7e95f4263a221fcf20b86b4e",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "tractor-tire",
+          "sledgehammer"
+        ],
+        "muscles": {
+          "primary": [
+            "obliques",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/tire-sledge-hammer/"
+          ],
+          "confidence": "low",
+          "reason": "Tire sledge hammer — силовое ударное движение кувалдой по шине, исходная карточка не описывает технику; обе вещи по названию, поэтому уверенность низкая."
+        }
+      ],
+      "notes": "Tire sledge hammer — силовое ударное движение кувалдой по шине, исходная карточка не описывает технику; обе вещи по названию, поэтому уверенность низкая."
+    },
+    {
+      "id": "fitnessprogramer:toe-extensor-stretch",
+      "source_path": "assets/work/calf/toe-extensor-stretch.json",
+      "source_blob_sha": "e9c79181fb4b8751bac076a63aca39f25534457b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/toe-extensor-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Toe extensor stretch — растяжение разгибателей пальцев стопы при тыльной стороне пальцев на полу, не силовая работа."
+        }
+      ],
+      "notes": "Toe extensor stretch — растяжение разгибателей пальцев стопы при тыльной стороне пальцев на полу, не силовая работа."
+    },
+    {
+      "id": "fitnessprogramer:toe-reaches",
+      "source_path": "assets/work/abs/toe-reaches.json",
+      "source_blob_sha": "eb06eaa0c9d96cdf457fb44c9b27bb030718905d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/toe-reaches/"
+          ],
+          "confidence": "medium",
+          "reason": "Toe reaches в карточке описывает упражнение на пресс с касанием стоп, исходные rectus abdominis и obliques оставлены, стабилизаторы неизвестны."
+        }
+      ],
+      "notes": "Toe reaches в карточке описывает упражнение на пресс с касанием стоп, исходные rectus abdominis и obliques оставлены, стабилизаторы неизвестны."
+    },
+    {
+      "id": "fitnessprogramer:toes-to-bar",
+      "source_path": "assets/work/abs/toes-to-bar.json",
+      "source_blob_sha": "6689db32b23c8dc2d9764cb7737630966e60d4bb",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis",
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/toes-to-bar/"
+          ],
+          "confidence": "medium",
+          "reason": "Toes to bar: в инструкции прямо требуется турник; сгибатели бедра и пресс поднимают ноги к перекладине, хват удерживает вис."
+        }
+      ],
+      "notes": "Toes to bar: в инструкции прямо требуется турник; сгибатели бедра и пресс поднимают ноги к перекладине, хват удерживает вис."
     }
   ]
 }
