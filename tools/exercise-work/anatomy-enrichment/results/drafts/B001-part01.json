@@ -42,7 +42,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_maximus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
         }
       ]
     },
@@ -330,7 +330,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_maximus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
         }
       ]
     },
@@ -396,7 +396,7 @@
             "https://cdn.muscleandstrength.com/exercises/smith-machine-leg-press"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (quadriceps_femoris) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (quadriceps_femoris) без произвольных стабилизаторов."
         }
       ]
     },
@@ -436,7 +436,7 @@
             "https://www.nasm.org/resource-center/exercise-library/leg-press"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (quadriceps_femoris) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (quadriceps_femoris) без произвольных стабилизаторов."
         }
       ],
       "notes": "Исходные Adductor Magnus и Hamstrings не имеют прямого единственного соответствия в справочнике."
@@ -582,7 +582,7 @@
             "https://www.strengthlog.com/trapezius-muscle-exercises-workout/"
           ],
           "confidence": "high",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (trapezius_upper) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (trapezius_upper) без произвольных стабилизаторов."
         }
       ]
     },
@@ -725,7 +725,7 @@
             "https://www.acefitness.org/resources/everyone/exercise-library/44/seated-biceps-curl/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (biceps_brachii) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (biceps_brachii) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. В исходнике указано Dumbbells, хотя название указывает на тренажёр для сгибания рук; точный тип тренажёра не утверждён."
@@ -763,7 +763,7 @@
             "https://www.strengthlog.com/smith-machine-bench-press/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (pectoralis_sternal) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (pectoralis_sternal) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
@@ -791,7 +791,7 @@
             "https://www.acefitness.org/resources/pros/expert-articles/6471/recruit-the-glutes-6-exercises-to-improve-mobility-and-strength/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (gluteus_maximus) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (gluteus_maximus) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря. Движение на тренажёре разгибания ног необычно, техника в исходнике недостаточно описана; разметка ограничена надёжным главным движением."
@@ -829,7 +829,7 @@
             "https://www.strengthlog.com/machine-crunch/"
           ],
           "confidence": "medium",
-          "reason": "Сохранена подтверждённая двигательная роль, уточнены канонические анатомические ID (rectus_abdominis) без произвольных стабилизаторов."
+          "reason": "Добавлена основная мышечная роль с каноническими ID (rectus_abdominis) без произвольных стабилизаторов."
         }
       ],
       "notes": "Для специализированного тренажёра из названия в EQUIPMENT_LABELS отсутствует точный фильтр; общий machine не подменяется вымышленным ID. Требуется решение о расширении словаря."
