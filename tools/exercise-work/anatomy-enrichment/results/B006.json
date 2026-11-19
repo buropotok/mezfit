@@ -1602,8 +1602,7 @@
       "category_verified": true,
       "patch": {
         "equipment": [
-          "dumbbell",
-          "bench"
+          "dumbbell"
         ],
         "muscles": {
           "primary": [
@@ -1631,10 +1630,10 @@
             "https://fitnessprogramer.com/exercise/dumbbell-seated-alternate-front-raise/"
           ],
           "confidence": "low",
-          "reason": "Отсутствует инструкция; для сидячего подъёма поочерёдно предположена опора на скамью, требуется визуальная проверка."
+          "reason": "Исходная карточка не указывает вид сиденья: нельзя считать именно gym bench необходимым оборудованием; подтверждены только гантели. Проверить вариант по GIF."
         }
       ],
-      "notes": "Отсутствует инструкция; для сидячего подъёма поочерёдно предположена опора на скамью, требуется визуальная проверка."
+      "notes": "Исходная карточка не указывает вид сиденья: нельзя считать именно gym bench необходимым оборудованием; подтверждены только гантели. Проверить вариант по GIF."
     },
     {
       "id": "fitnessprogramer:dumbbell-seated-bent-over-rear-delt-row",
@@ -1644,8 +1643,7 @@
       "category_verified": true,
       "patch": {
         "equipment": [
-          "dumbbell",
-          "bench"
+          "dumbbell"
         ],
         "muscles": {
           "primary": [
@@ -1673,10 +1671,10 @@
             "https://fitnessprogramer.com/exercise/dumbbell-seated-bent-over-rear-delt-row/"
           ],
           "confidence": "low",
-          "reason": "Сидя в наклоне при тяге на задние дельты возможна опора на скамью, подтвердить вариант по GIF."
+          "reason": "Положение сидя не подтверждает обязательную гимнастическую скамью: вид сиденья не определён исходником. Уточнить по GIF; оставить подтверждённые гантели."
         }
       ],
-      "notes": "Сидя в наклоне при тяге на задние дельты возможна опора на скамью, подтвердить вариант по GIF."
+      "notes": "Положение сидя не подтверждает обязательную гимнастическую скамью: вид сиденья не определён исходником. Уточнить по GIF; оставить подтверждённые гантели."
     },
     {
       "id": "fitnessprogramer:dumbbell-seated-cuban-press",
@@ -1686,8 +1684,7 @@
       "category_verified": true,
       "patch": {
         "equipment": [
-          "dumbbell",
-          "bench"
+          "dumbbell"
         ],
         "muscles": {
           "primary": [
@@ -1717,10 +1714,10 @@
             "https://fitnessprogramer.com/exercise/dumbbell-seated-cuban-press/"
           ],
           "confidence": "low",
-          "reason": "Cuban press сочетает наружную ротацию и жим; исходник без описания. Проверить амплитуду и положение сидя по GIF."
+          "reason": "Cuban press включает ротацию и жим, исходник не содержит техники. Конкретный тип сиденья неизвестен; не включать скамью как установленное оборудование. Проверить GIF."
         }
       ],
-      "notes": "Cuban press сочетает наружную ротацию и жим; исходник без описания. Проверить амплитуду и положение сидя по GIF."
+      "notes": "Cuban press включает ротацию и жим, исходник не содержит техники. Конкретный тип сиденья неизвестен; не включать скамью как установленное оборудование. Проверить GIF."
     },
     {
       "id": "fitnessprogramer:dumbbell-seated-front-and-back-tate-press",
@@ -1771,8 +1768,7 @@
       "category_verified": true,
       "patch": {
         "equipment": [
-          "dumbbell",
-          "bench"
+          "dumbbell"
         ],
         "muscles": {
           "primary": [
@@ -1798,10 +1794,10 @@
             "https://fitnessprogramer.com/exercise/dumbbell-seated-neutral-wrist-curl/"
           ],
           "confidence": "low",
-          "reason": "В названии wrist curl с нейтральным хватом нет ясности о плоскости движения; предварительно сгибатели кисти, необходимо сверить GIF."
+          "reason": "Исходник не содержит инструкции, нейтральная плоскость wrist curl и тип опоры не подтверждены. Только гантели уверенно установлены; необходим GIF."
         }
       ],
-      "notes": "В названии wrist curl с нейтральным хватом нет ясности о плоскости движения; предварительно сгибатели кисти, необходимо сверить GIF."
+      "notes": "Исходник не содержит инструкции, нейтральная плоскость wrist curl и тип опоры не подтверждены. Только гантели уверенно установлены; необходим GIF."
     },
     {
       "id": "fitnessprogramer:dumbbell-shoulder-press",
@@ -3250,8 +3246,7 @@
       "category_verified": true,
       "patch": {
         "equipment": [
-          "ez bar",
-          "bench"
+          "ez bar"
         ],
         "muscles": {
           "primary": [
@@ -3277,10 +3272,10 @@
             "https://fitnessprogramer.com/exercise/ez-bar-lying-close-grip-triceps-extension-behind-head/"
           ],
           "confidence": "low",
-          "reason": "Лежачее разгибание на трицепс с EZ-грифом. В исходнике есть только generic Barbell без описания/мышц, подтвердить опору по GIF."
+          "reason": "Подтверждён EZ-гриф по названию, но лежачий вариант может выполняться на полу или скамье. Источник не подтверждает обязательность скамьи; проверить GIF."
         }
       ],
-      "notes": "Лежачее разгибание на трицепс с EZ-грифом. В исходнике есть только generic Barbell без описания/мышц, подтвердить опору по GIF."
+      "notes": "Подтверждён EZ-гриф по названию, но лежачий вариант может выполняться на полу или скамье. Источник не подтверждает обязательность скамьи; проверить GIF."
     },
     {
       "id": "fitnessprogramer:ez-bar-underhand-press",
