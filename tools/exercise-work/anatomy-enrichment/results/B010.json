@@ -1,0 +1,467 @@
+{
+  "schema_version": 1,
+  "batch_id": "B010",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:ring-inverted-row",
+      "source_path": "assets/work/back/ring-inverted-row.json",
+      "source_blob_sha": "2d65cd2f01025bbe207f021d727fd46e69859729",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "gymnastic-rings"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "rhomboids"
+          ],
+          "secondary": [
+            "biceps_brachii",
+            "brachialis",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/ring-inverted-row/"
+          ],
+          "confidence": "medium",
+          "reason": "Ring inverted row использует подвесные гимнастические кольца, не ремни TRX: название определяет снаряд, тяга нагружает спину и сгибатели локтя."
+        }
+      ],
+      "notes": "Ring inverted row использует подвесные гимнастические кольца, не ремни TRX: название определяет снаряд, тяга нагружает спину и сгибатели локтя."
+    },
+    {
+      "id": "fitnessprogramer:rolling-like-a-ball",
+      "source_path": "assets/work/erector-spinae/rolling-like-a-ball.json",
+      "source_blob_sha": "3026eecc11dcc8a61b5f7f8b47e02f0df2f0f9f7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "core",
+        "equipment": [
+          "mat"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rolling-like-a-ball/"
+          ],
+          "confidence": "medium",
+          "reason": "Rolling Like a Ball — пилатесовское перекатывание с собранными коленями и контролем корпуса на коврике; back не является силовой мышечной группой-мишенью."
+        }
+      ],
+      "notes": "Rolling Like a Ball — пилатесовское перекатывание с собранными коленями и контролем корпуса на коврике; back не является силовой мышечной группой-мишенью."
+    },
+    {
+      "id": "fitnessprogramer:romanian-deadlift",
+      "source_path": "assets/work/back/romanian-deadlift.json",
+      "source_blob_sha": "c400fcadec03e09bfe48d22b47f0f86892677609",
+      "status": "verified",
+      "category_verified": true,
+      "patch": {
+        "primary_category": "legs",
+        "muscles": {
+          "primary": [
+            "gluteus_maximus",
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "secondary": [
+            "hip_adductors"
+          ],
+          "stabilizers": [
+            "erector_spinae",
+            "latissimus_dorsi"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "primary_category",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/romanian-deadlift/"
+          ],
+          "confidence": "medium",
+          "reason": "Romanian deadlift: тазобедренный hinge с почти прямыми коленями; бицепс бедра и ягодичные динамические двигатели, разгибатели позвоночника стабилизируют нейтральную спину."
+        }
+      ],
+      "notes": "Romanian deadlift: тазобедренный hinge с почти прямыми коленями; бицепс бедра и ягодичные динамические двигатели, разгибатели позвоночника стабилизируют нейтральную спину."
+    },
+    {
+      "id": "fitnessprogramer:rope-climb",
+      "source_path": "assets/work/back/rope-climb.json",
+      "source_blob_sha": "988e1ca281a3bd03589a5245bea9409cd04d749a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "rope"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi",
+            "biceps_brachii"
+          ],
+          "secondary": [
+            "brachialis",
+            "brachioradialis"
+          ],
+          "stabilizers": [
+            "forearm_grip",
+            "rectus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rope-climb/"
+          ],
+          "confidence": "medium",
+          "reason": "Rope climb по инструкции выполняется по вертикальному канату, а не тросовому блоку; канонический rope уже существует."
+        }
+      ],
+      "notes": "Rope climb по инструкции выполняется по вертикальному канату, а не тросовому блоку; канонический rope уже существует."
+    },
+    {
+      "id": "fitnessprogramer:rope-pushdown",
+      "source_path": "assets/work/triceps/rope-pushdown.json",
+      "source_blob_sha": "83591789fa33609d30b74b8b9d4531ba4fb5c8b9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "cable-rope-handle"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rope-pushdown/"
+          ],
+          "confidence": "medium",
+          "reason": "Rope pushdown требует тросовый блок и двустороннюю канатную рукоять, не гимнастический канат для лазания; трицепс разгибает локоть."
+        }
+      ],
+      "notes": "Rope pushdown требует тросовый блок и двустороннюю канатную рукоять, не гимнастический канат для лазания; трицепс разгибает локоть."
+    },
+    {
+      "id": "fitnessprogramer:rope-straight-arm-pulldown",
+      "source_path": "assets/work/back/rope-straight-arm-pulldown.json",
+      "source_blob_sha": "84bd870bb4a4c884f7acf0668c9f5203b82a6c4b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "cable",
+          "cable-rope-handle"
+        ],
+        "muscles": {
+          "secondary": [
+            "teres_major",
+            "deltoid_posterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rope-straight-arm-pulldown/"
+          ],
+          "confidence": "medium",
+          "reason": "Straight-arm rope pulldown: тросовый блок с канатной рукоятью, латиссимус primary из исходника верен, исходный список помощников слишком широк."
+        }
+      ],
+      "notes": "Straight-arm rope pulldown: тросовый блок с канатной рукоятью, латиссимус primary из исходника верен, исходный список помощников слишком широк."
+    },
+    {
+      "id": "fitnessprogramer:rotator-cuff-stretch",
+      "source_path": "assets/work/shoulders/rotator-cuff-stretch.json",
+      "source_blob_sha": "ced01a58ff80f5658815b0369635278d708edeb3",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/rotator-cuff-stretch/"
+          ],
+          "confidence": "medium",
+          "reason": "Rotator cuff stretch — растяжка вращательной манжеты, её растяжение нельзя выдавать за активные силовые роли."
+        }
+      ],
+      "notes": "Rotator cuff stretch — растяжка вращательной манжеты, её растяжение нельзя выдавать за активные силовые роли."
+    },
+    {
+      "id": "fitnessprogramer:run-in-place",
+      "source_path": "assets/work/cardio/run-in-place.json",
+      "source_blob_sha": "070e8012a129832872e2c974393e854e1286cf55",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/run-in-place/"
+          ],
+          "confidence": "medium",
+          "reason": "Run in place — ритмическая кардиоактивность без выделенной силы одной мышцы."
+        }
+      ],
+      "notes": "Run in place — ритмическая кардиоактивность без выделенной силы одной мышцы."
+    },
+    {
+      "id": "fitnessprogramer:running",
+      "source_path": "assets/work/cardio/running.json",
+      "source_blob_sha": "4eceaf8d581d0960c1d35383adb3c0c302b33ae2",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/running/"
+          ],
+          "confidence": "medium",
+          "reason": "Running — кардиодвигательная активность всего тела, анатомическая иерархия силового упражнения неприменима."
+        }
+      ],
+      "notes": "Running — кардиодвигательная активность всего тела, анатомическая иерархия силового упражнения неприменима."
+    },
+    {
+      "id": "fitnessprogramer:russian-twist",
+      "source_path": "assets/work/abs/russian-twist.json",
+      "source_blob_sha": "ef8885d8113fe98345923bcbeca5020368d67792",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "muscles": {
+          "secondary": [
+            "rectus_abdominis"
+          ],
+          "stabilizers": [
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/russian-twist/"
+          ],
+          "confidence": "medium",
+          "reason": "Russian twist: исходные obliques primary верны, при ротации туловища участвует прямая и поперечная мышцы живота; вес в инструкции необязателен."
+        }
+      ],
+      "notes": "Russian twist: исходные obliques primary верны, при ротации туловища участвует прямая и поперечная мышцы живота; вес в инструкции необязателен."
+    },
+    {
+      "id": "fitnessprogramer:scapula-dips",
+      "source_path": "assets/work/shoulders/scapula-dips.json",
+      "source_blob_sha": "1fbed6c40a6dd1ec5feed0353dafb5789f4e164b",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "dip bars"
+        ],
+        "muscles": {
+          "primary": [
+            "serratus_anterior",
+            "trapezius_lower"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "triceps_brachii"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/scapula-dips/"
+          ],
+          "confidence": "low",
+          "reason": "Scapula dips обычно выполняются в упоре на брусьях; исходное NO EQUIPMENT конфликтует с движением. Нет техники, GIF нужен для уточнения опоры и роли нижней трапеции."
+        }
+      ],
+      "notes": "Scapula dips обычно выполняются в упоре на брусьях; исходное NO EQUIPMENT конфликтует с движением. Нет техники, GIF нужен для уточнения опоры и роли нижней трапеции."
+    },
+    {
+      "id": "fitnessprogramer:scapula-pull-up",
+      "source_path": "assets/work/back/scapula-pull-up.json",
+      "source_blob_sha": "92e08a6555b5dfc678c7fbfa528d1570344e8259",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "pull-up bar"
+        ],
+        "muscles": {
+          "primary": [
+            "trapezius_lower",
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "rhomboids"
+          ],
+          "stabilizers": [
+            "forearm_grip"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/scapula-pull-up/"
+          ],
+          "confidence": "medium",
+          "reason": "Scapula pull-up требует турник, депрессию/поворот лопаток без сгибания локтя, хват удерживает вис."
+        }
+      ],
+      "notes": "Scapula pull-up требует турник, депрессию/поворот лопаток без сгибания локтя, хват удерживает вис."
+    }
+  ]
+}
