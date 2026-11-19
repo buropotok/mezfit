@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/buropotok/mezfit/tools/exercise-work/anatomy-enrichment/result-schema.json",
+  "title": "Mezfit FitnessProgramer enrichment batch result v1",
+  "description": "One reviewed record per unique exercise in the claimed batch. Omitted patch properties mean preserve source data, never erase them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "batch_id",
+    "source_commit",
+    "manifest_blob_sha",
+    "exercises"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^B[0-9]{3}$"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "manifest_blob_sha": {
+      "const": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4"
+    },
+    "exercises": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "source_path",
+          "source_blob_sha",
+          "status",
+          "category_verified",
+          "patch",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^fitnessprogramer:[a-z0-9-]+$"
+          },
+          "source_path": {
+            "type": "string",
+            "pattern": "^assets/work/[a-z-]+/[a-z0-9-]+\\.json$"
+          },
+          "source_blob_sha": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "status": {
+            "enum": [
+              "verified",
+              "partial",
+              "needs_review",
+              "unchanged"
+            ]
+          },
+          "category_verified": {
+            "type": "boolean",
+            "description": "Whether one final UI category was semantically verified; required for multi-category exercise entries."
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "primary_category": {
+                "enum": [
+                  "chest",
+                  "arms",
+                  "back",
+                  "shoulders",
+                  "core",
+                  "legs",
+                  "full_body",
+                  "cardio",
+                  "other"
+                ]
+              },
+              "equipment": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "muscles": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "primary": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "secondary": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "stabilizers": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "fields",
+                "source_urls",
+                "confidence",
+                "reason"
+              ],
+              "properties": {
+                "fields": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "enum": [
+                      "primary_category",
+                      "equipment",
+                      "muscles.primary",
+                      "muscles.secondary",
+                      "muscles.stabilizers"
+                    ]
+                  }
+                },
+                "source_urls": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "confidence": {
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 10
+                }
+              }
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
