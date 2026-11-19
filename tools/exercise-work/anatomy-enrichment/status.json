@@ -293,11 +293,11 @@
       "result_stats": null
     },
     "B010": {
-      "status": "new",
-      "agent": null,
-      "claim_id": null,
-      "started_at": null,
-      "lease_until": null,
+      "status": "in_progress",
+      "agent": "gpt6-anatomy-2026-11-19",
+      "claim_id": "b010-mwntrnqf-ojzr951x6",
+      "started_at": "2026-11-19T17:29:26.247Z",
+      "lease_until": "2026-11-19T19:29:26.247Z",
       "completed_at": null,
       "result_branch": null,
       "result_commit": null,
