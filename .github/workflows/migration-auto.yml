@@ -104,3 +104,29 @@ jobs:
           path: migration-trace.json
           if-no-files-found: warn
           retention-days: 7
+
+  source-package-smoke:
+    needs: nested-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify SourceImportPackage v1 and replay/cleanup
+        run: node migration/cloudflare.mjs
+        env:
+          MIGRATION_OPERATION: source-package-smoke
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          MEZFIT_APP_ORIGIN: ${{ vars.MEZFIT_APP_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_BOOTSTRAP_API_TOKEN: ${{ secrets.CLOUDFLARE_BOOTSTRAP_API_TOKEN }}
+      - name: Upload sanitized source-package trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-trace-source-package-${{ github.run_attempt }}
+          path: migration-trace.json
+          if-no-files-found: warn
+          retention-days: 7

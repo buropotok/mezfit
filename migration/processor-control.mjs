@@ -65,9 +65,12 @@ async function invoke(api, id, params, emit, deadline, wait, operation) {
 }
 
 export async function runProcessorSmoke(api, id, version, emit, runtime, { runId, wait = sleep, operation = 'processor-smoke' } = {}) {
-  if (!['processor-smoke', 'nested-smoke'].includes(operation)) throw new Error('MIGRATION_OPERATION_INVALID');
-  const nested = operation === 'nested-smoke';
-  const verified = nested ? 'MIGRATION_NESTED_SMOKE_VERIFIED' : 'MIGRATION_PROCESSOR_SMOKE_VERIFIED';
+  if (!['processor-smoke', 'nested-smoke', 'source-package-smoke'].includes(operation)) throw new Error('MIGRATION_OPERATION_INVALID');
+  const scenario = operation === 'source-package-smoke'
+    ? { worker: 'processor-source-package-smoke', verified: 'MIGRATION_SOURCE_PACKAGE_SMOKE_VERIFIED', ok: 'MIGRATION_SOURCE_PACKAGE_SMOKE_OK' }
+    : operation === 'nested-smoke'
+      ? { worker: 'processor-nested-smoke', verified: 'MIGRATION_NESTED_SMOKE_VERIFIED', ok: 'MIGRATION_NESTED_SMOKE_OK' }
+      : { worker: 'processor-smoke', verified: 'MIGRATION_PROCESSOR_SMOKE_VERIFIED', ok: 'MIGRATION_PROCESSOR_SMOKE_OK' };
   const deadline = Date.now() + 60000;
   let ready = false;
   for (let attempt = 1; attempt <= 5 && Date.now() < deadline; attempt++) {
@@ -87,9 +90,9 @@ export async function runProcessorSmoke(api, id, version, emit, runtime, { runId
   runtime.started = true;
   let primary;
   try {
-    runtime.instance = await invoke(api, id, { operation: nested ? 'processor-nested-smoke' : 'processor-smoke', jobId: id, expectedVersion: version, runId },
+    runtime.instance = await invoke(api, id, { operation: scenario.worker, jobId: id, expectedVersion: version, runId },
       emit, Date.now() + 130000, wait, operation);
-    if (output(runtime.instance) !== verified || runtime.instance?.status !== 'complete') {
+    if (output(runtime.instance) !== scenario.verified || runtime.instance?.status !== 'complete') {
       throw new Error('MIGRATION_PROCESSOR_SMOKE_FAILED');
     }
   } catch (error) {
@@ -115,5 +118,5 @@ export async function runProcessorSmoke(api, id, version, emit, runtime, { runId
       if (!primary) throw error;
     }
   }
-  return nested ? 'MIGRATION_NESTED_SMOKE_OK' : 'MIGRATION_PROCESSOR_SMOKE_OK';
+  return scenario.ok;
 }

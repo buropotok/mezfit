@@ -1,6 +1,6 @@
 # MIG-04 — Universal SourceImportPackage v1
 
-**Статус:** утверждённая предметная архитектура и проект wire-контракта v1 для реализации MIG-04. Документ не означает наличия опубликованной JSON Schema, готового адаптера реального формата или возможности записи в Dexie Cloud.
+**Статус:** утверждённая предметная архитектура v1; MIG-04 реализует TypeScript types/runtime validator, result schema v3 и synthetic-training. Cloud acceptance ожидается после merge. Документ не означает наличия опубликованной JSON Schema, готового адаптера реального формата или возможности записи в Dexie Cloud.
 **Основание:** согласованная модель Mezfit; уточнение владельца 18.11.2026 о границе PROGRAM / OCCURRENCE / SESSION.
 **Связанные документы:** [migration.md](../../migration.md) (§15), [domain-model.md](domain-model.md), [local-first-storage-sync.md](local-first-storage-sync.md).
 **Реализация, которую необходимо соблюдать:** `src/data/cloud/workout-foundation-types.ts`, `src/data/cloud/workout-occurrence-plan.ts`, `shared/workout-occurrence-plan.ts`, `src/data/cloud/adhoc-workout-types.ts`.

@@ -3,6 +3,10 @@ export const FIXTURE_FORMAT = 'mezfit-migration-fixture-v1';
 export const PROCESSOR_INPUT_LIMIT = 8192;
 export const PROCESSOR_RECORD_LIMIT = 256;
 export const PROCESSOR_RESULT_LIMIT = 1024;
+export const SOURCE_PACKAGE_RESULT_LIMIT = 65536;
+export function processorResultLimit(schemaVersion) {
+  return schemaVersion === 3 ? SOURCE_PACKAGE_RESULT_LIMIT : PROCESSOR_RESULT_LIMIT;
+}
 
 export function processorInstanceId(id) {
   return 'process-' + PROCESSOR_VERSION + '-' + id;

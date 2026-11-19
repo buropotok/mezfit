@@ -18,7 +18,7 @@ export function createAdapterRegistry(adapters: readonly ImportAdapter[]) {
       || !Number.isSafeInteger(descriptor.maxInputBytes) || descriptor.maxInputBytes <= 0
       || descriptor.maxInputBytes > PROCESSOR_INPUT_LIMIT || !Number.isSafeInteger(descriptor.maxRecords)
       || descriptor.maxRecords < 0 || descriptor.maxRecords > PROCESSOR_RECORD_LIMIT
-      || ![1, 2].includes(descriptor.resultSchemaVersion)) throw new ProcessingFailure('INVALID_ADAPTER_REGISTRY');
+      || ![1, 2, 3].includes(descriptor.resultSchemaVersion)) throw new ProcessingFailure('INVALID_ADAPTER_REGISTRY');
     identities.add(descriptor.adapterId);
   }
   return Object.freeze({

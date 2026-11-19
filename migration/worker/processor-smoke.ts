@@ -7,6 +7,8 @@ import { isResult, ProcessingFailure, sha256, type Success } from './processor';
 import { UPLOAD_BUCKET } from './r2-upload';
 import type { SmokeBindings } from './smoke';
 import { observed } from './trace';
+import { trainingFixture } from './processor/source-package/fixture';
+import { matchesTrainingFixture } from './processor/source-package/smoke-expectation';
 import { NESTED_FORMAT } from './processor/adapters/nested';
 
 const CONTENT_TYPE = 'application/octet-stream';
@@ -22,7 +24,11 @@ export async function processorReadiness(env: SmokeBindings, step: WorkflowStep,
   });
 }
 
-function smokeFixture(scenario: 'fixture' | 'nested') {
+function smokeFixture(scenario: 'fixture' | 'nested' | 'source-package') {
+  if (scenario === 'source-package') return {
+    bytes: new TextEncoder().encode(JSON.stringify(trainingFixture())), count: 5,
+    adapterId: 'synthetic-training', verified: 'MIGRATION_SOURCE_PACKAGE_SMOKE_VERIFIED', matches: matchesTrainingFixture,
+  };
   if (scenario === 'nested') {
     const fixture = { format: NESTED_FORMAT, container: { groups: [
       { sourceId: 'z', items: [{ sourceId: 'c', amount: 9, peerId: 'a' }] },
@@ -52,7 +58,7 @@ function smokeFixture(scenario: 'fixture' | 'nested') {
 }
 
 export async function runProcessorSmoke(env: SmokeBindings, id: string, step: WorkflowStep, context: TraceContext,
-  version: string, permanent: (code: string) => Error, scenario: 'fixture' | 'nested' = 'fixture') {
+  version: string, permanent: (code: string) => Error, scenario: 'fixture' | 'nested' | 'source-package' = 'fixture') {
   const run = (name: string) => processStep(env, step, context, name);
   const fixture = smokeFixture(scenario);
   const { bytes } = fixture;
