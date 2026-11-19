@@ -835,6 +835,425 @@
         }
       ],
       "notes": "Исходная карточка содержит технику жима лёжа на горизонтальной скамье и отдельно называет динамическую стабилизацию бицепсом."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-pull-through",
+      "source_path": "assets/work/hip/dumbbell-pull-through.json",
+      "source_blob_sha": "8d42158538159a945fb7181f524604c3f59879cb",
+      "status": "needs_review",
+      "category_verified": false,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "biceps_femoris",
+            "semitendinosus",
+            "semimembranosus"
+          ],
+          "stabilizers": [
+            "erector_spinae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-pull-through/"
+          ],
+          "confidence": "low",
+          "reason": "Движение pull-through неоднозначно без видео; источник относит к разгибателям спины/бедра/ног. Проверить, что это именно тяга через ноги, а не планка с переносом гантели."
+        }
+      ],
+      "notes": "Движение pull-through неоднозначно без видео; источник относит к разгибателям спины/бедра/ног. Проверить, что это именно тяга через ноги, а не планка с переносом гантели."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-pullover",
+      "source_path": "assets/work/chest/dumbbell-pullover.json",
+      "source_blob_sha": "d39514e557585f37e13fee27b9cc90e436901fbd",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "bench"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "latissimus_dorsi",
+            "teres_major",
+            "triceps_long_head",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "forearm_flexors"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-pullover/"
+          ],
+          "confidence": "medium",
+          "reason": "Исходник называет грудную мышцу основной и широчайшую синергистом; версия лёжа поперёк скамьи подтверждена инструкцией. Перечень дополнительных мышц сокращён."
+        }
+      ],
+      "notes": "Исходник называет грудную мышцу основной и широчайшую синергистом; версия лёжа поперёк скамьи подтверждена инструкцией. Перечень дополнительных мышц сокращён."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-pullover-on-stability-ball",
+      "source_path": "assets/work/chest/dumbbell-pullover-on-stability-ball.json",
+      "source_blob_sha": "0efb414dbc946d462de4e1d180fe9185cfff216d",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell",
+          "stability ball"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_sternal"
+          ],
+          "secondary": [
+            "latissimus_dorsi",
+            "teres_major",
+            "triceps_long_head",
+            "serratus_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-pullover-on-stability-ball/"
+          ],
+          "confidence": "medium",
+          "reason": "Фитбол заменяет скамью. Избыточный список стабилизаторов исходника не переносится без доказательства конкретной роли."
+        }
+      ],
+      "notes": "Фитбол заменяет скамью. Избыточный список стабилизаторов исходника не переносится без доказательства конкретной роли."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-push-press",
+      "source_path": "assets/work/shoulders/dumbbell-push-press.json",
+      "source_blob_sha": "b46bb09b59fc8b9df4fe55734831f158879ad96f",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_anterior"
+          ],
+          "secondary": [
+            "deltoid_lateral",
+            "triceps_brachii",
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-push-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Push press отличается использованием ног для импульса, но доминирующий жимовой акцент на плечах. Стабилизаторы в источнике не установлены."
+        }
+      ],
+      "notes": "Push press отличается использованием ног для импульса, но доминирующий жимовой акцент на плечах. Стабилизаторы в источнике не установлены."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-raise",
+      "source_path": "assets/work/shoulders/dumbbell-raise.json",
+      "source_blob_sha": "9a3e00709ff4c30fc2a260746a589132066f6d54",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_lateral"
+          ],
+          "secondary": [
+            "trapezius_upper",
+            "supraspinatus",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "levator_scapulae"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-raise/"
+          ],
+          "confidence": "medium",
+          "reason": "Список исходных синергистов сокращён до мышц с обоснованной ролью при подъёме рук."
+        }
+      ],
+      "notes": "Список исходных синергистов сокращён до мышц с обоснованной ролью при подъёме рук."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-rear-delt-row",
+      "source_path": "assets/work/shoulders/dumbbell-rear-delt-row.json",
+      "source_blob_sha": "1dbf663ef26c9c3dcff6cb8a71ba338ecacbcdbb",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-rear-delt-row/"
+          ],
+          "confidence": "low",
+          "reason": "В исходной карточке не названы мышцы и нет инструкции. Проверить положение плеча и путь локтей по GIF; назначена основная задняя дельта по варианту тяги."
+        }
+      ],
+      "notes": "В исходной карточке не названы мышцы и нет инструкции. Проверить положение плеча и путь локтей по GIF; назначена основная задняя дельта по варианту тяги."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-rear-lunge",
+      "source_path": "assets/work/hip/dumbbell-rear-lunge.json",
+      "source_blob_sha": "bc5a1ce50a311c1fb49e96039b75459750d629a7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris"
+          ],
+          "secondary": [
+            "gluteus_maximus",
+            "soleus"
+          ],
+          "stabilizers": [
+            "gluteus_medius",
+            "erector_spinae",
+            "obliques",
+            "quadratus_lumborum"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-rear-lunge/"
+          ],
+          "confidence": "medium",
+          "reason": "Нормализованы исходные мышцы, стабилизаторы с сомнительной функцией исключены."
+        }
+      ],
+      "notes": "Нормализованы исходные мышцы, стабилизаторы с сомнительной функцией исключены."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-renegade-row",
+      "source_path": "assets/work/back/dumbbell-renegade-row.json",
+      "source_blob_sha": "bd57ea90293df8760507c0420471b3a22aa8e428",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "latissimus_dorsi"
+          ],
+          "secondary": [
+            "rhomboids",
+            "teres_major",
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-renegade-row/"
+          ],
+          "confidence": "low",
+          "reason": "Гребковая тяга выполняется из планки; анти-ротационная работа живота стабилизирует корпус. Исходная карточка не задаёт мышечный перечень, требуется визуальное подтверждение."
+        }
+      ],
+      "notes": "Гребковая тяга выполняется из планки; анти-ротационная работа живота стабилизирует корпус. Исходная карточка не задаёт мышечный перечень, требуется визуальное подтверждение."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-reverse-curl",
+      "source_path": "assets/work/biceps/dumbbell-reverse-curl.json",
+      "source_blob_sha": "2c02ec3a9727e78a66a06b4dcd8c12eb960b4046",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "brachioradialis",
+            "brachialis"
+          ],
+          "secondary": [
+            "biceps_brachii"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-reverse-curl/"
+          ],
+          "confidence": "medium",
+          "reason": "Обратный (пронированный) хват переносит акцент на плечелучевую и плечевую мышцы."
+        }
+      ],
+      "notes": "Обратный (пронированный) хват переносит акцент на плечелучевую и плечевую мышцы."
+    },
+    {
+      "id": "fitnessprogramer:dumbbell-reverse-fly",
+      "source_path": "assets/work/shoulders/dumbbell-reverse-fly.json",
+      "source_blob_sha": "e6f9309a69128169de8e20daa3875a34cb9ae1ed",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dumbbell"
+        ],
+        "muscles": {
+          "primary": [
+            "deltoid_posterior"
+          ],
+          "secondary": [
+            "rhomboids",
+            "trapezius_middle",
+            "infraspinatus",
+            "teres_minor"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/dumbbell-reverse-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Reverse fly — горизонтальное отведение плеча; не приписаны недоказанные мышцы корпуса."
+        }
+      ],
+      "notes": "Reverse fly — горизонтальное отведение плеча; не приписаны недоказанные мышцы корпуса."
     }
   ]
 }
