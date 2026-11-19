@@ -1,0 +1,408 @@
+{
+  "schema_version": 1,
+  "batch_id": "B012",
+  "source_commit": "043a7be1ddbfc669910bab86c33e11aa41b9a87b",
+  "manifest_blob_sha": "b3b9a82f7ec8c008f3dab56a0ddcc6c3bb1679c4",
+  "exercises": [
+    {
+      "id": "fitnessprogramer:treadmill",
+      "source_path": "assets/work/cardio/treadmill.json",
+      "source_blob_sha": "db8d86dc49f6dcad52e56ecee75e8005bd616e9b",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "treadmill"
+        ],
+        "muscles": {
+          "primary": [
+            "other"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/treadmill/"
+          ],
+          "confidence": "medium",
+          "reason": "Беговая дорожка подтверждена инструкцией. Ходьба и бег с разной скоростью/уклоном не допускают единого надёжного списка основных и стабилизирующих мышц."
+        }
+      ],
+      "notes": "Беговая дорожка подтверждена инструкцией. Ходьба и бег с разной скоростью/уклоном не допускают единого надёжного списка основных и стабилизирующих мышц."
+    },
+    {
+      "id": "fitnessprogramer:triceps-dips",
+      "source_path": "assets/work/triceps/triceps-dips.json",
+      "source_blob_sha": "ac3515fcb12d3dd78408e6f26abe8efb773778a9",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "dip bars"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "pectoralis_sternal",
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/triceps-dips/"
+          ],
+          "confidence": "medium",
+          "reason": "В описании прямо указаны параллельные брусья; generic Machine и NO EQUIPMENT ошибочны. Синергисты сокращены до механически подтверждённых, стабилизаторы из исходника не подтверждены."
+        }
+      ],
+      "notes": "В описании прямо указаны параллельные брусья; generic Machine и NO EQUIPMENT ошибочны. Синергисты сокращены до механически подтверждённых, стабилизаторы из исходника не подтверждены."
+    },
+    {
+      "id": "fitnessprogramer:triceps-dips-on-floor",
+      "source_path": "assets/work/triceps/triceps-dips-on-floor.json",
+      "source_blob_sha": "fa5ec261d51df3e4d0b07d9d6543c4e0de81eb1c",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "pectoralis_sternal"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/triceps-dips-on-floor/"
+          ],
+          "confidence": "medium",
+          "reason": "Напольный вариант с опорой на ладони, отдельные брусья не нужны. Источник перечисляет избыточные синергисты, оставлены основные участники разгибания локтя."
+        }
+      ],
+      "notes": "Напольный вариант с опорой на ладони, отдельные брусья не нужны. Источник перечисляет избыточные синергисты, оставлены основные участники разгибания локтя."
+    },
+    {
+      "id": "fitnessprogramer:triceps-extension-with-resistance-bands",
+      "source_path": "assets/work/triceps/triceps-extension-with-resistance-bands.json",
+      "source_blob_sha": "f6505311b292a63134d5bb5a272bbbcf865b88a7",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "band"
+        ],
+        "muscles": {
+          "primary": [
+            "triceps_brachii"
+          ],
+          "secondary": [
+            "other"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/triceps-extension-with-resistance-bands/"
+          ],
+          "confidence": "medium",
+          "reason": "Тяга резинки закреплена над головой и выполняется разгибанием локтей; дополнительное оборудование не обязательно, источник не устанавливает синергистов и стабилизаторов."
+        }
+      ],
+      "notes": "Тяга резинки закреплена над головой и выполняется разгибанием локтей; дополнительное оборудование не обязательно, источник не устанавливает синергистов и стабилизаторов."
+    },
+    {
+      "id": "fitnessprogramer:trx-chest-fly",
+      "source_path": "assets/work/chest/trx-chest-fly.json",
+      "source_blob_sha": "cd791ddca2d558c99953210d03b69a7a03c4c525",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "trx"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/trx-chest-fly/"
+          ],
+          "confidence": "medium",
+          "reason": "Сведение прямых рук в подвесных петлях нагружает грудную мышцу; инструкция требует держать корпус жёстким, поэтому стабилизируется пресс."
+        }
+      ],
+      "notes": "Сведение прямых рук в подвесных петлях нагружает грудную мышцу; инструкция требует держать корпус жёстким, поэтому стабилизируется пресс."
+    },
+    {
+      "id": "fitnessprogramer:trx-chest-press",
+      "source_path": "assets/work/chest/trx-chest-press.json",
+      "source_blob_sha": "13fac4928ee15335001e3a60de4852dbf4186e11",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "trx"
+        ],
+        "muscles": {
+          "primary": [
+            "pectoralis_major"
+          ],
+          "secondary": [
+            "deltoid_anterior",
+            "triceps_brachii"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "transversus_abdominis"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/trx-chest-press/"
+          ],
+          "confidence": "medium",
+          "reason": "Жим груди на петлях с согнутыми локтями, в отличие от fly; корпус удерживается в наклоне. Подтверждены подвесные петли."
+        }
+      ],
+      "notes": "Жим груди на петлях с согнутыми локтями, в отличие от fly; корпус удерживается в наклоне. Подтверждены подвесные петли."
+    },
+    {
+      "id": "fitnessprogramer:trx-mountain-climber",
+      "source_path": "assets/work/abs/trx-mountain-climber.json",
+      "source_blob_sha": "d92531b9dd078219e6873db9c9dd33a200fb5f5a",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "trx"
+        ],
+        "muscles": {
+          "primary": [
+            "iliopsoas"
+          ],
+          "secondary": [
+            "rectus_femoris"
+          ],
+          "stabilizers": [
+            "rectus_abdominis",
+            "obliques"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/trx-mountain-climber/"
+          ],
+          "confidence": "low",
+          "reason": "В исходнике нет мышц и инструкции. Предварительно это попеременное приведение коленей в подвесной планке; уточнить точную амплитуду по GIF."
+        }
+      ],
+      "notes": "В исходнике нет мышц и инструкции. Предварительно это попеременное приведение коленей в подвесной планке; уточнить точную амплитуду по GIF."
+    },
+    {
+      "id": "fitnessprogramer:trx-pistol-squat",
+      "source_path": "assets/work/hip/trx-pistol-squat.json",
+      "source_blob_sha": "621438214da95a3b632c4a11b5b2f640dd494f09",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "trx"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gluteus_medius",
+            "soleus"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/trx-pistol-squat/"
+          ],
+          "confidence": "low",
+          "reason": "Pistol squat с опорой на петли предполагает одностороннее разгибание колена/бедра. Источник не описывает стабилизаторов и варианта помощи петлями."
+        }
+      ],
+      "notes": "Pistol squat с опорой на петли предполагает одностороннее разгибание колена/бедра. Источник не описывает стабилизаторов и варианта помощи петлями."
+    },
+    {
+      "id": "fitnessprogramer:tuck-crunch",
+      "source_path": "assets/work/abs/tuck-crunch.json",
+      "source_blob_sha": "81475cb80d4133b42f6dbe40dd7e4f58ccf3b18a",
+      "status": "partial",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "rectus_abdominis"
+          ],
+          "secondary": [
+            "obliques"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/tuck-crunch/"
+          ],
+          "confidence": "medium",
+          "reason": "В исходнике прямо названы Rectus Abdominis и Obliques; доказанных отдельных стабилизаторов нет."
+        }
+      ],
+      "notes": "В исходнике прямо названы Rectus Abdominis и Obliques; доказанных отдельных стабилизаторов нет."
+    },
+    {
+      "id": "fitnessprogramer:tuck-jump",
+      "source_path": "assets/work/cardio/tuck-jump.json",
+      "source_blob_sha": "ffda6815f988ee70a3b2886c112dd5dd49fdf95e",
+      "status": "needs_review",
+      "category_verified": true,
+      "patch": {
+        "equipment": [
+          "none"
+        ],
+        "muscles": {
+          "primary": [
+            "quadriceps_femoris",
+            "gluteus_maximus"
+          ],
+          "secondary": [
+            "gastrocnemius",
+            "iliopsoas"
+          ],
+          "stabilizers": [
+            "other"
+          ]
+        }
+      },
+      "evidence": [
+        {
+          "fields": [
+            "equipment",
+            "muscles.primary",
+            "muscles.secondary",
+            "muscles.stabilizers"
+          ],
+          "source_urls": [
+            "https://fitnessprogramer.com/exercise/tuck-jump/"
+          ],
+          "confidence": "low",
+          "reason": "Плиометрический tuck jump включает разгибание ног при взлёте и сгибание бедра в группировке; исходник не содержит техники, роли требуют GIF."
+        }
+      ],
+      "notes": "Плиометрический tuck jump включает разгибание ног при взлёте и сгибание бедра в группировке; исходник не содержит техники, роли требуют GIF."
+    }
+  ]
+}
