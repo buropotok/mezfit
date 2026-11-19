@@ -1,0 +1,115 @@
+{
+  "batch_id": "B003",
+  "proposals": [
+    {
+      "id": "ab-roller-crunch-machine",
+      "label_ru": "Тренажёр для скручиваний с роликовым механизмом",
+      "definition_ru": "Специализированный тренажёр для скручиваний пресса, идентифицированный источником как Ab Roller Crunch (Machine); механизм нуждается в уточнении по GIF.",
+      "exercise_ids": [
+        "fitnessprogramer:ab-roller-crunch"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ab-roller-crunch/"
+      ],
+      "confidence": "low",
+      "aliases_considered": [
+        "machine",
+        "ab roller",
+        "ab coaster",
+        "ab-wheel"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "ab-straps",
+      "label_ru": "Подвесные петли для пресса",
+      "definition_ru": "Пара подвесных локтевых лямок для подъёма ног в висе (Ab Straps), отличная от TRX/обычного турника.",
+      "exercise_ids": [
+        "fitnessprogramer:ab-straps-leg-raise"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ab-straps-leg-raise/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "trx",
+        "suspension trainer",
+        "pull-up bar"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "ab-wheel",
+      "label_ru": "Ролик для пресса",
+      "definition_ru": "Двуручный гимнастический ролик с колесом для выкатов корпуса, не тренажёр Ab Roller Crunch.",
+      "exercise_ids": [
+        "fitnessprogramer:ab-wheel-rollout"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/ab-wheel-rollout/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "ab roller",
+        "roller wheel",
+        "ab-roller-crunch-machine"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "arm-blaster",
+      "label_ru": "Изолятор для бицепса (Arm Blaster)",
+      "definition_ru": "Жёсткая нагрудная опора под заднюю поверхность плеч для локализованного сгибания рук; используется с гантелями.",
+      "exercise_ids": [
+        "fitnessprogramer:arm-blaster-hammer-curl"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/arm-blaster-hammer-curl/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "preacher bench",
+        "bench",
+        "arm support"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "assisted-dip-pull-up-machine",
+      "label_ru": "Гравитрон",
+      "definition_ru": "Тренажёр с противовесом, подвижной платформой под колени/ступни и брусьями для отжиманий и/или турником для подтягиваний.",
+      "exercise_ids": [
+        "fitnessprogramer:asisted-triceps-dips"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/asisted-triceps-dips/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "machine",
+        "dip bars",
+        "assisted dip machine",
+        "gravitron"
+      ],
+      "existing_equipment_match_checked": true
+    },
+    {
+      "id": "air-bike",
+      "label_ru": "Аэробайк",
+      "definition_ru": "Велотренажёр с воздушным сопротивлением и движущимися рукоятками для одновременной работы рук и ног, в отличие от классического стационарного велотренажёра.",
+      "exercise_ids": [
+        "fitnessprogramer:assault-airbike"
+      ],
+      "source_urls": [
+        "https://fitnessprogramer.com/exercise/assault-airbike/"
+      ],
+      "confidence": "high",
+      "aliases_considered": [
+        "bike",
+        "stationary bike",
+        "Assault AirBike"
+      ],
+      "existing_equipment_match_checked": true
+    }
+  ]
+}
