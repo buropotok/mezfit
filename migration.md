@@ -1156,3 +1156,41 @@ Dexie Cloud REST upsert нельзя считать безопасным мас�
 допустимы исследование, extraction и dry-run с явными
 issues, но не молчаливая публикация якобы «готовой» истории.
 
+### 15.13. MIG-05 — Business Mapping Engine / MezfitImportPlan v1 (dry-run)
+
+**Статус:** реализован как отдельная **чистая библиотека в ветке MIG-05**,
+без включения в Workflow, без Dexie/IndexedDB/Dexie Cloud/R2 business writes
+и без UI/approval/publisher. Нормативный контракт:
+[`migration-import-plan-contract.md`](docs/architecture/migration-import-plan-contract.md);
+код: [`migration/business-mapping/`](migration/business-mapping/).
+Это уточнение статуса только для `MezfitImportPlan`, упоминания
+«пока не реализовано» в исторической §15.3 относятся к состоянию
+архитектуры до MIG-05 и не означают готовности полного импорта.
+
+Реализованы: повторная MIG-04 runtime validation на входе, IANA business-date
+inclusive filtering по session/scheduled, глобальная дедупликация связанных
+scheduled по всем sessions, полная closure выбранных source programs,
+независимые frozen PLAN и FACT, proposal default program только при доказанном
+отсутствии source programs, центральная exercise mapping registry,
+консервативный exact match или proposed imported custom, фиксированные
+единицы/точность и исходные метрики, предлагаемые слоты времени,
+versioned/typed operations, dependency-based partial selection,
+loss/issues/preview, snapshot hashes, стабильные identity/replay keys,
+строгие входная и выходная runtime-схемы и unit/contract tests.
+
+Не реализованы и **не разрешены этим PR**: фактическая публикация,
+Imported Client storage, постоянный realm/ACL, Telegram binding/приглашения,
+Clone & Rebind, изменение процессорного protocol schema v1/v2/v3 или
+MIG-03/MIG-04 lifecycle, публикация личных упражнений в Dexie, post-import
+Exercise Reconciliation, Flex write, AI Adapter Builder/API, реальные
+Gym Keeper decoder, UI и автоматический Workflow deploy. Исходный
+`SourceWorkoutTiming` не доказывает конец scheduled workout:
+`SCHEDULE_END_UNKNOWN` оставляет самостоятельный planned candidate
+blocked и `missed=undetermined`; `in_progress` и `unknown`
+sessions сохраняются как кандидаты с блокирующим issue, не становятся
+completed. Все approvals и server-side authorization — будущий отдельный этап.
+
+Примечание: проектная §15.12 сохраняет **неразрешённые** пункты, прежде всего
+модель Imported Client storage, привилегированные роли/realm и
+календарную интеграцию; типизированный dry-run план не разрешает
+заполнять эти пробелы эвристикой или вымышленными данными.
