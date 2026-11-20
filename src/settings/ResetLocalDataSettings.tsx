@@ -83,7 +83,7 @@ export function ResetLocalDataSettings({
         </div>
 
         <Text variant="footnote" tone="muted">
-          Размеры приблизительные: учитывается содержимое IndexedDB, без служебных расходов на диске.
+          Размеры приблизительные: показан объём соответствующих локальных хранилищ, а не точное место на диске.
         </Text>
 
         <div className="local-data-reset__notice">
