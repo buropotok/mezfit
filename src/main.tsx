@@ -3,6 +3,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { startAppBootstrap } from './appBootstrap';
+import { completePendingLocalDataReset } from './data/local/resetLocalData';
 import { finishBoot } from './bootDiagnostics';
 import { getTelegramLaunchStartParam, getTelegramWebApp } from './telegram';
 import './ui/konsta.css';
@@ -35,6 +36,14 @@ function BootCompletion({ children }: { children: React.ReactNode }) {
 
 async function bootstrap(): Promise<void> {
   root.classList.add('k-ios', 'dark', 'safe-areas');
+  try {
+    // No mounted React/Dexie instances can reopen the stores during deletion.
+    await completePendingLocalDataReset();
+  } catch {
+    root.setAttribute('role', 'alert');
+    root.textContent = 'Не удалось очистить локальные данные. Закройте другие окна Mezfit и откройте приложение заново.';
+    return;
+  }
   let content = <App />;
   const isFullscreenDayScheduleUiKit = (
     window.location.pathname === '/ui-kit-day-schedule.html'
