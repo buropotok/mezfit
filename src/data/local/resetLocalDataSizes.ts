@@ -7,6 +7,11 @@ function recordBytes(value: unknown, seen = new WeakSet<object>()): number {
   if (typeof value === 'boolean') return 1;
   if (typeof value !== 'object') return 0;
   if (value instanceof Blob) return value.size;
+  // A Blob read across a realm boundary may not share the local Blob prototype.
+  // Verify the native Blob brand so its binary size is not mistaken for an empty object.
+  if (Object.prototype.toString.call(value) === '[object Blob]'
+    && 'size' in value && typeof value.size === 'number'
+    && 'slice' in value && typeof value.slice === 'function') return value.size;
   if (value instanceof ArrayBuffer) return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
   if (value instanceof Date) return 8;
