@@ -123,7 +123,8 @@ const operationShape: Rule = v => {
   if (v.kind === 'historical_session') return exact(v, { ...operationBase,
     kind: one('historical_session'), name: nullable(value => typeof value === 'string' && value.length <= 1000),
     completionState: one('completed', 'in_progress', 'unknown'),
-    programRef: choiceRef, scheduledWorkoutRef: choiceRef, timing, frozenPlan: plan, fact: list(factExercise, 32),
+    sourceProgramRef: choiceRef, programRef: choiceRef, scheduledWorkoutRef: choiceRef,
+    timing, frozenPlan: plan, fact: list(factExercise, 32),
     importedProvenance: one(true) });
   if (v.kind === 'standalone_scheduled') return exact(v, { ...operationBase,
     kind: one('standalone_scheduled'), name: nullable(value => typeof value === 'string' && value.length <= 1000),
