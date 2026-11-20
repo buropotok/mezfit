@@ -1,6 +1,6 @@
 import { WorkoutStartDismissed } from '../workout/adhoc-workout-errors';
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { STARTED_PLAN_MESSAGE as lockedPlanMessage } from '../data/cloud/planned-session-policy';
+import { STARTED_PLAN_MESSAGE as lockedPlanMessage, occurrencePlanEditRestriction } from '../data/cloud/planned-session-policy';
 import { createPortal } from 'react-dom';
 import { Toast, Button as KonstaButton } from 'konsta/react';
 import type { CloudProgramDayOutline, CloudProgramExerciseSnapshot } from '../data/cloud/workout-foundation-types';
@@ -283,6 +283,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
   const [programUpdateOpen, setProgramUpdateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [blockedExerciseAction, setBlockedExerciseAction] = useState<'replace' | 'delete' | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!onNavigationContextChange) return;
@@ -562,7 +563,11 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
       reportPlanError(reason, 'Не удалось заменить упражнение');
     } finally { setBusy(false); }
   };
-  const mayEditStructure = Boolean(draft && !readOnly && (draft.coachUserId ?? draft.athleteUserId) === draft.actorUserId);
+  const editRestriction = draft ? occurrencePlanEditRestriction(draft) : null;
+  const blockReason = planLocked ? lockedPlanMessage : editRestriction ?? (readOnly
+    ? 'Изменение упражнений недоступно в режиме просмотра этой тренировки.' : null);
+  // A locked PLAN retains clickable set controls for the existing lock hint, never for mutations.
+  const mayEditStructure = Boolean(draft && !readOnly && (editRestriction === null || planLocked));
   let displayedDay = draft ? outline(draft) : null;
   if (displayedDay && optimisticOrder && !planLocked) {
     const positions = new Map(optimisticOrder.next.map((id, index) => [id, index]));
@@ -755,6 +760,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             onReplaceExercise={mayEditStructure ? id => { if (!mutationBlocked()) {
               setReplaceExerciseId(id); setExercisePickerOpened(true);
             } } : undefined}
+            onBlockedExerciseAction={blockReason ? setBlockedExerciseAction : undefined}
             onDeleteSet={mayEditStructure ? (exerciseId, setId) => edit(current => ({
               ...current, plan: removeOccurrenceSet(current.plan, exerciseId, setId),
             })) : undefined}
@@ -797,6 +803,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
       <Text variant="body">{lockedPlanMessage}</Text>
     </Toast> : null}
+    <MezfitDialog opened={blockedExerciseAction !== null} role="alertdialog"
+      title={<Text variant="headline">{blockedExerciseAction === 'replace'
+        ? 'Нельзя заменить упражнение' : 'Нельзя удалить упражнение'}</Text>}
+      onBackdropClick={() => setBlockedExerciseAction(null)}
+      buttons={<MezfitDialogButton strong onClick={() => setBlockedExerciseAction(null)}>Понятно</MezfitDialogButton>}>
+      <Text variant="body">{blockReason}</Text>
+    </MezfitDialog>
     {draft && auxiliaryReady && !collapsed ? <>
       {planner && informationExercise ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}>
         <ProgramExerciseInformationSheet key={informationExercise.id} repository={planner.programs}
