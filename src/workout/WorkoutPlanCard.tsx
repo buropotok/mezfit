@@ -52,6 +52,7 @@ export interface WorkoutPlanCardProps {
   onAddSet?: (programExerciseId: string) => void;
   onDeleteExercise?: (programExerciseId: string) => void;
   onReplaceExercise?: (programExerciseId: string) => void;
+  onBlockedExerciseAction?: (action: 'replace' | 'delete') => void;
   onOpenSet?: (programExerciseId: string, setId: string) => void;
   onDeleteSet?: (programExerciseId: string, setId: string) => void | Promise<void>;
   /** Only scheduled occurrence cards supply scoped discussion targets. */
@@ -137,12 +138,13 @@ export function WorkoutPlanCard({
   onReorderExercises, portalDragOverlay = false, preserveDragHeight = false,
   creatorName, creatorAvatar, athleteName, athleteAvatar, readOnly = false, busy = false,
   canMoveUp = false, canMoveDown = false, onEdit, onComment, onMove, onDuplicate, onDelete, onAddExercise, onAddSet,
-  onDeleteExercise, onReplaceExercise, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
+  onDeleteExercise, onReplaceExercise, onBlockedExerciseAction, onExerciseInformation, onOpenSet, onDeleteSet, onMutationAttempt, showPlanMetrics = false,
   discussionTargetFor, onOpenDiscussion, onNavigationContextChange, onSetDeletionNavigationContextChange,
   focusExerciseId, focusSetId, focusReady,
 }: WorkoutPlanCardProps) {
   const { day, exercises } = outline;
   const authoringVisible = !readOnly;
+  const blockedExerciseMutations = Boolean(onMutationAttempt && onBlockedExerciseAction);
   const mutate = (action?: () => void) => { if (readOnly) return; if (onMutationAttempt) onMutationAttempt(); else action?.(); };
   const [menuOpen, setMenuOpen] = useState(false);
   const [schedulePopoverOpen, setSchedulePopoverOpen] = useState(false);
@@ -198,9 +200,11 @@ export function WorkoutPlanCard({
         if (onMutationAttempt) { onMutationAttempt(); return; }
         return onDeleteSet?.(item.exercise.id, setId);
       } : undefined}
-      onDelete={authoringVisible && (onMutationAttempt || onDeleteExercise) ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
-      onReplace={authoringVisible && (onMutationAttempt || onDeleteExercise) && (onMutationAttempt || onReplaceExercise)
+      onDelete={authoringVisible && !blockedExerciseMutations && (onMutationAttempt || onDeleteExercise)
+        ? () => mutate(() => onDeleteExercise?.(item.exercise.id)) : undefined}
+      onReplace={authoringVisible && !blockedExerciseMutations && (onMutationAttempt || onDeleteExercise) && (onMutationAttempt || onReplaceExercise)
         ? () => mutate(() => onReplaceExercise?.(item.exercise.id)) : undefined}
+      onUnavailableExerciseAction={onBlockedExerciseAction}
       onInformation={onExerciseInformation ? () => onExerciseInformation(item.exercise.id) : undefined} />,
   }));
   return <article aria-label={`День ${day.name}`}>
