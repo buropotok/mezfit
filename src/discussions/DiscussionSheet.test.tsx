@@ -368,3 +368,27 @@ describe('COMM-05 one thread UI with canonical Konsta primitives', () => {
   });
 
 });
+
+it('opens web links in sent messages without opening the message menu', async () => {
+  const openLink = vi.fn();
+  vi.stubGlobal('Telegram', { WebApp: { openLink } });
+  const url = 'https://example.com/video_(1)';
+  const plainUrl = 'www.example.org';
+  const text = `Смотри (${url}).\nЕщё ${plainUrl}, javascript:alert(1)`;
+  mount({}, fixture([message('links', text)]));
+
+  const link = await screen.findByRole('link', { name: url });
+  expect(link.getAttribute('href')).toBe(url);
+  const plainLink = screen.getByRole('link', { name: plainUrl });
+  expect(plainLink.getAttribute('href')).toBe('https://www.example.org');
+  expect(screen.getAllByRole('link')).toHaveLength(2);
+  expect(link.parentElement?.textContent).toBe(text);
+  fireEvent.click(link);
+  expect(openLink).toHaveBeenCalledExactlyOnceWith(url);
+  expect(screen.queryByRole('menu', { name: 'Действия сообщения' })).toBeNull();
+
+  vi.stubGlobal('Telegram', undefined);
+  const browserOpen = vi.spyOn(window, 'open').mockReturnValue(null);
+  fireEvent.click(plainLink);
+  expect(browserOpen).toHaveBeenCalledExactlyOnceWith('https://www.example.org', '_blank', 'noopener,noreferrer');
+});

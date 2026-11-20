@@ -3,6 +3,17 @@ import { isDiscussionVideoPosition, type DiscussionMessage, type DiscussionVideo
 import { discussionInstant, type DiscussionCursor } from '../../../shared/discussion-read-state';
 export { discussionInstant, discussionCursorKey, discussionCursorFromKey, discussionReadCursor, type DiscussionCursor } from '../../../shared/discussion-read-state';
 export interface DiscussionQuote { messageId: string; authorUserId: string | null; text: string; unavailable: boolean; deleted: boolean; videoPosition?: DiscussionVideoPosition }
+const replyMediaLabel = {
+  'video-note': 'Видеосообщение',
+  voice: 'Голосовое сообщение',
+  video: 'Видео',
+  photo: undefined,
+} satisfies Record<MessageAttachment['mediaType'], string | undefined>;
+
+export function discussionReplyText(text: string, attachments?: readonly MessageAttachment[]): string {
+  return attachments?.map(attachment => replyMediaLabel[attachment.mediaType]).find(Boolean)
+    ?? text.split(/\r?\n/, 1)[0].slice(0, 160);
+}
 /** Evidence captured by the repository, never inferred from its general sync indicator. */
 export interface DiscussionReceiptSnapshot {
   confirmedIds: readonly string[];
@@ -32,7 +43,7 @@ export function discussionMessageView(row: DiscussionMessage, original?: Discuss
     text: deleted ? '' : row.text, deleted, editedAt: deleted ? undefined : row.editedAt,
     reply: deleted || !row.replyToMessageId ? null : {
       messageId: row.replyToMessageId, authorUserId: source?.authorUserId ?? null,
-      text: source && !source.deletedAt ? source.text.split(/\r?\n/, 1)[0].slice(0, 160) : '',
+      text: source && !source.deletedAt ? discussionReplyText(source.text) : '',
       ...(row.replyVideoPosition ? { videoPosition: row.replyVideoPosition } : {}),
       unavailable: !source, deleted: Boolean(source?.deletedAt),
     } };

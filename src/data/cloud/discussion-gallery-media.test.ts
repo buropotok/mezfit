@@ -161,3 +161,32 @@ it('round-trips independent video replies with immutable attachment positions th
     reply: { messageId: original.id, videoPosition: second.replyVideoPosition },
   });
 });
+
+it.each([
+  { mediaType: 'video', mimeType: 'video/mp4', label: 'Видео' },
+  { mediaType: 'video-note', mimeType: 'video/mp4', label: 'Видеосообщение' },
+  { mediaType: 'voice', mimeType: 'audio/mp4', label: 'Голосовое сообщение' },
+] as const)('shows $label in a reply even when the original is outside the page', async ({ mediaType, mimeType, label }) => {
+  const actor = 'tg:22';
+  const db = new MezfitCloudDatabase('9987654324', '', { discussions: true });
+  databases.push(db);
+  db.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true, disableWebSocket: true,
+    tryUseServiceWorker: false, unsyncedTables: ['localWorkoutOccurrenceDrafts'] });
+  await db.open();
+  const repository = new DiscussionRepository(db, actor, { realmId: actor, coachClientId: null });
+  const thread = await repository.createThread(prepareDiscussionThread(
+    { kind: 'program', trainingPlanId: 'plan' }, 'Тест', '2026-11-09',
+  ));
+  const original = { ...prepareDiscussionMessage(thread.id, ''), createdAt: '2026-11-09T12:00:00.000Z',
+    draftMedia: { ...media, mediaType, mimeType, durationSeconds: 2, ...(mediaType === 'voice' ? { waveform: [0.5] } : {}) } };
+  await repository.saveDraft(original);
+  await repository.send(original, { ...uploaded, contentType: mimeType });
+  const published = await repository.getMessage(thread.id, original.id);
+  const answer = { ...prepareDiscussionMessage(thread.id, 'Ответ', original.id),
+    createdAt: new Date(Date.parse(published.createdAt) + 1).toISOString() };
+  const quote = { messageId: original.id, authorUserId: actor, text: label };
+
+  expect((await repository.send(answer)).reply).toMatchObject(quote);
+  expect((await repository.getMessage(thread.id, answer.id)).reply).toMatchObject(quote);
+  expect((await repository.page(thread.id, undefined, 1)).messages).toMatchObject([{ id: answer.id, reply: quote }]);
+});

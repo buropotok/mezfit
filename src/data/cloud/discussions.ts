@@ -3,7 +3,7 @@ import { discussionAnchorKey, discussionId, discussionParents, discussionTitle, 
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, assertMessageAttachmentWrite, discussionReadStateId,
   isDiscussionVideoPosition, sameDiscussionVideoPosition, type DiscussionVideoPosition,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
-import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, discussionInstant, discussionMessageView, isDiscussionMessage,
+import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, discussionInstant, discussionMessageView, discussionReplyText, isDiscussionMessage,
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
 import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
@@ -327,12 +327,13 @@ export class DiscussionRepository {
       }));
     });
   }
-  private withAttachments(messages: DiscussionMessageView[], rows: DiscussionMessage[]): Promise<DiscussionMessageView[]> {
+  private withAttachments(messages: DiscussionMessageView[], rows: DiscussionMessage[],
+    quoteRows: ReadonlyMap<string, DiscussionMessage> = new Map()): Promise<DiscussionMessageView[]> {
     const table = this.db.messageAttachments;
-    const active = rows.filter(row => !row.deletedAt);
+    const active = [...rows, ...quoteRows.values()].filter(row => !row.deletedAt);
     if (!table || !active.length) return Dexie.Promise.resolve(messages);
     const byId = new Map(active.map(row => [row.id, row]));
-    return table.where('[realmId+messageId]').anyOf(active.map(row => [row.realmId, row.id])).toArray().then(attachments => {
+    return table.where('[realmId+messageId]').anyOf([...byId.values()].map(row => [row.realmId, row.id])).toArray().then(attachments => {
       const projected = new Map<string, MessageAttachment[]>();
       for (const attachment of attachments) {
         const row = byId.get(attachment.messageId);
@@ -348,16 +349,24 @@ export class DiscussionRepository {
       }
       return messages.map(message => {
         const items = projected.get(message.id);
-        return items ? { ...message, attachments: items } : message;
+        const reply = message.reply;
+        const quoteAttachments = reply && !reply.unavailable && !reply.deleted ? projected.get(reply.messageId) : undefined;
+        return { ...message, ...(items ? { attachments: items } : {}),
+          ...(reply && quoteAttachments ? { reply: { ...reply, text: discussionReplyText(reply.text, quoteAttachments) } } : {}) };
       });
     });
   }
   private async view(row: DiscussionMessage): Promise<DiscussionMessageView> {
     const reply = row.replyToMessageId ? await this.db.discussionMessages.get(row.replyToMessageId) : undefined;
     if (!isDiscussionMessage(reply) || reply.draftForRealmId || reply.realmId !== this.scope.realmId) return discussionMessageView(row);
+    const project = async (source: DiscussionMessage) => {
+      const quote = discussionMessageView(row, { ...source, threadId: row.threadId });
+      const [view] = await this.withAttachments([quote], [], new Map([[source.id, source]]));
+      return view;
+    };
     // Same-thread provenance is already established by the message read. Do not
     // add a second thread-header dependency to ordinary quote hydration.
-    if (reply.threadId === row.threadId) return discussionMessageView(row, reply);
+    if (reply.threadId === row.threadId) return project(reply);
     // A reply may cross historical storage threads of this exact entity/pair.
     const root = await this.thread(row.threadId);
     const sourceThread = await this.db.discussionThreads.get(reply.threadId);
@@ -367,7 +376,7 @@ export class DiscussionRepository {
         && sourceThread.coachClientId === root.coachClientId && sourceThread.anchorKey === root.anchorKey
         && this.visible(reply, sourceThread.id); } catch { /* An invalid quote stays unavailable. */ }
     }
-    return discussionMessageView(row, sameConversation ? { ...reply, threadId: row.threadId } : undefined);
+    return sameConversation ? project(reply) : discussionMessageView(row);
   }
   /** Lightweight, authorization-checked navigation lookup, without quote or media projection. */
   async notificationTarget(threadId: string, messageId: string): Promise<DiscussionThread | 'deleted' | null> {
@@ -565,7 +574,7 @@ export class DiscussionRepository {
         .where({ id: thread.id, lastActivityAt: thread.lastActivityAt }).modify({ lastActivityAt });
       const view = await this.view(row);
       return media ? (await this.withAttachments([view], [row]))[0] : view;
-    }, Boolean(media || input.replyVideoPosition));
+    }, Boolean(media || input.replyToMessageId));
   }
   async edit(threadId: string, id: string, text: string): Promise<void> {
     if (typeof text !== 'string' || !text.trim() || text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
@@ -630,7 +639,7 @@ export class DiscussionRepository {
                 const original = row.replyToMessageId ? quotes.get(row.replyToMessageId) : undefined;
                 return discussionMessageView(row, original ? { ...original, threadId: row.threadId } : undefined);
               });
-              return this.withAttachments(messages, rows).then(projected => ({ messages: projected, before: cursor, ...(deletion ? { deletion } : {}) }));
+              return this.withAttachments(messages, rows, quotes).then(projected => ({ messages: projected, before: cursor, ...(deletion ? { deletion } : {}) }));
             });
           });
         });
