@@ -180,9 +180,10 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
   }
 
   // Closure contains the ENTIRE referenced program graph, not workout-specific slices.
-  const used = new Map<string, { subject: string; exerciseKey: string }>();
+  const unresolvedSubjectScope = 'source-subject-unknown';
+  const used = new Map<string, { subject: string | null; exerciseKey: string }>();
   const use = (subject: string | null, exerciseKey: string) => {
-    if (subject && bySubject.has(subject)) used.set(subject + '\u0000' + exerciseKey, { subject, exerciseKey });
+    used.set((subject ?? unresolvedSubjectScope) + '\u0000' + exerciseKey, { subject, exerciseKey });
   };
   for (const program of requiredPrograms.values()) for (const day of program.days)
     for (const exercise of day.exercises) use(subjectKey(program.subjectRef), exercise.exerciseSourceKey);
@@ -196,19 +197,20 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
     for (const exercise of schedule.plan.exercises) use(subjectKey(schedule.subjectRef), exercise.exerciseSourceKey);
   const mappingByUse = new Map<string, ExerciseMapping>();
   for (const { subject, exerciseKey } of [...used.values()]
-    .sort((a, b) => (a.subject + a.exerciseKey).localeCompare(b.subject + b.exerciseKey, 'en'))) {
+    .sort((a, b) => ((a.subject ?? '') + a.exerciseKey).localeCompare((b.subject ?? '') + b.exerciseKey, 'en'))) {
     const source = byExercise.get(exerciseKey);
-    const identityKey = await id('exercise', subject, exerciseKey);
-    const mapKey = subject + '\u0000' + exerciseKey;
+    const identityKey = await id('exercise', subject ?? unresolvedSubjectScope, exerciseKey);
+    const mapKey = (subject ?? unresolvedSubjectScope) + '\u0000' + exerciseKey;
     let mapping: ExerciseMapping;
     const name = source?.sourceName?.trim() ?? '';
     const trackingHint = source?.trackingHint;
     const registered = input.mappingSnapshot.entries.find(entry => entry.identityKey === identityKey);
     const registeredTarget = registered
       ? input.catalogueSnapshot.entries.find(entry => entry.id === registered.catalogueExerciseId) : undefined;
-    if (!source || !name) {
+    if (!subject || !bySubject.has(subject) || !source || !name) {
       mapping = { kind: 'blocked', identityKey, sourceExerciseKey: exerciseKey, sourceSubjectKey: subject,
-        reason: source ? 'UNRESOLVED_EXERCISE' : 'MISSING_EXERCISE' };
+        reason: !subject || !bySubject.has(subject) ? 'UNRESOLVED_SUBJECT'
+          : source ? 'UNRESOLVED_EXERCISE' : 'MISSING_EXERCISE' };
     } else if (registered && !registeredTarget) {
       mapping = { kind: 'blocked', identityKey, sourceExerciseKey: exerciseKey, sourceSubjectKey: subject,
         reason: 'UNRESOLVED_EXERCISE' };
@@ -247,7 +249,8 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
     if (mapping.kind === 'blocked') report(mapping.reason, 'customExercise', exerciseKey, null);
   }
   const mappingKey = (subject: string | null, exerciseKey: string): string =>
-    (subject ? mappingByUse.get(subject + '\u0000' + exerciseKey)?.identityKey : null) ?? 'unresolved:' + exerciseKey;
+    mappingByUse.get((subject ?? unresolvedSubjectScope) + '\u0000' + exerciseKey)?.identityKey
+      ?? 'unresolved:' + exerciseKey;
   const dependencies = (keys: string[]): string[] => [...new Set(keys.flatMap(k => {
     const mapping = mappings.find(m => m.identityKey === k);
     return mapping?.kind === 'proposed_custom' ? [mapping.operationKey] : [];
