@@ -287,52 +287,41 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     if (!photos.length || !enabledRef.current || active.current || photoSend.current) return;
     const controller = new AbortController();
     photoSend.current = controller;
-    active.current = controller;
     resume.current = null;
     setSendingPhotos(true); setError(undefined); setPhase('uploading');
-    const staged: { selected: Selection; command: DiscussionMessageInput }[] = [];
     const first = draft.mediaCommand();
-    let stagingComplete = false;
     try {
       for (const [index, photo] of photos.entries()) {
+        if (controller.signal.aborted || !enabledRef.current) return;
+        active.current = controller;
         await storeSelectedMedia(repository.actorUserId, photo);
-        // Closing the sheet stops uploads, but already confirmed files can still
-        // be recovered from the private outbox after their local saves finish.
-        if (!enabledRef.current) return;
         const input = index === 0 ? first : prepareDiscussionMessage(draft.threadId, '');
+        // Finish this private draft even if the sheet closes during the local write.
         const command = await draft.stageMedia({ ...photo.metadata, uploadState: 'uploading' }, input);
+        if (active.current === controller) active.current = null;
         if (index === 0 && command) draft.detachMedia(first.id);
-        if (command) staged.push({ selected: { ...photo, separate: command }, command });
-        if (!controller.signal.aborted) setPhotos(current => current.filter(item => item.metadata.id !== photo.metadata.id));
-      }
-      stagingComplete = true;
-    } catch {
-      if (controller.signal.aborted) return;
-      for (const { selected, command } of staged) {
-        enqueuePending({ command, selected, preview: URL.createObjectURL(selected.file),
-          error: 'Фото сохранено на устройстве. Повторите отправку.' });
-      }
-      setError('Не удалось сохранить все фото на устройстве. Повторите отправку.');
-      setPhase('failed');
-      return;
-    } finally {
-      if (active.current === controller) active.current = null;
-      if (!stagingComplete && photoSend.current === controller) {
-        photoSend.current = null;
-        setSendingPhotos(false);
-      }
-    }
-    try {
-      for (const { selected, command } of staged) {
-        if (controller.signal.aborted) return;
+        if (photoSend.current !== controller || !enabledRef.current) return;
+        setPhotos(current => current.filter(item => item.metadata.id !== photo.metadata.id));
+        if (!command) continue;
+        const selected = { ...photo, separate: command };
+        if (controller.signal.aborted) {
+          enqueuePending({ command, selected, preview: URL.createObjectURL(selected.file),
+            error: 'Фото сохранено на устройстве. Повторите отправку.' });
+          return;
+        }
         setSelection(selected);
         await send(selected, false, command);
       }
+    } catch {
+      if (photoSend.current !== controller || controller.signal.aborted) return;
+      setError('Не удалось сохранить фото на устройстве. Повторите отправку.');
+      setPhase('failed');
     } finally {
+      if (active.current === controller) active.current = null;
       if (photoSend.current === controller) {
         photoSend.current = null;
         setSendingPhotos(false);
-        setPhase('idle');
+        setPhase(current => current === 'uploading' ? 'idle' : current);
       }
     }
   }
