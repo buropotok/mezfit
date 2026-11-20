@@ -8,7 +8,8 @@ import { discussionCursorKey, discussionCursorFromKey, discussionReadCursor, dis
   type DiscussionCursor, type DiscussionMessageView, type DiscussionReceiptSnapshot } from './discussion-views';
 import { isApprovedAssignedPair } from './relationship-access';
 import { DiscussionSync } from './discussion-sync';
-import { discussionMediaTextId, isDiscussionMediaDraft, isDiscussionMediaType, type DiscussionMediaDraft } from './discussion-media';
+import { belongsToDiscussionPhotoSender, discussionMediaTextId, isDiscussionMediaDraft, isDiscussionMediaType, sameDiscussionPhotoPreview,
+  type DiscussionMediaDraft } from './discussion-media';
 import { directMediaSizeLimit, directMediaUrl, type UploadedMedia } from '../../media/directMediaUpload';
 import { deletedDiscussionIds, storeDiscussionDeletion, type DiscussionDeletionTables } from './discussion-deletion';
 import type { MezfitCloudDatabase } from './database';
@@ -18,6 +19,7 @@ export type DiscussionDatabase = Pick<MezfitCloudDatabase,
   /** Only the callback-based transaction capability is needed, not every app table on its context. */
   transaction<T>(mode: 'r' | 'rw', tables: readonly string[], task: () => Promise<T>): Promise<T>;
 };
+
 export interface CreateDiscussionThread { id: string; anchor: DiscussionAnchor; entityName: string; date: string; createdAt: string }
 export interface CreateFreeDiscussion { id: string; title: string; createdAt: string }
 export interface DiscussionMessageInput {
@@ -409,7 +411,8 @@ export class DiscussionRepository {
       || (input.replyVideoPosition !== undefined
         && (!discussionId(input.replyToMessageId) || !isDiscussionVideoPosition(input.replyVideoPosition)))
       || typeof input.text !== 'string' || input.text.length > 20000 || !discussionInstant(input.createdAt)) fail('INVALID_DISCUSSION_DRAFT');
-    if (input.draftMedia !== undefined && (!this.supportsMedia || !isDiscussionMediaDraft(input.draftMedia))) fail('INVALID_DISCUSSION_ATTACHMENT');
+    if (input.draftMedia !== undefined && (!this.supportsMedia || !isDiscussionMediaDraft(input.draftMedia)
+      || (input.draftMedia.preview && !await belongsToDiscussionPhotoSender(input.draftMedia, this.actorUserId)))) fail('INVALID_DISCUSSION_ATTACHMENT');
     return this.write(async peer => {
       await this.writableThread(input.threadId, peer);
       if (input.replyToMessageId) await this.message(input.threadId, input.replyToMessageId);
@@ -418,7 +421,8 @@ export class DiscussionRepository {
         || previous.owner !== this.actorUserId || previous.threadId !== input.threadId
         || previous.draftForRealmId !== this.scope.realmId)) fail('DISCUSSION_ID_REUSED');
       if (input.draftMedia && previous?.draftMedia
-        && (previous.draftMedia.id !== input.draftMedia.id || previous.draftMedia.storageKey !== input.draftMedia.storageKey)) {
+        && (previous.draftMedia.id !== input.draftMedia.id || previous.draftMedia.storageKey !== input.draftMedia.storageKey
+          || !sameDiscussionPhotoPreview(previous.draftMedia.preview, input.draftMedia.preview))) {
         fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       }
       const draft: DiscussionMessage = { id: input.id, threadId: input.threadId, text: input.text,
@@ -504,7 +508,8 @@ export class DiscussionRepository {
     const attachments = this.db.messageAttachments;
     if (media !== undefined && (!attachments || !isDiscussionMediaDraft(media) || !uploaded
       || uploaded.key !== media.storageKey || uploaded.contentType !== media.mimeType
-      || uploaded.sizeBytes !== media.sizeBytes)) fail('INVALID_DISCUSSION_ATTACHMENT');
+      || uploaded.sizeBytes !== media.sizeBytes || !sameDiscussionPhotoPreview(uploaded.preview, media.preview)
+      || (media.preview && !await belongsToDiscussionPhotoSender(media, this.actorUserId)))) fail('INVALID_DISCUSSION_ATTACHMENT');
     if (typeof input.text !== 'string' || (!input.text.trim() && !media) || input.text.length > 20000) fail('DISCUSSION_TEXT_REQUIRED');
     return this.write(async peer => {
       const thread = await this.writableThread(input.threadId, peer);
@@ -515,7 +520,8 @@ export class DiscussionRepository {
           || !sameDiscussionVideoPosition(existing.replyVideoPosition, input.replyVideoPosition)) fail('DISCUSSION_ID_REUSED');
         if (media) {
           const attachment = await attachments?.get(media.id);
-          if (!attachment || attachment.storageKey !== media.storageKey || attachment.uploadState !== 'ready') fail('DISCUSSION_ID_REUSED');
+          if (!attachment || attachment.storageKey !== media.storageKey || attachment.uploadState !== 'ready'
+            || !sameDiscussionPhotoPreview(attachment.preview, media.preview)) fail('DISCUSSION_ID_REUSED');
           // A retry acknowledges the same publication even after the message
           // was deleted. The returned view still masks the tombstone.
           assertMessageAttachmentWrite(this.actorUserId, thread, { ...existing, deletedAt: undefined }, attachment);
@@ -539,6 +545,7 @@ export class DiscussionRepository {
         || existing.draftMedia.storageKey !== media.storageKey || existing.draftMedia.mimeType !== media.mimeType
         || existing.draftMedia.sizeBytes !== media.sizeBytes || existing.draftMedia.durationSeconds !== media.durationSeconds
         || existing.draftMedia.mediaType !== media.mediaType
+        || !sameDiscussionPhotoPreview(existing.draftMedia.preview, media.preview)
         || JSON.stringify(existing.draftMedia.waveform) !== JSON.stringify(media.waveform))) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       if (!media && existing?.draftMedia) fail('DISCUSSION_MEDIA_DRAFT_CHANGED');
       const reply = input.replyToMessageId ? await this.message(thread.id, input.replyToMessageId) : undefined;
@@ -567,6 +574,7 @@ export class DiscussionRepository {
           owner: row.owner, authorUserId: row.authorUserId, mediaType: media.mediaType, storageKey: media.storageKey,
           mimeType: media.mimeType, sizeBytes: media.sizeBytes, durationSeconds: media.durationSeconds,
           ...(media.waveform === undefined ? {} : { waveform: media.waveform }),
+          ...(media.preview ? { preview: media.preview } : {}),
           uploadState: 'ready', confirmedAt: row.createdAt };
         assertMessageAttachmentWrite(this.actorUserId, thread, row, attachment);
         await attachments.add(attachment);

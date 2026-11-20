@@ -83,6 +83,29 @@ it('reads a cached photo from IndexedDB before requesting Yandex', async () => {
   expect(get).not.toHaveBeenCalled();
 });
 
+it('downloads Full for the photo viewer without persisting the original', async () => {
+  await setupBrowser();
+  const path = 'mvp-media/' + 'a'.repeat(64);
+  const photoId = 'b'.repeat(64);
+  const full = { ...photoEntry, storageKey: `${path}/full/${photoId}` };
+  const preview = { ...photoEntry, storageKey: `${path}/preview/${photoId}` };
+  await storeDiscussionMedia(preview, new Blob(['small'], { type: preview.mimeType }), true);
+  const get = vi.fn<typeof fetch>().mockResolvedValue(new Response(
+    new Blob(['photo'], { type: full.mimeType }), { headers: { 'Content-Type': full.mimeType } },
+  ));
+  vi.stubGlobal('fetch', get);
+  const src = directMediaUrl(full.storageKey) ?? '';
+  const { container, unmount } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={src} type="photo" cache={full} mode="viewer" />
+  </KonstaProvider>);
+  await waitFor(() => expect(container.querySelector('img')?.getAttribute('src')).toBe('blob:cached-attachment'));
+  expect(get).toHaveBeenCalledExactlyOnceWith(src, expect.anything());
+  expect(await readDiscussionMedia(full)).toBeNull();
+  expect(await (await readDiscussionMedia(preview))?.text()).toBe('small');
+  unmount();
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:cached-attachment');
+});
+
 it('requires a valid local copy for an outgoing video and reads it back from IndexedDB', async () => {
   await setupBrowser();
   const video = new Blob(['video'], { type: videoEntry.mimeType });

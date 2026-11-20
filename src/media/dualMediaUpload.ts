@@ -1,8 +1,9 @@
 import { uploadDirectMedia, directMediaUrl, validateDirectMedia, MediaUploadError, type UploadedMedia } from './directMediaUpload';
 import { uploadCloudflareMedia } from './cloudflareMediaUpload';
+import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
 import {
   rememberMediaReplica, confirmMediaReplica, publishMediaReplica, listIncompleteMediaReplicas,
-  readDiscussionMedia, type DiscussionMediaCacheEntry, type MediaReplicaProvider,
+  readDiscussionMedia, getMediaReplica, reconcilePublishedPhotoReplicas, type DiscussionMediaCacheEntry, type MediaReplicaProvider,
 } from './discussionMediaCache';
 
 const inFlightReplicas = new Set<string>();
@@ -32,10 +33,23 @@ async function attemptReplica(file: File, entry: DiscussionMediaCacheEntry, prov
  */
 export async function uploadMirroredDiscussionMedia(
   file: File,
-  { accountId, retryKey, signal }: { accountId: string; retryKey: string; signal?: AbortSignal },
+  { accountId, retryKey, signal, preview }: {
+    accountId: string; retryKey: string; signal?: AbortSignal; preview?: DiscussionPhotoPreview;
+  },
 ): Promise<UploadedMedia> {
   const entry = { accountId, storageKey: retryKey, mimeType: validateDirectMedia(file), sizeBytes: file.size };
-  await rememberMediaReplica(entry, file.name).catch(() => undefined);
+  const variants = [{ entry, file }];
+  if (preview) {
+    const previewEntry = { accountId, ...preview };
+    const blob = await readDiscussionMedia(previewEntry);
+    if (!blob) throw new Error('DISCUSSION_PHOTO_PREVIEW_MISSING');
+    const previewFile = new File([blob], preview.mimeType === 'image/webp' ? 'preview.webp' : 'preview.jpg',
+      { type: preview.mimeType });
+    variants.push({ entry: previewEntry, file: previewFile });
+    await Promise.all(variants.map(variant => rememberMediaReplica(variant.entry, variant.file.name)));
+  } else {
+    await rememberMediaReplica(entry, file.name).catch(() => undefined);
+  }
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
   // External cancellation applies only until the first provider confirms success.
   // Once publication is allowed, the remaining transfer is owned by the replica service.
@@ -44,18 +58,36 @@ export async function uploadMirroredDiscussionMedia(
   const cancel = () => { if (!delivered) transfer.abort(); };
   signal?.addEventListener('abort', cancel, { once: true });
 
-  const yandexIdentity = `${accountId}:${retryKey}:yandex`;
-  const r2Identity = `${accountId}:${retryKey}:r2`;
-  inFlightReplicas.add(yandexIdentity);
+  const uploadTo = async (provider: MediaReplicaProvider): Promise<UploadedMedia> => {
+    const results = await Promise.allSettled(variants.map(async variant => {
+      const { storageKey, mimeType, sizeBytes } = variant.entry;
+      const identity = `${accountId}:${storageKey}:${provider}`;
+      inFlightReplicas.add(identity);
+      try {
+        const replica = preview ? await getMediaReplica(accountId, storageKey) : null;
+        const confirmed = provider === 'yandex' ? replica?.yandexConfirmedAt : replica?.r2ConfirmedAt;
+        const url = confirmed && directMediaUrl(storageKey);
+        if (url) return { key: storageKey, url, contentType: mimeType, sizeBytes, fileName: variant.file.name };
+        const upload = provider === 'yandex' ? uploadDirectMedia : uploadCloudflareMedia;
+        const uploaded = await upload(variant.file, { retryKey: storageKey, signal: transfer.signal });
+        const confirmation = confirmMediaReplica(accountId, storageKey, provider);
+        if (preview) await confirmation;
+        else await confirmation.catch(() => undefined);
+        return uploaded;
+      } finally {
+        inFlightReplicas.delete(identity);
+      }
+    }));
+    // Every variant must succeed at the same provider. Wait for sibling transfers
+    // to settle even if one fails so hedging and subsequent retries can own them safely.
+    const [full, ...remaining] = results;
+    if (full.status === 'rejected') throw full.reason;
+    for (const result of remaining) if (result.status === 'rejected') throw result.reason;
+    return preview ? { ...full.value, preview } : full.value;
+  };
   let yandexSettled: () => void = () => undefined;
   const yandexDone = new Promise<void>(resolve => { yandexSettled = resolve; });
-  const yandex = uploadDirectMedia(file, { retryKey, signal: transfer.signal }).then(async uploaded => {
-    await confirmMediaReplica(accountId, retryKey, 'yandex').catch(() => undefined);
-    return uploaded;
-  }).finally(() => {
-    inFlightReplicas.delete(yandexIdentity);
-    yandexSettled();
-  });
+  const yandex = uploadTo('yandex').finally(yandexSettled);
 
   let hedgeTimer: ReturnType<typeof setTimeout> | undefined;
   const hedge = new Promise<void>(resolve => { hedgeTimer = setTimeout(resolve, 8_000); });
@@ -63,14 +95,7 @@ export async function uploadMirroredDiscussionMedia(
     await Promise.race([yandexDone, hedge]);
     if (hedgeTimer) clearTimeout(hedgeTimer);
     if (transfer.signal.aborted) throw new MediaUploadError('CANCELLED');
-    inFlightReplicas.add(r2Identity);
-    try {
-      const uploaded = await uploadCloudflareMedia(file, { retryKey, signal: transfer.signal });
-      await confirmMediaReplica(accountId, retryKey, 'r2').catch(() => undefined);
-      return uploaded;
-    } finally {
-      inFlightReplicas.delete(r2Identity);
-    }
+    return uploadTo('r2');
   })();
 
   try {
@@ -106,10 +131,15 @@ function canResumeMediaReplicas(): boolean {
 }
 
 /** Called from the authenticated application lifecycle; never waits on React components. */
-export async function resumeMediaReplicaUploads(accountId: string): Promise<void> {
+export async function resumeMediaReplicaUploads(
+  accountId: string, isPhotoPublished?: (storageKey: string) => Promise<boolean>,
+): Promise<void> {
   if (inFlightRecovery.has(accountId) || !canResumeMediaReplicas()) return;
   inFlightRecovery.add(accountId);
   try {
+    // Recover the crash window after committing the message but before marking
+    // the separate local media queue as published.
+    if (isPhotoPublished) await reconcilePublishedPhotoReplicas(accountId, isPhotoPublished).catch(() => undefined);
     const pending = await listIncompleteMediaReplicas(accountId);
     for (const task of pending) {
       if (!canResumeMediaReplicas()) break;

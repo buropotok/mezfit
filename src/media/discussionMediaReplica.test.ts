@@ -2,7 +2,8 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, expect, it } from 'vitest';
 import { rememberMediaReplica, confirmMediaReplica, publishMediaReplica, listIncompleteMediaReplicas,
-  getMediaReplica, storeDiscussionMedia, readDiscussionMedia } from './discussionMediaCache';
+  getMediaReplica, storeDiscussionMedia, readDiscussionMedia, storeDiscussionPhoto,
+  reconcilePublishedPhotoReplicas } from './discussionMediaCache';
 
 const entry = { accountId: 'tg:702', storageKey: 'mvp-media/' + 'b'.repeat(64),
   mimeType: 'video/mp4', sizeBytes: 6 };
@@ -46,4 +47,30 @@ it('refuses to reuse a replica key for different file metadata', async () => {
   await rememberMediaReplica(entry, 'movie.mp4');
   await expect(rememberMediaReplica({ ...entry, sizeBytes: 7 }, 'movie.mp4'))
     .rejects.toThrow('MEDIA_REPLICA_MISMATCH');
+});
+
+it('retains both photo bytes through retries and deletes only Full after publication and four confirmations', async () => {
+  const accountId = entry.accountId;
+  const prefix = 'mvp-media/' + 'a'.repeat(64);
+  const photoId = 'b'.repeat(64);
+  const full = { accountId, storageKey: `${prefix}/full/${photoId}`, mimeType: 'image/jpeg', sizeBytes: 6 };
+  const preview = { accountId, storageKey: `${prefix}/preview/${photoId}`, mimeType: 'image/webp', sizeBytes: 3 };
+  await storeDiscussionPhoto(full, new Blob(['sample'], { type: full.mimeType }),
+    preview, new Blob(['web'], { type: preview.mimeType }));
+  await rememberMediaReplica(full, 'photo.jpg');
+  await rememberMediaReplica(preview, 'preview.webp');
+  for (const object of [full, preview]) await confirmMediaReplica(accountId, object.storageKey, 'yandex');
+  await confirmMediaReplica(accountId, full.storageKey, 'r2');
+  expect(await readDiscussionMedia(full)).not.toBeNull();
+  expect(await listIncompleteMediaReplicas(accountId)).toEqual([]);
+
+  // Simulate a reload after the repository published but before the local queue was marked.
+  await reconcilePublishedPhotoReplicas(accountId, async key => key === full.storageKey);
+  expect((await listIncompleteMediaReplicas(accountId)).map(task => task.storageKey)).toEqual([preview.storageKey]);
+  expect(await readDiscussionMedia(full)).not.toBeNull();
+  await confirmMediaReplica(accountId, preview.storageKey, 'r2');
+  expect(await readDiscussionMedia(full)).toBeNull();
+  expect(await (await readDiscussionMedia(preview))?.text()).toBe('web');
+  expect(await getMediaReplica(accountId, full.storageKey)).toBeNull();
+  expect(await listIncompleteMediaReplicas(accountId)).toEqual([]);
 });

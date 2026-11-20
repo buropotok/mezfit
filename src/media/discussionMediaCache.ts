@@ -1,5 +1,7 @@
 import Dexie, { type Table } from 'dexie';
-import { directMediaSizeLimit, directMediaUrl } from './directMediaUpload';
+import { directMediaUrl } from './directMediaUpload';
+import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaObjectSizeLimit } from '../../shared/discussion-media-limits';
+import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
 import { signedDiscussionR2ReadUrl } from './cloudflareMediaRead';
 
 /** Do not download very large clips merely because their thumbnail became visible. */
@@ -40,7 +42,7 @@ class DiscussionMediaDatabase extends Dexie {
 function mediaUrl(entry: DiscussionMediaCacheEntry) {
   if (!/^tg:[1-9]\d*$/.test(entry.accountId) || !/^(image|video|audio)\//.test(entry.mimeType)
     || !Number.isSafeInteger(entry.sizeBytes) || entry.sizeBytes <= 0
-    || entry.sizeBytes > directMediaSizeLimit(entry.mimeType)) return null;
+    || entry.sizeBytes > discussionMediaObjectSizeLimit(entry.storageKey, entry.mimeType)) return null;
   return directMediaUrl(entry.storageKey);
 }
 
@@ -77,6 +79,39 @@ export async function storeDiscussionMedia(entry: DiscussionMediaCacheEntry, blo
   }
 }
 
+export async function storeDiscussionPhoto(
+  full: DiscussionMediaCacheEntry, file: Blob, preview: DiscussionPhotoPreview, thumbnail: Blob,
+): Promise<void> {
+  const previewEntry = { ...preview, accountId: full.accountId };
+  const keys = photoReplicaKeys(full.storageKey);
+  if (!keys || keys[0] !== full.storageKey || keys[1] !== preview.storageKey
+    || !mediaUrl(full) || !matches(full, file) || !mediaUrl(previewEntry) || !matches(previewEntry, thumbnail)) {
+    throw new Error('INVALID_LOCAL_MEDIA');
+  }
+  const db = new DiscussionMediaDatabase(full.accountId);
+  try {
+    await db.transaction('rw', db.files, () =>
+      db.files.bulkPut([{ key: full.storageKey, blob: file }, { key: preview.storageKey, blob: thumbnail }]));
+  } finally { db.close(); }
+}
+
+function photoReplicaKeys(storageKey: string): [string, string] | null {
+  const match = DISCUSSION_MEDIA_KEY_PATTERN.exec(storageKey);
+  if (!match?.[2]) return null;
+  const prefix = `mvp-media/${match[1]}`;
+  return [`${prefix}/full/${match[3]}`, `${prefix}/preview/${match[3]}`];
+}
+
+/** Called inside the replica transaction, so no retry can observe a deleted Full
+ * together with incomplete replication state. */
+async function cleanCompletedPhoto(db: DiscussionMediaDatabase, keys: [string, string]): Promise<void> {
+  const [full, preview] = await db.replicas.bulkGet(keys);
+  if (!full?.published || !preview?.published || !full.yandexConfirmedAt || !full.r2ConfirmedAt
+    || !preview.yandexConfirmedAt || !preview.r2ConfirmedAt) return;
+  await db.files.delete(keys[0]);
+  await db.replicas.bulkDelete(keys);
+}
+
 /** Local operational retry state, not a second synchronized business database. */
 export async function rememberMediaReplica(entry: DiscussionMediaCacheEntry, fileName: string): Promise<void> {
   if (!mediaUrl(entry) || typeof fileName !== 'string' || fileName.length > 1024) throw new Error('INVALID_MEDIA_REPLICA');
@@ -100,16 +135,56 @@ export async function confirmMediaReplica(accountId: string, storageKey: string,
   if (!/^tg:[1-9]\d*$/.test(accountId) || !directMediaUrl(storageKey)) throw new Error('INVALID_MEDIA_REPLICA');
   const db = new DiscussionMediaDatabase(accountId);
   try {
-    await db.replicas.update(storageKey,
-      provider === 'yandex' ? { yandexConfirmedAt: new Date().toISOString() } : { r2ConfirmedAt: new Date().toISOString() });
+    const now = new Date().toISOString();
+    const patch = provider === 'yandex' ? { yandexConfirmedAt: now } : { r2ConfirmedAt: now };
+    const keys = photoReplicaKeys(storageKey);
+    if (!keys) await db.replicas.update(storageKey, patch);
+    else await db.transaction('rw', db.replicas, db.files, async () => {
+      await db.replicas.update(storageKey, patch);
+      await cleanCompletedPhoto(db, keys);
+    });
   } finally { db.close(); }
 }
 
 export async function publishMediaReplica(accountId: string, storageKey: string): Promise<void> {
   if (!/^tg:[1-9]\d*$/.test(accountId) || !directMediaUrl(storageKey)) throw new Error('INVALID_MEDIA_REPLICA');
   const db = new DiscussionMediaDatabase(accountId);
-  try { await db.replicas.update(storageKey, { published: true }); }
+  try {
+    const keys = photoReplicaKeys(storageKey);
+    if (!keys) await db.replicas.update(storageKey, { published: true });
+    else await db.transaction('rw', db.replicas, db.files, async () => {
+      await Promise.all(keys.map(key => db.replicas.update(key, { published: true })));
+      await cleanCompletedPhoto(db, keys);
+    });
+  }
   finally { db.close(); }
+}
+
+export async function reconcilePublishedPhotoReplicas(
+  accountId: string, isPublished: (storageKey: string) => Promise<boolean>,
+): Promise<void> {
+  if (!/^tg:[1-9]\d*$/.test(accountId)) return;
+  const db = new DiscussionMediaDatabase(accountId);
+  try {
+    const rows = await db.replicas.filter(row => !row.published && DISCUSSION_MEDIA_KEY_PATTERN.exec(row.key)?.[2] === 'full').toArray();
+    for (const row of rows) {
+      if (await isPublished(row.key)) await publishMediaReplica(accountId, row.key);
+    }
+  } finally { db.close(); }
+}
+
+/** Delete the bytes of an explicitly discarded draft, not a running or published upload. */
+export async function discardUnpublishedDiscussionPhoto(accountId: string, storageKey: string): Promise<void> {
+  const keys = photoReplicaKeys(storageKey);
+  if (!keys || !/^tg:[1-9]\d*$/.test(accountId)) return;
+  const db = new DiscussionMediaDatabase(accountId);
+  try {
+    await db.transaction('rw', db.replicas, db.files, async () => {
+      if ((await db.replicas.bulkGet(keys)).some(row => row?.published)) return;
+      await db.files.bulkDelete(keys);
+      await db.replicas.bulkDelete(keys);
+    });
+  } finally { db.close(); }
 }
 
 export async function listIncompleteMediaReplicas(accountId: string): Promise<MediaReplicaTask[]> {
@@ -181,7 +256,7 @@ export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promi
         } catch { /* R2 may be unreachable or this user may no longer have realm access. */ }
       }
       if (!blob) return null;
-      await storeDiscussionMedia(entry, blob);
+      if (DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] !== 'full') await storeDiscussionMedia(entry, blob);
       return blob;
     } finally {
       clearTimeout(timer);
