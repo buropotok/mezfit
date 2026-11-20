@@ -483,6 +483,35 @@ participants retain read visibility of their historical shared discussions;
 ending cooperation alone must not remove their membership or grant the history
 to a different trainer. See `docs/architecture/discussion-schema-acl-plan.md`.
 
+### Approved independent occurrence PLAN editing (2026-11-20)
+
+The owner approved editing the **occurrence snapshot**, not the source program, from any
+workout entry point: an authorized Coach may edit an unstarted Client occurrence in
+either format, and the athlete may edit their own unstarted `independent` occurrence,
+even when its program was assigned by a Coach. A Client may not edit a `coached`
+occurrence PLAN. Started/completed PLAN snapshots remain frozen; independently
+added execution FACT is governed by its separate mutation contract. Disabled
+exercise Replace/Delete must explain the specific reason in `MezfitDialog`.
+
+As a narrow Client-only §21 ACL extension,
+`tools/dexie-roles/independent-occurrence-plan.mjs` and
+`.github/workflows/dexie-independent-occurrence-plan.yml` may append **only**
+`plan` and `publishedPlan` to Client `workoutOccurrences` field-update grants,
+using the exact `cloud/independent-occurrence-plan-roles.json` overlay. The
+complete approved Discussions MVP role baseline (with or without the already
+installed `pendingRepeatRule` permission on both roles) is required. Do not
+change Coach grants, source program PLAN tables, `originalPlan`, lifecycle,
+realm/owner/identity, other roles, membership or schema. Server ACL is
+field-scoped; dynamic `independent`/`coached` eligibility is checked by the
+local typed repository, not by comparing cloud templates or by a new Worker.
+Reuse the existing protected `DEXIE_CLOUD_WRITE_KEY`, main/owner manual
+Preview/Apply, literal `APPLY_INDEPENDENT_OCCURRENCE_PLAN_ACL`, shared writer
+concurrency, complete pre-import recheck and complete schema/roles readback
+even following failed/no-op import. Never install on PR/push. An explicit owner
+activation and real authenticated Client/Coach permission checks are required
+before claiming synchronized production behavior. See
+`docs/architecture/independent-occurrence-plan-edits.md`.
+
 ## 22. Performance and failure isolation
 
 Keep startup focused on shell/first-screen requirements. Avoid unnecessary startup requests, large feature-only data, expensive hidden UI, and broad observers/listeners.
@@ -665,8 +694,11 @@ Visibility and resource occupancy are separate: independent client workouts do
 not book the coach. All authorized relationship records remain accessible.
 
 Ordinary Coach grants include PLAN/publication baselines (`originalPlan`,
-`publishedPlan`) and publication state; Client may update publication state/draft author but
-not assigned PLAN/baselines. Execution status/session fields remain protected.
+`publishedPlan`) and publication state; Client may update occurrence `plan` and its `publishedPlan` backup only for their own
+independent unstarted workouts under the 2026-11-20 decision; they may still not
+edit assigned source-program PLAN, `originalPlan`, or coached occurrence PLAN.
+The repository enforces format/participant/lifecycle eligibility locally, while
+Dexie Cloud enforces the structural field/realm permissions. Execution status/session fields remain protected.
 The protected calendar ACL installer may upgrade the frozen pre-calendar,
 scheduling-request or v1 calendar policy to this exact reviewed manifest. Other
 roles, source programs, FACT, schema and membership stay unchanged.
