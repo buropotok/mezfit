@@ -79,7 +79,7 @@ async function mockCloud(overrides: {
       ? Response.json(data.realm) : new Response(null, { status: 404 });
     if (path === '/all/discussionMessages/' + messageId) return data.message
       ? Response.json(data.message) : new Response(null, { status: 404 });
-    if (path === '/all/messageAttachments/' + attachmentId) return data.attachment
+    if (path === '/all/messageAttachments/' + String(data.attachment?.id ?? attachmentId)) return data.attachment
       ? Response.json(data.attachment) : new Response(null, { status: 404 });
     if (path === '/all/discussionThreads/' + encodeURIComponent(data.message?.threadId ? String(data.message.threadId) : threadId)) return data.thread
       ? Response.json(data.thread) : new Response(null, { status: 404 });
@@ -167,6 +167,33 @@ describe('Private R2 discussion media reads', () => {
     data.attachment = { ...data.attachment, storageKey: senderKey };
     expect((await handleDiscussionR2MediaRoute(request({ ...body, storageKey: senderKey }), env())).status).toBe(200);
     expect(head).toHaveBeenCalledWith(senderKey);
+  });
+
+  it('authorizes only the exact variant of a consistent published photo pair', async () => {
+    const { realmId, data } = await mockCloud();
+    const prefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
+    const photoId = 'b'.repeat(64);
+    const preview = { storageKey: `mvp-media/${prefix}/preview/${photoId}`, mimeType: 'image/webp', sizeBytes: 4 };
+    const full = { storageKey: `mvp-media/${prefix}/full/${photoId}`, mimeType: 'image/jpeg', sizeBytes: 6 };
+    const published = { ...data.attachment, id: photoId, mediaType: 'photo', ...full, preview };
+    data.attachment = published;
+    const id = { realmId, messageId, attachmentId: photoId, initData: await telegramInitData(200600) };
+    const read = ({ storageKey, mimeType, sizeBytes }: typeof full) =>
+      handleDiscussionR2MediaRoute(request({ ...id, storageKey, contentType: mimeType, sizeBytes }), env());
+
+    expect((await read({ ...full, storageKey: preview.storageKey })).status).toBe(403);
+    data.attachment = { ...published, preview: { ...preview, storageKey: preview.storageKey.replace(photoId, 'c'.repeat(64)) } };
+    expect((await read(full)).status).toBe(403);
+    expect(head).not.toHaveBeenCalled();
+
+    data.attachment = published;
+    for (const object of [preview, full]) {
+      head.mockResolvedValueOnce({ size: object.sizeBytes, httpMetadata: { contentType: object.mimeType } });
+      const response = await read(object);
+      expect(response.status).toBe(200);
+      const result = await response.json() as { getUrl: string };
+      expect(new URL(result.getUrl).pathname).toBe('/' + object.storageKey);
+    }
   });
 
   it.each([

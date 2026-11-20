@@ -1,4 +1,11 @@
 import { discussionId, discussionRecord } from './discussion-anchor';
+import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaObjectSizeLimit } from './discussion-media-limits';
+
+export interface DiscussionPhotoPreview {
+  storageKey: string;
+  mimeType: string;
+  sizeBytes: number;
+}
 
 /** Metadata only. Native owner has full row control; these guards describe normal app writes. */
 export interface MessageAttachment {
@@ -9,6 +16,21 @@ export interface MessageAttachment {
   uploadState: 'pending' | 'uploading' | 'failed' | 'ready';
   confirmedAt: string | null;
   deletedAt?: string;
+  /** Present only on photos that have two cloud objects. Top-level metadata describes Full. */
+  preview?: DiscussionPhotoPreview;
+}
+
+export function isDiscussionPhotoPair(attachment: Record<string, unknown>, preview: unknown): preview is DiscussionPhotoPreview {
+  const { storageKey, mimeType, sizeBytes } = attachment;
+  if (attachment.mediaType !== 'photo' || typeof storageKey !== 'string' || typeof mimeType !== 'string'
+    || typeof sizeBytes !== 'number' || !Number.isSafeInteger(sizeBytes) || sizeBytes < 1
+    || sizeBytes > discussionMediaObjectSizeLimit(storageKey, mimeType)) return false;
+  const key = DISCUSSION_MEDIA_KEY_PATTERN.exec(storageKey);
+  if (key?.[2] !== 'full' || attachment.id !== key[3] || !discussionRecord(preview) || typeof preview.mimeType !== 'string'
+    || typeof preview.sizeBytes !== 'number' || !Number.isSafeInteger(preview.sizeBytes) || preview.sizeBytes < 1) return false;
+  const previewKey = `mvp-media/${key[1]}/preview/${key[3]}`;
+  return preview.storageKey === previewKey
+    && preview.sizeBytes <= discussionMediaObjectSizeLimit(previewKey, preview.mimeType);
 }
 
 /** Response from the future authenticated gateway after it verifies the actual stored object.
@@ -63,6 +85,8 @@ export function assertMessageAttachmentWrite(
     || !discussionId(attachment.id) || attachment.messageId !== message.id || !discussionId(message.id)
     || attachment.realmId !== thread.realmId || attachment.owner !== actor || attachment.authorUserId !== actor
     || !media({ ...attachment }) || (attachment.storageKey !== null && !storageKey(attachment.storageKey))
+    || ((attachment.preview !== undefined || DISCUSSION_MEDIA_KEY_PATTERN.exec(attachment.storageKey ?? '')?.[2])
+      && !isDiscussionPhotoPair({ ...attachment }, attachment.preview))
     || !['pending', 'uploading', 'failed', 'ready'].includes(attachment.uploadState)
     || (attachment.deletedAt !== undefined && !instant(attachment.deletedAt))
     || (Boolean(message.deletedAt) && attachment.deletedAt === undefined)) invalid();
@@ -73,6 +97,9 @@ export function assertMessageAttachmentWrite(
     for (const field of ['id', 'realmId', 'owner', 'authorUserId', 'messageId', 'mediaType', 'mimeType', 'sizeBytes', 'durationSeconds'] as const)
       if (previous[field] !== attachment[field]) invalid();
     if (JSON.stringify(previous.waveform) !== JSON.stringify(attachment.waveform)
+      || previous.preview?.storageKey !== attachment.preview?.storageKey
+      || previous.preview?.mimeType !== attachment.preview?.mimeType
+      || previous.preview?.sizeBytes !== attachment.preview?.sizeBytes
       || (previous.storageKey !== null && previous.storageKey !== attachment.storageKey)
       || (previous.confirmedAt !== null && previous.confirmedAt !== attachment.confirmedAt)
       || (previous.uploadState === 'ready' && attachment.uploadState !== 'ready')

@@ -1,4 +1,4 @@
-import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
+import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix, discussionMediaObjectSizeLimit } from '../../shared/discussion-media-limits';
 import { TelegramAuthError, validateTelegramInitData } from './telegram';
 import { authorizeDiscussionR2Read, validDiscussionR2ReadIdentity, type DiscussionMediaReadEnv } from './discussion-media-read-auth';
 
@@ -53,10 +53,10 @@ function parseMediaRequest(raw: unknown): R2MediaRequest | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const input = raw as Record<string, unknown>;
   if (typeof input.initData !== 'string' || input.initData.length > 4096
-    || typeof input.storageKey !== 'string' || !DISCUSSION_MEDIA_KEY_PATTERN.test(input.storageKey)
+    || typeof input.storageKey !== 'string'
     || typeof input.contentType !== 'string'
     || typeof input.sizeBytes !== 'number' || !Number.isSafeInteger(input.sizeBytes)
-    || input.sizeBytes < 1 || input.sizeBytes > discussionMediaSizeLimit(input.contentType)) return null;
+    || input.sizeBytes < 1 || input.sizeBytes > discussionMediaObjectSizeLimit(input.storageKey, input.contentType)) return null;
   return {
     initData: input.initData, storageKey: input.storageKey,
     contentType: input.contentType, sizeBytes: input.sizeBytes,

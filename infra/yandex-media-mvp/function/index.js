@@ -156,10 +156,15 @@ function handleRequest(event, env, now, trace = () => {}) {
   trace('ALLOWLIST_CHECKED', 'INFO', { reason: env.MEDIA_TELEGRAM_ALLOWLIST ? 'ALLOWED' : 'NOT_ENABLED' });
 
   const { storageKey, contentType, sizeBytes } = payload;
-  const limit = limits.get(contentType);
-  const keyMatch = typeof storageKey === 'string' && /^mvp-media\/(?:([a-f0-9]{64})\/)?[a-f0-9]{64}$/.exec(storageKey);
+  const keyMatch = typeof storageKey === 'string' && /^mvp-media\/(?:([a-f0-9]{64})\/(?:(preview|full)\/)?)?[a-f0-9]{64}$/.exec(storageKey);
   const invalidKey = !keyMatch || keyMatch[0] !== storageKey;
-  const invalidSize = !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || (limit && sizeBytes > limit * 1024 * 1024);
+  const variant = keyMatch?.[2];
+  // This function is deployed independently of the TypeScript Worker.
+  const limit = variant === 'preview'
+    ? (contentType === 'image/webp' || contentType === 'image/jpeg' ? 100 * 1024 : 0)
+    : (variant === 'full' && (typeof contentType !== 'string' || !contentType.startsWith('image/'))
+      ? 0 : (limits.get(contentType) ?? 0) * 1024 * 1024);
+  const invalidSize = !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || (limit > 0 && sizeBytes > limit);
   if (invalidKey || !limit || invalidSize) {
     trace('UPLOAD_VALIDATION_REJECTED', 'WARN', {
       reason: invalidKey ? 'INVALID_KEY' : !limit ? 'INVALID_CONTENT_TYPE' : 'INVALID_SIZE',

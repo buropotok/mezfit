@@ -62,6 +62,13 @@ denied/unsynced cloud access fails closed. Existing `mezfit` GIF bucket, categor
 Dexie avatars and Yandex Function remain unchanged. Cold Mini App/bootstrap/auth without VPN
 and Telegram iOS/Android video Range behavior remain unverified gates.
 
+**COMM-09 photo variants (2026-11-20):** [The photo contract](communications.md#comm-09--два-варианта-новых-фото)
+extends the object layout for new photos. One synchronized attachment carries
+Full and Preview metadata. The local recovery store retains original bytes until
+publication and confirmation of both objects in both providers. The durable
+local read cache stores Preview. Existing realms and Dexie Cloud Addon continue
+to own message access and metadata synchronization.
+
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
 defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.
 COMM-06 (2026-11-07) registers v15/v16/v17 on the normal account lifecycle, without a
