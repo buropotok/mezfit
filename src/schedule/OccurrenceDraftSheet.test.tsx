@@ -598,11 +598,11 @@ describe('draft edit recovery', () => {
   });
 });
 
-describe('client access to assigned calendar PLAN', () => {
+describe('client access to coached calendar PLAN', () => {
   it.each([false, true])('opens the coach set for inspection with parent readOnly=%s and never writes PLAN', async readOnly => {
     cloudEnabled.value = true;
     const scheduled: LocalWorkoutOccurrenceDraft = { ...draft, coachUserId: 'tg:202',
-      clientUserId: 'tg:101', saved: true,
+      clientUserId: 'tg:101', format: 'coached', saved: true,
       plan: { ...plan, exercises: [{ ...plan.exercises[0], sets: [{
         id: 'assigned-set', sourceProgramSetId: null, position: 0, setType: 'cluster',
         setLabel: null, comment: null, materialLinks: [], chatLinks: [],
