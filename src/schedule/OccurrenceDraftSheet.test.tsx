@@ -26,10 +26,13 @@ vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSele
   return null;
 } }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
-  WorkoutPlanCard: ({ onAddSet, onOpenSet, onExerciseInformation, programName, hideProgramName, day,
+  WorkoutPlanCard: ({ onAddSet, onOpenSet, onExerciseInformation, onReplaceExercise, onDeleteExercise,
+    onBlockedExerciseAction, programName, hideProgramName, day,
     focusExerciseId, focusSetId, focusReady }: {
     onAddSet?: (id: string) => void; onOpenSet?: (exerciseId: string, setId: string) => void;
     onExerciseInformation?: (id: string) => void;
+    onReplaceExercise?: (id: string) => void; onDeleteExercise?: (id: string) => void;
+    onBlockedExerciseAction?: (action: 'replace' | 'delete') => void;
     programName?: string; hideProgramName?: boolean; day?: CloudProgramDayOutline;
     focusExerciseId?: string; focusSetId?: string; focusReady?: boolean;
   }) => <>
@@ -38,6 +41,8 @@ vi.mock('../workout/WorkoutPlanCard', () => ({
     <span data-testid="scheduled-set-techniques">{day?.exercises.flatMap(exercise =>
       exercise.sets.map(set => set.setType ?? 'ordinary')).join(',') ?? ''}</span>
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
+    <button onClick={() => onReplaceExercise ? onReplaceExercise('exercise') : onBlockedExerciseAction?.('replace')}>Заменить упражнение</button>
+    <button onClick={() => onDeleteExercise ? onDeleteExercise('exercise') : onBlockedExerciseAction?.('delete')}>Удалить упражнение</button>
     {day?.exercises.flatMap(exercise => exercise.sets.map(set =>
       <button key={set.id} onClick={() => onOpenSet?.(exercise.exercise.id, set.id)}>
         Открыть план подхода {set.position + 1}
@@ -624,6 +629,35 @@ describe('client access to coached calendar PLAN', () => {
     expect(screen.queryByRole('dialog', { name: 'План конкретной тренировки' })).toBeNull();
     expect(enqueue).not.toHaveBeenCalled();
     expect(scheduled.plan.exercises[0].sets[0].plannedWeightKg).toBe(70.75);
+  });
+});
+
+describe('blocked exercise actions use the shared MezfitDialog', () => {
+  it.each(['replace', 'delete'] as const)('explains forbidden coached %s without editing PLAN', action => {
+    const scheduled = { ...draft, coachUserId: 'tg:202', clientUserId: 'tg:101',
+      format: 'coached' as const, saved: true };
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={scheduled} drafts={drafts}
+      onClose={vi.fn()} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: action === 'replace' ? 'Заменить упражнение' : 'Удалить упражнение' }));
+    expect(screen.getByText(action === 'replace' ? 'Нельзя заменить упражнение' : 'Нельзя удалить упражнение')).toBeTruthy();
+    expect(screen.getByText('План тренировки с тренером может изменять только тренер.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Понятно' }));
+    expect(screen.queryByText('Нельзя заменить упражнение')).toBeNull();
+    expect(screen.queryByText('Нельзя удалить упражнение')).toBeNull();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it('explains frozen PLAN without running a previously visible edit callback', () => {
+    const frozen = { ...draft, saved: true, workoutSessionId: 'started-session', executionStatus: 'in_progress' as const };
+    const drafts = new WorkoutOccurrenceDraftRepository({} as MezfitCloudDatabase, 'tg:101');
+    const enqueue = vi.spyOn(drafts, 'enqueueEdit').mockResolvedValue(undefined);
+    render(<OccurrenceDraftSheet draft={frozen} drafts={drafts} planLocked
+      onClose={vi.fn()} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Заменить упражнение' }));
+    expect(screen.getByText('Тренировка была запущена. Изменить план нельзя')).toBeTruthy();
+    expect(enqueue).not.toHaveBeenCalled();
   });
 });
 
