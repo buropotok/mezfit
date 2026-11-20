@@ -5,6 +5,7 @@ import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayOutline } from './workout-foundation-types';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { draftFromProgramDay } from './workout-occurrence-plan';
+import { replaceOccurrenceExercise } from './workout-occurrence-edit';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 
 const opened: Dexie[] = [];
@@ -138,9 +139,8 @@ describe('local workout occurrence drafts', () => {
       athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
     source.id = await repo(creator).create(source);
     const id = await repo(creator).save(source.id);
-    const replacement = { ...source.plan, exercises: source.plan.exercises.map(row => ({
-      ...row, exercise: { ...row.exercise, exerciseDefinitionId: '0002', name: 'Жим ногами' },
-    })) };
+    const replacement = replaceOccurrenceExercise(source.plan, source.plan.exercises[0].id,
+      { ...source.plan.exercises[0].exercise, exerciseDefinitionId: '0002', name: 'Жим ногами' }, false);
     await repo('tg:202').replacePlan('draft:' + id, replacement);
     const stored = await db.table('workoutOccurrences').get(id);
     expect(stored).toMatchObject({
