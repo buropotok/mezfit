@@ -440,7 +440,9 @@ export function SettingsPage({
 
   if (syncHistoryOpen) return <SyncHistoryPanel glassBlur={effectiveGlassBlur} />;
 
-  if (dataResetOpen) return <ResetLocalDataSettings glassBlur={effectiveGlassBlur} onClear={selection => {
+  if (dataResetOpen) return <ResetLocalDataSettings glassBlur={effectiveGlassBlur}
+    telegramUserId={cloud?.actorUserId.startsWith('tg:') ? cloud.actorUserId.slice(3) : null}
+    onClear={selection => {
     const telegramUserId = cloud?.actorUserId.startsWith('tg:') ? cloud.actorUserId.slice(3) : null;
     if (!telegramUserId) throw new Error('NO_LOCAL_DATABASE_ACCOUNT');
     requestLocalDataReset(telegramUserId, selection);
