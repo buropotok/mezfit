@@ -342,10 +342,9 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       <Text variant="body">{blockedExerciseAction?.reason}</Text>
     </MezfitDialog>
     <MezfitDialog opened={deleteExerciseId !== null}
-      title={session?.occurrenceId ? 'Тренировка была запущена. Удаление из плана невозможно.' : 'Удалить упражнение?'}
+      title="Удалить упражнение?"
       onBackdropClick={closeOverlay}
-      buttons={session?.occurrenceId
-        ? <MezfitDialogButton strong onClick={closeOverlay}>Понятно</MezfitDialogButton> : <>
+      buttons={<>
       <MezfitDialogButton disabled={busy} onClick={closeOverlay}>Отмена</MezfitDialogButton>
       <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
         if (!deleteExerciseId || pending.current) return;
@@ -355,9 +354,9 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           if (alive.current) setDeleteExerciseId(null);
         }).catch(report);
       }}>Удалить</MezfitDialogButton>
-    </>}>{!session?.occurrenceId ? <>
+    </>}>
       <Text variant="body">Упражнение и его подходы будут удалены из этой тренировки.</Text>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    </> : null}</MezfitDialog>
+    </MezfitDialog>
   </section>;
 }
