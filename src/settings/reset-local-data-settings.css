@@ -23,3 +23,9 @@
   width: 24px;
   height: 24px;
 }
+
+.local-data-reset__choice-copy {
+  display: grid;
+  gap: var(--ui-space-1);
+  min-width: 0;
+}
