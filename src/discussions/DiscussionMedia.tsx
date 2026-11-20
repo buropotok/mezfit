@@ -161,7 +161,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
       <Text variant="caption">Подготавливаем видео…</Text>
     </div>}
     {type === 'video' && !thumbnail && !failed &&
-      <DiscussionVideoControls key={String(usePlainSource)} player={player} source={orientation.src} />}
+      <DiscussionVideoControls key={`controls:${usePlainSource}`} player={player} source={orientation.src} />}
     {onComment && paused && !failed && <div className="discussion-media__comment" data-hint={showCommentHint || undefined}>
       {showCommentHint && <Text variant="footnote" className="discussion-media__comment-hint">
         Нажмите, чтобы прокомментировать стопкадр.
