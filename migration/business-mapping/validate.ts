@@ -144,7 +144,7 @@ const exerciseMapping: Rule = v => exact(v, {
   identityKey: key, sourceExerciseKey: str(128), sourceSubjectKey: str(128), kind: one('proposed_custom'),
   operationKey: key, trackingType: tracking, requiresReconciliation: one(true),
 }) || exact(v, {
-  identityKey: key, sourceExerciseKey: str(128), sourceSubjectKey: str(128), kind: one('blocked'), reason: issueCode,
+  identityKey: key, sourceExerciseKey: str(128), sourceSubjectKey: nullable(str(128)), kind: one('blocked'), reason: issueCode,
 });
 const issue: Rule = v => exact(v, {
   code: issueCode, severity: one('info', 'warning', 'error'), entityKind: one('source', 'program', 'session', 'scheduledWorkout', 'customExercise', 'provenance'),
