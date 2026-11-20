@@ -205,11 +205,12 @@ export interface ImportOperationBase {
 }
 export type ImportOperation =
   | (ImportOperationBase & { kind: 'program'; program: ProposedProgram })
-  | (ImportOperationBase & { kind: 'historical_session'; completionState: SourceImportPackageV1['sessions'][number]['completionState'];
+  | (ImportOperationBase & { kind: 'historical_session'; name: string | null;
+      completionState: SourceImportPackageV1['sessions'][number]['completionState'];
       programRef: SourceRef; scheduledWorkoutRef: SourceRef; timing: ImportTime; frozenPlan: PlannedSnapshot; fact: PerformedExercise[];
       importedProvenance: true })
-  | (ImportOperationBase & { kind: 'standalone_scheduled'; programRef: SourceRef; programDayRef: SourceRef;
-      timing: ImportTime; plan: PlannedSnapshot })
+  | (ImportOperationBase & { kind: 'standalone_scheduled'; name: string | null;
+      programRef: SourceRef; programDayRef: SourceRef; timing: ImportTime; plan: PlannedSnapshot })
   | (ImportOperationBase & { kind: 'proposed_custom_exercise'; exerciseIdentityKey: string; sourceName: string;
       trackingType: ExerciseTracking; requiresReconciliation: true; targetScope: 'coach' })
   | (ImportOperationBase & { kind: 'provenance_metadata'; forOperationKey: string; marker: 'imported' });
