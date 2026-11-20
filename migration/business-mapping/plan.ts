@@ -1,7 +1,7 @@
 import { assertBuildInput, assertPlan } from './validate';
 import { canonical, digest } from './canonical';
 import { convertMetrics } from './measure';
-import { mapTiming } from './timing';
+import { mapTiming, isReliableTimeZone } from './timing';
 import type {
   SourceImportPackageV1, SourceRef, SourceSession, SourceScheduledWorkout, SourceProgram,
   SourcePlanPresence, SourceWorkoutTiming, SourceFactSet,
@@ -23,7 +23,7 @@ const normalize = (text: string): string => text.trim().normalize('NFKC').toLoca
 function businessDate(timing: SourceWorkoutTiming): string | null {
   if (timing.localDate) return timing.localDate;
   const instant = timing.startedAtUtc ?? timing.completedAtUtc;
-  if (!instant || !timing.timeZone) return null;
+  if (!instant || !isReliableTimeZone(timing.timeZone)) return null;
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: timing.timeZone,
     year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(instant));
   const d = Object.fromEntries(parts.map(item => [item.type, item.value]));
