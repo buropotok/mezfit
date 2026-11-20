@@ -93,10 +93,10 @@ export function useFreeDiscussionCreation({ cloud, organization, category, scope
   const action = useMemo<NavigationFloatingAction>(() => ({
     label: createFreeDiscussionTitle, icon: 'message-circle-plus',
     ...(relationshipId ? { onClick: start } : { popoverItems: [
-      { id: 'personal', label: PERSONAL_DISCUSSION_TITLE, icon: 'user' as const, disabled: !db || !actor,
+      { id: 'personal', label: PERSONAL_DISCUSSION_TITLE, icon: 'message-circle-star' as const, disabled: !db || !actor,
         onSelect: () => { void openPersonal(); } },
       { id: 'shared', label: role === 'coach' ? 'Чат с клиентом' : 'Чат с тренером',
-        icon: 'message-circle' as const, onSelect: start },
+        icon: role === 'coach' ? 'message-circle' as const : 'message-circle-user' as const, onSelect: start },
     ] }),
   }), [actor, db, openPersonal, relationshipId, role, start]);
 
