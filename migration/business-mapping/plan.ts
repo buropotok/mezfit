@@ -405,7 +405,7 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
       input.calendarOccupancySnapshot.intervals, stagedSlots);
     const operation: ImportOperation = { ...base(key, b.ref, [{ kind: 'session', sourceKey: session.sourceKey }],
       dep), kind: 'historical_session', name: session.name, completionState: session.completionState,
-      programRef, scheduledWorkoutRef: session.scheduledWorkoutRef,
+      sourceProgramRef: session.programRef, programRef, scheduledWorkoutRef: session.scheduledWorkoutRef,
       timing: timed.timing,
       frozenPlan: { state: 'absent' }, fact: [], importedProvenance: true };
     operation.reasonCodes.push(...b.reasons);
