@@ -2,7 +2,7 @@
 import { StrictMode, useEffect, useState, type ReactNode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DISCUSSION_TITLE_MAX_LENGTH, discussionAnchorKey } from '../../shared/discussion-anchor';
+import { DISCUSSION_TITLE_MAX_LENGTH, discussionAnchorKey, personalDiscussionId, PERSONAL_DISCUSSION_TITLE } from '../../shared/discussion-anchor';
 import { NavigationShell, type AppDestination, type NavigationContext } from '../NavigationShell';
 import { CoachShell } from '../coach/CoachShell';
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
@@ -38,6 +38,12 @@ vi.mock('../data/cloud/discussions', async original => ({
   DiscussionRepository: class {
     constructor(readonly db: object, readonly actorUserId: string, readonly scope: DiscussionScope) {}
     createFreeDiscussion(input: CreateFreeDiscussion) { return state.create(this.db, this.actorUserId, this.scope, input); }
+    async ensurePersonalDiscussion() {
+      const id = personalDiscussionId(this.actorUserId);
+      return state.saved.find(thread => thread.id === id) ?? persist(this.scope, {
+        id, title: PERSONAL_DISCUSSION_TITLE, createdAt: new Date().toISOString(),
+      });
+    }
   },
   observeDiscussionNotificationThread: () => ({ unsubscribe() {} }),
 }));
@@ -141,8 +147,14 @@ function deferred<T>() {
 const fab = () => screen.queryByRole('button', { name: 'Создать чат' });
 function click(name: string, role = 'button') { fireEvent.click(screen.getByRole(role, { name })); }
 function popBack() { act(() => { window.dispatchEvent(new PopStateEvent('popstate')); }); }
-function start(peer = `Выбрать тренера ${coachTwo.displayName}`, title = 'Мой чат') {
+async function pickChatType(name: string) {
+  const item = await screen.findByRole('menuitem', { name });
+  await waitFor(() => expect(item.closest('[inert]')).toBeNull());
+  fireEvent.click(item);
+}
+async function start(peer = `Выбрать тренера ${coachTwo.displayName}`, title = 'Мой чат', workspace = false) {
   click('Создать чат');
+  if (!workspace) await pickChatType(peer.startsWith('Выбрать клиента') ? 'Чат с клиентом' : 'Чат с тренером');
   click(peer);
   fireEvent.change(screen.getByLabelText('Название чата'), { target: { value: title } });
 }
@@ -175,12 +187,33 @@ afterEach(() => {
 });
 
 describe('creating free discussions from the standard navigation FAB', () => {
+  it('opens one personal chat from the FAB without a trainer or category write', async () => {
+    state.coaches = [];
+    render(<Harness />);
+    click('Личное', 'tab');
+    click('Создать чат');
+    expect(screen.queryByRole('dialog', { name: 'Выбрать тренера' })).toBeNull();
+    await pickChatType('Личный чат');
+    const sheet = await screen.findByRole('dialog', { name: 'Личный чат' });
+    expect(sheet.getAttribute('data-realm')).toBe(state.actor);
+    expect(sheet.getAttribute('data-thread')).toBe(personalDiscussionId(state.actor));
+    click('Закрыть чат');
+
+    click('Создать чат');
+    await pickChatType('Личный чат');
+    expect((await screen.findByRole('dialog', { name: 'Личный чат' })).getAttribute('data-thread'))
+      .toBe(personalDiscussionId(state.actor));
+    expect(state.saved).toHaveLength(1);
+    expect(state.assign).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['Питание', 'nutrition'], ['Личное', 'personal'], ['Привычки', { kind: 'custom', id: habits.id }],
   ] satisfies [string, AssignableDiscussionCategory][])('assigns the selected %s category and opens the chosen coach before feed emission', async (tab, category) => {
     const view = render(<Harness />);
     click(tab, 'tab');
     click('Создать чат');
+    await pickChatType('Чат с тренером');
     const picker = screen.getByRole('dialog', { name: 'Выбрать тренера' });
     expect(fab()).toBeNull();
     expect(within(picker).getAllByRole('img')).toHaveLength(2);
@@ -242,7 +275,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
     click('Поиск клиента');
     expect(fab()).toBeNull();
     click('Закрыть поиск клиентов');
-    start('Выбрать клиента Мария', 'Общий чат');
+    await start('Выбрать клиента Мария', 'Общий чат');
     click('Создать');
     const globalChat = await screen.findByRole('dialog', { name: 'Общий чат' });
     expect(globalChat.getAttribute('data-realm')).toBe(clientTwo.relationshipId);
@@ -278,7 +311,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
     state.assign.mockReturnValueOnce(firstAssignment.promise);
     render(<StrictMode><Harness /></StrictMode>);
     click('Питание', 'tab');
-    start();
+    await start();
     const create = screen.getByRole('button', { name: 'Создать' });
     act(() => { create.click(); create.click(); });
     await waitFor(() => expect(state.assign).toHaveBeenCalledTimes(1));
@@ -295,7 +328,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
     expect(state.assign).toHaveBeenNthCalledWith(2, state.saved[0], 'nutrition');
     expect(state.saved).toHaveLength(1);
     popBack();
-    start();
+    await start();
     click('Создать');
     await screen.findByRole('dialog', { name: 'Мой чат' });
     expect(state.saved).toHaveLength(2);
@@ -306,7 +339,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
     state.create.mockRejectedValueOnce(new Error('local write interrupted'));
     render(<Harness />);
     click('Личное', 'tab');
-    start();
+    await start();
     click('Создать');
     await screen.findByText('Не удалось создать чат. Повторите попытку.');
     expect(state.assign).not.toHaveBeenCalled();
@@ -321,7 +354,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
     state.assign.mockReturnValueOnce(assignment.promise);
     const view = render(<Harness />);
     click('Личное', 'tab');
-    start();
+    await start();
     click('Создать');
     await waitFor(() => expect(state.assign).toHaveBeenCalledTimes(1));
     state.coaches = [coachOne];
@@ -333,12 +366,13 @@ describe('creating free discussions from the standard navigation FAB', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('shows local contact loading and empty states, and supports Back and cancel without a write', () => {
+  it('shows local contact loading and empty states, and supports Back and cancel without a write', async () => {
     state.coaches = [];
     state.status = 'loading';
     const view = render(<Harness />);
     click('Личное', 'tab');
     click('Создать чат');
+    await pickChatType('Чат с тренером');
     expect(screen.getByText('Загружаем список собеседников…')).toBeTruthy();
     state.status = 'ready';
     view.rerender(<Harness />);
@@ -347,24 +381,24 @@ describe('creating free discussions from the standard navigation FAB', () => {
     expect(screen.queryByRole('dialog', { name: 'Выбрать тренера' })).toBeNull();
     state.coaches = [coachOne];
     view.rerender(<Harness />);
-    start('Выбрать тренера Анна');
+    await start('Выбрать тренера Анна');
     popBack();
     expect(screen.getByRole('dialog', { name: 'Выбрать тренера' })).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Создать чат' })).toBeNull();
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Выбрать тренера' })).getByRole('button', { name: 'Назад' }));
-    start('Выбрать тренера Анна');
+    await start('Выбрать тренера Анна');
     click('Отмена');
     expect(screen.queryByRole('dialog', { name: 'Создать чат' })).toBeNull();
     expect(fab()).toBeTruthy();
     expect(state.create).not.toHaveBeenCalled();
   });
 
-  it('uses Telegram Back and the browser entry to close the current creation step', () => {
+  it('uses Telegram Back and the browser entry to close the current creation step', async () => {
     const backButton: TelegramBackButton = { show: vi.fn(), hide: vi.fn(), onClick: vi.fn(), offClick: vi.fn() };
     window.Telegram = { WebApp: { initData: 'test', colorScheme: 'dark', ready: vi.fn(), expand: vi.fn(), BackButton: backButton } };
     render(<Harness />);
     click('Личное', 'tab');
-    start();
+    await start();
     const handler = vi.mocked(backButton.onClick).mock.lastCall?.[0];
     if (!handler) throw new Error('Telegram Back was not registered');
     handler();
@@ -380,7 +414,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
   it('rejects invalid titles and rechecks a deleted category and revoked pair at submit', async () => {
     const view = render(<Harness />);
     click('Привычки', 'tab');
-    start(undefined, '   ');
+    await start(undefined, '   ');
     click('Создать');
     expect(screen.getByRole('alert').textContent).toContain('Введите название чата');
     const input = screen.getByLabelText('Название чата');
@@ -410,7 +444,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
       state.assign.mockReturnValueOnce(assignment.promise);
       const view = render(<Harness />);
       click('Личное', 'tab');
-      start();
+      await start();
       click('Создать');
       await waitFor(() => expect(state.assign).toHaveBeenCalledTimes(1));
       switch (change) {
@@ -433,7 +467,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
   it('drops an immediately opened chat if its verified pair disappears and never reopens it on contact refresh', async () => {
     const view = render(<Harness />);
     click('Личное', 'tab');
-    start();
+    await start();
     click('Создать');
     await screen.findByRole('dialog', { name: 'Мой чат' });
     state.coaches = [coachOne];
@@ -451,7 +485,7 @@ describe('creating free discussions from the standard navigation FAB', () => {
     const page = (relationshipId: string) => <Harness role="coach" destination="clients" relationshipId={relationshipId} />;
     const view = render(page(clientOne.relationshipId));
     click('Личное', 'tab');
-    start('Выбрать клиента Лена');
+    await start('Выбрать клиента Лена', undefined, true);
     click('Создать');
     await waitFor(() => expect(state.create).toHaveBeenCalledTimes(1));
     const [, , scope, input] = state.create.mock.calls[0];

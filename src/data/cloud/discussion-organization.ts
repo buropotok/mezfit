@@ -350,7 +350,8 @@ export class DiscussionOrganizationRepository<TDatabase extends OrganizationData
     const conflict = isBasicCategory(own) && isBasicCategory(peer) && own !== peer;
     if (conflict) diagnostics.push('LEGACY_BASIC_ASSIGNMENT_CONFLICT');
     const selection: CategorySelection = { v: 1, base: conflict ? 'none'
-      : isBasicCategory(own) ? own : isBasicCategory(peer) ? peer : thread.anchor.kind === 'free' ? 'none' : 'training' };
+      : isBasicCategory(own) ? own : isBasicCategory(peer) ? peer
+        : thread.anchor.kind === 'free' ? (thread.coachClientId === null ? 'personal' : 'none') : 'training' };
     const ownCustom = assignmentCategoryId(own), peerCustom = assignmentCategoryId(peer);
     if (ownCustom) selection[targets.actorRole] = ownCustom;
     if (peerCustom && targets.peerRole) selection[targets.peerRole] = peerCustom;

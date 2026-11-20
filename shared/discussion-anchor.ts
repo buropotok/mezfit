@@ -9,17 +9,26 @@ export type EntityDiscussionAnchor =
 export type FreeDiscussionAnchor = { kind: 'free'; threadId: string };
 export type DiscussionAnchor = EntityDiscussionAnchor | FreeDiscussionAnchor;
 export const FREE_DISCUSSION_ID_PREFIX = 'free-discussion:';
+const PERSONAL_DISCUSSION_ID_PREFIX = FREE_DISCUSSION_ID_PREFIX + 'self:';
+export const PERSONAL_DISCUSSION_TITLE = 'Личный чат';
+export const personalDiscussionId = (realmId: string) => PERSONAL_DISCUSSION_ID_PREFIX + realmId;
 export const DISCUSSION_TITLE_MAX_LENGTH = 120;
 const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+export const isPersonalDiscussionRealm = (value: unknown): value is `tg:${number}` =>
+  typeof value === 'string' && /^tg:[1-9]\d*$/.test(value);
+export const isPersonalDiscussionId = (id: string) => id.startsWith(PERSONAL_DISCUSSION_ID_PREFIX)
+  && isPersonalDiscussionRealm(id.slice(PERSONAL_DISCUSSION_ID_PREFIX.length));
 function isFreeDiscussionId(id: unknown): id is string {
   return typeof id === 'string' && id.startsWith(FREE_DISCUSSION_ID_PREFIX)
-    && id.length === FREE_DISCUSSION_ID_PREFIX.length + 36 && uuidV4.test(id.slice(FREE_DISCUSSION_ID_PREFIX.length));
+    && (isPersonalDiscussionId(id)
+      || (id.length === FREE_DISCUSSION_ID_PREFIX.length + 36 && uuidV4.test(id.slice(FREE_DISCUSSION_ID_PREFIX.length))));
 }
 
 /** Anchor kind and the reserved free thread namespace must agree on both read boundaries. */
 export function matchesDiscussionThreadAnchor(anchor: DiscussionAnchor, id: string, title: unknown, contextPath: unknown): boolean {
   if (anchor.kind !== 'free') return !isFreeDiscussionId(id);
   return anchor.threadId === id && typeof title === 'string' && title === title.trim()
+    && (!isPersonalDiscussionId(id) || title === PERSONAL_DISCUSSION_TITLE)
     && title.length > 0 && title.length <= DISCUSSION_TITLE_MAX_LENGTH && !/[\u0000-\u001f\u007f]/.test(title)
     && Array.isArray(contextPath) && contextPath.length === 0;
 }
@@ -59,7 +68,8 @@ export function discussionAnchorKey(scope: DiscussionScope, anchor: DiscussionAn
     || !isDiscussionAnchor(anchor)) throw new Error('INVALID_DISCUSSION_ANCHOR');
   const head = [scope.realmId, scope.coachClientId, anchor.kind];
   if (anchor.kind === 'free') {
-    if (scope.coachClientId === null) throw new Error('INVALID_DISCUSSION_ANCHOR');
+    if (scope.coachClientId === null ? anchor.threadId !== personalDiscussionId(scope.realmId)
+      : isPersonalDiscussionId(anchor.threadId)) throw new Error('INVALID_DISCUSSION_ANCHOR');
     return JSON.stringify([...head, anchor.threadId]);
   }
   if (anchor.kind === 'program') return JSON.stringify([...head, anchor.trainingPlanId]);

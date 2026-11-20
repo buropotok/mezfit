@@ -1,5 +1,6 @@
 import Dexie, { liveQuery } from 'dexie';
-import { discussionAnchorKey, discussionId, discussionParents, discussionTitle, FREE_DISCUSSION_ID_PREFIX, type FreeDiscussionAnchor } from '../../../shared/discussion-anchor';
+import { discussionAnchorKey, discussionId, discussionParents, discussionTitle, FREE_DISCUSSION_ID_PREFIX,
+  personalDiscussionId, PERSONAL_DISCUSSION_TITLE, type FreeDiscussionAnchor } from '../../../shared/discussion-anchor';
 import { assertDiscussionMessageWrite, assertDiscussionReadStateWrite, assertDiscussionThread, assertMessageAttachmentWrite, discussionReadStateId,
   isDiscussionVideoPosition, sameDiscussionVideoPosition, type DiscussionVideoPosition,
   type DiscussionAnchor, type DiscussionScope, type DiscussionThread, type DiscussionMessage, type MessageAttachment } from './discussion-contracts';
@@ -238,6 +239,14 @@ export class DiscussionRepository {
   }
   async createFreeDiscussion(input: CreateFreeDiscussion): Promise<DiscussionThread> {
     if (this.scope.coachClientId === null) fail('DISCUSSION_ACCESS_DENIED');
+    return this.createFreeThread(input);
+  }
+  async ensurePersonalDiscussion(): Promise<DiscussionThread> {
+    if (this.scope.coachClientId !== null || this.scope.realmId !== this.actorUserId) fail('DISCUSSION_ACCESS_DENIED');
+    return this.createFreeThread({ id: personalDiscussionId(this.actorUserId), title: PERSONAL_DISCUSSION_TITLE,
+      createdAt: new Date().toISOString() });
+  }
+  private createFreeThread(input: CreateFreeDiscussion): Promise<DiscussionThread> {
     if (typeof input.title !== 'string') fail('INVALID_DISCUSSION_TITLE');
     const anchor: FreeDiscussionAnchor = { kind: 'free', threadId: input.id };
     const row: DiscussionThread = {
@@ -250,7 +259,7 @@ export class DiscussionRepository {
       const existing = await this.db.discussionThreads.get(row.id);
       if (existing) {
         if (existing.realmId !== row.realmId || existing.coachClientId !== row.coachClientId
-          || existing.anchorKey !== row.anchorKey || existing.createdAt !== row.createdAt
+          || existing.anchorKey !== row.anchorKey || (row.coachClientId !== null && existing.createdAt !== row.createdAt)
           || existing.derivedTitleSnapshot !== row.derivedTitleSnapshot) fail('DISCUSSION_ID_REUSED');
         assertDiscussionThread(existing);
         if ((await this.deletedIds([existing])).has(existing.id)) fail('DISCUSSION_NOT_FOUND');

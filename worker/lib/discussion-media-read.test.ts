@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
+import { discussionAnchorKey, personalDiscussionId, PERSONAL_DISCUSSION_TITLE } from '../../shared/discussion-anchor';
 import { handleDiscussionR2MediaRoute, signDiscussionR2Get } from './discussion-media-r2';
 import { relationshipMembership } from './dexie-cloud-membership';
 
@@ -80,7 +81,7 @@ async function mockCloud(overrides: {
       ? Response.json(data.message) : new Response(null, { status: 404 });
     if (path === '/all/messageAttachments/' + attachmentId) return data.attachment
       ? Response.json(data.attachment) : new Response(null, { status: 404 });
-    if (path === '/all/discussionThreads/' + threadId) return data.thread
+    if (path === '/all/discussionThreads/' + encodeURIComponent(data.message?.threadId ? String(data.message.threadId) : threadId)) return data.thread
       ? Response.json(data.thread) : new Response(null, { status: 404 });
     throw new Error('Unexpected Dexie read: ' + path);
   });
@@ -123,6 +124,32 @@ describe('Private R2 discussion media reads', () => {
       contentType: 'image/jpeg', sizeBytes: 6,
     }), env());
     expect(response.status).toBe(403);
+    expect(head).not.toHaveBeenCalled();
+  });
+
+  it('requires the personal realm owner and an exact published attachment in their personal chat', async () => {
+    const realmId = 'tg:100500';
+    const personalId = personalDiscussionId(realmId);
+    const anchor = { kind: 'free' as const, threadId: personalId };
+    const scope = { realmId, coachClientId: null };
+    const { data, upstream } = await mockCloud({
+      members: [],
+      message: { id: messageId, realmId, threadId: personalId, owner: realmId, authorUserId: realmId, deletedAt: '' },
+      attachment: { id: attachmentId, messageId, realmId, owner: realmId, authorUserId: realmId,
+        storageKey: key, mimeType: 'image/jpeg', sizeBytes: 6, uploadState: 'ready' },
+      thread: { id: personalId, ...scope, owner: realmId, anchor, anchorKey: discussionAnchorKey(scope, anchor),
+        derivedTitleSnapshot: PERSONAL_DISCUSSION_TITLE, contextPath: [] },
+    });
+    const body = { realmId, messageId, attachmentId, storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
+    const owner = await telegramInitData(100500);
+    const foreign = await telegramInitData(200600);
+    expect((await handleDiscussionR2MediaRoute(request({ ...body, initData: foreign }), env())).status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+    expect((await handleDiscussionR2MediaRoute(request({ ...body, initData: owner }), env())).status).toBe(200);
+    expect(upstream.mock.calls.some(([url]) => new URL(String(url)).pathname === '/all/members')).toBe(false);
+    head.mockClear();
+    data.message = { ...data.message, draftForRealmId: realmId };
+    expect((await handleDiscussionR2MediaRoute(request({ ...body, initData: owner }), env())).status).toBe(403);
     expect(head).not.toHaveBeenCalled();
   });
 
