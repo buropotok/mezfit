@@ -1,19 +1,52 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Toggle } from 'konsta/react';
 import { Button, GlassSurface, Icon, MezfitDialog, MezfitDialogButton, Text } from '../ui';
 import type { LocalDataResetSelection } from '../data/local/resetLocalData';
+import { estimateLocalDataBytes, estimateMediaCacheBytes } from '../data/local/resetLocalDataSizes';
 import './reset-local-data-settings.css';
 
+type SizeResult = number | 'loading' | null;
+
+function sizeLabel(value: SizeResult): string {
+  if (value === 'loading') return 'Подсчёт…';
+  if (value === null) return 'Размер недоступен';
+  if (value === 0) return '0 Б';
+  if (value < 1024) return `≈ ${value} Б`;
+  if (value < 1024 * 1024) return `≈ ${(value / 1024).toFixed(1)} КБ`;
+  return `≈ ${(value / (1024 * 1024)).toFixed(1)} МБ`;
+}
+
 export function ResetLocalDataSettings({
-  glassBlur, onClear,
+  glassBlur, onClear, telegramUserId = null,
 }: {
   glassBlur?: number;
   onClear: (selection: LocalDataResetSelection) => void;
+  telegramUserId?: string | null;
 }) {
   const [media, setMedia] = useState(false);
   const [workouts, setWorkouts] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState('');
+  const [mediaSize, setMediaSize] = useState<SizeResult>('loading');
+  const [workoutsSize, setWorkoutsSize] = useState<SizeResult>('loading');
+
+  useEffect(() => {
+    let active = true;
+    setMediaSize('loading');
+    setWorkoutsSize('loading');
+    if (!telegramUserId) {
+      setMediaSize(null);
+      setWorkoutsSize(null);
+      return () => { active = false; };
+    }
+    void estimateMediaCacheBytes(telegramUserId)
+      .then(bytes => { if (active) setMediaSize(bytes); })
+      .catch(() => { if (active) setMediaSize(null); });
+    void estimateLocalDataBytes(telegramUserId)
+      .then(bytes => { if (active) setWorkoutsSize(bytes); })
+      .catch(() => { if (active) setWorkoutsSize(null); });
+    return () => { active = false; };
+  }, [telegramUserId]);
 
   const clear = () => {
     setConfirmOpen(false);
@@ -34,14 +67,24 @@ export function ResetLocalDataSettings({
 
         <div className="local-data-reset__choices">
           <label className="local-data-reset__choice">
-            <Text variant="body">Кэш медиа</Text>
+            <span className="local-data-reset__choice-copy">
+              <Text variant="body">Кэш медиа</Text>
+              <Text variant="footnote" tone="muted" aria-live="polite">{sizeLabel(mediaSize)}</Text>
+            </span>
             <Toggle component="span" checked={media} onChange={() => setMedia(value => !value)} />
           </label>
           <label className="local-data-reset__choice">
-            <Text variant="body">Данные о программах и тренировках.</Text>
+            <span className="local-data-reset__choice-copy">
+              <Text variant="body">Данные о программах и тренировках.</Text>
+              <Text variant="footnote" tone="muted" aria-live="polite">{sizeLabel(workoutsSize)}</Text>
+            </span>
             <Toggle component="span" checked={workouts} onChange={() => setWorkouts(value => !value)} />
           </label>
         </div>
+
+        <Text variant="footnote" tone="muted">
+          Размеры приблизительные: учитывается содержимое IndexedDB, без служебных расходов на диске.
+        </Text>
 
         <div className="local-data-reset__notice">
           <span className="local-data-reset__notice-icon"><Icon name="info-triangle" /></span>
