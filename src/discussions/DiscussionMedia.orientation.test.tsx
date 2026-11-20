@@ -43,19 +43,27 @@ it('renders photo attachments without trying to inspect video orientation', () =
   expect(readVideoOrientation).not.toHaveBeenCalled();
 });
 
-it('corrects ordinary video while keeping playback and seeking controls upright', async () => {
-  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation: 90 });
+it.each([0, 90])('uses the same playback and seek controls with rotation %i', async rotation => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 488, rotation });
   const { container } = render(<KonstaProvider theme="ios" dark>
     <DiscussionMedia src="blob:video" type="video" mode="viewer" />
   </KonstaProvider>);
   const video = container.querySelector('video')!;
-  expect(video.controls).toBe(true);
-  load(video, 480, 488);
-  await waitFor(() => expect(video.style.transform).toContain('rotate(90deg)'));
+  const playButton = screen.getByRole('button', { name: 'Воспроизвести' });
   expect(video.controls).toBe(false);
+  load(video, 480, 488);
+  await waitFor(() => expect(video.getAttribute('src')).toBe(rotation ? 'blob:neutral' : 'blob:video'));
+  if (rotation) expect(video.style.transform).toContain('rotate(90deg)');
+  else await waitFor(() => expect(video.style.visibility).toBe(''));
+  expect(screen.getByRole('button', { name: 'Воспроизвести' })).toBe(playButton);
   const play = vi.spyOn(video, 'play').mockResolvedValue(undefined);
   fireEvent.click(screen.getByRole('button', { name: 'Воспроизвести' }));
   expect(play).toHaveBeenCalledOnce();
+  vi.spyOn(video, 'paused', 'get').mockReturnValue(false);
+  fireEvent.play(video);
+  const pause = vi.spyOn(video, 'pause').mockImplementation(() => {});
+  fireEvent.click(screen.getByRole('button', { name: 'Пауза' }));
+  expect(pause).toHaveBeenCalledOnce();
   fireEvent.input(screen.getByRole('slider', { name: 'Перемотка видео' }), { target: { value: '50' } });
   expect(video.currentTime).toBe(5);
 });
@@ -89,20 +97,20 @@ it('passes the missing rotation when copying a compensated video frame for annot
   expect(onAnnotate).toHaveBeenCalledWith(image, 0);
 });
 
-it('preserves native controls for square videos with zero rotation metadata', async () => {
+it('shows the playback panel in the attachment preview', async () => {
   vi.mocked(readVideoOrientation).mockResolvedValue({ width: 480, height: 480, rotation: 0 });
   const { container, rerender } = render(<KonstaProvider theme="ios" dark>
-    <DiscussionMedia src="blob:correct" type="video" mode="viewer" />
+    <DiscussionMedia src="blob:correct" type="video" mode="preview" />
   </KonstaProvider>);
   const video = container.querySelector('video')!;
   load(video, 480, 480);
   await waitFor(() => expect(readVideoOrientation).toHaveBeenCalledOnce());
   expect(video.style.transform).toBe('');
-  expect(video.controls).toBe(true);
+  expect(screen.getByRole('slider', { name: 'Перемотка видео' })).toBeTruthy();
   rerender(<KonstaProvider theme="ios" dark><DiscussionMedia src="blob:square" type="video" mode="viewer" /></KonstaProvider>);
   load(video, 480, 480);
   await waitFor(() => expect(readVideoOrientation).toHaveBeenCalledTimes(2));
-  expect(video.controls).toBe(true);
+  expect(screen.getByRole('slider', { name: 'Перемотка видео' })).toBeTruthy();
 });
 
 it('shows a normalized square thumbnail with the same angle as the viewer', async () => {
@@ -111,6 +119,7 @@ it('shows a normalized square thumbnail with the same angle as the viewer', asyn
     <DiscussionMedia src="blob:square" type="video" mode="thumbnail" />
   </KonstaProvider>);
   const video = container.querySelector('video')!;
+  expect(screen.queryByRole('slider', { name: 'Перемотка видео' })).toBeNull();
   load(video, 480, 480);
   await waitFor(() => expect(video.getAttribute('src')).toBe('blob:neutral'));
   expect(video.style.transform).toContain('rotate(90deg)');

@@ -5,7 +5,7 @@ import { DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES, type DiscussionMediaCacheEn
 import { copyAnnotationImage } from './discussion-annotation';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 import { useVideoOrientation } from '../media/useVideoOrientation';
-import { OrientedVideoControls } from './OrientedVideoControls';
+import { DiscussionVideoControls } from './DiscussionVideoControls';
 
 export interface DiscussionMediaSource {
   src: string;
@@ -93,7 +93,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onLoad={() => setImageReady(true)} onError={handleError} />
     : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={orientation.src} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
         style={orientation.style}
-        playsInline autoPlay={startAt === undefined && autoPlay} controls={!thumbnail && !orientation.rotation && !orientation.flip} controlsList="nofullscreen" preload={mode === 'viewer' ? 'auto' : 'metadata'}
+        playsInline autoPlay={startAt === undefined && autoPlay} preload={mode === 'viewer' ? 'auto' : 'metadata'}
         onLoadedData={() => setFrameReady(true)} onSeeking={() => setFrameReady(false)} onSeeked={() => setFrameReady(true)}
         onLoadedMetadata={event => {
           const video = event.currentTarget;
@@ -133,8 +133,8 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     {type === 'video' && orientation.pending && !failed && <div className="discussion-media__preparing">
       <Text variant="caption">Подготавливаем видео…</Text>
     </div>}
-    {!thumbnail && !failed && (orientation.rotation !== 0 || orientation.flip) &&
-      <OrientedVideoControls player={player} source={orientation.src} />}
+    {type === 'video' && !thumbnail && !failed &&
+      <DiscussionVideoControls key={String(usePlainSource)} player={player} source={orientation.src} />}
     {onComment && paused && !failed && <div className="discussion-media__comment" data-hint={showCommentHint || undefined}>
       {showCommentHint && <Text variant="footnote" className="discussion-media__comment-hint">
         Нажмите, чтобы прокомментировать стопкадр.
