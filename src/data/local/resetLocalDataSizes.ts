@@ -1,7 +1,8 @@
 /** Approximate bytes of IndexedDB payloads, not on-disk usage (indexes and storage overhead vary). */
+const encoder = new TextEncoder();
 function recordBytes(value: unknown, seen = new WeakSet<object>()): number {
   if (value === null || value === undefined) return 0;
-  if (typeof value === 'string') return new TextEncoder().encode(value).byteLength;
+  if (typeof value === 'string') return encoder.encode(value).byteLength;
   if (typeof value === 'number' || typeof value === 'bigint') return 8;
   if (typeof value === 'boolean') return 1;
   if (typeof value !== 'object') return 0;
