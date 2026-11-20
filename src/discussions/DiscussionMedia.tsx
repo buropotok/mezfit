@@ -57,10 +57,11 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
   const thumbnail = mode === 'thumbnail';
   const viewerPreview = type === 'photo' && mode === 'viewer' ? photoPreview : undefined;
   const autoCacheVideo = !thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES);
-  const { url: mediaSrc, unavailable, container, tryR2Fallback } = useDiscussionMediaSource(
+  const { url: mediaSrc, unavailable, r2Failure, container, tryR2Fallback } = useDiscussionMediaSource(
     src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
   const failed = elementFailed || unavailable;
+  const photoFailure = mediaSrc?.startsWith('blob:') ? 'PHOTO-FULL-DECODE' : r2Failure ?? 'PHOTO-FULL-LOAD';
   const crossOrigin = mode === 'viewer' && !autoPlay && !usePlainSource && mediaSrc?.startsWith('https:')
     ? 'anonymous' : undefined;
   const orientation = useVideoOrientation(player, type === 'video' ? mediaSrc : undefined, 'contain',
@@ -134,7 +135,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
     {viewerPreview && !imageReady && <div className="discussion-media__photo-status">
       <Text variant="footnote" role="status">
         {failed
-          ? `Не удалось открыть оригинал фото. Код ${mediaSrc?.startsWith('blob:') ? 'PHOTO-FULL-DECODE' : 'PHOTO-FULL-LOAD'}`
+          ? `Не удалось открыть оригинал фото. Код ${photoFailure}`
           : 'Загружаем оригинал фото…'}
       </Text>
       {failed && retryButton}
