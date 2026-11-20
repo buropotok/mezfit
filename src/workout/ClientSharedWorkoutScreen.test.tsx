@@ -85,13 +85,19 @@ describe('Client local workout screen', () => {
     expect(state.startQuick).toHaveBeenCalledOnce();
     expect(state.showSession).toHaveBeenCalledWith('own');
   });
-  it('starts a published plan while keeping its prescription read-only', async () => {
+  it('starts a published independent plan while allowing athlete PLAN edits', async () => {
     render(<ClientSharedWorkoutScreen {...props} />);
     act(() => state.upcomingNext?.([planned]));
-    expect(state.cards.at(-1)).toMatchObject({ readOnly: true, allowReadOnlyStart: true });
+    expect(state.cards.at(-1)).toMatchObject({ readOnly: false, allowReadOnlyStart: true });
     fireEvent.click(screen.getByText('Start planned'));
     expect(await screen.findByText('Session planned-session')).toBeTruthy();
     expect(state.start).toHaveBeenCalledWith(planned.draft);
+  });
+  it('keeps coached workout PLAN read-only for the athlete', () => {
+    render(<ClientSharedWorkoutScreen {...props} />);
+    const coached = { ...planned, draft: { ...planned.draft, format: 'coached' as const } };
+    act(() => state.upcomingNext?.([coached]));
+    expect(state.cards.at(-1)).toMatchObject({ readOnly: true, allowReadOnlyStart: true });
   });
   it('retains the launch choices and reports an unavailable execution grant', async () => {
     state.startQuick.mockRejectedValue(new Error('CLIENT_EXECUTION_ACL_REQUIRED'));
