@@ -372,7 +372,7 @@ export async function buildMezfitImportPlan(sourceInput: unknown, configInput: u
   // Unresolved bindings for unknown subjects have no verified source identity;
   // their workouts are listed as blocked selections without operations.
   const result = {
-    kind: 'mezfit.import-plan' as const, schemaVersion: 1 as const, planId: '', policyVersion: config.policyVersion,
+    kind: 'mezfit.import-plan' as const, schemaVersion: 1 as const, policyVersion: config.policyVersion,
     source: { packageSha256, datasetKey, sourceApp, formatFamily, formatVersion, adapterId, adapterVersion, inputSha256,
       programCount: pkg.programs.length },
     scope: { ...config.period, evaluatedAtUtc: new Date(config.evaluatedAtUtc).toISOString(), programs: 'linked-only' as const,
