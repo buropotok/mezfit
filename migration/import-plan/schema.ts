@@ -46,55 +46,57 @@ export const zone: Rule<string> = (value): value is string => {
   catch { return false; }
 };
 
-// Guard both ingress points before lookup or serialization. Reject accessors,
-// non-JSON objects and sparse arrays without evaluating their contents.
-export function boundedJson(root: unknown, maxBytes: number): boolean {
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+// Copy while checking the JSON budget and reading only own data properties.
+// Creating containers here keeps the snapshot in the validator's JS realm.
+export function jsonSnapshot(root: unknown, maxBytes: number): unknown {
   let nodes = 0;
   let bytes = 0;
   const encoder = new TextEncoder();
   const ancestors = new Set<object>();
-  function visit(value: unknown, depth: number): boolean {
-    if (++nodes > 100_000 || depth > 18 || ++bytes > maxBytes) return false;
+
+  function copy(value: unknown, depth: number): JsonValue | undefined {
+    if (++nodes > 100_000 || depth > 18 || ++bytes > maxBytes) return undefined;
     if (typeof value === 'string') {
-      if (value.length > maxBytes - bytes) return false;
+      if (value.length > maxBytes - bytes) return undefined;
       bytes += encoder.encode(JSON.stringify(value)).length;
-      return bytes <= maxBytes;
+      return bytes <= maxBytes ? value : undefined;
     }
     if (value === null || typeof value === 'boolean' || finite(value)) {
       bytes += JSON.stringify(value).length;
-      return bytes <= maxBytes;
+      return bytes <= maxBytes ? value : undefined;
     }
-    if (typeof value !== 'object' || value === null) return false;
-    if (ancestors.has(value)) return false;
+    if (typeof value !== 'object' || value === null || ancestors.has(value)) return undefined;
     ancestors.add(value);
     const array = Array.isArray(value);
     const prototype = Object.getPrototypeOf(value);
-    if (array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null) return false;
+    if (array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null) return undefined;
     const properties = Reflect.ownKeys(value);
-    if (array ? value.length > 10_000 || properties.length !== value.length + 1 : properties.length > 32) return false;
-    let index = 0;
+    if (array ? value.length > 10_000 || properties.length !== value.length + 1 : properties.length > 32) return undefined;
+    const items: JsonValue[] = [];
+    const entries: [string, JsonValue][] = [];
     for (const property of properties) {
       if (array && property === 'length') continue;
-      if (typeof property !== 'string' || (array && property !== String(index++))) return false;
+      if (typeof property !== 'string' || (array && property !== String(items.length))) return undefined;
       if (!array) {
-        if (property.length > maxBytes - bytes) return false;
+        if (property.length > maxBytes - bytes) return undefined;
         bytes += encoder.encode(JSON.stringify(property)).length + 1;
-        if (bytes > maxBytes) return false;
+        if (bytes > maxBytes) return undefined;
       }
       const descriptor = Object.getOwnPropertyDescriptor(value, property);
-      if (!descriptor?.enumerable || !Object.hasOwn(descriptor, 'value') || !visit(descriptor.value, depth + 1)) return false;
+      if (!descriptor?.enumerable || !Object.hasOwn(descriptor, 'value')) return undefined;
+      const item = copy(descriptor.value, depth + 1);
+      if (item === undefined) return undefined;
+      if (array) items.push(item);
+      else entries.push([property, item]);
     }
     ancestors.delete(value);
-    bytes++;
-    return bytes <= maxBytes;
+    if (++bytes > maxBytes) return undefined;
+    return array ? items : Object.fromEntries(entries);
   }
-  try { return visit(root, 0); }
-  catch { return false; }
-}
 
-export function jsonSnapshot(value: unknown, maxBytes: number): unknown {
-  if (!boundedJson(value, maxBytes)) return undefined;
-  try { return structuredClone(value); }
+  try { return copy(root, 0); }
   catch { return undefined; }
 }
 
