@@ -100,3 +100,34 @@ it('switches a failed voice message to the private R2 source', async () => {
   await waitFor(() => expect(view.container.querySelector('audio')?.getAttribute('src')).toBe(getUrl));
   expect(transport).toHaveBeenCalledTimes(1);
 });
+
+it.each([
+  [404, 200, 'R2-SIGN-404'],
+  [200, 403, 'R2-GET-403'],
+  [200, 200, 'R2-SIZE'],
+] as const)('shows the Full error code for signer %i and storage %i on the viewer', async (signStatus, getStatus, code) => {
+  await browserBlob();
+  const fullKey = `mvp-media/${'d'.repeat(64)}/full/${'e'.repeat(64)}`;
+  const full = { ...entry, storageKey: fullKey, attachmentId: 'e'.repeat(64) };
+  const fullSrc = directMediaUrl(fullKey) ?? '';
+  const signedSrc = getUrl.replace(key, fullKey);
+  const transport = vi.fn<typeof fetch>(async url => {
+    if (url === fullSrc) return new Response(null, { status: 404 });
+    if (url === '/api/discussion-media/read') return signStatus === 200
+      ? Response.json({ storageKey: fullKey, getUrl: signedSrc, expiresAt: Date.now() + 600_000 })
+      : Response.json({ error: { code: 'MEDIA_NOT_FOUND' } }, { status: signStatus });
+    if (url === signedSrc) return new Response('x', { status: getStatus, headers: { 'Content-Type': full.mimeType } });
+    throw new Error('Unexpected URL');
+  });
+  vi.stubGlobal('fetch', transport);
+
+  const view = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={fullSrc} type="photo" cache={full} mode="viewer"
+      photoPreview={{ src: 'blob:preview' }} />
+  </KonstaProvider>);
+  await view.findByText(`Не удалось открыть оригинал фото. Код ${code}`);
+  expect(view.getByRole('button', { name: 'Повторить' })).toBeTruthy();
+  expect(transport.mock.calls.map(([url]) => url)).toEqual(
+    signStatus === 200 ? [fullSrc, '/api/discussion-media/read', signedSrc] : [fullSrc, '/api/discussion-media/read'],
+  );
+});
