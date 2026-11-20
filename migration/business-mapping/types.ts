@@ -98,7 +98,7 @@ export type ExerciseMapping =
       catalogueExerciseId: string; trackingType: ExerciseTracking; matchEvidence: 'reviewed_registry' | 'exact_unique' }
   | { identityKey: string; sourceExerciseKey: string; sourceSubjectKey: string; kind: 'proposed_custom';
       operationKey: string; trackingType: ExerciseTracking; requiresReconciliation: true }
-  | { identityKey: string; sourceExerciseKey: string; sourceSubjectKey: string; kind: 'blocked'; reason: IssueCode };
+  | { identityKey: string; sourceExerciseKey: string; sourceSubjectKey: string | null; kind: 'blocked'; reason: IssueCode };
 
 export interface ConvertedMeasurement {
   value: number;
