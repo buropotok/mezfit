@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { downloadDiscussionMedia, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { downloadDiscussionMedia, downloadDiscussionMediaWithStatus, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { signedDiscussionR2ReadUrl } from '../media/cloudflareMediaRead';
 import { DISCUSSION_MEDIA_KEY_PATTERN } from '../../shared/discussion-media-limits';
 
@@ -10,7 +10,7 @@ export function useDiscussionMediaSource(
   const fullPhoto = mode === 'photo' && Boolean(storageKey && DISCUSSION_MEDIA_KEY_PATTERN.exec(storageKey)?.[2] === 'full');
   const container = useRef<HTMLDivElement>(null);
   const identity = JSON.stringify([src, accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId, mode, retry]);
-  const [resolved, setResolved] = useState<{ identity: string; url: string | null }>();
+  const [resolved, setResolved] = useState<{ identity: string; url: string | null; r2Failure?: string }>();
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;
   const mounted = useRef(true);
@@ -50,12 +50,13 @@ export function useDiscussionMediaSource(
       const cached = await readDiscussionMedia(entry);
       if (!active) return;
       if (!cached && mode === 'video') void downloadDiscussionMedia(entry);
-      const blob = cached ?? (mode === 'photo' ? await downloadDiscussionMedia(entry) : null);
+      const download = !cached && mode === 'photo' ? await downloadDiscussionMediaWithStatus(entry) : null;
+      const blob = cached ?? download?.blob;
       if (!active) return;
       if (blob && typeof URL.createObjectURL === 'function') objectUrl = URL.createObjectURL(blob);
       // A late Yandex cache lookup must not overwrite an already-selected R2 URL.
       if (fallbackSelected.current !== identity) {
-        setResolved({ identity, url: objectUrl ?? (fullPhoto && !blob ? null : src) });
+        setResolved({ identity, url: objectUrl ?? (fullPhoto && !blob ? null : src), r2Failure: download?.r2Failure });
       }
     };
     let observer: IntersectionObserver | undefined;
@@ -74,6 +75,7 @@ export function useDiscussionMediaSource(
     };
   }, [src, accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId, mode, identity, lazy, fullPhoto]);
 
-  const url = !accountId ? src : resolved?.identity === identity ? resolved.url : undefined;
-  return { url: url ?? undefined, unavailable: url === null, container, tryR2Fallback };
+  const current = resolved?.identity === identity ? resolved : undefined;
+  const url = !accountId ? src : current?.url;
+  return { url: url ?? undefined, unavailable: url === null, r2Failure: current?.r2Failure, container, tryR2Fallback };
 }
