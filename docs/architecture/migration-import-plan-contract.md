@@ -67,6 +67,8 @@ interface MezfitImportPlanV1 {
 }
 ```
 
+Для `historical_session` поле `sourceProgramRef` — **буквальная** ссылка из session источника, а `programRef` — отдельно **разрешённая** program-связь (возможно транзитивно через linked scheduled). При `sourceProgramRef.none` и доказанной цепочке `scheduled.programRef.linked` они могут различаться, не подменяя provenance. Имена автоматически предложенных фазы/дня — явно генерируемые planning labels, а не вымышленные названия из source.
+
 **Typed ImportOperation**: `program` с предложением полного структурного graph; `historical_session` со source completionState, независимыми `frozenPlan`/`fact` и timestamp provenance; `standalone_scheduled` с независимым PLAN; `proposed_custom_exercise`; `provenance_metadata` с маркером imported. У каждой есть `operationKey`, source refs, `targetBindingRef`, `dependencyKeys`, `reasonCodes`, `evidence`, `losses`, `state`. Это **не** generic `{table,action,row}` и не Dexie Entity; отсутствуют реальные realm/owner IDs.
 
 **Группы ImportSelection** описывают `operationKeys`, состояние `selected/excluded_by_coach/blocked/already_imported`, reasons, транзитивный `dependencyClosure`. Независимые выбранные компоненты могут пройти вперёд в будущем Publisher только при отдельном подтверждении тренера. `ready_for_review` — нет блокирующих операций в данном плане, но **никогда** не publishable. `requires_decisions` — есть и blocked, и независимые selected. `blocked` — нет независимых готовых к review операций.
@@ -95,6 +97,7 @@ Source dataset `test-diary / test-family / source-dataset-2026` содержит
 {
   "kind": "historical_session",
   "completionState": "completed",
+  "sourceProgramRef": {"state":"linked", "sourceKey":"p:old"},
   "programRef": {"state":"linked", "sourceKey":"p:old"},
   "scheduledWorkoutRef": {"state":"linked", "sourceKey":"sw:linked"},
   "frozenPlan": {"state":"present", "exercises":[
