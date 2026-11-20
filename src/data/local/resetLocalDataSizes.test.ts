@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
+import { Blob as NativeBlob } from 'node:buffer';
 import { afterEach, expect, it } from 'vitest';
 import { estimateLocalDataBytes, estimateMediaCacheBytes } from './resetLocalDataSizes';
 
@@ -18,19 +19,21 @@ afterEach(async () => {
 });
 
 it('estimates removable media bytes but excludes protected replica originals', async () => {
+  // jsdom Blob is not faithfully structured-cloned by fake-indexeddb; the native
+  // Blob exercises persisted binary payloads without weakening the byte assertion.
   const discussion = new Dexie(mediaName);
   discussion.version(1).stores({ files: '&key' });
   discussion.version(2).stores({ files: '&key', replicas: '&key' });
   await discussion.table('files').bulkPut([
-    { key: 'thumbnail', blob: new Blob(['a'.repeat(20000)]) },
-    { key: 'upload-original', blob: new Blob(['b'.repeat(50000)]) },
+    { key: 'thumbnail', blob: new NativeBlob(['a'.repeat(20000)]) },
+    { key: 'upload-original', blob: new NativeBlob(['b'.repeat(50000)]) },
   ]);
   await discussion.table('replicas').put({ key: 'upload-original', published: false });
   discussion.close();
 
   const exercise = new Dexie(base2Name);
   exercise.version(1).stores({ images: 'key' });
-  await exercise.table('images').put({ key: 'gif', blob: new Blob(['c'.repeat(30000)]) });
+  await exercise.table('images').put({ key: 'gif', blob: new NativeBlob(['c'.repeat(30000)]) });
   exercise.close();
 
   const mediaBytes = await estimateMediaCacheBytes(userId);
