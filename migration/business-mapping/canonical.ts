@@ -22,7 +22,7 @@ export function canonical(value: unknown): string {
     return '{' + Object.entries(value).sort(([a], [b]) => a.localeCompare(b, 'en'))
       .map(([key, item]) => JSON.stringify(key) + ':' + canonical(item)).join(',') + '}';
   }
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? 'null';
 }
 
 /** SHA-256 is stable across Worker/browser/Node WebCrypto; no randomness, clock, I/O or DB. */
