@@ -95,15 +95,18 @@ it('stops a full photo when its response body stalls', async () => {
   }
 });
 
-it('does not request a signed R2 read when Yandex fails with backup disabled', async () => {
+it('requests an authorized R2 read when Yandex fails with backup disabled', async () => {
   vi.stubGlobal('localStorage', { getItem: () => 'off' });
   vi.stubGlobal('Telegram', { WebApp: { initData: 'available' } });
-  const fetchMedia = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 404 }));
+  const fetchMedia = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(null, { status: 404 }))
+    .mockResolvedValueOnce(new Response(null, { status: 403 }));
   vi.stubGlobal('fetch', fetchMedia);
 
   await expect(downloadDiscussionMedia({
     ...entry, realmId: 'realm', messageId: 'message', attachmentId: 'attachment',
   })).resolves.toBeNull();
-  expect(fetchMedia).toHaveBeenCalledOnce();
-  expect(fetchMedia).toHaveBeenCalledWith(expect.stringMatching(/storage\.yandexcloud\.net/), expect.any(Object));
+  expect(fetchMedia).toHaveBeenCalledTimes(2);
+  expect(fetchMedia).toHaveBeenNthCalledWith(1, expect.stringMatching(/storage\.yandexcloud\.net/), expect.any(Object));
+  expect(fetchMedia).toHaveBeenNthCalledWith(2, '/api/discussion-media/read', expect.objectContaining({ method: 'POST' }));
 });

@@ -63,7 +63,8 @@ it('does not bypass the Worker when R2 access is refused', async () => {
   expect(transport).toHaveBeenCalledTimes(2);
 });
 
-it('switches native video Range playback to the signed R2 URL without a full-video download', async () => {
+it('switches native video Range playback to the signed R2 URL with backup off', async () => {
+  setDiscussionMediaBackupEnabled(false);
   await browserBlob();
   const transport = vi.fn<typeof fetch>(async url => {
     if (url === '/api/discussion-media/read') return Response.json({

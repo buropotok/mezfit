@@ -28,9 +28,9 @@ async function attemptReplica(file: File, entry: DiscussionMediaCacheEntry, prov
 }
 
 /**
- * Try Yandex first, but hedge via R2 if it remains unresponsive for eight seconds.
- * The first confirmed provider permits publication; the other keeps uploading
- * independently. The source File has already been saved in IndexedDB by the caller.
+ * With backup on, Yandex starts first and R2 runs after it settles or after eight seconds.
+ * With backup off, R2 starts only after Yandex reports an upload failure.
+ * The source File has already been saved in IndexedDB by the caller.
  */
 export async function uploadMirroredDiscussionMedia(
   file: File,
@@ -40,7 +40,7 @@ export async function uploadMirroredDiscussionMedia(
 ): Promise<UploadedMedia> {
   const entry = { accountId, storageKey: retryKey, mimeType: validateDirectMedia(file), sizeBytes: file.size };
   const variants = [{ entry, file }];
-  let yandexOnly: true | undefined = isDiscussionMediaBackupEnabled() ? undefined : true;
+  let fallbackOnly: true | undefined = isDiscussionMediaBackupEnabled() ? undefined : true;
   if (preview) {
     const previewEntry = { accountId, ...preview };
     const blob = await readDiscussionMedia(previewEntry);
@@ -49,12 +49,12 @@ export async function uploadMirroredDiscussionMedia(
       { type: preview.mimeType });
     variants.push({ entry: previewEntry, file: previewFile });
     const existing = await getMediaReplica(accountId, retryKey);
-    if (existing?.yandexOnly) yandexOnly = true;
+    if (existing?.yandexOnly) fallbackOnly = true;
     // Preserve the original recovery policy when recreating a missing variant task.
-    const replicaYandexOnly = existing ? existing.yandexOnly : yandexOnly;
-    await rememberMediaReplica(entry, file.name, replicaYandexOnly);
-    await rememberMediaReplica(previewEntry, previewFile.name, replicaYandexOnly);
-  } else if (!yandexOnly) {
+    const replicaFallbackOnly = existing ? existing.yandexOnly : fallbackOnly;
+    await rememberMediaReplica(entry, file.name, replicaFallbackOnly);
+    await rememberMediaReplica(previewEntry, previewFile.name, replicaFallbackOnly);
+  } else if (!fallbackOnly) {
     await rememberMediaReplica(entry, file.name).catch(() => undefined);
   }
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
@@ -92,25 +92,21 @@ export async function uploadMirroredDiscussionMedia(
     for (const result of remaining) if (result.status === 'rejected') throw result.reason;
     return preview ? { ...full.value, preview } : full.value;
   };
-  if (yandexOnly) {
-    try {
-      return await uploadTo('yandex');
-    } finally {
-      signal?.removeEventListener('abort', cancel);
+  const yandex = uploadTo('yandex');
+  const uploadFallback = () => yandex.catch((reason: unknown) => {
+    if (transfer.signal.aborted || !(reason instanceof MediaUploadError) || reason.code === 'CANCELLED') {
+      throw reason;
     }
-  }
-
-  let yandexSettled: () => void = () => undefined;
-  const yandexDone = new Promise<void>(resolve => { yandexSettled = resolve; });
-  const yandex = uploadTo('yandex').finally(yandexSettled);
+    return uploadTo('r2');
+  });
 
   let hedgeTimer: ReturnType<typeof setTimeout> | undefined;
-  const hedge = new Promise<void>(resolve => { hedgeTimer = setTimeout(resolve, 8_000); });
-  const r2 = (async () => {
-    await Promise.race([yandexDone, hedge]);
+  const r2 = fallbackOnly ? uploadFallback() : (async () => {
+    const hedge = new Promise<void>(resolve => { hedgeTimer = setTimeout(resolve, 8_000); });
+    await Promise.race([yandex.then(() => undefined, () => undefined), hedge]);
     if (hedgeTimer) clearTimeout(hedgeTimer);
     if (transfer.signal.aborted) throw new MediaUploadError('CANCELLED');
-    if (!isDiscussionMediaBackupEnabled()) return yandex;
+    if (!isDiscussionMediaBackupEnabled()) return uploadFallback();
     return uploadTo('r2');
   })();
 
