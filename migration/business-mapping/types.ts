@@ -207,7 +207,8 @@ export type ImportOperation =
   | (ImportOperationBase & { kind: 'program'; program: ProposedProgram })
   | (ImportOperationBase & { kind: 'historical_session'; name: string | null;
       completionState: SourceImportPackageV1['sessions'][number]['completionState'];
-      programRef: SourceRef; scheduledWorkoutRef: SourceRef; timing: ImportTime; frozenPlan: PlannedSnapshot; fact: PerformedExercise[];
+      sourceProgramRef: SourceRef; programRef: SourceRef; scheduledWorkoutRef: SourceRef;
+      timing: ImportTime; frozenPlan: PlannedSnapshot; fact: PerformedExercise[];
       importedProvenance: true })
   | (ImportOperationBase & { kind: 'standalone_scheduled'; name: string | null;
       programRef: SourceRef; programDayRef: SourceRef; timing: ImportTime; plan: PlannedSnapshot })
