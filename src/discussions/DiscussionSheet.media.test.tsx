@@ -363,8 +363,11 @@ it('comments from the fullscreen pause and reopens the exact frame from the comp
   fireEvent.click(screen.getByRole('button', { name: label }));
 
   expect(screen.queryByLabelText('Просмотр вложения')).toBeNull();
-  const capsule = screen.getByRole('button', { name: '00:07' });
-  fireEvent.click(capsule);
+  const quote = screen.getByRole('button', { name: 'Открыть видео на 00:07' });
+  const context = screen.getByRole('button', { name: 'Отменить ответ или редактирование' }).parentElement;
+  expect(context?.contains(quote)).toBe(true);
+  expect(within(quote).getByText('00:07')).toBeTruthy();
+  fireEvent.click(quote);
   await screen.findByRole('region', { name: 'Просмотр вложения' });
   const frame = viewerVideo();
   fireEvent.loadedMetadata(frame);
@@ -377,7 +380,26 @@ it('comments from the fullscreen pause and reopens the exact frame from the comp
     text: 'Проверь этот кадр', replyToMessageId: original.id,
     replyVideoPosition: { attachmentId: original.attachments[0].id, seconds: 7.375 },
   })));
-  await waitFor(() => expect(screen.queryByRole('button', { name: '00:07' })).toBeNull());
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Открыть видео на 00:07' })).toBeNull());
+
+  fireEvent.click(screen.getByRole('link', { name: 'Открыть видео' }));
+  await waitFor(() => expect(viewerVideo().getAttribute('src')).toBeTruthy());
+  const secondFrame = viewerVideo();
+  fireEvent.loadedMetadata(secondFrame);
+  secondFrame.currentTime = 9;
+  fireEvent.pause(secondFrame);
+  fireEvent.click(screen.getByRole('button', { name: label }));
+  expect(screen.getByRole('button', { name: 'Открыть видео на 00:09' })).toBeTruthy();
+  const input = screen.getByPlaceholderText('Сообщение') as HTMLTextAreaElement;
+  fireEvent.change(input, { target: { value: 'Текст без ссылки' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить ответ или редактирование' }));
+  expect(input.value).toBe('Текст без ссылки');
+  expect(screen.queryByRole('button', { name: 'Открыть видео на 00:09' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+  await waitFor(() => expect(port.send).toHaveBeenLastCalledWith(expect.objectContaining({
+    text: 'Текст без ссылки', replyToMessageId: undefined,
+  })));
+  expect(vi.mocked(port.send).mock.lastCall?.[0].replyVideoPosition).toBeUndefined();
 
   view.unmount();
   replace([savedReply]);

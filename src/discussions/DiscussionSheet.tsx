@@ -2,13 +2,13 @@ import { Fragment, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, u
 import { Button, Messages, MessagesTitle, Toast } from 'konsta/react';
 import { sameDiscussionVideoPosition, type DiscussionVideoPosition, type MessageAttachment } from '../data/cloud/discussion-contracts';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
-import { discussionCursorKey, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
+import { discussionCursorKey, discussionReplyText, type DiscussionMessageView, type DiscussionQuote, type DiscussionReceiptSnapshot } from '../data/cloud/discussion-views';
 import type { DiscussionSyncState } from '../data/cloud/discussion-sync';
 import { syncStatusLabel } from '../data/cloud/sync-status';
 import type { NavigationContext } from '../NavigationShell';
 import { Avatar, IconButton, Text } from '../ui/primitives';
 import { Icon } from '../ui/Icon';
-import { Badge, BadgeChoice } from '../ui/Badge';
+import { Badge } from '../ui/Badge';
 import { GlassSurface } from '../ui/GlassSurface';
 import { MezfitMessagebar } from '../ui/konsta-mezfit/Messagebar';
 import { DiscussionActionIcon } from './DiscussionActionIcon';
@@ -41,6 +41,7 @@ import { runHapticProbe } from '../telegram';
 import { useRecordingButtonAnimation } from './useRecordingButtonAnimation';
 import { RECORDING_LOCK_DISTANCE } from './useRecordingGesture';
 import { shouldShowWebViewUpdate, VideoWebViewUpdatePopover } from '../video-note/VideoWebViewUpdatePopover';
+import { DiscussionMessageText } from './DiscussionMessageText';
 import './discussion-sheet.css';
 
 export interface DiscussionAuthor { name: string; avatarSrc?: string }
@@ -87,11 +88,11 @@ function formatVideoPosition(seconds: number) {
   return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
 }
 
-function Quote({ quote, resolveAuthor, onJump }: {
-  quote: DiscussionQuote; resolveAuthor: DiscussionSheetProps['resolveAuthor']; onJump?: () => void;
+function Quote({ quote, resolveAuthor, onJump, disabled = false }: {
+  quote: DiscussionQuote; resolveAuthor: DiscussionSheetProps['resolveAuthor']; onJump?: () => void; disabled?: boolean;
 }) {
   const author = <Text variant="caption">{quote.authorUserId ? resolveAuthor(quote.authorUserId).name : 'Исходное сообщение'}</Text>;
-  return <button type="button" className="discussion-quote" disabled={quote.videoPosition ? quote.deleted : quote.unavailable} onClick={event => {
+  return <button type="button" className="discussion-quote" disabled={disabled || (quote.videoPosition ? quote.deleted : quote.unavailable)} onClick={event => {
     event.stopPropagation(); onJump?.();
   }} aria-label={quote.videoPosition ? `Открыть видео на ${formatVideoPosition(quote.videoPosition.seconds)}` : 'Перейти к исходному сообщению'}>
     {quote.videoPosition ? <span className="discussion-quote__heading">
@@ -197,7 +198,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [annotation, setAnnotation] = useState<{ image: HTMLCanvasElement; seconds?: number } | null>(null);
   const annotationSession = useRef(annotation);
   const [annotationExit, setAnnotationExit] = useState<AnnotationExit>('editing');
-  const [annotationReply, setAnnotationReply] = useState<DiscussionMessageView | null>(null);
+  const [replySource, setReplySource] = useState<DiscussionMessageView | null>(null);
   const cancelAnnotation = () => {
     annotationSession.current = null;
     setAnnotation(null);
@@ -659,11 +660,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       trigger={<button type="button" ref={trigger} aria-hidden="true" tabIndex={-1} className="discussion-menu-source" />} />
   </span>;
   const replying = replyId ? state.messages.find(row => row.id === replyId)
-    ?? (annotationReply?.id === replyId ? annotationReply : undefined) : undefined;
-  const photoReply = activeAttachment?.mediaType === 'photo';
-  const replyQuote: DiscussionQuote | null = replyId && (!draft.videoPosition || photoReply) ? { messageId: replyId,
+    ?? (replySource?.id === replyId ? replySource : undefined) : undefined;
+  const replyQuote: DiscussionQuote | null = replyId ? { messageId: replyId,
     authorUserId: replying?.authorUserId ?? null, deleted: Boolean(replying?.deleted), unavailable: !replying,
-    text: replying && !replying.deleted ? replying.text.split(/\r?\n/, 1)[0] : '',
+    text: replying && !replying.deleted ? discussionReplyText(replying.text, replying.attachments) : '',
     videoPosition: draft.videoPosition } : null;
 
   const commentOnFrame = viewing && viewer?.type === 'video' && !localVideoUrl && !annotation && canCompose && !editId
@@ -676,11 +676,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         catch { /* Browser storage may be unavailable; keep the flag for this open discussion. */ }
       }
       draft.update(draft.text, viewing.messageId, { attachmentId: viewing.attachmentId, seconds });
+      setReplySource(viewedMessage ?? viewing.original ?? null);
       setFullscreenSource(null);
       setViewing(null);
     } : undefined;
-  const composerVideoPosition = replyId && draft.videoPosition && !photoReply
-    ? { messageId: replyId, position: draft.videoPosition } : null;
 
   const pickAttachment = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
@@ -705,7 +704,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       onSelected: () => {
         if (session.snapshot().deletion || !alive.current || annotationSession.current !== annotation) return false;
         draft.update(draft.text, messageId, seconds === undefined ? undefined : { attachmentId, seconds });
-        setAnnotationReply(viewedMessage ?? viewing.original ?? null);
+        setReplySource(viewedMessage ?? viewing.original ?? null);
         annotationSession.current = null;
         setAnnotation(null);
         setFullscreenSource(null);
@@ -792,7 +791,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                 opaqueTextFooter={attachments.some(attachment => attachment.mediaType !== 'voice')}
                 name={showAvatars && author ? <Text variant="caption">{author.name}</Text> : undefined}
                 avatar={showAvatars && author ? <Avatar name={author.name} src={author.avatarSrc} size="small" /> : undefined}
-                text={!mediaOnly && <Text variant="chat" className="discussion-message-text">{message.deleted ? 'Сообщение удалено' : message.text}</Text>}
+                text={!mediaOnly && <DiscussionMessageText text={message.deleted ? 'Сообщение удалено' : message.text} />}
                 textHeader={message.reply && <Quote quote={message.reply} resolveAuthor={resolveAuthor} onJump={() => {
                   const reply = message.reply;
                   if (!reply) return;
@@ -941,7 +940,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         <Button rounded disabled={busy} onClick={draft.retry}>Повторить сохранение черновика</Button></>}
       {syncState?.status === 'error' && <Button rounded disabled={busy} onClick={() => void run(() => repository.sync.retry())}>Повторить синхронизацию</Button>}
       {(replyQuote || editId) && <div className="discussion-composer-context__mode">
-        {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor} onJump={() => {
+        {replyQuote ? <Quote quote={replyQuote} resolveAuthor={resolveAuthor}
+          disabled={Boolean(replyQuote.videoPosition) && (busy || voiceInProgress || circleInProgress)} onJump={() => {
           if (replyQuote.videoPosition) openVideoPosition(replyQuote.messageId, replyQuote.videoPosition);
           else void jump(replyQuote.messageId);
         }} /> : <Text variant="footnote">Редактирование сообщения</Text>}
@@ -987,17 +987,13 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         </span>}
       </GlassSurface>
       <GlassSurface className="discussion-composer__field" {...material} shape={{ radius: 24 }} wrapContent={false}>
-        {composerVideoPosition && <BadgeChoice className="discussion-composer__timecode" color="yellow"
-          disabled={busy || voiceInProgress || circleInProgress} onClick={() => openVideoPosition(composerVideoPosition.messageId, composerVideoPosition.position)}>
-          {formatVideoPosition(composerVideoPosition.position.seconds)}
-        </BadgeChoice>}
         {!discardingVoice && (recordingVoice || recordingCircle) ? <DiscussionRecordingStatus locked={lockedRecording} onCancel={discardVoice} />
           : !discardingVoice && voiceDraft && media.preview ? <DiscussionVoice key={media.preview} src={media.preview}
             waveform={voiceDraft.waveform ?? []} durationMs={(voiceDraft.durationSeconds ?? 0) * 1000} />
           : !discardingVoice && voiceDraft ? <Text variant="footnote" className="discussion-composer__voice-placeholder">
             {media.selection ? 'Готовим голосовое сообщение…' : 'Голосовое сообщение'}
           </Text>
-          : <MezfitMessagebar bare textareaId={textareaId} className={composerVideoPosition ? 'discussion-composer__timecode-input' : undefined}
+          : <MezfitMessagebar bare textareaId={textareaId}
             placeholder={circleInProgress || circleDraft ? '' : editId ? 'Редактировать сообщение' : 'Сообщение'}
             value={text} maxRows={5} disabled={!canCompose || voiceInProgress || circleInProgress || Boolean(circleDraft) || discardingVoice}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)} />}
