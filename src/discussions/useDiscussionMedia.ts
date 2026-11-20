@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
 import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
-import { MediaUploadError } from '../media/directMediaUpload';
+import { MediaUploadError, photoMediaKey } from '../media/directMediaUpload';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from '../media/dualMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
@@ -197,16 +197,18 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setError(undefined); setPhase('checking');
     try {
       const next = await inspectDiscussionMedia(file, controller.signal);
-      if (active.current !== controller) return false;
-      if (controller.signal.aborted) { setPhase('idle'); return false; }
       const separate = sendToThread ? prepareDiscussionMessage(sendToThread, '') : undefined;
       const saved = separate ? undefined : draft.media;
+      const metadata = !saved && next.metadata.mediaType === 'photo' ? { ...next.metadata,
+        storageKey: await photoMediaKey(next.metadata.storageKey, repository.actorUserId) } : saved ?? next.metadata;
+      if (active.current !== controller) return false;
+      if (controller.signal.aborted) { setPhase('idle'); return false; }
       if (saved && (saved.fileName !== next.metadata.fileName
         || saved.sizeBytes !== next.metadata.sizeBytes || saved.mimeType !== next.metadata.mimeType
         || saved.durationSeconds !== next.metadata.durationSeconds)) {
         throw new Error('Выберите тот же файл или удалите прежнее вложение');
       }
-      const selected = { ...next, metadata: saved ?? next.metadata, separate };
+      const selected = { ...next, metadata, separate };
       if (onSelected?.() === false) { setPhase('idle'); return false; }
       setSelection(selected);
       if (separate) {
@@ -241,7 +243,8 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         try {
           const item = await inspectDiscussionMedia(file, controller.signal);
           if (item.metadata.mediaType !== 'photo') throw new Error('Ожидалось фото');
-          checked.push(item);
+          checked.push({ ...item, metadata: { ...item.metadata,
+            storageKey: await photoMediaKey(item.metadata.storageKey, repository.actorUserId) } });
         } catch (reason) {
           const detail = reason instanceof Error ? reason.message : 'Не удалось проверить файл';
           rejected.push(file.name + ' — ' + detail);

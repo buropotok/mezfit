@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { uploadDirectMedia } from './directMediaUpload';
+import { directMediaUrl, photoMediaKey, uploadDirectMedia } from './directMediaUpload';
 import { mediaFunctionUrl, mockSignedMediaTransport, rawInitData, signedMediaResponse } from './mediaUploadTestFixtures';
 
 const photo = () => new File(['sample'], 'photo.jpg', { type: 'image/jpeg' });
@@ -11,6 +11,22 @@ afterEach(() => {
 });
 
 describe('signed direct media upload', () => {
+  it('enables stable sender prefixes for new photo keys independently of legacy URL support', async () => {
+    const suffix = 'a'.repeat(64);
+    const legacyKey = 'mvp-media/' + suffix;
+    vi.stubEnv('VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED', '');
+    expect(await photoMediaKey(legacyKey, 'tg:123')).toBe(legacyKey);
+    vi.stubEnv('VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED', 'true');
+    const { webcrypto } = await vi.importActual<{ webcrypto: Crypto }>('node:crypto');
+    vi.stubGlobal('crypto', webcrypto);
+    const prefix = 'de2a34060e590e44a7e59962a47b9d60532a9c24173dbcb987562b39c39278a5';
+    const key = `mvp-media/${prefix}/${suffix}`;
+    expect(await photoMediaKey(legacyKey, 'tg:123')).toBe(key);
+    expect(await photoMediaKey(legacyKey, 'tg:124')).not.toBe(key);
+    expect(directMediaUrl(legacyKey)).toContain(legacyKey);
+    expect(directMediaUrl(key)).toContain(key);
+  });
+
   it('uploads the original bytes directly and returns a permanent URL without the filename', async () => {
     const put = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 200 }));
     const transport = mockSignedMediaTransport(put);

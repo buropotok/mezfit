@@ -1,5 +1,6 @@
 import { getTelegramWebApp } from '../telegram';
-import { DISCUSSION_MEDIA_LIMITS_MIB, DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
+import { DISCUSSION_MEDIA_LIMITS_MIB, DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix,
+  discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
 
 export const MEDIA_BUCKET = 'mezfit-comm-poc-20261106';
 const endpoint = 'https://storage.yandexcloud.net';
@@ -12,6 +13,12 @@ export function directMediaUrl(key: string): string | null {
 export function createDirectMediaKey(): string {
   return 'mvp-media/' + Array.from(crypto.getRandomValues(new Uint8Array(32)),
     byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export async function photoMediaKey(storageKey: string, actorUserId: string): Promise<string> {
+  if (import.meta.env.VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED !== 'true') return storageKey;
+  const prefix = await discussionMediaSenderPrefix(actorUserId);
+  return `mvp-media/${prefix}/${storageKey.slice('mvp-media/'.length)}`;
 }
 
 type UploadErrorCode = 'INVALID_KEY' | 'INVALID_TYPE' | 'INVALID_SIZE' | 'CANCELLED' | 'TIMEOUT' | 'NETWORK' | 'HTTP'

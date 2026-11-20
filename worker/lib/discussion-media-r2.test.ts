@@ -78,6 +78,24 @@ describe('Cloudflare R2 upload signer', () => {
     expect((await handleDiscussionR2MediaRoute(foreign, env())).status).toBe(403);
   });
 
+  it('binds photo PUT signing and upload verification to the authenticated sender prefix', async () => {
+    const prefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
+    const storageKey = `mvp-media/${prefix}/${'a'.repeat(64)}`;
+    const owner = { initData: await initData(), storageKey, contentType: 'image/jpeg', sizeBytes: 6 };
+    const foreign = { ...owner, initData: await initData(200600) };
+    head.mockClear();
+    for (const endpoint of ['sign', 'verify']) {
+      expect((await handleDiscussionR2MediaRoute(request(endpoint, foreign), env())).status).toBe(403);
+    }
+    expect(head).not.toHaveBeenCalled();
+    const signed = await handleDiscussionR2MediaRoute(request('sign', owner), env());
+    expect(signed.status).toBe(200);
+    const payload = await signed.json() as { putUrl: string };
+    expect(new URL(payload.putUrl).pathname).toBe('/' + storageKey);
+    expect((await handleDiscussionR2MediaRoute(request('verify', owner), env())).status).toBe(200);
+    expect(head).toHaveBeenCalledWith(storageKey);
+  });
+
   it('allows any authenticated Telegram user without a separate user-ID allowlist', async () => {
     for (const userId of [100500, 200600]) {
       const valid = { initData: await initData(userId), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };
