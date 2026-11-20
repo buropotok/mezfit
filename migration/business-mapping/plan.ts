@@ -306,7 +306,8 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
       sourceSetType: set.sourceSetType, sourceSetLabel: set.sourceSetLabel,
       sourceMetrics: set.metrics,
       metrics: result?.metrics ?? { reps: null, weight: null, duration: null, distance: null },
-      setStatus: set.setStatus, rpe: set.rpe, comment: set.comment, sourceAttributes: set.sourceAttributes };
+      setStatus: set.setStatus, rpe: set.rpe, comment: set.comment,
+      sourceAttributes: set.sourceAttributes.map(attr => ({ ...attr })) };
   }
   const programOps = new Map<string, string>();
   const makeProgramExercises = (subject: string | null, exs: Array<{
@@ -317,7 +318,8 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
     sourceKey: ex.sourceKey, position: ex.position, exerciseMappingKey: mappingKey(subject, ex.exerciseSourceKey),
     notes: ex.notes, sets: ordered(ex.sets).map(set => ({
       sourceKey: set.sourceKey, position: set.position, setType: set.sourceSetType,
-      setLabel: set.sourceSetLabel, comment: set.comment, sourceAttributes: set.sourceAttributes,
+      setLabel: set.sourceSetLabel, comment: set.comment,
+      sourceAttributes: set.sourceAttributes.map(attr => ({ ...attr })),
     })),
   }));
   for (const program of sorted([...requiredPrograms.values()])) {
@@ -367,7 +369,8 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
       notes: ex.notes,
       sets: ordered(ex.sets).map(set => ({
         sourceKey: set.sourceKey, position: set.position, setType: set.sourceSetType,
-        setLabel: set.sourceSetLabel, comment: set.comment, sourceAttributes: set.sourceAttributes,
+        setLabel: set.sourceSetLabel, comment: set.comment,
+        sourceAttributes: set.sourceAttributes.map(attr => ({ ...attr })),
       })),
     })) : [];
     const exKeys = exercises.map(ex => ex.exerciseMappingKey);
