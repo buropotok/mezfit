@@ -803,13 +803,13 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
     {lockToastVersion > 0 ? <Toast opened position="center" role="status" aria-live="polite">
       <Text variant="body">{lockedPlanMessage}</Text>
     </Toast> : null}
-    <MezfitDialog opened={blockedExerciseAction !== null} role="alertdialog"
+    {(auxiliaryReady || blockedExerciseAction !== null) ? <MezfitDialog opened={blockedExerciseAction !== null} role="alertdialog"
       title={<Text variant="headline">{blockedExerciseAction === 'replace'
         ? 'Нельзя заменить упражнение' : 'Нельзя удалить упражнение'}</Text>}
       onBackdropClick={() => setBlockedExerciseAction(null)}
       buttons={<MezfitDialogButton strong onClick={() => setBlockedExerciseAction(null)}>Понятно</MezfitDialogButton>}>
       <Text variant="body">{blockReason}</Text>
-    </MezfitDialog>
+    </MezfitDialog> : null}
     {draft && auxiliaryReady && !collapsed ? <>
       {planner && informationExercise ? <Suspense fallback={<Text variant="footnote">Загружаем информацию…</Text>}>
         <ProgramExerciseInformationSheet key={informationExercise.id} repository={planner.programs}
