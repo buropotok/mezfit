@@ -417,6 +417,13 @@ export function SettingsPage({
           </div>
         </GlassSurface>
 
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__data-reset-entry">
+          <Text variant="title">Хранилище</Text>
+          <span className="settings-page__action">
+            <Button onClick={() => setDataResetOpen(true)}>Очистка данных</Button>
+          </span>
+        </GlassSurface>
+
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Разработка</Text>
           <Text variant="footnote" tone="muted">
@@ -425,7 +432,6 @@ export function SettingsPage({
           <div className="settings-page__actions">
             <Button onClick={() => setModulesOpen(true)}>Модули</Button>
             <Button variant="secondary" onClick={() => setSyncHistoryOpen(true)}>История синхронизации</Button>
-            <Button variant="secondary" onClick={() => setDataResetOpen(true)}>Очистка данных</Button>
           </div>
         </GlassSurface>
       </section>
