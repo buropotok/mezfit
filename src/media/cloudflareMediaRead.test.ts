@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { setDiscussionMediaBackupEnabled } from './discussionMediaBackupPreference';
 import { signedDiscussionR2ReadUrl } from './cloudflareMediaRead';
 import { rawInitData } from './mediaUploadTestFixtures';
 
@@ -10,7 +11,9 @@ const entry = { accountId: 'tg:100500', storageKey: key, mimeType: 'video/mp4', 
   realmId: 'rlm' + 'b'.repeat(28), messageId: '22222222-2222-4222-8222-222222222222', attachmentId: '33333333-3333-4333-8333-333333333333' };
 const response = () => Response.json({ storageKey: key, getUrl, expiresAt: Date.now() + 600_000 });
 
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+beforeEach(() => { setDiscussionMediaBackupEnabled(true); });
+
+afterEach(() => { localStorage.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 it('gets a private signed GET URL only through the typed same-origin Worker API', async () => {
   vi.stubGlobal('Telegram', { WebApp: { initData: rawInitData } });
