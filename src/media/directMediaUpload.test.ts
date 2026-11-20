@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { createHash, webcrypto } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { directMediaUrl, photoMediaKey, uploadDirectMedia } from './directMediaUpload';
 import { mediaFunctionUrl, mockSignedMediaTransport, rawInitData, signedMediaResponse } from './mediaUploadTestFixtures';
@@ -18,8 +17,9 @@ describe('signed direct media upload', () => {
     vi.stubEnv('VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED', '');
     expect(await photoMediaKey(legacyKey, 'tg:123')).toBe(legacyKey);
     vi.stubEnv('VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED', 'true');
+    const { webcrypto } = await vi.importActual<{ webcrypto: Crypto }>('node:crypto');
     vi.stubGlobal('crypto', webcrypto);
-    const prefix = createHash('sha256').update('tg:123').digest('hex');
+    const prefix = 'de2a34060e590e44a7e59962a47b9d60532a9c24173dbcb987562b39c39278a5';
     const key = `mvp-media/${prefix}/${suffix}`;
     expect(await photoMediaKey(legacyKey, 'tg:123')).toBe(key);
     expect(await photoMediaKey(legacyKey, 'tg:124')).not.toBe(key);

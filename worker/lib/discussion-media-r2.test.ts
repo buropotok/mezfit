@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { handleDiscussionR2MediaRoute, signDiscussionR2Put } from './discussion-media-r2';
 
@@ -80,7 +79,7 @@ describe('Cloudflare R2 upload signer', () => {
   });
 
   it('binds photo PUT signing and upload verification to the authenticated sender prefix', async () => {
-    const prefix = createHash('sha256').update('tg:100500').digest('hex');
+    const prefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
     const storageKey = `mvp-media/${prefix}/${'a'.repeat(64)}`;
     const owner = { initData: await initData(), storageKey, contentType: 'image/jpeg', sizeBytes: 6 };
     const foreign = { ...owner, initData: await initData(200600) };

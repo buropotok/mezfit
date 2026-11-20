@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { discussionAnchorKey, personalDiscussionId, PERSONAL_DISCUSSION_TITLE } from '../../shared/discussion-anchor';
 import { handleDiscussionR2MediaRoute, signDiscussionR2Get } from './discussion-media-r2';
@@ -156,8 +155,8 @@ describe('Private R2 discussion media reads', () => {
 
   it('checks the prefix against the author while allowing the other participant to read the photo', async () => {
     const { realmId, data } = await mockCloud();
-    const senderPrefix = createHash('sha256').update('tg:100500').digest('hex');
-    const foreignPrefix = createHash('sha256').update('tg:200600').digest('hex');
+    const senderPrefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
+    const foreignPrefix = 'cccd2338f5d1115cd7a5c2712b942c0023df9a16e4e3f3320cfb67ad1b2e3620';
     const body = { initData: await telegramInitData(200600), realmId, messageId, attachmentId,
       contentType: 'image/jpeg', sizeBytes: 6 };
     const senderKey = `mvp-media/${senderPrefix}/${'a'.repeat(64)}`;
