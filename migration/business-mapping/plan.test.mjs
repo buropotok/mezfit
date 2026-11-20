@@ -414,7 +414,8 @@ describe('MIG-05 business mapping: contract and read-only planning', () => {
     const plan = await buildMezfitImportPlan(input);
     expect(session(plan, 'ses:linked').operationKey).toBe(prior);
     expect(session(plan, 'ses:linked').state).toBe('already_imported');
-    expect(plan.preview.alreadyImported).toBe(1);
+    // Both the historical session and its provenance action are recognized as replayed.
+    expect(plan.preview.alreadyImported).toBe(2);
     expect(plan.planId).not.toBe(original.planId);
   });
 
