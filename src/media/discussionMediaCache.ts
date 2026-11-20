@@ -42,7 +42,7 @@ class DiscussionMediaDatabase extends Dexie {
 
 /** Drop only disposable media bytes. Keep replica originals needed for upload recovery. */
 export async function clearDiscussionMediaCache(accountId: string): Promise<void> {
-  if (!/^tg:[1-9]\\d*$/.test(accountId)) throw new Error('INVALID_MEDIA_CACHE_ACCOUNT');
+  if (!/^tg:[1-9]\d*$/.test(accountId)) throw new Error('INVALID_MEDIA_CACHE_ACCOUNT');
   const db = new DiscussionMediaDatabase(accountId);
   try {
     const protectedKeys = new Set(await db.replicas.toCollection().primaryKeys());
