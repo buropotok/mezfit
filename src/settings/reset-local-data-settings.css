@@ -1,0 +1,25 @@
+.local-data-reset__choices {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.local-data-reset__choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+  min-height: 44px;
+}
+
+.local-data-reset__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-space-2);
+}
+
+.local-data-reset__notice-icon {
+  display: inline-flex;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
