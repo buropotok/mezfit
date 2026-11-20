@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, expect, it, vi } from 'vitest';
 import { downloadDiscussionMedia, readDiscussionMedia, storeDiscussionMedia } from './discussionMediaCache';
+import { rawInitData } from './mediaUploadTestFixtures';
 
 const file = new Blob(['video'], { type: 'video/mp4' });
 const entry = {
@@ -97,7 +98,7 @@ it('stops a full photo when its response body stalls', async () => {
 
 it('requests an authorized R2 read when Yandex fails with backup disabled', async () => {
   vi.stubGlobal('localStorage', { getItem: () => 'off' });
-  vi.stubGlobal('Telegram', { WebApp: { initData: 'available' } });
+  vi.stubGlobal('window', { Telegram: { WebApp: { initData: rawInitData } } });
   const fetchMedia = vi.fn<typeof fetch>()
     .mockResolvedValueOnce(new Response(null, { status: 404 }))
     .mockResolvedValueOnce(new Response(null, { status: 403 }));
