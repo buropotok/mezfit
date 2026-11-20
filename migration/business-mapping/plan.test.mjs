@@ -522,6 +522,23 @@ describe('MIG-05 business mapping: contract and read-only planning', () => {
     expect(second.exerciseMappings[0].identityKey).not.toBe(first.exerciseMappings[0].identityKey);
   });
 
+  it('keeps unknown-subject sessions as explicit blocked candidates rather than throwing or inventing identity', async () => {
+    const input = businessInput();
+    input.sourcePackage.sessions[1].subjectRef = { state: 'unknown' };
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    const unknown = session(plan, 'ses:adhoc');
+    expect(unknown).toBeDefined();
+    expect(unknown.state).toBe('blocked');
+    expect(unknown.targetBindingRef).toBe('source-only');
+    expect(issues(plan, 'UNRESOLVED_SUBJECT').length).toBeGreaterThan(0);
+    expect(plan.exerciseMappings).toContainEqual(expect.objectContaining({
+      sourceExerciseKey: 'ex:hold', sourceSubjectKey: null,
+      kind: 'blocked', reason: 'UNRESOLVED_SUBJECT',
+    }));
+    expect(isMezfitImportPlan(plan)).toBe(true);
+  });
+
   it('rejects malformed snapshots and source packages before mapping, without mutation', async () => {
     const input = businessInput();
     const before = clone(input);
