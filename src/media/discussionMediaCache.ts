@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { ApiError } from '../api';
 import { directMediaUrl } from './directMediaUpload';
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaObjectSizeLimit } from '../../shared/discussion-media-limits';
 import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
@@ -208,7 +209,12 @@ export async function getMediaReplica(accountId: string, storageKey: string): Pr
   } finally { db.close(); }
 }
 
-const downloads = new Map<string, Promise<Blob | null>>();
+interface DownloadResult {
+  blob: Blob | null;
+  r2Failure?: string;
+}
+
+const downloads = new Map<string, { result: Promise<DownloadResult>; blob: Promise<Blob | null> }>();
 const PRIMARY_RESPONSE_TIMEOUT_MS = 8_000;
 const FULL_PHOTO_IDLE_TIMEOUT_MS = 15_000;
 
@@ -239,8 +245,16 @@ async function readFullPhoto(response: Response, sizeBytes: number, onProgress: 
 
 /** Cache a complete response. The first video player can stream independently. */
 export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promise<Blob | null> {
+  return startDiscussionMediaDownload(entry).blob;
+}
+
+export function downloadDiscussionMediaWithStatus(entry: DiscussionMediaCacheEntry): Promise<DownloadResult> {
+  return startDiscussionMediaDownload(entry).result;
+}
+
+function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
   const url = mediaUrl(entry);
-  if (!url) return Promise.resolve(null);
+  if (!url) return { result: Promise.resolve({ blob: null }), blob: Promise.resolve(null) };
   const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
     entry.realmId, entry.messageId, entry.attachmentId]);
   const active = downloads.get(key);
@@ -248,6 +262,7 @@ export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promi
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 300_000);
   const fullPhoto = DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] === 'full';
+  let r2Failure: string | undefined;
   const fetchComplete = async (
     resolveSource: (signal: AbortSignal) => string | Promise<string>, primary: boolean,
   ): Promise<Blob | null> => {
@@ -265,39 +280,58 @@ export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promi
     if (primary) startTimer(PRIMARY_RESPONSE_TIMEOUT_MS);
     else if (fullPhoto) receivedData();
 
+    let stage: 'SIGN' | 'GET' | 'BODY' = 'SIGN';
     try {
       const source = await resolveSource(signal);
+      stage = 'GET';
       if (fullPhoto && !primary) receivedData();
       const response = await fetch(source, {
         signal, credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
       });
       const length = response.headers.get('content-length');
       if (response.status !== 200 || (length !== null && Number(length) !== entry.sizeBytes)) {
+        if (!primary) r2Failure = response.status !== 200 ? `R2-GET-${response.status}` : 'R2-SIZE';
         void response.body?.cancel().catch(() => undefined);
         return null;
       }
+      stage = 'BODY';
       if (fullPhoto) receivedData();
       const blob = fullPhoto ? await readFullPhoto(response, entry.sizeBytes, receivedData) : await response.blob();
-      return !signal.aborted && blob && matches(entry, blob) ? blob : null;
-    } catch {
+      if (!signal.aborted && blob && matches(entry, blob)) return blob;
+      if (!primary) r2Failure = signal.aborted ? 'R2-BODY-TIMEOUT'
+        : !blob || blob.size !== entry.sizeBytes ? 'R2-SIZE' : 'R2-MIME';
+      return null;
+    } catch (error) {
+      if (!primary) {
+        const detail = signal.aborted ? 'TIMEOUT'
+          : error instanceof ApiError && error.code === 'DISCUSSION_R2_HTTP' ? error.status : 'FAILED';
+        r2Failure = `R2-${stage}-${detail}`;
+      }
       return null;
     } finally {
       clearTimeout(idleTimer);
       controller.signal.removeEventListener('abort', cancel);
     }
   };
-  const task = (async () => {
+  const result = (async () => {
     try {
       let blob = await fetchComplete(() => url, true);
       if (!blob && entry.realmId && entry.messageId && entry.attachmentId) {
         blob = await fetchComplete(signal => signedDiscussionR2ReadUrl(entry, signal), false);
       }
       if (blob && !fullPhoto) await storeDiscussionMedia(entry, blob);
-      return blob;
+      return { blob, r2Failure };
     } finally {
       clearTimeout(timer);
     }
   })().finally(() => downloads.delete(key));
+  let blobTask: Promise<Blob | null> | undefined;
+  const task = {
+    result,
+    get blob() {
+      return blobTask ??= result.then(download => download.blob);
+    },
+  };
   downloads.set(key, task);
   return task;
 }
