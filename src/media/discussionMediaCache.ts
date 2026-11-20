@@ -303,7 +303,8 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
       return null;
     } catch (error) {
       if (!primary) {
-        const detail = signal.aborted ? 'TIMEOUT' : error instanceof ApiError ? error.status : 'FAILED';
+        const detail = signal.aborted ? 'TIMEOUT'
+          : error instanceof ApiError && error.code === 'DISCUSSION_R2_HTTP' ? error.status : 'FAILED';
         r2Failure = `R2-${stage}-${detail}`;
       }
       return null;
