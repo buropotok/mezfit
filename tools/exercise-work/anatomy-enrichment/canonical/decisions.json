@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "source_pr": 845,
+  "approved_semantic_merges": {
+    "head-harness": "neck-harness",
+    "v-grip-attachment": "v-bar-attachment",
+    "back-extension-bench": "roman-chair"
+  },
+  "kept_distinct": [
+    [
+      "seated-row-machine",
+      "seated-cable-row-machine"
+    ],
+    [
+      "seated-row-machine",
+      "plate-loaded-seated-row-machine"
+    ],
+    [
+      "shoulder-press-machine",
+      "plate-loaded-shoulder-press-machine"
+    ],
+    [
+      "cable-rope-handle",
+      "rope"
+    ],
+    [
+      "bicycle",
+      "bike"
+    ]
+  ],
+  "approved_russian_labels": {
+    "arm-blaster": "Армбластер (изолятор для бицепса)",
+    "door-frame": "Дверной проём",
+    "lat-pulldown-machine": "Тренажёр для вертикальной тяги",
+    "neck-harness": "Шейная упряжь",
+    "pvc-pipe": "Гимнастическая ПВХ-палка",
+    "t-bar-row-machine": "Тренажёр для тяги Т-грифа",
+    "v-bar-attachment": "V-образная рукоять",
+    "roman-chair": "Скамья для гиперэкстензии (римский стул)"
+  },
+  "note": "Двенадцать ручных уточнений equipment: other определены в build.mjs; кроме них, текст на русском не выдумывается."
+}
