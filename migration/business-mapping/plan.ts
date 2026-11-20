@@ -138,13 +138,27 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
   }
   const synthetic = new Map<string, SourceSession | null>();
   const completedSourceSessionMissing = (subject: string, selected: Map<string, SourceSession[]>): boolean =>
-    !selected.get(subject)?.some(s => s.completionState === 'completed' && businessDate(s.timing));
-  for (const [subject, sessions] of selectedBySubject) {
+    !selected.get(subject)?.some(s => s.completionState === 'completed');
+  const selectedSubjects = new Set([
+    ...selectedSessions.map(s => subjectKey(s.subjectRef)),
+    ...selectedScheduled.map(w => subjectKey(w.subjectRef)),
+  ].filter((key): key is string => key !== null));
+  for (const subject of [...selectedSubjects].sort((a, b) => a.localeCompare(b, 'en'))) {
+    const sessions = selectedBySubject.get(subject) ?? [];
     const schedules = selectedScheduled.filter(w => subjectKey(w.subjectRef) === subject);
-    const noPrograms = sessions.every(s => s.programRef.state === 'none' && s.scheduledWorkoutRef.state === 'none')
-      && schedules.every(s => s.programRef.state === 'none');
+    const noPrograms = sessions.every(s => {
+      if (s.programRef.state !== 'none') return false;
+      if (s.scheduledWorkoutRef.state === 'none') return true;
+      if (s.scheduledWorkoutRef.state !== 'linked') return false;
+      return bySchedule.get(s.scheduledWorkoutRef.sourceKey)?.programRef.state === 'none';
+    }) && schedules.every(s => s.programRef.state === 'none');
     if (!noPrograms || pkg.coverage.programs !== 'complete'
-      || pkg.coverage.scheduledWorkouts !== 'complete') continue;
+      || pkg.coverage.scheduledWorkouts !== 'complete' || pkg.coverage.sessions !== 'complete') continue;
+    if (sessions.some(s => s.completionState === 'completed' && !businessDate(s.timing))) {
+      report('AMBIGUOUS_LAST_SESSION', 'program', subject, null);
+      synthetic.set(subject, null);
+      continue;
+    }
     const completed = sessions.filter(s => s.completionState === 'completed' && businessDate(s.timing));
     const orderedSessions = [...completed].sort((a, b) => {
       const da = businessDate(a.timing) ?? '';
@@ -209,9 +223,10 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
         reason: 'UNKNOWN_TRACKING' };
     } else {
       // Unique exact match only when both name, tracking AND equipment evidence are compatible.
-      const matches = input.catalogueSnapshot.entries.filter(entry =>
+      const equipmentEvidence = source.equipment?.trim();
+      const matches = equipmentEvidence ? input.catalogueSnapshot.entries.filter(entry =>
         normalize(entry.name) === normalize(name) && entry.trackingType === trackingHint
-        && normalize(entry.equipment ?? '') === normalize(source.equipment ?? ''));
+        && !!entry.equipment?.trim() && normalize(entry.equipment) === normalize(equipmentEvidence)) : [];
       if (matches.length === 1 && input.catalogueSnapshot.completeness === 'complete') {
         mapping = { kind: 'catalog_match', identityKey, sourceExerciseKey: exerciseKey, sourceSubjectKey: subject,
           catalogueExerciseId: matches[0].id, trackingType: trackingHint, matchEvidence: 'exact_unique' };
