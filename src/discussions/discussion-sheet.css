@@ -293,6 +293,24 @@
   z-index: 5;
 }
 
+.discussion-photo-previews {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 8px;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.discussion-photo-preview {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  aspect-ratio: 1;
+}
+
+.discussion-photo-preview > * { grid-area: 1 / 1; }
+.discussion-photo-preview > button { align-self: start; justify-self: end; }
+
 .discussion-media-stage__viewer {
   display: grid;
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);

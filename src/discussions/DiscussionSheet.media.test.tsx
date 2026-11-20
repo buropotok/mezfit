@@ -106,6 +106,50 @@ it('previews a photo and retries an attachment-only send with the same message, 
   ]);
 });
 
+it('previews a gallery selection and sends the remaining photos independently', async () => {
+  const port = { ...fixture().port, supportsMedia: true };
+  const photos = ['one', 'two', 'three'].map((id, index) => {
+    const file = new File([id], `${id}.jpg`, { type: 'image/jpeg' });
+    const metadata: DiscussionMediaDraft = {
+      id, storageKey: 'mvp-media/' + (index + 1).toString().repeat(64), mediaType: 'photo',
+      mimeType: file.type, sizeBytes: file.size, durationSeconds: null, fileName: file.name, uploadState: 'uploading',
+    };
+    const uploaded: UploadedMedia = { key: metadata.storageKey, url: directMediaUrl(metadata.storageKey) ?? '',
+      contentType: file.type, sizeBytes: file.size, fileName: file.name };
+    vi.mocked(inspectDiscussionMedia).mockResolvedValueOnce({ file, metadata });
+    return { file, metadata, uploaded };
+  });
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:batch-preview');
+    static revokeObjectURL = vi.fn();
+  });
+  vi.mocked(uploadDirectMedia).mockRejectedValueOnce(new MediaUploadError('NETWORK'))
+    .mockResolvedValueOnce(photos[2].uploaded).mockResolvedValueOnce(photos[0].uploaded);
+  const view = render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
+    anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
+    onNavigationContextChange={() => {}} /></KonstaProvider>);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Добавить вложение' })).toHaveProperty('disabled', false));
+  const input = view.baseElement.querySelector('input[type="file"][multiple]');
+  if (!input) throw new Error('Missing photo input');
+  fireEvent.change(input, { target: { files: photos.map(photo => photo.file) } });
+  expect(await screen.findAllByAltText('Предпросмотр фото')).toHaveLength(3);
+  fireEvent.click(screen.getByRole('button', { name: 'Убрать фото two.jpg' }));
+  expect(screen.getAllByAltText('Предпросмотр фото')).toHaveLength(2);
+  expect(uploadDirectMedia).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+  await waitFor(() => expect(port.send).toHaveBeenCalledOnce());
+  expect(port.send).toHaveBeenCalledWith(expect.objectContaining({ draftMedia: photos[2].metadata }), photos[2].uploaded);
+  const retry = screen.getByRole('button', { name: 'Ещё раз' });
+  await waitFor(() => expect(retry).toHaveProperty('disabled', false));
+  fireEvent.click(retry);
+  await waitFor(() => expect(port.send).toHaveBeenCalledTimes(2));
+  const firstDraft = vi.mocked(port.saveDraft).mock.calls[0][0];
+  expect(port.send).toHaveBeenLastCalledWith(
+    expect.objectContaining({ id: firstDraft.id, draftMedia: photos[0].metadata }), photos[0].uploaded,
+  );
+});
+
 it('automatically delivers a confirmed set video as its own message and leaves the chat draft in place', async () => {
   const existing = { id: 'existing-draft', threadId: thread.id, text: 'Набранный черновик', createdAt: thread.createdAt };
   const port = { ...fixture().port, supportsMedia: true, getDraft: async () => existing };
