@@ -2,6 +2,11 @@ import type { SourceWorkoutTiming } from '../worker/processor/source-package/typ
 import type { CalendarOccupancySnapshot, ImportTime, IssueCode } from './types';
 
 const DAY_MINUTES = 1440;
+export function isReliableTimeZone(value: string | null): value is string {
+  if (!value) return false;
+  try { new Intl.DateTimeFormat('en-US', { timeZone: value }); return true; }
+  catch { return false; }
+}
 function utcForLocal(date: string, minute: number, zone: string): string | null {
   const [y, m, d] = date.split('-').map(Number);
   const local = Date.UTC(y, m - 1, d, Math.floor(minute / 60), minute % 60);
@@ -33,12 +38,14 @@ export function mapTiming(
   proposed: string[],
 ): { timing: ImportTime; issues: IssueCode[] } {
   const issues: IssueCode[] = [];
+  if (value.timeZone !== null && !isReliableTimeZone(value.timeZone)) issues.push('UNKNOWN_SOURCE_TIMEZONE');
   let start = value.startedAtUtc;
   let end = category === 'session' ? value.completedAtUtc : null;
   let inferred = false;
   if (value.precision === 'date' && value.localDate) {
-    if (!value.timeZone) issues.push('UNKNOWN_SOURCE_TIMEZONE');
-    else {
+    if (!isReliableTimeZone(value.timeZone)) {
+      if (!issues.includes('UNKNOWN_SOURCE_TIMEZONE')) issues.push('UNKNOWN_SOURCE_TIMEZONE');
+    } else {
       for (let minute = 8 * 60; minute < DAY_MINUTES; minute += 30) {
         const slot = utcForLocal(value.localDate, minute, value.timeZone);
         if (!slot) continue;
