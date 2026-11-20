@@ -6,12 +6,13 @@ import { useEntityDiscussions } from '../discussions/useEntityDiscussions';
 import { UnreadCount } from '../ui/UnreadCount';
 import { loadBrowserGlassSettings } from '../glassSettings';
 
-export function ExerciseActionsMenu({ onDelete, onReplace, onInformation, busy = false, discussionTarget = null, onNavigationContextChange, onOpenDiscussion }: {
+export function ExerciseActionsMenu({ onDelete, onReplace, onInformation, onUnavailableAction, busy = false, discussionTarget = null, onNavigationContextChange, onOpenDiscussion }: {
   discussionTarget?: EntityDiscussionTarget | null;
   onOpenDiscussion?: (target: EntityDiscussionTarget) => void;
   onNavigationContextChange?: (context: NavigationContext | null) => void;
   onDelete?: () => void;
   onReplace?: () => void;
+  onUnavailableAction?: (action: 'replace' | 'delete') => void;
   onInformation?: () => void;
   busy?: boolean;
 }) {
@@ -21,6 +22,9 @@ export function ExerciseActionsMenu({ onDelete, onReplace, onInformation, busy =
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<(() => void) | null>(null);
   const glass = loadBrowserGlassSettings();
+  const deleteAction = onDelete ?? (onUnavailableAction ? () => onUnavailableAction('delete') : undefined);
+  const replaceAction = onDelete && onReplace ? onReplace
+    : onUnavailableAction ? () => onUnavailableAction('replace') : undefined;
   const defer = (action: (() => void) | undefined) => {
     if (!action || busy) return;
     setPending(() => action);
@@ -32,8 +36,8 @@ export function ExerciseActionsMenu({ onDelete, onReplace, onInformation, busy =
       className="session-exercise__menu" data-no-dnd disabled={busy} />}
     items={[
       ...(discussionTarget ? [discussions.menuItem] : []),
-      { id: 'replace', label: 'Заменить', icon: 'replace', disabled: busy || !onDelete || !onReplace, onSelect: () => defer(onReplace) },
-      { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy || !onDelete, onSelect: () => defer(onDelete) },
+      { id: 'replace', label: 'Заменить', icon: 'replace', disabled: busy || !replaceAction, onSelect: () => defer(replaceAction) },
+      { id: 'delete', label: 'Удалить', icon: 'trash-outline', disabled: busy || !deleteAction, onSelect: () => defer(deleteAction) },
       { id: 'information', label: 'Информация', icon: 'info-circle', disabled: busy || !onInformation, onSelect: () => defer(onInformation) },
     ]}
     onPresentationChange={presented => {
