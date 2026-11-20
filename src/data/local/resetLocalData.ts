@@ -1,5 +1,3 @@
-import { clearDiscussionMediaCache } from '../../media/discussionMediaCache';
-
 const RESET_REQUEST_KEY = 'mezfit.local-data-reset.v1';
 
 export interface LocalDataResetSelection {
@@ -11,7 +9,8 @@ interface PendingReset extends LocalDataResetSelection {
   telegramUserId: string;
 }
 
-function validUserId(value: string): boolean {
+function validUserId(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
   return /^[1-9]\d*$/.test(value);
 }
 
@@ -58,6 +57,7 @@ export async function completePendingLocalDataReset(
   if (pending.media) {
     // Discussion replicas may own original bytes not yet copied to both media stores.
     // Clear disposable cache entries only; never discard recovery tasks or their files.
+    const { clearDiscussionMediaCache } = await import('../../media/discussionMediaCache');
     await clearDiscussionMediaCache('tg:' + pending.telegramUserId);
     await remove('mezfit-base2-public-media-v1');
   }
