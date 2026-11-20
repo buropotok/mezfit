@@ -364,7 +364,7 @@
   object-fit: contain;
 }
 
-.discussion-media__orientation-controls {
+.discussion-media__video-controls {
   position: absolute;
   inset-inline: 12px;
   bottom: calc(12px + var(--discussion-media-safe-bottom, 0px));
@@ -383,16 +383,16 @@
   pointer-events: none;
 }
 
-.discussion-media__orientation-time {
+.discussion-media__video-time {
   flex-shrink: 0;
 }
 
-.discussion-media__orientation-seek {
+.discussion-media__video-seek {
   flex: 1;
   min-width: 0;
 }
 
-.discussion-media__orientation-error {
+.discussion-media__video-error {
   position: absolute;
   bottom: 100%;
   inset-inline: 0;
@@ -464,11 +464,6 @@
   height: 100%;
   min-height: 0;
   object-fit: contain;
-}
-
-/* On WebKit, keep the viewer in the app-controlled fullscreen stage. */
-.discussion-media--viewer > video::-webkit-media-controls-fullscreen-button {
-  display: none;
 }
 
 .discussion-media__annotate {

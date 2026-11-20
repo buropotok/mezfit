@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { IconButton, MezfitSlider, Text } from '../ui';
 
-/** Keep controls upright when the media element itself needs a CSS rotation. */
-export function OrientedVideoControls({ player, source }: {
+export function DiscussionVideoControls({ player, source }: {
   player: RefObject<HTMLVideoElement | null>; source: string | undefined;
 }) {
   const [paused, setPaused] = useState(true);
@@ -13,12 +12,13 @@ export function OrientedVideoControls({ player, source }: {
   useEffect(() => {
     const video = player.current;
     if (!video) return;
+    setPlayFailed(false);
     const update = () => {
       setPaused(video.paused);
       setPosition(Number.isFinite(video.currentTime) ? video.currentTime : 0);
       setDuration(Number.isFinite(video.duration) ? video.duration : 0);
     };
-    const events = ['timeupdate', 'play', 'pause', 'ended', 'durationchange', 'seeked'] as const;
+    const events = ['loadedmetadata', 'emptied', 'timeupdate', 'play', 'pause', 'ended', 'durationchange', 'seeked'] as const;
     events.forEach(event => video.addEventListener(event, update));
     update();
     return () => {
@@ -27,8 +27,8 @@ export function OrientedVideoControls({ player, source }: {
     };
   }, [player, source]);
   const time = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
-  return <div className="discussion-media__orientation-controls">
-    <IconButton label={paused ? 'Воспроизвести' : 'Пауза'}
+  return <div className="discussion-media__video-controls">
+    <IconButton label={paused ? 'Воспроизвести' : 'Пауза'} disabled={!source}
       onClick={() => {
         const video = player.current;
         if (!video) return;
@@ -43,14 +43,14 @@ export function OrientedVideoControls({ player, source }: {
         {paused ? <path d="M7 4v16l14-8z" /> : <path d="M6 4h4v16H6zM14 4h4v16h-4z" />}
       </svg>
     </IconButton>
-    <div className="discussion-media__orientation-seek">
+    <div className="discussion-media__video-seek">
       <MezfitSlider size="small" fullWidth start={0} end={100} ariaLabel="Перемотка видео"
         value={duration > 0 ? position / duration * 100 : 0}
         onValueChange={value => {
           if (player.current && duration > 0) player.current.currentTime = value / 100 * duration;
         }} />
     </div>
-    <Text variant="caption" className="discussion-media__orientation-time">{time(position)} / {time(duration)}</Text>
-    {playFailed && <Text variant="footnote" role="alert" className="discussion-media__orientation-error">Не удалось запустить видео. Повторите попытку.</Text>}
+    <Text variant="caption" className="discussion-media__video-time">{time(position)} / {time(duration)}</Text>
+    {playFailed && <Text variant="footnote" role="alert" className="discussion-media__video-error">Не удалось запустить видео. Повторите попытку.</Text>}
   </div>;
 }

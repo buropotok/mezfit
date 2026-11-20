@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
@@ -220,9 +220,9 @@ it('plays and exports a failed local video offline without removing its retry dr
       onNavigationContextChange={() => {}} /></KonstaProvider>);
 
     fireEvent.click(await screen.findByRole('link', { name: 'Открыть видео' }));
-    const player = screen.getByRole('region', { name: 'Просмотр вложения' }).querySelector('video');
-    expect(player?.src).toBe('blob:offline-video');
-    expect(player?.controls).toBe(true);
+    const viewer = screen.getByRole('region', { name: 'Просмотр вложения' });
+    expect(viewer.querySelector('video')?.src).toBe('blob:offline-video');
+    expect(within(viewer).getByRole('button', { name: 'Воспроизвести' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Закрыть просмотр' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Действия неотправленного видео' }));
@@ -287,7 +287,7 @@ it('opens a gallery video in the sheet and returns to the same chat via Back', a
 
   fireEvent.click(await screen.findByRole('link', { name: 'Открыть видео' }));
   const viewer = screen.getByRole('region', { name: 'Просмотр вложения' });
-  expect(viewer.querySelector('video')?.controls).toBe(true);
+  expect(within(viewer).getByRole('button', { name: 'Воспроизвести' })).toBeTruthy();
   expect(viewer.closest('[role="dialog"]')?.getAttribute('aria-label')).toBe('Обсуждение');
   act(() => onNavigationContextChange.mock.lastCall?.[0]?.onBack?.());
   expect(screen.queryByRole('region', { name: 'Просмотр вложения' })).toBeNull();
