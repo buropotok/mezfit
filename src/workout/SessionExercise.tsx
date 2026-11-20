@@ -372,6 +372,7 @@ function ProgramExercise(props: ProgramSessionExerciseProps) {
         onOpenDiscussion={props.onOpenDiscussion} onNavigationContextChange={props.onNavigationContextChange}
         onDelete={props.editable !== false ? props.onDelete : undefined}
         onReplace={props.editable !== false && props.onDelete ? props.onReplace : undefined}
+        onUnavailableAction={props.onUnavailableExerciseAction}
         onInformation={props.onInformation} />}
       onAddSet={props.editable !== false ? props.onAddSet : undefined} busy={props.busy}
     >
