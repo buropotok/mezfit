@@ -204,3 +204,28 @@ it('does not preload a large video until the viewer is opened', async () => {
   </KonstaProvider>);
   await waitFor(() => expect(get).toHaveBeenCalledTimes(1));
 });
+
+it('offers retry for a failed Full request and keeps the cached preview visible', async () => {
+  await setupBrowser();
+  const path = 'mvp-media/' + 'e'.repeat(64);
+  const id = 'f'.repeat(64);
+  const full = { ...photoEntry, storageKey: `${path}/full/${id}` };
+  const preview = { ...photoEntry, storageKey: `${path}/preview/${id}` };
+  const fullSrc = directMediaUrl(full.storageKey) ?? '';
+  const previewSrc = directMediaUrl(preview.storageKey) ?? '';
+  await storeDiscussionMedia(preview, new Blob(['small'], { type: preview.mimeType }), true);
+  const get = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 503 }));
+  vi.stubGlobal('fetch', get);
+
+  const view = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={fullSrc} type="photo" cache={full} mode="viewer"
+      photoPreview={{ src: previewSrc, cache: preview }} />
+  </KonstaProvider>);
+  const thumbnail = await view.findByAltText('Миниатюра фото');
+  fireEvent.load(thumbnail);
+  await view.findByText('Не удалось открыть оригинал фото. Код PHOTO-FULL-LOAD');
+  expect(thumbnail.style.visibility).toBe('visible');
+  expect(view.queryByAltText('Фото во вложении')).toBeNull();
+  expect(view.getByRole('button', { name: 'Повторить' })).toBeTruthy();
+  expect(get).toHaveBeenCalledExactlyOnceWith(fullSrc, expect.anything());
+});

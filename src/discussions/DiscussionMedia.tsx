@@ -50,16 +50,17 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
   const [usePlainSource, setUsePlainSource] = useState(false);
   const player = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [elementFailed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const currentRetry = useRef(retry);
   currentRetry.current = retry;
   const thumbnail = mode === 'thumbnail';
   const viewerPreview = type === 'photo' && mode === 'viewer' ? photoPreview : undefined;
   const autoCacheVideo = !thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES);
-  const { url: mediaSrc, container, tryR2Fallback } = useDiscussionMediaSource(
+  const { url: mediaSrc, unavailable, container, tryR2Fallback } = useDiscussionMediaSource(
     src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
+  const failed = elementFailed || unavailable;
   const crossOrigin = mode === 'viewer' && !autoPlay && !usePlainSource && mediaSrc?.startsWith('https:')
     ? 'anonymous' : undefined;
   const orientation = useVideoOrientation(player, type === 'video' ? mediaSrc : undefined, 'contain',

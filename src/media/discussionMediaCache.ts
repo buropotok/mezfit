@@ -209,6 +209,33 @@ export async function getMediaReplica(accountId: string, storageKey: string): Pr
 }
 
 const downloads = new Map<string, Promise<Blob | null>>();
+const PRIMARY_RESPONSE_TIMEOUT_MS = 8_000;
+const FULL_PHOTO_IDLE_TIMEOUT_MS = 15_000;
+
+async function readFullPhoto(response: Response, sizeBytes: number, onProgress: () => void): Promise<Blob | null> {
+  if (!response.body) return response.blob();
+
+  const reader = response.body.getReader();
+  const parts: BlobPart[] = [];
+  let received = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value.byteLength) continue;
+      received += value.byteLength;
+      if (received > sizeBytes) {
+        void reader.cancel().catch(() => undefined);
+        return null;
+      }
+      onProgress();
+      parts.push(new Uint8Array(value).buffer);
+    }
+    return new Blob(parts, { type: response.headers.get('content-type') ?? '' });
+  } finally {
+    reader.releaseLock();
+  }
+}
 
 /** Cache a complete response. The first video player can stream independently. */
 export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promise<Blob | null> {
@@ -220,8 +247,27 @@ export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promi
   if (active) return active;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 300_000);
-  const fetchComplete = async (source: string, signal: AbortSignal): Promise<Blob | null> => {
+  const fullPhoto = DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] === 'full';
+  const fetchComplete = async (
+    resolveSource: (signal: AbortSignal) => string | Promise<string>, primary: boolean,
+  ): Promise<Blob | null> => {
+    if (controller.signal.aborted) return null;
+    const attempt = new AbortController();
+    const { signal } = attempt;
+    const cancel = () => attempt.abort();
+    controller.signal.addEventListener('abort', cancel, { once: true });
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const startTimer = (delay: number) => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(cancel, delay);
+    };
+    const receivedData = () => startTimer(FULL_PHOTO_IDLE_TIMEOUT_MS);
+    if (primary) startTimer(PRIMARY_RESPONSE_TIMEOUT_MS);
+    else if (fullPhoto) receivedData();
+
     try {
+      const source = await resolveSource(signal);
+      if (fullPhoto && !primary) receivedData();
       const response = await fetch(source, {
         signal, credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
       });
@@ -230,33 +276,23 @@ export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promi
         void response.body?.cancel().catch(() => undefined);
         return null;
       }
-      const blob = await response.blob();
-      return matches(entry, blob) ? blob : null;
+      if (fullPhoto) receivedData();
+      const blob = fullPhoto ? await readFullPhoto(response, entry.sizeBytes, receivedData) : await response.blob();
+      return !signal.aborted && blob && matches(entry, blob) ? blob : null;
     } catch {
       return null;
+    } finally {
+      clearTimeout(idleTimer);
+      controller.signal.removeEventListener('abort', cancel);
     }
   };
   const task = (async () => {
     try {
-      // An unreachable Yandex connection must not monopolize the full media timeout.
-      const primary = new AbortController();
-      const cancel = () => primary.abort();
-      controller.signal.addEventListener('abort', cancel, { once: true });
-      const primaryTimeout = setTimeout(() => primary.abort(), 8_000);
-      let blob: Blob | null = null;
-      try { blob = await fetchComplete(url, primary.signal); }
-      finally {
-        clearTimeout(primaryTimeout);
-        controller.signal.removeEventListener('abort', cancel);
+      let blob = await fetchComplete(() => url, true);
+      if (!blob && entry.realmId && entry.messageId && entry.attachmentId) {
+        blob = await fetchComplete(signal => signedDiscussionR2ReadUrl(entry, signal), false);
       }
-      if (!blob && !controller.signal.aborted && entry.realmId && entry.messageId && entry.attachmentId) {
-        try {
-          const fallbackUrl = await signedDiscussionR2ReadUrl(entry, controller.signal);
-          blob = await fetchComplete(fallbackUrl, controller.signal);
-        } catch { /* R2 may be unreachable or this user may no longer have realm access. */ }
-      }
-      if (!blob) return null;
-      if (DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] !== 'full') await storeDiscussionMedia(entry, blob);
+      if (blob && !fullPhoto) await storeDiscussionMedia(entry, blob);
       return blob;
     } finally {
       clearTimeout(timer);
