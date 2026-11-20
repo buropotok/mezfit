@@ -252,26 +252,29 @@ it('shows the safe repository diagnosis when an observed session becomes unavail
 });
 
 
-it.each([null, 'occurrence-one'])('shows one deletion dialog matching session kind (occurrence=%s)', occurrenceId => {
+it.each([null, 'occurrence-one'])('allows deleting a FACT-added exercise (occurrence=%s)', occurrenceId => {
   const { observations, repository } = fixture();
   act(() => observations[0].next({ ...session, occurrenceId }, row));
   fireEvent.click(screen.getByRole('button', { name: 'Удалить упражнение' }));
-  expect(screen.getAllByRole('dialog')).toHaveLength(1);
-  if (occurrenceId) {
-    const dialog = screen.getByRole('dialog', {
-      name: 'Тренировка была запущена. Удаление из плана невозможно.',
-    });
-    expect(within(dialog).getAllByRole('button')).toHaveLength(1);
-    expect(within(dialog).queryByRole('button', { name: 'Удалить' })).toBeNull();
-    expect(screen.queryByText('Упражнение и его подходы будут удалены из этой тренировки.')).toBeNull();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Понятно' }));
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(repository.deleteExercise).not.toHaveBeenCalled();
-    expect(screen.getByTestId('session-card')).toBeTruthy();
-  } else {
-    expect(screen.getByRole('dialog', { name: 'Удалить упражнение?' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Удалить' })).toBeTruthy();
-  }
+  const dialog = screen.getByRole('dialog', { name: 'Удалить упражнение?' });
+  expect(within(dialog).getByRole('button', { name: 'Удалить' })).toBeTruthy();
+  expect(within(dialog).getByText('Упражнение и его подходы будут удалены из этой тренировки.')).toBeTruthy();
+  expect(repository.deleteExercise).not.toHaveBeenCalled();
+});
+
+it('explains why an exercise from the frozen started PLAN cannot be deleted', () => {
+  const { observations, repository } = fixture();
+  act(() => observations[0].next({
+    ...session, occurrenceId: 'occurrence-one',
+    exercises: [{ ...session.exercises[0], occurrenceExerciseId: 'plan-exercise-one' }],
+  }, row));
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить упражнение' }));
+  const dialog = screen.getByRole('dialog', { name: 'Нельзя удалить упражнение' });
+  expect(within(dialog).getByText('Упражнение входит в зафиксированный план запущенной тренировки.')).toBeTruthy();
+  expect(within(dialog).queryByRole('button', { name: 'Удалить' })).toBeNull();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Понятно' }));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(repository.deleteExercise).not.toHaveBeenCalled();
 });
 
 it('requests review only after explicit completion commits, even if the session screen unmounts', async () => {

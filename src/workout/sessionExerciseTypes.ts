@@ -36,6 +36,8 @@ export interface SessionExerciseData<Id extends string | number = number> {
   sessionExerciseId: Id;
   workoutSessionId: Id;
   sourceProgramExerciseId: Id | null;
+  /** Immutable occurrence PLAN link; null for exercises added during execution. */
+  occurrenceExerciseId?: string | null;
   position: number;
   status: SessionExerciseStatus;
   notes: string | null;
@@ -72,6 +74,7 @@ interface SessionExerciseSharedProps<Id extends string | number = number> {
   onOpenExerciseMenu?: (sessionExerciseId: Id) => void;
   onDeleteExercise?: (sessionExerciseId: Id) => void;
   onReplaceExercise?: (sessionExerciseId: Id) => void;
+  onUnavailableExerciseAction?: (action: 'replace' | 'delete', sessionExerciseId: Id) => void;
   onInformation?: () => void;
   onOpenHistory?: (exerciseDefinitionId: Id) => void;
   onOpenChat?: () => void;
@@ -111,6 +114,8 @@ export interface ProgramSessionExerciseProps {
   onAddSet?: () => void;
   onDelete?: () => void;
   onReplace?: () => void;
+  /** A read-only or immutable exercise still explains why replace/delete cannot run. */
+  onUnavailableExerciseAction?: (action: 'replace' | 'delete') => void;
   onInformation?: () => void;
   onOpenSet?: (setId: string) => void;
   onDeleteSet?: (setId: string) => void | Promise<void>;

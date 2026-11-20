@@ -5,6 +5,7 @@ import type { CloudTrainingPlanRow, MezfitCloudDatabase } from './database';
 import type { CloudProgramDayOutline } from './workout-foundation-types';
 import { relationshipMembership } from '../../../worker/lib/dexie-cloud-membership';
 import { draftFromProgramDay } from './workout-occurrence-plan';
+import { replaceOccurrenceExercise } from './workout-occurrence-edit';
 import { WorkoutOccurrenceDraftRepository } from './workout-occurrence-drafts';
 
 const opened: Dexie[] = [];
@@ -102,13 +103,13 @@ describe('local workout occurrence drafts', () => {
     expect(await repo().get('draft:' + id)).toBeNull();
   });
 
-  it('keeps private coach content out of the client view while timing edits stay local-first', async () => {
+  it('preserves Client timing edits on independent bookings without touching PLAN', async () => {
     const pair = await relationshipMembership('101', '202');
     await db.table('realms').put(pair.realm); await db.table('members').bulkAdd(pair.members);
-    const shared = { ...make(), realmId: pair.realm.realmId, athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
+    const shared = { ...make(), realmId: pair.realm.realmId,
+      athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
     shared.id = await repo().create(shared); const id = await repo().save(shared.id);
     expect((await db.table('workoutOccurrences').get(id)).owner).toBe(pair.realm.realmId);
-    // Timing edits remain available on the published booking.
     await repo('tg:202').enqueueEdit('draft:' + id, current => ({ ...current, durationMinutes: 90 }));
     expect((await db.table('workoutOccurrences').get(id)).durationMinutes).toBe(90);
     const patches: Record<string, unknown>[] = [];
@@ -118,15 +119,53 @@ describe('local workout occurrence drafts', () => {
     await repo('tg:202').save('draft:' + id);
     updating.unsubscribe(capture);
     for (const patch of patches) expect(patch).not.toHaveProperty('plan');
-    expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe(shared.plan.name);
+    expect((await db.table('workoutOccurrences').get(id)).plan).toEqual(shared.plan);
+    expect((await repo('tg:202').get('draft:' + id))?.durationMinutes).toBe(90);
+    expect(await repo('tg:303').get('draft:' + id)).toBeNull();
+  });
+
+  it('keeps coached occurrence PLAN editable by Coach but inaccessible to Client', async () => {
+    const pair = await relationshipMembership('101', '202');
+    await db.table('realms').put(pair.realm); await db.table('members').bulkAdd(pair.members);
+    const shared = { ...make(), format: 'coached' as const, realmId: pair.realm.realmId,
+      athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
+    shared.id = await repo().create(shared); const id = await repo().save(shared.id);
+    expect(await repo('tg:202').get('draft:' + id)).toBeNull();
     await expect(repo('tg:202').replacePlan('draft:' + id, { ...shared.plan, name: 'Подмена' }))
-      .rejects.toThrow('SCHEDULE_PLAN_FORBIDDEN');
+      .rejects.toThrow('OCCURRENCE_DRAFT_NOT_FOUND');
+    expect((await db.table('workoutOccurrences').get(id)).plan).toEqual(shared.plan);
     await repo().replacePlan('draft:' + id, { ...shared.plan, name: 'Новый план тренера' });
     expect(await repo('tg:202').get('draft:' + id)).toBeNull();
     expect(await repo('tg:202').list()).toEqual([]);
     expect((await db.table('workoutOccurrences').get(id)).plan.name).toBe('Новый план тренера');
     await repo().save('draft:' + id);
-    expect((await repo('tg:202').get('draft:' + id))?.plan.name).toBe('Новый план тренера');
+    expect((await repo().get('draft:' + id))?.plan.name).toBe('Новый план тренера');
+    expect(await repo('tg:202').get('draft:' + id)).toBeNull();
+    expect(await repo('tg:303').get('draft:' + id)).toBeNull();
+  });
+
+  it.each(['tg:101', 'tg:202'])('lets an independent Client edit a scheduled occurrence created by %s', async creator => {
+    const pair = await relationshipMembership('101', '202');
+    await db.table('realms').put(pair.realm); await db.table('members').bulkAdd(pair.members);
+    const source = { ...make(), actorUserId: creator, realmId: pair.realm.realmId,
+      athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202' };
+    source.id = await repo(creator).create(source);
+    const id = await repo(creator).save(source.id);
+    const replacement = replaceOccurrenceExercise(source.plan, source.plan.exercises[0].id,
+      { ...source.plan.exercises[0].exercise, exerciseDefinitionId: '0002', name: 'Жим ногами' }, false);
+    await repo('tg:202').replacePlan('draft:' + id, replacement);
+    const stored = await db.table('workoutOccurrences').get(id);
+    expect(stored).toMatchObject({
+      realmId: pair.realm.realmId, owner: pair.realm.realmId,
+      athleteUserId: 'tg:202', coachUserId: 'tg:101', clientUserId: 'tg:202',
+      format: 'independent', publicationStatus: 'draft', draftAuthorUserId: 'tg:202',
+      plan: { exercises: [{ exercise: { exerciseDefinitionId: '0002' } }] },
+      originalPlan: { exercises: [{ exercise: { exerciseDefinitionId: '0001' } }] },
+      publishedPlan: { exercises: [{ exercise: { exerciseDefinitionId: '0001' } }] },
+    });
+    expect((await repo('tg:202').get('draft:' + id))?.saved).toBe(false);
+    await repo('tg:202').save('draft:' + id);
+    expect((await repo('tg:101').get('draft:' + id))?.plan.exercises[0].exercise.exerciseDefinitionId).toBe('0002');
     expect(await repo('tg:303').get('draft:' + id)).toBeNull();
   });
 

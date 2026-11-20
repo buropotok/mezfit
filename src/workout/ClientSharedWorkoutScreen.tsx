@@ -13,7 +13,6 @@ import { usePlannedWorkoutStart } from './PlannedWorkoutStartContext';
 import { adHocErrorMessage } from './adhoc-workout-errors';
 import './adhoc-workouts.css';
 
-const refusePlanSave = async () => { throw new Error('Изменение плана недоступно'); };
 const ignoreClose = () => {};
 
 /** Athlete execution and launch choices share the shell's local active-session projection. */
@@ -29,6 +28,7 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
   const upcoming = useMemo(() => cloud?.db ? new PlannedWorkoutsRepository(cloud.db, cloud.actorUserId, 'client') : null,
     [cloud?.db, cloud?.actorUserId]);
   const [rows, setRows] = useState<UpcomingPlannedWorkout[]>([]);
+  const [editingRows, setEditingRows] = useState<UpcomingPlannedWorkout[]>([]);
   const [plansLoaded, setPlansLoaded] = useState(false);
   const [plansError, setPlansError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -53,7 +53,7 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
     }
   }, [repository, activeId]);
   useEffect(() => {
-    setRows([]); setPlansLoaded(false); setPlansError('');
+    setRows([]); setEditingRows([]); setExpandedId(null); setPlansLoaded(false); setPlansError('');
     if (!upcoming || activeId) return;
     let active = true;
     const subscription = upcoming.observe(new Date(), rows => {
@@ -63,6 +63,22 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, [upcoming, activeId, retry]);
+  useEffect(() => {
+    if (!upcoming || !expandedId) return;
+    let active = true;
+    const id = expandedId;
+    const subscription = upcoming.observeDraft('draft:' + id, draft => {
+      if (!active) return;
+      setEditingRows(current => current.flatMap(row => row.id !== id ? [row]
+        : draft && !draft.workoutSessionId && (!draft.executionStatus || draft.executionStatus === 'scheduled')
+          ? [{ ...row, draft }] : []));
+    }, reason => {
+      if (active) setError(adHocErrorMessage(reason, 'Не удалось обновить тренировку'));
+    });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [upcoming, expandedId]);
+  const displayedRows = rows.map(row => editingRows.find(editing => editing.id === row.id) ?? row)
+    .concat(editingRows.filter(editing => !rows.some(row => row.id === editing.id)));
   const exerciseInformation = useCallback((exerciseId: string) => {
     if (!repository || !sessionId) return Promise.reject(new Error('Тренировка недоступна'));
     return repository.exerciseInformation(sessionId, exerciseId);
@@ -101,10 +117,16 @@ export function ClientSharedWorkoutScreen({ initData, actor, onNavigationContext
         {plansLoaded && !plansError && !rows.length ? <Text variant="footnote">На ближайшие две недели тренировок нет.</Text> : null}
         {plansError ? <><Text variant="footnote" role="alert">{plansError}</Text>
           <Button rounded tonal onClick={() => setRetry(value => value + 1)}>Повторить загрузку плана</Button></> : null}
-        {upcoming ? rows.map(row => <OccurrenceDraftCard key={row.id} draft={row.draft} drafts={upcoming.drafts}
-          actor={actor} sourceProgramName={row.programName} readOnly allowReadOnlyStart
-          collapsed={expandedId !== row.id} onCollapsedChange={() => setExpandedId(id => id === row.id ? null : row.id)}
-          onSave={refusePlanSave} onClose={ignoreClose} onNavigationContextChange={onNavigationContextChange}
+        {upcoming ? displayedRows.map(row => <OccurrenceDraftCard key={row.id} draft={row.draft} drafts={upcoming.drafts}
+          actor={actor} sourceProgramName={row.programName} readOnly={row.draft.format !== 'independent'} allowReadOnlyStart
+          collapsed={expandedId !== row.id} onCollapsedChange={() => {
+            if (expandedId === row.id) {
+              setExpandedId(null); setEditingRows(current => current.filter(editing => editing.id !== row.id));
+            } else {
+              setExpandedId(row.id); setEditingRows([row]);
+            }
+          }}
+          onSave={async draft => { await upcoming.drafts.save(draft.id); }} onClose={ignoreClose} onNavigationContextChange={onNavigationContextChange}
           onStart={start && !busy ? draft => runStart(async () => ({ id: await start.start(draft) })) : undefined} />) : null}
       </> : null}
       {busy ? <Text variant="body" role="status">Начинаем тренировку…</Text> : null}

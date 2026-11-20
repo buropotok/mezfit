@@ -1,5 +1,5 @@
 import { AdHocWorkoutRepository, type CalendarWorkoutSession } from './adhoc-workouts';
-import { STARTED_PLAN_MESSAGE } from './planned-session-policy';
+import { STARTED_PLAN_MESSAGE, occurrencePlanEditRestriction } from './planned-session-policy';
 import { liveQuery } from 'dexie';
 import type { LocalProgramSyncRow, MezfitCloudDatabase } from './database';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
@@ -271,7 +271,7 @@ export class WorkoutOccurrenceDraftRepository {
       if (contentChanged || repeatChanged) this.assertPlanEditable(current);
       if (repeatChanged && changed.pendingRepeatRule != null && !isWorkoutRepeatRule(changed.pendingRepeatRule))
         throw new WorkoutEditRejected('INVALID_REPEAT_RULE');
-      if (contentChanged && (current.coachUserId ?? current.athleteUserId) !== this.actorUserId)
+      if (contentChanged && occurrencePlanEditRestriction(current))
         throw new WorkoutEditRejected('SCHEDULE_PLAN_FORBIDDEN');
       try { validateScheduleTiming(changed); }
       catch (reason) { throw new WorkoutEditRejected(reason instanceof Error ? reason.message : 'INVALID_SCHEDULE_TIMING'); }
@@ -372,7 +372,7 @@ export class WorkoutOccurrenceDraftRepository {
       if (draft.saved) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
       const row = await this.db.workoutOccurrences.get(id.slice(6));
       if (!row) throw new WorkoutEditRejected('OCCURRENCE_DRAFT_NOT_FOUND');
-      const author = (row.coachUserId ?? row.athleteUserId) === this.actorUserId;
+      const author = occurrencePlanEditRestriction(draft) === null;
       if (row.publishedPlan && author) {
         await this.db.workoutOccurrences.update(row.id, { plan: row.publishedPlan, publicationStatus: 'published', pendingRepeatRule: null,
           updatedAt: new Date().toISOString() });

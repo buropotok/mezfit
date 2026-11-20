@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { AdHocWorkoutRepository, type ClientExerciseFact, type CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
+import type { LocalWorkoutOccurrenceDraft } from '../data/cloud/workout-occurrence-plan';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
 import type { ExercisePeriod } from '../coach/clientExerciseStatistics';
 import type { LocalDate } from '../ui';
@@ -41,7 +42,7 @@ function useProfileRead<T>(requested: boolean, observe: Observe<T> | null) {
   } };
 }
 
-type Workouts = { occurrences: CloudWorkoutOccurrenceRow[]; sessions: CalendarWorkoutSession[] };
+type Workouts = { occurrences: CloudWorkoutOccurrenceRow[]; drafts: LocalWorkoutOccurrenceDraft[]; sessions: CalendarWorkoutSession[] };
 type HistoryFilter = { from: LocalDate | null; to: LocalDate };
 type ExerciseFilter = { period: ExercisePeriod; anchor: Date; anchorDay: number; category: string | null };
 type Cloud = NonNullable<ReturnType<typeof useCloudConnections>>;
@@ -56,6 +57,7 @@ function useProfileData(cloud: Cloud | null, tab: ProfileTab, clientUserId?: str
     return new WorkoutOccurrenceDraftRepository(db, actorUserId).observeWorkspace(value => {
       next({
         occurrences: value.occurrences.filter(row => row.entryKind !== 'personal_event' && belongs(row)),
+        drafts: (value.drafts ?? []).filter(belongs),
         sessions: (value.sessions ?? []).filter(belongs),
       });
     }, error);

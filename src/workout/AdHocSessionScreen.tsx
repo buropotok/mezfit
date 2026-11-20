@@ -79,6 +79,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const [finishConfirm, setFinishConfirm] = useState(false);
   const [deleteExerciseId, setDeleteExerciseId] = useState<string | null>(null);
   const [replaceExerciseId, setReplaceExerciseId] = useState<string | null>(null);
+  const [blockedExerciseAction, setBlockedExerciseAction] = useState<{ action: 'replace' | 'delete'; reason: string } | null>(null);
   const [replacementChoice, setReplacementChoice] = useState<{
     exerciseId: string; definitionId: string; compatible: boolean;
   } | null>(null);
@@ -90,7 +91,7 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
   const availableSession = useRef<ActiveWorkoutSession<string> | null>(null);
   const clearEditingSurfaces = useCallback(() => {
     setSelection(false); setFinishConfirm(false); setDeleteExerciseId(null);
-    setReplaceExerciseId(null); setReplacementChoice(null); setInformationExerciseId(null);
+    setReplaceExerciseId(null); setReplacementChoice(null); setBlockedExerciseAction(null); setInformationExerciseId(null);
   }, []);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
@@ -129,6 +130,19 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       if (alive.current) setBusy(pending.current > 0);
     });
   }, [sessionId, readOnly]);
+  const mutationBlockReason = (action: 'replace' | 'delete', id: string): string | null => {
+    const current = availableSession.current;
+    if (!current) return 'Тренировка недоступна.';
+    if (current.status !== 'active') return 'Тренировка завершена. Изменять упражнения нельзя.';
+    if (readOnly) return 'У вас нет прав редактировать упражнения этой тренировки.';
+    const exercise = current.exercises.find(item => item.sessionExerciseId === id);
+    if (!exercise) return 'Упражнение больше недоступно.';
+    if (current.occurrenceId && exercise.occurrenceExerciseId)
+      return 'Упражнение входит в зафиксированный план запущенной тренировки.';
+    if (action === 'replace' && (!repository.replaceExercise || !repository.replacementTrackingType))
+      return 'Замена упражнения не поддерживается в этом режиме выполнения.';
+    return null;
+  };
   const report = useCallback((reason: unknown) => {
     if (alive.current) setError(adHocErrorMessage(reason));
   }, []);
@@ -219,10 +233,22 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
         onAddExercise={() => { if (!pending.current) { setError(''); setReplaceExerciseId(null); setSelection(true); } }}
         onAddSet={id => { if (!pending.current) void mutate(() => repository.addSet(sessionId, id)).catch(report); }}
         onDeleteSet={id => mutate(() => repository.deleteSet(sessionId, id))}
-        onDeleteExercise={id => { if (!pending.current) setDeleteExerciseId(id); }}
-        onReplaceExercise={repository.replaceExercise && repository.replacementTrackingType ? id => {
-          if (!pending.current) { setError(''); setReplaceExerciseId(id); setSelection(true); }
-        } : undefined}
+        onDeleteExercise={id => {
+          if (pending.current) return;
+          const reason = mutationBlockReason('delete', id);
+          if (reason) setBlockedExerciseAction({ action: 'delete', reason });
+          else setDeleteExerciseId(id);
+        }}
+        onReplaceExercise={id => {
+          if (pending.current) return;
+          const reason = mutationBlockReason('replace', id);
+          if (reason) setBlockedExerciseAction({ action: 'replace', reason });
+          else { setError(''); setReplaceExerciseId(id); setSelection(true); }
+        }}
+        onUnavailableExerciseAction={(action, id) => {
+          const reason = mutationBlockReason(action, id);
+          setBlockedExerciseAction({ action, reason: reason ?? 'Это действие сейчас недоступно.' });
+        }}
         onExerciseInformation={onExerciseInformation ? id => {
           if (!pending.current) setInformationExerciseId(id);
         } : undefined}
@@ -309,11 +335,16 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
       </>}>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
     </MezfitDialog>
+    <MezfitDialog opened={blockedExerciseAction !== null} role="alertdialog"
+      title={blockedExerciseAction?.action === 'replace' ? 'Нельзя заменить упражнение' : 'Нельзя удалить упражнение'}
+      onBackdropClick={() => setBlockedExerciseAction(null)}
+      buttons={<MezfitDialogButton strong onClick={() => setBlockedExerciseAction(null)}>Понятно</MezfitDialogButton>}>
+      <Text variant="body">{blockedExerciseAction?.reason}</Text>
+    </MezfitDialog>
     <MezfitDialog opened={deleteExerciseId !== null}
-      title={session?.occurrenceId ? 'Тренировка была запущена. Удаление из плана невозможно.' : 'Удалить упражнение?'}
+      title="Удалить упражнение?"
       onBackdropClick={closeOverlay}
-      buttons={session?.occurrenceId
-        ? <MezfitDialogButton strong onClick={closeOverlay}>Понятно</MezfitDialogButton> : <>
+      buttons={<>
       <MezfitDialogButton disabled={busy} onClick={closeOverlay}>Отмена</MezfitDialogButton>
       <MezfitDialogButton strong tone="danger" disabled={busy} onClick={() => {
         if (!deleteExerciseId || pending.current) return;
@@ -323,9 +354,9 @@ export function AdHocSessionScreen({ repository, sessionId, initData, actor, pre
           if (alive.current) setDeleteExerciseId(null);
         }).catch(report);
       }}>Удалить</MezfitDialogButton>
-    </>}>{!session?.occurrenceId ? <>
+    </>}>
       <Text variant="body">Упражнение и его подходы будут удалены из этой тренировки.</Text>
       {error ? <Text variant="footnote" role="alert">{error}</Text> : null}
-    </> : null}</MezfitDialog>
+    </MezfitDialog>
   </section>;
 }

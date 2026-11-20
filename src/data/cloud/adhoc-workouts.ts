@@ -855,6 +855,7 @@ export class AdHocWorkoutRepository {
         const exerciseSets = sets.filter(set => set.exerciseId === row.id);
         const plannedExercise = session.occurrencePlan?.exercises.find(item => item.id === row.occurrenceExerciseId);
         return { discussionAnchor: anchor(row), sessionExerciseId: row.id, workoutSessionId: session.id, sourceProgramExerciseId: null,
+          occurrenceExerciseId: row.occurrenceExerciseId ?? null,
           position: row.position, status: exerciseSets.length > 0 && exerciseSets.every(set => set.setStatus !== 'pending')
             ? 'completed' : 'active', notes: row.notes, mediaUrl: row.exercise.mediaUrl,
           exercise: { id: row.exercise.exerciseDefinitionId, scope: row.exercise.scope === 'public' ? 'global' : row.exercise.scope, name: row.exercise.name,
