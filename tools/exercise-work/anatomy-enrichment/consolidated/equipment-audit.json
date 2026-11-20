@@ -1,0 +1,1463 @@
+{
+  "schema_version": 1,
+  "proposal_occurrences": 110,
+  "lexical_unique_candidate_ids": 82,
+  "candidate_conflicts": [
+    {
+      "id": "arm-blaster",
+      "original_ids": [
+        "arm-blaster",
+        "arm_blaster"
+      ],
+      "labels": [
+        "Изолятор для бицепса (Arm Blaster)",
+        "Армбластер (упор для рук)",
+        "Фиксатор рук Arm Blaster"
+      ],
+      "conflicts": [
+        "different_russian_labels"
+      ],
+      "existing_filter_matches": [],
+      "same_label_other_ids": []
+    },
+    {
+      "id": "door-frame",
+      "original_ids": [
+        "door-frame",
+        "door_frame"
+      ],
+      "labels": [
+        "Дверной проём (опора)",
+        "Дверной проём"
+      ],
+      "conflicts": [
+        "different_russian_labels"
+      ],
+      "existing_filter_matches": [],
+      "same_label_other_ids": []
+    },
+    {
+      "id": "lat-pulldown-machine",
+      "original_ids": [
+        "lat-pulldown-machine"
+      ],
+      "labels": [
+        "Тренажёр для вертикальной тяги",
+        "Тренажёр верхней тяги с упорами для бёдер"
+      ],
+      "conflicts": [
+        "different_russian_labels"
+      ],
+      "existing_filter_matches": [],
+      "same_label_other_ids": []
+    },
+    {
+      "id": "neck-harness",
+      "original_ids": [
+        "neck-harness",
+        "neck_harness"
+      ],
+      "labels": [
+        "Шейная лямка для тренировки мышц шеи",
+        "Шейная лямка для отягощений"
+      ],
+      "conflicts": [
+        "different_russian_labels"
+      ],
+      "existing_filter_matches": [],
+      "same_label_other_ids": []
+    },
+    {
+      "id": "pvc-pipe",
+      "original_ids": [
+        "pvc-pipe",
+        "pvc_pipe"
+      ],
+      "labels": [
+        "Гимнастическая ПВХ-палка",
+        "ПВХ-палка для тренировки движений"
+      ],
+      "conflicts": [
+        "different_russian_labels"
+      ],
+      "existing_filter_matches": [],
+      "same_label_other_ids": []
+    },
+    {
+      "id": "t-bar-row-machine",
+      "original_ids": [
+        "t-bar-row-machine"
+      ],
+      "labels": [
+        "Тренажёр для Т-грифа",
+        "Тренажёр Т-грифа для тяги"
+      ],
+      "conflicts": [
+        "different_russian_labels"
+      ],
+      "existing_filter_matches": [],
+      "same_label_other_ids": []
+    }
+  ],
+  "label_collisions": [],
+  "unmatched_equipment_usages": [],
+  "unused_equipment_proposals": [],
+  "invalid_proposal_refs": [],
+  "used_equipment": [
+    {
+      "id": "dumbbell",
+      "source_values": [
+        "dumbbell"
+      ],
+      "exercise_count": 148,
+      "existing_filter_ids": [
+        "dumbbell"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "cable",
+      "source_values": [
+        "cable"
+      ],
+      "exercise_count": 115,
+      "existing_filter_ids": [
+        "cable"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "bench",
+      "source_values": [
+        "bench"
+      ],
+      "exercise_count": 92,
+      "existing_filter_ids": [
+        "bench"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "no-equipment",
+      "source_values": [
+        "no equipment"
+      ],
+      "exercise_count": 66,
+      "existing_filter_ids": [
+        "no equipment"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "band",
+      "source_values": [
+        "band"
+      ],
+      "exercise_count": 63,
+      "existing_filter_ids": [
+        "band"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "barbell",
+      "source_values": [
+        "barbell"
+      ],
+      "exercise_count": 55,
+      "existing_filter_ids": [
+        "barbell"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "none",
+      "source_values": [
+        "none"
+      ],
+      "exercise_count": 52,
+      "existing_filter_ids": [
+        "none"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "incline-bench",
+      "source_values": [
+        "incline bench"
+      ],
+      "exercise_count": 37,
+      "existing_filter_ids": [
+        "incline bench"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "pull-up-bar",
+      "source_values": [
+        "pull-up bar"
+      ],
+      "exercise_count": 35,
+      "existing_filter_ids": [
+        "pull-up bar"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "box",
+      "source_values": [
+        "box"
+      ],
+      "exercise_count": 24,
+      "existing_filter_ids": [
+        "box"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "gymstick",
+      "source_values": [
+        "gymstick"
+      ],
+      "exercise_count": 22,
+      "existing_filter_ids": [
+        "gymstick"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "wall",
+      "source_values": [
+        "wall"
+      ],
+      "exercise_count": 21,
+      "existing_filter_ids": [
+        "wall"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "smith-machine",
+      "source_values": [
+        "smith machine"
+      ],
+      "exercise_count": 18,
+      "existing_filter_ids": [
+        "smith machine"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "medicine-ball",
+      "source_values": [
+        "medicine ball"
+      ],
+      "exercise_count": 15,
+      "existing_filter_ids": [
+        "medicine ball"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "other",
+      "source_values": [
+        "other"
+      ],
+      "exercise_count": 12,
+      "existing_filter_ids": [
+        "other"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "chest-press-machine",
+      "source_values": [
+        "chest-press-machine"
+      ],
+      "exercise_count": 11,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "chest-press-machine"
+      ]
+    },
+    {
+      "id": "ez-bar",
+      "source_values": [
+        "ez bar"
+      ],
+      "exercise_count": 11,
+      "existing_filter_ids": [
+        "ez bar"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "preacher-bench",
+      "source_values": [
+        "preacher-bench",
+        "preacher_bench"
+      ],
+      "exercise_count": 8,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "preacher-bench"
+      ]
+    },
+    {
+      "id": "dip-bars",
+      "source_values": [
+        "dip bars"
+      ],
+      "exercise_count": 7,
+      "existing_filter_ids": [
+        "dip bars"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "dumbbells",
+      "source_values": [
+        "dumbbells"
+      ],
+      "exercise_count": 7,
+      "existing_filter_ids": [
+        "dumbbells"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "foam-roller",
+      "source_values": [
+        "foam roller"
+      ],
+      "exercise_count": 7,
+      "existing_filter_ids": [
+        "foam roller"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "kettlebell",
+      "source_values": [
+        "kettlebell"
+      ],
+      "exercise_count": 7,
+      "existing_filter_ids": [
+        "kettlebell"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "power-rack",
+      "source_values": [
+        "power-rack",
+        "power_rack"
+      ],
+      "exercise_count": 7,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "power-rack"
+      ]
+    },
+    {
+      "id": "stability-ball",
+      "source_values": [
+        "stability ball"
+      ],
+      "exercise_count": 7,
+      "existing_filter_ids": [
+        "stability ball"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "leg-press-machine",
+      "source_values": [
+        "leg-press-machine"
+      ],
+      "exercise_count": 6,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "leg-press-machine"
+      ]
+    },
+    {
+      "id": "leg-curl-machine",
+      "source_values": [
+        "leg-curl-machine"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "leg-curl-machine"
+      ]
+    },
+    {
+      "id": "neck-harness",
+      "source_values": [
+        "neck-harness",
+        "neck_harness"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "neck-harness"
+      ]
+    },
+    {
+      "id": "pec-deck-machine",
+      "source_values": [
+        "pec-deck-machine",
+        "pec_deck_machine"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "pec-deck-machine"
+      ]
+    },
+    {
+      "id": "plate",
+      "source_values": [
+        "plate"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [
+        "plate"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "plyo-box",
+      "source_values": [
+        "plyo box"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [
+        "plyo box"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "trx",
+      "source_values": [
+        "trx"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [
+        "trx"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "weight-plate",
+      "source_values": [
+        "weight plate"
+      ],
+      "exercise_count": 5,
+      "existing_filter_ids": [
+        "weight plate"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "ab-crunch-machine",
+      "source_values": [
+        "ab-crunch-machine"
+      ],
+      "exercise_count": 4,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "ab-crunch-machine"
+      ]
+    },
+    {
+      "id": "hack-squat-machine",
+      "source_values": [
+        "hack-squat-machine",
+        "hack_squat_machine"
+      ],
+      "exercise_count": 4,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hack-squat-machine"
+      ]
+    },
+    {
+      "id": "lat-pulldown-machine",
+      "source_values": [
+        "lat-pulldown-machine"
+      ],
+      "exercise_count": 4,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "lat-pulldown-machine"
+      ]
+    },
+    {
+      "id": "leg-extension-machine",
+      "source_values": [
+        "leg-extension-machine"
+      ],
+      "exercise_count": 4,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "leg-extension-machine"
+      ]
+    },
+    {
+      "id": "resistance-band",
+      "source_values": [
+        "resistance band"
+      ],
+      "exercise_count": 4,
+      "existing_filter_ids": [
+        "resistance band"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "arm-blaster",
+      "source_values": [
+        "arm-blaster",
+        "arm_blaster"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "arm-blaster"
+      ]
+    },
+    {
+      "id": "assisted-dip-pull-up-machine",
+      "source_values": [
+        "assisted-dip-pull-up-machine"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "assisted-dip-pull-up-machine"
+      ]
+    },
+    {
+      "id": "biceps-curl-machine",
+      "source_values": [
+        "biceps-curl-machine"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "biceps-curl-machine"
+      ]
+    },
+    {
+      "id": "chair",
+      "source_values": [
+        "chair"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "chair"
+      ]
+    },
+    {
+      "id": "glute-kickback-machine",
+      "source_values": [
+        "glute-kickback-machine"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "glute-kickback-machine"
+      ]
+    },
+    {
+      "id": "hip-abduction-machine",
+      "source_values": [
+        "hip-abduction-machine"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hip-abduction-machine"
+      ]
+    },
+    {
+      "id": "shoulder-press-machine",
+      "source_values": [
+        "shoulder-press-machine"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "shoulder-press-machine"
+      ]
+    },
+    {
+      "id": "t-bar-row-machine",
+      "source_values": [
+        "t-bar-row-machine"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "t-bar-row-machine"
+      ]
+    },
+    {
+      "id": "towel",
+      "source_values": [
+        "towel"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "towel"
+      ]
+    },
+    {
+      "id": "treadmill",
+      "source_values": [
+        "treadmill"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [
+        "treadmill"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "weighted-vest",
+      "source_values": [
+        "weighted_vest"
+      ],
+      "exercise_count": 3,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "weighted-vest"
+      ]
+    },
+    {
+      "id": "back-extension-bench",
+      "source_values": [
+        "back_extension_bench"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "back-extension-bench"
+      ]
+    },
+    {
+      "id": "bike",
+      "source_values": [
+        "bike"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [
+        "bike"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "bosu-balance-trainer",
+      "source_values": [
+        "bosu-balance-trainer"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "bosu-balance-trainer"
+      ]
+    },
+    {
+      "id": "cable-rope-handle",
+      "source_values": [
+        "cable-rope-handle"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "cable-rope-handle"
+      ]
+    },
+    {
+      "id": "dip-machine",
+      "source_values": [
+        "dip-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "dip-machine"
+      ]
+    },
+    {
+      "id": "door-frame",
+      "source_values": [
+        "door-frame",
+        "door_frame"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "door-frame"
+      ]
+    },
+    {
+      "id": "gymnastic-rings",
+      "source_values": [
+        "gymnastic_rings",
+        "gymnastic-rings"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "gymnastic-rings"
+      ]
+    },
+    {
+      "id": "hip-adduction-machine",
+      "source_values": [
+        "hip-adduction-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hip-adduction-machine"
+      ]
+    },
+    {
+      "id": "landmine",
+      "source_values": [
+        "landmine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [
+        "landmine"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "lateral-raise-machine",
+      "source_values": [
+        "lateral-raise-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "lateral-raise-machine"
+      ]
+    },
+    {
+      "id": "neck-training-machine",
+      "source_values": [
+        "neck-training-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "neck-training-machine"
+      ]
+    },
+    {
+      "id": "pvc-pipe",
+      "source_values": [
+        "pvc-pipe",
+        "pvc_pipe"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "pvc-pipe"
+      ]
+    },
+    {
+      "id": "roman-chair",
+      "source_values": [
+        "roman-chair"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "roman-chair"
+      ]
+    },
+    {
+      "id": "rope",
+      "source_values": [
+        "rope"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [
+        "rope"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "seated-row-machine",
+      "source_values": [
+        "seated-row-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "seated-row-machine"
+      ]
+    },
+    {
+      "id": "shrug-machine",
+      "source_values": [
+        "shrug-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "shrug-machine"
+      ]
+    },
+    {
+      "id": "torso-rotation-machine",
+      "source_values": [
+        "torso-rotation-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "torso-rotation-machine"
+      ]
+    },
+    {
+      "id": "tractor-tire",
+      "source_values": [
+        "tractor-tire"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "tractor-tire"
+      ]
+    },
+    {
+      "id": "trap-bar",
+      "source_values": [
+        "trap bar"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [
+        "trap bar"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "triceps-extension-machine",
+      "source_values": [
+        "triceps-extension-machine"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "triceps-extension-machine"
+      ]
+    },
+    {
+      "id": "v-bar-attachment",
+      "source_values": [
+        "v_bar_attachment"
+      ],
+      "exercise_count": 2,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "v-bar-attachment"
+      ]
+    },
+    {
+      "id": "ab-coaster-machine",
+      "source_values": [
+        "ab-coaster-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "ab-coaster-machine"
+      ]
+    },
+    {
+      "id": "ab-roller-crunch-machine",
+      "source_values": [
+        "ab-roller-crunch-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "ab-roller-crunch-machine"
+      ]
+    },
+    {
+      "id": "ab-straps",
+      "source_values": [
+        "ab-straps"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "ab-straps"
+      ]
+    },
+    {
+      "id": "ab-wheel",
+      "source_values": [
+        "ab-wheel"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "ab-wheel"
+      ]
+    },
+    {
+      "id": "air-bike",
+      "source_values": [
+        "air-bike"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "air-bike"
+      ]
+    },
+    {
+      "id": "battle-rope",
+      "source_values": [
+        "battle-rope"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "battle-rope"
+      ]
+    },
+    {
+      "id": "belt-squat-machine",
+      "source_values": [
+        "belt-squat-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "belt-squat-machine"
+      ]
+    },
+    {
+      "id": "bicycle",
+      "source_values": [
+        "bicycle"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "bicycle"
+      ]
+    },
+    {
+      "id": "captains-chair",
+      "source_values": [
+        "captains_chair"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "captains-chair"
+      ]
+    },
+    {
+      "id": "deadlift-machine",
+      "source_values": [
+        "deadlift-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "deadlift-machine"
+      ]
+    },
+    {
+      "id": "dip-belt",
+      "source_values": [
+        "dip_belt"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "dip-belt"
+      ]
+    },
+    {
+      "id": "donkey-calf-raise-machine",
+      "source_values": [
+        "donkey-calf-raise-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "donkey-calf-raise-machine"
+      ]
+    },
+    {
+      "id": "elliptical-trainer",
+      "source_values": [
+        "elliptical-trainer"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "elliptical-trainer"
+      ]
+    },
+    {
+      "id": "hand-gripper",
+      "source_values": [
+        "hand-gripper"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hand-gripper"
+      ]
+    },
+    {
+      "id": "head-harness",
+      "source_values": [
+        "head-harness"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "head-harness"
+      ]
+    },
+    {
+      "id": "high-row-machine",
+      "source_values": [
+        "high-row-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "high-row-machine"
+      ]
+    },
+    {
+      "id": "hip-flexion-machine",
+      "source_values": [
+        "hip-flexion-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hip-flexion-machine"
+      ]
+    },
+    {
+      "id": "hip-thrust-machine",
+      "source_values": [
+        "hip-thrust-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hip-thrust-machine"
+      ]
+    },
+    {
+      "id": "horizontal-leg-press-machine",
+      "source_values": [
+        "horizontal-leg-press-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "horizontal-leg-press-machine"
+      ]
+    },
+    {
+      "id": "hurdle",
+      "source_values": [
+        "hurdle"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "hurdle"
+      ]
+    },
+    {
+      "id": "jump-rope",
+      "source_values": [
+        "jump rope"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [
+        "jump rope"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "mat",
+      "source_values": [
+        "mat"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [
+        "mat"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "monkey-bars",
+      "source_values": [
+        "monkey_bars"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "monkey-bars"
+      ]
+    },
+    {
+      "id": "nordic-curl-bench",
+      "source_values": [
+        "nordic-curl-bench"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "nordic-curl-bench"
+      ]
+    },
+    {
+      "id": "pendulum-squat-machine",
+      "source_values": [
+        "pendulum_squat_machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "pendulum-squat-machine"
+      ]
+    },
+    {
+      "id": "plate-loaded-seated-row-machine",
+      "source_values": [
+        "plate_loaded_seated_row_machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "plate-loaded-seated-row-machine"
+      ]
+    },
+    {
+      "id": "plate-loaded-shoulder-press-machine",
+      "source_values": [
+        "plate_loaded_shoulder_press_machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "plate-loaded-shoulder-press-machine"
+      ]
+    },
+    {
+      "id": "pullover-machine",
+      "source_values": [
+        "pullover-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "pullover-machine"
+      ]
+    },
+    {
+      "id": "push-up-bars",
+      "source_values": [
+        "push_up_bars"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "push-up-bars"
+      ]
+    },
+    {
+      "id": "reaction-ball",
+      "source_values": [
+        "reaction_ball"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "reaction-ball"
+      ]
+    },
+    {
+      "id": "reverse-hyperextension-machine",
+      "source_values": [
+        "reverse-hyperextension-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "reverse-hyperextension-machine"
+      ]
+    },
+    {
+      "id": "rowing-machine",
+      "source_values": [
+        "rowing machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [
+        "rowing machine"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "seated-back-extension-machine",
+      "source_values": [
+        "seated-back-extension-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "seated-back-extension-machine"
+      ]
+    },
+    {
+      "id": "seated-cable-row-machine",
+      "source_values": [
+        "seated-cable-row-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "seated-cable-row-machine"
+      ]
+    },
+    {
+      "id": "seated-calf-raise-machine",
+      "source_values": [
+        "seated-calf-raise-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "seated-calf-raise-machine"
+      ]
+    },
+    {
+      "id": "ski-ergometer",
+      "source_values": [
+        "ski-ergometer"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "ski-ergometer"
+      ]
+    },
+    {
+      "id": "sledgehammer",
+      "source_values": [
+        "sledgehammer"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "sledgehammer"
+      ]
+    },
+    {
+      "id": "squat-wedge",
+      "source_values": [
+        "squat-wedge"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "squat-wedge"
+      ]
+    },
+    {
+      "id": "stair-climber-machine",
+      "source_values": [
+        "stair-climber-machine"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "stair-climber-machine"
+      ]
+    },
+    {
+      "id": "stationary-bike",
+      "source_values": [
+        "stationary bike"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [
+        "stationary bike"
+      ],
+      "proposed_ids": []
+    },
+    {
+      "id": "strongman-log",
+      "source_values": [
+        "strongman-log"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "strongman-log"
+      ]
+    },
+    {
+      "id": "table",
+      "source_values": [
+        "table"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "table"
+      ]
+    },
+    {
+      "id": "upper-body-ergometer",
+      "source_values": [
+        "upper-body-ergometer"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "upper-body-ergometer"
+      ]
+    },
+    {
+      "id": "v-grip-attachment",
+      "source_values": [
+        "v-grip-attachment"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "v-grip-attachment"
+      ]
+    },
+    {
+      "id": "vertical-pole",
+      "source_values": [
+        "vertical-pole"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "vertical-pole"
+      ]
+    },
+    {
+      "id": "vibration-plate",
+      "source_values": [
+        "vibration_plate"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "vibration-plate"
+      ]
+    },
+    {
+      "id": "water-bottle",
+      "source_values": [
+        "water_bottle"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "water-bottle"
+      ]
+    },
+    {
+      "id": "wrist-roller",
+      "source_values": [
+        "wrist_roller"
+      ],
+      "exercise_count": 1,
+      "existing_filter_ids": [],
+      "proposed_ids": [
+        "wrist-roller"
+      ]
+    }
+  ],
+  "semantic_review_pairs": [
+    {
+      "ids": [
+        "neck-harness",
+        "head-harness"
+      ],
+      "reason": "Шейные упряжи/лямки могут обозначать одно устройство. Сравнить конструкцию и целевые упражнения, не создавать два идентичных фильтра."
+    },
+    {
+      "ids": [
+        "v-bar-attachment",
+        "v-grip-attachment"
+      ],
+      "reason": "Два предложения для V-образной рукояти: проверить эквивалентность конструкции и стандартизовать русское название."
+    },
+    {
+      "ids": [
+        "seated-row-machine",
+        "seated-cable-row-machine"
+      ],
+      "reason": "Оба обозначают горизонтальную тягу сидя; проверить, является ли второе лишь кабельным вариантом общего первого."
+    },
+    {
+      "ids": [
+        "seated-row-machine",
+        "plate-loaded-seated-row-machine"
+      ],
+      "reason": "Проверить, оправдано ли разделение общего тренажёра горизонтальной тяги и рычажного варианта с дисками."
+    },
+    {
+      "ids": [
+        "shoulder-press-machine",
+        "plate-loaded-shoulder-press-machine"
+      ],
+      "reason": "Сравнить общий тренажёр жима плечами и рычажную разновидность, чтобы не продублировать пользовательский фильтр."
+    },
+    {
+      "ids": [
+        "roman-chair",
+        "back-extension-bench"
+      ],
+      "reason": "Названия «римский стул» и «скамья для гиперэкстензии» часто перекрываются, но конструкции могут различаться; проверить источники."
+    },
+    {
+      "ids": [
+        "cable-rope-handle",
+        "rope"
+      ],
+      "reason": "Сопоставить новую канатную рукоять для блока с существующим оборудованием rope («Канат») — значение общего фильтра может быть шире."
+    },
+    {
+      "ids": [
+        "bicycle",
+        "bike"
+      ],
+      "reason": "Проверить, относится ли bicycle к обычному велосипеду, а существующее bike — к велотренажёру; не сливать без подтверждения."
+    }
+  ],
+  "notes": "Lexical grouping only; full semantic deduplication and final label approval remain open."
+}

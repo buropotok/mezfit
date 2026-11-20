@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "scope": "agent candidate results (patches), not fully materialized exercise cards",
+  "catalogue_count": 1173,
+  "unique_ids": 1173,
+  "batch_counts": {
+    "B001": 100,
+    "B002": 100,
+    "B003": 100,
+    "B004": 100,
+    "B005": 100,
+    "B006": 100,
+    "B007": 100,
+    "B008": 100,
+    "B009": 100,
+    "B010": 100,
+    "B011": 100,
+    "B012": 73
+  },
+  "counts": {
+    "status": {
+      "partial": 759,
+      "needs_review": 194,
+      "verified": 216,
+      "unchanged": 4
+    },
+    "muscles_other": {
+      "primary": 182,
+      "secondary": 342,
+      "stabilizers": 636
+    },
+    "equipment_other": 12,
+    "category_other": 12,
+    "empty_role_arrays": 0,
+    "equipment_patched": 839,
+    "anatomy_patched": 1169,
+    "category_patched": 86
+  },
+  "source_status_at_capture": [
+    {
+      "batch": "B011",
+      "status": "in_progress",
+      "pinned_commit": "7f282be542978080192fffe475268318b5a546de"
+    }
+  ],
+  "source_status_latest": {
+    "B001": "completed",
+    "B002": "completed",
+    "B003": "completed",
+    "B004": "completed",
+    "B005": "completed",
+    "B006": "completed",
+    "B007": "completed",
+    "B008": "completed",
+    "B009": "completed",
+    "B010": "completed",
+    "B011": "in_progress",
+    "B012": "completed"
+  },
+  "issue_count": 0,
+  "issues": []
+}

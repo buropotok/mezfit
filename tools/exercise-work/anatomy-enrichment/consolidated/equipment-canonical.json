@@ -1,0 +1,1232 @@
+{
+  "schema_version": 1,
+  "scope": "FitnessProgramer Base 2 / PR #845 — approved equipment vocabulary; research data only, not a deployed UI filter or migrated exercise catalogue",
+  "sources": [
+    "equipment-candidates.json",
+    "equipment-audit.json",
+    "consolidated-index.json",
+    "src/data/exercises/publicExerciseFilters.ts"
+  ],
+  "notes": [
+    "id is the canonical value to use in the next integration stage; id_aliases are exact source spellings or retired proposal IDs. No exercise-card JSON is rewritten by this file.",
+    "label_ru_aliases preserve the alternative Russian labels actually proposed by the agents; the canonical six conflicting labels follow the owner's approval.",
+    "Existing exact ID spellings containing spaces are retained where they are already used by the catalogue. The five obvious existing synonyms were grouped using the app's identical Russian filter labels; they do not imply a new equipment design decision.",
+    "The separately approved eight semantic reviews comprise three merges and five intentionally distinct pairs. Equal-looking equipment must not be merged by label alone.",
+    "The research placeholder 'other' occurs 12 times in source patches but is not a physical equipment type, so it is not included here. The approved exercise-specific resolutions must be applied when integrating those patches; this file does not mutate them.",
+    "walk-wave-machine was approved as a concrete replacement for an 'other' occurrence but was absent from agents' 82 candidate proposals; its Russian display name is a working translation and is flagged accordingly.",
+    "B011 evidence status remains as captured in source-snapshot.json; this reference data does not rewrite the immutable source snapshot."
+  ],
+  "statistics": {
+    "agent_proposal_occurrences": 110,
+    "lexical_candidate_ids": 82,
+    "equipment_ids_in_candidate_patches": 117,
+    "approved_semantic_merges": 3,
+    "distinct_semantic_pairs": 5,
+    "existing_filter_alias_groups": 5,
+    "new_types_from_other_resolution": 1,
+    "canonical_entries": 109
+  },
+  "decisions": {
+    "merge_equivalent_candidate_ids": [
+      {
+        "canonical_id": "neck-harness",
+        "merged_ids": [
+          "head-harness"
+        ]
+      },
+      {
+        "canonical_id": "v-bar-attachment",
+        "merged_ids": [
+          "v-grip-attachment"
+        ]
+      },
+      {
+        "canonical_id": "roman-chair",
+        "merged_ids": [
+          "back-extension-bench"
+        ]
+      }
+    ],
+    "keep_distinct": [
+      [
+        "seated-row-machine",
+        "seated-cable-row-machine"
+      ],
+      [
+        "seated-row-machine",
+        "plate-loaded-seated-row-machine"
+      ],
+      [
+        "shoulder-press-machine",
+        "plate-loaded-shoulder-press-machine"
+      ],
+      [
+        "rope",
+        "cable-rope-handle"
+      ],
+      [
+        "bicycle",
+        "bike"
+      ]
+    ],
+    "existing_filter_aliases": [
+      {
+        "canonical_id": "none",
+        "merged_ids": [
+          "no equipment"
+        ]
+      },
+      {
+        "canonical_id": "dumbbell",
+        "merged_ids": [
+          "dumbbells"
+        ]
+      },
+      {
+        "canonical_id": "band",
+        "merged_ids": [
+          "resistance band"
+        ]
+      },
+      {
+        "canonical_id": "weight plate",
+        "merged_ids": [
+          "plate"
+        ]
+      },
+      {
+        "canonical_id": "bike",
+        "merged_ids": [
+          "stationary bike"
+        ]
+      }
+    ],
+    "approved_russian_labels": {
+      "arm-blaster": "Армбластер (изолятор для бицепса)",
+      "door-frame": "Дверной проём",
+      "lat-pulldown-machine": "Тренажёр для вертикальной тяги",
+      "neck-harness": "Шейная упряжь",
+      "pvc-pipe": "Гимнастическая ПВХ-палка",
+      "t-bar-row-machine": "Тренажёр для тяги Т-грифа"
+    }
+  },
+  "placeholder_not_equipment": {
+    "id": "other",
+    "label_ru": "Другое оборудование",
+    "source_patch_occurrences": 12
+  },
+  "equipment": [
+    {
+      "id": "ab-coaster-machine",
+      "label_ru": "Тренажёр Ab Coaster",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "ab-crunch-machine",
+      "label_ru": "Тренажёр для скручиваний",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "ab-roller-crunch-machine",
+      "label_ru": "Тренажёр Ab Roller Crunch для скручиваний",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B003"
+      ]
+    },
+    {
+      "id": "ab-straps",
+      "label_ru": "Подвесные петли для пресса",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B003"
+      ]
+    },
+    {
+      "id": "ab-wheel",
+      "label_ru": "Ролик для пресса",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B003"
+      ]
+    },
+    {
+      "id": "air-bike",
+      "label_ru": "Аэробайк",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B003"
+      ]
+    },
+    {
+      "id": "arm-blaster",
+      "label_ru": "Армбластер (изолятор для бицепса)",
+      "id_aliases": [
+        "arm_blaster"
+      ],
+      "label_ru_aliases": [
+        "Армбластер (упор для рук)",
+        "Изолятор для бицепса (Arm Blaster)",
+        "Фиксатор рук Arm Blaster"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B003",
+        "B004",
+        "B005"
+      ]
+    },
+    {
+      "id": "assisted-dip-pull-up-machine",
+      "label_ru": "Гравитрон",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B003"
+      ]
+    },
+    {
+      "id": "band",
+      "label_ru": "Резинка",
+      "id_aliases": [
+        "resistance band"
+      ],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "barbell",
+      "label_ru": "Штанга",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "battle-rope",
+      "label_ru": "Боевые канаты",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B004"
+      ]
+    },
+    {
+      "id": "belt-squat-machine",
+      "label_ru": "Тренажёр для приседаний с поясом",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B004"
+      ]
+    },
+    {
+      "id": "bench",
+      "label_ru": "Скамья",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "biceps-curl-machine",
+      "label_ru": "Тренажёр для сгибания рук",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "bicycle",
+      "label_ru": "Велосипед",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009"
+      ]
+    },
+    {
+      "id": "bike",
+      "label_ru": "Велотренажёр",
+      "id_aliases": [
+        "stationary bike"
+      ],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "bosu-balance-trainer",
+      "label_ru": "Балансировочная полусфера BOSU",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B004",
+        "B007"
+      ]
+    },
+    {
+      "id": "box",
+      "label_ru": "Платформа",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "cable",
+      "label_ru": "Тросовый блок",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "cable-rope-handle",
+      "label_ru": "Канатная рукоять для блочного тренажёра",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B010"
+      ]
+    },
+    {
+      "id": "captains-chair",
+      "label_ru": "Тренажёр «Капитанский стул»",
+      "id_aliases": [
+        "captains_chair"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B005"
+      ]
+    },
+    {
+      "id": "chair",
+      "label_ru": "Стул",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B005",
+        "B009"
+      ]
+    },
+    {
+      "id": "chest-press-machine",
+      "label_ru": "Тренажёр для жима от груди",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "deadlift-machine",
+      "label_ru": "Тренажёр для становой тяги",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "dip bars",
+      "label_ru": "Брусья",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "dip-belt",
+      "label_ru": "Пояс для подвешивания отягощений",
+      "id_aliases": [
+        "dip_belt"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B012"
+      ]
+    },
+    {
+      "id": "dip-machine",
+      "label_ru": "Тренажёр для отжиманий на брусьях",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "donkey-calf-raise-machine",
+      "label_ru": "Тренажёр для ослиных подъёмов на носки",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "door-frame",
+      "label_ru": "Дверной проём",
+      "id_aliases": [
+        "door_frame"
+      ],
+      "label_ru_aliases": [
+        "Дверной проём (опора)"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B004",
+        "B005"
+      ]
+    },
+    {
+      "id": "dumbbell",
+      "label_ru": "Гантели",
+      "id_aliases": [
+        "dumbbells"
+      ],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "elliptical-trainer",
+      "label_ru": "Эллиптический тренажёр",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "ez bar",
+      "label_ru": "EZ-гриф",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "foam roller",
+      "label_ru": "Массажный ролик",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "glute-kickback-machine",
+      "label_ru": "Тренажёр для отведения ноги назад",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "gymnastic-rings",
+      "label_ru": "Гимнастические кольца",
+      "id_aliases": [
+        "gymnastic_rings"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009",
+        "B010"
+      ]
+    },
+    {
+      "id": "gymstick",
+      "label_ru": "Гимстик",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "hack-squat-machine",
+      "label_ru": "Гакк-тренажёр",
+      "id_aliases": [
+        "hack_squat_machine"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B007",
+        "B009"
+      ]
+    },
+    {
+      "id": "hand-gripper",
+      "label_ru": "Кистевой эспандер",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B007"
+      ]
+    },
+    {
+      "id": "high-row-machine",
+      "label_ru": "Тренажёр для высокой тяги",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "hip-abduction-machine",
+      "label_ru": "Тренажёр для отведения бёдер",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "hip-adduction-machine",
+      "label_ru": "Тренажёр для приведения бёдер",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "hip-flexion-machine",
+      "label_ru": "Тренажёр для подъёма ноги вперёд",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "hip-thrust-machine",
+      "label_ru": "Тренажёр для ягодичного моста",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "horizontal-leg-press-machine",
+      "label_ru": "Горизонтальный тренажёр для жима ногами",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B007"
+      ]
+    },
+    {
+      "id": "hurdle",
+      "label_ru": "Барьер для прыжков",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B005"
+      ]
+    },
+    {
+      "id": "incline bench",
+      "label_ru": "Наклонная скамья",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "jump rope",
+      "label_ru": "Скакалка",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "kettlebell",
+      "label_ru": "Гиря",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "landmine",
+      "label_ru": "Лэндмайн",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "lat-pulldown-machine",
+      "label_ru": "Тренажёр для вертикальной тяги",
+      "id_aliases": [],
+      "label_ru_aliases": [
+        "Тренажёр верхней тяги с упорами для бёдер"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B002",
+        "B008"
+      ]
+    },
+    {
+      "id": "lateral-raise-machine",
+      "label_ru": "Тренажёр для махов в стороны",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "leg-curl-machine",
+      "label_ru": "Тренажёр для сгибания ног",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B008",
+        "B010"
+      ]
+    },
+    {
+      "id": "leg-extension-machine",
+      "label_ru": "Тренажёр для разгибания ног",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B008",
+        "B010"
+      ]
+    },
+    {
+      "id": "leg-press-machine",
+      "label_ru": "Тренажёр для жима ногами",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B008",
+        "B010"
+      ]
+    },
+    {
+      "id": "mat",
+      "label_ru": "Коврик",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "medicine ball",
+      "label_ru": "Медбол",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "monkey-bars",
+      "label_ru": "Рукоход",
+      "id_aliases": [
+        "monkey_bars"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B005"
+      ]
+    },
+    {
+      "id": "neck-harness",
+      "label_ru": "Шейная упряжь",
+      "id_aliases": [
+        "head-harness",
+        "neck_harness"
+      ],
+      "label_ru_aliases": [
+        "Шейная лямка для отягощений",
+        "Шейная лямка для тренировки мышц шеи",
+        "Шейная упряжь для отягощений"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B002",
+        "B008",
+        "B012"
+      ]
+    },
+    {
+      "id": "neck-training-machine",
+      "label_ru": "Тренажёр для мышц шеи",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "none",
+      "label_ru": "Без оборудования",
+      "id_aliases": [
+        "no equipment"
+      ],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "nordic-curl-bench",
+      "label_ru": "Скамья Nordic Curl с фиксаторами голеней",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B008"
+      ]
+    },
+    {
+      "id": "pec-deck-machine",
+      "label_ru": "Тренажёр «Бабочка»",
+      "id_aliases": [
+        "pec_deck_machine"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B009"
+      ]
+    },
+    {
+      "id": "pendulum-squat-machine",
+      "label_ru": "Маятниковый тренажёр для приседаний",
+      "id_aliases": [
+        "pendulum_squat_machine"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009"
+      ]
+    },
+    {
+      "id": "plate-loaded-seated-row-machine",
+      "label_ru": "Рычажный тренажёр для горизонтальной тяги",
+      "id_aliases": [
+        "plate_loaded_seated_row_machine"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009"
+      ]
+    },
+    {
+      "id": "plate-loaded-shoulder-press-machine",
+      "label_ru": "Рычажный тренажёр для жима плечами",
+      "id_aliases": [
+        "plate_loaded_shoulder_press_machine"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009"
+      ]
+    },
+    {
+      "id": "plyo box",
+      "label_ru": "Плиобокс",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "power-rack",
+      "label_ru": "Силовая рама со страховочными упорами",
+      "id_aliases": [
+        "power_rack"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B004",
+        "B007",
+        "B009",
+        "B011"
+      ]
+    },
+    {
+      "id": "preacher-bench",
+      "label_ru": "Скамья Скотта",
+      "id_aliases": [
+        "preacher_bench"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B002",
+        "B005",
+        "B006",
+        "B012"
+      ]
+    },
+    {
+      "id": "pull-up bar",
+      "label_ru": "Турник",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "pullover-machine",
+      "label_ru": "Тренажёр для пуловера",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "push-up-bars",
+      "label_ru": "Упоры для отжиманий",
+      "id_aliases": [
+        "push_up_bars"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009"
+      ]
+    },
+    {
+      "id": "pvc-pipe",
+      "label_ru": "Гимнастическая ПВХ-палка",
+      "id_aliases": [
+        "pvc_pipe"
+      ],
+      "label_ru_aliases": [
+        "ПВХ-палка для тренировки движений"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B007",
+        "B009"
+      ]
+    },
+    {
+      "id": "reaction-ball",
+      "label_ru": "Реакционный мяч",
+      "id_aliases": [
+        "reaction_ball"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B009"
+      ]
+    },
+    {
+      "id": "reverse-hyperextension-machine",
+      "label_ru": "Тренажёр для обратной гиперэкстензии",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "roman-chair",
+      "label_ru": "Римский стул",
+      "id_aliases": [
+        "back_extension_bench",
+        "back-extension-bench"
+      ],
+      "label_ru_aliases": [
+        "Скамья для гиперэкстензии"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B004",
+        "B007",
+        "B012"
+      ]
+    },
+    {
+      "id": "rope",
+      "label_ru": "Канат",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "rowing machine",
+      "label_ru": "Гребной тренажёр",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "seated-back-extension-machine",
+      "label_ru": "Сидячий тренажёр для разгибания спины",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B010"
+      ]
+    },
+    {
+      "id": "seated-cable-row-machine",
+      "label_ru": "Тренажёр для горизонтальной тяги сидя",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B002"
+      ]
+    },
+    {
+      "id": "seated-calf-raise-machine",
+      "label_ru": "Тренажёр для подъёмов на носки сидя",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "seated-row-machine",
+      "label_ru": "Тренажёр для горизонтальной тяги",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "shoulder-press-machine",
+      "label_ru": "Тренажёр для жима плечами",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "shrug-machine",
+      "label_ru": "Тренажёр для шрагов",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "ski-ergometer",
+      "label_ru": "Лыжный эргометр SkiErg",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B011"
+      ]
+    },
+    {
+      "id": "sledgehammer",
+      "label_ru": "Тренировочная кувалда",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B011"
+      ]
+    },
+    {
+      "id": "smith machine",
+      "label_ru": "Тренажёр Смита",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "squat-wedge",
+      "label_ru": "Клин для подъёма пяток",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B007"
+      ]
+    },
+    {
+      "id": "stability ball",
+      "label_ru": "Фитбол",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "stair-climber-machine",
+      "label_ru": "Лестничный кардиотренажёр",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "strongman-log",
+      "label_ru": "Силовое бревно для стронгмена",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B008"
+      ]
+    },
+    {
+      "id": "t-bar-row-machine",
+      "label_ru": "Тренажёр для тяги Т-грифа",
+      "id_aliases": [],
+      "label_ru_aliases": [
+        "Тренажёр для Т-грифа",
+        "Тренажёр Т-грифа для тяги"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B011"
+      ]
+    },
+    {
+      "id": "table",
+      "label_ru": "Устойчивый гимнастический/бытовой стол",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B011"
+      ]
+    },
+    {
+      "id": "torso-rotation-machine",
+      "label_ru": "Тренажёр для вращения корпуса",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "towel",
+      "label_ru": "Полотенце для упражнений",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B008",
+        "B011"
+      ]
+    },
+    {
+      "id": "tractor-tire",
+      "label_ru": "Большая покрышка для силовых упражнений",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B011"
+      ]
+    },
+    {
+      "id": "trap bar",
+      "label_ru": "Трэп-гриф",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "treadmill",
+      "label_ru": "Беговая дорожка",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "triceps-extension-machine",
+      "label_ru": "Тренажёр для разгибания рук",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001"
+      ]
+    },
+    {
+      "id": "trx",
+      "label_ru": "Подвесные петли",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "upper-body-ergometer",
+      "label_ru": "Ручной велоэргометр",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B007"
+      ]
+    },
+    {
+      "id": "v-bar-attachment",
+      "label_ru": "V-образная рукоять для блока",
+      "id_aliases": [
+        "v_bar_attachment",
+        "v-grip-attachment"
+      ],
+      "label_ru_aliases": [
+        "V-образная рукоять"
+      ],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B001",
+        "B012"
+      ]
+    },
+    {
+      "id": "vertical-pole",
+      "label_ru": "Вертикальный гимнастический шест",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B007"
+      ]
+    },
+    {
+      "id": "vibration-plate",
+      "label_ru": "Вибрационная платформа",
+      "id_aliases": [
+        "vibration_plate"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B012"
+      ]
+    },
+    {
+      "id": "walk-wave-machine",
+      "label_ru": "Тренажёр Walk Wave",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "approved_other_resolution",
+      "label_status": "рабочее название: русский перевод не встречался в предложениях агентов"
+    },
+    {
+      "id": "wall",
+      "label_ru": "Стена",
+      "id_aliases": [],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "water-bottle",
+      "label_ru": "Бутылка с водой",
+      "id_aliases": [
+        "water_bottle"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B012"
+      ]
+    },
+    {
+      "id": "weight plate",
+      "label_ru": "Блин",
+      "id_aliases": [
+        "plate"
+      ],
+      "label_ru_aliases": [],
+      "source": "existing_filter"
+    },
+    {
+      "id": "weighted-vest",
+      "label_ru": "Утяжелённый жилет",
+      "id_aliases": [
+        "weighted_vest"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B012"
+      ]
+    },
+    {
+      "id": "wrist-roller",
+      "label_ru": "Роллер для предплечий",
+      "id_aliases": [
+        "wrist_roller"
+      ],
+      "label_ru_aliases": [],
+      "source": "agent_proposal",
+      "source_batches": [
+        "B012"
+      ]
+    }
+  ]
+}

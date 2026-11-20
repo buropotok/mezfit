@@ -1,0 +1,50 @@
+[
+  {
+    "batch": "B001",
+    "source_status": "completed",
+    "result_commit": "d33c9a53e4f1430de0a218126b17a586901bba0e",
+    "result_blob_sha": "512befe49b6ca8cabfd05365b52a35e615c7ec53",
+    "rows": 100,
+    "result_branch": "data/anatomy-batch-B001-b001-20261119201610-vvbc53mt"
+  },
+  {
+    "batch": "B002",
+    "source_status": "completed",
+    "result_commit": "73896853264ca75988455f10086ccfdfbde2469e",
+    "result_blob_sha": "e3007b86d528266fe30e3b4931d7859eb1a64b5b",
+    "rows": 100,
+    "result_branch": "data/anatomy-batch-B002-b002-mwnq47y6-eceohwdg9f"
+  },
+  {
+    "batch": "B003",
+    "source_status": "completed",
+    "result_commit": "070c4374adc6fecb741172d9c4aec0e3ac772310",
+    "result_blob_sha": "3f7b992ed16a6f3d5e558ad507d135efef8db998",
+    "rows": 100,
+    "result_branch": "data/anatomy-batch-B003-b003-20261119154806-cw8ffunslh"
+  },
+  {
+    "batch": "B004",
+    "source_status": "completed",
+    "result_commit": "3890e1afae6e8996d4fe3b896bb4c84e101fab8a",
+    "result_blob_sha": "3d111e3a49beca51d41904277176bf97ad998696",
+    "rows": 100,
+    "result_branch": "data/anatomy-batch-B004-b004-mwnq5lh1-v2vh8oje9"
+  },
+  {
+    "batch": "B005",
+    "source_status": "completed",
+    "result_commit": "e726dc07d3e11e7603068addbe48abb209e60344",
+    "result_blob_sha": "b16dfa1fedae7c67c5eaec3cc6a1a24f022e413a",
+    "rows": 100,
+    "result_branch": "data/anatomy-batch-B005-b005-mwnq5y8q-maphv9a9w6"
+  },
+  {
+    "batch": "B006",
+    "source_status": "completed",
+    "result_commit": "bf3ff9ebda252c732dbf3a4ca9f5d884bed74f41",
+    "result_blob_sha": "5f02765cf70a13eefa996b77140171e067ff87df",
+    "rows": 100,
+    "result_branch": "data/anatomy-batch-B006-b006-mwnq6qtm-a3crctsh1u"
+  }
+]
