@@ -74,3 +74,22 @@ it('retains both photo bytes through retries and deletes only Full after publica
   expect(await getMediaReplica(accountId, full.storageKey)).toBeNull();
   expect(await listIncompleteMediaReplicas(accountId)).toEqual([]);
 });
+
+it('drops the temporary Full copy after both Yandex variants are published without backup', async () => {
+  const accountId = entry.accountId;
+  const prefix = 'mvp-media/' + 'a'.repeat(64);
+  const photoId = 'b'.repeat(64);
+  const full = { accountId, storageKey: `${prefix}/full/${photoId}`, mimeType: 'image/jpeg', sizeBytes: 6 };
+  const preview = { accountId, storageKey: `${prefix}/preview/${photoId}`, mimeType: 'image/webp', sizeBytes: 3 };
+  await storeDiscussionPhoto(full, new Blob(['sample'], { type: full.mimeType }),
+    preview, new Blob(['web'], { type: preview.mimeType }));
+  await rememberMediaReplica(full, 'photo.jpg', true);
+  await rememberMediaReplica(preview, 'preview.webp', true);
+  for (const object of [full, preview]) await confirmMediaReplica(accountId, object.storageKey, 'yandex');
+  expect(await readDiscussionMedia(full)).not.toBeNull();
+
+  await publishMediaReplica(accountId, full.storageKey);
+  expect(await readDiscussionMedia(full)).toBeNull();
+  expect(await (await readDiscussionMedia(preview))?.text()).toBe('web');
+  expect(await listIncompleteMediaReplicas(accountId)).toEqual([]);
+});
