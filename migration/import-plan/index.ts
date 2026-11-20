@@ -50,7 +50,7 @@ export async function buildMezfitImportPlan(sourceInput: unknown, configInput: u
   const config = jsonSnapshot(configInput, 4_194_304);
   if (!configRule(config) || !validSnapshots(config, pkg)) throw new Error('MIG05_INVALID_PLANNING_INPUT');
   const { sourceApp, formatFamily, formatVersion, adapterId, adapterVersion, inputSha256 } = pkg.provenance;
-  const { datasetKey } = config;
+  const { datasetKey, existingImportsSnapshot } = config;
   const [packageSha256, snapshotEntries, excludedHash] = await Promise.all([
     hash(canonicalSource(pkg)),
     Promise.all((['catalogueSnapshot', 'targetSnapshot', 'mappingSnapshot', 'occupancySnapshot', 'existingImportsSnapshot'] as const)
@@ -65,7 +65,7 @@ export async function buildMezfitImportPlan(sourceInput: unknown, configInput: u
   const definitions = byKey(pkg.sourceExercises);
   const registered = config.mappingSnapshot?.map(row => [row.exerciseKey, row.catalogueId] as const);
   const match = exerciseMatcher(config.catalogueSnapshot, registered ? new Map(registered) : null);
-  const replay = new Set(config.existingImportsSnapshot ?? []);
+  const replay = new Set(existingImportsSnapshot ?? []);
   const excluded = new Set(config.excludedGroups);
   const { workouts, programs } = sourceGraph(pkg, config.period);
 
@@ -128,7 +128,7 @@ export async function buildMezfitImportPlan(sourceInput: unknown, configInput: u
     const checkTarget = () => {
       const target = bindingFor(subjectSourceKey);
       if (!target || target.kind === 'unresolved') flag('UNRESOLVED_SUBJECT');
-      if (config.existingImportsSnapshot === null) flag('SNAPSHOT_UNRESOLVED');
+      if (existingImportsSnapshot === null) flag('SNAPSHOT_UNRESOLVED');
     };
     return { flag, finish, addLosses, common, save, skip, checkTarget, dependencies, isBlocked };
   }
