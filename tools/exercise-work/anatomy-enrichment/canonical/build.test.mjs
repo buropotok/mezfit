@@ -28,6 +28,7 @@ describe('FitnessProgramer canonical materialization', () => {
       description: '', description_ru: '', description_en: 'English only',
     });
     expect(selectRussianDescription({ how_to: 'English', how_to_ru: 'Русский текст' }).description).toBe('Русский текст');
+    expect(selectRussianDescription({ description_ru: '', how_to_ru: 'Русский текст' }).description_ru).toBe('Русский текст');
   });
   it('preserves source evidence and marks unknown anatomy rather than inventing IDs', () => {
     const card = materializeExercise(data, { ...sample, how_to: 'English only' }, manifest);

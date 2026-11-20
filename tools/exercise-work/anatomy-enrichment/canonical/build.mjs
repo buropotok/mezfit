@@ -62,8 +62,8 @@ export function canonicalEquipment(id, patch, source) {
 }
 
 export function selectRussianDescription(source) {
-  const ru = (source.description_ru ?? source.how_to_ru ?? '').trim();
-  const en = (source.description_en ?? source.how_to ?? '').trim();
+  const ru = [source.description_ru, source.how_to_ru].find(value => typeof value === 'string' && value.trim())?.trim() ?? '';
+  const en = [source.description_en, source.how_to].find(value => typeof value === 'string' && value.trim())?.trim() ?? '';
   return { description: ru, description_ru: ru, description_en: en };
 }
 
@@ -79,7 +79,7 @@ export function materializeExercise(record, source, manifest) {
   for (const role of ['primary', 'secondary', 'stabilizers']) {
     const roleValues = originalMuscles[role] ?? [];
     if (!Array.isArray(roleValues)) fail('INVALID_MUSCLE_ROLE: ' + record.id);
-    if (roleValues.includes('other')) unresolvedRoles.push(role);
+    if (originalMuscles[role] === undefined || roleValues.includes('other')) unresolvedRoles.push(role);
     canonicalMuscles[role] = unique(roleValues.filter(value => value !== 'other'));
   }
   return {
