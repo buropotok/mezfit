@@ -34,6 +34,7 @@ import { DiscussionRecordingStatus } from './DiscussionRecordingStatus';
 import { DiscussionVoiceTrash } from './DiscussionVoiceTrash';
 import { DiscussionAnnotationEditor, type AnnotationExit } from './DiscussionAnnotationEditor';
 import { DiscussionMediaStage } from './DiscussionMediaStage';
+import { DiscussionPhotoPreview } from './DiscussionPhotoPreview';
 import { DiscussionVideoRecorder } from './DiscussionVideoRecorder';
 import { DiscussionAttachmentSaveDialog, type DiscussionAttachmentSaveTarget } from './DiscussionVideoSaveDialog';
 import { startPressScale } from '../ui/PressScale';
@@ -177,9 +178,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const [attachmentsPresented, setAttachmentsPresented] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const mediaBusy = media.phase !== 'idle' && media.phase !== 'failed';
-  const mediaPresent = Boolean(activeAttachment);
-  const previewing = Boolean(media.preview && media.selection && !voiceDraft && !circleDraft
+  const mediaBusy = media.sendingPhotos || (media.phase !== 'idle' && media.phase !== 'failed');
+  const photosSelected = media.photos.length > 0;
+  const previewingPhotos = photosSelected && !media.sendingPhotos;
+  const mediaPresent = photosSelected || Boolean(activeAttachment);
+  const previewing = previewingPhotos || Boolean(media.preview && media.selection && !voiceDraft && !circleDraft
     && !outgoing);
   const [viewing, setViewing] = useState<{
     messageId: string;
@@ -340,7 +343,10 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   const cancelMode = () => { if (!editId) draft.update(draft.text, null); setEditId(null); setEditText(''); };
   const closePreview = () => {
     if (media.phase === 'uploading') media.cancel();
-    else if (!mediaBusy) void media.remove();
+    else if (!mediaBusy) {
+      if (photosSelected) media.removePhoto();
+      else void media.remove();
+    }
   };
   const finishVoiceDiscard = () => {
     if (!alive.current || !removingVoice.current
@@ -564,6 +570,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
   });
   const submit = () => {
     if (session.snapshot().deletion || cameraOpen || pending.current || mediaBusy || outgoing) return;
+    if (!editId && photosSelected) { void media.sendPhotos(); return; }
     if (!editId && mediaPresent) { void media.send(); return; }
     void run(async () => {
       if (!text.trim()) return;
@@ -687,6 +694,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     if (file) void media.choose(file);
   };
   const canAttach = canCompose && !voiceComposer && !circleInProgress && !mediaPresent && !editId;
+  const pickPhotos = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.currentTarget.files ?? []);
+    event.currentTarget.value = '';
+    if (canAttach && !session.snapshot().deletion && !pending.current) void media.choosePhotos(files);
+  };
   const annotate = canAttach && repository.supportsMedia && viewing && !localVideoUrl && !annotation
     ? (image: HTMLCanvasElement, seconds?: number) => {
       if (session.snapshot().deletion || annotationSession.current) return;
@@ -838,7 +850,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
           return <Fragment key={command.id}>
             <div className="discussion-message-target discussion-message-target--outgoing" data-own="true" data-message-id={command.id}>
               <DiscussionOutgoingMedia src={preview} attachment={attachment} createdAt={command.createdAt}
-                status="failed" error={pendingError} retryDisabled={mediaBusy || Boolean(media.selection)}
+                status="failed" error={pendingError} retryDisabled={mediaBusy || photosSelected || Boolean(media.selection)}
                 playbackHost={videoPlaybackHost} scrollViewport={scroller} onCancel={() => {}}
                 onRetry={() => media.retryPending(command.id)}
                 onRemove={video && attachment.mediaType === 'video' ? () => setDeleting({ id: command.id, kind: 'outgoing-video' })
@@ -871,6 +883,13 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       </Messages>
       <div ref={setVideoPlaybackHost} className="discussion-video-note-playback" />
     </div>
+    {!readOnly && previewingPhotos && <DiscussionMediaStage label="Предпросмотр фото"
+      style={{ bottom: composerHeight + contextHeight }}>
+      <div className="discussion-photo-previews">
+        {media.photos.map(({ file, metadata }) => <DiscussionPhotoPreview key={metadata.id} file={file}
+          onRemove={() => media.removePhoto(metadata.id)} />)}
+      </div>
+    </DiscussionMediaStage>}
     {!readOnly && previewing && media.preview && media.selection && media.selection.metadata.mediaType !== 'voice' && media.selection.metadata.mediaType !== 'video-note' &&
       <DiscussionMediaStage label="Предпросмотр вложения" fullscreen={Boolean(previewVideoUrl && !viewer && mediaFullscreen)}
         style={{ bottom: composerHeight + contextHeight }}>
@@ -924,7 +943,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {voice.status === 'processing' && <Text variant="footnote" role="status">Готовим голосовое сообщение…</Text>}
       {media.error && !outgoing && <Text variant="footnote" role="alert">{media.error}</Text>}
       {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
-      {mediaPresent && <div className="discussion-composer-context__mode">
+      {photosSelected && !media.sendingPhotos && <div className="discussion-composer-context__mode">
+        <Text variant="footnote">Фото: {media.photos.length}</Text>
+        <IconButton icon="x" label="Убрать все фото" disabled={busy || mediaBusy} onClick={closePreview} />
+      </div>}
+      {activeAttachment && <div className="discussion-composer-context__mode">
         {!previewing && !voiceDraft && !circleDraft && <Text variant="footnote" className="discussion-media-filename">{activeAttachment?.fileName}</Text>}
         {circleDraft ? <>
           {!media.selection && <Text variant="footnote" role="alert">Запись кружка недоступна на этом устройстве. Удалите черновик и запишите заново.</Text>}
@@ -958,8 +981,8 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
     </div>}
     {repository.supportsMedia && <>
       <input type="file" hidden ref={gallery} accept={DISCUSSION_MEDIA_ACCEPT} onChange={pickAttachment} />
-      <input type="file" hidden ref={photoPicker} accept={DISCUSSION_MEDIA_ACCEPT.split(',').filter(type => type.startsWith('image/')).join(',')}
-        onChange={pickAttachment} />
+      <input type="file" hidden multiple ref={photoPicker} accept={DISCUSSION_MEDIA_ACCEPT.split(',').filter(type => type.startsWith('image/')).join(',')}
+        onChange={pickPhotos} />
     </>}
     <div className="discussion-composer" ref={composer} inert={Boolean(viewer || annotation) || cameraOpen || mediaFullscreen} data-previewing={previewing || undefined}>
       <GlassSurface ref={addSurface} className="discussion-composer__button discussion-composer__button--add" {...material}
@@ -1015,7 +1038,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
             : repository.supportsMedia && actionMode === 'camera' ? 'Удерживайте для записи видеокружка' : undefined}
           className={actionMode === 'microphone' || actionMode === 'camera' ? 'discussion-composer__microphone' : undefined}
           disabled={!canCompose || attachmentsOpen || discardingVoice || voice.status === 'processing' || videoNote.status === 'processing'
-            || (actionMode === 'send' && !lockedRecording && (mediaPresent ? !media.selection : !text.trim()))}
+            || (actionMode === 'send' && !lockedRecording && !photosSelected && (mediaPresent ? !media.selection : !text.trim()))}
           onPointerDown={event => {
             // The chat material owns the continuous scale; suppress the primitive's second press animation.
             event.preventDefault();

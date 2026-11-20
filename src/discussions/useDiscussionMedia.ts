@@ -73,9 +73,13 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
   const [selection, setSelection] = useState<Selection>();
+  const [photos, setPhotos] = useState<Selection[]>([]);
+  const [sendingPhotos, setSendingPhotos] = useState(false);
+  const photoSend = useRef<AbortController | null>(null);
   const selectionRef = useRef<Selection | undefined>(selection);
   selectionRef.current = selection;
-  const [preview, setPreview] = useState<string>();
+  const [selectedPreview, setPreview] = useState<{ selection: Selection; url: string }>();
+  const preview = selectedPreview?.selection === selection ? selectedPreview?.url : undefined;
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string>();
   const [outgoing, setOutgoing] = useState<OutgoingMedia>();
@@ -95,11 +99,14 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   const resume = useRef<(() => void) | null>(null);
 
   useEffect(() => () => {
+    photoSend.current?.abort(); photoSend.current = null;
     active.current?.abort(); active.current = null; resume.current = null;
     for (const entry of pendingRef.current) if (entry.preview) URL.revokeObjectURL(entry.preview);
   }, []);
   useEffect(() => {
     if (enabled) return;
+    photoSend.current?.abort(); photoSend.current = null;
+    setPhotos([]); setSendingPhotos(false);
     resume.current = null;
     const controller = active.current;
     active.current = null;
@@ -138,7 +145,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   useEffect(() => {
     if (!selection) { setPreview(undefined); return; }
     const url = URL.createObjectURL(selection.file);
-    setPreview(url);
+    setPreview({ selection, url });
     return () => URL.revokeObjectURL(url);
   }, [selection]);
   const savedCapture = draft.media;
@@ -183,7 +190,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     sendToThread?: string;
     onSelected?: () => boolean;
   } = {}) {
-    if (!enabledRef.current || active.current) return false;
+    if (!enabledRef.current || active.current || photoSend.current || photos.length) return false;
     resume.current = null;
     const controller = new AbortController();
     active.current = controller;
@@ -221,8 +228,97 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
+  async function choosePhotos(files: File[]) {
+    if (files.length === 1) return choose(files[0]);
+    if (!files.length || !enabledRef.current || active.current || photoSend.current || selectionRef.current || draft.media) return;
+    const controller = new AbortController();
+    active.current = controller;
+    setError(undefined); setPhase('checking');
+    try {
+      const checked: Selection[] = [];
+      const rejected: string[] = [];
+      for (const file of files) {
+        try {
+          const item = await inspectDiscussionMedia(file, controller.signal);
+          if (item.metadata.mediaType !== 'photo') throw new Error('Ожидалось фото');
+          checked.push(item);
+        } catch (reason) {
+          const detail = reason instanceof Error ? reason.message : 'Не удалось проверить файл';
+          rejected.push(file.name + ' — ' + detail);
+        }
+        if (controller.signal.aborted || active.current !== controller) return;
+      }
+      setPhotos(checked);
+      setError(rejected.length ? rejected[0] + (rejected.length > 1 ? ` (Не добавлено фото: ${rejected.length})` : '') : undefined);
+      setPhase(rejected.length ? 'failed' : 'idle');
+    } finally {
+      if (active.current === controller) active.current = null;
+    }
+  }
+
+  function removePhoto(id?: string) {
+    if (active.current || photoSend.current) return;
+    setPhotos(current => id ? current.filter(item => item.metadata.id !== id) : []);
+    setError(undefined); setPhase('idle');
+  }
+
+  async function sendPhotos() {
+    if (!photos.length || !enabledRef.current || active.current || photoSend.current) return;
+    const controller = new AbortController();
+    photoSend.current = controller;
+    active.current = controller;
+    resume.current = null;
+    setSendingPhotos(true); setError(undefined); setPhase('uploading');
+    const staged: { selected: Selection; command: DiscussionMessageInput }[] = [];
+    const first = draft.mediaCommand();
+    let stagingComplete = false;
+    try {
+      for (const [index, photo] of photos.entries()) {
+        const { storageKey, mimeType, sizeBytes } = photo.metadata;
+        await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, photo.file, true);
+        // Closing the sheet stops uploads, but already confirmed files can still
+        // be recovered from the private outbox after their local saves finish.
+        if (!enabledRef.current) return;
+        const input = index === 0 ? first : prepareDiscussionMessage(draft.threadId, '');
+        const command = await draft.stageMedia({ ...photo.metadata, uploadState: 'uploading' }, input);
+        if (index === 0 && command) draft.detachMedia(first.id);
+        if (command) staged.push({ selected: { ...photo, separate: command }, command });
+        if (!controller.signal.aborted) setPhotos(current => current.filter(item => item.metadata.id !== photo.metadata.id));
+      }
+      stagingComplete = true;
+    } catch {
+      if (controller.signal.aborted) return;
+      for (const { selected, command } of staged) {
+        enqueuePending({ command, selected, preview: URL.createObjectURL(selected.file),
+          error: 'Фото сохранено на устройстве. Повторите отправку.' });
+      }
+      setError('Не удалось сохранить все фото на устройстве. Повторите отправку.');
+      setPhase('failed');
+      return;
+    } finally {
+      if (active.current === controller) active.current = null;
+      if (!stagingComplete && photoSend.current === controller) {
+        photoSend.current = null;
+        setSendingPhotos(false);
+      }
+    }
+    try {
+      for (const { selected, command } of staged) {
+        if (controller.signal.aborted) return;
+        setSelection(selected);
+        await send(selected, false, command);
+      }
+    } finally {
+      if (photoSend.current === controller) {
+        photoSend.current = null;
+        setSendingPhotos(false);
+        setPhase('idle');
+      }
+    }
+  }
+
   function chooseVoice(clip: VoiceRecording, immediately = false) {
-    if (!enabledRef.current || active.current || selection || draft.media) return;
+    if (!enabledRef.current || active.current || photoSend.current || photos.length || selection || draft.media) return;
     setError(undefined);
     try {
       const next = prepareDiscussionVoice(clip);
@@ -237,7 +333,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   }
 
   function sendVideoNote(clip: VideoNoteRecording, previewOnly = false) {
-    if (!enabledRef.current || active.current || selection || draft.media) return;
+    if (!enabledRef.current || active.current || photoSend.current || photos.length || selection || draft.media) return;
     setError(undefined);
     try {
       const next = prepareDiscussionVideoNote(clip);
@@ -251,26 +347,26 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
-  async function send(selected = selection, allowResume = true) {
+  async function send(selected = selection, allowResume = true, staged?: DiscussionMessageInput) {
     if (!enabledRef.current || !selected || active.current) return;
     resume.current = null;
     const controller = new AbortController();
     active.current = controller;
     interrupted.current = document.visibilityState === 'hidden' || navigator.onLine === false;
-    let command: DiscussionMessageInput | null = null;
-    let savingFile = true;
+    let command: DiscussionMessageInput | null = staged ?? null;
+    let savingFile = !staged;
     const message = selected.separate ?? draft.mediaCommand();
     setOutgoing({ id: message.id, createdAt: message.createdAt, attachmentId: selected.metadata.id });
     setError(undefined); setPhase('uploading');
     try {
       const { storageKey, mimeType, sizeBytes } = selected.metadata;
-      if (storedKey.current !== storageKey) {
+      if (!staged && storedKey.current !== storageKey) {
         await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file, true);
         storedKey.current = storageKey;
       }
       savingFile = false;
       // Finish the private draft even if the sheet closes while IndexedDB is writing.
-      command = await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' }, selected.separate);
+      command ??= await draft.stageMedia({ ...selected.metadata, uploadState: 'uploading' }, selected.separate);
       if (!enabledRef.current || controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       if (!command) {
         if (active.current === controller) { setSelection(undefined); setOutgoing(undefined); setPhase('idle'); }
@@ -364,7 +460,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
 
   function retryPending(id: string) {
     const entry = pendingRef.current.find(row => row.command.id === id);
-    if (!enabledRef.current || !entry?.selected || active.current || selectionRef.current) return;
+    if (!enabledRef.current || !entry?.selected || active.current || photoSend.current || photos.length || selectionRef.current) return;
     updatePending(pendingRef.current.filter(row => row.command.id !== id));
     if (entry.preview) URL.revokeObjectURL(entry.preview);
     setSelection(entry.selected);
@@ -385,5 +481,6 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   }
 
   return { selection, preview, outgoing, pendingMedia, published, setPublished, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
+    photos, choosePhotos, removePhoto, sendPhotos, sendingPhotos,
     retryPending, removePending, cancel: () => { resume.current = null; if (!publishing.current) active.current?.abort(); } };
 }
