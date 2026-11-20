@@ -127,7 +127,7 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
   }, []);
   const selected = occurrences.find(row => row.id === openedOccurrenceId) ?? null;
-  const selectedDraft = useMemo(() => workouts.data?.drafts.find(row => row.id === 'draft:' + openedOccurrenceId)
+  const selectedDraft = useMemo(() => workouts.data?.drafts?.find(row => row.id === 'draft:' + openedOccurrenceId)
     ?? (selected && cloud ? draftFromOccurrence(cloud.actorUserId, selected) : null),
   [workouts.data?.drafts, openedOccurrenceId, selected, cloud?.actorUserId]);
   const editRestriction = selectedDraft ? occurrencePlanEditRestriction(selectedDraft) : null;
