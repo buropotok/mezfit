@@ -94,3 +94,16 @@ it('stops a full photo when its response body stalls', async () => {
     vi.useRealTimers();
   }
 });
+
+it('does not request a signed R2 read when Yandex fails with backup disabled', async () => {
+  vi.stubGlobal('localStorage', { getItem: () => 'off' });
+  vi.stubGlobal('Telegram', { WebApp: { initData: 'available' } });
+  const fetchMedia = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 404 }));
+  vi.stubGlobal('fetch', fetchMedia);
+
+  await expect(downloadDiscussionMedia({
+    ...entry, realmId: 'realm', messageId: 'message', attachmentId: 'attachment',
+  })).resolves.toBeNull();
+  expect(fetchMedia).toHaveBeenCalledOnce();
+  expect(fetchMedia).toHaveBeenCalledWith(expect.stringMatching(/storage\.yandexcloud\.net/), expect.any(Object));
+});

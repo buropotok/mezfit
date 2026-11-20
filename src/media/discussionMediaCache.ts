@@ -3,6 +3,7 @@ import { ApiError } from '../api';
 import { directMediaUrl } from './directMediaUpload';
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaObjectSizeLimit } from '../../shared/discussion-media-limits';
 import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
+import { isDiscussionMediaBackupEnabled } from './discussionMediaBackupPreference';
 import { signedDiscussionR2ReadUrl } from './cloudflareMediaRead';
 
 /** Do not download very large clips merely because their thumbnail became visible. */
@@ -23,6 +24,7 @@ export interface MediaReplicaTask extends DiscussionMediaCacheEntry {
   fileName: string;
   yandexConfirmedAt?: string;
   r2ConfirmedAt?: string;
+  yandexOnly?: true;
   published: boolean;
 }
 
@@ -127,14 +129,16 @@ function photoReplicaKeys(storageKey: string): [string, string] | null {
  * together with incomplete replication state. */
 async function cleanCompletedPhoto(db: DiscussionMediaDatabase, keys: [string, string]): Promise<void> {
   const [full, preview] = await db.replicas.bulkGet(keys);
-  if (!full?.published || !preview?.published || !full.yandexConfirmedAt || !full.r2ConfirmedAt
-    || !preview.yandexConfirmedAt || !preview.r2ConfirmedAt) return;
+  if (!full?.published || !preview?.published || !full.yandexConfirmedAt || !preview.yandexConfirmedAt
+    || !(full.yandexOnly || full.r2ConfirmedAt) || !(preview.yandexOnly || preview.r2ConfirmedAt)) return;
   await db.files.delete(keys[0]);
   await db.replicas.bulkDelete(keys);
 }
 
 /** Local operational retry state, not a second synchronized business database. */
-export async function rememberMediaReplica(entry: DiscussionMediaCacheEntry, fileName: string): Promise<void> {
+export async function rememberMediaReplica(
+  entry: DiscussionMediaCacheEntry, fileName: string, yandexOnly?: true,
+): Promise<void> {
   if (!mediaUrl(entry) || typeof fileName !== 'string' || fileName.length > 1024) throw new Error('INVALID_MEDIA_REPLICA');
   const db = new DiscussionMediaDatabase(entry.accountId);
   try {
@@ -147,7 +151,7 @@ export async function rememberMediaReplica(entry: DiscussionMediaCacheEntry, fil
         return;
       }
       await db.replicas.add({ key: entry.storageKey, mimeType: entry.mimeType, sizeBytes: entry.sizeBytes,
-        fileName, published: false });
+        fileName, yandexOnly, published: false });
     });
   } finally { db.close(); }
 }
@@ -213,10 +217,10 @@ export async function listIncompleteMediaReplicas(accountId: string): Promise<Me
   const db = new DiscussionMediaDatabase(accountId);
   try {
     const rows = await db.replicas.toArray();
-    return rows.filter(row => row.published && (!row.r2ConfirmedAt || !row.yandexConfirmedAt))
+    return rows.filter(row => row.published && (!row.yandexConfirmedAt || (!row.yandexOnly && !row.r2ConfirmedAt)))
       .map(row => ({ accountId, storageKey: row.key, mimeType: row.mimeType,
         sizeBytes: row.sizeBytes, fileName: row.fileName,
-        yandexConfirmedAt: row.yandexConfirmedAt, r2ConfirmedAt: row.r2ConfirmedAt, published: true }));
+        yandexConfirmedAt: row.yandexConfirmedAt, r2ConfirmedAt: row.r2ConfirmedAt, yandexOnly: row.yandexOnly, published: true }));
   } finally { db.close(); }
 }
 
@@ -302,7 +306,8 @@ export function downloadDiscussionMediaWithStatus(entry: DiscussionMediaCacheEnt
 function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
   const url = mediaUrl(entry);
   if (!url) return { result: Promise.resolve({ blob: null }), blob: Promise.resolve(null) };
-  const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
+  const backupEnabled = isDiscussionMediaBackupEnabled();
+  const key = JSON.stringify([backupEnabled, entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
     entry.realmId, entry.messageId, entry.attachmentId]);
   const active = downloads.get(key);
   if (active) return active;
@@ -372,7 +377,7 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
   const result = (async () => {
     try {
       let blob = await fetchComplete(() => url, true);
-      if (!blob && entry.realmId && entry.messageId && entry.attachmentId) {
+      if (!blob && backupEnabled && isDiscussionMediaBackupEnabled() && entry.realmId && entry.messageId && entry.attachmentId) {
         blob = await fetchComplete(signal => signedDiscussionR2ReadUrl(entry, signal), false);
       }
       if (blob && !fullPhoto) await storeDiscussionMedia(entry, blob);

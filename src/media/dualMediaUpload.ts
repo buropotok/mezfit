@@ -1,4 +1,5 @@
 import { uploadDirectMedia, directMediaUrl, validateDirectMedia, MediaUploadError, type UploadedMedia } from './directMediaUpload';
+import { isDiscussionMediaBackupEnabled } from './discussionMediaBackupPreference';
 import { uploadCloudflareMedia } from './cloudflareMediaUpload';
 import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
 import {
@@ -39,6 +40,7 @@ export async function uploadMirroredDiscussionMedia(
 ): Promise<UploadedMedia> {
   const entry = { accountId, storageKey: retryKey, mimeType: validateDirectMedia(file), sizeBytes: file.size };
   const variants = [{ entry, file }];
+  let yandexOnly: true | undefined = isDiscussionMediaBackupEnabled() ? undefined : true;
   if (preview) {
     const previewEntry = { accountId, ...preview };
     const blob = await readDiscussionMedia(previewEntry);
@@ -46,8 +48,13 @@ export async function uploadMirroredDiscussionMedia(
     const previewFile = new File([blob], preview.mimeType === 'image/webp' ? 'preview.webp' : 'preview.jpg',
       { type: preview.mimeType });
     variants.push({ entry: previewEntry, file: previewFile });
-    await Promise.all(variants.map(variant => rememberMediaReplica(variant.entry, variant.file.name)));
-  } else {
+    const existing = await getMediaReplica(accountId, retryKey);
+    if (existing?.yandexOnly) yandexOnly = true;
+    // Preserve the original recovery policy when recreating a missing variant task.
+    const replicaYandexOnly = existing ? existing.yandexOnly : yandexOnly;
+    await rememberMediaReplica(entry, file.name, replicaYandexOnly);
+    await rememberMediaReplica(previewEntry, previewFile.name, replicaYandexOnly);
+  } else if (!yandexOnly) {
     await rememberMediaReplica(entry, file.name).catch(() => undefined);
   }
   if (signal?.aborted) throw new MediaUploadError('CANCELLED');
@@ -85,6 +92,14 @@ export async function uploadMirroredDiscussionMedia(
     for (const result of remaining) if (result.status === 'rejected') throw result.reason;
     return preview ? { ...full.value, preview } : full.value;
   };
+  if (yandexOnly) {
+    try {
+      return await uploadTo('yandex');
+    } finally {
+      signal?.removeEventListener('abort', cancel);
+    }
+  }
+
   let yandexSettled: () => void = () => undefined;
   const yandexDone = new Promise<void>(resolve => { yandexSettled = resolve; });
   const yandex = uploadTo('yandex').finally(yandexSettled);
@@ -95,6 +110,7 @@ export async function uploadMirroredDiscussionMedia(
     await Promise.race([yandexDone, hedge]);
     if (hedgeTimer) clearTimeout(hedgeTimer);
     if (transfer.signal.aborted) throw new MediaUploadError('CANCELLED');
+    if (!isDiscussionMediaBackupEnabled()) return yandex;
     return uploadTo('r2');
   })();
 
@@ -150,7 +166,7 @@ export async function resumeMediaReplicaUploads(
       // A stalled primary transfer must not delay recovery of the independent R2 copy.
       const providers: MediaReplicaProvider[] = [];
       if (!task.yandexConfirmedAt) providers.push('yandex');
-      if (!task.r2ConfirmedAt) providers.push('r2');
+      if (!task.yandexOnly && !task.r2ConfirmedAt && isDiscussionMediaBackupEnabled()) providers.push('r2');
       await Promise.all(providers.map(provider => attemptReplica(file, task, provider)));
     }
   } catch {

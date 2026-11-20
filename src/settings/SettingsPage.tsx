@@ -39,6 +39,7 @@ import { CoachInviteDialog } from '../coach/CoachInviteDialog';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import { ScreenDiagnostics } from './ScreenDiagnostics';
 import { ResetLocalDataSettings } from './ResetLocalDataSettings';
+import { isDiscussionMediaBackupEnabled, setDiscussionMediaBackupEnabled } from '../media/discussionMediaBackupPreference';
 import { requestLocalDataReset } from '../data/local/resetLocalData';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
@@ -309,6 +310,8 @@ export function SettingsPage({
   const [topPanelDemoOpen, setTopPanelDemoOpen] = useState(false);
   const [inviteFallbackDemoOpen, setInviteFallbackDemoOpen] = useState(false);
   const [workoutCardMode, setWorkoutCardMode] = useState<WorkoutSessionCardMode>('active-program');
+  const [mediaBackupEnabled, setMediaBackupEnabled] = useState(isDiscussionMediaBackupEnabled);
+  const [mediaBackupError, setMediaBackupError] = useState(false);
   const [workoutCardSource, setWorkoutCardSource] = useState<'program' | 'own'>('program');
   const [workoutCardExercises, setWorkoutCardExercises] = useState<SessionExerciseData[]>([workoutCardPreviewExercise]);
   const [workoutCardTitle, setWorkoutCardTitle] = useState('Своя тренировка');
@@ -419,6 +422,23 @@ export function SettingsPage({
 
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__data-reset-entry">
           <Text variant="title">Хранилище</Text>
+          <label className="settings-page__glass-field">
+            <Text variant="body">Копировать медиа из чатов в резервное облако</Text>
+            <Toggle
+              component="span"
+              className="justify-self-start"
+              checked={mediaBackupEnabled}
+              onChange={() => {
+                const enabled = !mediaBackupEnabled;
+                const saved = setDiscussionMediaBackupEnabled(enabled);
+                if (saved) setMediaBackupEnabled(enabled);
+                setMediaBackupError(!saved);
+              }}
+            />
+          </label>
+          {mediaBackupError && (
+            <Text variant="footnote" role="alert">Не удалось сохранить настройку на устройстве.</Text>
+          )}
           <span className="settings-page__action">
             <Button onClick={() => setDataResetOpen(true)}>Очистка данных</Button>
           </span>

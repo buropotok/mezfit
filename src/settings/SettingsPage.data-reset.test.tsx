@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { setDiscussionMediaBackupEnabled } from '../media/discussionMediaBackupPreference';
 import { SettingsPage } from './SettingsPage';
 import type { NavigationContext } from '../NavigationShell';
 
@@ -23,4 +24,24 @@ it('opens the storage reset section in both modes and returns through navigation
   expect(context).toEqual(expect.objectContaining({ title: 'Очистка данных', scrollKey: 'settings:data-reset' }));
   act(() => context?.onBack?.());
   expect(screen.getByRole('region', { name: 'Настройки' })).toBeTruthy();
+});
+
+it('persists the chat media backup toggle when reopening settings', () => {
+  const label = 'Копировать медиа из чатов в резервное облако';
+  try {
+    const page = render(<SettingsPage activeRole="coach" onNavigationContextChange={vi.fn()} />);
+    const toggle = screen.getByRole('checkbox', { name: label });
+    expect(toggle).toHaveProperty('checked', true);
+    fireEvent.click(toggle);
+    expect(toggle).toHaveProperty('checked', false);
+    page.unmount();
+
+    render(<SettingsPage activeRole="client" onNavigationContextChange={vi.fn()} />);
+    const reopened = screen.getByRole('checkbox', { name: label });
+    expect(reopened).toHaveProperty('checked', false);
+    fireEvent.click(reopened);
+    expect(reopened).toHaveProperty('checked', true);
+  } finally {
+    setDiscussionMediaBackupEnabled(true);
+  }
 });

@@ -65,8 +65,10 @@ and Telegram iOS/Android video Range behavior remain unverified gates.
 **COMM-09 photo variants (2026-11-20):** [The photo contract](communications.md#comm-09--два-варианта-новых-фото)
 extends the object layout for new photos. One synchronized attachment carries
 Full and Preview metadata. The local recovery store retains original bytes until
-publication and confirmation of both objects in both providers. The durable
-local read cache stores Preview. Existing realms and Dexie Cloud Addon continue
+publication and confirmation of both objects in the required providers. Both
+providers are required by default. With chat backup disabled in device settings,
+new uploads and remote reads use Yandex only. Previously queued R2 copies pause
+until backup is enabled. The durable local read cache stores Preview. Existing realms and Dexie Cloud Addon continue
 to own message access and metadata synchronization.
 
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)

@@ -2,6 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from './dualMediaUpload';
 import { uploadDirectMedia, MediaUploadError } from './directMediaUpload';
+import { setDiscussionMediaBackupEnabled } from './discussionMediaBackupPreference';
 import { uploadCloudflareMedia } from './cloudflareMediaUpload';
 import { listIncompleteMediaReplicas, readDiscussionMedia, confirmMediaReplica, publishMediaReplica } from './discussionMediaCache';
 
@@ -146,4 +147,47 @@ it('starts R2 after eight seconds when Yandex is still waiting and accepts the f
   await expect(result).resolves.toMatchObject({ key });
   expect(uploadDirectMedia).toHaveBeenCalledOnce();
   expect(uploadCloudflareMedia).toHaveBeenCalledOnce();
+});
+
+it('sends both photo variants only to Yandex with backup disabled', async () => {
+  setDiscussionMediaBackupEnabled(false);
+  try {
+    const prefix = 'mvp-media/' + 'd'.repeat(64);
+    const photoId = 'e'.repeat(64);
+    const fullKey = `${prefix}/full/${photoId}`;
+    const preview = { storageKey: `${prefix}/preview/${photoId}`, mimeType: 'image/webp', sizeBytes: 3 };
+    vi.mocked(readDiscussionMedia).mockResolvedValueOnce(new Blob(['web'], { type: preview.mimeType }));
+    vi.mocked(uploadDirectMedia)
+      .mockResolvedValueOnce({ ...uploaded, key: fullKey })
+      .mockResolvedValueOnce({ ...uploaded, key: preview.storageKey, sizeBytes: preview.sizeBytes });
+
+    await expect(uploadMirroredDiscussionMedia(file(), { accountId, retryKey: fullKey, preview }))
+      .resolves.toMatchObject({ key: fullKey, preview });
+    expect(uploadDirectMedia).toHaveBeenCalledTimes(2);
+    expect(confirmMediaReplica).toHaveBeenCalledWith(accountId, fullKey, 'yandex');
+    expect(confirmMediaReplica).toHaveBeenCalledWith(accountId, preview.storageKey, 'yandex');
+    expect(uploadCloudflareMedia).not.toHaveBeenCalled();
+  } finally {
+    setDiscussionMediaBackupEnabled(true);
+  }
+});
+
+it('preserves a Yandex send error and skips pending R2 copies with backup disabled', async () => {
+  setDiscussionMediaBackupEnabled(false);
+  try {
+    const primaryError = new MediaUploadError('NETWORK', undefined, undefined, undefined, 'put');
+    vi.mocked(uploadDirectMedia).mockRejectedValueOnce(primaryError);
+    await expect(uploadMirroredDiscussionMedia(file(), { accountId, retryKey: key }))
+      .rejects.toBe(primaryError);
+    vi.mocked(listIncompleteMediaReplicas).mockResolvedValueOnce([{
+      accountId, storageKey: key, mimeType: 'image/jpeg', sizeBytes: 6,
+      fileName: 'photo.jpg', published: true, yandexConfirmedAt: '2026-11-20T12:00:00.000Z',
+    }]);
+    vi.mocked(readDiscussionMedia).mockResolvedValueOnce(new Blob(['sample'], { type: 'image/jpeg' }));
+    await resumeMediaReplicaUploads(accountId);
+    expect(uploadDirectMedia).toHaveBeenCalledOnce();
+    expect(uploadCloudflareMedia).not.toHaveBeenCalled();
+  } finally {
+    setDiscussionMediaBackupEnabled(true);
+  }
 });

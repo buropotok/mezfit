@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { downloadDiscussionMedia, downloadDiscussionMediaWithStatus, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { isDiscussionMediaBackupEnabled } from '../media/discussionMediaBackupPreference';
 import { signedDiscussionR2ReadUrl } from '../media/cloudflareMediaRead';
 import { DISCUSSION_MEDIA_KEY_PATTERN } from '../../shared/discussion-media-limits';
 
@@ -25,12 +26,12 @@ export function useDiscussionMediaSource(
    * because a message appeared in the viewport.
    */
   const tryR2Fallback = (): Promise<boolean> => {
-    if (!cache?.realmId || !cache.messageId || !cache.attachmentId || !src.startsWith('https:')
+    if (!isDiscussionMediaBackupEnabled() || !cache?.realmId || !cache.messageId || !cache.attachmentId || !src.startsWith('https:')
       || resolved?.identity === identity && resolved.url?.startsWith('blob:')
       || fallbackSelected.current === identity) return Promise.resolve(false);
     if (fallbackInFlight.current?.identity === identity) return fallbackInFlight.current.promise;
     const promise = signedDiscussionR2ReadUrl(cache).then(url => {
-      if (!mounted.current || latestIdentity.current !== identity) return false;
+      if (!mounted.current || latestIdentity.current !== identity || !isDiscussionMediaBackupEnabled()) return false;
       fallbackSelected.current = identity;
       setResolved({ identity, url });
       return true;
