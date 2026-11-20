@@ -8,6 +8,7 @@ import { localWorkoutDate as localDate, selectProfileWorkoutRows, type CalendarT
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { draftFromOccurrence } from '../data/cloud/workout-occurrence-plan';
+import { occurrencePlanEditRestriction } from '../data/cloud/planned-session-policy';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { ProgramActor } from '../program/ProgramSummary';
 import { useWorkoutPerson } from '../schedule/WorkoutPerson';
@@ -126,21 +127,23 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', tick); };
   }, []);
   const selected = occurrences.find(row => row.id === openedOccurrenceId) ?? null;
-  const selectedDraft = useMemo(() => selected && cloud
-    ? draftFromOccurrence(cloud.actorUserId, selected) : null, [selected, cloud?.actorUserId]);
+  const selectedDraft = useMemo(() => workouts.data?.drafts.find(row => row.id === 'draft:' + openedOccurrenceId)
+    ?? (selected && cloud ? draftFromOccurrence(cloud.actorUserId, selected) : null),
+  [workouts.data?.drafts, openedOccurrenceId, selected, cloud?.actorUserId]);
+  const editRestriction = selectedDraft ? occurrencePlanEditRestriction(selectedDraft) : null;
   useEffect(() => {
-    if (!workouts.data || !openedOccurrenceId || selected) return;
+    if (!workouts.data || !openedOccurrenceId || selectedDraft) return;
     setOpenedOccurrenceId(null);
-  }, [workouts.data, openedOccurrenceId, selected]);
+  }, [workouts.data, openedOccurrenceId, selectedDraft]);
   useEffect(() => {
     setSourceProgramName(null);
-    if (!planner || !selected?.trainingPlanId) return;
+    if (!planner || !selectedDraft?.trainingPlanId) return;
     let active = true;
-    const subscription = planner.programs.observeName(selected.trainingPlanId,
+    const subscription = planner.programs.observeName(selectedDraft.trainingPlanId,
       name => { if (active) setSourceProgramName(name); },
       () => { if (active) setSourceProgramName(null); });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [planner, selected?.trainingPlanId]);
+  }, [planner, selectedDraft?.trainingPlanId]);
 
   const rows = useMemo(() => selectProfileWorkoutRows({ occurrences, sessions,
     actorUserId: cloud?.actorUserId, contact, mode, today, now, from, to,
@@ -256,7 +259,9 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     <CalendarSessionSheet sessionId={openedSessionId} role={sessionRole} initData={initData} actor={actor}
       onClose={close} onNavigationContextChange={setNestedNavigation} />
     {repository ? <OccurrenceDraftSheet draft={selectedDraft} drafts={repository}
-      actor={actor} readOnly onClose={close} onSave={async () => { throw new Error('Редактирование доступно в календаре'); }}
+      actor={actor} readOnly={editRestriction !== null}
+      planLocked={Boolean(selectedDraft?.workoutSessionId || (selectedDraft?.executionStatus && selectedDraft.executionStatus !== 'scheduled'))}
+      onClose={close} onSave={async draft => { await repository.save(draft.id); }}
       sourceProgramName={sourceProgramName} onNavigationContextChange={setNestedNavigation} /> : null}
   </section>;
 }
