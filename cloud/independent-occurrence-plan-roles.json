@@ -1,0 +1,14 @@
+{
+  "roles": {
+    "client": {
+      "permissions": {
+        "update": {
+          "workoutOccurrences": [
+            "plan",
+            "publishedPlan"
+          ]
+        }
+      }
+    }
+  }
+}
