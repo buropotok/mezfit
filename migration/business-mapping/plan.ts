@@ -336,6 +336,8 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
     operation.reasonCodes.push(...b.reasons);
     if (badMappings(exKeys)) flag(operation, 'UNRESOLVED_EXERCISE');
     if (!program.name?.trim() || !program.phases.length
+      || program.phases.some(phase => !phase.name?.trim())
+      || program.days.some(day => !day.name?.trim())
       || program.days.some(day => day.phaseRef.state !== 'linked'
         || !program.phases.some(phase => phase.sourceKey === day.phaseRef.sourceKey)))
       flag(operation, 'INVALID_DEPENDENCY');
@@ -370,14 +372,17 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
       dependencies(exKeys)), kind: 'program',
       program: { sourceProgramKey: null, syntheticFromSessionKey: last?.sourceKey ?? null,
         name: last?.name ?? null, intendedStatus: 'active',
-        phases: [{ sourceKey: 'synthetic:phase', name: null, position: 0 }],
-        days: [{ sourceKey: 'synthetic:day', name: null, position: 0,
+        phases: [{ sourceKey: 'synthetic:phase', name: 'Импортированная фаза', position: 0 }],
+        days: [{ sourceKey: 'synthetic:day', name: last?.name ?? null, position: 0,
           phaseRef: { state: 'linked', sourceKey: 'synthetic:phase' }, exercises }] } };
     operation.reasonCodes.push(...b.reasons);
     if (!last) flag(operation, completedSourceSessionMissing(subject, selectedBySubject)
       ? 'NO_COMPLETED_SESSION' : 'AMBIGUOUS_LAST_SESSION');
     if (last && !last.name?.trim()) flag(operation, 'INVALID_DEPENDENCY');
     if (badMappings(exKeys)) flag(operation, 'UNRESOLVED_EXERCISE');
+    if (exercises.some(ex => ex.sets.some(set =>
+      !knownSetType(set.setType) || !knownSetLabel(set.setLabel))))
+      flag(operation, 'UNSUPPORTED_SET_METADATA');
     if (input.targetContextSnapshot.activeProgramSubjectKeys.includes(subject))
       flag(operation, 'ACTIVE_PROGRAM_CONFLICT');
     operations.push(operation);
@@ -393,11 +398,12 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
     const timed = mapTiming(session.timing, input.evaluatedAtUtc, 'session',
       input.calendarOccupancySnapshot.intervals, stagedSlots);
     const operation: ImportOperation = { ...base(key, b.ref, [{ kind: 'session', sourceKey: session.sourceKey }],
-      dep), kind: 'historical_session', completionState: session.completionState,
+      dep), kind: 'historical_session', name: session.name, completionState: session.completionState,
       programRef, scheduledWorkoutRef: session.scheduledWorkoutRef,
       timing: timed.timing,
       frozenPlan: { state: 'absent' }, fact: [], importedProvenance: true };
     operation.reasonCodes.push(...b.reasons);
+    if (!session.name?.trim()) flag(operation, 'INVALID_DEPENDENCY');
     if (session.completionState !== 'completed') flag(operation, 'UNKNOWN_COMPLETION');
     if (!businessDate(session.timing)) flag(operation, 'UNKNOWN_BUSINESS_DATE');
     if (programRef.state === 'unknown' || programKey && !byProgram.has(programKey))
@@ -444,9 +450,10 @@ export async function buildMezfitImportPlan(raw: unknown): Promise<MezfitImportP
       input.calendarOccupancySnapshot.intervals, stagedSlots);
     const operation: ImportOperation = { ...base(key, b.ref,
       [{ kind: 'scheduledWorkout', sourceKey: schedule.sourceKey }], deps),
-      kind: 'standalone_scheduled', programRef: schedule.programRef,
+      kind: 'standalone_scheduled', name: schedule.name, programRef: schedule.programRef,
       programDayRef: schedule.programDayRef, timing: timed.timing, plan: { state: 'absent' } };
     operation.reasonCodes.push(...b.reasons);
+    if (!schedule.name?.trim()) flag(operation, 'INVALID_DEPENDENCY');
     if (!businessDate(schedule.timing)) flag(operation, 'UNKNOWN_BUSINESS_DATE');
     if (schedule.programRef.state === 'unknown' || programKey && !byProgram.has(programKey))
       flag(operation, 'UNKNOWN_PROGRAM_RELATION');
