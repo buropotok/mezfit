@@ -72,6 +72,18 @@ describe('MIG-05 business mapping: contract and read-only planning', () => {
     expect(marker.marker).toBe('imported');
   });
 
+  it('preserves the raw none program ref when a program is resolved transitively through linked scheduled', async () => {
+    const input = businessInput();
+    input.sourcePackage.sessions[0].programRef = { state: 'none' };
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    const completed = session(plan, 'ses:linked');
+    expect(completed.sourceProgramRef).toEqual({ state: 'none' });
+    expect(completed.programRef).toEqual({ state: 'linked', sourceKey: 'p:old' });
+    expect(completed.dependencyKeys).toContain(find(plan, 'program', 'p:old').operationKey);
+    expect(completed.state).toBe('selected');
+  });
+
   it('keeps independent Ad-hoc as FACT-only without fake occurrence or frozen PLAN', async () => {
     const plan = await buildMezfitImportPlan(businessInput());
     const own = session(plan, 'ses:adhoc');
