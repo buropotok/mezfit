@@ -5,7 +5,7 @@ import Dexie from 'dexie';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { directMediaUrl } from '../media/directMediaUpload';
-import { readDiscussionMedia, downloadDiscussionMedia } from '../media/discussionMediaCache';
+import { readDiscussionMedia, downloadDiscussionMedia, downloadDiscussionMediaWithStatus } from '../media/discussionMediaCache';
 import { rawInitData } from '../media/mediaUploadTestFixtures';
 import { DiscussionMedia } from './DiscussionMedia';
 import { DiscussionVoice } from './DiscussionVoice';
@@ -130,4 +130,51 @@ it.each([
   expect(transport.mock.calls.map(([url]) => url)).toEqual(
     signStatus === 200 ? [fullSrc, '/api/discussion-media/read', signedSrc] : [fullSrc, '/api/discussion-media/read'],
   );
+});
+
+it.each([true, false])('validates and joins ranges after a broken R2 body (valid first range: %s)', async valid => {
+  await browserBlob();
+  const chunkSize = 1024 * 1024;
+  const sizeBytes = chunkSize + 3;
+  const fullKey = `mvp-media/${'f'.repeat(64)}/full/${'a'.repeat(64)}`;
+  const full = { ...entry, storageKey: fullKey, attachmentId: 'a'.repeat(64), sizeBytes };
+  const signedSrc = getUrl.replace(key, fullKey);
+  const ranges: string[] = [];
+  const transport = vi.fn<typeof fetch>(async (url, options) => {
+    if (url === directMediaUrl(fullKey)) return new Response(null, { status: 404 });
+    if (url === '/api/discussion-media/read') {
+      return Response.json({ storageKey: fullKey, getUrl: signedSrc, expiresAt: Date.now() + 600_000 });
+    }
+    if (url !== signedSrc) throw new Error('Unexpected URL');
+    const range = new Headers(options?.headers).get('range');
+    if (range === null) {
+      const body = new ReadableStream({ start(controller) { controller.error(new TypeError('Connection reset')); } });
+      return new Response(body, { headers: { 'Content-Type': full.mimeType, 'Content-Length': String(sizeBytes) } });
+    }
+    ranges.push(range);
+    const first = range === `bytes=0-${chunkSize - 1}`;
+    const body = first ? new Uint8Array(chunkSize).fill(7) : Uint8Array.of(8, 9, 10);
+    const contentRange = first
+      ? `bytes ${valid ? '0' : '1'}-${chunkSize - 1}/${sizeBytes}`
+      : `bytes ${chunkSize}-${sizeBytes - 1}/${sizeBytes}`;
+    return new Response(body, {
+      status: 206, headers: { 'Content-Type': full.mimeType, 'Content-Range': contentRange },
+    });
+  });
+  vi.stubGlobal('fetch', transport);
+
+  const result = await downloadDiscussionMediaWithStatus(full);
+  expect(ranges).toEqual(valid
+    ? [`bytes=0-${chunkSize - 1}`, `bytes=${chunkSize}-${sizeBytes - 1}`]
+    : [`bytes=0-${chunkSize - 1}`]);
+  if (valid) {
+    expect(result.blob?.size).toBe(sizeBytes);
+    expect(new Uint8Array(await result.blob?.slice(chunkSize - 1).arrayBuffer() ?? new ArrayBuffer(0)))
+      .toEqual(Uint8Array.of(7, 8, 9, 10));
+    expect(result.r2Failure).toBeUndefined();
+  } else {
+    expect(result.blob).toBeNull();
+    expect(result.r2Failure).toBe('R2-RANGE-INVALID');
+  }
+  expect(await readDiscussionMedia(full)).toBeNull();
 });
