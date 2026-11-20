@@ -57,7 +57,7 @@ function useProfileData(cloud: Cloud | null, tab: ProfileTab, clientUserId?: str
     return new WorkoutOccurrenceDraftRepository(db, actorUserId).observeWorkspace(value => {
       next({
         occurrences: value.occurrences.filter(row => row.entryKind !== 'personal_event' && belongs(row)),
-        drafts: value.drafts.filter(belongs),
+        drafts: (value.drafts ?? []).filter(belongs),
         sessions: (value.sessions ?? []).filter(belongs),
       });
     }, error);
