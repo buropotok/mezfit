@@ -3,7 +3,7 @@
 **Проект:** Mezfit · **Репозиторий:** `buropotok/mezfit`  
 **Дата фиксации контекста:** 18 ноября 2026 г.
 **Статус:** архитектурный документ / ориентир для следующих этапов, **не** свидетельство реализации запланированного кода.  
-**Текущая точка:** инфраструктура и TypeScript File Processing Engine v1 приняты в Cloudflare; MIG-03 с двумя синтетическими адаптерами развернут и принят в независимых fixture/nested smoke. Реальные форматы, AI API, бизнес-канонизация, временные импортированные клиенты и публикация в Dexie Cloud ещё не реализованы. MIG-04 добавляет runtime SourceImportPackage v1, result schema v3 и synthetic-training smoke; облачная приёмка новой версии ожидается после merge. Последние продуктовые решения, их приоритет и открытые вопросы — в [§15](#15-последние-бизнес-правила-и-целевые-flows-импорта). [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
+**Текущая точка:** инфраструктура, TypeScript File Processing Engine v1 и синтетические форматы MIG-03 приняты в Cloudflare. MIG-04 с SourceImportPackage v1 и result schema v3 принят в run 44596180976. MIG-05 добавляет изолированный dry-run [MezfitImportPlan v1](docs/architecture/migration-import-plan-contract.md) для предпросмотра. Реальные адаптеры, AI API, временное хранилище импортированных клиентов, подтверждение и публикация в Dexie Cloud, сверка упражнений и Clone & Rebind остаются отдельными этапами. [Последние бизнес-правила](#15-последние-бизнес-правила-и-целевые-flows-импорта). [Инструкция запуска](docs/architecture/migration-infrastructure.md#проверка-typescript-execution-engine).
 
 > **Назначение.** Это основной документ для нового рабочего чата, архитектора и разработчика, продолжающего миграцию из Gym Keeper в Mezfit. Здесь зафиксированы задача, принятые решения, границы системы, подтверждённые результаты, ещё не реализованные контракты, риски, этапы, порядок приёмки и источники. Тексты поручений агентам сюда намеренно не включены.
 
@@ -421,8 +421,7 @@ reviewed adapter id/version. Input SHA рассчитан по bytes, provenance
 Новая автоматическая операция `source-package-smoke` сравнивает полный
 пакет с независимым canonical эталоном, проверяет SHA, attempts=1,
 Queue replay и owned cleanup. Только после cleanup возможен
-`MIGRATION_SOURCE_PACKAGE_SMOKE_OK`. Cloud acceptance этого изменения
-ещё не подтверждена; реальные Gym Keeper и большие архивы вне scope.
+`MIGRATION_SOURCE_PACKAGE_SMOKE_OK`. Облачная приёмка подтверждена в run 44596180976. Реальные Gym Keeper и большие архивы вне scope.
 
 ### 7.4. Частичные сбои
 
@@ -631,7 +630,8 @@ suggestions и автоматическое продвижение кандид�
 | **2. TypeScript File Processing Engine v1** | **Done для synthetic** | Независимый processor smoke 44156101755 и infra smoke 44153088455 | Telemetry PARTIAL, CPU не измерен |
 | **MIG-03. Универсальный Adapter Engine** | **Done для synthetic** | Fixture + nested confirmed, runs 44183912443 / 44201744839, §2.5 | Реальные форматы ещё не реализованы |
 | **Nested-smoke** | **Done** | `MIGRATION_NESTED_SMOKE_OK` в run 44201744839 после schema v2, replay и cleanup/readback | Телеметрия `PARTIAL`, CPU не измерен |
-| **Контракт универсального импорта (MIG-04)** | **Runtime реализован; cloud acceptance pending** | [`SourceImportPackage v1`](docs/architecture/migration-source-contract.md): PROGRAM=структура, OCCURRENCE=PLAN, SESSION=frozen PLAN+FACT; проверка исходных связей/единиц | Типы/runtime validator, schema v3, synthetic-training и auto smoke; live подтверждение ожидается. ImportPlan, identity/ACL, Clone & Rebind — отдельные этапы |
+| **Контракт универсального импорта (MIG-04)** | **Принят в Cloudflare** | [`SourceImportPackage v1`](docs/architecture/migration-source-contract.md): PROGRAM=структура, OCCURRENCE=PLAN, SESSION=frozen PLAN+FACT; проверка исходных связей/единиц | Типы/runtime validator, schema v3, synthetic-training и auto smoke, run 44596180976. Identity/ACL и Clone & Rebind остаются отдельными этапами |
+| **Бизнес-план импорта (MIG-05)** | **Dry-run реализован** | [MezfitImportPlan v1](docs/architecture/migration-import-plan-contract.md) с отбором тренировок по периоду, зависимостями, PLAN/FACT и отчётом | Предпросмотр, проверка контракта и fixtures; отдельные этапы для подтверждения, публикации, временных клиентов и сверки упражнений |
 | **3. Доказать реальные форматы** | Planned, независимо от MIG-03 | Обезличенные samples, magic/schema, versioned compatibility matrix, фикстуры | Экспорт из реального Gym Keeper |
 | **4. Адаптеры реальных источников, начиная с Gym Keeper** | Planned | Decoders по подтверждённым format/version и независимым samples | MIG-03 и этап 3 |
 | **AI Discovery / Adapter Builder** | Planned | Исследование неизвестного формата, candidate → validation gate → reviewed registry | Решение по AI API/стоимости/приватности и образцы |
@@ -765,7 +765,8 @@ Production Engine не должен выполняться на GitHub Actions: 
 1. Корневой [`AGENTS.md`](AGENTS.md) — обязательные инженерные, security и PR-правила.
 2. [`docs/architecture/local-first-storage-sync.md`](docs/architecture/local-first-storage-sync.md) — главный контракт бизнес-хранилища, Coach/Client realms и PLAN/FACT.
 3. [`docs/architecture/migration-infrastructure.md`](docs/architecture/migration-infrastructure.md) — детальная уже реализованная инфраструктура, операции bootstrap/deploy/smoke/trace.
-   [`docs/architecture/migration-source-contract.md`](docs/architecture/migration-source-contract.md) — нормативная предметная спецификация `SourceImportPackage v1` для MIG-04; runtime в `migration/worker/processor/source-package/`, cloud acceptance pending.
+   [`docs/architecture/migration-source-contract.md`](docs/architecture/migration-source-contract.md) — нормативная предметная спецификация `SourceImportPackage v1` для MIG-04; runtime в `migration/worker/processor/source-package/`, облачная приёмка в run 44596180976.
+   [`docs/architecture/migration-import-plan-contract.md`](docs/architecture/migration-import-plan-contract.md) — контракт dry-run MIG-05, runtime в `migration/import-plan/`.
 4. [`docs/reference/gym-keeper/backup-format.md`](docs/reference/gym-keeper/backup-format.md) — доказанное и неустановленное про backup/export.
 5. [`docs/reference/gym-keeper/program-diary-domain.md`](docs/reference/gym-keeper/program-diary-domain.md), [`final-synthesis.md`](docs/reference/gym-keeper/final-synthesis.md) — перенос смыслов, не Android UI.
 6. `migration/worker/processor/{contracts,registry,index}.ts`, `processor/adapters/`, `process-workflow.ts`, `execution-store.ts`, `processor-smoke.ts` — контракт адаптеров и единственный runtime path. Затем `index.ts`, `events.ts`, `smoke.ts`, `r2-upload.ts`, `trace.ts`, `migration/trace.mjs`, `trace-collector.mjs`, `cloudflare.mjs`.
@@ -967,13 +968,13 @@ occurrence и в замороженном снимке сессии. При ав
   упражнение источника во всех его сессиях должно получать одну и
   ту же согласованную цель. Ключи разных клиентов/экспортов и одноимённых
   сторонних приложений не должны случайно смешиваться.
-- Кандидата может предложить ИИ; автоматическое окончательное
-  принятие неоднозначного match **не согласовано**. Точный
-  алгоритм поиска в библиотеке, пороги уверенности и случаи создания
-  пользовательского упражнения владелец предоставит отдельно.
-- Неустановленное соответствие не должно без отчёта терять исторические
-  упражнения/подходы. Его обработка и право на частичную публикацию —
-  отдельное решение при preview.
+- MIG-05 использует подтверждённое соответствие из реестра либо
+  единственное точное совпадение по названию, tracking type, оборудованию
+  и типу движения. При отсутствующем или неоднозначном совпадении план
+  предлагает пользовательское упражнение, если установлены его название
+  и tracking type. Проверка тренером откладывается на этап после импорта.
+- При недостатке данных блокируется зависимая группа. Независимые группы
+  остаются доступны для последующего подтверждения с явным отчётом о потерях.
 - Массовая коррекция: тренер исправляет **центральное соответствие**
   для source key один раз, а все связанные импортированные сессии должны
   показывать корректное упражнение через согласованный слой разрешения.
