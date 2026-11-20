@@ -5,7 +5,13 @@ export const DISCUSSION_MEDIA_LIMITS_MIB: Readonly<Record<string, number>> = {
   'audio/ogg': 25, 'audio/webm': 25, 'audio/mp4': 25, 'audio/mpeg': 25, 'audio/wav': 25,
 };
 
-export const DISCUSSION_MEDIA_KEY_PATTERN = /^mvp-media\/[a-f0-9]{64}$/;
+export const DISCUSSION_MEDIA_KEY_PATTERN = /^mvp-media\/(?:([a-f0-9]{64})\/)?[a-f0-9]{64}$/;
+
+/** Use an opaque path segment so public media URLs omit raw Telegram IDs. */
+export async function discussionMediaSenderPrefix(actorUserId: string): Promise<string> {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(actorUserId));
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 export function discussionMediaSizeLimit(mimeType: string): number {
   // Only explicitly supported MIME keys are valid. Prototype properties like

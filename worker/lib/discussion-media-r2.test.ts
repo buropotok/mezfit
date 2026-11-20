@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { handleDiscussionR2MediaRoute, signDiscussionR2Put } from './discussion-media-r2';
 
@@ -76,6 +77,24 @@ describe('Cloudflare R2 upload signer', () => {
       method: 'POST', headers: { Origin: 'https://evil.example' }, body: JSON.stringify(good),
     });
     expect((await handleDiscussionR2MediaRoute(foreign, env())).status).toBe(403);
+  });
+
+  it('binds photo PUT signing and upload verification to the authenticated sender prefix', async () => {
+    const prefix = createHash('sha256').update('tg:100500').digest('hex');
+    const storageKey = `mvp-media/${prefix}/${'a'.repeat(64)}`;
+    const owner = { initData: await initData(), storageKey, contentType: 'image/jpeg', sizeBytes: 6 };
+    const foreign = { ...owner, initData: await initData(200600) };
+    head.mockClear();
+    for (const endpoint of ['sign', 'verify']) {
+      expect((await handleDiscussionR2MediaRoute(request(endpoint, foreign), env())).status).toBe(403);
+    }
+    expect(head).not.toHaveBeenCalled();
+    const signed = await handleDiscussionR2MediaRoute(request('sign', owner), env());
+    expect(signed.status).toBe(200);
+    const payload = await signed.json() as { putUrl: string };
+    expect(new URL(payload.putUrl).pathname).toBe('/' + storageKey);
+    expect((await handleDiscussionR2MediaRoute(request('verify', owner), env())).status).toBe(200);
+    expect(head).toHaveBeenCalledWith(storageKey);
   });
 
   it('allows any authenticated Telegram user without a separate user-ID allowlist', async () => {

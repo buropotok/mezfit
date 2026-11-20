@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { discussionAnchorKey, personalDiscussionId, PERSONAL_DISCUSSION_TITLE } from '../../shared/discussion-anchor';
 import { handleDiscussionR2MediaRoute, signDiscussionR2Get } from './discussion-media-r2';
@@ -151,6 +152,22 @@ describe('Private R2 discussion media reads', () => {
     data.message = { ...data.message, draftForRealmId: realmId };
     expect((await handleDiscussionR2MediaRoute(request({ ...body, initData: owner }), env())).status).toBe(403);
     expect(head).not.toHaveBeenCalled();
+  });
+
+  it('checks the prefix against the author while allowing the other participant to read the photo', async () => {
+    const { realmId, data } = await mockCloud();
+    const senderPrefix = createHash('sha256').update('tg:100500').digest('hex');
+    const foreignPrefix = createHash('sha256').update('tg:200600').digest('hex');
+    const body = { initData: await telegramInitData(200600), realmId, messageId, attachmentId,
+      contentType: 'image/jpeg', sizeBytes: 6 };
+    const senderKey = `mvp-media/${senderPrefix}/${'a'.repeat(64)}`;
+    const foreignKey = `mvp-media/${foreignPrefix}/${'a'.repeat(64)}`;
+    data.attachment = { ...data.attachment, storageKey: foreignKey };
+    expect((await handleDiscussionR2MediaRoute(request({ ...body, storageKey: foreignKey }), env())).status).toBe(403);
+    expect(head).not.toHaveBeenCalled();
+    data.attachment = { ...data.attachment, storageKey: senderKey };
+    expect((await handleDiscussionR2MediaRoute(request({ ...body, storageKey: senderKey }), env())).status).toBe(200);
+    expect(head).toHaveBeenCalledWith(senderKey);
   });
 
   it.each([

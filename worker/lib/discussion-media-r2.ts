@@ -1,4 +1,4 @@
-import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
+import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix, discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
 import { TelegramAuthError, validateTelegramInitData } from './telegram';
 import { authorizeDiscussionR2Read, validDiscussionR2ReadIdentity, type DiscussionMediaReadEnv } from './discussion-media-read-auth';
 
@@ -190,6 +190,10 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
     }), { headers: { 'Cache-Control': 'no-store' } });
   }
 
+  const senderPrefix = DISCUSSION_MEDIA_KEY_PATTERN.exec(input.storageKey)?.[1];
+  if (senderPrefix && (!input.contentType.startsWith('image/') || senderPrefix !== await discussionMediaSenderPrefix(actorId))) {
+    return jsonError(403, 'MEDIA_FORBIDDEN');
+  }
   if (path.endsWith('/verify')) {
     const object = await env.R2_BINDING_DISCUSSION_MEDIA.head(input.storageKey);
     if (!object) return jsonError(404, 'MEDIA_NOT_FOUND');

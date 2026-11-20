@@ -157,8 +157,8 @@ function handleRequest(event, env, now, trace = () => {}) {
 
   const { storageKey, contentType, sizeBytes } = payload;
   const limit = limits.get(contentType);
-  const invalidKey = typeof storageKey !== 'string' || storageKey.length !== 74
-    || !/^mvp-media\/[a-f0-9]{64}$/.test(storageKey);
+  const keyMatch = typeof storageKey === 'string' && /^mvp-media\/(?:([a-f0-9]{64})\/)?[a-f0-9]{64}$/.exec(storageKey);
+  const invalidKey = !keyMatch || keyMatch[0] !== storageKey;
   const invalidSize = !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || (limit && sizeBytes > limit * 1024 * 1024);
   if (invalidKey || !limit || invalidSize) {
     trace('UPLOAD_VALIDATION_REJECTED', 'WARN', {
@@ -166,6 +166,12 @@ function handleRequest(event, env, now, trace = () => {}) {
       contentType, sizeBytes,
     });
     return respond(400, { code: 'INVALID_UPLOAD' });
+  }
+  const senderPrefix = keyMatch[1];
+  if (senderPrefix && (!contentType.startsWith('image/')
+    || senderPrefix !== createHash('sha256').update('tg:' + userId).digest('hex'))) {
+    trace('UPLOAD_VALIDATION_REJECTED', 'WARN', { reason: 'SENDER_PREFIX_FORBIDDEN' });
+    return respond(403, { code: 'MEDIA_FORBIDDEN' });
   }
   trace('UPLOAD_VALIDATED', 'INFO', {
     contentType, sizeBytes, storageKeyHash: createHash('sha256').update(storageKey).digest('hex'),

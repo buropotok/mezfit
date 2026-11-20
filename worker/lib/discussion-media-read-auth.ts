@@ -1,5 +1,6 @@
 import { discussionAnchorKey, discussionId, discussionRecord, isDiscussionAnchor, isPersonalDiscussionId, isPersonalDiscussionRealm,
   matchesDiscussionThreadAnchor, personalDiscussionId } from '../../shared/discussion-anchor';
+import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix } from '../../shared/discussion-media-limits';
 import { cloudList, cloudRead, cloudToken, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 const mediaRowId = (value: unknown): value is string => typeof value === 'string'
@@ -71,6 +72,8 @@ export async function authorizeDiscussionR2Read(
     || attachment.deletedAt || attachment.uploadState !== 'ready'
     || attachment.storageKey !== input.storageKey
     || attachment.mimeType !== input.contentType || attachment.sizeBytes !== input.sizeBytes) return false;
+  const senderPrefix = DISCUSSION_MEDIA_KEY_PATTERN.exec(input.storageKey)?.[1];
+  if (senderPrefix && senderPrefix !== await discussionMediaSenderPrefix(message.authorUserId)) return false;
   const thread = await cloudRead('/all/discussionThreads/' + encodeURIComponent(message.threadId), token, fetchImpl, true);
   if (!discussionRecord(thread) || thread.id !== message.threadId
     || thread.realmId !== input.realmId || thread.owner !== input.realmId) return false;

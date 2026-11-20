@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import signer from '../infra/yandex-media-mvp/function/index.js';
@@ -68,6 +68,17 @@ describe('Yandex media signer', () => {
     expect(second.storageKey).toBe(first.storageKey);
     expect(second.putUrl).not.toBe(first.putUrl);
     expect(second.expiresAt).toBe(first.expiresAt + 601_000);
+  });
+
+  it('signs a photo under the authenticated sender prefix only', () => {
+    const prefix = createHash('sha256').update('tg:123').digest('hex');
+    const storageKey = `mvp-media/${prefix}/${'a'.repeat(64)}`;
+    const body = { ...upload, storageKey, initData: initData() };
+    const signed = post(body);
+    expect(signed.statusCode).toBe(200);
+    expect(new URL(JSON.parse(signed.body).putUrl).pathname.endsWith('/' + storageKey)).toBe(true);
+    expect(post({ ...body, initData: initData({ user: '{"id":124}' }) }).statusCode).toBe(403);
+    expect(post({ ...body, contentType: 'video/mp4' }).statusCode).toBe(403);
   });
 
   it.each([
