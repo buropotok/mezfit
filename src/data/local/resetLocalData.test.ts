@@ -51,10 +51,16 @@ it('clears media cache but keeps original files required for unfinished replica 
 
   expect(await Dexie.exists(publicMedia)).toBe(false);
   expect(await Dexie.exists(media)).toBe(true);
-  expect(await db.table('files').get('cached')).toBeUndefined();
-  expect(await db.table('files').get('in-progress')).toBeDefined();
-  expect(await db.table('replicas').get('in-progress')).toBeDefined();
-  db.close();
+  const reopened = new Dexie(media);
+  reopened.version(1).stores({ files: '&key' });
+  reopened.version(2).stores({ files: '&key', replicas: '&key' });
+  try {
+    expect(await reopened.table('files').get('cached')).toBeUndefined();
+    expect(await reopened.table('files').get('in-progress')).toBeDefined();
+    expect(await reopened.table('replicas').get('in-progress')).toBeDefined();
+  } finally {
+    reopened.close();
+  }
 });
 
 it('rejects empty selections and invalid accounts without deleting anything', async () => {
