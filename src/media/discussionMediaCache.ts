@@ -39,6 +39,26 @@ class DiscussionMediaDatabase extends Dexie {
   }
 }
 
+
+/** Drop only disposable media bytes. Keep replica originals needed for upload recovery. */
+export async function clearDiscussionMediaCache(accountId: string): Promise<void> {
+  if (!/^tg:[1-9]\\d*$/.test(accountId)) throw new Error('INVALID_MEDIA_CACHE_ACCOUNT');
+  const db = new DiscussionMediaDatabase(accountId);
+  try {
+    const protectedKeys = new Set(await db.replicas.toCollection().primaryKeys());
+    if (protectedKeys.size === 0) {
+      await db.delete();
+      return;
+    }
+    await db.transaction('rw', db.files, async () => {
+      const keys = await db.files.toCollection().primaryKeys();
+      await db.files.bulkDelete(keys.filter(key => !protectedKeys.has(key)));
+    });
+  } finally {
+    db.close();
+  }
+}
+
 function mediaUrl(entry: DiscussionMediaCacheEntry) {
   if (!/^tg:[1-9]\d*$/.test(entry.accountId) || !/^(image|video|audio)\//.test(entry.mimeType)
     || !Number.isSafeInteger(entry.sizeBytes) || entry.sizeBytes <= 0
