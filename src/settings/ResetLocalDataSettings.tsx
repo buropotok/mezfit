@@ -61,7 +61,7 @@ export function ResetLocalDataSettings({
         </span>
       </GlassSurface>
 
-      <MezfitDialog opened={confirmOpen} onBackdropClick={() => setConfirmOpen(false)}
+      <MezfitDialog opened={confirmOpen} role="alertdialog" aria-modal="true" aria-label="Очистить локальные данные?" onBackdropClick={() => setConfirmOpen(false)}
         title={<Text variant="headline">Очистить локальные данные?</Text>}
         content={<Text variant="body">
           Выбранные данные будут удалены с этого устройства. Несинхронизированные изменения
