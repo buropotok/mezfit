@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { DISCUSSION_TITLE_MAX_LENGTH, matchesDiscussionThreadAnchor } from '../../shared/discussion-anchor';
+import { DISCUSSION_TITLE_MAX_LENGTH, matchesDiscussionThreadAnchor, PERSONAL_DISCUSSION_TITLE } from '../../shared/discussion-anchor';
 import type { NavigationContext, NavigationFloatingAction } from '../NavigationShell';
 import type { CloudContact, useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import type { DiscussionThread } from '../data/cloud/discussion-contracts';
@@ -33,7 +33,7 @@ function creationError(reason: unknown, saved: boolean): string {
 }
 
 export function useFreeDiscussionCreation({ cloud, organization, category, scope, role, relationshipId, blocked, parent,
-  onNavigationContextChange, onStart, onCreated }: {
+  onNavigationContextChange, onStart, onCreated, onPersonalError }: {
   cloud: ReturnType<typeof useCloudConnections>;
   organization: DiscussionOrganizationRepository | null;
   category: AssignableDiscussionCategory | null;
@@ -43,18 +43,21 @@ export function useFreeDiscussionCreation({ cloud, organization, category, scope
   blocked: boolean;
   parent: NavigationContext | null;
   onNavigationContextChange: (value: NavigationContext | null) => void;
-  onStart: () => void;
+  onStart: () => () => boolean;
   onCreated: (thread: DiscussionThread, contact: CloudContact | undefined, parent: NavigationContext | null) => void;
+  onPersonalError: () => void;
 }) {
   const peers = (role === 'coach' ? cloud?.clients : cloud?.coaches) ?? noContacts;
   const contacts = relationshipId ? peers.filter(contact => contact.relationshipId === relationshipId) : peers;
   const [creation, setCreation] = useState<Creation | null>(null);
   const current = creation?.session.scope === scope && !blocked ? creation : null;
   const running = useRef<Session | null>(null);
+  const personalRequest = useRef<object | null>(null);
   const latest = useRef<{ scope: object; category: typeof category; parent: typeof parent; current: typeof current;
-    blocked: boolean; contacts: typeof contacts; onStart: typeof onStart; onCreated: typeof onCreated } | null>(null);
+    blocked: boolean; contacts: typeof contacts; onStart: typeof onStart; onCreated: typeof onCreated;
+    onPersonalError: typeof onPersonalError } | null>(null);
   useLayoutEffect(() => {
-    latest.current = { scope, category, parent, current, blocked, contacts, onStart, onCreated };
+    latest.current = { scope, category, parent, current, blocked, contacts, onStart, onCreated, onPersonalError };
     return () => { latest.current = null; };
   });
   useLayoutEffect(() => {
@@ -63,13 +66,39 @@ export function useFreeDiscussionCreation({ cloud, organization, category, scope
 
   const start = useCallback(() => {
     const surface = latest.current;
-    if (surface?.scope !== scope || surface.blocked || surface.current || !surface.category) return;
+    if (surface?.scope !== scope || surface.blocked || surface.current || !surface.category || personalRequest.current === scope) return;
     surface.onStart();
     setCreation({ step: 'contact', session: { scope, category: surface.category, parent: surface.parent } });
   }, [scope]);
+  const db = cloud?.db;
+  const actor = cloud?.actorUserId;
+  const openPersonal = useCallback(async () => {
+    const surface = latest.current;
+    if (!db || !actor || surface?.scope !== scope || surface.blocked || surface.current
+      || personalRequest.current === scope) return;
+    personalRequest.current = scope;
+    const canOpen = surface.onStart();
+    try {
+      const repository = new DiscussionRepository(db, actor, { realmId: actor, coachClientId: null });
+      const thread = await repository.ensurePersonalDiscussion();
+      const active = latest.current;
+      if (canOpen() && active?.scope === scope && !active.blocked && !active.current) active.onCreated(thread, undefined, surface.parent);
+    } catch {
+      const active = latest.current;
+      if (canOpen() && active?.scope === scope && !active.blocked && !active.current) active.onPersonalError();
+    } finally {
+      if (personalRequest.current === scope) personalRequest.current = null;
+    }
+  }, [actor, db, scope]);
   const action = useMemo<NavigationFloatingAction>(() => ({
-    label: createFreeDiscussionTitle, icon: 'message-circle-plus', onClick: start,
-  }), [start]);
+    label: createFreeDiscussionTitle, icon: 'message-circle-plus',
+    ...(relationshipId ? { onClick: start } : { popoverItems: [
+      { id: 'personal', label: PERSONAL_DISCUSSION_TITLE, icon: 'user' as const, disabled: !db || !actor,
+        onSelect: () => { void openPersonal(); } },
+      { id: 'shared', label: role === 'coach' ? 'Чат с клиентом' : 'Чат с тренером',
+        icon: 'message-circle' as const, onSelect: start },
+    ] }),
+  }), [actor, db, openPersonal, relationshipId, role, start]);
 
   const select = (peer: CloudContact) => {
     const surface = latest.current;

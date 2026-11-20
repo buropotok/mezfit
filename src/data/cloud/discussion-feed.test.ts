@@ -122,6 +122,30 @@ describe('free discussions in the local repository', () => {
     await expect(new DiscussionRepository(db, 'tg:11', scope(1)).getThread(first.id)).rejects.toThrow('DISCUSSION_NOT_FOUND');
   });
 
+  it('reuses the same personal thread and keeps its messages inside the account realm', async () => {
+    const { db, coach } = await fixture();
+    const personalScope = { realmId: 'tg:22', coachClientId: null };
+    const personal = new DiscussionRepository(db, 'tg:22', personalScope);
+    const [first, repeated] = await Promise.all([personal.ensurePersonalDiscussion(), personal.ensurePersonalDiscussion()]);
+    expect(repeated).toEqual(first);
+    expect(first).toMatchObject({ ...personalScope, owner: 'tg:22', derivedTitleSnapshot: 'Личный чат' });
+    expect(await db.discussionThreads.count()).toBe(1);
+
+    const input = { id: 'own-note', threadId: first.id, text: 'Заметка себе', createdAt: time };
+    await personal.saveDraft(input);
+    expect(await personal.getDraft(first.id)).toMatchObject(input);
+    const sent = await personal.send(input);
+    expect(await personal.getDraft(first.id)).toBeNull();
+    expect(await new DiscussionRepository(db, 'tg:22', personalScope).feed())
+      .toEqual([expect.objectContaining({ thread: expect.objectContaining({ id: first.id }), latest: sent, unread: 0 })]);
+    const other = new DiscussionRepository(db, 'tg:11', personalScope);
+    await expect(other.ensurePersonalDiscussion()).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    await expect(other.page(first.id)).rejects.toThrow('DISCUSSION_ACCESS_DENIED');
+    await expect(coach.getThread(first.id)).rejects.toThrow('DISCUSSION_NOT_FOUND');
+    await expect(coach.createFreeDiscussion({ ...prepareFreeDiscussion('Личный чат'), id: first.id }))
+      .rejects.toThrow('INVALID_DISCUSSION_ANCHOR');
+  });
+
   it('opens same-title threads separately, including an empty chat, and resolves the exact notification', async () => {
     const { db, scope, coach, client } = await fixture();
     const first = await coach.createFreeDiscussion(prepareFreeDiscussion('Питание'));

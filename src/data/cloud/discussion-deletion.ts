@@ -18,7 +18,7 @@ function deletionMarker(thread: DiscussionThread, actor: string) {
 export function deletedDiscussionIds(
   db: Pick<DiscussionDeletionTables, 'flexValues'>, threads: readonly DiscussionThread[], actor: string,
 ): Promise<Set<string>> {
-  const markers = threads.filter(thread => thread.anchor.kind === 'free')
+  const markers = threads.filter(thread => thread.anchor.kind === 'free' && thread.coachClientId !== null)
     .map(thread => ({ thread, ...deletionMarker(thread, actor) }));
   if (!markers.length) return Dexie.Promise.resolve(new Set<string>());
   return db.flexValues.bulkGet(markers.map(marker => marker.id)).then(rows =>

@@ -96,7 +96,7 @@ function DiscussionInboxItem({ row, onOpen, onEntity, onOpenOrigin, onAvatarSour
     trailingAction={entityAction || moveActions ? <>
       {entityAction ? <Button rounded tonal inline aria-label={`${entityAction}: ${row.thread.derivedTitleSnapshot}`}
         onClick={() => onEntity(row)}><Text variant="caption">{entityAction}</Text></Button> : null}
-      {moveActions ? <DiscussionMoveMenu title={row.thread.derivedTitleSnapshot} free={kind === 'free'}
+      {moveActions ? <DiscussionMoveMenu title={row.thread.derivedTitleSnapshot} free={kind === 'free' && row.thread.coachClientId !== null}
         actions={moveActions} onMove={category => moveActions.move(row, category)}
         onDelete={() => moveActions.remove(row)} /> : null}
     </> : undefined}
@@ -180,9 +180,12 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
   ) : undefined;
   // Creation has a committed header before the feed can project it. Keep that
   // opening only within the same tab, account, role and verified pair.
-  const createdContact = opened?.kind === 'created' && opened.scope === creationScope && opened.row.contact
-    && !notificationMessageId ? findDiscussionPeer(notificationPeers ?? [], opened.row.contact) : undefined;
-  const current = (opened?.kind === 'notification' ? notificationContact : opened?.kind === 'created' ? createdContact : activeRow) ? opened : null;
+  const validCreation = opened?.kind === 'created' && opened.scope === creationScope && !notificationMessageId;
+  const createdContact = validCreation && opened.row.contact
+    ? findDiscussionPeer(notificationPeers ?? [], opened.row.contact) : undefined;
+  const createdPersonal = validCreation && opened.row.thread.coachClientId === null && opened.row.thread.realmId === actorId;
+  const current = (opened?.kind === 'notification' ? notificationContact
+    : opened?.kind === 'created' ? createdContact || createdPersonal : activeRow) ? opened : null;
   const currentThread = current?.kind === 'created' ? activeRow?.thread ?? current.row.thread : current?.row.thread;
   useLayoutEffect(() => {
     if (opened?.kind === 'created' && !current) setOpened(previous => previous === opened ? null : previous);
@@ -249,14 +252,21 @@ export function DiscussionsPage({ role, relationshipId, notificationMessageId, o
     : manageCategory ? { kind: 'custom', id: manageCategory.id } : null;
   const creation = useFreeDiscussionCreation({ cloud, organization: organization.repository, category: creationCategory,
     scope: creationScope, role, relationshipId, blocked: covered || Boolean(dialog || categoryBusy || notificationMessageId),
-    parent, onNavigationContextChange, onStart: () => { cancelPendingOpen(); setOpenError(''); setUnavailableCreatedChat(null); },
+    parent, onNavigationContextChange, onStart: () => {
+      cancelPendingOpen();
+      setOpenError('');
+      setUnavailableCreatedChat(null);
+      const generation = request.current;
+      return () => generation === request.current;
+    },
+    onPersonalError: () => setOpenError('Не удалось открыть личный чат. Повторите нажатие.'),
     onCreated: (thread, contact, source) => {
-      if (!contact) {
+      if (!contact && thread.coachClientId !== null) {
         setUnavailableCreatedChat(creationScope);
         return;
       }
       setOpened({ kind: 'created', scope: creationScope, parent: source,
-        row: { thread, contact, latest: null, unread: 0, hasAttachments: false } });
+        row: { thread, contact: contact ?? null, latest: null, unread: 0, hasAttachments: false } });
     },
   });
   const openCategoryDialog = (intent: CategoryDialogIntent) => {
