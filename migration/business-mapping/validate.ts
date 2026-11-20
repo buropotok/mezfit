@@ -103,7 +103,7 @@ const factExercise: Rule = v => exact(v, {
 });
 const sourceTiming: Rule = v => exact(v, {
   localDate: nullable(date), startedAtUtc: nullable(instant), completedAtUtc: nullable(instant),
-  timeZone: nullable(zone), precision: one('instant', 'minute', 'date', 'unknown'),
+  timeZone: nullable(str(128)), precision: one('instant', 'minute', 'date', 'unknown'),
 });
 const timing: Rule = v => exact(v, {
   source: sourceTiming, proposedStartsAtUtc: nullable(instant), proposedEndsAtUtc: nullable(instant),
@@ -287,7 +287,8 @@ export function isMezfitImportPlan(value: unknown): value is MezfitImportPlanV1 
     }
     if (o.kind === 'historical_session' || o.kind === 'standalone_scheduled') {
       if (o.state === 'selected' && (!named(o.name)
-        || !o.timing.proposedStartsAtUtc)) return false;
+        || !o.timing.proposedStartsAtUtc
+        || o.timing.source.timeZone !== null && !zone(o.timing.source.timeZone))) return false;
       const frozen = o.kind === 'historical_session' ? o.frozenPlan : o.plan;
       if (frozen.state === 'present' && (!hasDistinctPositions(frozen.exercises)
         || !frozen.exercises.every(ex => hasDistinctPositions(ex.sets)))) return false;
