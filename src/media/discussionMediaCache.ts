@@ -237,6 +237,7 @@ interface DownloadResult {
 const downloads = new Map<string, { result: Promise<DownloadResult>; blob: Promise<Blob | null> }>();
 const PRIMARY_RESPONSE_TIMEOUT_MS = 8_000;
 const FULL_PHOTO_IDLE_TIMEOUT_MS = 15_000;
+const R2_PHOTO_PART_BYTES = 1024 * 1024;
 
 async function readFullPhoto(response: Response, sizeBytes: number, onProgress: () => void): Promise<Blob | null> {
   if (!response.body) return response.blob();
@@ -261,6 +262,32 @@ async function readFullPhoto(response: Response, sizeBytes: number, onProgress: 
   } finally {
     reader.releaseLock();
   }
+}
+
+async function readR2PhotoInParts(
+  source: string, entry: DiscussionMediaCacheEntry, request: RequestInit, resetIdleTimeout: () => void,
+): Promise<Blob | null> {
+  const parts: Blob[] = [];
+  for (let start = 0; start < entry.sizeBytes; start += R2_PHOTO_PART_BYTES) {
+    if (request.signal?.aborted) return null;
+    const end = Math.min(start + R2_PHOTO_PART_BYTES, entry.sizeBytes) - 1;
+    const size = end - start + 1;
+    resetIdleTimeout();
+    const response = await fetch(source, { ...request, headers: { Range: `bytes=${start}-${end}` } });
+    // Some bucket CORS policies don't expose Content-Range to the browser.
+    const range = response.headers.get('content-range');
+    const length = response.headers.get('content-length');
+    if (response.status !== 206 || (range !== null && range !== `bytes ${start}-${end}/${entry.sizeBytes}`)
+      || (length !== null && Number(length) !== size)) {
+      void response.body?.cancel().catch(() => undefined);
+      return null;
+    }
+    resetIdleTimeout();
+    const part = await readFullPhoto(response, size, resetIdleTimeout);
+    if (!part || !matches({ ...entry, sizeBytes: size }, part)) return null;
+    parts.push(part);
+  }
+  return new Blob(parts, { type: entry.mimeType });
 }
 
 /** Cache a complete response. The first video player can stream independently. */
@@ -300,14 +327,15 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
     if (primary) startTimer(PRIMARY_RESPONSE_TIMEOUT_MS);
     else if (fullPhoto) receivedData();
 
-    let stage: 'SIGN' | 'GET' | 'BODY' = 'SIGN';
+    let stage: 'SIGN' | 'GET' | 'BODY' | 'RANGE' = 'SIGN';
     try {
       const source = await resolveSource(signal);
       stage = 'GET';
       if (fullPhoto && !primary) receivedData();
-      const response = await fetch(source, {
+      const request = {
         signal, credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
-      });
+      } satisfies RequestInit;
+      const response = await fetch(source, request);
       const length = response.headers.get('content-length');
       if (response.status !== 200 || (length !== null && Number(length) !== entry.sizeBytes)) {
         if (!primary) r2Failure = response.status !== 200 ? `R2-GET-${response.status}` : 'R2-SIZE';
@@ -316,9 +344,17 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
       }
       stage = 'BODY';
       if (fullPhoto) receivedData();
-      const blob = fullPhoto ? await readFullPhoto(response, entry.sizeBytes, receivedData) : await response.blob();
+      let blob: Blob | null;
+      try {
+        blob = fullPhoto ? await readFullPhoto(response, entry.sizeBytes, receivedData) : await response.blob();
+      } catch (error) {
+        if (primary || !fullPhoto || signal.aborted || entry.sizeBytes <= R2_PHOTO_PART_BYTES) throw error;
+        stage = 'RANGE';
+        blob = await readR2PhotoInParts(source, entry, request, receivedData);
+      }
       if (!signal.aborted && blob && matches(entry, blob)) return blob;
-      if (!primary) r2Failure = signal.aborted ? 'R2-BODY-TIMEOUT'
+      if (!primary) r2Failure = signal.aborted ? `R2-${stage}-TIMEOUT`
+        : stage === 'RANGE' ? 'R2-RANGE-INVALID'
         : !blob || blob.size !== entry.sizeBytes ? 'R2-SIZE' : 'R2-MIME';
       return null;
     } catch (error) {
