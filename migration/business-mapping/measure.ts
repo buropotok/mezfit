@@ -8,11 +8,11 @@ const factors = {
 } as const;
 const unit = { weight: 'kg', duration: 's', distance: 'm' } as const;
 const allowed: Record<ExerciseTracking, ReadonlySet<keyof SourceSetMetrics>> = {
-  weight_reps: new Set(['weight', 'reps']),
-  time: new Set(['duration']),
-  time_distance: new Set(['duration', 'distance']),
-  time_reps: new Set(['duration', 'reps']),
-  time_weight: new Set(['duration', 'weight']),
+  weight_reps: new Set<keyof SourceSetMetrics>(['weight', 'reps']),
+  time: new Set<keyof SourceSetMetrics>(['duration']),
+  time_distance: new Set<keyof SourceSetMetrics>(['duration', 'distance']),
+  time_reps: new Set<keyof SourceSetMetrics>(['duration', 'reps']),
+  time_weight: new Set<keyof SourceSetMetrics>(['duration', 'weight']),
 };
 
 function convert(kind: 'weight' | 'duration' | 'distance', input: { value: number; unit: string | null } | null):
@@ -23,6 +23,7 @@ function convert(kind: 'weight' | 'duration' | 'distance', input: { value: numbe
   if (factor === undefined) return 'error';
   const exact = input.value * factor;
   if (!Number.isFinite(exact) || exact < 0 || exact > Number.MAX_SAFE_INTEGER) return 'error';
+  if (!Number.isSafeInteger(Math.round(exact * 1e6))) return 'error';
   const rounded = Math.round(exact * 1e6) / 1e6;
   if (!Number.isFinite(rounded) || rounded < 0 || (input.value > 0 && rounded === 0)) return 'error';
   return { value: rounded, unit: unit[kind], originalValue: input.value, originalUnit: input.unit!, precision: 6 };
