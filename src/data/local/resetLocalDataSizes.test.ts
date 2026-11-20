@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
+// @ts-expect-error CI deliberately omits Node.js typings; Vitest runs this test in Node and needs its native Blob.
 import { Blob as NativeBlob } from 'node:buffer';
 import { afterEach, expect, it } from 'vitest';
 import { estimateLocalDataBytes, estimateMediaCacheBytes } from './resetLocalDataSizes';
