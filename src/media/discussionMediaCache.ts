@@ -324,7 +324,13 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
       clearTimeout(timer);
     }
   })().finally(() => downloads.delete(key));
-  const task = { result, blob: result.then(download => download.blob) };
+  let blobTask: Promise<Blob | null> | undefined;
+  const task = {
+    result,
+    get blob() {
+      return blobTask ??= result.then(download => download.blob);
+    },
+  };
   downloads.set(key, task);
   return task;
 }
