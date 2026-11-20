@@ -88,7 +88,7 @@ const programDay: Rule = v => exact(v, {
 const program: Rule = v => exact(v, {
   sourceProgramKey: nullable(str(128)), syntheticFromSessionKey: nullable(str(128)),
   name: nullable(value => typeof value === 'string' && value.length <= 1000),
-  phases: list(w => exact(w, { sourceKey: str(128), name: nullable(str(1000)), position: nat }), 32),
+  phases: list(w => exact(w, { sourceKey: str(128), name: nullable(value => typeof value === 'string' && value.length <= 1000), position: nat }), 32),
   days: list(programDay, 32), intendedStatus: one('active'),
 });
 const factSet: Rule = v => exact(v, {
@@ -121,11 +121,13 @@ const operationShape: Rule = v => {
   if (!record(v) || !Object.hasOwn(v, 'kind')) return false;
   if (v.kind === 'program') return exact(v, { ...operationBase, kind: one('program'), program });
   if (v.kind === 'historical_session') return exact(v, { ...operationBase,
-    kind: one('historical_session'), completionState: one('completed', 'in_progress', 'unknown'),
+    kind: one('historical_session'), name: nullable(value => typeof value === 'string' && value.length <= 1000),
+    completionState: one('completed', 'in_progress', 'unknown'),
     programRef: choiceRef, scheduledWorkoutRef: choiceRef, timing, frozenPlan: plan, fact: list(factExercise, 32),
     importedProvenance: one(true) });
   if (v.kind === 'standalone_scheduled') return exact(v, { ...operationBase,
-    kind: one('standalone_scheduled'), programRef: choiceRef, programDayRef: choiceRef, timing, plan });
+    kind: one('standalone_scheduled'), name: nullable(value => typeof value === 'string' && value.length <= 1000),
+    programRef: choiceRef, programDayRef: choiceRef, timing, plan });
   if (v.kind === 'proposed_custom_exercise') return exact(v, { ...operationBase, kind: one('proposed_custom_exercise'),
     exerciseIdentityKey: key, sourceName: name, trackingType: tracking, requiresReconciliation: one(true), targetScope: one('coach') });
   if (v.kind === 'provenance_metadata') return exact(v, { ...operationBase, kind: one('provenance_metadata'),
