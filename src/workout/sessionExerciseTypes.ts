@@ -111,6 +111,8 @@ export interface ProgramSessionExerciseProps {
   onAddSet?: () => void;
   onDelete?: () => void;
   onReplace?: () => void;
+  /** A read-only or immutable exercise still explains why replace/delete cannot run. */
+  onUnavailableExerciseAction?: (action: 'replace' | 'delete') => void;
   onInformation?: () => void;
   onOpenSet?: (setId: string) => void;
   onDeleteSet?: (setId: string) => void | Promise<void>;
