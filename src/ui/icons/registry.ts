@@ -69,6 +69,7 @@ import editUrl from './edit-outline.svg';
 import usersFilledUrl from './liquid-glass-users-filled.svg';
 import usersOutlineUrl from './liquid-glass-users-outline.svg';
 
+import tablerInfoTriangleUrl from './tabler-info-triangle.svg';
 import tablerPencilPlusUrl from './tabler-pencil-plus.svg';
 import tablerReplaceUrl from './tabler-replace.svg';
 import tablerLetterIUrl from './tabler-letter-i.svg';
@@ -138,6 +139,7 @@ const uiIconRegistry = {
   home: { outline: homeUrl, filled: homeFilledUrl },
   history: { outline: historyUrl, filled: historyUrl },
   'info-circle': { outline: infoCircleUrl, filled: infoCircleUrl },
+  'info-triangle': { outline: tablerInfoTriangleUrl, filled: tablerInfoTriangleUrl },
   'menu-2': { outline: menu2Url, filled: menu2Url },
   x: { outline: xUrl, filled: xUrl },
   'record-circle': { outline: recordCircleUrl, filled: recordCircleUrl },

@@ -38,6 +38,9 @@ import { SessionExercise, WorkedMuscles, WorkoutSessionCard, type ActiveWorkoutS
 import { CoachInviteDialog } from '../coach/CoachInviteDialog';
 import { LiquidPopoverModesDemo } from './LiquidPopoverModesDemo';
 import { ScreenDiagnostics } from './ScreenDiagnostics';
+import { ResetLocalDataSettings } from './ResetLocalDataSettings';
+import { requestLocalDataReset } from '../data/local/resetLocalData';
+import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
 import { WorkoutReminderSettings } from './WorkoutReminderSettings';
@@ -289,9 +292,11 @@ export function SettingsPage({
   previewWidth = null,
   onPreviewWidthChange,
 }: SettingsPageProps) {
+  const cloud = useCloudConnections();
   const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
   const [syncHistoryOpen, setSyncHistoryOpen] = useState(false);
+  const [dataResetOpen, setDataResetOpen] = useState(false);
   const [resistanceBandsOpen, setResistanceBandsOpen] = useState(false);
   const [glassSettingsOpen, setGlassSettingsOpen] = useState(false);
   const [backgroundSettingsOpen, setBackgroundSettingsOpen] = useState(false);
@@ -321,6 +326,7 @@ export function SettingsPage({
   };
   const closeScreenDiagnostics = useCallback(() => setScreenDiagnosticsOpen(false), []);
   const closeSyncHistory = useCallback(() => setSyncHistoryOpen(false), []);
+  const closeDataReset = useCallback(() => setDataResetOpen(false), []);
   const closeResistanceBands = useCallback(() => setResistanceBandsOpen(false), []);
   useEffect(() => {
     if (initialScreenDiagnosticsOpen) onScreenDiagnosticsDeepLinkConsumed?.();
@@ -352,6 +358,10 @@ export function SettingsPage({
       onNavigationContextChange({ title: 'История синхронизации', scrollKey: 'settings:sync-history', onBack: closeSyncHistory });
       return () => onNavigationContextChange(null);
     }
+    if (dataResetOpen) {
+      onNavigationContextChange({ title: 'Очистка данных', scrollKey: 'settings:data-reset', onBack: closeDataReset });
+      return () => onNavigationContextChange(null);
+    }
     if (screenDiagnosticsOpen) {
       onNavigationContextChange({ title: 'Диагностика экрана', scrollKey: 'settings:diagnostics', onBack: closeScreenDiagnostics });
       return () => onNavigationContextChange(null);
@@ -379,9 +389,9 @@ export function SettingsPage({
 
     onNavigationContextChange(null);
     return undefined;
-  }, [backgroundSettingsOpen, closeBackgroundSettings, closeGlassSettings, closeModules, closeResistanceBands, closeScreenDiagnostics, closeSyncHistory, closeTypographySettings, glassSettingsOpen, modulesOpen, onNavigationContextChange, resistanceBandsOpen, screenDiagnosticsOpen, syncHistoryOpen, typographySettingsOpen]);
+  }, [backgroundSettingsOpen, closeBackgroundSettings, closeDataReset, closeGlassSettings, closeModules, closeResistanceBands, closeScreenDiagnostics, closeSyncHistory, closeTypographySettings, dataResetOpen, glassSettingsOpen, modulesOpen, onNavigationContextChange, resistanceBandsOpen, screenDiagnosticsOpen, syncHistoryOpen, typographySettingsOpen]);
 
-  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen && !syncHistoryOpen && !resistanceBandsOpen) {
+  if (!modulesOpen && !glassSettingsOpen && !typographySettingsOpen && !backgroundSettingsOpen && !screenDiagnosticsOpen && !syncHistoryOpen && !resistanceBandsOpen && !dataResetOpen) {
     return (
       <section className="settings-page" aria-label="Настройки">
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__diagnostics-entry">
@@ -407,6 +417,13 @@ export function SettingsPage({
           </div>
         </GlassSurface>
 
+        <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__data-reset-entry">
+          <Text variant="title">Хранилище</Text>
+          <span className="settings-page__action">
+            <Button onClick={() => setDataResetOpen(true)}>Очистка данных</Button>
+          </span>
+        </GlassSurface>
+
         <GlassSurface component="section" wrapContent={false} preset="modalTuned" optics={false} blur={effectiveGlassBlur} shape={{ radius: 16 }} className="settings-page__section">
           <Text variant="title">Разработка</Text>
           <Text variant="footnote" tone="muted">
@@ -422,6 +439,15 @@ export function SettingsPage({
   }
 
   if (syncHistoryOpen) return <SyncHistoryPanel glassBlur={effectiveGlassBlur} />;
+
+  if (dataResetOpen) return <ResetLocalDataSettings glassBlur={effectiveGlassBlur}
+    telegramUserId={cloud?.actorUserId.startsWith('tg:') ? cloud.actorUserId.slice(3) : null}
+    onClear={selection => {
+    const telegramUserId = cloud?.actorUserId.startsWith('tg:') ? cloud.actorUserId.slice(3) : null;
+    if (!telegramUserId) throw new Error('NO_LOCAL_DATABASE_ACCOUNT');
+    requestLocalDataReset(telegramUserId, selection);
+    window.location.reload();
+  }} />;
 
   if (screenDiagnosticsOpen) return <ScreenDiagnostics glassBlur={effectiveGlassBlur} previewWidth={previewWidth} onPreviewWidthChange={onPreviewWidthChange} />;
 
