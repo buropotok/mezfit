@@ -474,6 +474,23 @@
   object-fit: contain;
 }
 
+.discussion-media--viewer > img {
+  grid-area: 1 / 1;
+}
+
+.discussion-media__photo-status {
+  position: absolute;
+  bottom: calc(12px + var(--discussion-media-safe-bottom, 0px));
+  inset-inline: calc(12px + var(--discussion-media-safe-left, 0px)) calc(12px + var(--discussion-media-safe-right, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgb(0 0 0 / 0.75);
+}
+
 .discussion-media__annotate {
   position: absolute;
   top: calc(8px + var(--discussion-media-safe-top, 0px));

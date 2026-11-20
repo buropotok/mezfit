@@ -74,8 +74,15 @@ function galleryMediaSource(attachment: MessageAttachment, accountId: string, th
   const { storageKey, mimeType, sizeBytes } = thumbnail && attachment.preview ? attachment.preview : attachment;
   const src = storageKey && directMediaUrl(storageKey);
   if (!storageKey || !src || mediaType === 'voice' || mediaType === 'video-note') return null;
-  return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes,
-    realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id } };
+  const readIdentity = {
+    accountId, realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id,
+  };
+  const preview = !thumbnail && attachment.preview;
+  const previewSrc = preview && directMediaUrl(preview.storageKey);
+  return { src, type: mediaType, durationSeconds, cache: { ...readIdentity, storageKey, mimeType, sizeBytes },
+    photoPreview: preview && previewSrc ? { src: previewSrc, cache: {
+      ...readIdentity, storageKey: preview.storageKey, mimeType: preview.mimeType, sizeBytes: preview.sizeBytes,
+    } } : undefined };
 }
 
 const videoCommentHintKey = 'mezfit.discussion.videoCommentUsed';

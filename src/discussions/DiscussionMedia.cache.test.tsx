@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import Dexie from 'dexie';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -114,6 +114,44 @@ it('requires a valid local copy for an outgoing video and reads it back from Ind
   expect(await readDiscussionMedia(videoEntry)).toBeNull();
   await storeDiscussionMedia(videoEntry, video, true);
   expect(await (await readDiscussionMedia(videoEntry))?.text()).toBe('video');
+});
+
+it('keeps the cached preview when Full fails to decode and replaces it after a successful retry', async () => {
+  await setupBrowser();
+  const path = 'mvp-media/' + 'd'.repeat(64);
+  const id = 'e'.repeat(64);
+  const full = { ...photoEntry, storageKey: `${path}/full/${id}` };
+  const preview = { ...photoEntry, storageKey: `${path}/preview/${id}` };
+  const fullSrc = directMediaUrl(full.storageKey) ?? '';
+  const previewSrc = directMediaUrl(preview.storageKey) ?? '';
+  await storeDiscussionMedia(preview, new Blob(['small'], { type: preview.mimeType }), true);
+  const get = vi.fn<typeof fetch>().mockImplementation(async () => new Response(
+    new Blob(['photo'], { type: full.mimeType }), { headers: { 'Content-Type': full.mimeType } },
+  ));
+  vi.stubGlobal('fetch', get);
+  const annotate = vi.fn();
+
+  const view = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src={fullSrc} type="photo" cache={full} mode="viewer"
+      photoPreview={{ src: previewSrc, cache: preview }} onAnnotate={annotate} />
+  </KonstaProvider>);
+  const thumbnail = await view.findByAltText('Миниатюра фото');
+  fireEvent.load(thumbnail);
+  expect(thumbnail.style.visibility).toBe('visible');
+  const original = await view.findByAltText('Фото во вложении');
+  expect(original.style.visibility).toBe('hidden');
+  fireEvent.error(original);
+  await view.findByText('Не удалось открыть оригинал фото. Код PHOTO-FULL-DECODE');
+  expect(view.getByAltText('Миниатюра фото')).toBe(thumbnail);
+  expect(view.queryByRole('button', { name: 'Рисовать на изображении' })).toBeNull();
+
+  fireEvent.click(view.getByRole('button', { name: 'Повторить' }));
+  fireEvent.load(await view.findByAltText('Фото во вложении'));
+  expect(view.queryByAltText('Миниатюра фото')).toBeNull();
+  expect(view.queryByRole('status')).toBeNull();
+  expect(view.getByRole('button', { name: 'Рисовать на изображении' })).toBeTruthy();
+  expect(get.mock.calls.map(([url]) => url)).toEqual([fullSrc, fullSrc]);
+  expect(await readDiscussionMedia(full)).toBeNull();
 });
 
 it('caches a visible video thumbnail and serves it locally on reopening', async () => {

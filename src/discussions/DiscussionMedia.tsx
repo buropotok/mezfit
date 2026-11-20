@@ -7,11 +7,23 @@ import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 import { useVideoOrientation } from '../media/useVideoOrientation';
 import { DiscussionVideoControls } from './DiscussionVideoControls';
 
-export interface DiscussionMediaSource {
+interface DiscussionPhotoSource {
   src: string;
+  cache?: DiscussionMediaCacheEntry;
+}
+
+export interface DiscussionMediaSource extends DiscussionPhotoSource {
   type: 'photo' | 'video';
   durationSeconds?: number | null;
-  cache?: DiscussionMediaCacheEntry;
+  photoPreview?: DiscussionPhotoSource;
+}
+
+function ViewerPhotoPreview({ src, cache }: DiscussionPhotoSource) {
+  const { url, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'photo', 0, false);
+  const [loadedUrl, setLoadedUrl] = useState<string>();
+  return url ? <img key={url} src={url} alt="Миниатюра фото" referrerPolicy="no-referrer"
+    style={{ visibility: loadedUrl === url ? 'visible' : 'hidden' }}
+    onLoad={() => setLoadedUrl(url)} onError={() => { setLoadedUrl(undefined); void tryR2Fallback(); }} /> : null;
 }
 
 function seekThumbnail(video: HTMLVideoElement) {
@@ -20,7 +32,7 @@ function seekThumbnail(video: HTMLVideoElement) {
   video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
 }
 
-export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint, onAnnotate }: DiscussionMediaSource & {
+export function DiscussionMedia({ src, type, durationSeconds, cache, photoPreview, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint, onAnnotate }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
   onMenu?: () => void;
@@ -43,6 +55,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const currentRetry = useRef(retry);
   currentRetry.current = retry;
   const thumbnail = mode === 'thumbnail';
+  const viewerPreview = type === 'photo' && mode === 'viewer' ? photoPreview : undefined;
   const autoCacheVideo = !thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES);
   const { url: mediaSrc, container, tryR2Fallback } = useDiscussionMediaSource(
     src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
@@ -90,6 +103,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
   const duration = Math.floor(durationSeconds ?? 0);
   const content = type === 'photo'
     ? <img key={String(usePlainSource)} ref={photo} crossOrigin={crossOrigin} src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
+        style={viewerPreview && !imageReady ? { visibility: 'hidden' } : undefined}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onLoad={() => setImageReady(true)} onError={handleError} />
     : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={orientation.src} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
         style={orientation.style}
@@ -110,14 +124,27 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
     if (!onComment || !video?.paused || !Number.isFinite(video.currentTime) || video.currentTime < 0) return;
     onComment(video.currentTime);
   };
+  const retryButton = <Button rounded onClick={() => {
+    setFailed(false); setUsePlainSource(false); setRetry(value => value + 1);
+  }}><Text variant="body">Повторить</Text></Button>;
 
   return <div ref={container} className={`discussion-media discussion-media--${mode}`} onClick={event => event.stopPropagation()}>
-    {failed ? <div className="discussion-media__error">
+    {viewerPreview && !imageReady && <ViewerPhotoPreview {...viewerPreview} />}
+    {viewerPreview && !imageReady && <div className="discussion-media__photo-status">
+      <Text variant="footnote" role="status">
+        {failed
+          ? `Не удалось открыть оригинал фото. Код ${mediaSrc?.startsWith('blob:') ? 'PHOTO-FULL-DECODE' : 'PHOTO-FULL-LOAD'}`
+          : 'Загружаем оригинал фото…'}
+      </Text>
+      {failed && retryButton}
+    </div>}
+    {failed && !viewerPreview && <div className="discussion-media__error">
       <Text variant="footnote" role="status">
         {label} недоступно. Проверьте сеть и поддержку формата на устройстве.
       </Text>
-      <Button rounded onClick={() => { setFailed(false); setUsePlainSource(false); setRetry(value => value + 1); }}><Text variant="footnote">Повторить</Text></Button>
-    </div> : thumbnail ? <a href={src} className="discussion-media__open"
+      {retryButton}
+    </div>}
+    {!failed && (thumbnail ? <a href={src} className="discussion-media__open"
       aria-label={type === 'photo' ? 'Открыть фото' : 'Открыть видео'} onClick={event => {
         event.preventDefault();
         onOpen?.();
@@ -129,7 +156,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, mode, onOpe
           {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, '0')}
         </Text>}
       </>}
-    </a> : content}
+    </a> : (!viewerPreview || mediaSrc) && content)}
     {type === 'video' && orientation.pending && !failed && <div className="discussion-media__preparing">
       <Text variant="caption">Подготавливаем видео…</Text>
     </div>}
