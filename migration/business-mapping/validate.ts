@@ -269,8 +269,37 @@ export function isMezfitImportPlan(value: unknown): value is MezfitImportPlanV1 
       ? o.plan.exercises.map(ex => ex.exerciseMappingKey) : [];
     return [];
   };
+  const hasDistinctPositions = (rows: readonly { position: number; sourceKey: string }[]): boolean =>
+    unique(rows.map(row => String(row.position))) && unique(rows.map(row => row.sourceKey));
+  const named = (value: string | null): boolean => typeof value === 'string' && value.trim().length > 0;
+  function nestedStructure(o: ImportOperation): boolean {
+    if (o.kind === 'program') {
+      const p = o.program;
+      if (!hasDistinctPositions(p.phases) || !hasDistinctPositions(p.days)) return false;
+      if (o.state === 'selected' && (!named(p.name) || !p.phases.length
+        || p.phases.some(phase => !named(phase.name))
+        || p.days.some(day => !named(day.name)
+          || day.phaseRef.state !== 'linked'
+          || !p.phases.some(phase => phase.sourceKey === day.phaseRef.sourceKey)))) return false;
+      return p.days.every(day => hasDistinctPositions(day.exercises)
+        && day.exercises.every(ex => hasDistinctPositions(ex.sets)));
+    }
+    if (o.kind === 'historical_session' || o.kind === 'standalone_scheduled') {
+      if (o.state === 'selected' && (!named(o.name)
+        || !o.timing.proposedStartsAtUtc)) return false;
+      const frozen = o.kind === 'historical_session' ? o.frozenPlan : o.plan;
+      if (frozen.state === 'present' && (!hasDistinctPositions(frozen.exercises)
+        || !frozen.exercises.every(ex => hasDistinctPositions(ex.sets)))) return false;
+      return o.kind !== 'historical_session' || (hasDistinctPositions(o.fact)
+        && o.fact.every(ex => hasDistinctPositions(ex.sets)));
+    }
+    return true;
+  }
   for (const o of plan.operations) {
-    if (!bindings.has(o.targetBindingRef) && o.targetBindingRef !== 'source-only'
+    if (!nestedStructure(o)
+      || o.state === 'selected' && o.targetBindingRef === 'source-only'
+      || o.state === 'selected' && refs(o).some(k => mappings.get(k)?.kind === 'blocked')
+      || (!bindings.has(o.targetBindingRef) && o.targetBindingRef !== 'source-only')
       || o.dependencyKeys.includes(o.operationKey)
       || !unique(o.dependencyKeys)
       || !o.dependencyKeys.every(k => operations.has(k))
@@ -302,7 +331,22 @@ export function isMezfitImportPlan(value: unknown): value is MezfitImportPlanV1 
     done.add(k);
     return true;
   }
-  return plan.operations.every(o => visit(o.operationKey));
+  if (!plan.operations.every(o => visit(o.operationKey))) return false;
+  const selectedKeys = plan.selections.flatMap(s => s.operationKeys);
+  if (!unique(selectedKeys) || selectedKeys.length !== plan.operations.length) return false;
+  function closure(key: string, seen = new Set<string>()): string[] {
+    for (const dep of operations.get(key)?.dependencyKeys ?? []) if (!seen.has(dep)) {
+      seen.add(dep);
+      closure(dep, seen);
+    }
+    return [...seen].sort();
+  }
+  return plan.selections.every(s => {
+    const expected = new Set(s.operationKeys.flatMap(k => closure(k)));
+    return unique(s.dependencyClosure)
+      && s.dependencyClosure.length === expected.size
+      && s.dependencyClosure.every(k => expected.has(k));
+  });
 }
 
 /** Keep diagnostics free of sensitive payloads at untrusted boundaries. */
