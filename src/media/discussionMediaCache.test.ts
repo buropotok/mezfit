@@ -35,3 +35,62 @@ it('shares an in-flight download and only keeps a complete response', async () =
   expect(await (await readDiscussionMedia(entry))?.text()).toBe('video');
   expect(fetchMedia).toHaveBeenCalledTimes(2);
 });
+
+it('completes a full photo when the body takes over eight seconds but keeps making progress', async () => {
+  const photo = { ...entry, storageKey: `mvp-media/${'a'.repeat(64)}/full/${'b'.repeat(64)}`,
+    mimeType: 'image/jpeg', sizeBytes: 3 };
+  vi.useFakeTimers();
+  try {
+    const fetchMedia = vi.fn<typeof fetch>(async (_url, options) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          const timers = [7_000, 14_000, 21_000].map((delay, index) => setTimeout(() => {
+            controller.enqueue(Uint8Array.of(index + 1));
+            if (index === 2) controller.close();
+          }, delay));
+          options?.signal?.addEventListener('abort', () => {
+            timers.forEach(timer => clearTimeout(timer));
+            controller.error(new Error('aborted'));
+          }, { once: true });
+        },
+      });
+      return new Response(body, { headers: { 'Content-Type': photo.mimeType } });
+    });
+    vi.stubGlobal('fetch', fetchMedia);
+
+    const download = downloadDiscussionMedia(photo);
+    await vi.advanceTimersByTimeAsync(21_000);
+    const blob = await download;
+    expect(blob?.size).toBe(3);
+    expect(fetchMedia.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
+    expect(fetchMedia).toHaveBeenCalledOnce();
+  } finally {
+    vi.useRealTimers();
+  }
+  expect(await readDiscussionMedia(photo)).toBeNull();
+});
+
+it('stops a full photo when its response body stalls', async () => {
+  const photo = { ...entry, storageKey: `mvp-media/${'a'.repeat(64)}/full/${'c'.repeat(64)}`,
+    mimeType: 'image/jpeg', sizeBytes: 2 };
+  vi.useFakeTimers();
+  try {
+    const fetchMedia = vi.fn<typeof fetch>(async (_url, options) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(Uint8Array.of(1));
+          options?.signal?.addEventListener('abort', () => controller.error(new Error('aborted')), { once: true });
+        },
+      });
+      return new Response(body, { headers: { 'Content-Type': photo.mimeType } });
+    });
+    vi.stubGlobal('fetch', fetchMedia);
+
+    const download = downloadDiscussionMedia(photo);
+    await vi.advanceTimersByTimeAsync(15_001);
+    expect(await download).toBeNull();
+    expect(fetchMedia.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
+});
