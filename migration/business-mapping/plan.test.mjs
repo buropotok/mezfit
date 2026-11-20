@@ -314,6 +314,101 @@ describe('MIG-05 business mapping: contract and read-only planning', () => {
     }
   });
 
+  it('four years of history select only the last-year workouts while keeping a linked older program whole', async () => {
+    const input = businessInput();
+    const old = clone(input.sourcePackage.sessions[0]);
+    old.sourceKey = 'ses:2022';
+    old.timing = {
+      localDate: '2022-06-01', startedAtUtc: '2022-06-01T09:00:00.000Z',
+      completedAtUtc: '2022-06-01T10:00:00.000Z', timeZone: 'UTC', precision: 'instant',
+    };
+    old.scheduledWorkoutRef = { state: 'none' };
+    old.frozenPlan.exercises[0].sourceKey = 'fp:2022';
+    old.frozenPlan.exercises[0].sets[0].sourceKey = 'fp:set2022';
+    old.performedExercises[0].sourceKey = 'fact:2022';
+    old.performedExercises[0].sets[0].sourceKey = 'fact:set2022';
+    old.performedExercises[0].sets[0].planSetRef.sourceKey = 'fp:set2022';
+    input.sourcePackage.sessions.push(old);
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    expect(plan.preview.outsidePeriod.sessions).toBe(1);
+    expect(plan.preview.selected.sessions).toBe(2);
+    expect(session(plan, 'ses:2022')).toBeUndefined();
+    expect(find(plan, 'program', 'p:old').program.days[0].exercises).toHaveLength(2);
+  });
+
+  it('does not declare a workout or its dependent program ready when a required target name is absent', async () => {
+    const input = businessInput();
+    input.sourcePackage.sessions[0].name = null;
+    input.sourcePackage.programs[0].phases[0].name = null;
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    expect(session(plan, 'ses:linked').name).toBeNull();
+    expect(session(plan, 'ses:linked').state).toBe('blocked');
+    expect(find(plan, 'program', 'p:old').state).toBe('blocked');
+    expect(session(plan, 'ses:adhoc').state).toBe('selected');
+    expect(issues(plan, 'INVALID_DEPENDENCY').length).toBeGreaterThan(1);
+  });
+
+  it('a scheduled-only client without any completed session receives an explicit blocked default-program decision', async () => {
+    const input = businessInput();
+    input.sourcePackage.programs = [];
+    input.sourcePackage.sessions = [];
+    input.sourcePackage.scheduledWorkouts = [input.sourcePackage.scheduledWorkouts[1]];
+    const sw = input.sourcePackage.scheduledWorkouts[0];
+    sw.programRef = { state: 'none' };
+    sw.programDayRef = { state: 'none' };
+    sw.plan.exercises[0].sourceProgramExerciseRef = { state: 'none' };
+    sw.plan.exercises[0].sets[0].sourceProgramSetRef = { state: 'none' };
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    expect(issues(plan, 'NO_COMPLETED_SESSION').length).toBeGreaterThan(0);
+    const synthetic = plan.operations.find(x => x.kind === 'program');
+    expect(synthetic).toBeDefined();
+    expect(synthetic.state).toBe('blocked');
+    expect(synthetic.program.phases).toHaveLength(1);
+    expect(synthetic.program.days).toHaveLength(1);
+    expect(schedule(plan, 'sw:solo')).toBeDefined();
+  });
+
+  it('cannot choose a last session from two equally dated completed workouts with no known finish time', async () => {
+    const input = businessInput();
+    input.sourcePackage.programs = [];
+    input.sourcePackage.scheduledWorkouts = [];
+    const previous = input.sourcePackage.sessions[0];
+    previous.programRef = { state: 'none' };
+    previous.scheduledWorkoutRef = { state: 'none' };
+    previous.frozenPlan.exercises[0].sourceProgramExerciseRef = { state: 'none' };
+    previous.frozenPlan.exercises[0].sets[0].sourceProgramSetRef = { state: 'none' };
+    previous.timing = {
+      localDate: '2026-10-11', startedAtUtc: null, completedAtUtc: null, timeZone: 'UTC', precision: 'date',
+    };
+    const second = input.sourcePackage.sessions[1];
+    second.timing = {
+      localDate: '2026-10-11', startedAtUtc: null, completedAtUtc: null, timeZone: 'UTC', precision: 'date',
+    };
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    expect(issues(plan, 'AMBIGUOUS_LAST_SESSION').length).toBeGreaterThan(0);
+    const synthetic = plan.operations.find(x => x.kind === 'program');
+    expect(synthetic.state).toBe('blocked');
+    expect(synthetic.program.syntheticFromSessionKey).toBeNull();
+  });
+
+  it('uses a deterministic 08:00 local slot across a DST start without changing the source date', async () => {
+    const input = businessInput();
+    input.sourcePackage.sessions[1].timing = {
+      localDate: '2026-03-29', startedAtUtc: null, completedAtUtc: null,
+      timeZone: 'Europe/Warsaw', precision: 'date',
+    };
+    input.period.fromDate = '2026-03-29';
+    input.period.throughDate = '2026-03-29';
+    const plan = await buildMezfitImportPlan(input);
+    expect(session(plan, 'ses:adhoc').timing.proposedStartsAtUtc).toBe('2026-03-29T06:00:00.000Z');
+    expect(session(plan, 'ses:adhoc').timing.source.localDate).toBe('2026-03-29');
+    expect(session(plan, 'ses:adhoc').state).toBe('blocked');
+  });
+
   it('programs with no selected workout are excluded, while the linked older program is included', async () => {
     const input = businessInput();
     input.sourcePackage.programs.push({
