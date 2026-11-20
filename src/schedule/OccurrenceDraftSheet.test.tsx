@@ -27,12 +27,13 @@ vi.mock('../workout/WorkoutExerciseSelectionSheet', () => ({ WorkoutExerciseSele
 } }));
 vi.mock('../workout/WorkoutPlanCard', () => ({
   WorkoutPlanCard: ({ onAddSet, onOpenSet, onExerciseInformation, onReplaceExercise, onDeleteExercise,
-    onBlockedExerciseAction, programName, hideProgramName, day,
+    onBlockedExerciseAction, onMutationAttempt, programName, hideProgramName, day,
     focusExerciseId, focusSetId, focusReady }: {
     onAddSet?: (id: string) => void; onOpenSet?: (exerciseId: string, setId: string) => void;
     onExerciseInformation?: (id: string) => void;
     onReplaceExercise?: (id: string) => void; onDeleteExercise?: (id: string) => void;
     onBlockedExerciseAction?: (action: 'replace' | 'delete') => void;
+    onMutationAttempt?: () => void;
     programName?: string; hideProgramName?: boolean; day?: CloudProgramDayOutline;
     focusExerciseId?: string; focusSetId?: string; focusReady?: boolean;
   }) => <>
@@ -41,8 +42,10 @@ vi.mock('../workout/WorkoutPlanCard', () => ({
     <span data-testid="scheduled-set-techniques">{day?.exercises.flatMap(exercise =>
       exercise.sets.map(set => set.setType ?? 'ordinary')).join(',') ?? ''}</span>
     <button onClick={() => onAddSet?.('exercise')}>Добавить подход</button>
-    <button onClick={() => onReplaceExercise ? onReplaceExercise('exercise') : onBlockedExerciseAction?.('replace')}>Заменить упражнение</button>
-    <button onClick={() => onDeleteExercise ? onDeleteExercise('exercise') : onBlockedExerciseAction?.('delete')}>Удалить упражнение</button>
+    <button onClick={() => onBlockedExerciseAction && onMutationAttempt
+      ? onBlockedExerciseAction('replace') : onReplaceExercise ? onReplaceExercise('exercise') : onBlockedExerciseAction?.('replace')}>Заменить упражнение</button>
+    <button onClick={() => onBlockedExerciseAction && onMutationAttempt
+      ? onBlockedExerciseAction('delete') : onDeleteExercise ? onDeleteExercise('exercise') : onBlockedExerciseAction?.('delete')}>Удалить упражнение</button>
     {day?.exercises.flatMap(exercise => exercise.sets.map(set =>
       <button key={set.id} onClick={() => onOpenSet?.(exercise.exercise.id, set.id)}>
         Открыть план подхода {set.position + 1}
