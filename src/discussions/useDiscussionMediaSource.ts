@@ -50,8 +50,8 @@ export function useDiscussionMediaSource(
       const cached = await readDiscussionMedia(entry);
       if (!active) return;
       if (!cached && mode === 'video') void downloadDiscussionMedia(entry);
-      const download = !cached && mode === 'photo' ? await downloadDiscussionMediaWithStatus(entry) : null;
-      const blob = cached ?? download?.blob;
+      const download = !cached && fullPhoto ? await downloadDiscussionMediaWithStatus(entry) : null;
+      const blob = cached ?? (download ? download.blob : mode === 'photo' ? await downloadDiscussionMedia(entry) : null);
       if (!active) return;
       if (blob && typeof URL.createObjectURL === 'function') objectUrl = URL.createObjectURL(blob);
       // A late Yandex cache lookup must not overwrite an already-selected R2 URL.
