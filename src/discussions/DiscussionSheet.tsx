@@ -69,8 +69,9 @@ export interface DiscussionSheetProps extends DiscussionTarget {
   renderAttachment?: (message: DiscussionMessageView) => ReactNode;
 }
 
-function galleryMediaSource(attachment: MessageAttachment, accountId: string): DiscussionMediaSource | null {
-  const { storageKey, mediaType, mimeType, sizeBytes, durationSeconds } = attachment;
+function galleryMediaSource(attachment: MessageAttachment, accountId: string, thumbnail = false): DiscussionMediaSource | null {
+  const { mediaType, durationSeconds } = attachment;
+  const { storageKey, mimeType, sizeBytes } = thumbnail && attachment.preview ? attachment.preview : attachment;
   const src = storageKey && directMediaUrl(storageKey);
   if (!storageKey || !src || mediaType === 'voice' || mediaType === 'video-note') return null;
   return { src, type: mediaType, durationSeconds, cache: { accountId, storageKey, mimeType, sizeBytes,
@@ -830,7 +831,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                       cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
                          realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id }} />;
                   }
-                  const source = galleryMediaSource(attachment, repository.actorUserId);
+                  const source = galleryMediaSource(attachment, repository.actorUserId, true);
                   return source && <DiscussionMedia key={attachment.id} {...source} mode="thumbnail"
                     onOpen={() => { closeMenu(); openViewer(message.id, attachment.id); }}
                     onMenu={onMenu} meta={meta} />;

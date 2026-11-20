@@ -8,6 +8,7 @@ import { mockSignedMediaTransport, signedMediaResponse } from '../../media/media
 import { MezfitCloudDatabase } from './database';
 import type { DiscussionMediaDraft } from './discussion-media';
 import { DiscussionRepository, prepareDiscussionMessage, prepareDiscussionThread } from './discussions';
+import { discussionMediaSenderPrefix } from '../../../shared/discussion-media-limits';
 
 const key = 'mvp-media/' + 'a'.repeat(64);
 const media: DiscussionMediaDraft = {
@@ -89,6 +90,32 @@ describe('gallery attachments', () => {
     await client.remove(thread.id, command.id);
     expect((await coach.getMessage(thread.id, command.id)).attachments).toBeUndefined();
   });
+});
+
+it('persists a photo pair as one attachment and requires matching uploaded Preview metadata', async () => {
+  const actor = 'tg:22';
+  const { webcrypto } = await vi.importActual<{ webcrypto: Crypto }>('node:crypto');
+  vi.stubGlobal('crypto', webcrypto);
+  const db = new MezfitCloudDatabase('9987654323', '', { discussions: true });
+  databases.push(db);
+  db.cloud.configure({ databaseUrl: '', requireAuth: false, disableEagerSync: true, disableWebSocket: true,
+    tryUseServiceWorker: false, unsyncedTables: ['localWorkoutOccurrenceDrafts'] });
+  await db.open();
+  const repository = new DiscussionRepository(db, actor, { realmId: actor, coachClientId: null });
+  const thread = await repository.ensurePersonalDiscussion();
+  const prefix = `mvp-media/${await discussionMediaSenderPrefix(actor)}`;
+  const id = 'a'.repeat(64);
+  const preview = { storageKey: `${prefix}/preview/${id}`, mimeType: 'image/webp', sizeBytes: 4 };
+  const draftMedia = { ...media, id, storageKey: `${prefix}/full/${id}`, mediaType: 'photo' as const,
+    mimeType: 'image/jpeg', durationSeconds: null, fileName: 'photo.jpg', preview };
+  const command = { ...prepareDiscussionMessage(thread.id, ''), draftMedia, requireUnsentDraft: true as const };
+  await repository.saveDraft(command);
+  const full = { ...uploaded, key: draftMedia.storageKey, contentType: draftMedia.mimeType, fileName: draftMedia.fileName };
+  await expect(repository.send(command, full)).rejects.toThrow('INVALID_DISCUSSION_ATTACHMENT');
+  const sent = await repository.send(command, { ...full, preview });
+  expect(sent.attachments).toMatchObject([{ id, storageKey: draftMedia.storageKey, preview }]);
+  expect(await db.messageAttachments.count()).toBe(1);
+  expect((await repository.getMessage(thread.id, command.id)).attachments).toEqual(sent.attachments);
 });
 
 it('publishes gallery media and typed text as two messages in one retryable send', async () => {

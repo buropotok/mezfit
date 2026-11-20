@@ -1,4 +1,5 @@
 import { getTelegramWebApp } from '../telegram';
+import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
 import { DISCUSSION_MEDIA_LIMITS_MIB, DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix,
   discussionMediaSizeLimit } from '../../shared/discussion-media-limits';
 
@@ -72,6 +73,7 @@ export interface UploadedMedia {
   contentType: string;
   sizeBytes: number;
   fileName: string;
+  preview?: DiscussionPhotoPreview;
 }
 
 export function directMediaSizeLimit(contentType: string): number {

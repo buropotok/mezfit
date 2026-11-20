@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
 import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
-import { MediaUploadError, photoMediaKey } from '../media/directMediaUpload';
+import { MediaUploadError } from '../media/directMediaUpload';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from '../media/dualMediaUpload';
-import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
+import { discardUnpublishedDiscussionPhoto, readDiscussionMedia, storeDiscussionMedia, storeDiscussionPhoto } from '../media/discussionMediaCache';
+import { createDiscussionPhotoPreview, prepareDiscussionPhoto } from '../media/discussionPhotoPreview';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionMessageView } from '../data/cloud/discussion-views';
 import type { DiscussionPort } from './discussion-session';
@@ -12,7 +13,9 @@ import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
 
-type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & { separate?: DiscussionMessageInput; restored?: boolean };
+type Selection = Awaited<ReturnType<typeof inspectDiscussionMedia>> & {
+  separate?: DiscussionMessageInput; restored?: boolean; photoPreview?: Blob;
+};
 type Phase = 'idle' | 'checking' | 'uploading' | 'publishing' | 'clearing' | 'failed';
 type OutgoingMedia = Pick<DiscussionMessageInput, 'id' | 'createdAt'> & { attachmentId: string };
 interface PendingMedia {
@@ -20,6 +23,15 @@ interface PendingMedia {
   selected?: Selection;
   preview?: string;
   error: string;
+}
+
+async function storeSelectedMedia(accountId: string, selected: Selection) {
+  const { storageKey, mimeType, sizeBytes, preview } = selected.metadata;
+  const entry = { accountId, storageKey, mimeType, sizeBytes };
+  if (!preview) return storeDiscussionMedia(entry, selected.file, true);
+  const thumbnail = selected.photoPreview ?? await readDiscussionMedia({ ...preview, accountId });
+  if (!thumbnail) throw new Error('DISCUSSION_PHOTO_PREVIEW_MISSING');
+  return storeDiscussionPhoto(entry, selected.file, preview, thumbnail);
 }
 
 // Canonical identifiers are logged; legacy numeric display IDs are preserved
@@ -199,8 +211,6 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       const next = await inspectDiscussionMedia(file, controller.signal);
       const separate = sendToThread ? prepareDiscussionMessage(sendToThread, '') : undefined;
       const saved = separate ? undefined : draft.media;
-      const metadata = !saved && next.metadata.mediaType === 'photo' ? { ...next.metadata,
-        storageKey: await photoMediaKey(next.metadata.storageKey, repository.actorUserId) } : saved ?? next.metadata;
       if (active.current !== controller) return false;
       if (controller.signal.aborted) { setPhase('idle'); return false; }
       if (saved && (saved.fileName !== next.metadata.fileName
@@ -208,7 +218,16 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         || saved.durationSeconds !== next.metadata.durationSeconds)) {
         throw new Error('Выберите тот же файл или удалите прежнее вложение');
       }
-      const selected = { ...next, metadata, separate };
+      const prepared = !saved && next.metadata.mediaType === 'photo'
+        ? await prepareDiscussionPhoto(next.file, next.metadata, repository.actorUserId, controller.signal)
+        : { metadata: saved ?? next.metadata };
+      const photoPreview = saved?.preview
+        ? await readDiscussionMedia({ ...saved.preview, accountId: repository.actorUserId })
+          ?? await createDiscussionPhotoPreview(next.file, controller.signal)
+        : undefined;
+      if (active.current !== controller) return false;
+      if (controller.signal.aborted) { setPhase('idle'); return false; }
+      const selected = { ...next, ...(photoPreview ? { photoPreview } : {}), ...prepared, separate };
       if (onSelected?.() === false) { setPhase('idle'); return false; }
       setSelection(selected);
       if (separate) {
@@ -243,8 +262,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         try {
           const item = await inspectDiscussionMedia(file, controller.signal);
           if (item.metadata.mediaType !== 'photo') throw new Error('Ожидалось фото');
-          checked.push({ ...item, metadata: { ...item.metadata,
-            storageKey: await photoMediaKey(item.metadata.storageKey, repository.actorUserId) } });
+          checked.push({ ...item, ...await prepareDiscussionPhoto(item.file, item.metadata, repository.actorUserId, controller.signal) });
         } catch (reason) {
           const detail = reason instanceof Error ? reason.message : 'Не удалось проверить файл';
           rejected.push(file.name + ' — ' + detail);
@@ -277,8 +295,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     let stagingComplete = false;
     try {
       for (const [index, photo] of photos.entries()) {
-        const { storageKey, mimeType, sizeBytes } = photo.metadata;
-        await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, photo.file, true);
+        await storeSelectedMedia(repository.actorUserId, photo);
         // Closing the sheet stops uploads, but already confirmed files can still
         // be recovered from the private outbox after their local saves finish.
         if (!enabledRef.current) return;
@@ -362,9 +379,9 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     setOutgoing({ id: message.id, createdAt: message.createdAt, attachmentId: selected.metadata.id });
     setError(undefined); setPhase('uploading');
     try {
-      const { storageKey, mimeType, sizeBytes } = selected.metadata;
-      if (!staged && storedKey.current !== storageKey) {
-        await storeDiscussionMedia({ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes }, selected.file, true);
+      const { storageKey, preview: photoPreview } = selected.metadata;
+      if (!staged && (storedKey.current !== storageKey || selected.photoPreview)) {
+        await storeSelectedMedia(repository.actorUserId, selected);
         storedKey.current = storageKey;
       }
       savingFile = false;
@@ -377,6 +394,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
       }
       const result = await uploadMirroredDiscussionMedia(selected.file, {
         accountId: repository.actorUserId, signal: controller.signal, retryKey: selected.metadata.storageKey,
+        ...(photoPreview ? { preview: photoPreview } : {}),
       });
       if (!enabledRef.current || controller.signal.aborted) throw new MediaUploadError('CANCELLED');
       publishing.current = true;
@@ -452,6 +470,10 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     try {
       if (selection?.separate) await repository.discardDraft?.(selection.separate.threadId, selection.separate.id);
       else await draft.clearMedia(selection?.restored);
+      const removed = selection?.metadata ?? draft.media;
+      if (removed?.preview && (!selection?.separate || repository.discardDraft)) {
+        await discardUnpublishedDiscussionPhoto(repository.actorUserId, removed.storageKey).catch(() => undefined);
+      }
       if (active.current !== controller) return;
       setSelection(undefined); setOutgoing(undefined); setError(undefined); setPhase('idle');
     } catch {
@@ -472,9 +494,12 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
 
   async function removePending(id: string) {
     const entry = pendingRef.current.find(row => row.command.id === id);
-    if (!entry || !repository.discardDraft) return;
+    if (!entry || !repository.discardDraft || (entry.command.draftMedia?.preview && active.current)) return;
     try {
       await repository.discardDraft(entry.command.threadId, entry.command.id);
+      if (entry.command.draftMedia?.preview) {
+        await discardUnpublishedDiscussionPhoto(repository.actorUserId, entry.command.draftMedia.storageKey).catch(() => undefined);
+      }
       updatePending(pendingRef.current.filter(row => row.command.id !== id));
       if (entry.preview) URL.revokeObjectURL(entry.preview);
     } catch {

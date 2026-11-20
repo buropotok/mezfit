@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useCloudConnections, type CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import type { DiscussionFeedRow } from '../data/cloud/discussions';
+import { isLocallyPublishedDiscussionPhoto } from '../data/cloud/discussion-media';
 import { observeDiscussionFeed } from '../data/cloud/discussion-feed';
 import { sortDiscussionFeed } from './feed-presentation';
 import { resumeMediaReplicaUploads } from '../media/dualMediaUpload';
@@ -15,8 +16,13 @@ export function DiscussionsProvider({ role, details = true, children }: { role: 
   // Recover pending R2/Yandex copies across sessions, independently of DiscussionSheet.
   useEffect(() => {
     const accountId = cloud?.actorUserId;
-    if (!accountId) return;
-    const recover = () => { if (document.visibilityState !== 'hidden') void resumeMediaReplicaUploads(accountId); };
+    const db = cloud?.db;
+    if (!accountId || !db) return;
+    const recover = () => {
+      if (document.visibilityState !== 'hidden') {
+        void resumeMediaReplicaUploads(accountId, key => isLocallyPublishedDiscussionPhoto(db, accountId, key));
+      }
+    };
     recover();
     window.addEventListener('online', recover);
     document.addEventListener('visibilitychange', recover);
@@ -24,7 +30,7 @@ export function DiscussionsProvider({ role, details = true, children }: { role: 
       window.removeEventListener('online', recover);
       document.removeEventListener('visibilitychange', recover);
     };
-  }, [cloud?.actorUserId]);
+  }, [cloud?.actorUserId, cloud?.db]);
   const [revision, setRevision] = useState(0);
   const realmKey = JSON.stringify([...new Set((contacts ?? []).map(contact => contact.relationshipId))].sort());
   const realmIds = useMemo<string[]>(() => JSON.parse(realmKey), [realmKey]);

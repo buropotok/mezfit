@@ -17,6 +17,7 @@ vi.mock('./discussionMediaCache', async original => ({
   publishMediaReplica: vi.fn(async () => undefined),
   listIncompleteMediaReplicas: vi.fn(async () => []),
   readDiscussionMedia: vi.fn(async () => null),
+  getMediaReplica: vi.fn(async () => null),
 }));
 
 const key = 'mvp-media/' + 'a'.repeat(64);
@@ -28,6 +29,24 @@ const uploaded = { key, url: 'https://storage.yandexcloud.net/bucket/' + key, fi
 afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
+});
+
+it('rejects a photo when Full and Preview succeeded in different providers', async () => {
+  const path = 'mvp-media/' + 'd'.repeat(64);
+  const photoId = 'e'.repeat(64);
+  const fullKey = `${path}/full/${photoId}`;
+  const preview = { storageKey: `${path}/preview/${photoId}`, mimeType: 'image/webp', sizeBytes: 3 };
+  vi.mocked(readDiscussionMedia).mockResolvedValueOnce(new Blob(['web'], { type: preview.mimeType }));
+  vi.mocked(uploadDirectMedia).mockImplementationOnce(async (_file, options) => {
+    expect(options?.retryKey).toBe(fullKey);
+    return { ...uploaded, key: fullKey };
+  }).mockRejectedValueOnce(new MediaUploadError('NETWORK'));
+  vi.mocked(uploadCloudflareMedia).mockRejectedValueOnce(new MediaUploadError('NETWORK'))
+    .mockResolvedValueOnce({ ...uploaded, key: preview.storageKey, contentType: preview.mimeType, sizeBytes: 3 });
+  await expect(uploadMirroredDiscussionMedia(file(), { accountId, retryKey: fullKey, preview })).rejects.toMatchObject({ code: 'NETWORK' });
+  expect(vi.mocked(confirmMediaReplica).mock.calls).toEqual([
+    [accountId, fullKey, 'yandex'], [accountId, preview.storageKey, 'r2'],
+  ]);
 });
 
 it('confirms Yandex and publishes immediately while R2 copy is still pending', async () => {

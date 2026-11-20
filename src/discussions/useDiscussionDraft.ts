@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
 import { sameDiscussionVideoPosition, type DiscussionVideoPosition } from '../data/cloud/discussion-contracts';
-import { discussionMediaTextId, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
+import { discussionMediaTextId, sameDiscussionPhotoPreview, type DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import type { DiscussionPort } from './discussion-session';
 
 /** Draft records belong to the repository; this hook owns only composer presentation. */
@@ -88,7 +88,8 @@ export function useDiscussionDraft(repository: DiscussionPort, threadId: string)
         // retryable until both records confirm this exact publication.
         const published = await repository.getMessage(threadId, input.id);
         if (published.deleted || published.authorUserId !== repository.actorUserId
-          || !published.attachments?.some(row => row.id === attachment.id && row.storageKey === attachment.storageKey)) throw reason;
+          || !published.attachments?.some(row => row.id === attachment.id && row.storageKey === attachment.storageKey
+            && sameDiscussionPhotoPreview(row.preview, attachment.preview))) throw reason;
         const latest = current.current;
         // Older clients put the text on the attachment message itself.
         const separateText = !published.text && latest?.id === input.id && latest.text.trim()
