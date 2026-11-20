@@ -314,6 +314,22 @@ describe('MIG-05 business mapping: contract and read-only planning', () => {
     expect(issues(plan, 'UNKNOWN_SOURCE_TIMEZONE').length).toBeGreaterThan(0);
   });
 
+  it('invalid source IANA timezone blocks just the affected date-only workout without throwing', async () => {
+    const input = businessInput();
+    input.sourcePackage.sessions[1].timing = {
+      localDate: '2026-10-11', startedAtUtc: null, completedAtUtc: null,
+      timeZone: 'Mars/Phobos', precision: 'date',
+    };
+    expect(isSourceImportPackage(input.sourcePackage)).toBe(true);
+    const plan = await buildMezfitImportPlan(input);
+    expect(session(plan, 'ses:adhoc').state).toBe('blocked');
+    expect(session(plan, 'ses:adhoc').timing.proposedStartsAtUtc).toBeNull();
+    expect(session(plan, 'ses:adhoc').timing.source.timeZone).toBe('Mars/Phobos');
+    expect(issues(plan, 'UNKNOWN_SOURCE_TIMEZONE').length).toBeGreaterThan(0);
+    expect(session(plan, 'ses:linked').state).toBe('selected');
+    expect(isMezfitImportPlan(plan)).toBe(true);
+  });
+
   it('in_progress and unknown sessions are retained as blocked candidates, not completed', async () => {
     for (const completionState of ['in_progress', 'unknown']) {
       const input = businessInput();
