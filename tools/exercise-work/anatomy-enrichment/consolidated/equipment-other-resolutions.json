@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "scope": "PR #845 approved replacements for 12 FitnessProgramer Base 2 agent candidate PATCH equipment entries containing 'other'",
+  "source_file": "consolidated-index.json",
+  "equipment_dictionary": "equipment-canonical.json",
+  "integration_policy": [
+    "At the integration stage, replace patch.equipment for each exact exercise_id with resolved_equipment.",
+    "Every resolved_equipment ID must match the canonical equipment dictionary exactly; arrays may contain multiple independent pieces of equipment.",
+    "The original agent candidate patches and source exercise cards remain unchanged in this research PR for provenance; do not silently modify them.",
+    "The placeholder 'other' must not remain in effective equipment for these 12 exercises. This is separate from anatomical/muscle taxonomy decisions.",
+    "If the source exercise record differs from the pinned snapshot, review that source change before applying the approved replacement."
+  ],
+  "status": "approved_in_discussion; not yet integrated into exercise cards",
+  "count": 12,
+  "resolutions": [
+    {
+      "exercise_id": "fitnessprogramer:walk-wave-machine",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "walk-wave-machine"
+      ],
+      "status": "approved",
+      "original_batch": "B001"
+    },
+    {
+      "exercise_id": "fitnessprogramer:glute-ham-raise",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "nordic-curl-bench"
+      ],
+      "status": "approved",
+      "original_batch": "B007"
+    },
+    {
+      "exercise_id": "fitnessprogramer:korean-dips",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "dip bars"
+      ],
+      "status": "approved",
+      "original_batch": "B008"
+    },
+    {
+      "exercise_id": "fitnessprogramer:side-plank-oblique-crunch",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "bench"
+      ],
+      "status": "approved",
+      "original_batch": "B010"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-back-extension",
+      "original_equipment": [
+        "back_extension_bench",
+        "other"
+      ],
+      "resolved_equipment": [
+        "roman-chair",
+        "weight plate"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-crunch",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "bench",
+        "weight plate"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-front-plank",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "weight plate"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-lying-twist",
+      "original_equipment": [
+        "stability ball",
+        "other"
+      ],
+      "resolved_equipment": [
+        "stability ball"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-one-arm-pull-up",
+      "original_equipment": [
+        "pull-up bar",
+        "other"
+      ],
+      "resolved_equipment": [
+        "pull-up bar",
+        "dumbbell"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-pull-up",
+      "original_equipment": [
+        "pull-up bar",
+        "other"
+      ],
+      "resolved_equipment": [
+        "pull-up bar",
+        "dip-belt",
+        "weight plate"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-side-bend-on-stability-ball",
+      "original_equipment": [
+        "stability ball",
+        "other"
+      ],
+      "resolved_equipment": [
+        "stability ball",
+        "weight plate"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    },
+    {
+      "exercise_id": "fitnessprogramer:weighted-sit-ups",
+      "original_equipment": [
+        "other"
+      ],
+      "resolved_equipment": [
+        "weight plate"
+      ],
+      "status": "approved",
+      "original_batch": "B012"
+    }
+  ]
+}
