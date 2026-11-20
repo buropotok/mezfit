@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { setDiscussionMediaBackupEnabled } from '../media/discussionMediaBackupPreference';
 import { SettingsPage } from './SettingsPage';
 import type { NavigationContext } from '../NavigationShell';
 
@@ -11,6 +10,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -26,22 +26,21 @@ it('opens the storage reset section in both modes and returns through navigation
   expect(screen.getByRole('region', { name: 'Настройки' })).toBeTruthy();
 });
 
-it('persists the chat media backup toggle when reopening settings', () => {
+it('defaults chat media backup to off and persists changes when reopening settings', () => {
   const label = 'Копировать медиа из чатов в резервное облако';
-  try {
-    const page = render(<SettingsPage activeRole="coach" onNavigationContextChange={vi.fn()} />);
-    const toggle = screen.getByRole('checkbox', { name: label });
-    expect(toggle).toHaveProperty('checked', true);
-    fireEvent.click(toggle);
-    expect(toggle).toHaveProperty('checked', false);
-    page.unmount();
+  const page = render(<SettingsPage activeRole="coach" onNavigationContextChange={vi.fn()} />);
+  const toggle = screen.getByRole('checkbox', { name: label });
+  expect(toggle).toHaveProperty('checked', false);
+  fireEvent.click(toggle);
+  expect(toggle).toHaveProperty('checked', true);
+  page.unmount();
 
-    render(<SettingsPage activeRole="client" onNavigationContextChange={vi.fn()} />);
-    const reopened = screen.getByRole('checkbox', { name: label });
-    expect(reopened).toHaveProperty('checked', false);
-    fireEvent.click(reopened);
-    expect(reopened).toHaveProperty('checked', true);
-  } finally {
-    setDiscussionMediaBackupEnabled(true);
-  }
+  const reopened = render(<SettingsPage activeRole="client" onNavigationContextChange={vi.fn()} />);
+  const persisted = screen.getByRole('checkbox', { name: label });
+  expect(persisted).toHaveProperty('checked', true);
+  fireEvent.click(persisted);
+  reopened.unmount();
+
+  render(<SettingsPage activeRole="client" onNavigationContextChange={vi.fn()} />);
+  expect(screen.getByRole('checkbox', { name: label })).toHaveProperty('checked', false);
 });

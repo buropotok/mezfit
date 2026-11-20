@@ -3,7 +3,8 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import Dexie from 'dexie';
 import { KonstaProvider } from 'konsta/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { setDiscussionMediaBackupEnabled } from '../media/discussionMediaBackupPreference';
 import { directMediaUrl } from '../media/directMediaUpload';
 import { readDiscussionMedia, downloadDiscussionMedia, downloadDiscussionMediaWithStatus } from '../media/discussionMediaCache';
 import { rawInitData } from '../media/mediaUploadTestFixtures';
@@ -18,8 +19,11 @@ const readHost = 'mezfit-discussion-media.' + 'a'.repeat(32) + '.r2.cloudflarest
 const getUrl = `https://${readHost}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=${'b'.repeat(64)}`;
 const yandexUrl = directMediaUrl(key) ?? '';
 
+beforeEach(() => { setDiscussionMediaBackupEnabled(true); });
+
 afterEach(async () => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
   await Dexie.delete('mezfit-discussion-media:' + accountId);
 });

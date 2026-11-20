@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from './dualMediaUpload';
 import { uploadDirectMedia, MediaUploadError } from './directMediaUpload';
 import { setDiscussionMediaBackupEnabled } from './discussionMediaBackupPreference';
@@ -27,7 +27,10 @@ const file = () => new File(['sample'], 'photo.jpg', { type: 'image/jpeg' });
 const uploaded = { key, url: 'https://storage.yandexcloud.net/bucket/' + key, fileName: 'photo.jpg',
   contentType: 'image/jpeg', sizeBytes: 6 };
 
+beforeEach(() => { setDiscussionMediaBackupEnabled(true); });
+
 afterEach(() => {
+  localStorage.clear();
   vi.useRealTimers();
   vi.clearAllMocks();
 });
