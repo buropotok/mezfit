@@ -1,3 +1,7 @@
+import type Dexie from 'dexie';
+import { cloudDatabaseName } from '../cloud/database';
+import { localDatabaseName } from './indexedDb/database';
+
 /** Approximate bytes of IndexedDB payloads, not on-disk usage (indexes and storage overhead vary). */
 const encoder = new TextEncoder();
 function recordBytes(value: unknown, seen = new WeakSet<object>()): number {
@@ -92,15 +96,29 @@ async function databaseBytes(
   const db = await existingDatabase(name, factory);
   if (!db) return 0;
   try {
-    const names = stores ?? Array.from(db.objectStoreNames);
-    let total = 0;
-    for (const store of names) {
-      if (db.objectStoreNames.contains(store)) total += await storeBytes(db, store, skipKeys);
-    }
-    return total;
+    return await openedDatabaseBytes(db, stores, skipKeys);
   } finally {
     db.close();
   }
+}
+
+async function openedDatabaseBytes(
+  db: IDBDatabase, stores?: readonly string[], skipKeys?: ReadonlySet<IDBValidKey>,
+): Promise<number> {
+  const storeNames = db.objectStoreNames;
+  let total = 0;
+  if (stores) {
+    for (const store of stores) {
+      if (storeNames.contains(store)) total += await storeBytes(db, store, skipKeys);
+    }
+  } else {
+    for (let index = 0; index < storeNames.length; index++) {
+      const store = storeNames.item(index);
+      if (store === null) throw new Error('INDEXEDDB_SIZE_READ_FAILED');
+      total += await storeBytes(db, store, skipKeys);
+    }
+  }
+  return total;
 }
 
 function verifyAccount(telegramUserId: string): void {
@@ -133,9 +151,21 @@ export async function estimateMediaCacheBytes(
 /** The two local account databases are deleted together on reset, never via synced row deletes. */
 export async function estimateLocalDataBytes(
   telegramUserId: string, factory: IDBFactory = indexedDB,
+  accountDatabase?: Pick<Dexie, 'name' | 'open' | 'backendDB'>,
 ): Promise<number> {
   verifyAccount(telegramUserId);
-  const cloud = await databaseBytes('mezfit-cloud:' + telegramUserId, factory);
-  const legacy = await databaseBytes('mezfit-local:' + telegramUserId, factory);
+  const name = cloudDatabaseName(telegramUserId);
+  if (accountDatabase && accountDatabase.name !== name) throw new Error('INVALID_LOCAL_DATABASE_USER_ID');
+
+  let cloud: number;
+  if (accountDatabase) {
+    await accountDatabase.open();
+    const active = accountDatabase.backendDB();
+    if (!active.objectStoreNames.length) throw new Error('INDEXEDDB_SIZE_READ_FAILED');
+    cloud = await openedDatabaseBytes(active);
+  } else {
+    cloud = await databaseBytes(name, factory);
+  }
+  const legacy = await databaseBytes(localDatabaseName(telegramUserId), factory);
   return cloud + legacy;
 }

@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 // @ts-expect-error CI deliberately omits Node.js typings; Vitest runs this test in Node and needs its native Blob.
 import { Blob as NativeBlob } from 'node:buffer';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { estimateLocalDataBytes, estimateMediaCacheBytes } from './resetLocalDataSizes';
 
 const userId = '83219';
@@ -57,6 +57,21 @@ it('counts all records in the selected account working databases without touchin
   expect(size).toBeGreaterThan(5000);
   expect(size).toBeLessThan(70000);
   expect(await estimateLocalDataBytes(otherId)).toBeGreaterThan(size);
+});
+
+it('counts the account data through the live database without opening it again', async () => {
+  const db = new Dexie('mezfit-cloud:' + userId);
+  db.version(1).stores({ workoutSessions: 'id' });
+  await db.table('workoutSessions').add({ id: 'session-1', notes: 'a'.repeat(2000) });
+  const open = vi.spyOn(indexedDB, 'open');
+  try {
+    expect(await estimateLocalDataBytes(userId, indexedDB, db)).toBeGreaterThan(2000);
+    expect(open.mock.calls.map(([name]) => name)).toEqual(['mezfit-local:' + userId]);
+    expect(db.isOpen()).toBe(true);
+  } finally {
+    open.mockRestore();
+    db.close();
+  }
 });
 
 it('does not create missing IndexedDB databases while measuring empty storage', async () => {
