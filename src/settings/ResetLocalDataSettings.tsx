@@ -17,11 +17,12 @@ function sizeLabel(value: SizeResult): string {
 }
 
 export function ResetLocalDataSettings({
-  glassBlur, onClear, telegramUserId = null,
+  glassBlur, onClear, telegramUserId = null, estimateAccountBytes = estimateLocalDataBytes,
 }: {
   glassBlur?: number;
   onClear: (selection: LocalDataResetSelection) => void;
   telegramUserId?: string | null;
+  estimateAccountBytes?: (telegramUserId: string) => Promise<number>;
 }) {
   const [media, setMedia] = useState(false);
   const [workouts, setWorkouts] = useState(false);
@@ -42,11 +43,11 @@ export function ResetLocalDataSettings({
     void estimateMediaCacheBytes(telegramUserId)
       .then(bytes => { if (active) setMediaSize(bytes); })
       .catch(() => { if (active) setMediaSize(null); });
-    void estimateLocalDataBytes(telegramUserId)
+    void estimateAccountBytes(telegramUserId)
       .then(bytes => { if (active) setWorkoutsSize(bytes); })
       .catch(() => { if (active) setWorkoutsSize(null); });
     return () => { active = false; };
-  }, [telegramUserId]);
+  }, [estimateAccountBytes, telegramUserId]);
 
   const clear = () => {
     setConfirmOpen(false);

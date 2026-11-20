@@ -41,6 +41,7 @@ import { ScreenDiagnostics } from './ScreenDiagnostics';
 import { ResetLocalDataSettings } from './ResetLocalDataSettings';
 import { isDiscussionMediaBackupEnabled, setDiscussionMediaBackupEnabled } from '../media/discussionMediaBackupPreference';
 import { requestLocalDataReset } from '../data/local/resetLocalData';
+import { estimateLocalDataBytes } from '../data/local/resetLocalDataSizes';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import { SyncHistoryPanel } from '../diagnostics/SyncHistoryPanel';
 import { ResistanceBandsSettings } from './ResistanceBandsSettings';
@@ -294,6 +295,9 @@ export function SettingsPage({
   onPreviewWidthChange,
 }: SettingsPageProps) {
   const cloud = useCloudConnections();
+  const accountDatabase = cloud?.db;
+  const estimateAccountBytes = useCallback((telegramUserId: string) =>
+    estimateLocalDataBytes(telegramUserId, undefined, accountDatabase), [accountDatabase]);
   const [screenDiagnosticsOpen, setScreenDiagnosticsOpen] = useState(initialScreenDiagnosticsOpen);
   const [modulesOpen, setModulesOpen] = useState(false);
   const [syncHistoryOpen, setSyncHistoryOpen] = useState(false);
@@ -461,6 +465,7 @@ export function SettingsPage({
   if (syncHistoryOpen) return <SyncHistoryPanel glassBlur={effectiveGlassBlur} />;
 
   if (dataResetOpen) return <ResetLocalDataSettings glassBlur={effectiveGlassBlur}
+    estimateAccountBytes={estimateAccountBytes}
     telegramUserId={cloud?.actorUserId.startsWith('tg:') ? cloud.actorUserId.slice(3) : null}
     onClear={selection => {
     const telegramUserId = cloud?.actorUserId.startsWith('tg:') ? cloud.actorUserId.slice(3) : null;
