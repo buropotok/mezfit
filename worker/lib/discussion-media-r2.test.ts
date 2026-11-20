@@ -96,6 +96,36 @@ describe('Cloudflare R2 upload signer', () => {
     expect(head).toHaveBeenCalledWith(storageKey);
   });
 
+  it('uses independent variant keys to sign and verify the authenticated sender’s photo objects', async () => {
+    const prefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
+    const photoId = 'b'.repeat(64);
+    const owner = await initData();
+    const other = await initData(200600);
+    const preview = { storageKey: `mvp-media/${prefix}/preview/${photoId}`, contentType: 'image/webp', sizeBytes: 4 };
+    const full = { storageKey: `mvp-media/${prefix}/full/${photoId}`, contentType: 'image/jpeg', sizeBytes: 6 };
+    head.mockClear();
+    for (const variant of [preview, full]) {
+      for (const endpoint of ['sign', 'verify']) {
+        expect((await handleDiscussionR2MediaRoute(request(endpoint, { ...variant, initData: other }), env())).status).toBe(403);
+      }
+    }
+    expect(head).not.toHaveBeenCalled();
+    for (const variant of [preview, full]) {
+      const params = { ...variant, initData: owner };
+      const response = await handleDiscussionR2MediaRoute(request('sign', params), env());
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      const payload = await response.json() as { putUrl: string };
+      expect(new URL(payload.putUrl).pathname).toBe('/' + variant.storageKey);
+      head.mockResolvedValueOnce({ size: variant.sizeBytes, httpMetadata: { contentType: variant.contentType } });
+      expect((await handleDiscussionR2MediaRoute(request('verify', params), env())).status).toBe(200);
+      expect(head).toHaveBeenCalledWith(variant.storageKey);
+    }
+    expect((await handleDiscussionR2MediaRoute(request('sign', { ...preview, initData: owner, sizeBytes: 100 * 1024 + 1 }), env())).status).toBe(400);
+    expect((await handleDiscussionR2MediaRoute(request('sign', { ...preview, initData: owner, contentType: 'image/gif' }), env())).status).toBe(400);
+    expect((await handleDiscussionR2MediaRoute(request('sign', { ...full, initData: owner, contentType: 'audio/ogg' }), env())).status).toBe(400);
+  });
+
   it('allows any authenticated Telegram user without a separate user-ID allowlist', async () => {
     for (const userId of [100500, 200600]) {
       const valid = { initData: await initData(userId), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };

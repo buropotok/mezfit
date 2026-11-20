@@ -81,6 +81,24 @@ describe('Yandex media signer', () => {
     expect(post({ ...body, contentType: 'video/mp4' }).statusCode).toBe(403);
   });
 
+  it('signs each photo variant for its sender with variant-specific MIME and limits', () => {
+    const prefix = createHash('sha256').update('tg:123').digest('hex');
+    const photoId = 'b'.repeat(64);
+    const owner = initData();
+    const preview = { storageKey: `mvp-media/${prefix}/preview/${photoId}`, contentType: 'image/webp', sizeBytes: 100 * 1024 };
+    const full = { storageKey: `mvp-media/${prefix}/full/${photoId}`, contentType: 'image/png', sizeBytes: 20 * 1024 * 1024 };
+    for (const variant of [preview, full]) {
+      const response = post({ ...variant, initData: owner });
+      expect(response.statusCode).toBe(200);
+      expect(new URL(JSON.parse(response.body).putUrl).pathname.endsWith('/' + variant.storageKey)).toBe(true);
+      expect(post({ ...variant, initData: initData({ user: '{"id":124}' }) }).statusCode).toBe(403);
+    }
+    expect(post({ ...preview, initData: owner, sizeBytes: preview.sizeBytes + 1 }).statusCode).toBe(400);
+    expect(post({ ...preview, initData: owner, contentType: 'image/png' }).statusCode).toBe(400);
+    expect(post({ ...full, initData: owner, contentType: 'video/mp4' }).statusCode).toBe(400);
+    expect(post({ ...full, initData: owner, storageKey: full.storageKey.replace('/full/', '/../full/') }).statusCode).toBe(400);
+  });
+
   it.each([
     undefined,
     initData().replace('123', '124'),

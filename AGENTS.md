@@ -99,7 +99,7 @@ A coach may mutate a client only when server-side authorization proves that rela
 
 Keep authorization logic auditable and avoid subtly different duplicated checks.
 
-**Owner-approved COMM-09 media boundary (2026-11-15, upload-only extension).**
+**Owner-approved COMM-09 media boundary (2026-11-15, initial upload extension).**
 The typed transport retains the primary Yandex Cloud Function: the Function
 verifies Telegram initData and signs one conditional PUT under the designated
 `mvp-media/` prefix. The phone uploads bytes directly to Yandex Object Storage;
@@ -135,6 +135,26 @@ new cloud administration permissions are implied. Browser-native media Range
 requests use a short-lived GET capability with only the Host header signed.
 Test with non-sensitive media and verify real Android/iOS Telegram WebView
 compatibility before claiming production readiness.
+
+**Owner-approved COMM-09 photo variants (2026-11-20).**
+For new discussion photos, one Dexie Cloud `MessageAttachment` references
+two write-once objects, `preview` and `full`, with the same sender hash and
+random 256-bit photo ID, also used as the attachment primary key. Each variant has the same key and bytes in Yandex and
+R2. Keep the top-level key and metadata for Full and add typed Preview metadata
+to the same attachment. Sign one conditional PUT per object after checking the
+authenticated sender prefix and variant-specific MIME and size. Preview is
+WebP or JPEG up to 100 KiB. Yandex retains public random-key GET. A direct
+Yandex URL for either variant reveals the path of its counterpart by design.
+R2 remains private and validates the exact requested variant of the published
+attachment within the existing authorized realm.
+
+Publish the attachment only after one provider confirms both objects. Persist
+the outstanding copies in the existing local recovery store. Remove the
+temporary local Full only after publication and confirmation of both variants in
+both providers. The chat uses cached Preview and opens Full on demand without a
+persistent Full cache. Legacy photos and other media retain their existing
+contracts. Deploy both gateways before enabling new photo writes. Live Yandex
+publication, IAM or ACL changes require separate owner approval.
 
 ## 10. Validation and error contracts
 

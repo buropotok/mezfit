@@ -1,6 +1,7 @@
 import { discussionAnchorKey, discussionId, discussionRecord, isDiscussionAnchor, isPersonalDiscussionId, isPersonalDiscussionRealm,
   matchesDiscussionThreadAnchor, personalDiscussionId } from '../../shared/discussion-anchor';
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix } from '../../shared/discussion-media-limits';
+import { isDiscussionPhotoPair } from '../../shared/discussion-attachment';
 import { cloudList, cloudRead, cloudToken, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 const mediaRowId = (value: unknown): value is string => typeof value === 'string'
@@ -20,10 +21,12 @@ export interface DiscussionR2ReadIdentity {
 }
 
 export function validDiscussionR2ReadIdentity(value: unknown): value is DiscussionR2ReadIdentity {
-  if (!discussionRecord(value)) return false;
+  if (!discussionRecord(value) || typeof value.storageKey !== 'string') return false;
+  const key = DISCUSSION_MEDIA_KEY_PATTERN.exec(value.storageKey);
+  if (!key) return false;
   return (isPersonalDiscussionRealm(value.realmId) || (typeof value.realmId === 'string' && /^rlm[a-f0-9]{28}$/.test(value.realmId)))
-    && mediaRowId(value.messageId) && mediaRowId(value.attachmentId)
-    && typeof value.storageKey === 'string' && typeof value.contentType === 'string'
+    && mediaRowId(value.messageId) && (key[2] ? value.attachmentId === key[3] : mediaRowId(value.attachmentId))
+    && typeof value.contentType === 'string'
     && typeof value.sizeBytes === 'number' && Number.isSafeInteger(value.sizeBytes);
 }
 
@@ -69,10 +72,18 @@ export async function authorizeDiscussionR2Read(
     || !discussionRecord(attachment) || attachment.id !== input.attachmentId
     || attachment.messageId !== input.messageId || attachment.realmId !== input.realmId
     || attachment.owner !== message.authorUserId || attachment.authorUserId !== message.authorUserId
-    || attachment.deletedAt || attachment.uploadState !== 'ready'
-    || attachment.storageKey !== input.storageKey
-    || attachment.mimeType !== input.contentType || attachment.sizeBytes !== input.sizeBytes) return false;
-  const senderPrefix = DISCUSSION_MEDIA_KEY_PATTERN.exec(input.storageKey)?.[1];
+    || attachment.deletedAt || attachment.uploadState !== 'ready') return false;
+  const key = DISCUSSION_MEDIA_KEY_PATTERN.exec(input.storageKey);
+  if (!key) return false;
+  let object = attachment;
+  if (key[2] || attachment.preview !== undefined) {
+    const preview = attachment.preview;
+    if (!key[2] || !isDiscussionPhotoPair(attachment, preview)) return false;
+    if (key[2] === 'preview') object = { ...preview };
+  }
+  if (object.storageKey !== input.storageKey || object.mimeType !== input.contentType
+    || object.sizeBytes !== input.sizeBytes) return false;
+  const senderPrefix = key[1];
   if (senderPrefix && senderPrefix !== await discussionMediaSenderPrefix(message.authorUserId)) return false;
   const thread = await cloudRead('/all/discussionThreads/' + encodeURIComponent(message.threadId), token, fetchImpl, true);
   if (!discussionRecord(thread) || thread.id !== message.threadId
