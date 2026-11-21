@@ -7,6 +7,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { directMediaUrl } from '../media/directMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
 import { DiscussionMedia } from './DiscussionMedia';
+import { DiscussionVideoNote } from './DiscussionVideoNote';
 
 const accountId = 'tg:8172';
 const photoEntry = {
@@ -228,4 +229,36 @@ it('offers retry for a failed Full request and keeps the cached preview visible'
   expect(view.queryByAltText('Фото во вложении')).toBeNull();
   expect(view.getByRole('button', { name: 'Повторить' })).toBeTruthy();
   expect(get).toHaveBeenCalledExactlyOnceWith(fullSrc, expect.anything());
+});
+
+it('caches a received video note before playback and opens the locally cached file on tap', async () => {
+  await setupBrowser();
+  const prefix = `mvp-media/${'a'.repeat(64)}`;
+  const mediaId = 'd'.repeat(64);
+  const full = { ...videoEntry, storageKey: `${prefix}/full/${mediaId}` };
+  const src = directMediaUrl(full.storageKey) ?? '';
+  const get = vi.fn<typeof fetch>().mockResolvedValue(new Response('video', {
+    headers: { 'Content-Type': full.mimeType },
+  }));
+  vi.stubGlobal('fetch', get);
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  try {
+    const view = render(<DiscussionVideoNote src={src} cache={full}
+      preview={{ src: 'https://media.example/preview/note.jpg' }} durationSeconds={5} />);
+    const video = view.getByLabelText('Записанный видеокружок');
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledOnce());
+    expect(video.getAttribute('src')).toBeNull();
+    expect(await (await readDiscussionMedia(full))?.text()).toBe('video');
+    expect(get).toHaveBeenCalledExactlyOnceWith(src, expect.anything());
+
+    fireEvent.click(view.getByRole('button', { name: 'Открыть видеокружок' }));
+    expect(video.getAttribute('src')).toBe('blob:cached-attachment');
+    expect(play).toHaveBeenCalledOnce();
+    expect(get).toHaveBeenCalledTimes(1);
+    view.unmount();
+  } finally {
+    play.mockRestore();
+    pause.mockRestore();
+  }
 });
