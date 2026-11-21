@@ -3,7 +3,7 @@ import Dexie from 'dexie';
 import { afterEach, expect, it } from 'vitest';
 import { rememberMediaReplica, confirmMediaReplica, publishMediaReplica, listIncompleteMediaReplicas,
   getMediaReplica, storeDiscussionMedia, readDiscussionMedia, storeDiscussionPhoto,
-  reconcilePublishedPhotoReplicas } from './discussionMediaCache';
+  reconcilePublishedPhotoReplicas, clearDiscussionMediaCache } from './discussionMediaCache';
 
 const entry = { accountId: 'tg:702', storageKey: 'mvp-media/' + 'b'.repeat(64),
   mimeType: 'video/mp4', sizeBytes: 6 };
@@ -96,3 +96,23 @@ it.each(['yandex', 'r2'] as const)(
     expect(await listIncompleteMediaReplicas(accountId)).toEqual([]);
   },
 );
+
+it('protects both newly saved video variants from a cache reset during upload recovery', async () => {
+  const accountId = entry.accountId;
+  const storagePrefix = `mvp-media/${'a'.repeat(64)}`;
+  const mediaId = 'c'.repeat(64);
+  const full = { ...entry, storageKey: `${storagePrefix}/full/${mediaId}` };
+  const preview = { accountId, storageKey: `${storagePrefix}/preview/${mediaId}`, mimeType: 'image/jpeg', sizeBytes: 3 };
+  await storeDiscussionPhoto(full, new File(['sample'], 'movie.mp4', { type: full.mimeType }),
+    preview, new Blob(['jpg'], { type: preview.mimeType }));
+  await clearDiscussionMediaCache(accountId);
+  expect(await (await readDiscussionMedia(full))?.text()).toBe('sample');
+  expect(await (await readDiscussionMedia(preview))?.text()).toBe('jpg');
+  for (const object of [full, preview]) {
+    await confirmMediaReplica(accountId, object.storageKey, 'yandex');
+    await confirmMediaReplica(accountId, object.storageKey, 'r2');
+  }
+  await publishMediaReplica(accountId, full.storageKey);
+  expect(await readDiscussionMedia(full)).toBeNull();
+  expect(await (await readDiscussionMedia(preview))?.text()).toBe('jpg');
+});

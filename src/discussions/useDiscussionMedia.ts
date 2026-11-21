@@ -4,11 +4,12 @@ import { reportVideoRecordingFailure } from '../video-note/video-recording-diagn
 import { MediaUploadError } from '../media/directMediaUpload';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from '../media/dualMediaUpload';
 import { discardUnpublishedDiscussionPhoto, readDiscussionMedia, storeDiscussionMedia, storeDiscussionPhoto } from '../media/discussionMediaCache';
+import { prepareDiscussionVideoPair } from '../media/discussionVideoPreparation';
 import { createDiscussionPhotoPreview, prepareDiscussionPhoto } from '../media/discussionPhotoPreview';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionMessageView } from '../data/cloud/discussion-views';
 import type { DiscussionPort } from './discussion-session';
-import { inspectDiscussionMedia, prepareDiscussionVoice, prepareDiscussionVideoNote } from './discussion-media-file';
+import { discussionMediaInputMime, inspectDiscussionMedia, prepareDiscussionVoice, prepareDiscussionVideoNote } from './discussion-media-file';
 import type { VoiceRecording } from '../voice-note/useVoiceRecorder';
 import type { VideoNoteRecording } from '../video-note/useVideoNoteRecorder';
 import type { useDiscussionDraft } from './useDiscussionDraft';
@@ -85,6 +86,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
   const [selection, setSelection] = useState<Selection>();
+  const [videoProgress, setVideoProgress] = useState<number | null>();
   const [photos, setPhotos] = useState<Selection[]>([]);
   const [sendingPhotos, setSendingPhotos] = useState(false);
   const photoSend = useRef<AbortController | null>(null);
@@ -118,7 +120,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
   useEffect(() => {
     if (enabled) return;
     photoSend.current?.abort(); photoSend.current = null;
-    setPhotos([]); setSendingPhotos(false);
+    setPhotos([]); setSendingPhotos(false); setVideoProgress(undefined);
     resume.current = null;
     const controller = active.current;
     active.current = null;
@@ -198,6 +200,18 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     };
   }, []);
 
+  async function prepareVideo(file: File, controller: AbortController, note?: Selection['metadata']): Promise<Selection> {
+    setVideoProgress(null);
+    try {
+      const pair = await prepareDiscussionVideoPair(file, repository.actorUserId, controller.signal, value => {
+        if (active.current === controller && !controller.signal.aborted) setVideoProgress(value);
+      }, note);
+      return { file: pair.file, metadata: pair.metadata, photoPreview: pair.thumbnail };
+    } finally {
+      if (active.current === controller) setVideoProgress(undefined);
+    }
+  }
+
   async function choose(file: File, { sendToThread, onSelected }: {
     sendToThread?: string;
     onSelected?: () => boolean;
@@ -208,9 +222,13 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     active.current = controller;
     setError(undefined); setPhase('checking');
     try {
-      const next = await inspectDiscussionMedia(file, controller.signal);
       const separate = sendToThread ? prepareDiscussionMessage(sendToThread, '') : undefined;
       const saved = separate ? undefined : draft.media;
+      const newVideo = !saved && import.meta.env.VITE_DISCUSSION_VIDEO_VARIANTS_ENABLED === 'true'
+        && discussionMediaInputMime(file)?.startsWith('video/');
+      const next = newVideo
+        ? await prepareVideo(file, controller)
+        : await inspectDiscussionMedia(file, controller.signal);
       if (active.current !== controller) return false;
       if (controller.signal.aborted) { setPhase('idle'); return false; }
       if (saved && (saved.fileName !== next.metadata.fileName
@@ -223,7 +241,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
         : { metadata: saved ?? next.metadata };
       const photoPreview = saved?.preview
         ? await readDiscussionMedia({ ...saved.preview, accountId: repository.actorUserId })
-          ?? await createDiscussionPhotoPreview(next.file, controller.signal)
+          ?? (saved.mediaType === 'photo' ? await createDiscussionPhotoPreview(next.file, controller.signal) : undefined)
         : undefined;
       if (active.current !== controller) return false;
       if (controller.signal.aborted) { setPhase('idle'); return false; }
@@ -361,6 +379,27 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     resume.current = null;
     const controller = new AbortController();
     active.current = controller;
+    if (import.meta.env.VITE_DISCUSSION_VIDEO_NOTE_VARIANTS_ENABLED === 'true' && !staged
+      && !selected.restored && selected.metadata.mediaType === 'video-note' && !selected.metadata.preview) {
+      setPhase('checking'); setError(undefined);
+      try {
+        const pair = await prepareVideo(selected.file, controller, selected.metadata);
+        if (active.current !== controller || controller.signal.aborted) return;
+        selected = { ...selected, ...pair };
+        setSelection(selected);
+      } catch (reason) {
+        if (active.current === controller && !controller.signal.aborted) {
+          setError(reason instanceof Error ? reason.message : 'Не удалось подготовить видеокружок.');
+          setPhase('failed');
+        }
+        return;
+      } finally {
+        if (active.current === controller && !selected.metadata.preview) {
+          active.current = null;
+          if (controller.signal.aborted) setPhase('idle');
+        }
+      }
+    }
     interrupted.current = document.visibilityState === 'hidden' || navigator.onLine === false;
     let command: DiscussionMessageInput | null = staged ?? null;
     let savingFile = !staged;
@@ -497,7 +536,7 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     }
   }
 
-  return { selection, preview, outgoing, pendingMedia, published, setPublished, phase, error, choose, chooseVoice, sendVideoNote, send, remove,
+  return { selection, preview, outgoing, pendingMedia, published, setPublished, phase, videoProgress, error, choose, chooseVoice, sendVideoNote, send, remove,
     photos, choosePhotos, removePhoto, sendPhotos, sendingPhotos,
     retryPending, removePending, cancel: () => { resume.current = null; if (!publishing.current) active.current?.abort(); } };
 }

@@ -71,18 +71,20 @@ export interface DiscussionSheetProps extends DiscussionTarget {
 
 function galleryMediaSource(attachment: MessageAttachment, accountId: string, thumbnail = false): DiscussionMediaSource | null {
   const { mediaType, durationSeconds } = attachment;
-  const { storageKey, mimeType, sizeBytes } = thumbnail && attachment.preview ? attachment.preview : attachment;
+  const { storageKey, mimeType, sizeBytes } = thumbnail && mediaType === 'photo' && attachment.preview ? attachment.preview : attachment;
   const src = storageKey && directMediaUrl(storageKey);
   if (!storageKey || !src || mediaType === 'voice' || mediaType === 'video-note') return null;
   const readIdentity = {
     accountId, realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id,
   };
-  const preview = !thumbnail && attachment.preview;
+  const preview = (mediaType === 'video' || !thumbnail) && attachment.preview;
   const previewSrc = preview && directMediaUrl(preview.storageKey);
+  const previewSource = preview && previewSrc ? { src: previewSrc, cache: {
+    ...readIdentity, storageKey: preview.storageKey, mimeType: preview.mimeType, sizeBytes: preview.sizeBytes,
+  } } : undefined;
   return { src, type: mediaType, durationSeconds, cache: { ...readIdentity, storageKey, mimeType, sizeBytes },
-    photoPreview: preview && previewSrc ? { src: previewSrc, cache: {
-      ...readIdentity, storageKey: preview.storageKey, mimeType: preview.mimeType, sizeBytes: preview.sizeBytes,
-    } } : undefined };
+    photoPreview: mediaType === 'photo' ? previewSource : undefined,
+    videoPreview: mediaType === 'video' ? previewSource : undefined };
 }
 
 const videoCommentHintKey = 'mezfit.discussion.videoCommentUsed';
@@ -832,11 +834,14 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
                   if (attachment.mediaType === 'video-note' && attachment.storageKey) {
                     const { storageKey, mimeType, sizeBytes, durationSeconds } = attachment;
                     const src = directMediaUrl(storageKey);
+                    const readIdentity = { accountId: repository.actorUserId, realmId: attachment.realmId,
+                      messageId: attachment.messageId, attachmentId: attachment.id };
+                    const preview = attachment.preview;
+                    const poster = preview && directMediaUrl(preview.storageKey);
                     return src && <DiscussionVideoNote key={attachment.id} src={src}
                       durationSeconds={durationSeconds ?? 0} playbackHost={videoPlaybackHost} scrollViewport={scroller}
-                      meta={meta} onMenu={onMenu}
-                      cache={{ accountId: repository.actorUserId, storageKey, mimeType, sizeBytes,
-                         realmId: attachment.realmId, messageId: attachment.messageId, attachmentId: attachment.id }} />;
+                      meta={meta} onMenu={onMenu} cache={{ ...readIdentity, storageKey, mimeType, sizeBytes }}
+                      preview={preview && poster ? { src: poster, cache: { ...readIdentity, ...preview } } : undefined} />;
                   }
                   const source = galleryMediaSource(attachment, repository.actorUserId, true);
                   return source && <DiscussionMedia key={attachment.id} {...source} mode="thumbnail"
@@ -910,7 +915,7 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
         onExitChange={setAnnotationExit} onCancel={cancelAnnotation} onPrepare={prepareAnnotatedPhoto} />}
       {viewer && <div hidden={Boolean(annotation)} className="discussion-media-stage__viewer">
         <DiscussionMedia key={`${viewer.src}:${viewing?.startAt ?? ''}`} {...viewer} mode="viewer"
-          autoPlay={Boolean(localVideoUrl)} startAt={viewing?.startAt} onComment={commentOnFrame}
+          autoPlay={Boolean(localVideoUrl || (viewer.videoPreview && viewing?.startAt === undefined))} startAt={viewing?.startAt} onComment={commentOnFrame}
           showCommentHint={!readOnly && !videoCommentUsed} onAnnotate={annotate} />
         <div className="discussion-media-stage__close">
           {fullscreenButton}
@@ -950,7 +955,11 @@ function OpenDiscussion({ repository, threadId, anchor, focusMessageId, onClose,
       {voice.permissionReady && actionMode === 'microphone' && <Text variant="footnote" role="status">Микрофон доступен. Удерживайте кнопку для записи</Text>}
       {voice.status === 'processing' && <Text variant="footnote" role="status">Готовим голосовое сообщение…</Text>}
       {media.error && !outgoing && <Text variant="footnote" role="alert">{media.error}</Text>}
-      {media.phase === 'checking' && <Text variant="footnote" role="status">Проверяем файл…</Text>}
+      {media.phase === 'checking' && (media.videoProgress === undefined
+        ? <Text variant="footnote" role="status">Проверяем файл…</Text>
+        : <><Text variant="footnote" role="status">{media.videoProgress === null ? 'Подготавливаем видео…'
+          : `Сжимаем видео… ${Math.min(99, Math.round(media.videoProgress * 100))}%`}</Text>
+          <Button rounded onClick={media.cancel}><Text variant="footnote">Отмена</Text></Button></>)}
       {photosSelected && !media.sendingPhotos && <div className="discussion-composer-context__mode">
         <Text variant="footnote">Фото: {media.photos.length}</Text>
         <IconButton icon="x" label="Убрать все фото" disabled={busy || mediaBusy} onClick={closePreview} />

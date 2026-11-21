@@ -5,6 +5,7 @@ import { IconButton, Text } from '../ui/primitives';
 import { CircularVideoPlayback } from '../settings/CircularVideoPlayback';
 import { VideoNoteRecordingRing } from '../settings/VideoNoteRing';
 import type { DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import type { DiscussionImageSource } from './DiscussionMedia';
 import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 import { useDiscussionSwipeVisual } from './DiscussionSwipeReplyRow';
 import '../settings/video-note-module.css';
@@ -28,7 +29,7 @@ export function DiscussionVideoNoteCapture({ stream, progress }: { stream: Media
 }
 
 /** Sent/received circular attachment uses the existing round player and timeline. */
-export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta, playbackHost, scrollViewport, review = false }: {
+export function DiscussionVideoNote({ src, durationSeconds, cache, preview, onMenu, meta, playbackHost, scrollViewport, review = false }: {
   /** Unsent locked take stays expanded, including outside taps and playback end. */
   review?: boolean;
   /** Once attached, this sheet-owned portal target stays mounted for the whole discussion. */
@@ -37,6 +38,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
   src: string;
   durationSeconds: number;
   cache?: DiscussionMediaCacheEntry;
+  preview?: DiscussionImageSource;
   onMenu?: () => void;
   meta?: ReactNode;
 }) {
@@ -47,16 +49,22 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     '--note-left': string; '--note-top': string; '--note-width': string; '--note-expanded-height': string;
   }>();
   const [expanded, setExpanded] = useState(review);
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const currentRetry = useRef(retry);
   currentRetry.current = retry;
-  const { url, container, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'video', retry, false);
+  const { url, tryR2Fallback } = useDiscussionMediaSource(
+    src, preview && !expanded ? undefined : cache, preview ? 'cache-only' : 'video', retry, false,
+  );
+  const poster = useDiscussionMediaSource(preview?.src ?? '', preview?.cache, 'photo', retry, true);
+  const resolvedSource = preview ? url ?? src : url;
   const swipeVisual = useDiscussionSwipeVisual();
   // Measure in content coordinates so the browser scrolls the frame with the
   // message, even while native momentum scrolling runs ahead of React.
   useLayoutEffect(() => {
-    if (!playbackHost || !url || (!review && !previewAnchor)) return;
+    if (!playbackHost || !resolvedSource || (!review && !previewAnchor)) return;
     const host = playbackHost.getBoundingClientRect();
     const scroller = scrollViewport?.current;
     const viewport = scroller?.getBoundingClientRect() ?? host;
@@ -106,15 +114,20 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
       onMenu();
     }} />
   </span>;
-  const player = url && <div ref={circle}
+  const player = resolvedSource && <div ref={circle}
     className={`discussion-video-note__circle video-note-module__circle${review ? ' discussion-video-note__circle--review' : ''}`}>
-    <CircularVideoPlayback key={retry} src={url} fallbackDuration={durationSeconds}
+    <CircularVideoPlayback key={retry} src={resolvedSource} fallbackDuration={durationSeconds}
       mode={expanded ? 'play' : 'preview'} previewControlHost={playbackHost ? previewAnchor : undefined}
-      onExpand={() => setExpanded(true)}
+      staticPreview={preview ? (poster.url ? <img src={poster.url} alt="Обложка видеокружка" loading="lazy"
+        className="discussion-video-note__poster" referrerPolicy="no-referrer" onError={() => void poster.tryR2Fallback()} /> : null) : undefined}
+      onExpand={() => { setError(''); setExpanded(true); }}
       onReturnToPreview={review ? undefined : () => setExpanded(false)} onError={message => {
         if (message === 'Не удалось воспроизвести записанное видео на этом устройстве.') {
           const attempt = retry;
-          void tryR2Fallback().then(switched => { if (!switched && currentRetry.current === attempt) setError(message); });
+          void tryR2Fallback().then(switched => { if (!switched && currentRetry.current === attempt && (!preview || expandedRef.current)) {
+            setError(preview ? message + ' (Код: MEDIA_VIDEO_DECODE_FAILED)' : message);
+            if (preview) setExpanded(false);
+          } });
         } else setError(message);
       }} />
   </div>;
@@ -122,7 +135,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     ? { ...compactPlacement, top: undefined, left: undefined, right: undefined, bottom: undefined }
     : compactPlacement;
 
-  return <div ref={container} className={`discussion-video-note${review ? ' discussion-video-note--review' : ''}`} data-expanded={expanded || undefined}
+  return <div ref={poster.container} className={`discussion-video-note${review ? ' discussion-video-note--review' : ''}`} data-expanded={expanded || undefined}
     onClick={event => event.stopPropagation()}>
     {!review && (playbackHost !== undefined || !player)
       && <div ref={setPreviewAnchor} className="discussion-video-note__inline" />}
@@ -142,7 +155,7 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, onMenu, meta,
     {(!playbackHost || !player || expanded) && menu}
     {error && <div className="discussion-video-note__error">
       <Text variant="footnote" role="alert">{error}</Text>
-      <Button rounded onClick={() => { setError(''); setRetry(value => value + 1); }}>
+      <Button rounded onClick={() => { setError(''); setRetry(value => value + 1); if (preview) setExpanded(true); }}>
         <Text variant="footnote">Повторить</Text>
       </Button>
     </div>}

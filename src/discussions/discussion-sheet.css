@@ -478,6 +478,14 @@
   grid-area: 1 / 1;
 }
 
+.discussion-media--viewer[data-video-preview] > video {
+  grid-area: 1 / 1;
+}
+
+.discussion-media--viewer[data-video-preview]:not([data-video-ready]) > video {
+  visibility: hidden;
+}
+
 .discussion-media__photo-status {
   position: absolute;
   bottom: calc(12px + var(--discussion-media-safe-bottom, 0px));
@@ -665,6 +673,15 @@
 .discussion-video-note__circle {
   width: 100%;
   max-width: none;
+}
+
+.discussion-video-note__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 .discussion-video-note__menu {

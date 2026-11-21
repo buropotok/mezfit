@@ -1,5 +1,5 @@
-import { useEffect, useEffectEvent, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useEffectEvent, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { createPortal, flushSync } from 'react-dom';
 import { VideoNoteRing, VIDEO_NOTE_RING_RADIUS } from './VideoNoteRing';
 import { useVideoOrientation } from '../media/useVideoOrientation';
 import { Text } from '../ui/primitives';
@@ -30,6 +30,7 @@ interface CircularVideoPlaybackProps {
   /** Keep the compact tap target in its scroll surface when the video is painted in a portal. */
   previewControlHost?: HTMLElement | null;
   onExpand?: () => void;
+  staticPreview?: ReactNode;
   onReturnToPreview?: () => void;
 }
 
@@ -41,10 +42,13 @@ export function CircularVideoPlayback({
   mode = 'play',
   previewControlHost,
   onExpand,
+  staticPreview,
   onReturnToPreview,
 }: CircularVideoPlaybackProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const orientation = useVideoOrientation(videoRef, src, 'cover');
+  const deferred = staticPreview !== undefined;
+  const activeSource = !deferred || mode === 'play' ? src : undefined;
+  const orientation = useVideoOrientation(videoRef, activeSource, 'cover', undefined, deferred);
   const reportOrientationError = useEffectEvent(() => {
     onError('Не удалось воспроизвести записанное видео на этом устройстве.');
   });
@@ -56,12 +60,14 @@ export function CircularVideoPlayback({
   const wasPlayingRef = useRef(false);
   const aliveRef = useRef(true);
   const playGenerationRef = useRef(0);
+  const hadDeferredSource = useRef(false);
 
   const [duration, setDuration] = useState(fallbackDuration);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [canSeek, setCanSeek] = useState(false);
   const [seeking, setSeeking] = useState(false);
+  const [readySource, setReadySource] = useState<string>();
 
   useEffect(() => {
     const video = videoRef.current;
@@ -74,14 +80,25 @@ export function CircularVideoPlayback({
   }, []);
 
   useEffect(() => {
-    if (mode !== 'preview') return;
+    if (mode !== 'preview') {
+      hadDeferredSource.current = deferred;
+      return;
+    }
     playGenerationRef.current += 1;
-    videoRef.current?.pause();
+    const video = videoRef.current;
+    video?.pause();
+    if (hadDeferredSource.current) {
+      hadDeferredSource.current = false;
+      video?.load();
+      setReadySource(undefined);
+      setCurrentTime(0);
+      setCanSeek(false);
+    }
     setPlaying(false);
     seekingPointerRef.current = null;
     wasPlayingRef.current = false;
     setSeeking(false);
-  }, [mode]);
+  }, [mode, deferred]);
 
   // timeupdate is sparse on mobile WebViews; sample the actual frame time while playing.
   useEffect(() => {
@@ -128,9 +145,11 @@ export function CircularVideoPlayback({
       if (aliveRef.current && generation === playGenerationRef.current) {
         setPlaying(!video.paused);
       }
-    } catch {
+    } catch (reason) {
       if (aliveRef.current && generation === playGenerationRef.current) {
         setPlaying(false);
+        // A failed primary source can be replaced by its signed replica.
+        if (deferred && reason instanceof DOMException && ['AbortError', 'NotSupportedError'].includes(reason.name)) return;
         onError('Устройство не смогло воспроизвести этот видеоформат.');
         onReturnToPreview?.();
       }
@@ -148,7 +167,9 @@ export function CircularVideoPlayback({
     if (!video || seekingPointerRef.current !== null) return;
     if (mode === 'preview') {
       // Play in the user's tap handler, before React animates the circle outward.
-      onExpand?.();
+      // Attach the deferred source in the same activation as the native play call.
+      if (deferred && onExpand) flushSync(onExpand);
+      else onExpand?.();
       void requestPlay(video);
       return;
     }
@@ -262,7 +283,9 @@ export function CircularVideoPlayback({
         className="video-note-module__video"
         src={orientation.src}
         playsInline
-        preload="auto"
+        preload={activeSource ? 'auto' : 'none'}
+        autoPlay={deferred && mode === 'play'}
+        onLoadedData={deferred ? () => setReadySource(orientation.src) : undefined}
         onLoadedMetadata={(event) => {
           readDuration(event.currentTarget);
           if (event.currentTarget.paused) showPreviewFrame(event.currentTarget);
@@ -298,6 +321,9 @@ export function CircularVideoPlayback({
         onError={() => onError('Не удалось воспроизвести записанное видео на этом устройстве.')}
         aria-label="Записанный видеокружок"
       />
+      {deferred && (!activeSource || readySource !== orientation.src || orientation.pending) && staticPreview}
+      {deferred && mode === 'play' && readySource !== orientation.src && !orientation.pending
+        && <Text variant="caption" className="video-note-playback__preparing" role="status">Загружаем видеокружок…</Text>}
       {orientation.pending && <Text variant="caption" className="video-note-playback__preparing">Подготавливаем видео…</Text>}
       {mode === 'preview' && previewControlHost !== undefined
         ? previewControlHost && createPortal(tapControl, previewControlHost)

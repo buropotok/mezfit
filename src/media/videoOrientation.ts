@@ -15,10 +15,10 @@ export async function readVideoOrientation(src: string, signal: AbortSignal): Pr
   const timeout = setTimeout(() => { expired = true; dispose(); }, 5000);
   signal.addEventListener('abort', dispose, { once: true });
   try {
-    const { Input, MP4, WEBM, UrlSource } = await import('mediabunny');
+    const { Input, MP4, QTFF, WEBM, UrlSource } = await import('mediabunny');
     signal.throwIfAborted();
     if (expired) return null;
-    input = new Input({ formats: [MP4, WEBM], source: new UrlSource(src, {
+    input = new Input({ formats: [MP4, QTFF, WEBM], source: new UrlSource(src, {
       getRetryDelay: () => null,
       maxCacheSize: 1024 * 1024,
       parallelism: 1,
