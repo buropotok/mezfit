@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
+import * as backupPreference from './discussionMediaBackupPreference';
 import { rememberMediaReplica, confirmMediaReplica, publishMediaReplica, listIncompleteMediaReplicas,
   getMediaReplica, storeDiscussionMedia, readDiscussionMedia, storeDiscussionPhoto,
   reconcilePublishedPhotoReplicas, clearDiscussionMediaCache } from './discussionMediaCache';
@@ -115,4 +116,31 @@ it('protects both newly saved video variants from a cache reset during upload re
   await publishMediaReplica(accountId, full.storageKey);
   expect(await readDiscussionMedia(full)).toBeNull();
   expect(await (await readDiscussionMedia(preview))?.text()).toBe('jpg');
+});
+
+it.each([true, false])('keeps sent video-note Full in the disposable cache with backup %s', async backup => {
+  const preference = vi.spyOn(backupPreference, 'isDiscussionMediaBackupEnabled').mockReturnValue(backup);
+  const { accountId, mimeType } = entry;
+  const prefix = `mvp-media/${'a'.repeat(64)}`;
+  const mediaId = 'd'.repeat(64);
+  const full = { ...entry, storageKey: `${prefix}/full/${mediaId}` };
+  const preview = { accountId, storageKey: `${prefix}/preview/${mediaId}`, mimeType: 'image/jpeg', sizeBytes: 3 };
+  try {
+    await storeDiscussionPhoto(full, new File(['sample'], 'note.mp4', { type: mimeType }),
+      preview, new Blob(['jpg'], { type: preview.mimeType }), true);
+    for (const object of [full, preview]) await confirmMediaReplica(accountId, object.storageKey, 'yandex');
+    await reconcilePublishedPhotoReplicas(accountId, async key => key === full.storageKey);
+    if (backup) {
+      expect(await listIncompleteMediaReplicas(accountId)).toHaveLength(2);
+      for (const object of [full, preview]) await confirmMediaReplica(accountId, object.storageKey, 'r2');
+    }
+
+    expect(await getMediaReplica(accountId, full.storageKey)).toBeNull();
+    expect(await (await readDiscussionMedia(full))?.text()).toBe('sample');
+    expect(await (await readDiscussionMedia(preview))?.text()).toBe('jpg');
+    await clearDiscussionMediaCache(accountId);
+    expect(await readDiscussionMedia(full)).toBeNull();
+  } finally {
+    preference.mockRestore();
+  }
 });
