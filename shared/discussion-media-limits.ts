@@ -5,7 +5,7 @@ export const DISCUSSION_MEDIA_LIMITS_MIB: Readonly<Record<string, number>> = {
   'audio/ogg': 25, 'audio/webm': 25, 'audio/mp4': 25, 'audio/mpeg': 25, 'audio/wav': 25,
 };
 
-// Capture sender, photo variant and object ID. The sender and variant are
+// Capture sender, media variant and object ID. The sender and variant are
 // optional for legacy keys, but a variant always requires a sender.
 export const DISCUSSION_MEDIA_KEY_PATTERN = /^mvp-media\/(?:([a-f0-9]{64})\/(?:(preview|full)\/)?)?([a-f0-9]{64})$/;
 export const DISCUSSION_PHOTO_PREVIEW_MAX_BYTES = 100 * 1024;
@@ -25,10 +25,10 @@ export function discussionMediaSizeLimit(mimeType: string): number {
 
 export function discussionMediaObjectSizeLimit(storageKey: string, mimeType: string): number {
   const key = DISCUSSION_MEDIA_KEY_PATTERN.exec(storageKey);
-  if (!key) return 0;
+  if (!key || key[0] !== storageKey) return 0;
   if (key[2] === 'preview') {
     return mimeType === 'image/webp' || mimeType === 'image/jpeg' ? DISCUSSION_PHOTO_PREVIEW_MAX_BYTES : 0;
   }
-  if (key[2] === 'full' && !mimeType.startsWith('image/')) return 0;
+  if (key[2] === 'full' && !mimeType.startsWith('image/') && !mimeType.startsWith('video/')) return 0;
   return discussionMediaSizeLimit(mimeType);
 }

@@ -159,6 +159,14 @@ persistent Full cache. Legacy photos and other media retain their existing
 contracts. Deploy both gateways before enabling new photo writes. Live Yandex
 publication, IAM or ACL changes require separate owner approval.
 
+**Owner-approved COMM-09 video variants (2026-11-21).**
+The same two-object protocol covers ordinary video and video notes. Preview
+is a static WebP/JPEG frame. The ordinary video Full is prepared locally and
+compressed before upload when needed. For video notes Full is the byte-for-byte
+result of existing recording and trimming. Deploy both gateways and the
+compatible reader before enabling the independent client write flags. See
+`docs/architecture/communications.md` for the rollout and device checks.
+
 ## 10. Validation and error contracts
 
 Treat JSON bodies, query/route parameters, Telegram data, and legacy persisted data as untrusted. Validate before domain mutation. Use deliberate status codes and stable error shapes. Do not expose stack traces, SQL details, tokens, secrets, or unnecessary personal data.

@@ -190,8 +190,9 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
     }), { headers: { 'Cache-Control': 'no-store' } });
   }
 
-  const senderPrefix = DISCUSSION_MEDIA_KEY_PATTERN.exec(input.storageKey)?.[1];
-  if (senderPrefix && (!input.contentType.startsWith('image/') || senderPrefix !== await discussionMediaSenderPrefix(actorId))) {
+  const [, senderPrefix, variant] = DISCUSSION_MEDIA_KEY_PATTERN.exec(input.storageKey) ?? [];
+  if (senderPrefix && ((!variant && !input.contentType.startsWith('image/'))
+    || senderPrefix !== await discussionMediaSenderPrefix(actorId))) {
     return jsonError(403, 'MEDIA_FORBIDDEN');
   }
   if (path.endsWith('/verify')) {
