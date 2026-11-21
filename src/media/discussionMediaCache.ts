@@ -29,7 +29,7 @@ export interface MediaReplicaTask extends DiscussionMediaCacheEntry {
   published: boolean;
 }
 
-type StoredReplicaTask = Omit<MediaReplicaTask, 'accountId' | 'storageKey'> & { key: string };
+type StoredReplicaTask = Omit<MediaReplicaTask, 'accountId' | 'storageKey'> & { key: string; retainFull?: boolean };
 export type MediaReplicaProvider = 'yandex' | 'r2';
 
 class DiscussionMediaDatabase extends Dexie {
@@ -104,6 +104,7 @@ export async function storeDiscussionMedia(entry: DiscussionMediaCacheEntry, blo
 
 export async function storeDiscussionPhoto(
   full: DiscussionMediaCacheEntry, file: Blob, preview: DiscussionPhotoPreview, thumbnail: Blob,
+  retainFull = false,
 ): Promise<void> {
   const previewEntry = { ...preview, accountId: full.accountId };
   const keys = photoReplicaKeys(full.storageKey);
@@ -121,6 +122,7 @@ export async function storeDiscussionPhoto(
       const yandexOnly = isDiscussionMediaBackupEnabled() ? undefined : true;
       await db.transaction('rw', db.files, db.replicas, async () => {
         await ensureMediaReplica(db, full, file.name, yandexOnly);
+        if (retainFull) await db.replicas.update(full.storageKey, { retainFull: true });
         await ensureMediaReplica(db, previewEntry, preview.mimeType === 'image/webp' ? 'preview.webp' : 'preview.jpg', yandexOnly);
         await db.files.bulkPut([{ key: full.storageKey, blob: file }, { key: preview.storageKey, blob: thumbnail }]);
       });
@@ -144,7 +146,7 @@ async function cleanCompletedPhoto(db: DiscussionMediaDatabase, keys: [string, s
   const completeInR2 = full.r2ConfirmedAt && preview.r2ConfirmedAt;
   const fallbackOnly = full.yandexOnly && preview.yandexOnly;
   if (fallbackOnly ? !(completeInYandex || completeInR2) : !(completeInYandex && completeInR2)) return;
-  await db.files.delete(keys[0]);
+  if (!full.retainFull) await db.files.delete(keys[0]);
   await db.replicas.bulkDelete(keys);
 }
 
@@ -312,19 +314,19 @@ async function readR2PhotoInParts(
 }
 
 /** Cache a complete response. The first video player can stream independently. */
-export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry): Promise<Blob | null> {
-  return startDiscussionMediaDownload(entry).blob;
+export function downloadDiscussionMedia(entry: DiscussionMediaCacheEntry, cacheFull = false): Promise<Blob | null> {
+  return startDiscussionMediaDownload(entry, cacheFull).blob;
 }
 
 export function downloadDiscussionMediaWithStatus(entry: DiscussionMediaCacheEntry): Promise<DownloadResult> {
   return startDiscussionMediaDownload(entry).result;
 }
 
-function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
+function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry, cacheFull = false) {
   const url = mediaUrl(entry);
   if (!url) return { result: Promise.resolve({ blob: null }), blob: Promise.resolve(null) };
   const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
-    entry.realmId, entry.messageId, entry.attachmentId]);
+    entry.realmId, entry.messageId, entry.attachmentId, cacheFull]);
   const active = downloads.get(key);
   if (active) return active;
   const controller = new AbortController();
@@ -397,7 +399,7 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
       if (!blob && entry.realmId && entry.messageId && entry.attachmentId) {
         blob = await fetchComplete(signal => signedDiscussionR2ReadUrl(entry, signal), false);
       }
-      if (blob && !full) await storeDiscussionMedia(entry, blob);
+      if (blob && (!full || cacheFull)) await storeDiscussionMedia(entry, blob);
       return { blob, r2Failure };
     } finally {
       clearTimeout(timer);
