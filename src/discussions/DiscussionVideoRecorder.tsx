@@ -66,6 +66,7 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse, onTrimFall
     const element = cameraPreview.current;
     if (!element) return;
     element.srcObject = stream;
+    if (stream) void element.play()?.catch(() => { /* The recording check reports a stalled preview. */ });
     return () => { element.srcObject = null; };
   }, [stream, clip]);
 

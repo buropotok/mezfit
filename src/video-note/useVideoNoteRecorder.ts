@@ -3,7 +3,7 @@ import { withErrorCode } from '../../shared/app-error-codes';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
 import { recordingOptionsCandidates, usesSensorCameraDimensions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
-import { matchesCameraOrientation, waitForCameraFrame } from './camera-orientation';
+import { hasCameraFrame, matchesCameraOrientation, waitForCameraFrame } from './camera-orientation';
 import { getVideoRecordingFormatPreference } from './video-recording-format-preference';
 import { reportVideoRecordingFailure } from './video-recording-diagnostics';
 import type { VideoRecordingDiagnostic, VideoRecordingErrorCode } from '../../shared/video-recording-diagnostic';
@@ -50,7 +50,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
   const onRecordedRef = useRef(onRecorded);
   onRecordedRef.current = onRecorded;
   const camera = useVideoNoteCameraSession(profile, session);
-  const { acquire, liveStream, release: releaseCamera } = camera;
+  const { acquire, liveStream, release: releaseCamera, discard: discardCamera } = camera;
   const [status, setStatus] = useState<VideoNoteRecorderStatus>('idle');
   const [recordingError, setError] = useState<string | typeof UNSUPPORTED_AVC>('');
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -208,16 +208,18 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       const previewAbort = new AbortController();
       previewAbortRef.current = previewAbort;
       const current = () => mountedRef.current && epoch === epochRef.current && !previewAbort.signal.aborted;
-      const hasCurrentFrame = video && typeof video.requestVideoFrameCallback !== 'function'
-        && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
-      const frameReady = video && video.srcObject === source
-        && (hasCurrentFrame || await waitForCameraFrame(video, previewAbort.signal));
+      source.getVideoTracks().forEach(track => { track.enabled = true; });
+      // Keep the warm-camera path synchronous if it already has a decoded frame.
+      const hasCurrentFrame = video && typeof video.requestVideoFrameCallback !== 'function' && hasCameraFrame(video, source);
+      const frameReady = video && (hasCurrentFrame || await waitForCameraFrame(video, previewAbort.signal, undefined, source));
       if (!current()) return false;
       cameraSettingsRef.current = source.getVideoTracks()[0]?.getSettings?.() ?? {};
       if (!video || !frameReady) {
         previewAbortRef.current = null;
         reportFailure('CAMERA_PREVIEW_NOT_READY');
-        setError(withErrorCode('Дождитесь изображения с камеры и повторите попытку.', 'CAMERA_PREVIEW_NOT_READY'));
+        discardCamera();
+        setStream(null);
+        setError(withErrorCode('Камера не передала изображение. Включите её повторно.', 'CAMERA_PREVIEW_NOT_READY'));
         updateStatus('error');
         return false;
       }
@@ -229,7 +231,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         try {
           await track.applyConstraints({ width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } });
           if (!current()) return false;
-          const matched = await waitForCameraFrame(video, previewAbort.signal, orientationProfile);
+          const matched = await waitForCameraFrame(video, previewAbort.signal, orientationProfile, source);
           fallbackResult = matched ? 'success' : 'orientation-mismatch';
         } catch (cause) {
           fallbackResult = 'constraints-failed';
@@ -244,7 +246,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         });
       }
       previewAbortRef.current = null;
-      if (!matchesCameraOrientation(video, orientationProfile)) {
+      if (!hasCameraFrame(video, source) || !matchesCameraOrientation(video, orientationProfile)) {
         const orientation = orientationProfile === 'portrait' ? 'вертикальный' : 'горизонтальный';
         reportFailure('CAMERA_ORIENTATION', {
           cameraPreviewSize: `${video.videoWidth}x${video.videoHeight}`,
@@ -407,7 +409,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('error');
       return false;
     }
-  }, [acquire, clearTimers, liveStream, maxDurationMs, profile, release, reportFailure, stop, updateStatus]);
+  }, [acquire, clearTimers, discardCamera, liveStream, maxDurationMs, profile, release, reportFailure, stop, updateStatus]);
 
   useEffect(() => {
     mountedRef.current = true;

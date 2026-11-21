@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { acquireSessionCamera, hasCameraSessionAccess, hasSessionCamera, matchesCameraFacing, ownsSessionCamera, parkSessionCamera } from './sessionCamera';
+import { acquireSessionCamera, discardSessionCamera, hasCameraSessionAccess, hasSessionCamera, matchesCameraFacing, ownsSessionCamera, parkSessionCamera } from './sessionCamera';
 import { videoRecordingConstraints, type VideoRecordingProfile } from './video-recording-profile';
 
 export type VideoNoteFacingMode = 'user' | 'environment';
@@ -35,6 +35,11 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
     if (session) parkSessionCamera(token.current);
     else stream?.getTracks().forEach((track) => track.stop());
   }, [session]);
+
+  const discard = useCallback(() => {
+    if (session) discardSessionCamera(token.current);
+    release();
+  }, [release, session]);
 
   const acquire = useCallback(async (facing: VideoNoteFacingMode, requireFacing = false): Promise<MediaStream | null> => {
     const existing = liveStream(facing, requireFacing);
@@ -74,7 +79,7 @@ export function useVideoNoteCameraSession(profile: VideoRecordingProfile = 'circ
     };
   }, [release]);
 
-  return { acquire, liveStream, release,
+  return { acquire, liveStream, release, discard,
     hasStream: (facing: VideoNoteFacingMode, includeOtherProfiles = false) => liveStream(facing) !== null
       || (session && (includeOtherProfiles ? hasCameraSessionAccess() : hasSessionCamera(facing, profile))) };
 }
