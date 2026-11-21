@@ -27,12 +27,12 @@ interface PendingMedia {
 }
 
 async function storeSelectedMedia(accountId: string, selected: Selection) {
-  const { storageKey, mimeType, sizeBytes, preview } = selected.metadata;
+  const { storageKey, mimeType, sizeBytes, preview, mediaType } = selected.metadata;
   const entry = { accountId, storageKey, mimeType, sizeBytes };
   if (!preview) return storeDiscussionMedia(entry, selected.file, true);
   const thumbnail = selected.photoPreview ?? await readDiscussionMedia({ ...preview, accountId });
   if (!thumbnail) throw new Error('DISCUSSION_PHOTO_PREVIEW_MISSING');
-  return storeDiscussionPhoto(entry, selected.file, preview, thumbnail);
+  return storeDiscussionPhoto(entry, selected.file, preview, thumbnail, mediaType === 'video-note');
 }
 
 // Canonical identifiers are logged; legacy numeric display IDs are preserved
