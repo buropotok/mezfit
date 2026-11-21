@@ -44,7 +44,11 @@ export function parkSessionCamera(token: symbol) {
   source?.getTracks().forEach(track => { track.enabled = false; });
 }
 
-/** A screen borrows the shared source. Only pagehide or a camera switch ends it. */
+export function discardSessionCamera(token: symbol) {
+  if (owner === token) closeSession();
+}
+
+/** A screen borrows the shared source. Page exit, camera switches and stalled previews can end it. */
 export async function acquireSessionCamera(
   token: symbol, facing: VideoNoteFacingMode, profile: VideoRecordingProfile, requireFacing = false,
 ): Promise<MediaStream | null> {

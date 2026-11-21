@@ -8,18 +8,27 @@ export function matchesCameraOrientation(video: HTMLVideoElement, profile: Camer
     : video.videoWidth > video.videoHeight);
 }
 
+export function hasCameraFrame(video: HTMLVideoElement, source?: MediaStream): boolean {
+  if (source) {
+    const track = source.getVideoTracks()[0];
+    if (video.srcObject !== source || track?.readyState !== 'live' || !track.enabled || track.muted) return false;
+  }
+  return video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+}
+
 /** Wait for a decoded frame, with bounded cleanup on cancellation or a stalled camera. */
 export function waitForCameraFrame(
-  video: HTMLVideoElement, signal: AbortSignal, orientation?: CameraOrientation,
+  video: HTMLVideoElement, signal: AbortSignal, orientation?: CameraOrientation, source?: MediaStream,
 ): Promise<boolean> {
   if (signal.aborted) return Promise.resolve(false);
-  const ready = () => video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0
-    && (!orientation || matchesCameraOrientation(video, orientation));
+  const ready = () => hasCameraFrame(video, source) && (!orientation || matchesCameraOrientation(video, orientation));
   if (typeof video.requestVideoFrameCallback !== 'function' && ready()) return Promise.resolve(true);
 
   return new Promise(resolve => {
     let frameId: number | undefined;
-    const timeout = window.setTimeout(() => finish(false), 2500);
+    // Some WebViews fail to deliver the callback even when the current stream
+    // already has decoded data. For the initial preview, check it at the deadline.
+    const timeout = window.setTimeout(() => finish(Boolean(source) && !orientation && ready()), 2500);
     const finish = (result: boolean) => {
       window.clearTimeout(timeout);
       signal.removeEventListener('abort', abort);

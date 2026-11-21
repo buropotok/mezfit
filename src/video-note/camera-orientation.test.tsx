@@ -164,3 +164,51 @@ it('checks orientation after the first decoded frame instead of using the initia
   expect(capture.applyConstraints).not.toHaveBeenCalled();
   expect(Recorder.starts).toBe(1);
 });
+
+it('waits for the rear stream to replace an earlier preview before recording', async () => {
+  const track = { kind: 'video', enabled: false, readyState: 'live', muted: false, stop: vi.fn() };
+  const rear = { getTracks: () => [track], getVideoTracks: () => [track] };
+  getUserMedia.mockResolvedValue(rear);
+  const { result } = renderHook(() => useVideoNoteRecorder(undefined, 'portrait'));
+  const video = document.createElement('video');
+  const previous = {};
+  Object.defineProperties(video, {
+    srcObject: { value: previous, writable: true },
+    readyState: { value: 2 }, videoWidth: { value: 720 }, videoHeight: { value: 1280 },
+  });
+  const started = { current: Promise.resolve(false) };
+  await act(async () => {
+    started.current = result.current.start('environment', false, { video, profile: 'portrait' });
+  });
+  expect(Recorder.starts).toBe(0);
+  expect(track.enabled).toBe(true);
+  await act(async () => {
+    Object.defineProperty(video, 'srcObject', { value: rear });
+    video.dispatchEvent(new Event('loadeddata'));
+    expect(await started.current).toBe(true);
+  });
+  expect(Recorder.starts).toBe(1);
+});
+
+it('discards a stalled rear stream so the existing camera button can reopen it', async () => {
+  vi.useFakeTimers();
+  const track = { kind: 'video', enabled: false, readyState: 'live', muted: true, stop: vi.fn() };
+  const rear = { getTracks: () => [track], getVideoTracks: () => [track] };
+  const replacementTrack = { ...track, muted: false, stop: vi.fn() };
+  const replacement = { getTracks: () => [replacementTrack], getVideoTracks: () => [replacementTrack] };
+  getUserMedia.mockResolvedValueOnce(rear).mockResolvedValueOnce(replacement);
+  const { result } = renderHook(() => useVideoNoteRecorder(undefined, 'portrait', true));
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'srcObject', { value: rear });
+  await act(async () => {
+    const started = result.current.start('environment', false, { video, profile: 'portrait' });
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(await started).toBe(false);
+  });
+  expect(Recorder.starts).toBe(0);
+  expect(track.stop).toHaveBeenCalledOnce();
+  expect(result.current.error).toContain('CAMERA_PREVIEW_NOT_READY');
+  await act(async () => { await result.current.start('environment', true); });
+  expect(getUserMedia).toHaveBeenCalledTimes(2);
+  expect(result.current.stream).toBe(replacement);
+});
