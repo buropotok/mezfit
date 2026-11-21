@@ -95,8 +95,18 @@ describe('Yandex media signer', () => {
     }
     expect(post({ ...preview, initData: owner, sizeBytes: preview.sizeBytes + 1 }).statusCode).toBe(400);
     expect(post({ ...preview, initData: owner, contentType: 'image/png' }).statusCode).toBe(400);
-    expect(post({ ...full, initData: owner, contentType: 'video/mp4' }).statusCode).toBe(400);
+    expect(post({ ...full, initData: owner, contentType: 'audio/ogg' }).statusCode).toBe(400);
     expect(post({ ...full, initData: owner, storageKey: full.storageKey.replace('/full/', '/../full/') }).statusCode).toBe(400);
+  });
+
+  it.each(['video/mp4', 'video/webm', 'video/quicktime'])('signs %s only as Full under a variant key', contentType => {
+    const prefix = createHash('sha256').update('tg:123').digest('hex');
+    const body = { initData: initData(), storageKey: `mvp-media/${prefix}/full/${'b'.repeat(64)}`,
+      contentType, sizeBytes: 250 * 1024 * 1024 };
+    expect(post(body).statusCode).toBe(200);
+    expect(post({ ...body, sizeBytes: body.sizeBytes + 1 }).statusCode).toBe(400);
+    expect(post({ ...body, initData: initData({ user: '{"id":124}' }) }).statusCode).toBe(403);
+    expect(post({ ...body, storageKey: body.storageKey.replace('/full/', '/preview/'), sizeBytes: 4 }).statusCode).toBe(400);
   });
 
   it.each([

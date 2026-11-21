@@ -72,6 +72,14 @@ copies pause until backup is enabled. The durable local read cache stores Previe
 Existing realms and Dexie Cloud Addon continue to own message access and metadata
 synchronization.
 
+**COMM-09 video variants (2026-11-21):** The two-object protocol also covers
+ordinary video and video notes. The client prepares ordinary video before
+storing the final Full and Preview in the account-local recovery store.
+For video notes, Full is the result of recording and trimming. Published pairs
+use durable Preview caching and on-demand Full playback. Full stays in
+IndexedDB only while needed for upload recovery. Dexie Cloud synchronizes
+one attachment with both sets of metadata.
+
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
 defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.
 COMM-06 (2026-11-07) registers v15/v16/v17 on the normal account lifecycle, without a

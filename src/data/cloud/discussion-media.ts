@@ -1,6 +1,6 @@
 import type { MezfitCloudDatabase } from './database';
 import { discussionId, discussionRecord } from '../../../shared/discussion-anchor';
-import { isDiscussionPhotoPair, isVoiceWaveform, type DiscussionPhotoPreview } from '../../../shared/discussion-attachment';
+import { isDiscussionMediaPair, isVoiceWaveform, type DiscussionPhotoPreview } from '../../../shared/discussion-attachment';
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix } from '../../../shared/discussion-media-limits';
 import { directMediaSizeLimit, directMediaUrl, MEDIA_FILE_ACCEPT } from '../../media/directMediaUpload';
 
@@ -33,7 +33,7 @@ export function isDiscussionMediaDraft(value: unknown): value is DiscussionMedia
     || typeof value.fileName !== 'string' || value.fileName.length > 1024
     || (value.uploadState !== 'uploading' && value.uploadState !== 'failed')) return false;
   if ((value.preview !== undefined || DISCUSSION_MEDIA_KEY_PATTERN.exec(value.storageKey)?.[2])
-    && !isDiscussionPhotoPair(value, value.preview)) return false;
+    && !isDiscussionMediaPair(value, value.preview)) return false;
   if (value.mediaType === 'voice') return value.mimeType.startsWith('audio/')
     && typeof value.durationSeconds === 'number' && Number.isFinite(value.durationSeconds) && value.durationSeconds > 0
     && isVoiceWaveform(value.waveform);
@@ -66,5 +66,5 @@ export async function isLocallyPublishedDiscussionPhoto(
   const attachment = await db.messageAttachments?.get(key[3]);
   return !!attachment && attachment.owner === actorUserId && attachment.authorUserId === actorUserId
     && attachment.storageKey === storageKey && attachment.uploadState === 'ready'
-    && isDiscussionPhotoPair({ ...attachment }, attachment.preview);
+    && isDiscussionMediaPair({ ...attachment }, attachment.preview);
 }

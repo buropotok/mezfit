@@ -126,6 +126,24 @@ describe('Cloudflare R2 upload signer', () => {
     expect((await handleDiscussionR2MediaRoute(request('sign', { ...full, initData: owner, contentType: 'audio/ogg' }), env())).status).toBe(400);
   });
 
+  it('signs and verifies video Full for its sender while rejecting a video Preview', async () => {
+    const prefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
+    const full = { initData: await initData(), storageKey: `mvp-media/${prefix}/full/${'b'.repeat(64)}`,
+      contentType: 'video/mp4', sizeBytes: 6 };
+    const other = await initData(200600);
+    head.mockClear();
+    for (const endpoint of ['sign', 'verify']) {
+      expect((await handleDiscussionR2MediaRoute(request(endpoint, { ...full, initData: other }), env())).status).toBe(403);
+      expect((await handleDiscussionR2MediaRoute(request(endpoint, {
+        ...full, storageKey: full.storageKey.replace('/full/', '/preview/'),
+      }), env())).status).toBe(400);
+    }
+    expect(head).not.toHaveBeenCalled();
+    expect((await handleDiscussionR2MediaRoute(request('sign', full), env())).status).toBe(200);
+    head.mockResolvedValueOnce({ size: full.sizeBytes, httpMetadata: { contentType: full.contentType } });
+    expect((await handleDiscussionR2MediaRoute(request('verify', full), env())).status).toBe(200);
+  });
+
   it('allows any authenticated Telegram user without a separate user-ID allowlist', async () => {
     for (const userId of [100500, 200600]) {
       const valid = { initData: await initData(userId), storageKey: key, contentType: 'image/jpeg', sizeBytes: 6 };

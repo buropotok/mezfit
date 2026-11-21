@@ -196,6 +196,42 @@ describe('Private R2 discussion media reads', () => {
     }
   });
 
+  it.each(['video', 'video-note'])('requires a published, consistent %s pair to grant either read', async mediaType => {
+    const { realmId, data } = await mockCloud();
+    const prefix = '5996bea04a76410f80673abfa86a211f2031ae06c80af17466643b62c385cbad';
+    const mediaId = 'b'.repeat(64);
+    const preview = { storageKey: `mvp-media/${prefix}/preview/${mediaId}`, mimeType: 'image/jpeg', sizeBytes: 4 };
+    const full = { storageKey: `mvp-media/${prefix}/full/${mediaId}`, mimeType: 'video/mp4', sizeBytes: 6 };
+    const published = { ...data.attachment, id: mediaId, mediaType, durationSeconds: 30, ...full, preview };
+    const identity = { realmId, messageId, attachmentId: mediaId, initData: await telegramInitData(200600) };
+    const read = ({ storageKey, mimeType, sizeBytes }: typeof full) =>
+      handleDiscussionR2MediaRoute(request({ ...identity, storageKey, contentType: mimeType, sizeBytes }), env());
+
+    for (const invalid of [
+      { uploadState: 'pending' },
+      { deletedAt: '2026-11-16T00:00:00.000Z' },
+      { preview: undefined },
+      { preview: { ...preview, storageKey: preview.storageKey.replace(prefix, 'c'.repeat(64)) } },
+      { mimeType: 'image/png' },
+      { mediaType: 'voice' },
+      { durationSeconds: 181 },
+    ]) {
+      data.attachment = { ...published, ...invalid };
+      expect((await read(preview)).status).toBe(403);
+    }
+    data.attachment = published;
+    expect((await read({ ...full, sizeBytes: full.sizeBytes + 1 })).status).toBe(403);
+    expect(head).not.toHaveBeenCalled();
+
+    for (const object of [preview, full]) {
+      head.mockResolvedValueOnce({ size: object.sizeBytes, httpMetadata: { contentType: object.mimeType } });
+      const response = await read(object);
+      expect(response.status).toBe(200);
+      const result = await response.json() as { getUrl: string };
+      expect(new URL(result.getUrl).pathname).toBe('/' + object.storageKey);
+    }
+  });
+
   it.each([
     { attachment: { storageKey: 'mvp-media/' + 'b'.repeat(64) } },
     { attachment: { uploadState: 'pending' } },

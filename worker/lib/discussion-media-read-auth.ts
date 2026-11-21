@@ -1,7 +1,7 @@
 import { discussionAnchorKey, discussionId, discussionRecord, isDiscussionAnchor, isPersonalDiscussionId, isPersonalDiscussionRealm,
   matchesDiscussionThreadAnchor, personalDiscussionId } from '../../shared/discussion-anchor';
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix } from '../../shared/discussion-media-limits';
-import { isDiscussionPhotoPair } from '../../shared/discussion-attachment';
+import { isDiscussionMediaPair } from '../../shared/discussion-attachment';
 import { cloudList, cloudRead, cloudToken, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
 const mediaRowId = (value: unknown): value is string => typeof value === 'string'
@@ -78,7 +78,7 @@ export async function authorizeDiscussionR2Read(
   let object = attachment;
   if (key[2] || attachment.preview !== undefined) {
     const preview = attachment.preview;
-    if (!key[2] || !isDiscussionPhotoPair(attachment, preview)) return false;
+    if (!key[2] || !isDiscussionMediaPair(attachment, preview)) return false;
     if (key[2] === 'preview') object = { ...preview };
   }
   if (object.storageKey !== input.storageKey || object.mimeType !== input.contentType

@@ -16,13 +16,17 @@ export interface MessageAttachment {
   uploadState: 'pending' | 'uploading' | 'failed' | 'ready';
   confirmedAt: string | null;
   deletedAt?: string;
-  /** Present only on photos that have two cloud objects. Top-level metadata describes Full. */
+  /** Present on photos and videos that have two cloud objects. Top-level metadata describes Full. */
   preview?: DiscussionPhotoPreview;
 }
 
-export function isDiscussionPhotoPair(attachment: Record<string, unknown>, preview: unknown): preview is DiscussionPhotoPreview {
-  const { storageKey, mimeType, sizeBytes } = attachment;
-  if (attachment.mediaType !== 'photo' || typeof storageKey !== 'string' || typeof mimeType !== 'string'
+export function isDiscussionMediaPair(attachment: Record<string, unknown>, preview: unknown): preview is DiscussionPhotoPreview {
+  const { storageKey, mimeType, sizeBytes, mediaType, durationSeconds } = attachment;
+  const video = mediaType === 'video' || mediaType === 'video-note';
+  if ((!video && mediaType !== 'photo') || typeof storageKey !== 'string' || typeof mimeType !== 'string'
+    || !mimeType.startsWith(video ? 'video/' : 'image/')
+    || (video && (typeof durationSeconds !== 'number' || !Number.isFinite(durationSeconds)
+      || durationSeconds <= 0 || durationSeconds > (mediaType === 'video-note' ? 60 : 180)))
     || typeof sizeBytes !== 'number' || !Number.isSafeInteger(sizeBytes) || sizeBytes < 1
     || sizeBytes > discussionMediaObjectSizeLimit(storageKey, mimeType)) return false;
   const key = DISCUSSION_MEDIA_KEY_PATTERN.exec(storageKey);
@@ -86,7 +90,7 @@ export function assertMessageAttachmentWrite(
     || attachment.realmId !== thread.realmId || attachment.owner !== actor || attachment.authorUserId !== actor
     || !media({ ...attachment }) || (attachment.storageKey !== null && !storageKey(attachment.storageKey))
     || ((attachment.preview !== undefined || DISCUSSION_MEDIA_KEY_PATTERN.exec(attachment.storageKey ?? '')?.[2])
-      && !isDiscussionPhotoPair({ ...attachment }, attachment.preview))
+      && !isDiscussionMediaPair({ ...attachment }, attachment.preview))
     || !['pending', 'uploading', 'failed', 'ready'].includes(attachment.uploadState)
     || (attachment.deletedAt !== undefined && !instant(attachment.deletedAt))
     || (Boolean(message.deletedAt) && attachment.deletedAt === undefined)) invalid();

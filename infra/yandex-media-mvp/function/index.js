@@ -162,7 +162,8 @@ function handleRequest(event, env, now, trace = () => {}) {
   // This function is deployed independently of the TypeScript Worker.
   const limit = variant === 'preview'
     ? (contentType === 'image/webp' || contentType === 'image/jpeg' ? 100 * 1024 : 0)
-    : (variant === 'full' && (typeof contentType !== 'string' || !contentType.startsWith('image/'))
+    : (variant === 'full' && (typeof contentType !== 'string'
+      || (!contentType.startsWith('image/') && !contentType.startsWith('video/')))
       ? 0 : (limits.get(contentType) ?? 0) * 1024 * 1024);
   const invalidSize = !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || (limit > 0 && sizeBytes > limit);
   if (invalidKey || !limit || invalidSize) {
@@ -173,7 +174,7 @@ function handleRequest(event, env, now, trace = () => {}) {
     return respond(400, { code: 'INVALID_UPLOAD' });
   }
   const senderPrefix = keyMatch[1];
-  if (senderPrefix && (!contentType.startsWith('image/')
+  if (senderPrefix && ((!variant && !contentType.startsWith('image/'))
     || senderPrefix !== createHash('sha256').update('tg:' + userId).digest('hex'))) {
     trace('UPLOAD_VALIDATION_REJECTED', 'WARN', { reason: 'SENDER_PREFIX_FORBIDDEN' });
     return respond(403, { code: 'MEDIA_FORBIDDEN' });
