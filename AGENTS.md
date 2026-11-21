@@ -151,11 +151,12 @@ attachment within the existing authorized realm.
 Publish the attachment only after one provider confirms both objects. Persist
 the outstanding copies in the existing local recovery store. Remove the
 temporary local Full only after publication and confirmation of both variants in
-the required providers. By default only Yandex is required. Enabling the
-device-local backup preference adds R2 for new uploads. While backup is
-disabled, the device skips R2 read fallback and pauses previously queued R2
-copies. The chat uses cached Preview and opens Full on demand without a
-persistent Full cache. Legacy photos and other media retain their existing
+the required providers. By default, send to Yandex first and try R2 only if
+Yandex upload fails. One completed provider is then sufficient. Enabling the
+device-local backup preference requires both copies for cleanup. Previously
+queued backup copies to R2 pause while the preference is off. Authorized R2
+read fallback is available in both modes. The chat uses cached Preview and
+opens Full on demand without a persistent Full cache. Legacy photos and other media retain their existing
 contracts. Deploy both gateways before enabling new photo writes. Live Yandex
 publication, IAM or ACL changes require separate owner approval.
 

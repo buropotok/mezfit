@@ -175,11 +175,12 @@ it('sends both photo variants only to Yandex with backup disabled', async () => 
   }
 });
 
-it('preserves a Yandex send error and skips pending R2 copies with backup disabled', async () => {
+it('preserves a Yandex error if the R2 signer fails and pauses independent R2 copies', async () => {
   setDiscussionMediaBackupEnabled(false);
   try {
     const primaryError = new MediaUploadError('NETWORK', undefined, undefined, undefined, 'put');
     vi.mocked(uploadDirectMedia).mockRejectedValueOnce(primaryError);
+    vi.mocked(uploadCloudflareMedia).mockRejectedValueOnce(new MediaUploadError('SIGNER_UNAVAILABLE'));
     await expect(uploadMirroredDiscussionMedia(file(), { accountId, retryKey: key }))
       .rejects.toBe(primaryError);
     vi.mocked(listIncompleteMediaReplicas).mockResolvedValueOnce([{
@@ -189,8 +190,35 @@ it('preserves a Yandex send error and skips pending R2 copies with backup disabl
     vi.mocked(readDiscussionMedia).mockResolvedValueOnce(new Blob(['sample'], { type: 'image/jpeg' }));
     await resumeMediaReplicaUploads(accountId);
     expect(uploadDirectMedia).toHaveBeenCalledOnce();
-    expect(uploadCloudflareMedia).not.toHaveBeenCalled();
+    expect(uploadCloudflareMedia).toHaveBeenCalledOnce();
   } finally {
     setDiscussionMediaBackupEnabled(true);
   }
+});
+
+it('waits for a Yandex failure before sending both photo variants to R2 with backup off', async () => {
+  setDiscussionMediaBackupEnabled(false);
+  vi.useFakeTimers();
+  const prefix = 'mvp-media/' + 'd'.repeat(64);
+  const photoId = 'e'.repeat(64);
+  const fullKey = `${prefix}/full/${photoId}`;
+  const preview = { storageKey: `${prefix}/preview/${photoId}`, mimeType: 'image/webp', sizeBytes: 3 };
+  vi.mocked(readDiscussionMedia).mockResolvedValueOnce(new Blob(['web'], { type: preview.mimeType }));
+  vi.mocked(uploadDirectMedia)
+    .mockResolvedValueOnce({ ...uploaded, key: fullKey })
+    .mockImplementationOnce(() => new Promise((_, reject) => {
+      setTimeout(() => reject(new MediaUploadError('TIMEOUT')), 10_000);
+    }));
+  vi.mocked(uploadCloudflareMedia)
+    .mockResolvedValueOnce({ ...uploaded, key: fullKey })
+    .mockResolvedValueOnce({ ...uploaded, key: preview.storageKey, sizeBytes: preview.sizeBytes });
+
+  const result = uploadMirroredDiscussionMedia(file(), { accountId, retryKey: fullKey, preview });
+  const published = expect(result).resolves.toMatchObject({ key: fullKey, preview });
+  await vi.advanceTimersByTimeAsync(8_000);
+  expect(uploadCloudflareMedia).not.toHaveBeenCalled();
+  await vi.advanceTimersByTimeAsync(2_000);
+  await published;
+  expect(vi.mocked(uploadCloudflareMedia).mock.calls.map(([, options]) => options?.retryKey))
+    .toEqual([fullKey, preview.storageKey]);
 });

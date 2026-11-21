@@ -66,9 +66,12 @@ and Telegram iOS/Android video Range behavior remain unverified gates.
 extends the object layout for new photos. One synchronized attachment carries
 Full and Preview metadata. The local recovery store retains original bytes until
 publication and confirmation of both objects in the required providers. By
-default new uploads and remote reads use Yandex only. Both providers are
-required when chat backup is enabled in device settings. Previously queued R2
-copies pause until backup is enabled. The durable local read cache stores Preview.
+default Yandex is tried first and R2 is attempted only after a Yandex upload
+failure. Either complete copy releases the original after publication. Both
+copies are required for cleanup when chat backup is enabled in device settings.
+Previously queued R2 backup copies pause while off. Authorized remote reads
+fall back to R2 after a Yandex read failure in both modes. The durable local
+read cache stores Preview.
 Existing realms and Dexie Cloud Addon continue to own message access and metadata
 synchronization.
 
