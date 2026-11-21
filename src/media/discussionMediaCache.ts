@@ -3,6 +3,7 @@ import { ApiError } from '../api';
 import { directMediaUrl } from './directMediaUpload';
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaObjectSizeLimit } from '../../shared/discussion-media-limits';
 import type { DiscussionPhotoPreview } from '../../shared/discussion-attachment';
+import { isDiscussionMediaBackupEnabled } from './discussionMediaBackupPreference';
 import { signedDiscussionR2ReadUrl } from './cloudflareMediaRead';
 
 /** Do not download very large clips merely because their thumbnail became visible. */
@@ -48,14 +49,13 @@ export async function clearDiscussionMediaCache(accountId: string): Promise<void
   if (!/^tg:[1-9]\d*$/.test(accountId)) throw new Error('INVALID_MEDIA_CACHE_ACCOUNT');
   const db = new DiscussionMediaDatabase(accountId);
   try {
-    const protectedKeys = new Set(await db.replicas.toCollection().primaryKeys());
-    if (protectedKeys.size === 0) {
-      await db.delete();
-      return;
-    }
-    await db.transaction('rw', db.files, async () => {
-      const keys = await db.files.toCollection().primaryKeys();
-      await db.files.bulkDelete(keys.filter(key => !protectedKeys.has(key)));
+    await db.transaction('rw', db.files, db.replicas, async () => {
+      const protectedKeys = new Set(await db.replicas.toCollection().primaryKeys());
+      if (!protectedKeys.size) await db.files.clear();
+      else {
+        const keys = await db.files.toCollection().primaryKeys();
+        await db.files.bulkDelete(keys.filter(key => !protectedKeys.has(key)));
+      }
     });
   } finally {
     db.close();
@@ -113,8 +113,18 @@ export async function storeDiscussionPhoto(
   }
   const db = new DiscussionMediaDatabase(full.accountId);
   try {
-    await db.transaction('rw', db.files, () =>
-      db.files.bulkPut([{ key: full.storageKey, blob: file }, { key: preview.storageKey, blob: thumbnail }]));
+    const isVideo = full.mimeType.startsWith('video/') && file instanceof File;
+    if (!isVideo) {
+      await db.transaction('rw', db.files, () =>
+        db.files.bulkPut([{ key: full.storageKey, blob: file }, { key: preview.storageKey, blob: thumbnail }]));
+    } else {
+      const yandexOnly = isDiscussionMediaBackupEnabled() ? undefined : true;
+      await db.transaction('rw', db.files, db.replicas, async () => {
+        await ensureMediaReplica(db, full, file.name, yandexOnly);
+        await ensureMediaReplica(db, previewEntry, preview.mimeType === 'image/webp' ? 'preview.webp' : 'preview.jpg', yandexOnly);
+        await db.files.bulkPut([{ key: full.storageKey, blob: file }, { key: preview.storageKey, blob: thumbnail }]);
+      });
+    }
   } finally { db.close(); }
 }
 
@@ -138,6 +148,20 @@ async function cleanCompletedPhoto(db: DiscussionMediaDatabase, keys: [string, s
   await db.replicas.bulkDelete(keys);
 }
 
+async function ensureMediaReplica(
+  db: DiscussionMediaDatabase, entry: DiscussionMediaCacheEntry, fileName: string, yandexOnly?: true,
+): Promise<void> {
+  const stored = await db.replicas.get(entry.storageKey);
+  if (stored) {
+    if (stored.mimeType !== entry.mimeType || stored.sizeBytes !== entry.sizeBytes || stored.fileName !== fileName) {
+      throw new Error('MEDIA_REPLICA_MISMATCH');
+    }
+    return;
+  }
+  await db.replicas.add({ key: entry.storageKey, mimeType: entry.mimeType, sizeBytes: entry.sizeBytes,
+    fileName, yandexOnly, published: false });
+}
+
 /** Local operational retry state, not a second synchronized business database. */
 export async function rememberMediaReplica(
   entry: DiscussionMediaCacheEntry, fileName: string, yandexOnly?: true,
@@ -145,17 +169,7 @@ export async function rememberMediaReplica(
   if (!mediaUrl(entry) || typeof fileName !== 'string' || fileName.length > 1024) throw new Error('INVALID_MEDIA_REPLICA');
   const db = new DiscussionMediaDatabase(entry.accountId);
   try {
-    await db.transaction('rw', db.replicas, async () => {
-      const stored = await db.replicas.get(entry.storageKey);
-      if (stored) {
-        if (stored.mimeType !== entry.mimeType || stored.sizeBytes !== entry.sizeBytes || stored.fileName !== fileName) {
-          throw new Error('MEDIA_REPLICA_MISMATCH');
-        }
-        return;
-      }
-      await db.replicas.add({ key: entry.storageKey, mimeType: entry.mimeType, sizeBytes: entry.sizeBytes,
-        fileName, yandexOnly, published: false });
-    });
+    await db.transaction('rw', db.replicas, () => ensureMediaReplica(db, entry, fileName, yandexOnly));
   } finally { db.close(); }
 }
 
@@ -315,7 +329,8 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
   if (active) return active;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 300_000);
-  const fullPhoto = DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] === 'full';
+  const full = DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] === 'full';
+  const fullPhoto = full && entry.mimeType.startsWith('image/');
   let r2Failure: string | undefined;
   const fetchComplete = async (
     resolveSource: (signal: AbortSignal) => string | Promise<string>, primary: boolean,
@@ -382,7 +397,7 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry) {
       if (!blob && entry.realmId && entry.messageId && entry.attachmentId) {
         blob = await fetchComplete(signal => signedDiscussionR2ReadUrl(entry, signal), false);
       }
-      if (blob && !fullPhoto) await storeDiscussionMedia(entry, blob);
+      if (blob && !full) await storeDiscussionMedia(entry, blob);
       return { blob, r2Failure };
     } finally {
       clearTimeout(timer);

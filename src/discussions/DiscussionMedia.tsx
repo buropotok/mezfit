@@ -7,21 +7,22 @@ import { useDiscussionMediaSource } from './useDiscussionMediaSource';
 import { useVideoOrientation } from '../media/useVideoOrientation';
 import { DiscussionVideoControls } from './DiscussionVideoControls';
 
-interface DiscussionPhotoSource {
+export interface DiscussionImageSource {
   src: string;
   cache?: DiscussionMediaCacheEntry;
 }
 
-export interface DiscussionMediaSource extends DiscussionPhotoSource {
+export interface DiscussionMediaSource extends DiscussionImageSource {
   type: 'photo' | 'video';
   durationSeconds?: number | null;
-  photoPreview?: DiscussionPhotoSource;
+  photoPreview?: DiscussionImageSource;
+  videoPreview?: DiscussionImageSource;
 }
 
-function ViewerPhotoPreview({ src, cache }: DiscussionPhotoSource) {
+function ViewerImagePreview({ src, cache, label }: DiscussionImageSource & { label: string }) {
   const { url, tryR2Fallback } = useDiscussionMediaSource(src, cache, 'photo', 0, false);
   const [loadedUrl, setLoadedUrl] = useState<string>();
-  return url ? <img key={url} src={url} alt="Миниатюра фото" referrerPolicy="no-referrer"
+  return url ? <img key={url} src={url} alt={label} referrerPolicy="no-referrer"
     style={{ visibility: loadedUrl === url ? 'visible' : 'hidden' }}
     onLoad={() => setLoadedUrl(url)} onError={() => { setLoadedUrl(undefined); void tryR2Fallback(); }} /> : null;
 }
@@ -32,7 +33,7 @@ function seekThumbnail(video: HTMLVideoElement) {
   video.currentTime = video.duration > 3 ? 3 : video.duration / 2;
 }
 
-export function DiscussionMedia({ src, type, durationSeconds, cache, photoPreview, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint, onAnnotate }: DiscussionMediaSource & {
+export function DiscussionMedia({ src, type, durationSeconds, cache, photoPreview, videoPreview, mode, onOpen, onMenu, meta, autoPlay, startAt, onComment, showCommentHint, onAnnotate }: DiscussionMediaSource & {
   mode: 'thumbnail' | 'preview' | 'viewer';
   onOpen?: () => void;
   onMenu?: () => void;
@@ -56,16 +57,20 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
   currentRetry.current = retry;
   const thumbnail = mode === 'thumbnail';
   const viewerPreview = type === 'photo' && mode === 'viewer' ? photoPreview : undefined;
-  const autoCacheVideo = !thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES);
+  const staticVideoPreview = type === 'video' && thumbnail ? videoPreview : undefined;
+  const pairedVideo = type === 'video' && Boolean(videoPreview);
+  const autoCacheVideo = !pairedVideo && (!thumbnail || (cache && cache.sizeBytes <= DISCUSSION_VIDEO_THUMBNAIL_CACHE_MAX_BYTES));
+  const imageMode = type === 'photo' || Boolean(staticVideoPreview);
   const { url: mediaSrc, unavailable, r2Failure, container, tryR2Fallback } = useDiscussionMediaSource(
-    src, cache, type === 'photo' ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
+    staticVideoPreview?.src ?? src, staticVideoPreview ? staticVideoPreview.cache : cache,
+    imageMode ? 'photo' : autoCacheVideo ? 'video' : 'cache-only', retry, thumbnail,
   );
   const failed = elementFailed || unavailable;
   const photoFailure = mediaSrc?.startsWith('blob:') ? 'PHOTO-FULL-DECODE' : r2Failure ?? 'PHOTO-FULL-LOAD';
-  const crossOrigin = mode === 'viewer' && !autoPlay && !usePlainSource && mediaSrc?.startsWith('https:')
+  const crossOrigin = mode === 'viewer' && (!autoPlay || pairedVideo) && !usePlainSource && mediaSrc?.startsWith('https:')
     ? 'anonymous' : undefined;
-  const orientation = useVideoOrientation(player, type === 'video' ? mediaSrc : undefined, 'contain',
-    `${usePlainSource}:${failed}:${retry}:${mode}`);
+  const orientation = useVideoOrientation(player, imageMode ? undefined : mediaSrc, 'contain',
+    `${usePlainSource}:${failed}:${retry}:${mode}`, pairedVideo);
   function handleError() {
     setImageReady(false);
     setFrameReady(false);
@@ -103,13 +108,15 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
   };
   const label = type === 'photo' ? 'Фото' : 'Видео';
   const duration = Math.floor(durationSeconds ?? 0);
-  const content = type === 'photo'
-    ? <img key={String(usePlainSource)} ref={photo} crossOrigin={crossOrigin} src={mediaSrc} alt={mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
+  const content = imageMode
+    ? <img key={String(usePlainSource)} ref={photo} crossOrigin={crossOrigin} src={mediaSrc} alt={staticVideoPreview ? 'Обложка видео' : mode === 'preview' ? 'Предпросмотр фото' : 'Фото во вложении'}
         style={viewerPreview && !imageReady ? { visibility: 'hidden' } : undefined}
         loading={thumbnail ? 'lazy' : 'eager'} referrerPolicy="no-referrer" onLoad={() => setImageReady(true)} onError={handleError} />
     : <video key={String(usePlainSource)} ref={player} crossOrigin={crossOrigin} src={orientation.src} aria-label={mode === 'preview' ? 'Предпросмотр видео' : 'Видео во вложении'}
         style={orientation.style}
         playsInline autoPlay={startAt === undefined && autoPlay} preload={mode === 'viewer' ? 'auto' : 'metadata'}
+        onWaiting={pairedVideo ? () => setFrameReady(false) : undefined}
+        onPlaying={pairedVideo ? () => setFrameReady(true) : undefined}
         onLoadedData={() => setFrameReady(true)} onSeeking={() => setFrameReady(false)} onSeeked={() => setFrameReady(true)}
         onLoadedMetadata={event => {
           const video = event.currentTarget;
@@ -130,8 +137,11 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
     setFailed(false); setUsePlainSource(false); setRetry(value => value + 1);
   }}><Text variant="body">Повторить</Text></Button>;
 
-  return <div ref={container} className={`discussion-media discussion-media--${mode}`} onClick={event => event.stopPropagation()}>
-    {viewerPreview && !imageReady && <ViewerPhotoPreview {...viewerPreview} />}
+  return <div ref={container} className={`discussion-media discussion-media--${mode}`}
+    data-video-preview={pairedVideo || undefined} data-video-ready={pairedVideo && frameReady && !orientation.pending && !failed || undefined} onClick={event => event.stopPropagation()}>
+    {viewerPreview && !imageReady && <ViewerImagePreview {...viewerPreview} label="Миниатюра фото" />}
+    {mode === 'viewer' && videoPreview && (!frameReady || orientation.pending || failed)
+      && <ViewerImagePreview {...videoPreview} label="Обложка видео" />}
     {viewerPreview && !imageReady && <div className="discussion-media__photo-status">
       <Text variant="footnote" role="status">
         {failed
@@ -143,6 +153,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
     {failed && !viewerPreview && <div className="discussion-media__error">
       <Text variant="footnote" role="status">
         {label} недоступно. Проверьте сеть и поддержку формата на устройстве.
+        {pairedVideo && ` Код: ${r2Failure ?? 'MEDIA_VIDEO_DECODE_FAILED'}.`}
       </Text>
       {retryButton}
     </div>}

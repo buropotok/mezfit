@@ -76,10 +76,14 @@ function probe(url: string, video: boolean, signal: AbortSignal, mimeType: strin
   });
 }
 
+export function discussionMediaInputMime(original: File) {
+  return !original.type || original.type === 'application/octet-stream'
+    ? extensionTypes.get(original.name.split('.').at(-1)?.toLowerCase() ?? '') : original.type;
+}
+
 export async function inspectDiscussionMedia(original: File, signal: AbortSignal) {
   // Some gallery providers omit the MIME type. Decode the actual bytes below.
-  const type = !original.type || original.type === 'application/octet-stream'
-    ? extensionTypes.get(original.name.split('.').at(-1)?.toLowerCase() ?? '') : original.type;
+  const type = discussionMediaInputMime(original);
   const file = type && type !== original.type
     ? new File([original], original.name, { type, lastModified: original.lastModified }) : original;
   let mimeType: string;

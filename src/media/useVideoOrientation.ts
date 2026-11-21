@@ -5,8 +5,9 @@ import { loadVideoPlaybackCopy } from './videoPlaybackCopy';
 /** Thumbnails and players display only a source with known, neutral native rotation. */
 export function useVideoOrientation(
   ref: RefObject<HTMLVideoElement | null>, src: string | undefined, fit: 'contain' | 'cover', resetKey?: string,
+  allowNativeFallback = false,
 ) {
-  const identity = JSON.stringify([src, fit, resetKey]);
+  const identity = JSON.stringify([src, fit, resetKey, allowNativeFallback]);
   const [result, setResult] = useState<{
     identity: string; url: string; track: VideoOrientation | null; scale: number; visible: boolean; error?: string;
   } | null>(null);
@@ -21,8 +22,8 @@ export function useVideoOrientation(
     let restoreTime: number | null = null;
     let objectUrl: string | undefined;
     let track: VideoOrientation | null = null;
-    const fail = () => setResult({ identity, url: src, track: null, scale: 1, visible: false,
-      error: 'Не удалось подготовить ориентацию видео. Повторите попытку.' });
+    const fail = () => setResult({ identity, url: src, track: null, scale: 1, visible: allowNativeFallback,
+      error: allowNativeFallback ? undefined : 'Не удалось подготовить ориентацию видео. Повторите попытку.' });
     const timeout = setTimeout(() => controller.abort(), 60_000);
     controller.signal.addEventListener('abort', fail, { once: true });
     const publish = () => {
@@ -88,7 +89,7 @@ export function useVideoOrientation(
       video.removeEventListener('resize', resized);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [ref, src, fit, identity]);
+  }, [ref, src, fit, identity, allowNativeFallback]);
   const current = result?.identity === identity ? result : null;
   const track = current?.track;
   const rotation = track?.rotation ?? 0;

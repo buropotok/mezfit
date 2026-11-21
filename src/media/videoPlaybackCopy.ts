@@ -2,10 +2,10 @@ import type { Output as MediaOutput } from 'mediabunny';
 
 /** Copy compressed packets into a container with identity video transformations. */
 export async function normalizeVideoPlayback(blob: Blob, signal: AbortSignal): Promise<Blob> {
-  const { Input, MP4, WEBM, BlobSource, Output, BufferTarget, Mp4OutputFormat, WebMOutputFormat,
+  const { Input, MP4, QTFF, WEBM, BlobSource, Output, BufferTarget, Mp4OutputFormat, WebMOutputFormat,
     EncodedPacketSink, EncodedVideoPacketSource, EncodedAudioPacketSource } = await import('mediabunny');
   signal.throwIfAborted();
-  const input = new Input({ formats: [MP4, WEBM], source: new BlobSource(blob) });
+  const input = new Input({ formats: [MP4, QTFF, WEBM], source: new BlobSource(blob) });
   const target = new BufferTarget();
   let output: MediaOutput | undefined;
   const cancel = () => {
@@ -15,7 +15,8 @@ export async function normalizeVideoPlayback(blob: Blob, signal: AbortSignal): P
   signal.addEventListener('abort', cancel, { once: true });
   try {
     signal.throwIfAborted();
-    const mp4 = await input.getFormat() === MP4;
+    const format = await input.getFormat();
+    const mp4 = format === MP4 || format === QTFF;
     signal.throwIfAborted();
     output = new Output({ format: mp4 ? new Mp4OutputFormat() : new WebMOutputFormat(), target });
     const pumps: Array<() => Promise<void>> = [];
