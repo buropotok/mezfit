@@ -78,10 +78,12 @@ synchronization.
 **COMM-09 video variants (2026-11-21):** The two-object protocol also covers
 ordinary video and video notes. The client prepares ordinary video before
 storing the final Full and Preview in the account-local recovery store.
-For video notes, Full is the result of recording and trimming. Published pairs
-use durable Preview caching and on-demand Full playback. Full stays in
-IndexedDB only while needed for upload recovery. Dexie Cloud synchronizes
-one attachment with both sets of metadata.
+Published ordinary videos cache Preview and open Full on demand. Their Full
+stays in IndexedDB only while needed for upload recovery. Video notes use the
+result of recording and trimming as Full. Sent notes retain Full in the local
+media cache after upload recovery completes. Opening a chat downloads missing
+Full files of received notes in the background and caches complete responses.
+Dexie Cloud synchronizes one attachment with both sets of metadata.
 
 **COMM-04 repository foundation:** [discussions-repository.md](discussions-repository.md)
 defines local text/reply/edit/delete/read-state, private drafts and Addon-owned sync.

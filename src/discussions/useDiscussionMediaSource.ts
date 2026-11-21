@@ -4,13 +4,13 @@ import { signedDiscussionR2ReadUrl } from '../media/cloudflareMediaRead';
 import { DISCUSSION_MEDIA_KEY_PATTERN } from '../../shared/discussion-media-limits';
 
 export function useDiscussionMediaSource(
-  src: string, cache: DiscussionMediaCacheEntry | undefined, mode: 'cache-only' | 'photo' | 'video', retry: number, lazy: boolean,
+  src: string, cache: DiscussionMediaCacheEntry | undefined, mode: 'cache-only' | 'photo' | 'video' | 'video-note', retry: number, lazy: boolean,
 ) {
   const { accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId } = cache ?? {};
   const fullPhoto = mode === 'photo' && Boolean(storageKey && DISCUSSION_MEDIA_KEY_PATTERN.exec(storageKey)?.[2] === 'full');
   const container = useRef<HTMLDivElement>(null);
   const identity = JSON.stringify([src, accountId, storageKey, mimeType, sizeBytes, realmId, messageId, attachmentId, mode, retry]);
-  const [resolved, setResolved] = useState<{ identity: string; url: string | null; r2Failure?: string }>();
+  const [resolved, setResolved] = useState<{ identity: string; url: string | null; cachedUrl?: string; r2Failure?: string }>();
   const latestIdentity = useRef(identity);
   latestIdentity.current = identity;
   const mounted = useRef(true);
@@ -32,7 +32,7 @@ export function useDiscussionMediaSource(
     const promise = signedDiscussionR2ReadUrl(cache).then(url => {
       if (!mounted.current || latestIdentity.current !== identity) return false;
       fallbackSelected.current = identity;
-      setResolved({ identity, url });
+      setResolved(previous => ({ identity, url, cachedUrl: previous?.identity === identity ? previous.cachedUrl : undefined }));
       return true;
     }).catch(() => false).finally(() => {
       if (fallbackInFlight.current?.identity === identity) fallbackInFlight.current = null;
@@ -49,6 +49,14 @@ export function useDiscussionMediaSource(
     const load = async () => {
       const cached = await readDiscussionMedia(entry);
       if (!active) return;
+      if (mode === 'video-note') {
+        const blob = cached ?? await downloadDiscussionMedia(entry, true);
+        if (!active || !blob || typeof URL.createObjectURL !== 'function') return;
+        const cachedUrl = URL.createObjectURL(blob);
+        objectUrl = cachedUrl;
+        setResolved(previous => ({ identity, cachedUrl, url: previous?.identity === identity ? previous.url : src }));
+        return;
+      }
       if (!cached && mode === 'video') void downloadDiscussionMedia(entry);
       const download = !cached && fullPhoto ? await downloadDiscussionMediaWithStatus(entry) : null;
       const blob = cached ?? (download ? download.blob : mode === 'photo' ? await downloadDiscussionMedia(entry) : null);
@@ -77,5 +85,6 @@ export function useDiscussionMediaSource(
 
   const current = resolved?.identity === identity ? resolved : undefined;
   const url = !accountId ? src : current?.url;
-  return { url: url ?? undefined, unavailable: url === null, r2Failure: current?.r2Failure, container, tryR2Fallback };
+  return { url: url ?? undefined, cachedUrl: current?.cachedUrl, unavailable: url === null,
+    r2Failure: current?.r2Failure, container, tryR2Fallback };
 }
