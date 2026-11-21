@@ -49,17 +49,20 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, preview, onMe
     '--note-left': string; '--note-top': string; '--note-width': string; '--note-expanded-height': string;
   }>();
   const [expanded, setExpanded] = useState(review);
+  const [playFromCache, setPlayFromCache] = useState(false);
   const expandedRef = useRef(expanded);
   expandedRef.current = expanded;
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const currentRetry = useRef(retry);
   currentRetry.current = retry;
-  const { url, tryR2Fallback } = useDiscussionMediaSource(
-    src, preview && !expanded ? undefined : cache, preview ? 'cache-only' : 'video', retry, false,
+  const { url, cachedUrl, tryR2Fallback } = useDiscussionMediaSource(
+    src, cache, preview ? 'video-note' : 'video', retry, false,
   );
   const poster = useDiscussionMediaSource(preview?.src ?? '', preview?.cache, 'photo', retry, true);
-  const resolvedSource = preview ? url ?? src : url;
+  // Keep the source chosen in the tap handler until playback ends.
+  const useCachedSource = Boolean(cachedUrl && (!expanded || playFromCache));
+  const resolvedSource = preview ? (useCachedSource ? cachedUrl : url ?? src) : url;
   const swipeVisual = useDiscussionSwipeVisual();
   // Measure in content coordinates so the browser scrolls the frame with the
   // message, even while native momentum scrolling runs ahead of React.
@@ -120,11 +123,12 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, preview, onMe
       mode={expanded ? 'play' : 'preview'} previewControlHost={playbackHost ? previewAnchor : undefined}
       staticPreview={preview ? (poster.url ? <img src={poster.url} alt="Обложка видеокружка" loading="lazy"
         className="discussion-video-note__poster" referrerPolicy="no-referrer" onError={() => void poster.tryR2Fallback()} /> : null) : undefined}
-      onExpand={() => { setError(''); setExpanded(true); }}
+      onExpand={() => { setError(''); setPlayFromCache(Boolean(cachedUrl)); setExpanded(true); }}
       onReturnToPreview={review ? undefined : () => setExpanded(false)} onError={message => {
         if (message === 'Не удалось воспроизвести записанное видео на этом устройстве.') {
           const attempt = retry;
-          void tryR2Fallback().then(switched => { if (!switched && currentRetry.current === attempt && (!preview || expandedRef.current)) {
+          const fallback = preview && useCachedSource ? Promise.resolve(false) : tryR2Fallback();
+          void fallback.then(switched => { if (!switched && currentRetry.current === attempt && (!preview || expandedRef.current)) {
             setError(preview ? message + ' (Код: MEDIA_VIDEO_DECODE_FAILED)' : message);
             if (preview) setExpanded(false);
           } });
@@ -155,7 +159,9 @@ export function DiscussionVideoNote({ src, durationSeconds, cache, preview, onMe
     {(!playbackHost || !player || expanded) && menu}
     {error && <div className="discussion-video-note__error">
       <Text variant="footnote" role="alert">{error}</Text>
-      <Button rounded onClick={() => { setError(''); setRetry(value => value + 1); if (preview) setExpanded(true); }}>
+      <Button rounded onClick={() => {
+        setError(''); setRetry(value => value + 1); setPlayFromCache(false); if (preview) setExpanded(true);
+      }}>
         <Text variant="footnote">Повторить</Text>
       </Button>
     </div>}
