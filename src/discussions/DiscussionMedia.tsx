@@ -47,6 +47,7 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
   const photo = useRef<HTMLImageElement>(null);
   const [imageReady, setImageReady] = useState(false);
   const [frameReady, setFrameReady] = useState(false);
+  const [displayedVideoSource, setDisplayedVideoSource] = useState<string>();
   const [captureError, setCaptureError] = useState(false);
   const [usePlainSource, setUsePlainSource] = useState(false);
   const player = useRef<HTMLVideoElement>(null);
@@ -71,9 +72,15 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
     ? 'anonymous' : undefined;
   const orientation = useVideoOrientation(player, imageMode ? undefined : mediaSrc, 'contain',
     `${usePlainSource}:${failed}:${retry}:${mode}`, pairedVideo);
+  const videoVisible = Boolean(orientation.src) && displayedVideoSource === orientation.src && !orientation.pending;
+  const showVideoFrame = () => {
+    setFrameReady(true);
+    setDisplayedVideoSource(orientation.src);
+  };
   function handleError() {
     setImageReady(false);
     setFrameReady(false);
+    setDisplayedVideoSource(undefined);
     setPaused(false);
     if (crossOrigin) {
       // Some hosts support playback but do not allow reading pixels.
@@ -116,8 +123,8 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
         style={orientation.style}
         playsInline autoPlay={startAt === undefined && autoPlay} preload={mode === 'viewer' ? 'auto' : 'metadata'}
         onWaiting={pairedVideo ? () => setFrameReady(false) : undefined}
-        onPlaying={pairedVideo ? () => setFrameReady(true) : undefined}
-        onLoadedData={() => setFrameReady(true)} onSeeking={() => setFrameReady(false)} onSeeked={() => setFrameReady(true)}
+        onPlaying={pairedVideo ? showVideoFrame : undefined}
+        onLoadedData={showVideoFrame} onSeeking={() => setFrameReady(false)} onSeeked={showVideoFrame}
         onLoadedMetadata={event => {
           const video = event.currentTarget;
           if (thumbnail) { seekThumbnail(video); return; }
@@ -138,9 +145,9 @@ export function DiscussionMedia({ src, type, durationSeconds, cache, photoPrevie
   }}><Text variant="body">Повторить</Text></Button>;
 
   return <div ref={container} className={`discussion-media discussion-media--${mode}`}
-    data-video-preview={pairedVideo || undefined} data-video-ready={pairedVideo && frameReady && !orientation.pending && !failed || undefined} onClick={event => event.stopPropagation()}>
+    data-video-preview={pairedVideo || undefined} data-video-ready={pairedVideo && videoVisible && !failed || undefined} onClick={event => event.stopPropagation()}>
     {viewerPreview && !imageReady && <ViewerImagePreview {...viewerPreview} label="Миниатюра фото" />}
-    {mode === 'viewer' && videoPreview && (!frameReady || orientation.pending || failed)
+    {mode === 'viewer' && videoPreview && (!videoVisible || failed)
       && <ViewerImagePreview {...videoPreview} label="Обложка видео" />}
     {viewerPreview && !imageReady && <div className="discussion-media__photo-status">
       <Text variant="footnote" role="status">

@@ -9,16 +9,23 @@ export function DiscussionVideoControls({ player, source }: {
   const [duration, setDuration] = useState(0);
   const [playFailed, setPlayFailed] = useState(false);
   const generation = useRef(0);
+  const seekPending = useRef(false);
   useEffect(() => {
     const video = player.current;
     if (!video) return;
     setPlayFailed(false);
-    const update = () => {
+    seekPending.current = false;
+    const update = (event?: Event) => {
       setPaused(video.paused);
-      setPosition(Number.isFinite(video.currentTime) ? video.currentTime : 0);
+      if (event?.type === 'emptied'
+        || ((event?.type === 'seeked' || event?.type === 'playing') && !video.seeking)) {
+        seekPending.current = false;
+      }
+      // Decoder events may still report the earlier position while the finger moves.
+      if (!seekPending.current) setPosition(Number.isFinite(video.currentTime) ? video.currentTime : 0);
       setDuration(Number.isFinite(video.duration) ? video.duration : 0);
     };
-    const events = ['loadedmetadata', 'emptied', 'timeupdate', 'play', 'pause', 'ended', 'durationchange', 'seeked'] as const;
+    const events = ['loadedmetadata', 'emptied', 'timeupdate', 'play', 'playing', 'pause', 'ended', 'durationchange', 'seeked'] as const;
     events.forEach(event => video.addEventListener(event, update));
     update();
     return () => {
@@ -47,7 +54,14 @@ export function DiscussionVideoControls({ player, source }: {
       <MezfitSlider size="small" fullWidth start={0} end={100} ariaLabel="Перемотка видео"
         value={duration > 0 ? position / duration * 100 : 0}
         onValueChange={value => {
-          if (player.current && duration > 0) player.current.currentTime = value / 100 * duration;
+          const video = player.current;
+          if (!video || duration <= 0) return;
+          const next = value / 100 * duration;
+          setPosition(next);
+          if (next !== video.currentTime) {
+            seekPending.current = true;
+            video.currentTime = next;
+          }
         }} />
     </div>
     <Text variant="caption" className="discussion-media__video-time">{time(position)} / {time(duration)}</Text>

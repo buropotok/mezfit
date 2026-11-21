@@ -398,6 +398,7 @@
 .discussion-media__video-seek {
   flex: 1;
   min-width: 0;
+  touch-action: none;
 }
 
 .discussion-media__video-error {

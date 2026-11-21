@@ -129,3 +129,40 @@ it('shows a normalized square thumbnail with the same angle as the viewer', asyn
   await waitFor(() => expect(viewer.getAttribute('src')).toBe('blob:neutral'));
   expect(viewer.style.transform).toContain('rotate(90deg)');
 });
+
+it('keeps the thumb and video visible while consecutive seek requests are still decoding', async () => {
+  vi.mocked(readVideoOrientation).mockResolvedValue({ width: 720, height: 1280, rotation: 0 });
+  const { container } = render(<KonstaProvider theme="ios" dark>
+    <DiscussionMedia src="blob:video" type="video" mode="viewer" videoPreview={{ src: 'blob:cover' }} />
+  </KonstaProvider>);
+  const video = container.querySelector('video')!;
+  let time = 1;
+  let seeking = false;
+  const seek = vi.fn();
+  Object.defineProperties(video, {
+    currentTime: { get: () => time, set: seek },
+    seeking: { get: () => seeking },
+  });
+  load(video, 720, 1280);
+  fireEvent.loadedData(video);
+  await waitFor(() => expect(screen.queryByAltText('Обложка видео')).toBeNull());
+  const slider = screen.getByRole<HTMLInputElement>('slider', { name: 'Перемотка видео' });
+
+  fireEvent.input(slider, { target: { value: '30' } });
+  seeking = true;
+  fireEvent.seeking(video);
+  fireEvent.waiting(video);
+  fireEvent.timeUpdate(video);
+  expect(slider.value).toBe('30');
+  expect(screen.queryByAltText('Обложка видео')).toBeNull();
+
+  fireEvent.input(slider, { target: { value: '80' } });
+  expect(slider.value).toBe('80');
+  expect(seek.mock.calls).toEqual([[3], [8]]);
+  time = 8;
+  seeking = false;
+  fireEvent.seeked(video);
+  time = 9;
+  fireEvent.timeUpdate(video);
+  expect(slider.value).toBe('90');
+});
