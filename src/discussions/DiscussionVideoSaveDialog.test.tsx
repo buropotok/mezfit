@@ -2,11 +2,12 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
+import { downloadDiscussionMediaWithStatus } from '../media/discussionMediaCache';
 import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './DiscussionVideoSaveDialog';
 
 vi.mock('../media/discussionMediaCache', () => ({
   readDiscussionMedia: vi.fn(async () => null),
-  downloadDiscussionMedia: vi.fn(async () => null),
+  downloadDiscussionMediaWithStatus: vi.fn(async () => ({ blob: null })),
 }));
 
 const canShare = Object.getOwnPropertyDescriptor(navigator, 'canShare');
@@ -56,4 +57,22 @@ it('waits for Telegram to confirm the download request before closing', async ()
   act(() => downloadFile.mock.calls[0][1](true));
   expect(onStatus).toHaveBeenCalledWith('Запрос принят Telegram. Ищите «Видео Mezfit.mp4» в загрузках.');
   expect(onClose).toHaveBeenCalledOnce();
+});
+
+it('fetches the attachment again after a failed read and reports the storage stages', async () => {
+  vi.stubGlobal('Telegram', undefined);
+  const download = vi.mocked(downloadDiscussionMediaWithStatus);
+  const initialCalls = download.mock.calls.length;
+  download.mockResolvedValueOnce({ blob: null, yandexFailure: 'YANDEX-GET-404', r2Failure: 'R2-SIGN-403' })
+    .mockResolvedValueOnce({ blob: null, yandexFailure: 'YANDEX-GET-404', r2Failure: 'R2-SIGN-403' })
+    .mockResolvedValueOnce({ blob: new Blob(['video'], { type: 'video/mp4' }) });
+  const url = 'https://storage.example.com/video';
+  const entry = { accountId: 'tg:1', storageKey: 'video', mimeType: 'video/mp4', sizeBytes: 5 };
+  open({ url, cache: entry });
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Скачать файл' }));
+  expect((await screen.findByRole('alert')).textContent).toContain('YANDEX-GET-404 / R2-SIGN-403');
+  fireEvent.click(screen.getByRole('button', { name: 'Скачать файл' }));
+  expect(await screen.findByText('Файл готов к сохранению.')).toBeTruthy();
+  expect(download.mock.calls.slice(initialCalls)).toEqual([[entry], [entry], [entry]]);
 });
