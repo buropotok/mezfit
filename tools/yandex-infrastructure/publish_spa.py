@@ -12,9 +12,9 @@ import re
 import sys
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, build_opener
 
-from web_hosting import WebHostingError, bucket_name
+from web_hosting import NoRedirect, WebHostingError, bucket_name, inspect, request_json
 
 STORAGE_OBJECTS = "https://storage.yandexcloud.net"
 CONFIRM = "PUBLISH_MEZFIT_WEB"
@@ -63,14 +63,12 @@ def headers_for(name):
 def publish(directory, bucket, iam_token, upload):
     files = files_to_publish(directory)
     print(f"Publishing {len(files)} dist objects to bucket {bucket}; no deletions.")
-    index_content = None
-    for name, path in files:
-        contents = path.read_bytes()
-        if name == "index.html":
-            index_content = contents
-        upload(bucket, name, contents, headers_for(name))
+    index_content = (Path(directory) / "index.html").read_bytes()
     if not index_content:
         raise WebHostingError("SPA index.html is unexpectedly empty.")
+    for name, path in files:
+        contents = path.read_bytes()
+        upload(bucket, name, contents, headers_for(name))
     print(f"Published index.html SHA-256: {hashlib.sha256(index_content).hexdigest()}")
 
 
@@ -81,6 +79,13 @@ def main():
         raise WebHostingError("Missing Yandex folder ID or short-lived IAM token.")
     if os.environ.get("CONFIRM") != CONFIRM:
         raise WebHostingError("Explicit publication confirmation missing.")
+
+    opener = build_opener(NoRedirect())
+    def api(url, label, payload=None):
+        return request_json(opener, token, url, label, payload)
+    bucket, gateway, certificate = inspect(api, folder)
+    if not all((bucket, gateway, certificate)):
+        raise WebHostingError("Hosting resources missing; run Prepare Yandex Web Hosting first.")
 
     def upload(bucket, key, body, headers):
         safe_key = quote(key, safe="/")
