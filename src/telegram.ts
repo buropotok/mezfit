@@ -78,11 +78,18 @@ export function openMezfitBotChat(): void {
   openExternalLink(url);
 }
 
+export function canRequestTelegramFileDownload(webApp = getTelegramWebApp()): boolean {
+  try {
+    return typeof webApp?.downloadFile === 'function' && webApp.isVersionAtLeast?.('8.0') !== false;
+  } catch {
+    return false;
+  }
+}
+
 export function requestTelegramFileDownload(url: string, fileName: string, onResult: (accepted: boolean) => void): boolean {
   const webApp = getTelegramWebApp();
-  if (!webApp?.downloadFile) return false;
+  if (!webApp?.downloadFile || !canRequestTelegramFileDownload(webApp)) return false;
   try {
-    if (webApp.isVersionAtLeast?.('8.0') === false) return false;
     webApp.downloadFile({ url, file_name: fileName }, onResult);
     return true;
   } catch {
