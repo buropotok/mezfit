@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MessageAttachment } from '../data/cloud/discussion-contracts';
-import { downloadDiscussionMedia, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { downloadDiscussionMediaWithStatus, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { requestTelegramFileDownload } from '../telegram';
 import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
 import { Text } from '../ui/primitives';
@@ -63,6 +63,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   const label = attachmentLabel(mediaType);
   const [file, setFile] = useState<File | null>('file' in target ? target.file : null);
   const [loading, setLoading] = useState(!('file' in target));
+  const [readAttempt, setReadAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -78,8 +79,15 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         try {
           const cached = await readDiscussionMedia(entry);
           if (!current) return;
-          const blob = cached ?? (navigator.onLine === false ? null : await downloadDiscussionMedia(entry));
-          if (current && blob) setFile(new File([blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType }));
+          const result = cached ? { blob: cached } : await downloadDiscussionMediaWithStatus(entry);
+          if (!current) return;
+          if (result.blob) {
+            setFile(new File([result.blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType }));
+            if (readAttempt > 0) setNotice('Файл готов к сохранению.');
+          } else if (readAttempt > 0) {
+            const codes = [result.yandexFailure, result.r2Failure].filter(Boolean).join(' / ');
+            setError(`Не удалось получить файл. Попробуйте ещё раз.${codes ? ` Коды: ${codes}.` : ''}`);
+          }
         } finally {
           if (current) setLoading(false);
         }
@@ -88,7 +96,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       });
     }
     return () => { current = false; active.current = false; };
-  }, [target, mediaType, label]);
+  }, [target, mediaType, label, readAttempt]);
 
   const shareData = file ? { files: [file] } : null;
   const canShare = !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
@@ -140,7 +148,8 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       setSaving(false);
     }
     if (!file) {
-      setError(`${label} недоступно для скачивания. Проверьте сеть и попробуйте ещё раз.`);
+      setLoading(true);
+      setReadAttempt(attempt => attempt + 1);
       return;
     }
     try {
