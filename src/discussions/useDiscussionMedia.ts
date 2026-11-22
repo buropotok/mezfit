@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { APP_ERROR_CODES, withErrorCode } from '../../shared/app-error-codes';
 import { reportVideoRecordingFailure } from '../video-note/video-recording-diagnostics';
-import { MediaUploadError } from '../media/directMediaUpload';
+import { MediaUploadError, validateDirectMedia } from '../media/directMediaUpload';
 import { uploadMirroredDiscussionMedia, acceptMediaReplica, resumeMediaReplicaUploads } from '../media/dualMediaUpload';
 import { discardUnpublishedDiscussionPhoto, readDiscussionMedia, storeDiscussionMedia, storeDiscussionPhoto } from '../media/discussionMediaCache';
 import { prepareDiscussionVideoPair } from '../media/discussionVideoPreparation';
+import { prepareVideoExport } from '../media/prepareVideoExport';
 import { createDiscussionPhotoPreview, prepareDiscussionPhoto } from '../media/discussionPhotoPreview';
 import { prepareDiscussionMessage, type DiscussionMessageInput } from '../data/cloud/discussions';
 import type { DiscussionMessageView } from '../data/cloud/discussion-views';
@@ -404,10 +405,34 @@ export function useDiscussionMedia(repository: DiscussionPort, draft: ReturnType
     let command: DiscussionMessageInput | null = staged ?? null;
     let savingFile = !staged;
     const message = selected.separate ?? draft.mediaCommand();
-    setOutgoing({ id: message.id, createdAt: message.createdAt, attachmentId: selected.metadata.id });
-    setError(undefined); setPhase('uploading');
+    setError(undefined);
     try {
-      const { storageKey, preview: photoPreview } = selected.metadata;
+      const { storageKey, mimeType, mediaType } = selected.metadata;
+      // An existing draft or replica already commits this key to a specific size and payload.
+      if (mediaType === 'video' && mimeType === 'video/mp4' && !staged && !selected.restored
+        && storedKey.current !== storageKey && draft.media?.storageKey !== storageKey) {
+        setPhase('checking');
+        try {
+          const file = await prepareVideoExport(selected.file, controller.signal);
+          if (active.current !== controller || controller.signal.aborted) return;
+          if (file !== selected.file) {
+            const metadata = { ...selected.metadata, mimeType: validateDirectMedia(file), sizeBytes: file.size };
+            selected = { ...selected, file, metadata };
+            setSelection(selected);
+          }
+        } catch {
+          if (active.current === controller && !controller.signal.aborted) {
+            const code = APP_ERROR_CODES.MEDIA_VIDEO_PREPARATION_FAILED;
+            setError(withErrorCode('Не удалось подготовить длительность видео. Попробуйте ещё раз.', code));
+            reportVideoRecordingFailure(code, 'media', { mediaMimeType: mimeType, mediaSizeBytes: String(selected.file.size) });
+            setPhase('failed');
+          }
+          return;
+        }
+      }
+      setOutgoing({ id: message.id, createdAt: message.createdAt, attachmentId: selected.metadata.id });
+      setPhase('uploading');
+      const { preview: photoPreview } = selected.metadata;
       if (!staged && (storedKey.current !== storageKey || selected.photoPreview)) {
         await storeSelectedMedia(repository.actorUserId, selected);
         storedKey.current = storageKey;

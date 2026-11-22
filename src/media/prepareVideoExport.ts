@@ -19,7 +19,8 @@ async function isFragmentedMp4(file: Blob, signal: AbortSignal): Promise<boolean
 
 export async function prepareVideoExport(file: File, signal: AbortSignal): Promise<File> {
   signal.throwIfAborted();
-  if (file.type !== 'video/mp4' || !await isFragmentedMp4(file, signal)) return file;
+  const mimeType = file.type.split(';', 1)[0];
+  if (mimeType !== 'video/mp4' || !await isFragmentedMp4(file, signal)) return file;
   const { Input, MP4, BlobSource, Conversion, Output, Mp4OutputFormat, BufferTarget } = await import('mediabunny');
   signal.throwIfAborted();
   const input = new Input({ formats: [MP4], source: new BlobSource(file) });
@@ -42,7 +43,7 @@ export async function prepareVideoExport(file: File, signal: AbortSignal): Promi
       await conversion.execute();
       signal.throwIfAborted();
       if (!target.buffer?.byteLength) throw new Error('VIDEO_EXPORT_EMPTY');
-      return new File([target.buffer], file.name, { type: file.type, lastModified: file.lastModified });
+      return new File([target.buffer], file.name, { type: mimeType, lastModified: file.lastModified });
     } finally {
       signal.removeEventListener('abort', cancel);
     }
