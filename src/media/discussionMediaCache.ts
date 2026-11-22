@@ -254,15 +254,17 @@ export async function getMediaReplica(accountId: string, storageKey: string): Pr
 
 interface DownloadResult {
   blob: Blob | null;
+  yandexFailure?: string;
   r2Failure?: string;
 }
 
 const downloads = new Map<string, { result: Promise<DownloadResult>; blob: Promise<Blob | null> }>();
 const PRIMARY_RESPONSE_TIMEOUT_MS = 8_000;
-const FULL_PHOTO_IDLE_TIMEOUT_MS = 15_000;
+const FULL_MEDIA_IDLE_TIMEOUT_MS = 15_000;
 const R2_PHOTO_PART_BYTES = 1024 * 1024;
+const VIDEO_PART_BYTES = 4 * 1024 * 1024;
 
-async function readFullPhoto(response: Response, sizeBytes: number, onProgress: () => void): Promise<Blob | null> {
+async function readCompleteMediaBody(response: Response, sizeBytes: number, onProgress: () => void): Promise<Blob | null> {
   if (!response.body) return response.blob();
 
   const reader = response.body.getReader();
@@ -287,13 +289,14 @@ async function readFullPhoto(response: Response, sizeBytes: number, onProgress: 
   }
 }
 
-async function readR2PhotoInParts(
+async function readMediaInParts(
   source: string, entry: DiscussionMediaCacheEntry, request: RequestInit, resetIdleTimeout: () => void,
+  partBytes: number = R2_PHOTO_PART_BYTES,
 ): Promise<Blob | null> {
   const parts: Blob[] = [];
-  for (let start = 0; start < entry.sizeBytes; start += R2_PHOTO_PART_BYTES) {
+  for (let start = 0; start < entry.sizeBytes; start += partBytes) {
     if (request.signal?.aborted) return null;
-    const end = Math.min(start + R2_PHOTO_PART_BYTES, entry.sizeBytes) - 1;
+    const end = Math.min(start + partBytes, entry.sizeBytes) - 1;
     const size = end - start + 1;
     resetIdleTimeout();
     const response = await fetch(source, { ...request, headers: { Range: `bytes=${start}-${end}` } });
@@ -306,7 +309,7 @@ async function readR2PhotoInParts(
       return null;
     }
     resetIdleTimeout();
-    const part = await readFullPhoto(response, size, resetIdleTimeout);
+    const part = await readCompleteMediaBody(response, size, resetIdleTimeout);
     if (!part || !matches({ ...entry, sizeBytes: size }, part)) return null;
     parts.push(part);
   }
@@ -324,7 +327,7 @@ export function downloadDiscussionMediaWithStatus(entry: DiscussionMediaCacheEnt
 
 function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry, cacheFull = false) {
   const url = mediaUrl(entry);
-  if (!url) return { result: Promise.resolve({ blob: null }), blob: Promise.resolve(null) };
+  if (!url) return { result: Promise.resolve({ blob: null, yandexFailure: 'YANDEX-METADATA' }), blob: Promise.resolve(null) };
   const key = JSON.stringify([entry.accountId, entry.storageKey, entry.mimeType, entry.sizeBytes,
     entry.realmId, entry.messageId, entry.attachmentId, cacheFull]);
   const active = downloads.get(key);
@@ -333,6 +336,8 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry, cacheFul
   const timer = setTimeout(() => controller.abort(), 300_000);
   const full = DISCUSSION_MEDIA_KEY_PATTERN.exec(entry.storageKey)?.[2] === 'full';
   const fullPhoto = full && entry.mimeType.startsWith('image/');
+  const video = entry.mimeType.startsWith('video/');
+  let yandexFailure: string | undefined;
   let r2Failure: string | undefined;
   const fetchComplete = async (
     resolveSource: (signal: AbortSignal) => string | Promise<string>, primary: boolean,
@@ -347,47 +352,54 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry, cacheFul
       clearTimeout(idleTimer);
       idleTimer = setTimeout(cancel, delay);
     };
-    const receivedData = () => startTimer(FULL_PHOTO_IDLE_TIMEOUT_MS);
+    const failed = (reason: string) => {
+      if (primary) yandexFailure = `YANDEX-${reason}`;
+      else r2Failure = `R2-${reason}`;
+      return null;
+    };
+    const receivedData = () => startTimer(FULL_MEDIA_IDLE_TIMEOUT_MS);
     if (primary) startTimer(PRIMARY_RESPONSE_TIMEOUT_MS);
-    else if (fullPhoto) receivedData();
+    else if (fullPhoto || video) receivedData();
 
     let stage: 'SIGN' | 'GET' | 'BODY' | 'RANGE' = 'SIGN';
     try {
       const source = await resolveSource(signal);
       stage = 'GET';
-      if (fullPhoto && !primary) receivedData();
+      if ((fullPhoto || video) && !primary) receivedData();
       const request = {
         signal, credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
+        ...(video ? { cache: 'no-store' as const } : {}),
       } satisfies RequestInit;
       const response = await fetch(source, request);
       const length = response.headers.get('content-length');
       if (response.status !== 200 || (length !== null && Number(length) !== entry.sizeBytes)) {
-        if (!primary) r2Failure = response.status !== 200 ? `R2-GET-${response.status}` : 'R2-SIZE';
         void response.body?.cancel().catch(() => undefined);
-        return null;
+        const range = response.headers.get('content-range');
+        // A partial playback response is not a complete export. Request verified ranges explicitly.
+        if (video && response.status === 206 && range?.endsWith(`/${entry.sizeBytes}`)) {
+          stage = 'RANGE';
+          const complete = await readMediaInParts(source, entry, request, receivedData, VIDEO_PART_BYTES);
+          return !signal.aborted && complete ? complete : failed(signal.aborted ? 'RANGE-TIMEOUT' : 'RANGE-INVALID');
+        }
+        return failed(response.status !== 200 ? `GET-${response.status}` : 'SIZE');
       }
       stage = 'BODY';
-      if (fullPhoto) receivedData();
+      if (fullPhoto || video) receivedData();
       let blob: Blob | null;
       try {
-        blob = fullPhoto ? await readFullPhoto(response, entry.sizeBytes, receivedData) : await response.blob();
+        blob = fullPhoto || video ? await readCompleteMediaBody(response, entry.sizeBytes, receivedData) : await response.blob();
       } catch (error) {
         if (primary || !fullPhoto || signal.aborted || entry.sizeBytes <= R2_PHOTO_PART_BYTES) throw error;
         stage = 'RANGE';
-        blob = await readR2PhotoInParts(source, entry, request, receivedData);
+        blob = await readMediaInParts(source, entry, request, receivedData);
       }
       if (!signal.aborted && blob && matches(entry, blob)) return blob;
-      if (!primary) r2Failure = signal.aborted ? `R2-${stage}-TIMEOUT`
-        : stage === 'RANGE' ? 'R2-RANGE-INVALID'
-        : !blob || blob.size !== entry.sizeBytes ? 'R2-SIZE' : 'R2-MIME';
-      return null;
+      return failed(signal.aborted ? `${stage}-TIMEOUT` : stage === 'RANGE' ? 'RANGE-INVALID'
+        : !blob || blob.size !== entry.sizeBytes ? 'SIZE' : 'MIME');
     } catch (error) {
-      if (!primary) {
-        const detail = signal.aborted ? 'TIMEOUT'
-          : error instanceof ApiError && error.code === 'DISCUSSION_R2_HTTP' ? error.status : 'FAILED';
-        r2Failure = `R2-${stage}-${detail}`;
-      }
-      return null;
+      const detail = signal.aborted ? 'TIMEOUT'
+        : error instanceof ApiError && error.code === 'DISCUSSION_R2_HTTP' ? error.status : 'FAILED';
+      return failed(`${stage}-${detail}`);
     } finally {
       clearTimeout(idleTimer);
       controller.signal.removeEventListener('abort', cancel);
@@ -400,7 +412,7 @@ function startDiscussionMediaDownload(entry: DiscussionMediaCacheEntry, cacheFul
         blob = await fetchComplete(signal => signedDiscussionR2ReadUrl(entry, signal), false);
       }
       if (blob && (!full || cacheFull)) await storeDiscussionMedia(entry, blob);
-      return { blob, r2Failure };
+      return { blob, yandexFailure, r2Failure };
     } finally {
       clearTimeout(timer);
     }
