@@ -141,7 +141,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         setSaving(false);
         if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
         else {
-          setNativeDownloadDeclined(true);
+          if (browserUrl) setNativeDownloadDeclined(true);
           setNotice(browserUrl ? 'Telegram не начал скачивание. Нажмите «Скачать файл», чтобы открыть браузер.' : cancelled);
         }
       })) return;
