@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MessageAttachment } from '../data/cloud/discussion-contracts';
 import { downloadDiscussionMediaWithStatus, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
-import { requestTelegramFileDownload } from '../telegram';
+import { canRequestTelegramFileDownload, requestTelegramFileDownload } from '../telegram';
 import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
 import { Text } from '../ui/primitives';
 
@@ -70,11 +70,13 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   const [shareFailed, setShareFailed] = useState(false);
   const [nativeDeclined, setNativeDeclined] = useState(false);
   const active = useRef(false);
+  const telegramFirst = 'url' in target && (mediaType === 'video' || mediaType === 'video-note')
+    && !nativeDeclined && canRequestTelegramFileDownload();
 
   useEffect(() => {
     active.current = true;
     let current = true;
-    if ('cache' in target) {
+    if ('cache' in target && !telegramFirst) {
       const entry = target.cache;
       void (async () => {
         try {
@@ -98,10 +100,10 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       });
     }
     return () => { current = false; active.current = false; };
-  }, [target, mediaType, label, readAttempt]);
+  }, [target, mediaType, label, readAttempt, telegramFirst]);
 
   const shareData = file ? { files: [file] } : null;
-  const canShare = !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
+  const canShare = !telegramFirst && !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
   const retained = mediaType === 'video-note' ? 'Видеокружок остался в чате.' : `${label} осталось в чате.`;
   const cancelled = `Сохранение отменено. ${retained}`;
   const finish = (message: string) => {
@@ -135,10 +137,10 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   };
 
   const download = () => {
-    if (saving || loading) return;
+    if (saving || (loading && !telegramFirst)) return;
     setError('');
     setNotice('');
-    if ('url' in target && !nativeDeclined && navigator.onLine !== false) {
+    if ('url' in target && !nativeDeclined && (telegramFirst || navigator.onLine !== false)) {
       const name = discussionAttachmentFileName(mediaType, target.cache.mimeType);
       setSaving(true);
       if (requestTelegramFileDownload(target.url, name, accepted => {
@@ -151,6 +153,10 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         }
       })) return;
       setSaving(false);
+      if (telegramFirst) {
+        setNativeDeclined(true);
+        return;
+      }
     }
     if (!file) {
       setLoading(true);
@@ -167,7 +173,8 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
 
   return <MezfitDialog opened title={<Text variant="headline">Сохранить {label.toLowerCase()}</Text>} onBackdropClick={onClose}
     content={<>
-      <Text>{loading ? `Подготавливаем ${label.toLowerCase()}…` : canShare
+      <Text>{telegramFirst ? 'Подтвердите скачивание в диалоге Telegram.'
+        : loading ? `Подготавливаем ${label.toLowerCase()}…` : canShare
         ? (mediaType === 'video' ? 'В системном меню выберите «Сохранить видео», если этот пункт доступен.'
           : 'В системном меню выберите сохранение файла, если этот пункт доступен.')
         : 'Скачанный файл можно найти в «Файлах» или «Загрузках».'}</Text>
@@ -176,8 +183,8 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
     </>}
     buttons={<>
       <MezfitDialogButton onClick={onClose}><Text>Отмена</Text></MezfitDialogButton>
-      <MezfitDialogButton strong disabled={loading || saving} onClick={canShare ? () => void share() : download}>
-        <Text>{canShare || loading ? 'Сохранить' : 'Скачать файл'}</Text>
+      <MezfitDialogButton strong disabled={(loading && !telegramFirst) || saving} onClick={canShare ? () => void share() : download}>
+        <Text>{canShare || (loading && !telegramFirst) ? 'Сохранить' : 'Скачать файл'}</Text>
       </MezfitDialogButton>
     </>} />;
 }
