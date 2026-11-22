@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { withErrorCode } from '../../shared/app-error-codes';
 import { useVideoNoteCameraSession, type VideoNoteFacingMode } from './useVideoNoteCameraSession';
 
-import { recordingOptionsCandidates, usesSensorCameraDimensions, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
+import { recordingOptionsCandidates, usesSensorCameraDimensions, videoRecordingConstraints, VIDEO_RECORDING_PROFILES, type VideoRecordingProfile } from './video-recording-profile';
 import { hasCameraFrame, matchesCameraOrientation, waitForCameraFrame } from './camera-orientation';
 import { getVideoRecordingFormatPreference } from './video-recording-format-preference';
 import { reportVideoRecordingFailure } from './video-recording-diagnostics';
@@ -198,7 +198,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
     }
     cameraSettingsRef.current = source.getVideoTracks()[0]?.getSettings?.() ?? {};
     setStream(source);
-    if (permissionOnly) {
+    if (permissionOnly && !cameraOptions?.profile) {
       source.getTracks().forEach(track => { track.enabled = profile !== 'circle' && track.kind === 'video'; });
       updateStatus('idle');
       return false;
@@ -224,12 +224,19 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         return false;
       }
       const track = source.getVideoTracks()[0];
-      if (!matchesCameraOrientation(video, orientationProfile) && !usesSensorCameraDimensions()
-        && profile === 'portrait' && typeof track?.applyConstraints === 'function') {
+      const sensorDimensions = usesSensorCameraDimensions();
+      const rearVideo = session && facing === 'environment' && cameraSettingsRef.current.facingMode !== 'user';
+      if (!matchesCameraOrientation(video, orientationProfile) && typeof track?.applyConstraints === 'function'
+        && (rearVideo || (!sensorDimensions && profile === 'portrait'))) {
+        const fallbackProfile = sensorDimensions || !rearVideo || orientationProfile === 'portrait' ? 'landscape' : 'portrait';
+        const { width, height } = VIDEO_RECORDING_PROFILES[fallbackProfile];
         let fallbackResult = 'orientation-mismatch';
         let errorName: string | undefined;
         try {
-          await track.applyConstraints({ width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } });
+          // Recover the native frame when the rear camera's HD scaling picked the wrong orientation.
+          const constraints = rearVideo ? videoRecordingConstraints(fallbackProfile)
+            : { width: { ideal: width }, height: { ideal: height }, frameRate: { ideal: 30 } };
+          await track.applyConstraints(constraints);
           if (!current()) return false;
           const matched = await waitForCameraFrame(video, previewAbort.signal, orientationProfile, source);
           fallbackResult = matched ? 'success' : 'orientation-mismatch';
@@ -240,7 +247,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         if (!current()) return false;
         cameraSettingsRef.current = track.getSettings?.() ?? {};
         reportFailure('CAMERA_ORIENTATION_FALLBACK', {
-          cameraRequestedSize: '1280x720',
+          cameraRequestedSize: `${width}x${height}`,
           cameraPreviewSize: `${video.videoWidth}x${video.videoHeight}`,
           cameraFallbackResult: fallbackResult, errorName,
         });
@@ -255,6 +262,10 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
         updateStatus('error');
         return false;
       }
+    }
+    if (permissionOnly) {
+      updateStatus('idle');
+      return false;
     }
     source.getTracks().forEach(track => { track.enabled = true; });
     recordingStreamRef.current = source;
@@ -409,7 +420,7 @@ export function useVideoNoteRecorder(onRecorded?: (clip: VideoNoteRecording) => 
       updateStatus('error');
       return false;
     }
-  }, [acquire, clearTimers, discardCamera, liveStream, maxDurationMs, profile, release, reportFailure, stop, updateStatus]);
+  }, [acquire, clearTimers, discardCamera, liveStream, maxDurationMs, profile, release, reportFailure, session, stop, updateStatus]);
 
   useEffect(() => {
     mountedRef.current = true;

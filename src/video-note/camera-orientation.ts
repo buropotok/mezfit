@@ -27,8 +27,8 @@ export function waitForCameraFrame(
   return new Promise(resolve => {
     let frameId: number | undefined;
     // Some WebViews fail to deliver the callback even when the current stream
-    // already has decoded data. For the initial preview, check it at the deadline.
-    const timeout = window.setTimeout(() => finish(Boolean(source) && !orientation && ready()), 2500);
+    // already has decoded data. At the deadline recheck the exact source and orientation.
+    const timeout = window.setTimeout(() => finish(Boolean(source) && ready()), 2500);
     const finish = (result: boolean) => {
       window.clearTimeout(timeout);
       signal.removeEventListener('abort', abort);
