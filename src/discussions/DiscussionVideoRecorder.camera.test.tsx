@@ -150,3 +150,34 @@ it.each([
   fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
   expect(record).toHaveBeenCalledExactlyOnceWith(rear.stream);
 });
+
+it('recovers the native portrait preview before recording when the rear HD stream starts wide', async () => {
+  const rear = camera('environment');
+  const { open, getUserMedia } = openRecorder();
+  Object.defineProperty(navigator.mediaDevices, 'getSupportedConstraints', { value: () => ({ resizeMode: true }) });
+  vi.stubGlobal('screen', { orientation: { type: 'portrait-primary' } });
+  getUserMedia.mockResolvedValueOnce(rear.stream);
+  let width = 1280;
+  let height = 720;
+  const applyConstraints = vi.fn(async () => { width = 720; height = 1280; });
+  Object.assign(rear.video, { applyConstraints });
+  open();
+
+  const preview = screen.getByLabelText<HTMLVideoElement>('Изображение с камеры');
+  await waitFor(() => expect(preview.srcObject).toBe(rear.stream));
+  Object.defineProperties(preview, {
+    videoWidth: { get: () => width }, videoHeight: { get: () => height }, readyState: { value: 2 },
+  });
+  fireEvent.loadedData(preview);
+
+  const shutter = await screen.findByRole('button', { name: 'Начать запись' });
+  expect(applyConstraints).toHaveBeenCalledExactlyOnceWith({
+    width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 }, resizeMode: { exact: 'none' },
+  });
+  expect(preview.videoWidth).toBe(720);
+  expect(preview.videoHeight).toBe(1280);
+  expect(record).not.toHaveBeenCalled();
+  fireEvent.click(shutter);
+  expect(record).toHaveBeenCalledExactlyOnceWith(rear.stream);
+  expect(getUserMedia).toHaveBeenCalledOnce();
+});
