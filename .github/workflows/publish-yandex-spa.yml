@@ -1,0 +1,77 @@
+name: Publish MezFit SPA to Yandex
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: To publish the current main build, enter PUBLISH_MEZFIT_WEB
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-yandex-web-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner &&
+      inputs.confirm == 'PUBLISH_MEZFIT_WEB'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Verify existing Yandex deployment identity
+        env:
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in YC_DEPLOY_SA_ID YC_FOLDER_ID; do
+            [[ "${!key}" =~ ^[a-z0-9]+$ ]] || { echo "Missing or invalid $key"; exit 1; }
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+      - name: Build current SPA for Yandex
+        run: npm run build
+        env:
+          VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED: ${{ vars.VITE_CLOUD_ASSIGNED_PROGRAMS_ENABLED }}
+          VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED: ${{ vars.VITE_CLOUD_PROGRAM_MANAGEMENT_ENABLED }}
+          VITE_CLOUD_DISCUSSIONS_ENABLED: ${{ vars.VITE_CLOUD_DISCUSSIONS_ENABLED }}
+          VITE_YANDEX_MEDIA_FUNCTION_URL: ${{ vars.VITE_YANDEX_MEDIA_FUNCTION_URL }}
+          VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED: ${{ vars.VITE_DISCUSSION_PHOTO_SENDER_PREFIX_ENABLED }}
+          VITE_DISCUSSION_PHOTO_VARIANTS_ENABLED: ${{ vars.VITE_DISCUSSION_PHOTO_VARIANTS_ENABLED }}
+          VITE_DISCUSSION_VIDEO_VARIANTS_ENABLED: ${{ vars.VITE_DISCUSSION_VIDEO_VARIANTS_ENABLED }}
+          VITE_DISCUSSION_VIDEO_NOTE_VARIANTS_ENABLED: ${{ vars.VITE_DISCUSSION_VIDEO_NOTE_VARIANTS_ENABLED }}
+
+      - name: Acquire Yandex token using existing GitHub OIDC federation
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+
+      - name: Upload SPA build without deleting existing media or files
+        env:
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: python3 tools/yandex-infrastructure/publish_spa.py
