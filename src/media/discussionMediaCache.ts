@@ -294,6 +294,7 @@ async function readMediaInParts(
   partBytes: number = R2_PHOTO_PART_BYTES,
 ): Promise<Blob | null> {
   const parts: Blob[] = [];
+  const requireContentRange = entry.mimeType.startsWith('video/');
   for (let start = 0; start < entry.sizeBytes; start += partBytes) {
     if (request.signal?.aborted) return null;
     const end = Math.min(start + partBytes, entry.sizeBytes) - 1;
@@ -303,7 +304,7 @@ async function readMediaInParts(
     // Some bucket CORS policies don't expose Content-Range to the browser.
     const range = response.headers.get('content-range');
     const length = response.headers.get('content-length');
-    if (response.status !== 206 || (range !== null && range !== `bytes ${start}-${end}/${entry.sizeBytes}`)
+    if (response.status !== 206 || ((requireContentRange || range !== null) && range !== `bytes ${start}-${end}/${entry.sizeBytes}`)
       || (length !== null && Number(length) !== size)) {
       void response.body?.cancel().catch(() => undefined);
       return null;
