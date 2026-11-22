@@ -6,6 +6,7 @@ import type { DiscussionMediaDraft } from '../data/cloud/discussion-media';
 import type { DiscussionMessageInput } from '../data/cloud/discussions';
 import { directMediaUrl, MediaUploadError, uploadDirectMedia, type UploadedMedia } from '../media/directMediaUpload';
 import { readDiscussionMedia, storeDiscussionMedia } from '../media/discussionMediaCache';
+import * as videoExport from '../media/prepareVideoExport';
 import { DiscussionMedia } from './DiscussionMedia';
 import { DiscussionOutgoingMedia } from './DiscussionOutgoingMedia';
 import { DiscussionSheet, type DiscussionSheetProps } from './DiscussionSheet';
@@ -505,4 +506,39 @@ it('comments from the fullscreen pause and reopens the exact frame from the comp
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть просмотр' }));
   expect(screen.getByText('Стоп-кадр')).toBeTruthy();
   localStorage.removeItem('mezfit.discussion.videoCommentUsed');
+});
+
+it('stages and uploads the finalized MP4 using its new size', async () => {
+  const port = { ...fixture().port, supportsMedia: true };
+  const original = new File(['video'], 'Видео.mp4', { type: 'video/mp4' });
+  const finalized = new File(['finalized video'], original.name, { type: original.type });
+  const metadata: DiscussionMediaDraft = { id: 'finalized-video', storageKey: 'mvp-media/' + 'f'.repeat(64),
+    mediaType: 'video', mimeType: original.type, sizeBytes: original.size, durationSeconds: 2,
+    fileName: original.name, uploadState: 'uploading' };
+  const uploaded: UploadedMedia = { key: metadata.storageKey, url: directMediaUrl(metadata.storageKey) ?? '',
+    contentType: finalized.type, sizeBytes: finalized.size, fileName: finalized.name };
+  vi.mocked(inspectDiscussionMedia).mockResolvedValue({ file: original, metadata });
+  vi.mocked(uploadDirectMedia).mockResolvedValueOnce(uploaded);
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:finalized-video');
+    static revokeObjectURL = vi.fn();
+  });
+  const remux = vi.spyOn(videoExport, 'prepareVideoExport').mockResolvedValueOnce(finalized);
+  try {
+    const takeRecordedVideo = vi.fn<() => File | undefined>().mockReturnValueOnce(original);
+    render(<KonstaProvider theme="ios" dark><DiscussionSheet opened repository={port} threadId={thread.id}
+      anchor={anchor} resolveAuthor={id => ({ name: id })} onClose={() => {}} parentNavigation={null}
+      onNavigationContextChange={() => {}} takeRecordedVideo={takeRecordedVideo} /></KonstaProvider>);
+
+    await waitFor(() => expect(port.send).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      draftMedia: { ...metadata, sizeBytes: finalized.size },
+    }), uploaded));
+    expect(remux).toHaveBeenCalledExactlyOnceWith(original, expect.any(AbortSignal));
+    expect(storeDiscussionMedia).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      storageKey: metadata.storageKey, sizeBytes: finalized.size,
+    }), finalized, true);
+    expect(uploadDirectMedia).toHaveBeenCalledExactlyOnceWith(finalized, expect.objectContaining({ retryKey: metadata.storageKey }));
+  } finally {
+    remux.mockRestore();
+  }
 });
