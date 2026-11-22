@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MessageAttachment } from '../data/cloud/discussion-contracts';
 import { downloadDiscussionMedia, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
-import { requestTelegramFileDownload } from '../telegram';
+import { downloadLocalFile } from '../media/downloadLocalFile';
+import { prepareVideoExport } from '../media/prepareVideoExport';
+import { videoExportBrowserUrl } from '../media/videoExportLink';
+import { openExternalLink, requestTelegramFileDownload } from '../telegram';
 import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
 import { Text } from '../ui/primitives';
 
@@ -39,21 +42,6 @@ export function discussionAttachmentFileName(type: MessageAttachment['mediaType'
   return `Голосовое Mezfit.${extension}`;
 }
 
-function downloadLocalFile(file: File) {
-  const url = URL.createObjectURL(file);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = file.name;
-  document.body.appendChild(link);
-  try {
-    link.click();
-  } finally {
-    link.remove();
-    // Give the WebView time to start reading the object after the click.
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  }
-}
-
 export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   target: DiscussionAttachmentSaveTarget;
   onClose: () => void;
@@ -61,35 +49,52 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
 }) {
   const mediaType = target.mediaType ?? 'video';
   const label = attachmentLabel(mediaType);
-  const [file, setFile] = useState<File | null>('file' in target ? target.file : null);
+  const [prepared, setPrepared] = useState<{ file: File; remuxed: boolean } | null>(
+    'file' in target ? { file: target.file, remuxed: false } : null,
+  );
+  const file = prepared?.file ?? null;
   const [loading, setLoading] = useState(!('file' in target));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [shareFailed, setShareFailed] = useState(false);
+  const [useBrowserDownload, setUseBrowserDownload] = useState(false);
   const active = useRef(false);
 
   useEffect(() => {
     active.current = true;
-    let current = true;
+    const controller = new AbortController();
+    const { signal } = controller;
     if ('cache' in target) {
       const entry = target.cache;
       void (async () => {
         try {
           const cached = await readDiscussionMedia(entry);
-          if (!current) return;
+          if (signal.aborted) return;
           const blob = cached ?? (navigator.onLine === false ? null : await downloadDiscussionMedia(entry));
-          if (current && blob) setFile(new File([blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType }));
+          if (signal.aborted || !blob) return;
+          const original = new File([blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType });
+          try {
+            const file = await prepareVideoExport(original, signal);
+            if (!signal.aborted) setPrepared({ file, remuxed: file !== original });
+          } catch {
+            if (signal.aborted) return;
+            setPrepared({ file: original, remuxed: false });
+            setNotice('Не удалось обновить длительность видео. Можно сохранить оригинал.');
+          }
         } finally {
-          if (current) setLoading(false);
+          if (!signal.aborted) setLoading(false);
         }
       })().catch(() => {
-        if (current) setError(`Не удалось подготовить ${label.toLowerCase()}. Попробуйте скачать файл через Telegram.`);
+        if (!signal.aborted) setError(`Не удалось подготовить ${label.toLowerCase()}. Попробуйте скачать файл через Telegram.`);
       });
     }
-    return () => { current = false; active.current = false; };
+    return () => { controller.abort(); active.current = false; };
   }, [target, mediaType, label]);
 
+  const browserUrl = 'url' in target && (mediaType === 'video' || mediaType === 'video-note')
+    ? videoExportBrowserUrl(window.location.origin, target.url, { ...target.cache, videoNote: mediaType === 'video-note' })
+    : null;
   const shareData = file ? { files: [file] } : null;
   const canShare = !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
   const retained = mediaType === 'video-note' ? 'Видеокружок остался в чате.' : `${label} осталось в чате.`;
@@ -128,16 +133,26 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
     if (saving || loading) return;
     setError('');
     setNotice('');
-    if ('url' in target && navigator.onLine !== false) {
+    if ('url' in target && navigator.onLine !== false && !prepared?.remuxed && !useBrowserDownload) {
       const name = discussionAttachmentFileName(mediaType, target.cache.mimeType);
       setSaving(true);
       if (requestTelegramFileDownload(target.url, name, accepted => {
         if (!active.current) return;
         setSaving(false);
-        if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
+        if (browserUrl) {
+          setUseBrowserDownload(true);
+          setNotice(accepted
+            ? 'Telegram принял запрос. Если файла нет в загрузках, нажмите «Скачать файл», чтобы открыть браузер.'
+            : 'Telegram не начал скачивание. Нажмите «Скачать файл», чтобы открыть браузер.');
+        } else if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
         else setNotice(cancelled);
       })) return;
       setSaving(false);
+    }
+    if (browserUrl && navigator.onLine !== false) {
+      openExternalLink(browserUrl);
+      setNotice('Продолжите сохранение в браузере.');
+      return;
     }
     if (!file) {
       setError(`${label} недоступно для скачивания. Проверьте сеть и попробуйте ещё раз.`);
@@ -145,7 +160,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
     }
     try {
       downloadLocalFile(file);
-      finish(`Запрос на скачивание отправлен. Ищите «${file.name}» в «Файлах» или «Загрузках».`);
+      setNotice('Проверьте, началось ли скачивание. Если файл не появился, Telegram мог не передать его в «Загрузки».');
     } catch {
       setError(`Не удалось начать скачивание. ${retained}`);
     }
@@ -156,7 +171,8 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       <Text>{loading ? `Подготавливаем ${label.toLowerCase()}…` : canShare
         ? (mediaType === 'video' ? 'В системном меню выберите «Сохранить видео», если этот пункт доступен.'
           : 'В системном меню выберите сохранение файла, если этот пункт доступен.')
-        : 'Скачанный файл можно найти в «Файлах» или «Загрузках».'}</Text>
+        : browserUrl ? 'Если Telegram не сможет скачать видео, сохраните его в браузере.'
+          : 'Скачанный файл можно найти в «Файлах» или «Загрузках».'}</Text>
       {notice && <div><Text variant="footnote" role="status">{notice}</Text></div>}
       {error && <div><Text variant="footnote" role="alert">{error}</Text></div>}
     </>}

@@ -57,3 +57,24 @@ it('waits for Telegram to confirm the download request before closing', async ()
   expect(onStatus).toHaveBeenCalledWith('Запрос принят Telegram. Ищите «Видео Mezfit.mp4» в загрузках.');
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+it('opens browser export for a Yandex video when Android has no native download', async () => {
+  const openLink = vi.fn();
+  vi.stubGlobal('Telegram', { WebApp: { openLink } });
+  Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false });
+  const storageKey = 'mvp-media/' + 'a'.repeat(64);
+  const url = 'https://storage.yandexcloud.net/mezfit-comm-poc-20261106/' + storageKey;
+  const { onClose, onStatus } = open({ url,
+    cache: { accountId: 'tg:1', storageKey, mimeType: 'video/mp4', sizeBytes: 5 } });
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Скачать файл' }));
+  expect(openLink).toHaveBeenCalledOnce();
+  const exportUrl = new URL(openLink.mock.calls[0][0]);
+  expect(exportUrl.origin).toBe(window.location.origin);
+  expect(exportUrl.pathname).toBe('/video-export.html');
+  expect(exportUrl.search).toBe('');
+  expect(new URLSearchParams(exportUrl.hash.slice(1)).get('key')).toBe(storageKey);
+  expect(screen.getByText('Продолжите сохранение в браузере.')).toBeTruthy();
+  expect(onStatus).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
+});
