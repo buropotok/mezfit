@@ -74,7 +74,7 @@ function Rows({ tab, client }: { tab: ProfileTab; client?: CloudContact }) {
     selectProfileWorkoutRows({ ...workouts.data, actorUserId: cloud?.actorUserId, contact: client,
       mode: tab === 'calendar' ? 'plan' : 'history', today: '2026-11-08',
       to: tab === 'history' ? '2026-11-08' : undefined })
-      .map(row => 'session' in row ? row.session.name : row.occurrence.plan.name);
+      .map(row => 'session' in row ? row.session.name : row.kind === 'draft' ? row.draft.plan.name : row.occurrence.plan.name);
   return <>
     {snapshot.failed ? <div role="alert">Ошибка чтения <button onClick={snapshot.retry}>Повторить</button></div> : null}
     {!snapshot.data && !snapshot.failed ? <p>Первичное чтение</p> : null}
@@ -124,6 +124,21 @@ it('keeps one local workout observer across tabs and updates open History after 
   await db.adHocSessions.delete('Новая тренировка');
   await waitFor(() => expect(screen.queryByText('Новая тренировка')).toBeNull());
   expect(observe).toHaveBeenCalledOnce();
+});
+
+it('keeps a workout in Plan when its local edits make it a draft', async () => {
+  const db = await fixture();
+  await db.workoutOccurrences.add(booking('Тренировка', future));
+  render(profile('calendar'));
+  await screen.findByText('Тренировка');
+  await db.workoutOccurrences.update('Тренировка', {
+    publicationStatus: 'draft', plan: plan('Изменённая тренировка'),
+  });
+  await screen.findByText('Изменённая тренировка');
+  expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  await db.workoutOccurrences.update('Тренировка', { publicationStatus: 'published', plan: plan('Сохранённая тренировка') });
+  await screen.findByText('Сохранённая тренировка');
+  expect(screen.getAllByRole('listitem')).toHaveLength(1);
 });
 
 it('clears the old scope before a new client or account paints and cleans up every subscription', async () => {

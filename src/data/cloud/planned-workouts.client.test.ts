@@ -7,7 +7,7 @@ import { PlannedWorkoutsRepository } from './planned-workouts';
 import type { CloudWorkoutOccurrenceRow } from './workout-foundation-types';
 const databases: Dexie[] = [];
 afterEach(async () => { for (const db of databases.splice(0)) await db.delete(); });
-it('lists only the Client athlete’s published upcoming workouts in permitted realms', async () => {
+it('lists the Client athlete’s published workouts and accessible drafts in permitted realms', async () => {
   const db = new Dexie('planned-client-' + crypto.randomUUID(), { addons: [] });
   databases.push(db);
   const stores: Record<string, string | null> = {};
@@ -31,6 +31,10 @@ it('lists only the Client athlete’s published upcoming workouts in permitted r
   const database = db as unknown as MezfitCloudDatabase;
   const client = new PlannedWorkoutsRepository(database, 'tg:202', 'client');
   expect((await client.list(new Date(time))).map(row => row.id)).toEqual(['published']);
+  await db.table('workoutOccurrences').update(row.id, {
+    publicationStatus: 'draft', draftAuthorUserId: 'tg:202',
+  });
+  expect(await client.list(new Date(time))).toMatchObject([{ id: 'published', draft: { saved: false } }]);
   expect(await new PlannedWorkoutsRepository(database, 'tg:303', 'client').list(new Date(time))).toEqual([]);
   await db.table('members').delete(pair.members[1].id);
   expect(await client.list(new Date(time))).toEqual([]);
