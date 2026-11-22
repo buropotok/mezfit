@@ -100,7 +100,7 @@ def gateway_spec(bucket):
             "type": "dummy",
             "http_code": 503,
             "http_headers": {"Content-Type": "application/json", "Cache-Control": "no-store"},
-            "content": {"application/json": '{"error":"backend_not_migrated"}'},
+            "content": {"*": '{"error":"backend_not_migrated"}'},
         },
     }
     methods = ("get", "post", "put", "patch", "delete", "options")
