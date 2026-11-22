@@ -142,9 +142,9 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         if (browserUrl) {
           setUseBrowserDownload(true);
           const next = file ? 'повторить скачивание в Mezfit' : 'открыть браузер';
-          const status = accepted ? 'Telegram принял запрос. Если файла нет в загрузках, повторите скачивание.'
-            : 'Telegram не начал скачивание.';
-          setNotice(`${status} Нажмите «Скачать файл», чтобы ${next}.`);
+          setNotice(accepted
+            ? `Telegram принял запрос. Если файла нет в загрузках, нажмите «Скачать файл», чтобы ${next}.`
+            : `Telegram не начал скачивание. Нажмите «Скачать файл», чтобы ${next}.`);
         } else if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
         else setNotice(cancelled);
       })) return;
