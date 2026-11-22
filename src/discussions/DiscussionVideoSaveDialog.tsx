@@ -68,6 +68,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [shareFailed, setShareFailed] = useState(false);
+  const [nativeDeclined, setNativeDeclined] = useState(false);
   const active = useRef(false);
 
   useEffect(() => {
@@ -79,13 +80,14 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         try {
           const cached = await readDiscussionMedia(entry);
           if (!current) return;
-          const result = cached ? { blob: cached } : await downloadDiscussionMediaWithStatus(entry);
+          const result = cached ? null : await downloadDiscussionMediaWithStatus(entry);
           if (!current) return;
-          if (result.blob) {
-            setFile(new File([result.blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType }));
+          const blob = cached ?? result?.blob;
+          if (blob) {
+            setFile(new File([blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType }));
             if (readAttempt > 0) setNotice('Файл готов к сохранению.');
           } else if (readAttempt > 0) {
-            const codes = [result.yandexFailure, result.r2Failure].filter(Boolean).join(' / ');
+            const codes = [result?.yandexFailure, result?.r2Failure].filter(Boolean).join(' / ');
             setError(`Не удалось получить файл. Попробуйте ещё раз.${codes ? ` Коды: ${codes}.` : ''}`);
           }
         } finally {
@@ -136,14 +138,17 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
     if (saving || loading) return;
     setError('');
     setNotice('');
-    if ('url' in target && navigator.onLine !== false) {
+    if ('url' in target && !nativeDeclined && navigator.onLine !== false) {
       const name = discussionAttachmentFileName(mediaType, target.cache.mimeType);
       setSaving(true);
       if (requestTelegramFileDownload(target.url, name, accepted => {
         if (!active.current) return;
         setSaving(false);
         if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
-        else setNotice(cancelled);
+        else {
+          setNativeDeclined(true);
+          setNotice(cancelled);
+        }
       })) return;
       setSaving(false);
     }
