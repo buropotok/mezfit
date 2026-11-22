@@ -58,7 +58,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [shareFailed, setShareFailed] = useState(false);
-  const [nativeDownloadDeclined, setNativeDownloadDeclined] = useState(false);
+  const [useBrowserDownload, setUseBrowserDownload] = useState(false);
   const active = useRef(false);
 
   useEffect(() => {
@@ -133,17 +133,19 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
     if (saving || loading) return;
     setError('');
     setNotice('');
-    if ('url' in target && navigator.onLine !== false && !prepared?.remuxed && !nativeDownloadDeclined) {
+    if ('url' in target && navigator.onLine !== false && !prepared?.remuxed && !useBrowserDownload) {
       const name = discussionAttachmentFileName(mediaType, target.cache.mimeType);
       setSaving(true);
       if (requestTelegramFileDownload(target.url, name, accepted => {
         if (!active.current) return;
         setSaving(false);
-        if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
-        else {
-          if (browserUrl) setNativeDownloadDeclined(true);
-          setNotice(browserUrl ? 'Telegram не начал скачивание. Нажмите «Скачать файл», чтобы открыть браузер.' : cancelled);
-        }
+        if (browserUrl) {
+          setUseBrowserDownload(true);
+          setNotice(accepted
+            ? 'Telegram принял запрос. Если файла нет в загрузках, нажмите «Скачать файл», чтобы открыть браузер.'
+            : 'Telegram не начал скачивание. Нажмите «Скачать файл», чтобы открыть браузер.');
+        } else if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
+        else setNotice(cancelled);
       })) return;
       setSaving(false);
     }
