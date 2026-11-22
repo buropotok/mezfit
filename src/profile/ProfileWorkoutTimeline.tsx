@@ -4,7 +4,7 @@ import { useNavigationCalendar, type NavigationContext } from '../NavigationShel
 import type { CloudContact } from '../data/cloud/CloudConnectionsProvider';
 import { useCloudConnections } from '../data/cloud/CloudConnectionsProvider';
 import type { CloudWorkoutOccurrenceRow } from '../data/cloud/workout-foundation-types';
-import { localWorkoutDate as localDate, selectProfileWorkoutRows, type CalendarTimelineRow } from './profile-workout-selection';
+import { localWorkoutDate as localDate, selectProfileWorkoutRows, type CalendarTimelineRow, type ProfileWorkoutRow } from './profile-workout-selection';
 import type { CalendarWorkoutSession } from '../data/cloud/adhoc-workouts';
 import { WorkoutOccurrenceDraftRepository } from '../data/cloud/workout-occurrence-drafts';
 import { draftFromOccurrence } from '../data/cloud/workout-occurrence-plan';
@@ -16,6 +16,7 @@ import { OccurrenceDraftSheet } from '../schedule/OccurrenceDraftSheet';
 import { CalendarSessionSheet } from '../schedule/CalendarSessionSheet';
 import { preferredWorkoutDayStatus } from '../schedule/workout-day-statuses';
 import { WorkoutPlanCardHeader } from '../workout/WorkoutPlanCard';
+import { WorkoutPlanStatusBadge } from '../workout/WorkoutPlanStatusBadge';
 import { Avatar, Badge, DatePicker, GlassSurface, Icon, Text, type DatePickerDayStatus, type LocalDate } from '../ui';
 import { useProfileSnapshot } from './ProfileDataProvider';
 import './profile-workout-timeline.css';
@@ -33,22 +34,26 @@ function timeLabel(instant: string | null | undefined): string {
   return Number.isNaN(date.getTime()) ? '…' : date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
-function PlanRow({ occurrence, missed, actor, onOpen }: {
-  occurrence: CloudWorkoutOccurrenceRow; missed: boolean; actor?: ProgramActor; onOpen: () => void;
+function PlanRow({ row, showPlannedStatus, actor, onOpen }: {
+  row: Extract<ProfileWorkoutRow, { kind: 'planned' | 'missed' | 'draft' }>;
+  showPlannedStatus: boolean; actor?: ProgramActor; onOpen: () => void;
 }) {
-  const athlete = useWorkoutPerson(occurrence.athleteUserId, occurrence.realmId, actor);
-  const creator = useWorkoutPerson(occurrence.createdByUserId ?? occurrence.coachUserId ?? occurrence.athleteUserId,
-    occurrence.realmId, actor);
-  const end = new Date(Date.parse(occurrence.startsAtUtc) + occurrence.durationMinutes * 60_000);
+  const { kind } = row;
+  const workout = row.kind === 'draft' ? row.draft : row.occurrence;
+  const creatorId = row.kind === 'draft' ? undefined : row.occurrence.createdByUserId;
+  const athlete = useWorkoutPerson(workout.athleteUserId, workout.realmId, actor);
+  const creator = useWorkoutPerson(creatorId ?? workout.coachUserId ?? workout.athleteUserId, workout.realmId, actor);
+  const end = new Date(Date.parse(workout.startsAtUtc) + workout.durationMinutes * 60_000);
+  const label = kind === 'draft' ? 'Черновик тренировки' : kind === 'missed' ? 'Пропущенная тренировка' : 'Запланированная тренировка';
   return <GlassSurface component="button" wrapContent={false} shape="capsule" optics={false}
-    className="profile-workout-card" onClick={onOpen} aria-label={`${missed ? 'Пропущенная' : 'Запланированная'} тренировка: ${occurrence.plan.name}`}>
-    <WorkoutPlanCardHeader name={occurrence.plan.name}
-      programName={occurrence.trainingPlanId ? 'Программа тренировок' : 'Без программы'}
+    className="profile-workout-card" onClick={onOpen} aria-label={`${label}: ${workout.plan.name}`}>
+    <WorkoutPlanCardHeader name={workout.plan.name}
+      programName={workout.trainingPlanId ? 'Программа тренировок' : 'Без программы'}
       creatorName={creator.name} creatorAvatar={creator.passiveAvatar}
       athleteName={athlete.name} athleteAvatar={athlete.passiveAvatar}
-      status={missed ? <Badge color="gray" textVariant="caption">Пропущена</Badge> : undefined}
-      scheduledTiming={{ date: dateLabel(localDate(occurrence.startsAtUtc)),
-        time: `${timeLabel(occurrence.startsAtUtc)} — ${timeLabel(end.toISOString())}` }}>
+      status={kind !== 'planned' || showPlannedStatus ? <WorkoutPlanStatusBadge status={kind} /> : undefined}
+      scheduledTiming={{ date: dateLabel(row.date),
+        time: `${timeLabel(workout.startsAtUtc)} — ${timeLabel(end.toISOString())}` }}>
       <span className="workout-plan-card__chevron"><Icon name="chevron-right" /></span>
     </WorkoutPlanCardHeader>
   </GlassSurface>;
@@ -145,9 +150,10 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return () => { active = false; subscription.unsubscribe(); };
   }, [planner, selectedDraft?.trainingPlanId]);
 
-  const rows = useMemo(() => selectProfileWorkoutRows({ occurrences, sessions,
+  const drafts = workouts.data?.drafts;
+  const rows = useMemo(() => selectProfileWorkoutRows({ occurrences, drafts, sessions,
     actorUserId: cloud?.actorUserId, contact, mode, today, now, from, to,
-  }), [occurrences, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, now, from, to]);
+  }), [occurrences, drafts, sessions, cloud?.actorUserId, contact?.userId, contact?.relationshipId, mode, today, now, from, to]);
 
   const calendarEnabled = Boolean(onCalendarChange);
   const clientUserId = contact?.userId;
@@ -170,14 +176,15 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
     return { rowsByDate, dayStatuses: Array.from(statuses, ([date, status]) => ({ date, status })) };
   }, [calendarEnabled, occurrences, sessions, cloud?.actorUserId, clientUserId, relationshipId, today, now]);
 
-  const openWorkout = useCallback((row: CalendarTimelineRow) => {
+  const openWorkout = useCallback((row: ProfileWorkoutRow) => {
     setNestedNavigation(null);
     if ('session' in row) {
       // In their own profile, a coach can also be the athlete in another coach's realm.
       setSessionRole(!contact && row.session.clientUserId === cloud?.actorUserId ? 'client' : role);
     }
     setOpenedSessionId('session' in row ? row.session.id : null);
-    setOpenedOccurrenceId('occurrence' in row ? row.occurrence.id : null);
+    setOpenedOccurrenceId(row.kind === 'draft' ? row.occurrenceId
+      : 'occurrence' in row ? row.occurrence.id : null);
   }, [contact, cloud?.actorUserId, role]);
   const close = useCallback(() => { setOpenedOccurrenceId(null); setOpenedSessionId(null); setNestedNavigation(null); }, []);
   const selectCalendarDay = useCallback((date: LocalDate) => {
@@ -245,8 +252,8 @@ export function ProfileWorkoutTimeline({ mode, role, contact, actor, initData, o
         ? <SessionRow key={`session:${row.session.id}`} session={row.session}
           programName={row.session.programName ?? 'Без программы'} actor={actor}
           onOpen={() => openWorkout(row)} />
-        : <PlanRow key={`occurrence:${row.occurrence.id}`} occurrence={row.occurrence}
-          missed={row.kind === 'missed'} actor={actor}
+        : <PlanRow key={`occurrence:${row.kind === 'draft' ? row.occurrenceId : row.occurrence.id}`}
+          row={row} showPlannedStatus={mode === 'plan'} actor={actor}
           onOpen={() => openWorkout(row)} />)}
     </div>
     <DatePicker opened={picker !== null} surface="panel"

@@ -24,6 +24,7 @@ import { sessionTiming } from '../workout/session-timing';
 import { useSessionClock } from '../workout/useSessionClock';
 import { useWorkoutPerson } from './WorkoutPerson';
 import { isScheduledWorkoutMissed } from './workout-day-statuses';
+import { WorkoutPlanStatusBadge } from '../workout/WorkoutPlanStatusBadge';
 import type { NavigationContext } from '../NavigationShell';
 import { WorkoutPlanningRepository } from '../data/cloud/workout-planning';
 import type { WorkoutRepeatRule } from '../data/cloud/workout-recurrence';
@@ -116,6 +117,7 @@ export interface OccurrenceDraftSheetProps {
 }
 
 export interface OccurrenceDraftCardProps extends OccurrenceDraftSheetProps {
+  showScheduledStatus?: boolean;
   collapsed: boolean;
   onCollapsedChange: () => void;
 }
@@ -200,9 +202,9 @@ export function useOccurrenceDraftClose({ drafts, getIds, onSave, onClose, enabl
 
 function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCancel, onDelete, cancelled = false, planLocked = false,
   actor, readOnly = false, focusExerciseId, focusSetId, allowReadOnlyStart = false, saveNotice = '', sourceProgramName, container, flushEditsRef, suspended = false,
-  onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange,
+  onNavigationContextChange, auxiliaryReady, inlineCard = false, collapsed = false, onCollapsedChange, showScheduledStatus = false,
 }: OccurrenceDraftSheetProps & { container?: HTMLDivElement; auxiliaryReady: boolean;
-  inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void }) {
+  inlineCard?: boolean; collapsed?: boolean; onCollapsedChange?: () => void; showScheduledStatus?: boolean }) {
   const cloud = useCloudConnections();
   const [editorNavigation, setEditorNavigation] = useState<NavigationContext | null>(null);
   const [discussionNavigation, setDiscussionNavigation] = useState<NavigationContext | null>(null);
@@ -670,9 +672,12 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
               void flushEdits().then(() => { if (!mutationBlocked()) setProgramSheetOpen(true); })
                 .catch(reason => setError(reason instanceof Error ? reason.message : 'Не удалось сохранить правки'));
             }} />{!actionsOpen && <UnreadCount count={discussions.unread} className="entity-discussion-trigger__unread" />}</span> : null;
-  const inlineStatus = draft && collapsed && (draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed')
-    ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
-    : collapsed && missed ? <Badge color="gray" textVariant="caption">Пропущена</Badge> : undefined;
+  const planStatus = missed ? 'missed' : draft?.saved ? 'planned' : 'draft';
+  const inlineStatus = draft && collapsed
+    ? draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed'
+      ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
+      : missed || showScheduledStatus ? <WorkoutPlanStatusBadge status={planStatus} /> : undefined
+    : undefined;
   const content = draft ? <section className={`occurrence-draft-sheet${inlineCard ? ' occurrence-draft-sheet--inline' : ''}`}>
         {inlineCard ? <div className={`occurrence-draft-sheet__identity${inlineStatus ? ' occurrence-draft-sheet__identity--with-status' : ''}`}><WorkoutPlanCardHeader name={draft.plan.name}
           programName={sourceProgramName ?? undefined} hideProgramName={!sourceProgramName}
@@ -704,7 +709,7 @@ function OccurrenceDraftEditor({ draft, drafts, onClose, onSave, onStart, onCanc
             {cancelled ? <Badge textVariant="body">Отменена</Badge>
               : draft.executionStatus === 'in_progress' || draft.executionStatus === 'completed'
                 ? <Badge color={draft.executionStatus === 'in_progress' ? 'green' : 'gray'} textVariant="caption">{draft.executionStatus === 'completed' ? 'Завершена' : 'Запущена'}</Badge>
-              : <Badge color={missed ? 'gray' : draft.saved ? 'green' : 'yellow'} textVariant="caption">{missed ? 'Пропущена' : draft.saved ? 'Запланировано' : 'Черновик'}</Badge>}
+              : <WorkoutPlanStatusBadge status={planStatus} />}
           </div>
           <div className="occurrence-draft-sheet__timing">
             <Button className="occurrence-draft-sheet__date-button" variant="secondary" size="compact" disabled={busy || readOnly} onClick={() => { if (!mutationBlocked()) setDateOpened(true); }}>

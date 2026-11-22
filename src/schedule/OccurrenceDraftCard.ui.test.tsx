@@ -128,6 +128,20 @@ describe('shared scheduled occurrence UI', () => {
     expect(screen.queryByText('Сохранить')).toBeNull();
   });
 
+  it('shows the updated PLAN status on the collapsed client card', () => {
+    const props = setup(true);
+    const scheduled = { ...props.draft, startsAtUtc: new Date(Date.now() + 86_400_000).toISOString() };
+    const onCollapsedChange = vi.fn();
+    const { rerender } = render(<OccurrenceDraftCard {...props} draft={scheduled} collapsed showScheduledStatus
+      onCollapsedChange={onCollapsedChange} />);
+    expect(screen.getByText('Запланировано').closest('.workout-session-card__status-row')).toBeTruthy();
+
+    rerender(<OccurrenceDraftCard {...props} draft={{ ...scheduled, saved: false }} collapsed showScheduledStatus
+      onCollapsedChange={onCollapsedChange} />);
+    expect(screen.getByText('Черновик').closest('.workout-session-card__status-row')).toBeTruthy();
+    expect(screen.queryByText('Запланировано')).toBeNull();
+  });
+
   it.each(['sheet', 'card'] as const)('%s flushes before Start, rejects same-tick repeats, and keeps errors editable', async surface => {
     const props = setup(true);
     const latest = { ...props.draft, durationMinutes: 90 };
