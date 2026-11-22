@@ -121,3 +121,32 @@ it('offers the WebView update on Android when recording in H.264 is unavailable'
     vi.mocked(TestRecorder.isTypeSupported).mockRestore();
   }
 });
+
+it.each([
+  ['landscape-primary', 1280, 720],
+  ['portrait-primary', 720, 1280],
+] as const)('requests HD from the rear camera in %s and records that stream', async (orientation, width, height) => {
+  const rear = camera('environment');
+  const { open, getUserMedia } = openRecorder();
+  Object.defineProperty(navigator.mediaDevices, 'getSupportedConstraints', { value: () => ({ resizeMode: true }) });
+  vi.stubGlobal('screen', { orientation: { type: orientation } });
+  getUserMedia.mockResolvedValueOnce(rear.stream);
+  open();
+
+  const preview = screen.getByLabelText<HTMLVideoElement>('Изображение с камеры');
+  await waitFor(() => expect(preview.srcObject).toBe(rear.stream));
+  expect(getUserMedia).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+    video: expect.objectContaining({
+      facingMode: { ideal: 'environment' },
+      width: { ideal: width },
+      height: { ideal: height },
+      advanced: [{ width: { exact: width }, height: { exact: height } }],
+      resizeMode: { ideal: 'crop-and-scale' },
+    }),
+  }));
+  Object.defineProperties(preview, {
+    videoWidth: { value: width }, videoHeight: { value: height }, readyState: { value: 2 },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Начать запись' }));
+  expect(record).toHaveBeenCalledExactlyOnceWith(rear.stream);
+});

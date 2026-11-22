@@ -16,16 +16,19 @@ export function usesSensorCameraDimensions(): boolean {
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-export function videoRecordingConstraints(profile: VideoRecordingProfile): MediaTrackConstraints {
+export function videoRecordingConstraints(profile: VideoRecordingProfile, preferExactSize = false): MediaTrackConstraints {
   // WebKit interprets constraints in the camera's primary (landscape) orientation.
   // The actual portrait dimensions are checked after the first preview frame.
   const captureProfile = profile !== 'circle' && usesSensorCameraDimensions() ? 'landscape' : profile;
   const { width, height } = VIDEO_RECORDING_PROFILES[captureProfile];
   const supported = navigator.mediaDevices?.getSupportedConstraints?.();
-  const canRequireNativeSize = profile !== 'circle' && supported && 'resizeMode' in supported && supported.resizeMode === true;
+  const supportsResizeMode = profile !== 'circle' && supported && 'resizeMode' in supported && supported.resizeMode === true;
+  const preferHd = profile !== 'circle' && preferExactSize;
   return {
     width: { ideal: width }, height: { ideal: height }, frameRate: { ideal: 30 },
-    ...(canRequireNativeSize ? { resizeMode: { exact: 'none' } } : {}),
+    // The exact pair takes priority when supported. Otherwise the base request can still open the camera.
+    ...(preferHd ? { advanced: [{ width: { exact: width }, height: { exact: height } }] } : {}),
+    ...(supportsResizeMode ? { resizeMode: preferHd ? { ideal: 'crop-and-scale' } : { exact: 'none' } } : {}),
   };
 }
 

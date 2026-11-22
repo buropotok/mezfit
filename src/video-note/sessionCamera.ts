@@ -64,7 +64,10 @@ export async function acquireSessionCamera(
   if (!hasSessionCamera(facing, profile, requireFacing) && !pending) {
     const requestGeneration = generation;
     const request = navigator.mediaDevices.getUserMedia({
-      video: { facingMode: requireFacing ? { exact: facing } : { ideal: facing }, ...videoRecordingConstraints(profile) },
+      video: {
+        facingMode: requireFacing ? { exact: facing } : { ideal: facing },
+        ...videoRecordingConstraints(profile, facing === 'environment'),
+      },
       audio: { echoCancellation: true, noiseSuppression: true },
     }).then(stream => {
       if (generation !== requestGeneration) {
