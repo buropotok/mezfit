@@ -76,3 +76,29 @@ it('fetches the attachment again after a failed read and reports the storage sta
   expect(await screen.findByText('Файл готов к сохранению.')).toBeTruthy();
   expect(download.mock.calls.slice(initialCalls)).toEqual([[entry], [entry], [entry]]);
 });
+
+it('opens Telegram immediately for a published video even when the WebView reports offline', () => {
+  const downloadFile = vi.fn();
+  const systemShare = vi.fn();
+  const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+  vi.stubGlobal('Telegram', { WebApp: { downloadFile, isVersionAtLeast: () => true } });
+  Object.defineProperties(navigator, {
+    canShare: { configurable: true, value: () => true },
+    share: { configurable: true, value: systemShare },
+  });
+  const storage = vi.mocked(downloadDiscussionMediaWithStatus);
+  const fetchesBeforeOpening = storage.mock.calls.length;
+  const url = 'https://storage.example.com/video';
+  try {
+    open({ url, cache: { accountId: 'tg:1', storageKey: 'video', mimeType: 'video/mp4', sizeBytes: 5 } });
+
+    const button = screen.getByRole('button', { name: 'Скачать файл' });
+    expect(button).toHaveProperty('disabled', false);
+    fireEvent.click(button);
+    expect(downloadFile).toHaveBeenCalledExactlyOnceWith({ url, file_name: 'Видео Mezfit.mp4' }, expect.any(Function));
+    expect(storage.mock.calls).toHaveLength(fetchesBeforeOpening);
+    expect(systemShare).not.toHaveBeenCalled();
+  } finally {
+    onLine.mockRestore();
+  }
+});
