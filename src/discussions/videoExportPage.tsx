@@ -39,7 +39,12 @@ function VideoExportPage() {
       <h1><Text variant="headline">Сохранить видео Mezfit</Text></h1>
       {error ? <>
         <Text role="alert">Не удалось сохранить видео. Проверьте подключение и повторите попытку.</Text>
-        <Button onClick={() => { setError(false); setRequested(false); setAttempt(value => value + 1); }}>Повторить</Button>
+        <Button onClick={() => {
+          setFile(undefined);
+          setError(false);
+          setRequested(false);
+          setAttempt(value => value + 1);
+        }}>Повторить</Button>
       </> : file ? <>
         <Button onClick={download}>Скачать файл</Button>
         {requested && <Text role="status">Проверьте, началось ли скачивание в браузере.</Text>}
