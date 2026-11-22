@@ -6,6 +6,7 @@ an application. Reuses only the existing federated Yandex IAM token.
 """
 
 import json
+from copy import deepcopy
 import os
 import re
 import sys
@@ -170,6 +171,86 @@ def verify_certificate(cert, folder_id):
     return cert
 
 
+def normalize_gateway_readback(spec, domain):
+    """Discard only known OpenAPI display/default fields; preserve executable policy.
+
+    Yandex may enrich the stored spec with its default public server, operation
+    descriptions/responses, and standard path-parameter defaults. In contrast,
+    the integration, path/method set, auth, bucket and fallback must match.
+    """
+    if not isinstance(spec, dict):
+        raise WebHostingError("Gateway specification must be an OpenAPI object.")
+    normalized = deepcopy(spec)
+    servers = normalized.pop("servers", None)
+    if servers is not None:
+        # Never treat an arbitrary host as benign normalization.
+        expected_url = f"https://{domain}" if isinstance(domain, str) and domain else ""
+        if (not expected_url or not isinstance(servers, list) or not servers
+                or any(not isinstance(server, dict)
+                       or set(server) - {"url", "description"}
+                       or server.get("url", "").rstrip("/") != expected_url
+                       for server in servers)):
+            raise WebHostingError("Gateway specification has an unexpected server URL.")
+
+    paths = normalized.get("paths")
+    if isinstance(paths, dict):
+        for route in paths.values():
+            if not isinstance(route, dict):
+                continue
+            for operation in route.values():
+                if not isinstance(operation, dict):
+                    continue
+                for field in ("operationId", "summary", "description", "responses", "tags"):
+                    operation.pop(field, None)
+                # The default in OpenAPI for a path parameter is simple / no explode.
+                params = operation.get("parameters")
+                if isinstance(params, list):
+                    for param in params:
+                        if not isinstance(param, dict) or param.get("in") != "path":
+                            continue
+                        if param.get("style") == "simple":
+                            param.pop("style")
+                        if param.get("explode") is False:
+                            param.pop("explode")
+                        schema = param.get("schema")
+                        if isinstance(schema, dict) and schema.get("style") == "simple":
+                            schema.pop("style")
+                integration = operation.get("x-yc-apigateway-integration")
+                if isinstance(integration, dict) and isinstance(integration.get("http_headers"), dict):
+                    headers = integration["http_headers"]
+                    if len(headers) != len({key.lower() for key in headers if isinstance(key, str)}):
+                        raise WebHostingError("Gateway integration contains duplicate HTTP header names.")
+                    integration["http_headers"] = {key.lower(): value for key, value in headers.items()}
+    return normalized
+
+
+def spec_diff_paths(expected, actual, path="$", limit=8):
+    """Report safe JSON field paths, never potentially sensitive field values."""
+    if type(expected) is not type(actual):
+        return [path]
+    if isinstance(expected, dict):
+        result = []
+        for key in sorted(set(expected) | set(actual)):
+            field_path = f"{path}.{key}"
+            if key not in expected or key not in actual:
+                result.append(field_path)
+            else:
+                result.extend(spec_diff_paths(expected[key], actual[key], field_path, limit))
+            if len(result) >= limit:
+                return result[:limit]
+        return result
+    if isinstance(expected, list):
+        if len(expected) != len(actual):
+            return [path]
+        result = []
+        for index, (wanted, found) in enumerate(zip(expected, actual)):
+            result.extend(spec_diff_paths(wanted, found, f"{path}[{index}]", limit))
+            if len(result) >= limit:
+                return result[:limit]
+        return result
+    return [] if expected == actual else [path]
+
+
 def verify_gateway(gateway, folder_id, bucket, api):
     if (gateway.get("folderId") != folder_id or gateway.get("name") != NAME_GATEWAY
             or not resource_id(gateway.get("id"))
@@ -181,8 +262,15 @@ def verify_gateway(gateway, folder_id, bucket, api):
         actual = json.loads(result["openapiSpec"])
     except (KeyError, TypeError, ValueError):
         raise WebHostingError("Cannot parse current gateway specification.") from None
-    if actual != gateway_spec(bucket):
-        raise WebHostingError("Existing gateway specification changed; do not overwrite it automatically.")
+    expected = normalize_gateway_readback(gateway_spec(bucket), gateway.get("domain"))
+    actual = normalize_gateway_readback(actual, gateway.get("domain"))
+    differences = spec_diff_paths(expected, actual)
+    if differences:
+        raise WebHostingError(
+            "Existing gateway specification differs at "
+            + ", ".join(differences)
+            + "; refusing to overwrite or reuse modified routes."
+        )
     return gateway
 
 
