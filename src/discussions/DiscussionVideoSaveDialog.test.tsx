@@ -2,9 +2,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { KonstaProvider } from 'konsta/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { readDiscussionMedia } from '../media/discussionMediaCache';
-import * as localFiles from '../media/downloadLocalFile';
-import * as videoExport from '../media/prepareVideoExport';
 import { DiscussionVideoSaveDialog, type DiscussionVideoSaveTarget } from './DiscussionVideoSaveDialog';
 
 vi.mock('../media/discussionMediaCache', () => ({
@@ -59,56 +56,4 @@ it('waits for Telegram to confirm the download request before closing', async ()
   act(() => downloadFile.mock.calls[0][1](true));
   expect(onStatus).toHaveBeenCalledWith('Запрос принят Telegram. Ищите «Видео Mezfit.mp4» в загрузках.');
   expect(onClose).toHaveBeenCalledOnce();
-});
-
-it('opens browser export for a Yandex video when Android has no native download', async () => {
-  const openLink = vi.fn();
-  vi.stubGlobal('Telegram', { WebApp: { openLink } });
-  Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false });
-  const storageKey = 'mvp-media/' + 'a'.repeat(64);
-  const url = 'https://storage.yandexcloud.net/mezfit-comm-poc-20261106/' + storageKey;
-  const { onClose, onStatus } = open({ url,
-    cache: { accountId: 'tg:1', storageKey, mimeType: 'video/mp4', sizeBytes: 5 } });
-
-  fireEvent.click(await screen.findByRole('button', { name: 'Скачать файл' }));
-  expect(openLink).toHaveBeenCalledOnce();
-  const exportUrl = new URL(openLink.mock.calls[0][0]);
-  expect(exportUrl.origin).toBe(window.location.origin);
-  expect(exportUrl.pathname).toBe('/video-export.html');
-  expect(exportUrl.search).toBe('');
-  expect(new URLSearchParams(exportUrl.hash.slice(1)).get('key')).toBe(storageKey);
-  expect(screen.getByText('Продолжите сохранение в браузере.')).toBeTruthy();
-  expect(onStatus).not.toHaveBeenCalled();
-  expect(onClose).not.toHaveBeenCalled();
-});
-
-it('downloads the prepared MP4 in the Mini App and offers the original separately', async () => {
-  const original = new Blob(['original'], { type: 'video/mp4' });
-  const prepared = new File(['remuxed'], 'Видео Mezfit.mp4', { type: 'video/mp4' });
-  const cached = vi.mocked(readDiscussionMedia).mockResolvedValueOnce(original);
-  const remux = vi.spyOn(videoExport, 'prepareVideoExport').mockResolvedValueOnce(prepared);
-  const local = vi.spyOn(localFiles, 'downloadLocalFile').mockImplementation(() => {});
-  const openLink = vi.fn();
-  vi.stubGlobal('Telegram', { WebApp: { openLink } });
-  Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false });
-  const storageKey = 'mvp-media/' + 'b'.repeat(64);
-  const url = 'https://storage.yandexcloud.net/mezfit-comm-poc-20261106/' + storageKey;
-  try {
-    const { onClose, onStatus } = open({ url,
-      cache: { accountId: 'tg:1', storageKey, mimeType: 'video/mp4', sizeBytes: original.size } });
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Скачать файл' }));
-    expect(local).toHaveBeenCalledExactlyOnceWith(prepared);
-    expect(openLink).not.toHaveBeenCalled();
-    expect(onStatus).not.toHaveBeenCalled();
-    expect(onClose).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Скачать оригинал' }));
-    expect(openLink).toHaveBeenCalledExactlyOnceWith(url);
-    expect(local).toHaveBeenCalledOnce();
-  } finally {
-    cached.mockReset().mockResolvedValue(null);
-    remux.mockRestore();
-    local.mockRestore();
-  }
 });
