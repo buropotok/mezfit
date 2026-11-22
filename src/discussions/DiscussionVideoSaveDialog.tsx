@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MessageAttachment } from '../data/cloud/discussion-contracts';
-import { downloadDiscussionMediaWithStatus, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
+import { downloadDiscussionMedia, downloadDiscussionMediaWithStatus, readDiscussionMedia, type DiscussionMediaCacheEntry } from '../media/discussionMediaCache';
 import { canRequestTelegramFileDownload, requestTelegramFileDownload } from '../telegram';
 import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
 import { Text } from '../ui/primitives';
@@ -70,8 +70,8 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
   const [shareFailed, setShareFailed] = useState(false);
   const [nativeDeclined, setNativeDeclined] = useState(false);
   const active = useRef(false);
-  const telegramFirst = 'url' in target && (mediaType === 'video' || mediaType === 'video-note')
-    && !nativeDeclined && canRequestTelegramFileDownload();
+  const videoAttachment = mediaType === 'video' || mediaType === 'video-note';
+  const telegramFirst = 'url' in target && videoAttachment && !nativeDeclined && canRequestTelegramFileDownload();
 
   useEffect(() => {
     active.current = true;
@@ -82,9 +82,10 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         try {
           const cached = await readDiscussionMedia(entry);
           if (!current) return;
-          const result = cached ? null : await downloadDiscussionMediaWithStatus(entry);
+          const result = !cached && readAttempt > 0 ? await downloadDiscussionMediaWithStatus(entry) : null;
+          const blob = cached ?? (result ? result.blob
+            : videoAttachment || navigator.onLine !== false ? await downloadDiscussionMedia(entry) : null);
           if (!current) return;
-          const blob = cached ?? result?.blob;
           if (blob) {
             setFile(new File([blob], discussionAttachmentFileName(mediaType, entry.mimeType), { type: entry.mimeType }));
             if (readAttempt > 0) setNotice('Файл готов к сохранению.');
@@ -100,7 +101,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       });
     }
     return () => { current = false; active.current = false; };
-  }, [target, mediaType, label, readAttempt, telegramFirst]);
+  }, [target, mediaType, label, readAttempt, telegramFirst, videoAttachment]);
 
   const shareData = file ? { files: [file] } : null;
   const canShare = !telegramFirst && !shareFailed && shareData && navigator.canShare?.(shareData) && typeof navigator.share === 'function';
@@ -148,7 +149,7 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         setSaving(false);
         if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
         else {
-          setNativeDeclined(true);
+          if (videoAttachment) setNativeDeclined(true);
           setNotice(cancelled);
         }
       })) return;
@@ -159,8 +160,12 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       }
     }
     if (!file) {
-      setLoading(true);
-      setReadAttempt(attempt => attempt + 1);
+      if (videoAttachment) {
+        setLoading(true);
+        setReadAttempt(attempt => attempt + 1);
+      } else {
+        setError(`${label} недоступно для скачивания. Проверьте сеть и попробуйте ещё раз.`);
+      }
       return;
     }
     try {
