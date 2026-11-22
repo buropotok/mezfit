@@ -111,3 +111,21 @@ it('requests an authorized R2 read when Yandex fails with backup disabled', asyn
   expect(fetchMedia).toHaveBeenNthCalledWith(1, expect.stringMatching(/storage\.yandexcloud\.net/), expect.any(Object));
   expect(fetchMedia).toHaveBeenNthCalledWith(2, '/api/discussion-media/read', expect.objectContaining({ method: 'POST' }));
 });
+
+it('requests explicit verified ranges when video storage responds with only part of the file', async () => {
+  const fetchMedia = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(new Blob(['vi'], { type: file.type }), {
+      status: 206, headers: { 'Content-Range': 'bytes 0-1/5' },
+    }))
+    .mockResolvedValueOnce(new Response(file, {
+      status: 206, headers: { 'Content-Range': 'bytes 0-4/5', 'Content-Length': '5' },
+    }));
+  vi.stubGlobal('fetch', fetchMedia);
+
+  expect(await (await downloadDiscussionMedia(entry))?.text()).toBe('video');
+  expect(fetchMedia).toHaveBeenCalledTimes(2);
+  expect(fetchMedia).toHaveBeenNthCalledWith(1, expect.any(String), expect.objectContaining({ cache: 'no-store' }));
+  expect(fetchMedia).toHaveBeenNthCalledWith(2, expect.any(String), expect.objectContaining({
+    cache: 'no-store', headers: { Range: 'bytes=0-4' },
+  }));
+});
