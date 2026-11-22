@@ -123,6 +123,9 @@ class WebHostingContracts(unittest.TestCase):
         spec = gateway_spec(bucket_name(FOLDER))
         self.assertEqual(spec["paths"]["/api/{proxy+}"]["post"]
                          ["x-yc-apigateway-integration"]["http_code"], 503)
+        self.assertEqual(spec["paths"]["/api"]["get"]
+                         ["x-yc-apigateway-integration"]["content"],
+                         {"*": '{"error":"backend_not_migrated"}'})
         self.assertNotIn("error_object", spec["paths"]["/assets/{file+}"]["get"]
                          ["x-yc-apigateway-integration"])
         self.assertEqual(spec["paths"]["/{file+}"]["get"]["x-yc-apigateway-integration"]
