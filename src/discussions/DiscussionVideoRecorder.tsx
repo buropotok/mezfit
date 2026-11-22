@@ -9,6 +9,7 @@ import { DiscussionMediaStage } from './DiscussionMediaStage';
 import { DiscussionVideoReview } from './DiscussionVideoReview';
 import { shouldShowWebViewUpdate, VideoWebViewUpdatePopover } from '../video-note/VideoWebViewUpdatePopover';
 import { VIDEO_RECORDING_PROFILES } from '../video-note/video-recording-profile';
+import { hasCameraFrame, matchesCameraOrientation } from '../video-note/camera-orientation';
 
 const topControls: CSSProperties = { top: 'calc(1rem + var(--discussion-media-safe-top))', bottom: 'auto' };
 const bottomControls: CSSProperties = { bottom: 'calc(1rem + var(--discussion-media-safe-bottom))' };
@@ -51,6 +52,14 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse, onTrimFall
   const beginRecording = () => {
     void start(facing, false, { video: cameraPreview.current, profile: phoneVideoProfile(), requireFacing: selectedFacing !== null });
   };
+  const checkRearPreviewOrientation = () => {
+    const video = cameraPreview.current;
+    if (status !== 'idle' || actualFacing !== 'environment' || !stream || !video || !hasCameraFrame(video, stream)) return;
+    const orientation = phoneVideoProfile();
+    if (!matchesCameraOrientation(video, orientation)) {
+      void start(facing, true, { video, profile: orientation, requireFacing: selectedFacing !== null });
+    }
+  };
   const countdown = useRecordingCountdown(beginRecording);
   const countingDown = countdown.remaining !== null;
   const maxSeconds = VIDEO_RECORDING_PROFILES[profile].maxDurationMs / 1000;
@@ -86,7 +95,8 @@ export function DiscussionVideoRecorder({ onCancel, onGallery, onUse, onTrimFall
       ? <DiscussionVideoReview key="preview" clip={clip} onUse={onUse} onTrimFallback={onTrimFallback} profile={profile}
         confirmStyle={{ ...topControls, ...rightControl }} retakeStyle={{ ...centerControl, ...topControls }}
         onRetake={() => { setClip(null); enableCamera(); }} />
-      : <video key="camera" ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры" />}
+      : <video key="camera" ref={cameraPreview} autoPlay muted playsInline aria-label="Изображение с камеры"
+        onLoadedData={checkRearPreviewOrientation} onResize={checkRearPreviewOrientation} />}
     <FloatingActionButton label="Назад" icon="arrow-left" placement="left" style={{ ...topControls, ...leftControl }} onClick={onCancel} />
     {countingDown && <Text variant="headline" role="status" className="discussion-video-recorder__status">
       Запись через {countdown.remaining} сек.
