@@ -26,7 +26,7 @@ function openRecorder() {
   const getUserMedia = vi.fn<(constraints: MediaStreamConstraints) => Promise<unknown>>();
   vi.stubGlobal('MediaRecorder', TestRecorder);
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
-  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia, getSupportedConstraints: () => ({ resizeMode: true }) } });
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
   return {
     getUserMedia,
     open: () => render(<KonstaProvider theme="ios" dark>
@@ -128,6 +128,7 @@ it.each([
 ] as const)('requests HD from the rear camera in %s and records that stream', async (orientation, width, height) => {
   const rear = camera('environment');
   const { open, getUserMedia } = openRecorder();
+  Object.defineProperty(navigator.mediaDevices, 'getSupportedConstraints', { value: () => ({ resizeMode: true }) });
   vi.stubGlobal('screen', { orientation: { type: orientation } });
   getUserMedia.mockResolvedValueOnce(rear.stream);
   open();
