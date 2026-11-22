@@ -188,7 +188,8 @@ def normalize_gateway_readback(spec, domain):
         if (not expected_url or not isinstance(servers, list) or not servers
                 or any(not isinstance(server, dict)
                        or set(server) - {"url", "description"}
-                       or server.get("url", "").rstrip("/") != expected_url
+                       or not isinstance(server.get("url"), str)
+                       or server["url"].rstrip("/") != expected_url
                        for server in servers)):
             raise WebHostingError("Gateway specification has an unexpected server URL.")
 
