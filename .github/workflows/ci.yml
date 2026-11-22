@@ -12,7 +12,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Review Yandex DNS operator contracts
+      - name: Verify Yandex infrastructure operator contracts
         run: python3 -m unittest discover -s tools/yandex-infrastructure -p 'test_*.py'
       - uses: actions/setup-node@v4
         with:
