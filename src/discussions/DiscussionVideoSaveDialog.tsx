@@ -6,7 +6,7 @@ import { prepareVideoExport } from '../media/prepareVideoExport';
 import { videoExportBrowserUrl } from '../media/videoExportLink';
 import { openExternalLink, requestTelegramFileDownload } from '../telegram';
 import { MezfitDialog, MezfitDialogButton } from '../ui/konsta-mezfit/Dialog';
-import { Text } from '../ui/primitives';
+import { Button, Text } from '../ui/primitives';
 
 export type DiscussionAttachmentSaveTarget =
   ({ file: File } | { url: string; cache: DiscussionMediaCacheEntry })
@@ -129,11 +129,11 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
     }
   };
 
-  const download = () => {
+  const download = (original = false) => {
     if (saving || loading) return;
     setError('');
     setNotice('');
-    if ('url' in target && navigator.onLine !== false && !prepared?.remuxed && !useBrowserDownload) {
+    if ('url' in target && navigator.onLine !== false && (original || !prepared?.remuxed) && !useBrowserDownload) {
       const name = discussionAttachmentFileName(mediaType, target.cache.mimeType);
       setSaving(true);
       if (requestTelegramFileDownload(target.url, name, accepted => {
@@ -141,16 +141,17 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
         setSaving(false);
         if (browserUrl) {
           setUseBrowserDownload(true);
+          const next = file ? 'повторить скачивание в Mezfit' : 'открыть браузер';
           setNotice(accepted
-            ? 'Telegram принял запрос. Если файла нет в загрузках, нажмите «Скачать файл», чтобы открыть браузер.'
-            : 'Telegram не начал скачивание. Нажмите «Скачать файл», чтобы открыть браузер.');
+            ? `Telegram принял запрос. Если файла нет в загрузках, нажмите «Скачать файл», чтобы ${next}.`
+            : `Telegram не начал скачивание. Нажмите «Скачать файл», чтобы ${next}.`);
         } else if (accepted) finish(`Запрос принят Telegram. Ищите «${name}» в загрузках.`);
         else setNotice(cancelled);
       })) return;
       setSaving(false);
     }
-    if (browserUrl && navigator.onLine !== false) {
-      openExternalLink(browserUrl);
+    if ('url' in target && browserUrl && navigator.onLine !== false && (original || !file)) {
+      openExternalLink(original ? target.url : browserUrl);
       setNotice('Продолжите сохранение в браузере.');
       return;
     }
@@ -171,14 +172,18 @@ export function DiscussionAttachmentSaveDialog({ target, onClose, onStatus }: {
       <Text>{loading ? `Подготавливаем ${label.toLowerCase()}…` : canShare
         ? (mediaType === 'video' ? 'В системном меню выберите «Сохранить видео», если этот пункт доступен.'
           : 'В системном меню выберите сохранение файла, если этот пункт доступен.')
-        : browserUrl ? 'Если Telegram не сможет скачать видео, сохраните его в браузере.'
+        : browserUrl && !file ? 'Если Telegram не сможет скачать видео, сохраните его в браузере.'
           : 'Скачанный файл можно найти в «Файлах» или «Загрузках».'}</Text>
       {notice && <div><Text variant="footnote" role="status">{notice}</Text></div>}
       {error && <div><Text variant="footnote" role="alert">{error}</Text></div>}
+      {prepared?.remuxed && browserUrl && navigator.onLine !== false &&
+        <Button variant="secondary" size="compact" disabled={saving} onClick={() => download(true)}>
+          Скачать оригинал
+        </Button>}
     </>}
     buttons={<>
       <MezfitDialogButton onClick={onClose}><Text>Отмена</Text></MezfitDialogButton>
-      <MezfitDialogButton strong disabled={loading || saving} onClick={canShare ? () => void share() : download}>
+      <MezfitDialogButton strong disabled={loading || saving} onClick={canShare ? () => void share() : () => download()}>
         <Text>{canShare || loading ? 'Сохранить' : 'Скачать файл'}</Text>
       </MezfitDialogButton>
     </>} />;
