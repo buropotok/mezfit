@@ -138,6 +138,12 @@ class GatewayReadbackContracts(unittest.TestCase):
         with self.assertRaisesRegex(WebHostingError, "unexpected server URL"):
             verify_gateway(GATEWAY, FOLDER, bucket_name(FOLDER), FakeRecoveryApi(actual))
 
+    def test_malformed_server_url_is_a_controlled_failure(self):
+        actual = returned_spec()
+        actual["servers"] = [{"url": 123}]
+        with self.assertRaisesRegex(WebHostingError, "unexpected server URL"):
+            verify_gateway(GATEWAY, FOLDER, bucket_name(FOLDER), FakeRecoveryApi(actual))
+
     def test_duplicate_headers_are_never_silently_merged(self):
         actual = returned_spec()
         actual["paths"]["/api"]["get"]["x-yc-apigateway-integration"]["http_headers"] = {
