@@ -1,0 +1,116 @@
+name: Prepare Telegram JWKS Mirror
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Prepare isolated Yandex bucket/account or activate Cloudflare cron
+        required: true
+        type: choice
+        options: [prepare, activate]
+        default: prepare
+      mode:
+        description: Preview is read-only; Apply requires explicit confirmation
+        required: true
+        type: choice
+        options: [preview, apply]
+        default: preview
+      confirm:
+        description: PREPARE_MEZFIT_JWKS_MIRROR or ACTIVATE_MEZFIT_JWKS_MIRROR
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-telegram-jwks-mirror-provision
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+      YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+      JWKS_ACTION: ${{ inputs.action }}
+      JWKS_MODE: ${{ inputs.mode }}
+      JWKS_CONFIRM: ${{ inputs.confirm }}
+      JWKS_CREDENTIALS_FILE: ${{ runner.temp }}/mezfit-jwks-s3-secret.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Confirm explicit operation and preflight Cloudflare credentials
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [[ "$JWKS_MODE" == preview || "$JWKS_MODE" == apply ]] || exit 1
+          case "$JWKS_ACTION" in
+            prepare) expected=PREPARE_MEZFIT_JWKS_MIRROR ;;
+            activate) expected=ACTIVATE_MEZFIT_JWKS_MIRROR ;;
+            *) exit 1 ;;
+          esac
+          if [[ "$JWKS_MODE" == apply ]]; then
+            [[ "$JWKS_CONFIRM" == "$expected" ]] || { echo 'Wrong Apply confirmation' >&2; exit 1; }
+          fi
+          if [[ "$JWKS_ACTION" == activate && "$JWKS_MODE" == apply ]]; then
+            [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]] || exit 1
+            [[ -n "$CLOUDFLARE_API_TOKEN" ]] || { echo 'Missing Cloudflare deploy token' >&2; exit 1; }
+            curl --fail --silent --show-error --max-time 15 \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts" \
+              -o /dev/null
+          fi
+
+      - name: Acquire Yandex short-lived IAM token through existing federation
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+
+      - name: Preview or apply JWKS infrastructure
+        env:
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+        run: python3 tools/yandex-infrastructure/jwks_mirror.py
+
+      - uses: actions/setup-node@v4
+        if: inputs.action == 'activate' && inputs.mode == 'apply'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install pinned Wrangler
+        if: inputs.action == 'activate' && inputs.mode == 'apply'
+        run: npm ci
+
+      - name: Deploy separate Cloudflare JWKS Worker with one-time credentials
+        if: inputs.action == 'activate' && inputs.mode == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$JWKS_CREDENTIALS_FILE"
+          npx wrangler deploy --config tools/jwks-mirror/wrangler.jsonc \
+            --secrets-file "$JWKS_CREDENTIALS_FILE"
+
+      - name: Erase temporary one-time S3 credential file
+        if: always()
+        shell: bash
+        run: rm -f "$JWKS_CREDENTIALS_FILE"
