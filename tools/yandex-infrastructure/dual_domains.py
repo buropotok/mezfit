@@ -5,19 +5,17 @@ configuration is changed. Activate is a separate explicitly confirmed cutover.
 """
 
 import os
-import re
 import sys
 from urllib.parse import urlencode
 
 from web_hosting import (
-    CERTIFICATES, GATEWAYS, OPERATIONS, NoRedirect, WebHostingError,
+    CERTIFICATES, GATEWAYS, NoRedirect, WebHostingError,
     await_operation, bucket_name, choose, paged_list, request_json, resource_id,
     verify_gateway,
 )
 from urllib.request import build_opener
 
 DNS = "https://dns.api.cloud.yandex.net/dns/v1/zones"
-DOMAIN_NAMES = ("mezfit.online", "mezfit.ru")
 DOMAINS = {
     "mezfit.online": {"zone_name": "mezfit-online", "cert_name": "mezfit-online-web"},
     "mezfit.ru": {"zone_name": "mezfit-ru", "cert_name": "mezfit-ru-web"},
@@ -60,8 +58,7 @@ def select_zone(api, folder, domain):
 def select_certificate(api, folder, domain):
     certificates = paged_list(api, CERTIFICATES, folder, "certificates", "List managed certificates")
     name = DOMAINS[domain]["cert_name"]
-    matches = [cert for cert in certificates if cert.get("name") == name
-               or (cert.get("domains") == [domain] and cert.get("name") == name)]
+    matches = [cert for cert in certificates if cert.get("name") == name]
     if len(matches) > 1:
         raise WebHostingError(f"Duplicate {domain} certificate names.")
     if not matches:
@@ -168,7 +165,7 @@ def attached_to(gateway, domain, cert):
     if not candidates:
         return False
     item = candidates[0]
-    if item.get("certificateId") != cert["id"] or item.get("enabled") is False:
+    if item.get("certificateId") != cert["id"] or item.get("enabled") is not True:
         raise WebHostingError("Existing gateway domain attachment uses wrong certificate or is disabled.")
     return True
 
