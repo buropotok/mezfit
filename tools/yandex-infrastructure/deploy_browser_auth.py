@@ -375,6 +375,45 @@ def canonical_nonce_policy(actual, expected):
     return expected if normalized(actual) == normalized(expected) else actual
 
 
+def verify_nonce_s3_tags(tags, expected_tags):
+    tag_set = tags.find("TagSet")
+    if tags.tag != "Tagging" or len(tags) != 1 or tag_set is None or len(tag_set) != len(expected_tags):
+        raise WebHostingError("Unexpected nonce bucket tags.")
+    for tag, expected in zip(tag_set, expected_tags):
+        if (tag.tag != "Tag" or sorted(child.tag for child in tag) != ["Key", "Value"]
+                or tag.findtext("Key") != expected["key"] or tag.findtext("Value") != expected["value"]):
+            raise WebHostingError("Unexpected nonce bucket tags.")
+
+
+def verify_nonce_s3_acl(acl, folder, deploy_sa):
+    if acl.tag != "AccessControlPolicy":
+        raise WebHostingError("Unexpected nonce bucket ACL document root.")
+    owners = acl.findall("Owner")
+    grant_lists = acl.findall("AccessControlList")
+    if len(owners) > 1 or len(grant_lists) > 1 or len(owners) + len(grant_lists) != len(acl):
+        raise WebHostingError("Unexpected nonce bucket ACL elements or duplicate blocks.")
+    owner_ids = acl.findall("Owner/ID")
+    owner_id = acl.findtext("Owner/ID")
+    if (len(owner_ids) > 1 or owner_id not in (None, "", folder, deploy_sa)
+            or any(child.tag not in {"ID", "DisplayName"} for owner in owners for child in owner)):
+        raise WebHostingError("Unexpected nonce bucket ACL owner metadata.")
+    # Bucket.List verifies ownership. An empty AccessControlPolicy has no ACL
+    # grants, just like an empty AccessControlList. Check every grant present.
+    for grant in acl.findall("AccessControlList/Grant"):
+        grantee = grant.find("Grantee")
+        grantee_id = grant.findtext("Grantee/ID")
+        permission = grant.findtext("Permission")
+        if (grant.tag != "Grant" or sorted(child.tag for child in grant) != ["Grantee", "Permission"]
+                or grantee is None or grantee.get("{http://www.w3.org/2001/XMLSchema-instance}type") != "CanonicalUser"
+                or any(child.tag not in {"ID", "DisplayName"} for child in grantee)
+                or len(grantee.findall("ID")) != 1
+                or not ((grantee_id == folder and permission == "FULL_CONTROL")
+                        or (grantee_id == deploy_sa and permission in {"READ", "WRITE", "FULL_CONTROL"}))):
+            raise WebHostingError("Unexpected nonce bucket ACL grant.")
+    if any(child.tag != "Grant" for grants in grant_lists for child in grants):
+        raise WebHostingError("Unexpected nonce bucket ACL grant-list elements.")
+
+
 def nonce_s3_bucket_snapshot(request, folder, deploy_sa, runtime_sa, policy, observed_policy):
     """Reconstruct only the verified bucket fields when VIEW_FULL is denied."""
     settings, _ = nonce_bucket_contract(folder, runtime_sa)
@@ -388,39 +427,31 @@ def nonce_s3_bucket_snapshot(request, folder, deploy_sa, runtime_sa, policy, obs
         raise WebHostingError("Nonce bucket absent from its expected folder.")
     nonce_bucket_iam_resource_id(metadata, bucket)
 
-    tags = request(s3 + "?tagging", "Read nonce bucket tags through S3", xml=True)
     expected_tags = settings["tags"]
-    tag_set = tags.find("TagSet")
-    if tags.tag != "Tagging" or len(tags) != 1 or tag_set is None or len(tag_set) != len(expected_tags):
-        raise WebHostingError("Unexpected nonce bucket tags.")
-    for tag, expected in zip(tag_set, expected_tags):
-        if (tag.tag != "Tag" or sorted(child.tag for child in tag) != ["Key", "Value"]
-                or tag.findtext("Key") != expected["key"] or tag.findtext("Value") != expected["value"]):
-            raise WebHostingError("Unexpected nonce bucket tags.")
-
-    acl = request(s3 + "?acl", "Read nonce bucket ACL through S3", xml=True)
-    grants = acl.find("AccessControlList")
-    if (acl.tag != "AccessControlPolicy" or sorted(child.tag for child in acl) != ["AccessControlList", "Owner"]
-            or len(acl.findall("Owner/ID")) != 1 or acl.findtext("Owner/ID") != folder or grants is None):
-        raise WebHostingError("Unexpected nonce bucket ACL owner or structure.")
-    for grant in grants:
-        grantee = grant.find("Grantee")
-        grantee_id = grant.findtext("Grantee/ID")
-        permission = grant.findtext("Permission")
-        if (grant.tag != "Grant" or sorted(child.tag for child in grant) != ["Grantee", "Permission"]
-                or grantee is None or grantee.get("{http://www.w3.org/2001/XMLSchema-instance}type") != "CanonicalUser"
-                or any(child.tag not in {"ID", "DisplayName"} for child in grantee)
-                or len(grantee.findall("ID")) != 1
-                or not ((grantee_id == folder and permission == "FULL_CONTROL")
-                        or (grantee_id == deploy_sa and permission in {"READ", "WRITE", "FULL_CONTROL"}))):
-            raise WebHostingError("Unexpected nonce bucket ACL grant.")
+    errors = []
+    for query, verify in (
+        ("tagging", lambda data: verify_nonce_s3_tags(data, expected_tags)),
+        ("acl", lambda data: verify_nonce_s3_acl(data, folder, deploy_sa)),
+    ):
+        try:
+            verify(request(f"{s3}?{query}", f"Read nonce bucket {query} through S3", xml=True))
+        except WebHostingError as error:
+            errors.append(str(error))
 
     for query, absent_code in (("cors", "NoSuchCORSConfiguration"), ("website", "NoSuchWebsiteConfiguration")):
-        if request(f"{s3}?{query}", f"Verify no nonce bucket S3 {query} configuration",
-                   xml=True, absent_code=absent_code) is not None:
-            raise WebHostingError(f"Unexpected nonce bucket {query} configuration.")
-    if request(s3 + "?lifecycle", "Verify effective nonce lifecycle through Object Storage S3 API").get("approved") is not True:
-        raise WebHostingError("Nonce bucket lifecycleRules differ in S3 readback.")
+        try:
+            if request(f"{s3}?{query}", f"Verify no nonce bucket S3 {query} configuration",
+                       xml=True, absent_code=absent_code) is not None:
+                raise WebHostingError(f"Unexpected nonce bucket {query} configuration.")
+        except WebHostingError as error:
+            errors.append(str(error))
+    try:
+        if request(s3 + "?lifecycle", "Verify effective nonce lifecycle through Object Storage S3 API").get("approved") is not True:
+            raise WebHostingError("Nonce bucket lifecycleRules differ in S3 readback.")
+    except WebHostingError as error:
+        errors.append(str(error))
+    if errors:
+        raise WebHostingError(" ".join(errors))
     return {**metadata, "tags": expected_tags, "acl": {"grants": []}, "cors": [],
             "websiteSettings": {}, "lifecycleRules": settings["lifecycleRules"], "policy": policy}
 
@@ -539,7 +570,7 @@ def report_nonce_bucket_diagnostics(opener, token, folder, deploy_sa, runtime_sa
         return f"ACL matches the allowed grantees: {approved}"
 
     def policy_summary(data):
-        if data == policy:
+        if canonical_nonce_policy(data, policy) == policy:
             return "expected policy matches"
         if data == legacy_policy:
             return "only the previous runtime rule is present"
@@ -622,7 +653,7 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
                 raise
             result = error.nonce_policy_readback
             if isinstance(result, dict):
-                if result == policy:
+                if canonical_nonce_policy(result, policy) == policy:
                     result = "HTTP 200, policy matches the expected rules"
                 elif result == legacy_policy:
                     result = "HTTP 200, only the previous runtime rule is present"
