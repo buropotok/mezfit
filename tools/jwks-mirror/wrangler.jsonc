@@ -5,6 +5,7 @@
   "compatibility_date": "2026-11-23",
   "triggers": { "crons": ["* * * * *"] },
   "workers_dev": false,
+  "secrets": { "required": ["YC_JWKS_ACCESS_KEY_ID", "YC_JWKS_SECRET_ACCESS_KEY"] },
   "vars": {
     "YC_JWKS_BUCKET": "mezfit-telegram-jwks-b1g774t6sgop4rakjob7"
   }
