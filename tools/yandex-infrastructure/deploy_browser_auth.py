@@ -81,7 +81,7 @@ def function_bindings(api, function_id):
 
 def has_gateway_invoker(bindings, deploy_sa):
     return any(binding.get("roleId") == "functions.functionInvoker"
-               and binding.get("subject") == {"type": "serviceAccount", "id": sa}
+               and binding.get("subject") == {"type": "serviceAccount", "id": deploy_sa}
                for binding in bindings)
 
 
@@ -315,13 +315,17 @@ def main():
         return request_api(opener, token, url, label, payload)
     def update_api(url, label, payload, method):
         return request_api(opener, token, url, label, payload, method)
-    execute(os.environ.get("MODE", ""), os.environ.get("ACTION", ""),
-            os.environ.get("CONFIRM", ""), os.environ.get("YC_FOLDER_ID", ""),
+    # Resolve and, only in owner-confirmed Prepare Apply, create the
+    # dedicated runtime SA and protected Lockbox secret using GitHub Secrets.
+    # No secret payload, signing key or Telegram Client Secret is printed.
+    from browser_auth_bootstrap import bootstrap
+    mode = os.environ.get("MODE", "")
+    action = os.environ.get("ACTION", "")
+    folder = os.environ.get("YC_FOLDER_ID", "")
+    runtime_sa, secret_id, version_id = bootstrap(mode, action, folder, api)
+    execute(mode, action, os.environ.get("CONFIRM", ""), folder,
             os.environ.get("YC_DEPLOY_SA_ID", ""),
-            os.environ.get("YC_LOGIN_RUNTIME_SA_ID", ""),
-            os.environ.get("YC_LOGIN_LOCKBOX_ID", ""),
-            os.environ.get("YC_LOGIN_LOCKBOX_VERSION_ID", ""),
-            api, update_api)
+            runtime_sa, secret_id, version_id, api, update_api)
 
 
 if __name__ == "__main__":
