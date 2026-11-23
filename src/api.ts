@@ -1,5 +1,6 @@
 import type { DexieCloudOptions } from 'dexie-cloud-addon';
 import type { VideoRecordingDiagnostic } from '../shared/video-recording-diagnostic';
+import { parseBrowserSession, type BrowserIdentity } from './auth/browserSession';
 import { compressTelegramAvatar } from './media/telegram-avatar-compress';
 import { localizeBundledExerciseName } from './exerciseLocalization';
 import type { SetEntryFactDraft } from './workout/setEntryTypes';
@@ -444,6 +445,39 @@ async function apiRequest<T>(initData: string, path: string, init?: RequestInit)
     );
   }
   return response.json<T>();
+}
+
+async function browserAuthRequest(action: 'session' | 'logout', signal?: AbortSignal): Promise<Response> {
+  const response = await fetch(`/auth/${action}`, {
+    method: action === 'session' ? 'GET' : 'POST',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    signal,
+  });
+  if (!response.ok && !(action === 'session' && response.status === 401)) {
+    throw new ApiError(response.status, 'Запрос браузерной авторизации не выполнен');
+  }
+  return response;
+}
+
+export async function getBrowserSession(signal?: AbortSignal): Promise<BrowserIdentity | null> {
+  const response = await browserAuthRequest('session', signal);
+  if (response.status === 401) return null;
+
+  const value: unknown = await response.json().catch(() => null);
+  const identity = parseBrowserSession(value);
+  if (!identity) {
+    throw new ApiError(502, 'Некорректный ответ браузерной авторизации', 'INVALID_API_RESPONSE');
+  }
+  return identity;
+}
+
+export async function logoutBrowserSession(): Promise<void> {
+  const response = await browserAuthRequest('logout');
+  const value: unknown = await response.json().catch(() => null);
+  if (!isRecord(value) || value.authenticated !== false) {
+    throw new ApiError(502, 'Некорректное подтверждение выхода', 'INVALID_API_RESPONSE');
+  }
 }
 
 export interface DiscussionR2MediaInput {
