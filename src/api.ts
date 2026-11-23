@@ -480,6 +480,60 @@ export async function logoutBrowserSession(): Promise<void> {
   }
 }
 
+export interface BrowserLoginChallenge {
+  clientId: number;
+  nonce: string;
+  expiresIn: number;
+}
+
+async function browserLoginPost(path: '/auth/start' | '/auth/callback', body: object, signal: AbortSignal): Promise<unknown> {
+  const response = await fetch(path, {
+    method: 'POST', credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal,
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const value: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = isRecord(value) ? value : {};
+    const stage = typeof error.stage === 'string' && /^(jwks|jwt|challenge|internal)$/.test(error.stage)
+      ? error.stage : null;
+    const code = typeof error.code === 'string' && /^[a-z_]{1,40}$/.test(error.code) ? error.code : null;
+    const incident = typeof error.incidentId === 'string' && /^[\w-]{16}$/.test(error.incidentId)
+      ? `, ${error.incidentId}` : '';
+    const status = typeof error.httpStatus === 'number' && Number.isInteger(error.httpStatus)
+      && error.httpStatus >= 400 && error.httpStatus <= 599 ? `, HTTP ${error.httpStatus}` : '';
+    const diagnostic = stage && code ? ` (${stage}: ${code}${status}${incident})` : '';
+    throw new ApiError(response.status, `Не удалось подтвердить вход${diagnostic}`);
+  }
+  return value;
+}
+
+export async function prepareBrowserLogin(signal: AbortSignal): Promise<BrowserLoginChallenge | null> {
+  let value: unknown;
+  try {
+    value = await browserLoginPost('/auth/start', {}, signal);
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 404 || error.status === 405)) return null;
+    throw error;
+  }
+  if (!isRecord(value) || typeof value.clientId !== 'number' || !Number.isSafeInteger(value.clientId)
+      || value.clientId < 1 || typeof value.nonce !== 'string' || !/^[\w-]{43}$/.test(value.nonce)
+      || typeof value.expiresIn !== 'number' || !Number.isInteger(value.expiresIn)
+      || value.expiresIn < 120 || value.expiresIn > 300) {
+    throw new ApiError(502, 'Некорректный ответ подготовки входа', 'INVALID_API_RESPONSE');
+  }
+  return { clientId: value.clientId, nonce: value.nonce, expiresIn: value.expiresIn };
+}
+
+export async function completeBrowserLogin(idToken: string, signal: AbortSignal): Promise<BrowserIdentity> {
+  const value = await browserLoginPost('/auth/callback', { idToken }, signal);
+  if (!isRecord(value) || value.authenticated !== true) {
+    throw new ApiError(502, 'Некорректное подтверждение входа', 'INVALID_API_RESPONSE');
+  }
+  const identity = await getBrowserSession(signal);
+  if (!identity) throw new ApiError(401, 'Браузер не сохранил сессию Mezfit');
+  return identity;
+}
+
 export interface DiscussionR2MediaInput {
   initData: string;
   storageKey: string;
