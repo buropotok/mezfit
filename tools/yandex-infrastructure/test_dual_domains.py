@@ -188,6 +188,26 @@ class DomainContracts(unittest.TestCase):
         self.assertEqual(len(api.records["zru"]), 1)
         self.assertEqual(len({x["id"] for x in [api.gateway]}), 1)
 
+    def test_invalid_certificate_cannot_publish_a_dns_challenge(self):
+        api = FakeCloud()
+        api.prepare_online()
+        online = next(c for c in api.certificates if c["domains"] == ["mezfit.online"])
+        online["status"] = "INVALID"
+        with self.assertRaisesRegex(WebHostingError, "not awaiting validation"):
+            execute("apply", "validate_online", CONFIRMATIONS["validate_online"],
+                    FOLDER, api, sleep=lambda _: None)
+        self.assertEqual(len(api.writes), 2)
+
+    def test_inactive_gateway_cannot_activate_even_with_issued_certificate(self):
+        api = FakeCloud()
+        api.prepare_online()
+        api.issue("mezfit.online")
+        api.gateway["status"] = "UPDATING"
+        with self.assertRaisesRegex(WebHostingError, "must be ACTIVE"):
+            execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+                    FOLDER, api, sleep=lambda _: None)
+        self.assertEqual(len(api.writes), 2)
+
     def test_activation_refuses_unissued_certificate_without_writes(self):
         api = FakeCloud()
         api.prepare_online()
