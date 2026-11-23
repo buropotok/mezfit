@@ -87,6 +87,10 @@ def inspect(api, folder):
                     bucket_name(folder), folder, "JWKS private bucket")
     if sa and not resource_id(sa.get("id")):
         raise WebHostingError("JWKS publisher ID invalid.")
+    if bucket:
+        # Bucket.List may omit resourceId and ACL. Resolve authoritative metadata.
+        bucket = api(f"{STORAGE}/{bucket_name(folder)}?view=VIEW_BASIC",
+                     "Read exact JWKS bucket settings")
     bindings = read_bindings(api, check_bucket(bucket, folder)) if bucket else []
     if bindings and (not sa or bindings != [expected_binding(sa["id"])]):
         raise WebHostingError("JWKS bucket IAM drift; not overwriting existing grants.")
