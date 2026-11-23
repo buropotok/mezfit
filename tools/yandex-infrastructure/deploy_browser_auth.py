@@ -49,6 +49,42 @@ def request_api(opener, token, url, label, payload=None, method=None):
     return result
 
 
+def function_bindings(api, function_id):
+    """Inspect the function's direct IAM grants. Never allow public invocation."""
+    items = []
+    page_token = ""
+    seen = set()
+    for _ in range(100):
+        params = {"pageSize": "1000"}
+        if page_token:
+            params["pageToken"] = page_token
+        result = api(f"{FUNCTIONS}/{function_id}:listAccessBindings?{urlencode(params)}",
+                     "Read browser-auth function permissions")
+        batch = result.get("accessBindings", [])
+        if not isinstance(batch, list) or any(not isinstance(b, dict) for b in batch):
+            raise WebHostingError("Malformed browser-auth IAM bindings.")
+        items.extend(batch)
+        page_token = result.get("nextPageToken", "")
+        if not isinstance(page_token, str) or page_token in seen:
+            raise WebHostingError("Malformed IAM binding pagination.")
+        if not page_token:
+            break
+        seen.add(page_token)
+    else:
+        raise WebHostingError("IAM bindings pagination safety limit.")
+    if any(item.get("subject", {}).get("type") == "system"
+           and item.get("subject", {}).get("id") in {"allUsers", "allAuthenticatedUsers"}
+           for item in items):
+        raise WebHostingError("Public access on browser-auth function forbidden.")
+    return items
+
+
+def has_gateway_invoker(bindings, sa):
+    return any(binding.get("roleId") == "functions.functionInvoker"
+               and binding.get("subject") == {"type": "serviceAccount", "id": sa}
+               for binding in bindings)
+
+
 def source_package(source=SOURCE):
     content = source.read_bytes()
     if not content or len(content) > 512000:
@@ -183,6 +219,19 @@ def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
                               NAME_BROWSER_AUTH_FUNCTION, folder, "Browser-login function")
             if not function or function.get("id") != response.get("id"):
                 raise WebHostingError("New function readback differs; inspect before retry.")
+        bindings = function_bindings(api, function["id"])
+        if not has_gateway_invoker(bindings, sa):
+            access_update = api(f"{FUNCTIONS}/{function['id']}:updateAccessBindings",
+                                "Grant only gateway service account permission to invoke private function",
+                                {"accessBindingDeltas": [{
+                                    "action": "ADD", "accessBinding": {
+                                        "roleId": "functions.functionInvoker",
+                                        "subject": {"type": "serviceAccount", "id": sa},
+                                    },
+                                }]})
+            await_operation(api, access_update, "Grant browser login function invoke access", sleep)
+            if not has_gateway_invoker(function_bindings(api, function["id"]), sa):
+                raise WebHostingError("Private function invocation permission failed readback.")
         if not tagged:
             # Only the explicitly tagged version is invoked; a failed publish
             # cannot change the currently serving version.
@@ -211,6 +260,8 @@ def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
 
     if not function:
         raise WebHostingError("Browser auth function absent; run Prepare first.")
+    if not has_gateway_invoker(function_bindings(api, function["id"]), sa):
+        raise WebHostingError("Existing private auth function does not grant invocation to the approved gateway SA.")
     tagged = select_tagged_version(function_version_list(api, function["id"]))
     if (not resource_id(secret_id) or not resource_id(secret_version)
             or not tagged or not version_matches(tagged, fingerprint, sa, secret_id, secret_version, hosts)):
