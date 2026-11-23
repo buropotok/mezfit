@@ -16,7 +16,7 @@ on:
         options: [preview, apply]
         default: preview
       confirm:
-        description: PREPARE_, ACTIVATE_, or UPGRADE_MEZFIT_JWKS_MIRROR
+        description: Apply requires confirmation matching action (PREPARE/ACTIVATE/UPGRADE)
         type: string
         required: false
 
