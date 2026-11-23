@@ -85,6 +85,7 @@ jobs:
           YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
           YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
           YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          YC_LOGIN_RUNTIME_SA_ID: ${{ vars.YC_LOGIN_RUNTIME_SA_ID }}
           YC_LOGIN_LOCKBOX_ID: ${{ vars.YC_LOGIN_LOCKBOX_ID }}
           YC_LOGIN_LOCKBOX_VERSION_ID: ${{ vars.YC_LOGIN_LOCKBOX_VERSION_ID }}
         run: python3 tools/yandex-infrastructure/deploy_browser_auth.py
