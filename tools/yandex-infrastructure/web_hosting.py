@@ -255,9 +255,36 @@ def spec_diff_paths(expected, actual, path="$", limit=8):
 def verify_gateway(gateway, folder_id, bucket, api):
     if (gateway.get("folderId") != folder_id or gateway.get("name") != NAME_GATEWAY
             or not resource_id(gateway.get("id"))
-            or gateway.get("attachedDomains") not in (None, [])
             or gateway.get("status") not in {"ACTIVE", "CREATING", "UPDATING"}):
-        raise WebHostingError("Existing gateway has unexpected owner, name, status or custom domain.")
+        raise WebHostingError("Existing gateway has unexpected owner, name or status.")
+
+    # Domains may now be attached independently; publishing must still verify
+    # that no other domain/certificate or gateway integration was introduced.
+    attached = gateway.get("attachedDomains")
+    if attached is None:
+        attached = []
+    if not isinstance(attached, list) or len(attached) > 2:
+        raise WebHostingError("Unexpected gateway custom-domain attachments.")
+    if attached:
+        approved_names = {"mezfit.ru": NAME_CERTIFICATE,
+                          "mezfit.online": "mezfit-online-web"}
+        known = paged_list(api, CERTIFICATES, folder_id, "certificates", "List approved domain certificates")
+        used = set()
+        for item in attached:
+            if not isinstance(item, dict) or not isinstance(item.get("domain"), str):
+                raise WebHostingError("Malformed attached domain.")
+            name = item["domain"].rstrip(".")
+            expected_name = approved_names.get(name)
+            matches = [c for c in known if c.get("name") == expected_name] if expected_name else []
+            if (name in used or len(matches) != 1 or item.get("certificateId") != matches[0].get("id")
+                    or item.get("enabled") is not True
+                    or matches[0].get("status") not in {"ISSUED", "RENEWING"}
+                    or matches[0].get("folderId") != folder_id
+                    or matches[0].get("domains") != [name]
+                    or matches[0].get("type") != "MANAGED"
+                    or matches[0].get("deletionProtection") is not True):
+                raise WebHostingError("Unexpected gateway domain or certificate binding.")
+            used.add(name)
     result = api(f"{GATEWAYS}/{gateway['id']}:spec", "Read gateway OpenAPI contract")
     try:
         actual = json.loads(result["openapiSpec"])

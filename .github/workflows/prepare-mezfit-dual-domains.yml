@@ -1,0 +1,93 @@
+name: Prepare MezFit Dual Domains
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Select a domain operation (independent from the other domain)
+        type: choice
+        required: true
+        default: prepare_online
+        options:
+          - prepare_online
+          - validate_online
+          - validate_ru
+          - activate_online
+          - activate_ru
+      mode:
+        description: Preview makes no writes; Apply requires the matching confirmation
+        type: choice
+        required: true
+        default: preview
+        options:
+          - preview
+          - apply
+      confirm:
+        description: Enter the exact confirmation for the selected Apply operation
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-yandex-dual-domains
+  cancel-in-progress: false
+
+jobs:
+  domains:
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate selected phase, explicit confirmation and Yandex identity
+        shell: bash
+        env:
+          ACTION: ${{ inputs.action }}
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          case "$ACTION" in
+            prepare_online) expected=PREPARE_MEZFIT_ONLINE ;;
+            validate_online) expected=VALIDATE_MEZFIT_ONLINE ;;
+            validate_ru) expected=VALIDATE_MEZFIT_RU ;;
+            activate_online) expected=ACTIVATE_MEZFIT_ONLINE ;;
+            activate_ru) expected=ACTIVATE_MEZFIT_RU ;;
+            *) echo "Unknown domain action"; exit 1 ;;
+          esac
+          [[ "$MODE" == preview || "$MODE" == apply ]] || { echo "Invalid mode"; exit 1; }
+          if [[ "$MODE" == apply ]]; then
+            [[ "$CONFIRM" == "$expected" ]] || { echo "Wrong confirmation for selected action"; exit 1; }
+          fi
+          for key in YC_DEPLOY_SA_ID YC_FOLDER_ID; do
+            [[ "${!key}" =~ ^[a-z0-9]+$ ]] || { echo "Invalid or missing $key"; exit 1; }
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Acquire short-lived Yandex IAM token through existing GitHub OIDC
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+
+      - name: Preview or apply explicitly selected domain operation
+        env:
+          ACTION: ${{ inputs.action }}
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+        run: python3 tools/yandex-infrastructure/dual_domains.py
