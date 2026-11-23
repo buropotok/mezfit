@@ -89,5 +89,6 @@ jobs:
           MODE: ${{ inputs.mode }}
           CONFIRM: ${{ inputs.confirm }}
           YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
           YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
         run: python3 tools/yandex-infrastructure/dual_domains.py

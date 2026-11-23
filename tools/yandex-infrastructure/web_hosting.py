@@ -20,6 +20,8 @@ GATEWAYS = "https://serverless-apigateway.api.cloud.yandex.net/apigateways/v1/ap
 CERTIFICATES = "https://certificate-manager.api.cloud.yandex.net/certificate-manager/v1/certificates"
 OPERATIONS = "https://operation.api.cloud.yandex.net/operations"
 NAME_GATEWAY = "mezfit-web"
+NAME_BROWSER_AUTH_FUNCTION = "mezfit-browser-login"
+FUNCTIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/functions"
 NAME_CERTIFICATE = "mezfit-ru-web"
 DOMAIN = "mezfit.ru"
 CONFIRMATION = "PREPARE_MEZFIT_WEB"
@@ -139,6 +141,21 @@ def gateway_spec(bucket):
             },
         },
     }
+
+
+def browser_auth_gateway_spec(bucket, function_id, service_account_id):
+    """Exactly four same-origin auth endpoints, without altering other API routes."""
+    if not resource_id(function_id) or not resource_id(service_account_id):
+        raise WebHostingError("Missing approved browser-auth function or gateway service account.")
+    result = gateway_spec(bucket)
+    for path, method in (("/auth/start", "get"), ("/auth/callback", "get"),
+                         ("/auth/session", "get"), ("/auth/logout", "post")):
+        result["paths"][path] = {method: {"x-yc-apigateway-integration": {
+            "type": "cloud_functions", "function_id": function_id,
+            "service_account_id": service_account_id,
+            "tag": "browser-login", "payload_format_version": "1.0",
+        }}}
+    return result
 
 
 def choose(items, expected_name, folder_id, label):
@@ -290,7 +307,21 @@ def verify_gateway(gateway, folder_id, bucket, api):
         actual = json.loads(result["openapiSpec"])
     except (KeyError, TypeError, ValueError):
         raise WebHostingError("Cannot parse current gateway specification.") from None
-    expected = normalize_gateway_readback(gateway_spec(bucket), gateway.get("domain"))
+    paths = actual.get("paths") if isinstance(actual, dict) else None
+    auth_paths = {"/auth/start", "/auth/callback", "/auth/session", "/auth/logout"}
+    if isinstance(paths, dict) and auth_paths.intersection(paths):
+        # Once browser login is activated, allow only our exact function identity
+        # and the approved deployment SA. No arbitrary proxy/upstream is accepted.
+        approved_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
+        known = choose(paged_list(api, FUNCTIONS, folder_id, "functions",
+                                  "List approved browser-auth functions"),
+                       NAME_BROWSER_AUTH_FUNCTION, folder_id, "Browser auth function")
+        if not known or not resource_id(known.get("id")) or not resource_id(approved_sa):
+            raise WebHostingError("Browser auth routes require the approved function and deployment service account.")
+        expected_spec = browser_auth_gateway_spec(bucket, known["id"], approved_sa)
+    else:
+        expected_spec = gateway_spec(bucket)
+    expected = normalize_gateway_readback(expected_spec, gateway.get("domain"))
     actual = normalize_gateway_readback(actual, gateway.get("domain"))
     differences = spec_diff_paths(expected, actual)
     if differences:
