@@ -21,7 +21,7 @@ async function hmac(key, message) {
 
 /** Sign only two fixed keys in one isolated Yandex bucket. No arbitrary S3 proxy. */
 async function s3Request(env, method, name, payload) {
-  if (!/^[a-z0-9]{3,63}$/.test(env.YC_JWKS_BUCKET || '') ||
+  if (!/^[a-z0-9-]{3,63}$/.test(env.YC_JWKS_BUCKET || '') ||
       !/^mezfit-telegram-jwks-[a-z0-9]+$/.test(env.YC_JWKS_BUCKET) ||
       !/^[A-Za-z0-9]+$/.test(env.YC_JWKS_ACCESS_KEY_ID || '') ||
       !env.YC_JWKS_SECRET_ACCESS_KEY ||
