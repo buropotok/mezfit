@@ -250,6 +250,9 @@ def nonce_lifecycle_readback(rules):
         for name in ("tag", "andOperator"):
             if rule_filter.get(name) in ({}, None):
                 rule_filter.pop(name, None)
+        for name in ("objectSizeGreaterThan", "objectSizeLessThan"):
+            if rule_filter.get(name) == "":
+                rule_filter.pop(name)
         rule["filter"] = rule_filter
     expiration = rule.get("expiration")
     if isinstance(expiration, dict):
@@ -280,7 +283,8 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
             fields.append("anonymousAccessFlags")
         empty_website = {"index": "", "error": "", "routingRules": [], "redirectAllRequests": {}}
         if website not in ({}, None) and (not isinstance(website, dict)
-                or any(key not in empty_website or value != empty_website[key] for key, value in website.items())):
+                or any(key not in empty_website or value not in (empty_website[key], None)
+                       for key, value in website.items())):
             fields.append("websiteSettings")
         if current.get("cors") not in ([], None):
             fields.append("cors")
@@ -322,7 +326,10 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
             if nonce_lifecycle_readback(current.get("lifecycleRules")) != settings["lifecycleRules"]:
                 raise WebHostingError("Nonce bucket lifecycleRules failed readback.")
     if current.get("policy") != policy:
-        if read().get("policy") not in ({}, None):
+        fresh = read()
+        if nonce_lifecycle_readback(fresh.get("lifecycleRules")) != settings["lifecycleRules"]:
+            raise WebHostingError("Nonce bucket lifecycleRules changed concurrently; run Preview again.")
+        if fresh.get("policy") not in ({}, None):
             raise WebHostingError("Nonce bucket policy changed concurrently; run Preview again.")
         update_api(f"https://storage.yandexcloud.net/{bucket}?policy", "Install exact nonce bucket policy",
                    policy, method="PUT")
