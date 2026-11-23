@@ -231,12 +231,38 @@
         }, 8000);
       }());
     </script>
-    <script>window.__MEZFIT_BOOT__.mark('telegram-sdk-start');</script>
-    <script
-      src="https://telegram.org/js/telegram-web-app.js"
-      onload="window.__MEZFIT_BOOT__.mark('telegram-sdk-loaded')"
-      onerror="window.__MEZFIT_BOOT__.fail('telegram-sdk-error', { reason: 'load-error' })"
-    ></script>
+    <script>
+      // A normal browser does not need the Mini App bridge. Loading this remote
+      // classic script synchronously would block HTML parsing and React startup
+      // when telegram.org is slow or unreachable.
+      (function () {
+        var search = new URLSearchParams(window.location.search);
+        var hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        var telegramLaunch = ['tgWebAppData', 'tgWebAppPlatform', 'tgWebAppVersion'].some(function (key) {
+          return search.has(key) || hash.has(key);
+        });
+
+        // Mini App initialization must still wait for the Telegram bridge,
+        // including when its network request fails. Ordinary browsers never wait.
+        window.__MEZFIT_TELEGRAM_SDK_READY__ = telegramLaunch
+          ? new Promise(function (resolve, reject) {
+              window.__MEZFIT_BOOT__.mark('telegram-sdk-start');
+              var script = document.createElement('script');
+              script.src = 'https://telegram.org/js/telegram-web-app.js';
+              script.async = true;
+              script.onload = function () {
+                window.__MEZFIT_BOOT__.mark('telegram-sdk-loaded');
+                resolve();
+              };
+              script.onerror = function () {
+                window.__MEZFIT_BOOT__.fail('telegram-sdk-error', { reason: 'load-error' });
+                reject(new Error('Telegram Mini App SDK could not be loaded'));
+              };
+              document.head.appendChild(script);
+            })
+          : Promise.resolve();
+      }());
+    </script>
   </head>
   <body>
     <div id="root"></div>
