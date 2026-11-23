@@ -277,7 +277,8 @@ def verify_gateway(gateway, folder_id, bucket, api):
             expected_name = approved_names.get(name)
             matches = [c for c in known if c.get("name") == expected_name] if expected_name else []
             if (name in used or len(matches) != 1 or item.get("certificateId") != matches[0].get("id")
-                    or item.get("enabled") is False
+                    or item.get("enabled") is not True
+                    or matches[0].get("status") not in {"ISSUED", "RENEWING"}
                     or matches[0].get("folderId") != folder_id
                     or matches[0].get("domains") != [name]
                     or matches[0].get("type") != "MANAGED"
