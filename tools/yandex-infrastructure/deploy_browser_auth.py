@@ -10,6 +10,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import time
@@ -78,6 +79,20 @@ def approved_nonce_lifecycle_xml(body):
 
 def request_api(opener, token, url, label, payload=None, method=None):
     verb = method or ("POST" if payload is not None else "GET")
+    nonce_bindings = re.fullmatch(
+        re.escape(STORAGE) + r"/(mezfit-browser-nonce-[0-9a-f]{16}):listAccessBindings", url,
+    )
+    if verb == "GET" and nonce_bindings:
+        # Storage management reads use the bucket name. IAM attaches to the
+        # distinct resourceId returned by Bucket.Get, not its name or id.
+        bucket = nonce_bindings[1]
+        metadata = request_api(opener, token, f"{STORAGE}/{bucket}?view=VIEW_BASIC",
+                               "Resolve nonce bucket IAM resource ID")
+        identity = metadata.get("resourceId")
+        if metadata.get("name") != bucket or not isinstance(identity, str) or not re.fullmatch(
+                r"[A-Za-z0-9_-]{1,64}", identity):
+            raise WebHostingError("Nonce bucket IAM resource ID missing or invalid.")
+        url = f"{STORAGE}/{identity}:listAccessBindings"
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8") if payload is not None else None
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     if verb == "PUT" and body is not None:
