@@ -120,6 +120,15 @@ class OidcDiagnosticsUpgradeContracts(unittest.TestCase):
             changed_routes.execute("apply", "upgrade", UPGRADE)
         self.assertEqual(changed_routes.writes, [])
 
+    def test_upgraded_version_without_retained_baseline_is_rejected(self):
+        cloud = UpgradeCloud()
+        cloud.execute("apply", "upgrade", UPGRADE)
+        cloud.versions[0]["tags"].remove(PREVIOUS_TAG)
+        before = len(cloud.writes)
+        with self.assertRaisesRegex(WebHostingError, "rollback baseline"):
+            cloud.execute("apply", "upgrade", UPGRADE)
+        self.assertEqual(len(cloud.writes), before)
+
     def test_interrupted_upgrade_reuses_verified_candidate_without_redeploying(self):
         cloud = UpgradeCloud()
         cloud.fail_tag_once = True
