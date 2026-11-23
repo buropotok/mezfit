@@ -57,7 +57,7 @@ def approved_nonce_lifecycle_xml(body):
             raise ValueError("unexpected lifecycle XML markup")
         return (
             element.tag.removeprefix(namespace),
-            (element.text or "").strip(),
+            (element.text or "").strip() if len(element) else (element.text or ""),
             sorted(tree(child) for child in element),
         )
 
