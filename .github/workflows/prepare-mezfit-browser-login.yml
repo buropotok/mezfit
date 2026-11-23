@@ -1,0 +1,90 @@
+name: Prepare MezFit Browser Telegram Login
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Publish private login function or activate only the four approved gateway routes
+        type: choice
+        required: true
+        default: prepare
+        options:
+          - prepare
+          - activate
+      mode:
+        description: Preview is read-only; Apply requires exact confirmation
+        type: choice
+        required: true
+        default: preview
+        options:
+          - preview
+          - apply
+      confirm:
+        description: For Apply, enter the confirmation matching the selected action
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-yandex-web-auth
+  cancel-in-progress: false
+
+jobs:
+  browser-login:
+    if: >-
+      github.repository == 'buropotok/mezfit' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate explicitly approved phase and deployment identity
+        shell: bash
+        env:
+          ACTION: ${{ inputs.action }}
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          case "$ACTION" in
+            prepare) expected=PREPARE_MEZFIT_BROWSER_LOGIN ;;
+            activate) expected=ACTIVATE_MEZFIT_BROWSER_LOGIN ;;
+            *) echo "Invalid action"; exit 1 ;;
+          esac
+          [[ "$MODE" == preview || "$MODE" == apply ]] || { echo "Invalid mode"; exit 1; }
+          if [[ "$MODE" == apply ]]; then
+            [[ "$CONFIRM" == "$expected" ]] || { echo "Wrong action confirmation"; exit 1; }
+          fi
+          for key in YC_DEPLOY_SA_ID YC_FOLDER_ID; do
+            [[ "${!key}" =~ ^[a-z0-9]+$ ]] || { echo "Missing or invalid $key"; exit 1; }
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Acquire short-lived Yandex IAM token through existing GitHub OIDC
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+
+      - name: Preview or apply browser-login server and gateway routes
+        env:
+          ACTION: ${{ inputs.action }}
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          YC_LOGIN_LOCKBOX_ID: ${{ vars.YC_LOGIN_LOCKBOX_ID }}
+          YC_LOGIN_LOCKBOX_VERSION_ID: ${{ vars.YC_LOGIN_LOCKBOX_VERSION_ID }}
+        run: python3 tools/yandex-infrastructure/deploy_browser_auth.py
