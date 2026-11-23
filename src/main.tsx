@@ -71,4 +71,19 @@ async function bootstrap(): Promise<void> {
   );
 }
 
-void startAppBootstrap(bootstrap);
+// The HTML bootstrap resolves immediately in a regular browser. A real
+// Telegram Mini App launch waits for its SDK before inspecting initData,
+// preserving the existing signed-initData authentication path.
+const telegramSdkReady = (window as Window & {
+  __MEZFIT_TELEGRAM_SDK_READY__?: Promise<void>;
+}).__MEZFIT_TELEGRAM_SDK_READY__;
+
+void (async () => {
+  try {
+    await telegramSdkReady;
+    await startAppBootstrap(bootstrap);
+  } catch {
+    // The inline boot diagnostics already report an SDK load failure.
+    // Do not misclassify a failed Telegram launch as an unauthenticated browser.
+  }
+})();
