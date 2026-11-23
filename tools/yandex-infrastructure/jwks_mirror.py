@@ -20,7 +20,8 @@ IAM_SA = "https://iam.api.cloud.yandex.net/iam/v1/serviceAccounts"
 IAM_KEYS = "https://iam.api.cloud.yandex.net/iam/aws-compatibility/v1/accessKeys"
 NAME_SA = "mezfit-jwks-publisher"
 APPROVALS = {"prepare": "PREPARE_MEZFIT_JWKS_MIRROR",
-             "activate": "ACTIVATE_MEZFIT_JWKS_MIRROR"}
+             "activate": "ACTIVATE_MEZFIT_JWKS_MIRROR",
+             "upgrade": "UPGRADE_MEZFIT_JWKS_MIRROR"}
 PRIVATE = {"read": False, "list": False, "configRead": False}
 
 
@@ -150,6 +151,11 @@ def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sle
 
     if not sa or not bucket or bindings != [expected_binding(sa["id"])]:
         raise WebHostingError("Prepare JWKS private bucket and scoped publisher first.")
+    if action == "upgrade":
+        if len(keys) != 1:
+            raise WebHostingError("Upgrade requires exactly one existing JWKS S3 key; no rotation is allowed.")
+        print("JWKS upgrade: reuse existing Cloudflare Worker and unchanged S3 key. No Yandex writes.")
+        return
     if keys:
         raise WebHostingError("JWKS access key already exists. Refusing to mint/rotate it automatically.")
     print("JWKS activation: issue exactly one S3 key and deploy isolated Cloudflare Worker.")

@@ -82,6 +82,45 @@ literal confirmation. The PR itself does not perform live infrastructure changes
    cron errors. One-minute scheduling is best effort, not a real-time guarantee.
    Continue collecting rotation statistics before changing the interval.
 
+### Safe code-only Worker upgrade (after first successful activation)
+
+A deployed Worker must never be upgraded by repeating `activate/apply`: its Yandex
+static S3 credential is a one-time secret and cannot be read back from Yandex.
+Use **the same owner-only** `Prepare Telegram JWKS Mirror` workflow on `main`:
+
+1. `action=upgrade`, `mode=preview` (blank confirmation): read-only check
+   that the private bucket has the approved IAM contract and that exactly
+   **one** publisher S3 key exists.
+2. `action=upgrade`, `mode=apply`,
+   `confirm=UPGRADE_MEZFIT_JWKS_MIRROR`: preflight that the independent
+   Cloudflare Worker **already exists**, then redeploy its code with Wrangler
+   and **without** `--secrets-file` or any Yandex key creation.
+3. Wrangler verifies both required Cloudflare secret bindings are present;
+   existing secrets remain encrypted and unchanged during the code-only deploy.
+4. Inspect Cloudflare Cron Events / Workers Logs, then verify `jwks.json` and
+   `status.json` in the private bucket. Cron propagation can take up to
+   15 minutes after trigger installation or changes.
+
+For the initial bootstrap, the Worker previously rejected Yandex static S3
+key IDs containing `-`, even though those are valid characters. This was
+fixed independently of the key and bucket; existing credentials should be reused.
+
+### Empty bucket troubleshooting
+
+A green GitHub Actions run proves the requested *operator action* finished,
+not that the background Worker executed. `prepare/apply` creates only
+the bucket and publisher; `activate/apply` first deploys the Worker.
+
+In Cloudflare Dashboard -> Workers & Pages -> `mezfit-telegram-jwks-mirror`,
+check Cron Triggers, Cron Events and Workers Logs for
+`jwks_mirror_ok` or `jwks_mirror_failed`. `CONFIG_INVALID` means a
+mismatched bucket/key/secret binding; `TELEGRAM_FETCH_FAILED` or
+`FETCH_HTTP_...` means retrieval failed; `JWKS_WRITE_HTTP_403` or
+`STATUS_WRITE_HTTP_403` means Yandex S3 rejected writes.
+Never paste S3 secret values or `Authorization` headers into GitHub issues,
+Cloudflare logs or chats. Do not add a public test route or relax bucket IAM
+merely to debug.
+
 **Important one-shot recovery rule:** If `activate` creates a key but deployment fails,
 a second activation **fails closed** when any key already exists. The one-time secret
 cannot be retrieved from Yandex. An operator must inspect Cloudflare and Yandex,

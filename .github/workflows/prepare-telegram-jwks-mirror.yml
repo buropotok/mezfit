@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Prepare isolated Yandex bucket/account or activate Cloudflare cron
+        description: Prepare Yandex, activate once, or upgrade existing Cloudflare Worker
         required: true
         type: choice
-        options: [prepare, activate]
+        options: [prepare, activate, upgrade]
         default: prepare
       mode:
         description: Preview is read-only; Apply requires explicit confirmation
@@ -16,7 +16,7 @@ on:
         options: [preview, apply]
         default: preview
       confirm:
-        description: PREPARE_MEZFIT_JWKS_MIRROR or ACTIVATE_MEZFIT_JWKS_MIRROR
+        description: Apply requires confirmation matching action (PREPARE/ACTIVATE/UPGRADE)
         type: string
         required: false
 
@@ -61,12 +61,13 @@ jobs:
           case "$JWKS_ACTION" in
             prepare) expected=PREPARE_MEZFIT_JWKS_MIRROR ;;
             activate) expected=ACTIVATE_MEZFIT_JWKS_MIRROR ;;
+            upgrade) expected=UPGRADE_MEZFIT_JWKS_MIRROR ;;
             *) exit 1 ;;
           esac
           if [[ "$JWKS_MODE" == apply ]]; then
             [[ "$JWKS_CONFIRM" == "$expected" ]] || { echo 'Wrong Apply confirmation' >&2; exit 1; }
           fi
-          if [[ "$JWKS_ACTION" == activate && "$JWKS_MODE" == apply ]]; then
+          if [[ ( "$JWKS_ACTION" == activate || "$JWKS_ACTION" == upgrade ) && "$JWKS_MODE" == apply ]]; then
             [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]] || exit 1
             [[ -n "$CLOUDFLARE_API_TOKEN" ]] || { echo 'Missing Cloudflare deploy token' >&2; exit 1; }
             curl --fail --silent --show-error --max-time 15 \
@@ -74,10 +75,17 @@ jobs:
               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts" \
               -o /dev/null
             code=$(curl --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/mezfit-telegram-jwks-mirror")
-            [[ "$code" == "404" ]] || {
-              echo 'Cloudflare mirror Worker already exists or cannot be inspected; manual review required' >&2
-              exit 1
-            }
+            if [[ "$JWKS_ACTION" == activate ]]; then
+              [[ "$code" == "404" ]] || {
+                echo 'Cloudflare mirror Worker already exists or cannot be inspected; manual review required' >&2
+                exit 1
+              }
+            else
+              [[ "$code" == "200" ]] || {
+                echo 'Upgrade requires a deployed JWKS mirror Worker; no new Worker may be created' >&2
+                exit 1
+              }
+            fi
           fi
 
       - name: Acquire Yandex short-lived IAM token through existing federation
@@ -87,14 +95,14 @@ jobs:
           yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
 
       - uses: actions/setup-node@v4
-        if: inputs.action == 'activate' && inputs.mode == 'apply'
+        if: (inputs.action == 'activate' || inputs.action == 'upgrade') && inputs.mode == 'apply'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
 
       - name: Install pinned Wrangler
-        if: inputs.action == 'activate' && inputs.mode == 'apply'
+        if: (inputs.action == 'activate' || inputs.action == 'upgrade') && inputs.mode == 'apply'
         run: npm ci
 
       - name: Preview or apply JWKS infrastructure
@@ -115,6 +123,13 @@ jobs:
           test -s "$JWKS_CREDENTIALS_FILE"
           npx wrangler deploy --config tools/jwks-mirror/wrangler.jsonc \
             --secrets-file "$JWKS_CREDENTIALS_FILE"
+
+      - name: Redeploy existing Cloudflare JWKS Worker with unchanged secrets
+        if: inputs.action == 'upgrade' && inputs.mode == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config tools/jwks-mirror/wrangler.jsonc
 
       - name: Erase temporary one-time S3 credential file
         if: always()

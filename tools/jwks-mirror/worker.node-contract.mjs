@@ -100,3 +100,31 @@ test('failed JWKS write does not advertise a successful heartbeat', async () => 
     globalThis.fetch = savedFetch;
   }
 });
+
+test('Yandex hyphenated access-key ID is accepted and signed for private bucket', async () => {
+  const savedFetch = globalThis.fetch;
+  let observedSignedRequest = false;
+  const env = {
+    YC_JWKS_BUCKET: 'mezfit-telegram-jwks-b1g774t6sgop4rakjob7',
+    YC_JWKS_ACCESS_KEY_ID: 'YCAJEK0Iv6xqy-pEQcueLTAdg',
+    YC_JWKS_SECRET_ACCESS_KEY: 'example-local-fixture-only-s3-signing-secret',
+  };
+  globalThis.fetch = async (url, options = {}) => {
+    if (url.toString() === 'https://oauth.telegram.org/.well-known/jwks.json') {
+      return new Response(JSON.stringify({ keys: [rsa('telegram-key')] }), { status: 200 });
+    }
+    assert.match(
+      options.headers.Authorization,
+      /^AWS4-HMAC-SHA256 Credential=YCAJEK0Iv6xqy-pEQcueLTAdg\//,
+    );
+    observedSignedRequest = true;
+    if (options.method === 'GET') return new Response('not found', { status: 404 });
+    return new Response('', { status: 200 });
+  };
+  try {
+    assert.deepEqual(await refresh(env), { changed: true, keyCount: 1 });
+    assert.equal(observedSignedRequest, true);
+  } finally {
+    globalThis.fetch = savedFetch;
+  }
+});
