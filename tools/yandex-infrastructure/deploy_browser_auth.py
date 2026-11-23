@@ -52,6 +52,10 @@ class YandexHttpError(WebHostingError):
         super().__init__(f"{label}: HTTP {status}; inspect scoped Yandex IAM and resource state.")
 
 
+class NonceBucketSetupError(WebHostingError):
+    """The popup operator stopped before completing the nonce bucket checks."""
+
+
 def approved_nonce_lifecycle_xml(body):
     # S3 returns the effective rule, including all filters and actions.
     # Compare the exact tree, ignoring only element order and the S3 namespace.
@@ -84,8 +88,18 @@ def approved_nonce_lifecycle_xml(body):
     return False
 
 
-def request_api(opener, token, url, label, payload=None, method=None):
+def nonce_bucket_iam_resource_id(metadata, bucket):
+    identity = metadata.get("resourceId")
+    if metadata.get("name") != bucket or not isinstance(identity, str) or not re.fullmatch(
+            r"[A-Za-z0-9_-]{1,64}", identity):
+        raise WebHostingError("Nonce bucket IAM resource ID missing or invalid.")
+    return identity
+
+
+def request_api(opener, token, url, label, payload=None, method=None, *, status_only=False):
     verb = method or ("POST" if payload is not None else "GET")
+    if status_only and verb != "GET":
+        raise ValueError("Status probes must use GET.")
     nonce_bindings = re.fullmatch(
         re.escape(STORAGE) + r"/(mezfit-browser-nonce-[0-9a-f]{16}):listAccessBindings", url,
     )
@@ -95,10 +109,7 @@ def request_api(opener, token, url, label, payload=None, method=None):
         bucket = nonce_bindings[1]
         metadata = request_api(opener, token, f"{STORAGE}/{bucket}?view=VIEW_BASIC",
                                "Resolve nonce bucket IAM resource ID")
-        identity = metadata.get("resourceId")
-        if metadata.get("name") != bucket or not isinstance(identity, str) or not re.fullmatch(
-                r"[A-Za-z0-9_-]{1,64}", identity):
-            raise WebHostingError("Nonce bucket IAM resource ID missing or invalid.")
+        identity = nonce_bucket_iam_resource_id(metadata, bucket)
         url = f"{STORAGE}/{identity}:listAccessBindings"
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8") if payload is not None else None
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -107,6 +118,8 @@ def request_api(opener, token, url, label, payload=None, method=None):
     req = Request(url, data=body, method=verb, headers=headers)
     try:
         with opener.open(req, timeout=30) as response:
+            if status_only:
+                return response.status
             if verb == "GET" and url.startswith("https://storage.yandexcloud.net/mezfit-browser-nonce-") and url.endswith("?lifecycle"):
                 body = response.read(32_769)
                 result = {"approved": len(body) <= 32_768 and approved_nonce_lifecycle_xml(body)}
@@ -117,7 +130,7 @@ def request_api(opener, token, url, label, payload=None, method=None):
         nonce_full_view = re.fullmatch(
             re.escape(STORAGE) + r"/(mezfit-browser-nonce-[0-9a-f]{16})\?view=VIEW_FULL", url,
         )
-        if verb == "GET" and error.code == 403 and nonce_full_view:
+        if not status_only and verb == "GET" and error.code == 403 and nonce_full_view:
             bucket = nonce_full_view[1]
             try:
                 nonce_policy_readback = request_api(
@@ -349,6 +362,10 @@ def nonce_policy_readback_diff(actual, expected):
             continue
         observed = candidates[0]
         changed = [field for field in fields if observed.get(field) != rule[field]]
+        principal = observed.get("Principal")
+        if ("Principal" in changed and isinstance(principal, dict) and set(principal) == {"CanonicalUser"}
+                and as_list(principal["CanonicalUser"]) == rule["Principal"]["CanonicalUser"]):
+            changed.append("CanonicalUser scalar form")
         if "Resource" in changed:
             changed.append("Resource scalar form")
         actions = as_list(observed.get("Action"))
@@ -368,9 +385,14 @@ def nonce_policy_readback_diff(actual, expected):
                     continue
                 for key, value in conditions.items():
                     if key not in actual_conditions:
-                        changed.append(f"{operator}.{key} missing in exact form")
+                        case_matches = [found for found in actual_conditions if found.lower() == key.lower()]
+                        if len(case_matches) == 1 and actual_conditions[case_matches[0]] == value:
+                            changed.append(f"{operator}.{key} differs only in key case")
+                        else:
+                            changed.append(f"{operator}.{key} missing in exact form")
                     elif actual_conditions[key] != value:
-                        changed.append(f"{operator}.{key} value or type differs")
+                        changed.append(f"{operator}.{key} differs (received type "
+                                       f"{type(actual_conditions[key]).__name__})")
                 if actual_conditions.keys() - conditions.keys():
                     changed.append(f"unexpected keys in Condition.{operator}")
         if "Sid" in observed:
@@ -380,6 +402,76 @@ def nonce_policy_readback_diff(actual, expected):
         if changed:
             differences.append(f"expected rule {index + 1}: " + ", ".join(changed))
     return "; ".join(differences) if differences else "statement order"
+
+
+def report_nonce_bucket_diagnostics(opener, token, folder, deploy_sa, runtime_sa, policy):
+    """Collect independent read-only results even if an earlier request failed."""
+    settings, legacy_policy = nonce_bucket_contract(folder, runtime_sa)
+    bucket = settings["name"]
+    management = f"{STORAGE}/{bucket}"
+    s3 = f"https://storage.yandexcloud.net/{bucket}"
+
+    def probe(label, url, summarize=None):
+        result = None
+        try:
+            result = request_api(opener, token, url, label, status_only=summarize is None)
+        except YandexHttpError as error:
+            detail = f"HTTP {error.status}"
+        except WebHostingError:
+            detail = "response unavailable or invalid"
+        else:
+            detail = f"HTTP {result}" if summarize is None else f"HTTP 200; {summarize(result)}"
+        print(f"Nonce bucket diagnostic [{label}]: {detail}", flush=True)
+        return result
+
+    def basic_summary(data):
+        flags = data.get("anonymousAccessFlags", {})
+        private = isinstance(flags, dict) and all(
+            flags.get(key, False) is False for key in settings["anonymousAccessFlags"]
+        )
+        return (f"bucket and folder match: {data.get('name') == bucket and data.get('folderId') == folder}; "
+                f"anonymous access disabled: {private}; "
+                f"versioning disabled: {data.get('versioning', 'VERSIONING_DISABLED') == 'VERSIONING_DISABLED'}")
+
+    def acl_summary(data):
+        acl = data.get("acl")
+        grants = acl.get("grants", []) if isinstance(acl, dict) else None
+        approved = isinstance(grants, list) and all(
+            isinstance(grant, dict) and grant.get("grantType") == "GRANT_TYPE_ACCOUNT"
+            and grant.get("granteeId") == deploy_sa for grant in grants
+        )
+        return f"ACL matches the allowed grantees: {approved}"
+
+    def policy_summary(data):
+        if data == policy:
+            return "expected policy matches"
+        if data == legacy_policy:
+            return "only the previous runtime rule is present"
+        return nonce_policy_readback_diff(data, policy)
+
+    basic = probe("management VIEW_BASIC", management + "?view=VIEW_BASIC", basic_summary)
+    acl = probe("management VIEW_ACL", management + "?view=VIEW_ACL", acl_summary)
+    probe("management VIEW_FULL", management + "?view=VIEW_FULL")
+    try:
+        metadata = basic or acl
+        if not metadata or not metadata.get("resourceId"):
+            buckets = paged_list(lambda url, label: request_api(opener, token, url, label),
+                                 STORAGE, folder, "buckets", "List nonce buckets for IAM diagnostics")
+            metadata = choose(buckets, bucket, folder, "Private nonce bucket") or {}
+        if metadata.get("folderId") != folder:
+            raise WebHostingError("Nonce bucket folder could not be verified.")
+        identity = nonce_bucket_iam_resource_id(metadata, bucket)
+    except YandexHttpError as error:
+        print(f"Nonce bucket diagnostic [direct IAM bindings]: bucket lookup HTTP {error.status}", flush=True)
+    except WebHostingError:
+        print("Nonce bucket diagnostic [direct IAM bindings]: bucket resource ID unavailable", flush=True)
+    else:
+        probe("direct IAM bindings", f"{STORAGE}/{identity}:listAccessBindings",
+              lambda data: f"no direct bindings: {not (data.get('accessBindings') or data.get('nextPageToken'))}")
+    probe("S3 policy", s3 + "?policy", policy_summary)
+    probe("S3 lifecycle", s3 + "?lifecycle", lambda data: f"one-day used/ rule matches: {data.get('approved') is True}")
+    for query in ("acl", "cors", "website", "versioning", "location", "encryption"):
+        probe(f"S3 {query}", f"{s3}?{query}")
 
 
 def nonce_lifecycle_readback(rules):
@@ -596,7 +688,10 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     if len(candidates) > 1 or (candidates and not is_popup(candidates[0])):
         raise WebHostingError("Popup function candidate differs from the approved configuration.")
     print("Keep the verified diagnostics version and add only two popup POST methods.")
-    ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, nonce_policy=nonce_policy)
+    try:
+        ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, nonce_policy=nonce_policy)
+    except WebHostingError as error:
+        raise NonceBucketSetupError(str(error)) from None
     if mode == "preview":
         return
     ensure_serving(serving)
@@ -878,8 +973,12 @@ def main():
     runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
     nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa) if action == "popup" else None
-    execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id, version_id, api, update_api,
-            nonce_policy=nonce_policy)
+    try:
+        execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id, version_id, api, update_api,
+                nonce_policy=nonce_policy)
+    except NonceBucketSetupError:
+        report_nonce_bucket_diagnostics(opener, token, folder, deploy_sa, runtime_sa, nonce_policy)
+        raise
 
 
 if __name__ == "__main__":
