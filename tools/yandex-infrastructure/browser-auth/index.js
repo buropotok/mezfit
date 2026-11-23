@@ -136,7 +136,7 @@ function validClaims(claims, config, nonce, now = epoch()) {
       || claims.aud !== config.clientId
       || typeof claims.sub !== 'string' || claims.sub.length < 1 || claims.sub.length > 100
       || !Number.isSafeInteger(claims.id) || claims.id <= 0
-      || !Number.isInteger(claims.exp) || claims.exp <= now - 30
+      || !Number.isInteger(claims.exp) || claims.exp <= now
       || !Number.isInteger(claims.iat) || claims.iat > now + 60 || claims.iat < now - 600
       || claims.nonce !== nonce) return null;
   return {
