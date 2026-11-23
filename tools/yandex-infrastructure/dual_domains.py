@@ -82,6 +82,8 @@ def get_gateway(api, folder):
     if not gateway:
         raise WebHostingError("Original MezFit API Gateway not found; do not create another.")
     verify_gateway(gateway, folder, bucket_name(folder), api)
+    if gateway.get("status") != "ACTIVE":
+        raise WebHostingError("API Gateway must be ACTIVE before attaching a domain.")
     domain = gateway.get("domain", "")
     if (not isinstance(domain, str) or not domain.endswith(".apigw.yandexcloud.net")
             or not resource_id(gateway.get("id"))):
@@ -158,7 +160,7 @@ def dns_challenge(api, certificate, domain):
 
 def attached_to(gateway, domain, cert):
     candidates = [
-        attached for attached in gateway.get("attachedDomains", [])
+        attached for attached in (gateway.get("attachedDomains") or [])
         if isinstance(attached, dict) and attached.get("domain", "").rstrip(".") == domain
     ]
     if len(candidates) > 1:
