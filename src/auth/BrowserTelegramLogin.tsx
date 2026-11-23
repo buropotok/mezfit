@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { getBrowserSession, logoutBrowserSession } from '../api';
 import { Button, Surface, Text } from '../ui';
-import { parseBrowserSession, type BrowserIdentity } from './browserSession';
+import type { BrowserIdentity } from './browserSession';
 
 type BrowserAuthState =
   | { status: 'loading' }
@@ -21,20 +22,10 @@ export function BrowserTelegramLogin() {
     let active = true;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 5000);
-    void fetch('/auth/session', {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      signal: controller.signal,
-    }).then(async response => {
-      if (response.status === 401) {
-        if (active) setState({ status: 'signed-out' });
-        return;
+    void getBrowserSession(controller.signal).then(identity => {
+      if (active) {
+        setState(identity ? { status: 'signed-in', identity } : { status: 'signed-out' });
       }
-      if (!response.ok) throw new Error('Browser login unavailable');
-      const value: unknown = await response.json();
-      const identity = parseBrowserSession(value);
-      if (!identity) throw new Error('Invalid session response');
-      if (active) setState({ status: 'signed-in', identity });
     }).catch(() => {
       if (active) setState({ status: 'unavailable' });
     }).finally(() => window.clearTimeout(timeout));
@@ -48,12 +39,7 @@ export function BrowserTelegramLogin() {
   async function signOut() {
     setBusy(true);
     try {
-      const response = await fetch('/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin',
-        cache: 'no-store',
-      });
-      if (!response.ok) throw new Error('Logout failed');
+      await logoutBrowserSession();
       setState({ status: 'signed-out' });
     } catch {
       // Preserve the server-confirmed account on a transient logout failure.
