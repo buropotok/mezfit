@@ -91,10 +91,14 @@ def source_package(source=SOURCE):
         raise WebHostingError("Browser login handler source is missing or too large.")
     stream = io.BytesIO()
     with ZipFile(stream, "w", ZIP_DEFLATED) as archive:
-        item = ZipInfo("index.js", date_time=(2026, 1, 1, 0, 0, 0))
-        item.compress_type = ZIP_DEFLATED
-        item.external_attr = 0o644 << 16
-        archive.writestr(item, content)
+        for name, data in (
+            ("index.js", content),
+            ("package.json", (source.parent / "package.json").read_bytes()),
+        ):
+            item = ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
+            item.compress_type = ZIP_DEFLATED
+            item.external_attr = 0o644 << 16
+            archive.writestr(item, data)
     contents = stream.getvalue()
     digest = hashlib.sha256(contents).hexdigest()
     return contents, "MezFit browser OIDC code SHA256:" + digest
