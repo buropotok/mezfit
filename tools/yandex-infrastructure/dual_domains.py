@@ -133,6 +133,8 @@ def check_record(records, name, kind, value):
 def dns_challenge(api, certificate, domain):
     if certificate.get("status") in {"ISSUED", "RENEWING"}:
         return None
+    if certificate.get("status") != "VALIDATING":
+        raise WebHostingError(f"{domain} certificate is not awaiting validation; inspect its status.")
     detail = api(f"{CERTIFICATES}/{certificate['id']}?view=FULL",
                  f"Read {domain} certificate validation challenge")
     if detail.get("id") != certificate["id"] or detail.get("domains") != [domain]:
