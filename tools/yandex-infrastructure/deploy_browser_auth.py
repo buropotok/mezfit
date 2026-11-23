@@ -329,6 +329,15 @@ def main():
     confirm = os.environ.get("CONFIRM", "")
     require_confirmation(mode, action, confirm)
     folder = os.environ.get("YC_FOLDER_ID", "")
+    if not resource_id(folder):
+        raise WebHostingError("Missing approved YC_FOLDER_ID.")
+    # Avoid even partial IAM/Lockbox creation if the original website
+    # gateway is absent or already differs from the approved contract.
+    if mode == "apply" and action == "prepare":
+        current_gateway = choose(
+            paged_list(api, GATEWAYS, folder, "apiGateways", "Preflight browser auth Gateway"),
+            NAME_GATEWAY, folder, "Existing SPA gateway")
+        check_gateway(current_gateway, api, folder)
     runtime_sa, secret_id, version_id = bootstrap(mode, action, folder, api)
     execute(mode, action, confirm, folder,
             os.environ.get("YC_DEPLOY_SA_ID", ""),
