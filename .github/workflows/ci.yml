@@ -21,6 +21,8 @@ jobs:
           cache-dependency-path: package-lock.json
       - name: Verify Telegram OIDC Yandex Function contracts
         run: node --test tools/yandex-infrastructure/browser-auth/*.node-contract.cjs
+      - name: Verify Telegram JWKS mirror Worker contracts
+        run: node --test tools/jwks-mirror/*.node-contract.mjs
       - run: npm ci
       # Limit competing Vitest workers on shared CI runners without changing test timeouts or assertions.
       - run: npm test -- --maxWorkers=4
