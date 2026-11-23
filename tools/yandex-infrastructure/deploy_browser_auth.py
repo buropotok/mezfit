@@ -316,6 +316,72 @@ def deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa):
     return {**legacy, "Statement": [*legacy["Statement"], readback]}
 
 
+def nonce_policy_readback_diff(actual, expected):
+    """Report mismatched fields without printing any data from the policy."""
+    fields = ("Effect", "Principal", "Action", "Resource", "Condition")
+    differences = []
+    if actual.get("Version") != expected["Version"]:
+        differences.append("Version")
+    if "Id" in actual:
+        differences.append("Id present")
+    if actual.keys() - {"Version", "Id", "Statement"}:
+        differences.append("unexpected top-level fields")
+    rules = actual.get("Statement")
+    if isinstance(rules, dict):
+        rules = [rules]
+        differences.append("Statement is an object")
+    if not isinstance(rules, list):
+        return ", ".join([*differences, "Statement is missing or invalid"])
+
+    def as_list(value):
+        return [value] if isinstance(value, str) else value
+
+    expected_rules = expected["Statement"]
+    if len(rules) != len(expected_rules):
+        differences.append(f"Statement count {len(rules)} (expected {len(expected_rules)})")
+    for index, rule in enumerate(expected_rules):
+        candidates = [
+            item for item in rules
+            if isinstance(item, dict) and as_list(item.get("Resource")) == rule["Resource"]
+        ]
+        if len(candidates) != 1:
+            differences.append(f"expected rule {index + 1}: resource missing or ambiguous")
+            continue
+        observed = candidates[0]
+        changed = [field for field in fields if observed.get(field) != rule[field]]
+        if "Resource" in changed:
+            changed.append("Resource scalar form")
+        actions = as_list(observed.get("Action"))
+        if ("Action" in changed and isinstance(actions, list)
+                and all(isinstance(action, str) for action in actions)):
+            missing = [action for action in rule["Action"] if action not in actions]
+            extra = sum(action not in rule["Action"] for action in actions)
+            if missing or extra:
+                changed.append(f"missing actions [{', '.join(missing)}], unexpected actions {extra}")
+            elif len(actions) == len(rule["Action"]):
+                changed.append("same actions in different JSON form")
+        if "Condition" in changed and isinstance(observed.get("Condition"), dict):
+            for operator, conditions in rule["Condition"].items():
+                actual_conditions = observed["Condition"].get(operator)
+                if not isinstance(actual_conditions, dict):
+                    changed.append(f"Condition.{operator} missing or invalid")
+                    continue
+                for key, value in conditions.items():
+                    if key not in actual_conditions:
+                        changed.append(f"{operator}.{key} missing in exact form")
+                    elif actual_conditions[key] != value:
+                        changed.append(f"{operator}.{key} value or type differs")
+                if actual_conditions.keys() - conditions.keys():
+                    changed.append(f"unexpected keys in Condition.{operator}")
+        if "Sid" in observed:
+            changed.append("Sid present")
+        if observed.keys() - {*fields, "Sid"}:
+            changed.append("unexpected fields")
+        if changed:
+            differences.append(f"expected rule {index + 1}: " + ", ".join(changed))
+    return "; ".join(differences) if differences else "statement order"
+
+
 def nonce_lifecycle_readback(rules):
     # The management API can return inactive protobuf fields on a rule.
     # Only discard known defaults; additional active filters/rules are drift.
@@ -373,7 +439,8 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
                 elif result == legacy_policy:
                     result = "HTTP 200, only the previous runtime rule is present"
                 else:
-                    result = "HTTP 200, policy differs from the expected rules"
+                    result = ("HTTP 200, policy differs from the expected rules ("
+                              + nonce_policy_readback_diff(result, policy) + ")")
             probe = f" S3 GetBucketPolicy: {result}." if result is not None else ""
             raise WebHostingError(
                 f"Read private nonce bucket ({stage}): HTTP 403 for {bucket}.{probe} "
