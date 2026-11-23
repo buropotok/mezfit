@@ -31,6 +31,10 @@ class FakeCloud:
             return {"id": "op0001", "done": True, "response": {"id": SA_ID}}
         if url.startswith(mirror.STORAGE + "?"):
             return {"buckets": [self.bucket] if self.bucket else []}
+        if url == f"{mirror.STORAGE}/{mirror.bucket_name(FOLDER)}?view=VIEW_BASIC":
+            if not self.bucket:
+                raise AssertionError("Bucket metadata before creation")
+            return self.bucket
         if url == mirror.STORAGE:
             self.bucket = {
                 "name": mirror.bucket_name(FOLDER), "folderId": FOLDER,
