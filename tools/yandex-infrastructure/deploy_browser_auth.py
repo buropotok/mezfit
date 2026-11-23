@@ -79,7 +79,7 @@ def function_bindings(api, function_id):
     return items
 
 
-def has_gateway_invoker(bindings, sa):
+def has_gateway_invoker(bindings, deploy_sa):
     return any(binding.get("roleId") == "functions.functionInvoker"
                and binding.get("subject") == {"type": "serviceAccount", "id": sa}
                for binding in bindings)
@@ -178,12 +178,14 @@ def gateway_spec_changed(api, gateway, wanted):
     return spec_diff_paths(expected, actual)
 
 
-def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
-            update_api, sleep=time.sleep):
+def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
+            secret_version, api, update_api, sleep=time.sleep):
     if mode not in ("preview", "apply") or action not in ("prepare", "activate"):
         raise WebHostingError("Unknown browser auth operation.")
-    if not resource_id(folder) or not resource_id(sa):
+    if not resource_id(folder) or not resource_id(deploy_sa):
         raise WebHostingError("Missing YC_FOLDER_ID or YC_DEPLOY_SA_ID.")
+    if mode == "apply" and not resource_id(runtime_sa):
+        raise WebHostingError("Missing dedicated YC_LOGIN_RUNTIME_SA_ID.")
     if mode == "apply" and confirm != (PREPARE if action == "prepare" else ACTIVATE):
         raise WebHostingError("Wrong explicit confirmation.")
 
@@ -198,13 +200,13 @@ def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
     hosts = ",".join([gateway["domain"], "mezfit.online", "mezfit.ru"])
 
     if action == "prepare":
-        if not resource_id(secret_id) or not resource_id(secret_version):
+        if not resource_id(runtime_sa) or not resource_id(secret_id) or not resource_id(secret_version):
             if mode == "apply":
-                raise WebHostingError("Configure pinned Yandex Lockbox secret ID + version ID before Apply.")
+                raise WebHostingError("Configure dedicated runtime service account and pinned Yandex Lockbox secret ID + version ID before Apply.")
             print("PREVIEW: pinned Yandex Lockbox secret/version are not configured.")
         tagged = select_tagged_version(function_version_list(api, function["id"])) if function else None
-        if tagged and (not resource_id(secret_id) or not resource_id(secret_version)
-                       or not version_matches(tagged, fingerprint, sa, secret_id, secret_version, hosts)):
+        if tagged and (not resource_id(runtime_sa) or not resource_id(secret_id) or not resource_id(secret_version)
+                       or not version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts)):
             raise WebHostingError("Existing tagged browser login function version differs; manual review required.")
         print(f"Browser login function: {'reuse' if function else 'create'}; "
               f"version: {'reuse' if tagged else 'publish'}; source digest {fingerprint[-64:]}.")
@@ -224,17 +226,17 @@ def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
             if not function or function.get("id") != response.get("id"):
                 raise WebHostingError("New function readback differs; inspect before retry.")
         bindings = function_bindings(api, function["id"])
-        if not has_gateway_invoker(bindings, sa):
+        if not has_gateway_invoker(bindings, deploy_sa):
             access_update = api(f"{FUNCTIONS}/{function['id']}:updateAccessBindings",
                                 "Grant only gateway service account permission to invoke private function",
                                 {"accessBindingDeltas": [{
                                     "action": "ADD", "accessBinding": {
                                         "roleId": "functions.functionInvoker",
-                                        "subject": {"type": "serviceAccount", "id": sa},
+                                        "subject": {"type": "serviceAccount", "id": deploy_sa},
                                     },
                                 }]})
             await_operation(api, access_update, "Grant browser login function invoke access", sleep)
-            if not has_gateway_invoker(function_bindings(api, function["id"]), sa):
+            if not has_gateway_invoker(function_bindings(api, function["id"]), deploy_sa):
                 raise WebHostingError("Private function invocation permission failed readback.")
         if not tagged:
             # Only the explicitly tagged version is invoked; a failed publish
@@ -247,7 +249,7 @@ def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
                 "entrypoint": "index.handler",
                 "resources": {"memory": "268435456"},
                 "executionTimeout": "20s",
-                "serviceAccountId": sa,
+                "serviceAccountId": runtime_sa,
                 "content": base64.b64encode(content).decode("ascii"),
                 "environment": {"MEZFIT_AUTH_HOSTS": hosts},
                 "tag": [TAG],
@@ -257,21 +259,21 @@ def execute(mode, action, confirm, folder, sa, secret_id, secret_version, api,
             await_operation(api, api(VERSIONS, "Publish signed browser-login function version", data),
                             "Publish browser login version", sleep)
             tagged = select_tagged_version(function_version_list(api, function["id"]))
-            if not tagged or not version_matches(tagged, fingerprint, sa, secret_id, secret_version, hosts):
+            if not tagged or not version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts):
                 raise WebHostingError("Browser login function version failed strict readback.")
         print(f"Browser auth function prepared: {function['id']}. Activate gateway routes separately.")
         return
 
     if not function:
         raise WebHostingError("Browser auth function absent; run Prepare first.")
-    if not has_gateway_invoker(function_bindings(api, function["id"]), sa):
+    if not has_gateway_invoker(function_bindings(api, function["id"]), deploy_sa):
         raise WebHostingError("Existing private auth function does not grant invocation to the approved gateway SA.")
     tagged = select_tagged_version(function_version_list(api, function["id"]))
     if (not resource_id(secret_id) or not resource_id(secret_version)
-            or not tagged or not version_matches(tagged, fingerprint, sa, secret_id, secret_version, hosts)):
+            or not tagged or not version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts)):
         raise WebHostingError("Expected ACTIVE tagged browser auth version with pinned Lockbox secrets is absent.")
 
-    wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], sa)
+    wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
     diffs = gateway_spec_changed(api, gateway, wanted)
     if not diffs:
         print("Four exact browser-login routes are already active; no gateway update.")
@@ -316,6 +318,7 @@ def main():
     execute(os.environ.get("MODE", ""), os.environ.get("ACTION", ""),
             os.environ.get("CONFIRM", ""), os.environ.get("YC_FOLDER_ID", ""),
             os.environ.get("YC_DEPLOY_SA_ID", ""),
+            os.environ.get("YC_LOGIN_RUNTIME_SA_ID", ""),
             os.environ.get("YC_LOGIN_LOCKBOX_ID", ""),
             os.environ.get("YC_LOGIN_LOCKBOX_VERSION_ID", ""),
             api, update_api)
