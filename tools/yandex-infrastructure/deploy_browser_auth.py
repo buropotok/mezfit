@@ -146,7 +146,8 @@ def version_secrets(secret_id, secret_version):
 
 def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts, *, tagged=True):
     return (
-        version.get("description") == fingerprint
+        resource_id(version.get("id"))
+        and version.get("description") == fingerprint
         and version.get("status") == "ACTIVE"
         and version.get("runtime") == "nodejs22"
         and version.get("entrypoint") == "index.handler"
@@ -289,6 +290,12 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
         if gateway_spec_changed(api, gateway, wanted):
             raise WebHostingError("Exact active auth gateway routes required before diagnostics upgrade.")
         if version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts):
+            old = [v for v in function_version_list(api, function["id"])
+                   if PREVIOUS_TAG in v.get("tags", [])]
+            if len(old) != 1 or not version_matches(
+                    old[0], BASELINE_FINGERPRINT, runtime_sa, secret_id,
+                    secret_version, hosts, tagged=False):
+                raise WebHostingError("Diagnostic version active without validated rollback baseline.")
             print("Diagnostic browser auth version already active; no writes.")
             return
         if not version_matches(tagged, BASELINE_FINGERPRINT, runtime_sa,
@@ -323,7 +330,8 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
             if len(preserved) != 1 or PREVIOUS_TAG not in preserved[0].get("tags", []):
                 raise WebHostingError("Baseline rollback tag failed readback.")
         if not candidate:
-            if select_tagged_version(function_version_list(api, function["id"])).get("id") != tagged["id"]:
+            current_before_publish = select_tagged_version(function_version_list(api, function["id"]))
+            if not current_before_publish or current_before_publish.get("id") != tagged["id"]:
                 raise WebHostingError("Serving function changed concurrently; rerun Preview.")
             payload = {
                 "functionId": function["id"],
