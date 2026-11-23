@@ -39,7 +39,7 @@ export function loadTelegramLoginSdk(): Promise<TelegramLoginSdk> {
       window.clearTimeout(timeout);
       unavailable();
     }, { once: true });
-    document.head.append(script);
+    document.head.appendChild(script);
   }).finally(() => { pendingSdk = undefined; });
   return pendingSdk;
 }
