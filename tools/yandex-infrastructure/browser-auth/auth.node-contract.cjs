@@ -198,3 +198,108 @@ test('unauthorized host, missing config and protected /api paths fail closed', a
     process.env.TG_OIDC_CLIENT_SECRET = old;
   }
 });
+
+test('OIDC diagnostics distinguish token network failures and upstream rejection without leaking secrets', async () => {
+  for (const scenario of [
+    { name: 'dns', fetch: async () => {
+      const error = new TypeError('PRIVATE_CLIENT_SECRET_SHOULD_NOT_LOG');
+      error.cause = { code: 'ENOTFOUND' };
+      throw error;
+    }, code: 'dns' },
+    { name: 'http', fetch: async () => new Response(
+      JSON.stringify({ error: 'PRIVATE_UPSTREAM_BODY_SHOULD_NOT_LOG' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    ), code: 'http_error', httpStatus: 401 },
+    { name: 'timeout', fetch: async () => {
+      const error = new Error('PRIVATE_ERROR_DETAILS_SHOULD_NOT_LOG');
+      error.name = 'TimeoutError';
+      throw error;
+    }, code: 'timeout' },
+  ]) {
+    const start = await handler(events('/auth/start'));
+    const authorize = new URL(start.headers.Location);
+    const originalFetch = global.fetch;
+    const originalWarn = console.warn;
+    const warnings = [];
+    global.fetch = scenario.fetch;
+    console.warn = value => { warnings.push(value); };
+    let response;
+    try {
+      response = await handler(events('/auth/callback', 'GET',
+        { Cookie: cookiePair(start.multiValueHeaders['Set-Cookie'][0]) },
+        { code: 'auth-code-123456', state: authorize.searchParams.get('state') }));
+    } finally {
+      global.fetch = originalFetch;
+      console.warn = originalWarn;
+    }
+    assert.equal(response.statusCode, 401, scenario.name);
+    const body = JSON.parse(response.body);
+    assert.equal(body.error, 'TELEGRAM_LOGIN_VERIFICATION_FAILED');
+    assert.match(body.incidentId, /^[a-zA-Z0-9_-]{16}$/);
+    assert.equal(warnings.length, 1, scenario.name);
+    const logged = JSON.parse(warnings[0]);
+    assert.deepEqual(logged, {
+      event: 'mezfit.browser_oidc.failure',
+      incidentId: body.incidentId,
+      stage: 'token',
+      code: scenario.code,
+      ...(scenario.httpStatus ? { httpStatus: scenario.httpStatus } : {}),
+    });
+    assert.ok(!/PRIVATE_|auth-code-123456|test-client-secret|client_id|Cookie|Authorization/.test(warnings[0]));
+    assert.equal(response.multiValueHeaders['Set-Cookie'].length, 1);
+  }
+});
+
+test('OIDC diagnostics separate JWKS reachability from signature and claims checks', async () => {
+  for (const scenario of [
+    { name: 'jwks_dns', stage: 'jwks', code: 'dns' },
+    { name: 'jwt_claims', stage: 'jwt', code: 'invalid_claims' },
+    { name: 'jwt_signature', stage: 'jwt', code: 'invalid_signature' },
+  ]) {
+    const start = await handler(events('/auth/start'));
+    const authorize = new URL(start.headers.Location);
+    const nonce = authorize.searchParams.get('nonce');
+    let token = jwt(nonce, scenario.name === 'jwt_claims' ? { aud: 'unrelated-audience' } : {});
+    if (scenario.name === 'jwt_signature') {
+      const pieces = token.split('.');
+      pieces[2] = pieces[2].slice(0, -3) + 'abc';
+      token = pieces.join('.');
+    }
+    const originalFetch = global.fetch;
+    const originalWarn = console.warn;
+    const warnings = [];
+    global.fetch = async url => {
+      if (url === 'https://oauth.telegram.org/token') {
+        return new Response(JSON.stringify({ id_token: token }), { status: 200 });
+      }
+      if (url === 'https://oauth.telegram.org/.well-known/jwks.json') {
+        if (scenario.name === 'jwks_dns') {
+          const error = new TypeError('PRIVATE_JWKS_FAILURE_SHOULD_NOT_LOG');
+          error.cause = { code: 'EAI_AGAIN' };
+          throw error;
+        }
+        return new Response(JSON.stringify({ keys: [publicJwk] }), { status: 200 });
+      }
+      throw new Error('Unexpected URL');
+    };
+    console.warn = value => { warnings.push(value); };
+    let response;
+    try {
+      response = await handler(events('/auth/callback', 'GET',
+        { Cookie: cookiePair(start.multiValueHeaders['Set-Cookie'][0]) },
+        { code: 'auth-code-123456', state: authorize.searchParams.get('state') }));
+    } finally {
+      global.fetch = originalFetch;
+      console.warn = originalWarn;
+    }
+    assert.equal(response.statusCode, 401, scenario.name);
+    assert.equal(warnings.length, 1, scenario.name);
+    const body = JSON.parse(response.body);
+    const log = JSON.parse(warnings[0]);
+    assert.equal(log.incidentId, body.incidentId);
+    assert.equal(log.stage, scenario.stage);
+    assert.equal(log.code, scenario.code);
+    assert.ok(!/PRIVATE_|opaque-telegram-oidc-subject|Example User|auth-code-123456/.test(warnings[0]));
+    assert.deepEqual(Object.keys(body).sort(), ['error', 'incidentId']);
+  }
+});
