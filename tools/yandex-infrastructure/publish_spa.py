@@ -29,7 +29,15 @@ def files_to_publish(directory):
         if entry.is_symlink():
             raise WebHostingError(f"Refusing symlink inside dist: {entry}")
         if entry.is_file():
-            name = entry.relative_to(root).as_posix()
+            relative_path = entry.relative_to(root)
+            name = relative_path.as_posix()
+            # Vite copies empty public/.gitkeep placeholders into dist/.
+            # Never upload them; non-empty or hidden-directory files stay forbidden.
+            if (relative_path.name == ".gitkeep"
+                    and all(not part.startswith(".") for part in relative_path.parts[:-1])):
+                if entry.stat().st_size != 0:
+                    raise WebHostingError(f"Refusing non-empty .gitkeep file: {name}")
+                continue
             if name.startswith(".") or "/." in name or name.endswith(".map"):
                 raise WebHostingError(f"Refusing hidden or source-map file: {name}")
             files.append((name, entry))
