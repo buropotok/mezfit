@@ -23,7 +23,7 @@ async function hmac(key, message) {
 async function s3Request(env, method, name, payload) {
   if (!/^[a-z0-9-]{3,63}$/.test(env.YC_JWKS_BUCKET || '') ||
       !/^mezfit-telegram-jwks-[a-z0-9]+$/.test(env.YC_JWKS_BUCKET) ||
-      !/^[A-Za-z0-9]+$/.test(env.YC_JWKS_ACCESS_KEY_ID || '') ||
+      !/^[A-Za-z0-9_-]{5,128}$/.test(env.YC_JWKS_ACCESS_KEY_ID || '') ||
       !env.YC_JWKS_SECRET_ACCESS_KEY ||
       !['jwks.json', 'status.json'].includes(name) ||
       !['GET', 'PUT'].includes(method)) throw new Error('CONFIG_INVALID');
