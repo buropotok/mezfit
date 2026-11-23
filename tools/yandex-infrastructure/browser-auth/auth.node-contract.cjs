@@ -262,7 +262,7 @@ test('OIDC diagnostics separate JWKS reachability from signature and claims chec
     let token = jwt(nonce, scenario.name === 'jwt_claims' ? { aud: 'unrelated-audience' } : {});
     if (scenario.name === 'jwt_signature') {
       const pieces = token.split('.');
-      pieces[2] = pieces[2].slice(0, -3) + 'abc';
+      pieces[2] = (pieces[2][0] === 'A' ? 'B' : 'A') + pieces[2].slice(1);
       token = pieces.join('.');
     }
     const originalFetch = global.fetch;
