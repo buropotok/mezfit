@@ -152,8 +152,8 @@ def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sle
     target = Path(output_file)
     if not target.parent.is_dir() or target.exists():
         raise WebHostingError("Credentials path must be new in a pre-existing runner temp directory.")
-    with target.open("x", encoding="utf-8") as handle:
-        os.chmod(target, 0o600)
+    fd = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
         response = api(IAM_KEYS, "Create one-time JWKS publisher S3 key", {
             "serviceAccountId": sa["id"],
             "description": "MezFit isolated Telegram JWKS mirror Worker",
