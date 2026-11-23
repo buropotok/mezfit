@@ -165,7 +165,8 @@ test('session tokens cannot be forged, extended or used across hosts', async () 
   const response = await handler(events('/auth/session', 'GET',
     { Cookie: '__Host-mz_browser_session=' + signed }));
   assert.equal(response.statusCode, 200);
-  const tampered = signed.slice(0, -1) + (signed.slice(-1) === 'A' ? 'B' : 'A');
+  const [body, mac] = signed.split('.');
+  const tampered = body + '.' + (mac[0] === 'A' ? 'B' : 'A') + mac.slice(1);
   assert.equal((await handler(events('/auth/session', 'GET',
     { Cookie: '__Host-mz_browser_session=' + tampered }))).statusCode, 401);
   for (const override of ({ exp: now() - 1 }, { exp: now() + 100000 }, { host: 'mezfit.ru' })) {
