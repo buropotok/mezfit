@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import mirror, { normalizeJwks } from './worker.mjs';
+import mirror, { normalizeJwks, refresh } from './worker.mjs';
 
 const rsa = (kid, n = 'A'.repeat(342)) => ({ kty: 'RSA', alg: 'RS256', use: 'sig', kid, n, e: 'AQAB' });
 
@@ -23,4 +23,56 @@ test('does not provide any public fetching/proxy endpoint', async () => {
   const response = mirror.fetch();
   assert.equal(response.status, 404);
   assert.equal(await response.text(), 'Not Found');
+});
+
+test('minute refresh publishes changed JWKS once and always advances heartbeat', async () => {
+  const savedFetch = globalThis.fetch;
+  const objects = new Map();
+  const writes = [];
+  const env = {
+    YC_JWKS_BUCKET: 'mezfit-telegram-jwks-b1g774t6sgop4rakjob7',
+    YC_JWKS_ACCESS_KEY_ID: 'YCAJE12345678',
+    YC_JWKS_SECRET_ACCESS_KEY: 'example-local-fixture-only-s3-signing-secret',
+  };
+  globalThis.fetch = async (url, options = {}) => {
+    const address = url.toString();
+    if (address === 'https://oauth.telegram.org/.well-known/jwks.json') {
+      return new Response(JSON.stringify({ keys: [rsa('telegram-key')] }), { status: 200 });
+    }
+    const name = address.split('/').at(-1);
+    assert.match(options.headers.Authorization, /^AWS4-HMAC-SHA256 Credential=/);
+    assert.ok(['jwks.json', 'status.json'].includes(name));
+    if (options.method === 'GET') {
+      return objects.has(name)
+        ? new Response(objects.get(name), { status: 200 })
+        : new Response('not-found', { status: 404 });
+    }
+    assert.equal(options.method, 'PUT');
+    writes.push(name);
+    objects.set(name, new TextDecoder().decode(options.body));
+    return new Response('', { status: 200 });
+  };
+  try {
+    assert.deepEqual(await refresh(env), { changed: true, keyCount: 1 });
+    assert.deepEqual(await refresh(env), { changed: false, keyCount: 1 });
+    assert.deepEqual(writes, ['jwks.json', 'status.json', 'status.json']);
+    assert.deepEqual(JSON.parse(objects.get('status.json')).kids, ['telegram-key']);
+  } finally {
+    globalThis.fetch = savedFetch;
+  }
+});
+
+test('invalid Telegram JWKS never publishes objects', async () => {
+  const savedFetch = globalThis.fetch;
+  let storageCalled = false;
+  globalThis.fetch = async url => {
+    if (url.toString().includes('storage.yandexcloud.net')) storageCalled = true;
+    return new Response(JSON.stringify({ keys: [{ ...rsa('fake'), alg: 'HS256' }] }), { status: 200 });
+  };
+  try {
+    await assert.rejects(refresh({}), /JWKS_INVALID/);
+    assert.equal(storageCalled, false);
+  } finally {
+    globalThis.fetch = savedFetch;
+  }
 });
