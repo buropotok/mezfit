@@ -73,6 +73,11 @@ jobs:
               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
               "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts" \
               -o /dev/null
+            code=$(curl --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/mezfit-telegram-jwks-mirror")
+            [[ "$code" == "404" ]] || {
+              echo 'Cloudflare mirror Worker already exists or cannot be inspected; manual review required' >&2
+              exit 1
+            }
           fi
 
       - name: Acquire Yandex short-lived IAM token through existing federation
