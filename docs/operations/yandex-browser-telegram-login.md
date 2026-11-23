@@ -14,6 +14,35 @@ The function uses only the official Telegram HTTPS JWKS. A warm instance keeps k
 4. A failed sign-in displays sanitized `stage`, `code`, an optional `httpStatus` and `incidentId`. `jwks: timeout` means Yandex did not receive the keys in time. `jwt` means verification rejected the token. `challenge` identifies the one-time attempt or storage validation. The first real sign-in after publishing checks live reachability from the function. The diagnostics contain no JWT, authentication code, cookie, credentials or user data.
 5. To roll back, run `action=popup-rollback`, `mode=preview`, then `mode=apply`, `confirm=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP`. This removes the two POST methods and restores the verified diagnostics version. An already-published SPA uses the original flow when the popup endpoint responds with HTTP 404/405. The private bucket remains in place and its lifecycle rule expires markers. Browser identity still gives no access to `/api/*` or Dexie Cloud.
 
+### Nonce bucket recovery after HTTP 403
+
+If Preview reports `Read private nonce bucket (preflight): HTTP 403`, ask a
+Yandex Cloud operator with permission to view and edit the bucket policy to
+open the bucket named in the error under **Object Storage → Security → Access
+policy**. If the policy contains only the original runtime statement granting
+conditional `s3:PutObject` under `used/`, append the following statement to
+the existing `Statement` array. Substitute the workflow variable
+`YC_DEPLOY_SA_ID` and the exact bucket name from the error.
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": {"CanonicalUser": ["<YC_DEPLOY_SA_ID>"]},
+  "Action": [
+    "s3:GetBucketAcl", "s3:GetBucketCORS", "s3:GetBucketLocation",
+    "s3:GetBucketVersioning", "s3:GetBucketWebsite",
+    "s3:GetEncryptionConfiguration", "s3:GetLifecycleConfiguration"
+  ],
+  "Resource": ["arn:aws:s3:::<bucket-name>"],
+  "Condition": {"Bool": {"aws:SecureTransport": "true"}}
+}
+```
+
+Save the policy and run popup Preview again. Proceed to Apply when Preview
+passes. If the operator cannot inspect the policy, the policy differs from
+the expected runtime-only policy, or Preview still returns 403, inspect
+deployment IAM and bucket access before changing any settings.
+
 ## Original redirect flow
 
 **Scope:** a real Telegram OpenID Connect (OIDC) browser login flow on

@@ -45,6 +45,12 @@ BASELINE_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
 SOURCE = Path(__file__).parent / "browser-auth" / "index.js"
 
 
+class YandexHttpError(WebHostingError):
+    def __init__(self, label, status):
+        self.status = status
+        super().__init__(f"{label}: HTTP {status}; inspect scoped Yandex IAM and resource state.")
+
+
 def approved_nonce_lifecycle_xml(body):
     # S3 returns the effective rule, including all filters and actions.
     # Compare the exact tree, ignoring only element order and the S3 namespace.
@@ -106,7 +112,7 @@ def request_api(opener, token, url, label, payload=None, method=None):
             else:
                 result = {} if verb == "PUT" else json.load(response)
     except HTTPError as error:
-        raise WebHostingError(f"{label}: HTTP {error.code}; inspect scoped Yandex IAM and resource state.") from None
+        raise YandexHttpError(label, error.code) from None
     except (URLError, OSError, ValueError):
         raise WebHostingError(f"{label}: Yandex API response unavailable or invalid.") from None
     if not isinstance(result, dict):
@@ -280,6 +286,21 @@ def nonce_bucket_contract(folder, runtime_sa):
     return settings, policy
 
 
+def deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa):
+    if not resource_id(deploy_sa) or deploy_sa == runtime_sa:
+        raise WebHostingError("Nonce bucket requires a distinct deploy service account.")
+    settings, legacy = nonce_bucket_contract(folder, runtime_sa)
+    readback = {
+        "Effect": "Allow", "Principal": {"CanonicalUser": [deploy_sa]},
+        "Action": ["s3:GetBucketAcl", "s3:GetBucketCORS", "s3:GetBucketLocation",
+                   "s3:GetBucketVersioning", "s3:GetBucketWebsite", "s3:GetEncryptionConfiguration",
+                   "s3:GetLifecycleConfiguration"],
+        "Resource": [f"arn:aws:s3:::{settings['name']}"],
+        "Condition": {"Bool": {"aws:SecureTransport": "true"}},
+    }
+    return {**legacy, "Statement": [*legacy["Statement"], readback]}
+
+
 def nonce_lifecycle_readback(rules):
     # The management API can return inactive protobuf fields on a rule.
     # Only discard known defaults; additional active filters/rules are drift.
@@ -319,12 +340,23 @@ def nonce_lifecycle_readback(rules):
     return [rule]
 
 
-def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep):
-    settings, policy = nonce_bucket_contract(folder, runtime_sa)
+def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, *, nonce_policy=None):
+    settings, legacy_policy = nonce_bucket_contract(folder, runtime_sa)
+    policy = legacy_policy if nonce_policy is None else nonce_policy
     bucket = settings["name"]
 
-    def read():
-        current = api(f"{STORAGE}/{bucket}?view=VIEW_FULL", "Read private nonce bucket")
+    def read(stage):
+        try:
+            current = api(f"{STORAGE}/{bucket}?view=VIEW_FULL", f"Read private nonce bucket ({stage})")
+        except YandexHttpError as error:
+            if error.status != 403:
+                raise
+            raise WebHostingError(
+                f"Read private nonce bucket ({stage}): HTTP 403 for {bucket}. "
+                "Check deploy IAM and the existing bucket policy before retrying. "
+                "If only the runtime rule is present, follow nonce bucket recovery in "
+                "docs/operations/yandex-browser-telegram-login.md."
+            ) from None
         flags = current.get("anonymousAccessFlags", {})
         website = current.get("websiteSettings")
         fields = [key for key in ("name", "folderId", "tags") if current.get(key) != settings[key]]
@@ -340,7 +372,7 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
             fields.append("websiteSettings")
         if current.get("cors") not in ([], None):
             fields.append("cors")
-        if current.get("policy") not in ({}, None, policy):
+        if current.get("policy") not in ({}, None, legacy_policy, policy):
             fields.append("policy")
         lifecycle = current.get("lifecycleRules")
         lifecycle_missing = lifecycle in ([], None) and current.get("policy") in ({}, None)
@@ -369,38 +401,41 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
 
     existing = choose(paged_list(api, STORAGE, folder, "buckets", "List nonce buckets"),
                       bucket, folder, "Private nonce bucket")
-    current = read() if existing else {}
-    print(f"Nonce bucket: {'reuse' if existing else 'create'}; one-day expiry for empty markers.")
+    current = read("preflight") if existing else {}
+    policy_action = "reuse" if current.get("policy") == policy else "install"
+    print(f"Nonce bucket: {'reuse' if existing else 'create'}; one-day expiry for empty markers; "
+          f"policy: {policy_action}.", flush=True)
     if mode == "preview":
         return bucket
     if not existing:
         await_operation(api, api(STORAGE, "Create private nonce bucket", settings),
                         "Create private nonce bucket", sleep)
-        current = read()
+        current = read("after creation")
     if current.get("lifecycleRules") in ([], None):
-        current = read()
+        current = read("before lifecycle update")
         if current.get("lifecycleRules") in ([], None):
             await_operation(api, update_api(f"{STORAGE}/{bucket}", "Install missing nonce lifecycle", {
                 "updateMask": "lifecycleRules", "lifecycleRules": settings["lifecycleRules"],
             }, method="PATCH"), "Install missing nonce lifecycle", sleep)
-            current = read()
+            current = read("after lifecycle update")
             if nonce_lifecycle_readback(current.get("lifecycleRules")) != settings["lifecycleRules"]:
                 raise WebHostingError("Nonce bucket lifecycleRules failed readback.")
     if current.get("policy") != policy:
-        fresh = read()
+        fresh = read("before policy update")
         if nonce_lifecycle_readback(fresh.get("lifecycleRules")) != settings["lifecycleRules"]:
             raise WebHostingError("Nonce bucket lifecycleRules changed concurrently; run Preview again.")
-        if fresh.get("policy") not in ({}, None):
+        if fresh.get("policy") != current.get("policy"):
             raise WebHostingError("Nonce bucket policy changed concurrently; run Preview again.")
         update_api(f"https://storage.yandexcloud.net/{bucket}?policy", "Install exact nonce bucket policy",
                    policy, method="PUT")
-        if read().get("policy") != policy:
+        print("Nonce bucket policy submitted. Verifying deployed settings.", flush=True)
+        if read("after policy update").get("policy") != policy:
             raise WebHostingError("Nonce bucket policy failed readback.")
     return bucket
 
 
 def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
-                 secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep):
+                 secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep, *, nonce_policy):
     function_id = function["id"]
     legacy_spec = browser_auth_gateway_spec(bucket_name(folder), function_id, deploy_sa)
     popup_spec = browser_auth_gateway_spec(bucket_name(folder), function_id, deploy_sa, popup=True)
@@ -470,7 +505,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     if len(candidates) > 1 or (candidates and not is_popup(candidates[0])):
         raise WebHostingError("Popup function candidate differs from the approved configuration.")
     print("Keep the verified diagnostics version and add only two popup POST methods.")
-    ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep)
+    ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, nonce_policy=nonce_policy)
     if mode == "preview":
         return
     ensure_serving(serving)
@@ -500,7 +535,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
 
 
 def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
-            secret_version, api, update_api, sleep=time.sleep):
+            secret_version, api, update_api, sleep=time.sleep, *, nonce_policy=None):
     require_confirmation(mode, action, confirm)
     if not resource_id(folder) or not resource_id(deploy_sa):
         raise WebHostingError("Missing YC_FOLDER_ID or YC_DEPLOY_SA_ID.")
@@ -592,7 +627,8 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
 
     if action in {"popup", "popup-rollback"}:
         deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
-                     secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep)
+                     secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep,
+                     nonce_policy=nonce_policy)
         return
 
     wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
@@ -749,9 +785,10 @@ def main():
         check_gateway(current_gateway, api, folder)
     bootstrap_action = "upgrade" if action in {"popup", "popup-rollback"} else action
     runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
-    execute(mode, action, confirm, folder,
-            os.environ.get("YC_DEPLOY_SA_ID", ""),
-            runtime_sa, secret_id, version_id, api, update_api)
+    deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
+    nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa) if action == "popup" else None
+    execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id, version_id, api, update_api,
+            nonce_policy=nonce_policy)
 
 
 if __name__ == "__main__":
