@@ -51,7 +51,11 @@ def check_bucket(bucket, folder, deploy_sa):
         raise WebHostingError("Static S3 authentication disabled for JWKS bucket.")
     if bucket.get("policy") not in ({}, None) or bucket.get("cors") not in ([], None):
         raise WebHostingError("Unexpected JWKS bucket policy or CORS settings.")
-    if bucket.get("websiteSettings") not in ({}, None):
+    website = bucket.get("websiteSettings")
+    empty_website = {"index": "", "error": "", "routingRules": [], "redirectAllRequests": {}}
+    if website not in ({}, None) and (not isinstance(website, dict)
+            or any(k not in empty_website or v not in (empty_website[k], None)
+                   for k, v in website.items())):
         raise WebHostingError("JWKS bucket may not serve a static website.")
     grants = bucket.get("acl", {}).get("grants", [])
     if not isinstance(grants, list) or any(
