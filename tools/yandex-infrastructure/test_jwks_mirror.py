@@ -111,5 +111,21 @@ class JwksMirrorTests(unittest.TestCase):
             self.call(fake)
 
 
+    def test_upgrade_reuses_one_existing_key_without_yandex_writes(self):
+        fake = FakeCloud()
+        self.call(fake, "apply", "prepare", mirror.APPROVALS["prepare"])
+        with self.assertRaises(WebHostingError):
+            self.call(fake, "preview", "upgrade")
+        fake.keys.append({"serviceAccountId": SA_ID, "keyId": "YCAJEK0Iv6xqy-pEQcueLTAdg"})
+        count = len(fake.writes)
+        self.call(fake, "preview", "upgrade")
+        self.call(fake, "apply", "upgrade", mirror.APPROVALS["upgrade"])
+        self.assertEqual(count, len(fake.writes))
+        self.assertEqual(len(fake.keys), 1)
+        fake.keys.append({"serviceAccountId": SA_ID, "keyId": "YCAJEanother"})
+        with self.assertRaises(WebHostingError):
+            self.call(fake, "preview", "upgrade")
+
+
 if __name__ == "__main__":
     unittest.main()
