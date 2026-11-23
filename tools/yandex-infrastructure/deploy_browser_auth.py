@@ -46,8 +46,9 @@ SOURCE = Path(__file__).parent / "browser-auth" / "index.js"
 
 
 class YandexHttpError(WebHostingError):
-    def __init__(self, label, status):
+    def __init__(self, label, status, *, nonce_policy_readback=None):
         self.status = status
+        self.nonce_policy_readback = nonce_policy_readback
         super().__init__(f"{label}: HTTP {status}; inspect scoped Yandex IAM and resource state.")
 
 
@@ -112,7 +113,21 @@ def request_api(opener, token, url, label, payload=None, method=None):
             else:
                 result = {} if verb == "PUT" else json.load(response)
     except HTTPError as error:
-        raise YandexHttpError(label, error.code) from None
+        nonce_policy_readback = None
+        nonce_full_view = re.fullmatch(
+            re.escape(STORAGE) + r"/(mezfit-browser-nonce-[0-9a-f]{16})\?view=VIEW_FULL", url,
+        )
+        if verb == "GET" and error.code == 403 and nonce_full_view:
+            bucket = nonce_full_view[1]
+            try:
+                nonce_policy_readback = request_api(
+                    opener, token, f"https://storage.yandexcloud.net/{bucket}?policy", "S3 GetBucketPolicy",
+                )
+            except YandexHttpError as probe_error:
+                nonce_policy_readback = f"HTTP {probe_error.status}"
+            except WebHostingError:
+                nonce_policy_readback = "response unavailable or invalid"
+        raise YandexHttpError(label, error.code, nonce_policy_readback=nonce_policy_readback) from None
     except (URLError, OSError, ValueError):
         raise WebHostingError(f"{label}: Yandex API response unavailable or invalid.") from None
     if not isinstance(result, dict):
@@ -351,9 +366,18 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
         except YandexHttpError as error:
             if error.status != 403:
                 raise
+            result = error.nonce_policy_readback
+            if isinstance(result, dict):
+                if result == policy:
+                    result = "HTTP 200, policy matches the expected rules"
+                elif result == legacy_policy:
+                    result = "HTTP 200, only the previous runtime rule is present"
+                else:
+                    result = "HTTP 200, policy differs from the expected rules"
+            probe = f" S3 GetBucketPolicy: {result}." if result is not None else ""
             raise WebHostingError(
-                f"Read private nonce bucket ({stage}): HTTP 403 for {bucket}. "
-                "Check deploy IAM and the existing bucket policy before retrying. "
+                f"Read private nonce bucket ({stage}): HTTP 403 for {bucket}.{probe} "
+                "Full bucket verification is required before rollout. "
                 "If only the runtime rule is present, follow nonce bucket recovery in "
                 "docs/operations/yandex-browser-telegram-login.md."
             ) from None
