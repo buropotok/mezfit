@@ -45,6 +45,7 @@ import { ClientInviteEntry, isClientInviteStartParam } from './invite/ClientInvi
 import { BotStartScreen } from './invite/BotStartScreen';
 import { Button as KonstaButton } from 'konsta/react';
 import { Button, GlassSurfaceProvider, Text } from './ui';
+import { BrowserTelegramLogin } from './auth/BrowserTelegramLogin';
 import { ClientWorkoutProvider } from './workout/ClientWorkoutContext';
 import { PlannedWorkoutStartProvider } from './workout/PlannedWorkoutStartContext';
 import { WorkoutCompletionProvider } from './workout/WorkoutCompletionContext';
@@ -374,15 +375,7 @@ export function App() {
   if (state.status === 'loading') return <main className="center"><p>Подключаем Mezfit…</p></main>;
 
   if (state.status === 'outside-telegram') {
-    return (
-      <main className="center">
-        <section className="card">
-          <div className="eyebrow">Mezfit</div>
-          <h1>Откройте приложение в Telegram</h1>
-          <p>Mini App использует Telegram initData для безопасной авторизации. Откройте @mezfit_bot и запустите Mezfit оттуда.</p>
-        </section>
-      </main>
-    );
+    return <BrowserTelegramLogin />;
   }
 
   if (state.status === 'error') {
