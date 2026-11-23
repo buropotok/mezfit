@@ -9,7 +9,8 @@ interface BrowserIdentity {
 
 type BrowserAuthState =
   | { status: 'loading' }
-  | { status: 'signed-out'; message?: string }
+  | { status: 'signed-out' }
+  | { status: 'unavailable' }
   | { status: 'signed-in'; identity: BrowserIdentity };
 
 function parseBrowserSession(value: unknown): BrowserIdentity | null {
@@ -39,27 +40,31 @@ export function BrowserTelegramLogin() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
     void fetch('/auth/session', {
       credentials: 'same-origin',
       cache: 'no-store',
       signal: controller.signal,
     }).then(async response => {
       if (response.status === 401) {
-        if (!controller.signal.aborted) setState({ status: 'signed-out' });
+        if (active) setState({ status: 'signed-out' });
         return;
       }
       if (!response.ok) throw new Error('Browser login unavailable');
       const value: unknown = await response.json();
       const identity = parseBrowserSession(value);
       if (!identity) throw new Error('Invalid session response');
-      if (!controller.signal.aborted) setState({ status: 'signed-in', identity });
+      if (active) setState({ status: 'signed-in', identity });
     }).catch(() => {
-      if (!controller.signal.aborted) {
-        setState({ status: 'signed-out', message: 'Браузерная авторизация пока недоступна. Можно открыть приложение через Telegram.' });
-      }
-    });
-    return () => controller.abort();
+      if (active) setState({ status: 'unavailable' });
+    }).finally(() => window.clearTimeout(timeout));
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   async function signOut() {
@@ -73,8 +78,7 @@ export function BrowserTelegramLogin() {
       if (!response.ok) throw new Error('Logout failed');
       setState({ status: 'signed-out' });
     } catch {
-      setState(previous => previous.status === 'signed-in' ? previous
-        : { status: 'signed-out', message: 'Не удалось завершить сеанс.' });
+      // Preserve the server-confirmed account on a transient logout failure.
     } finally {
       setBusy(false);
     }
@@ -100,10 +104,17 @@ export function BrowserTelegramLogin() {
                 Выйти
               </Button>
             </>
+          ) : state.status === 'unavailable' ? (
+            <>
+              <Text>Откройте приложение в Telegram.</Text>
+              <Text variant="footnote" tone="muted">
+                Браузерная авторизация на этом адресе пока не подключена.
+                Для работы Mini App откройте @mezfit_bot в Telegram.
+              </Text>
+            </>
           ) : (
             <>
               <Text>Подтвердите вход в Telegram, чтобы связать браузерную сессию с вашим аккаунтом.</Text>
-              {state.message ? <Text variant="footnote" tone="muted">{state.message}</Text> : null}
               <Button onClick={() => window.location.assign('/auth/start')}>Войти через Telegram</Button>
               <Text variant="footnote" tone="muted">
                 Для полной работы приложения пока откройте @mezfit_bot в Telegram.
