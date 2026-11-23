@@ -118,16 +118,16 @@ def check_record(records, name, kind, value):
     typed = [record for record in matches if record.get("type") == kind]
     if len(typed) > 1:
         raise WebHostingError(f"Duplicate {kind} record at {name}; manual review.")
+    # A CNAME must not coexist with any other type. ANAME at zone apex must
+    # not collide with records carrying an address or an alias.
+    incompatible = (lambda r: r.get("type") != kind) if kind == "CNAME" else (
+        lambda r: r.get("type") in {"A", "AAAA", "CNAME"})
+    if any(incompatible(record) for record in matches):
+        raise WebHostingError(f"Conflicting DNS record type at {name}; manual review.")
     if typed:
         if typed[0].get("data") != [value]:
             raise WebHostingError(f"Conflicting {kind} record at {name}; manual review.")
         return True
-    # A CNAME must not coexist with any other type. ANAME at zone apex must
-    # not collide with records carrying an address or an alias.
-    forbidden = (lambda r: r.get("type") != kind) if kind == "CNAME" else (
-        lambda r: r.get("type") in {"A", "AAAA", "CNAME", "ANAME"})
-    if any(forbidden(record) for record in matches):
-        raise WebHostingError(f"Conflicting DNS record type at {name}; manual review.")
     return False
 
 
