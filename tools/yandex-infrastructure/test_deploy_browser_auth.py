@@ -9,7 +9,7 @@ from io import BytesIO
 
 from deploy_browser_auth import (
     ACTIVATE, PREPARE, FUNCTIONS, TAG, VERSIONS, execute, source_package,
-    version_secrets,
+    version_secrets, require_confirmation,
 )
 from web_hosting import GATEWAYS, WebHostingError, bucket_name, gateway_spec
 
@@ -90,6 +90,15 @@ class FakeCloud:
 
 
 class BrowserOperatorContracts(TestCase):
+    def test_invalid_confirmation_blocks_bootstrap_preflight(self):
+        with self.assertRaisesRegex(WebHostingError, "confirmation"):
+            require_confirmation("apply", "prepare", "WRONG")
+        with self.assertRaisesRegex(WebHostingError, "confirmation"):
+            require_confirmation("apply", "activate", PREPARE)
+        with self.assertRaisesRegex(WebHostingError, "Unknown browser auth operation"):
+            require_confirmation("invalid", "prepare", "")
+        require_confirmation("preview", "prepare", "")
+
     def test_function_archive_is_reproducible_and_contains_only_runtime_files(self):
         archive, description = source_package()
         self.assertEqual(source_package(), (archive, description))
