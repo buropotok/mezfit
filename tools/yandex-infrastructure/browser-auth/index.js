@@ -118,17 +118,53 @@ function parameters(event) {
   return single;
 }
 
-async function fetchJson(url, options = {}) {
-  const response = await fetch(url, {
-    ...options, redirect: 'error', signal: AbortSignal.timeout(7000),
-  });
-  if (!response.ok) throw new Error('OIDC_UPSTREAM_UNAVAILABLE');
-  if (Number(response.headers.get('content-length') || 0) > 65536) {
-    throw new Error('OIDC_RESPONSE_TOO_LARGE');
+// Diagnostics contain only fixed codes and an optional HTTP status. Never log
+// upstream response bodies, error messages, headers, tokens, or user identity.
+class OidcCheckError extends Error {
+  constructor(stage, code, httpStatus = null) {
+    super('OIDC_VERIFICATION_FAILED');
+    this.stage = stage;
+    this.code = code;
+    this.httpStatus = httpStatus;
   }
-  const text = await response.text();
-  if (text.length > 65536) throw new Error('OIDC_RESPONSE_TOO_LARGE');
-  return JSON.parse(text);
+}
+
+function networkFailureCode(error) {
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return 'timeout';
+  const cause = error?.cause?.code;
+  if (cause === 'ENOTFOUND' || cause === 'EAI_AGAIN') return 'dns';
+  if (cause === 'ETIMEDOUT' || cause === 'UND_ERR_CONNECT_TIMEOUT') return 'timeout';
+  if (cause === 'ECONNREFUSED' || cause === 'ENETUNREACH' || cause === 'EHOSTUNREACH') return 'connect';
+  if (cause === 'CERT_HAS_EXPIRED' || cause === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+      || cause === 'ERR_TLS_CERT_ALTNAME_INVALID') return 'tls';
+  return 'network';
+}
+
+async function fetchJson(url, options, stage) {
+  let response;
+  try {
+    response = await fetch(url, {
+      ...options, redirect: 'error', signal: AbortSignal.timeout(7000),
+    });
+  } catch (error) {
+    throw new OidcCheckError(stage, networkFailureCode(error));
+  }
+  if (!response.ok) throw new OidcCheckError(stage, 'http_error', response.status);
+  if (Number(response.headers.get('content-length') || 0) > 65536) {
+    throw new OidcCheckError(stage, 'response_too_large');
+  }
+  let text;
+  try {
+    text = await response.text();
+  } catch {
+    throw new OidcCheckError(stage, 'body_read_failure');
+  }
+  if (text.length > 65536) throw new OidcCheckError(stage, 'response_too_large');
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new OidcCheckError(stage, 'invalid_json');
+  }
 }
 
 function validClaims(claims, config, nonce, now = epoch()) {
@@ -150,37 +186,46 @@ function validClaims(claims, config, nonce, now = epoch()) {
 
 async function authenticateIdToken(idToken, config, nonce) {
   if (typeof idToken !== 'string' || idToken.length > MAX_JWT_LENGTH) {
-    throw new Error('OIDC_INVALID_TOKEN');
+    throw new OidcCheckError('jwt', 'invalid_token');
   }
   const parts = idToken.split('.');
   if (parts.length !== 3 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) {
-    throw new Error('OIDC_INVALID_TOKEN');
+    throw new OidcCheckError('jwt', 'invalid_token');
   }
   let header, claims;
   try {
     header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
     claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
   } catch {
-    throw new Error('OIDC_INVALID_TOKEN');
+    throw new OidcCheckError('jwt', 'invalid_token');
   }
   if (header.alg !== 'RS256' || typeof header.kid !== 'string' || !header.kid
       || (header.typ !== undefined && header.typ !== 'JWT')) {
-    throw new Error('OIDC_INVALID_ALGORITHM');
+    throw new OidcCheckError('jwt', 'unsupported_algorithm');
   }
-  const keys = await fetchJson(ISSUER + '/.well-known/jwks.json');
-  if (!keys || !Array.isArray(keys.keys)) throw new Error('OIDC_INVALID_JWKS');
+  const keys = await fetchJson(ISSUER + '/.well-known/jwks.json', {}, 'jwks');
+  if (!keys || !Array.isArray(keys.keys)) throw new OidcCheckError('jwks', 'invalid_keys');
   const match = keys.keys.filter(k => k.kid === header.kid && k.kty === 'RSA'
     && (k.alg === undefined || k.alg === 'RS256')
     && (k.use === undefined || k.use === 'sig') && typeof k.n === 'string'
     && typeof k.e === 'string');
-  if (match.length !== 1) throw new Error('OIDC_UNKNOWN_KEY');
-  const key = createPublicKey({ key: match[0], format: 'jwk' });
-  const signature = Buffer.from(parts[2], 'base64url');
-  if (!verify('RSA-SHA256', Buffer.from(parts[0] + '.' + parts[1]), key, signature)) {
-    throw new Error('OIDC_INVALID_SIGNATURE');
+  if (match.length !== 1) throw new OidcCheckError('jwks', 'matching_key_not_found');
+  let key;
+  try {
+    key = createPublicKey({ key: match[0], format: 'jwk' });
+  } catch {
+    throw new OidcCheckError('jwks', 'invalid_public_key');
   }
+  const signature = Buffer.from(parts[2], 'base64url');
+  let validSignature;
+  try {
+    validSignature = verify('RSA-SHA256', Buffer.from(parts[0] + '.' + parts[1]), key, signature);
+  } catch {
+    throw new OidcCheckError('jwt', 'signature_check_failure');
+  }
+  if (!validSignature) throw new OidcCheckError('jwt', 'invalid_signature');
   const profile = validClaims(claims, config, nonce);
-  if (!profile) throw new Error('OIDC_INVALID_CLAIMS');
+  if (!profile) throw new OidcCheckError('jwt', 'invalid_claims');
   return profile;
 }
 
@@ -230,7 +275,10 @@ async function callback(event, config, host) {
       headers: { Authorization: 'Basic ' + credentials,
         'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
-    });
+    }, 'token');
+    if (!result || typeof result !== 'object' || typeof result.id_token !== 'string') {
+      throw new OidcCheckError('token', 'missing_id_token');
+    }
     const profile = await authenticateIdToken(result.id_token, config, flow.nonce);
     const session = signed({ version: 1, host, ...profile,
       iat: epoch(), exp: epoch() + SESSION_TTL }, config.key);
@@ -238,9 +286,18 @@ async function callback(event, config, host) {
       clearFlow,
       cookie(COOKIE_SESSION, session, SESSION_TTL),
     ]);
-  } catch {
-    // No token contents, raw Telegram errors or PII are written to logs.
-    return json(401, { error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED' }, [clearFlow]);
+  } catch (error) {
+    const incidentId = base64url(randomBytes(12));
+    const diagnostic = error instanceof OidcCheckError
+      ? { stage: error.stage, code: error.code, ...(error.httpStatus === null
+        ? {} : { httpStatus: error.httpStatus }) }
+      : { stage: 'internal', code: 'unclassified' };
+    console.warn(JSON.stringify({ event: 'mezfit.browser_oidc.failure', incidentId, ...diagnostic }));
+    // The operator may not have Yandex Function log access. Return only the
+    // same fixed, non-sensitive stage/code/status used by the safe log. Never
+    // return upstream bodies, exception messages, tokens or credentials.
+    return json(401, { error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED',
+      incidentId, ...diagnostic }, [clearFlow]);
   }
 }
 

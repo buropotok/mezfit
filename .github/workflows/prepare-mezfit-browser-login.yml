@@ -4,13 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Publish private login function or activate only the four approved gateway routes
+        description: Prepare function, activate gateway routes, or upgrade diagnostics only
         type: choice
         required: true
         default: prepare
         options:
           - prepare
           - activate
+          - upgrade
       mode:
         description: Preview is read-only; Apply requires exact confirmation
         type: choice
@@ -57,6 +58,7 @@ jobs:
           case "$ACTION" in
             prepare) expected=PREPARE_MEZFIT_BROWSER_LOGIN ;;
             activate) expected=ACTIVATE_MEZFIT_BROWSER_LOGIN ;;
+            upgrade) expected=UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS ;;
             *) echo "Invalid action"; exit 1 ;;
           esac
           [[ "$MODE" == preview || "$MODE" == apply ]] || { echo "Invalid mode"; exit 1; }

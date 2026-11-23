@@ -28,7 +28,13 @@ from web_hosting import (
 VERSIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/versions"
 PREPARE = "PREPARE_MEZFIT_BROWSER_LOGIN"
 ACTIVATE = "ACTIVATE_MEZFIT_BROWSER_LOGIN"
+UPGRADE = "UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS"
 TAG = "browser-login"
+PREVIOUS_TAG = "browser-login-pre-diagnostics"
+# Verified against the first successful production Prepare Apply GitHub Actions
+# run 45107553050. Reject changes from any other serving baseline.
+BASELINE_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
+                        "92f77f2f6ddfdc89bd29a85895ac613197c608ccd7c8e209b884f2abcadfed4f")
 SOURCE = Path(__file__).parent / "browser-auth" / "index.js"
 
 
@@ -138,16 +144,17 @@ def version_secrets(secret_id, secret_version):
     ]
 
 
-def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts):
+def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts, *, tagged=True):
     return (
-        version.get("description") == fingerprint
+        resource_id(version.get("id"))
+        and version.get("description") == fingerprint
         and version.get("status") == "ACTIVE"
         and version.get("runtime") == "nodejs22"
         and version.get("entrypoint") == "index.handler"
         and version.get("serviceAccountId") == sa
         and version.get("environment") == {"MEZFIT_AUTH_HOSTS": allowed_hosts}
         and version.get("secrets") == version_secrets(secret_id, secret_version)
-        and TAG in version.get("tags", [])
+        and (TAG in version.get("tags", []) if tagged else TAG not in version.get("tags", []))
     )
 
 
@@ -180,9 +187,10 @@ def gateway_spec_changed(api, gateway, wanted):
 
 def require_confirmation(mode, action, confirmation):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
-    if mode not in ("preview", "apply") or action not in ("prepare", "activate"):
+    expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE}
+    if mode not in ("preview", "apply") or action not in expected:
         raise WebHostingError("Unknown browser auth operation.")
-    if mode == "apply" and confirmation != (PREPARE if action == "prepare" else ACTIVATE):
+    if mode == "apply" and confirmation != expected[action]:
         raise WebHostingError("Wrong explicit confirmation.")
 
 
@@ -274,8 +282,97 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
     if not has_gateway_invoker(function_bindings(api, function["id"]), deploy_sa):
         raise WebHostingError("Existing private auth function does not grant invocation to the approved gateway SA.")
     tagged = select_tagged_version(function_version_list(api, function["id"]))
-    if (not resource_id(secret_id) or not resource_id(secret_version)
-            or not tagged or not version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts)):
+    if not resource_id(secret_id) or not resource_id(secret_version) or not tagged:
+        raise WebHostingError("Expected pinned browser auth version is absent.")
+
+    wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
+    if action == "upgrade":
+        if gateway_spec_changed(api, gateway, wanted):
+            raise WebHostingError("Exact active auth gateway routes required before diagnostics upgrade.")
+        if version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts):
+            old = [v for v in function_version_list(api, function["id"])
+                   if PREVIOUS_TAG in v.get("tags", [])]
+            if len(old) != 1 or not version_matches(
+                    old[0], BASELINE_FINGERPRINT, runtime_sa, secret_id,
+                    secret_version, hosts, tagged=False):
+                raise WebHostingError("Diagnostic version active without validated rollback baseline.")
+            print("Diagnostic browser auth version already active; no writes.")
+            return
+        if not version_matches(tagged, BASELINE_FINGERPRINT, runtime_sa,
+                               secret_id, secret_version, hosts):
+            raise WebHostingError("Serving browser auth version is not the approved baseline; manual review required.")
+        versions = function_version_list(api, function["id"])
+        tagged_previous = [v for v in versions if PREVIOUS_TAG in v.get("tags", [])]
+        if len(tagged_previous) > 1 or (tagged_previous and tagged_previous[0].get("id") != tagged.get("id")):
+            raise WebHostingError("Existing preserved baseline tag points elsewhere; manual review required.")
+        candidate = [v for v in versions if v.get("description") == fingerprint
+                     and TAG not in v.get("tags", [])]
+        if len(candidate) > 1 or (candidate and not version_matches(
+                candidate[0], fingerprint, runtime_sa, secret_id, secret_version, hosts,
+                tagged=False)):
+            raise WebHostingError("Existing untagged diagnostic version differs; manual review required.")
+        print(f"Diagnostics upgrade: preserve approved baseline {tagged['id']}; "
+              f"{'reuse' if candidate else 'publish'} diagnostic version; "
+              f"source digest {fingerprint[-64:]}.")
+        print("No gateway, secrets, cookies, Cloudflare, Dexie Cloud or media changes.")
+        if mode == "preview":
+            return
+
+        # After validation, keep an explicit rollback reference before moving
+        # the serving tag. An interrupted upgrade can resume without rotation.
+        if PREVIOUS_TAG not in tagged.get("tags", []):
+            op = api(f"{VERSIONS}/{tagged['id']}:setTag",
+                     "Preserve approved browser login baseline for rollback",
+                     {"tag": PREVIOUS_TAG})
+            await_operation(api, op, "Preserve browser login baseline", sleep)
+            versions = function_version_list(api, function["id"])
+            preserved = [v for v in versions if v.get("id") == tagged["id"]]
+            if len(preserved) != 1 or PREVIOUS_TAG not in preserved[0].get("tags", []):
+                raise WebHostingError("Baseline rollback tag failed readback.")
+        if not candidate:
+            current_before_publish = select_tagged_version(function_version_list(api, function["id"]))
+            if not current_before_publish or current_before_publish.get("id") != tagged["id"]:
+                raise WebHostingError("Serving function changed concurrently; rerun Preview.")
+            payload = {
+                "functionId": function["id"],
+                "runtime": "nodejs22",
+                "entrypoint": "index.handler",
+                "resources": {"memory": "268435456"},
+                "executionTimeout": "20s",
+                "serviceAccountId": runtime_sa,
+                "content": base64.b64encode(content).decode("ascii"),
+                "environment": {"MEZFIT_AUTH_HOSTS": hosts},
+                "tag": [],  # Publish without moving the serving browser-login tag.
+                "description": fingerprint,
+                "secrets": version_secrets(secret_id, secret_version),
+            }
+            result = await_operation(api, api(VERSIONS, "Publish untagged diagnostics version", payload),
+                                     "Publish diagnostics version", sleep)
+            versions = function_version_list(api, function["id"])
+            candidate = [v for v in versions if v.get("id") == result.get("id")]
+            if len(candidate) != 1 or not version_matches(
+                    candidate[0], fingerprint, runtime_sa, secret_id, secret_version, hosts,
+                    tagged=False):
+                raise WebHostingError("Untagged diagnostic version failed strict readback.")
+        current = select_tagged_version(function_version_list(api, function["id"]))
+        if not current or current.get("id") != tagged["id"]:
+            raise WebHostingError("Serving function changed concurrently; rerun Preview.")
+        op = api(f"{VERSIONS}/{candidate[0]['id']}:setTag",
+                 "Activate reviewed diagnostics function version", {"tag": TAG})
+        await_operation(api, op, "Activate diagnostics version", sleep)
+        after_versions = function_version_list(api, function["id"])
+        activated = select_tagged_version(after_versions)
+        previous = [v for v in after_versions if v.get("id") == tagged["id"]]
+        if (not activated or activated.get("id") != candidate[0]["id"]
+                or not version_matches(activated, fingerprint, runtime_sa,
+                                       secret_id, secret_version, hosts)
+                or len(previous) != 1 or PREVIOUS_TAG not in previous[0].get("tags", [])
+                or gateway_spec_changed(api, gateway, wanted)):
+            raise WebHostingError("Diagnostic deployment or rollback reference failed readback.")
+        print("Safe OIDC diagnostics active; previous function code retained under rollback tag.")
+        return
+
+    if not version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts):
         raise WebHostingError("Expected ACTIVE tagged browser auth version with pinned Lockbox secrets is absent.")
 
     wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
