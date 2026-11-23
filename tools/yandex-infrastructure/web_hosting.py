@@ -260,7 +260,9 @@ def verify_gateway(gateway, folder_id, bucket, api):
 
     # Domains may now be attached independently; publishing must still verify
     # that no other domain/certificate or gateway integration was introduced.
-    attached = gateway.get("attachedDomains", [])
+    attached = gateway.get("attachedDomains")
+    if attached is None:
+        attached = []
     if not isinstance(attached, list) or len(attached) > 2:
         raise WebHostingError("Unexpected gateway custom-domain attachments.")
     if attached:
