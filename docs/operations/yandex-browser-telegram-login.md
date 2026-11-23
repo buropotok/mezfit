@@ -150,6 +150,8 @@ used to acquire a short-lived IAM token. No static Yandex API key is stored.
 | `prepare` | `apply` | `PREPARE_MEZFIT_BROWSER_LOGIN` | Bootstrap private runtime account + protected Lockbox from GitHub Secret, scope Lockbox access, create/reuse private function and pinned Node 22 version; **no Gateway update** |
 | `activate` | `preview` | none | Check ACTIVE exact function, secrets, original gateway spec, and four routes |
 | `activate` | `apply` | `ACTIVATE_MEZFIT_BROWSER_LOGIN` | PATCH the **existing** gateway `openapiSpec`, add only four `/auth/*` routes, preserve `/api/*` dummy 503, static SPA and attached domains |
+| `upgrade` | `preview` | none | Inspect only: verify exact deployed auth baseline, approved gateway and pinned Lockbox, and plan diagnostics version switch |
+| `upgrade` | `apply` | `UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS` | Retain baseline version under `browser-login-pre-diagnostics`, publish reviewed diagnostics version without serving tag, verify configuration, then move only `browser-login` tag; no Gateway, Secret or SPA changes |
 
 All write phases are separately and explicitly confirmed. Readback checks
 require exact source SHA-256, function runtime, entrypoint, service account,
@@ -162,6 +164,85 @@ After merging the PR and activating the four routes, run the existing
 `Publish MezFit SPA to Yandex` workflow with
 `PUBLISH_MEZFIT_WEB` **again**, so the new browser-login React screen
 is actually served on Yandex. Cloudflare deploy continues separately.
+
+## Diagnosing TELEGRAM_LOGIN_VERIFICATION_FAILED after callback
+
+If Telegram redirects back to `/auth/callback` but the page displays
+`TELEGRAM_LOGIN_VERIFICATION_FAILED`, the earlier deployment returns one
+generic error regardless of whether the Yandex runtime can reach Telegram.
+**Do not assume Cloudflare/network restrictions or replace the OIDC Client
+Secret without collecting evidence.**
+
+The reviewed diagnostics are installed only after an additional explicit
+operator run:
+
+1. Merge the diagnostics PR after the required review and successful CI.
+2. Open the owner-only
+   [Prepare MezFit Browser Telegram Login workflow](https://github.com/buropotok/mezfit/actions/workflows/prepare-mezfit-browser-login.yml)
+   on `main`. Select `action=upgrade`, `mode=preview`, empty confirmation.
+   Confirm that the currently served `browser-login` version matches the pinned
+   baseline established by successful Prepare Apply run
+   [45107553050](https://github.com/buropotok/mezfit/actions/runs/45107553050).
+   An unexpected version or modified Gateway blocks the upgrade — never force.
+3. Repeat with `action=upgrade`, `mode=apply` and the exact confirmation
+   `UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS`.
+4. The operator first tags the original version
+   `browser-login-pre-diagnostics` for safe rollback, publishes and strictly
+   verifies a new unserved version with **the same runtime account, pinned
+   Lockbox version and host allowlist**, and only then moves the serving
+   `browser-login` tag. It reuses an already verified untagged candidate
+   after an interrupted run. No secrets are read or rotated, and the SPA
+   does not need to be republished.
+5. On the same Yandex technical origin, open `/`, click
+   **Войти через Telegram**, confirm in Telegram, and record the
+   **new** `incidentId` (16 URL-safe characters) in the JSON callback error.
+   Do not send the callback URL, `code`, cookies, client secret or ID token.
+6. View logs for Cloud Function
+   `mezfit-browser-login`, ID `d4ekc6o3om4qkrb88gpg`, in
+   [Yandex Cloud Functions console](https://console.yandex.cloud/) →
+   Cloud Functions → function → Logs, filtered to the test time;
+   search for `mezfit.browser_oidc.failure` and the exact `incidentId`.
+   Official instructions:
+   [Viewing the function execution log](https://yandex.cloud/en/docs/functions/operations/function/function-logs).
+   Equivalent Yandex CLI command for an authorized operator:
+   `yc serverless function logs d4ekc6o3om4qkrb88gpg --tag browser-login`.
+
+The log contains **only** a structured, allowlisted
+`event`, `incidentId`, `stage`, `code` and optional numeric
+`httpStatus`. It never writes error messages, request/response bodies,
+Authorization headers, Telegram code, ID token, credentials, nonce, state,
+cookies, host, user identity or IP.
+
+| Stage | Safe codes | Interpretation |
+| --- | --- | --- |
+| `token` | `dns`, `connect`, `timeout`, `tls`, `network` | Yandex Function could not complete the outbound Telegram token request. This supports a network/TLS cause; investigate Yandex egress/DNS and upstream reachability. |
+| `token` | `http_error`, `httpStatus` (e.g. 400/401) | Telegram answered. Check BotFather **OIDC** Client Secret, callback allowlist, code verifier and client registration; the HTTP status alone does not identify which credential or request field is wrong. |
+| `token` | `missing_id_token`, `invalid_json`, `response_too_large`, `body_read_failure` | The token exchange returned unusable content or failed during response reading. |
+| `jwks` | `dns`, `connect`, `timeout`, `tls`, `network`, `http_error` | Token endpoint responded, but obtaining verification keys failed at a separate request. |
+| `jwks` | `invalid_keys`, `matching_key_not_found`, `invalid_public_key` | Telegram key payload or expected signing key is incompatible or absent. |
+| `jwt` | `invalid_token`, `unsupported_algorithm`, `signature_check_failure`, `invalid_signature`, `invalid_claims` | Token received; signature, format, signing algorithm or verified claims failed. |
+| `internal` | `unclassified` | Other server-side exception; no speculative diagnosis. |
+
+The public HTTP response **still returns 401** with the generic
+`TELEGRAM_LOGIN_VERIFICATION_FAILED` error and a random, non-authorizing
+`incidentId`; it does not reveal the sensitive stage/code to the browser.
+A successful login does not emit a failure log.
+
+**Important:** This verifies the cause of a fresh failed request after the
+diagnostics release; previous error instances cannot be retroactively
+diagnosed. A network error proves only that the Function's outbound
+connection failed, not that Telegram specifically blocked Yandex.
+If an HTTP status or a JWKS/JWT code is logged, the next fix must target that
+specific path, not an assumed network ban.
+
+### Returning to the previous code
+
+The operator retains the exact previous function version under
+`browser-login-pre-diagnostics`. If the diagnostics release causes an
+unexpected regression, do not rotate Lockbox or revert Gateway spec.
+The owner must explicitly review and approve a separate rollback operation
+that reassigns `browser-login` to the retained version. Do not silently
+roll back or reapply a different source digest.
 
 ## Smoke checks
 
