@@ -15,6 +15,7 @@ from web_hosting import GATEWAYS, WebHostingError, bucket_name, gateway_spec
 
 FOLDER = "b1ggoodfolderid"
 SA = "ajeexampleaccount"
+RUNTIME_SA = "ajeruntimeaccount"
 SECRET = "e1abexample"
 SECRET_VERSION = "e2abexample"
 DOMAIN = "d5example.a1.apigw.yandexcloud.net"
@@ -84,7 +85,7 @@ class FakeCloud:
 
     def execute(self, mode, action, confirm, secret=SECRET, version=SECRET_VERSION):
         with patch.dict("os.environ", {"YC_DEPLOY_SA_ID": SA}):
-            execute(mode, action, confirm, FOLDER, SA, secret, version,
+            execute(mode, action, confirm, FOLDER, SA, RUNTIME_SA, secret, version,
                     self, self.update, sleep=lambda _: None)
 
 
@@ -132,6 +133,7 @@ class BrowserOperatorContracts(TestCase):
         }])
         self.assertEqual(cloud.writes[2][0], VERSIONS)
         self.assertEqual(cloud.writes[2][1]["runtime"], "nodejs22")
+        self.assertEqual(cloud.writes[2][1]["serviceAccountId"], RUNTIME_SA)
         self.assertEqual(cloud.writes[2][1]["tag"], [TAG])
         self.assertEqual(cloud.writes[2][1]["secrets"], version_secrets(SECRET, SECRET_VERSION))
         self.assertEqual(cloud.spec, gateway_spec(bucket_name(FOLDER)))
