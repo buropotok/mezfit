@@ -16,6 +16,14 @@ The function uses only the official Telegram HTTPS JWKS. A warm instance keeps k
 
 ### Nonce bucket recovery after HTTP 403
 
+When the management API denies `VIEW_FULL`, the operator can verify an existing
+bucket through the folder listing, the S3 API and direct IAM readback. It
+requires the approved policy, exact purpose tag and lifecycle, a private bucket
+in the expected folder with versioning disabled, the expected ACL, and no CORS,
+website configuration or direct IAM bindings. The S3 response may represent
+a single action, resource or principal ID as a string. Rule and action order
+do not affect verification. An unavailable check still stops the rollout.
+
 If Preview reports `Read private nonce bucket (preflight): HTTP 403`, ask a
 Yandex Cloud operator with permission to view and edit the bucket policy to
 open the bucket named in the error under **Object Storage → Security → Access
