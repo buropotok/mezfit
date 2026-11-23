@@ -194,10 +194,13 @@ operator run:
    after an interrupted run. No secrets are read or rotated, and the SPA
    does not need to be republished.
 5. On the same Yandex technical origin, open `/`, click
-   **Войти через Telegram**, confirm in Telegram, and record the
-   **new** `incidentId` (16 URL-safe characters) in the JSON callback error.
-   Do not send the callback URL, `code`, cookies, client secret or ID token.
-6. View logs for Cloud Function
+   **Войти через Telegram**, and confirm in Telegram. If authorization fails,
+   the callback **JSON body directly displays** `stage`, `code`, optional
+   numeric `httpStatus`, and a random `incidentId` (16 URL-safe characters).
+   **This is sufficient for triage without Yandex Cloud log access.** Share
+   only these four diagnostic fields, NOT the callback URL, authorization
+   `code`, cookies, client secret or ID token.
+6. If Cloud Function logs are available, optionally view logs for
    `mezfit-browser-login`, ID `d4ekc6o3om4qkrb88gpg`, in
    [Yandex Cloud Functions console](https://console.yandex.cloud/) →
    Cloud Functions → function → Logs, filtered to the test time;
@@ -224,8 +227,24 @@ cookies, host, user identity or IP.
 | `internal` | `unclassified` | Other server-side exception; no speculative diagnosis. |
 
 The public HTTP response **still returns 401** with the generic
-`TELEGRAM_LOGIN_VERIFICATION_FAILED` error and a random, non-authorizing
-`incidentId`; it does not reveal the sensitive stage/code to the browser.
+`TELEGRAM_LOGIN_VERIFICATION_FAILED` error, the random non-authorizing
+`incidentId`, and the **same fixed safe `stage` / `code` / optional
+numeric `httpStatus`**. No access to Yandex logs is needed to read these
+diagnostics. Example of a Telegram HTTP rejection:
+
+```json
+{
+  "error": "TELEGRAM_LOGIN_VERIFICATION_FAILED",
+  "incidentId": "<random URL-safe ID>",
+  "stage": "token",
+  "code": "http_error",
+  "httpStatus": 401
+}
+```
+
+The example is illustrative, not the observed cause. Neither the browser
+response nor server logs contain upstream text, response bodies, secrets,
+credentials, Telegram authorization code, id_token, nonce/state or identity.
 A successful login does not emit a failure log.
 
 **Important:** This verifies the cause of a fresh failed request after the
