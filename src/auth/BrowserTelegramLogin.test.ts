@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBrowserSession } from './BrowserTelegramLogin';
+import { parseBrowserSession } from './browserSession';
 
 describe('BrowserTelegramLogin session contract', () => {
   it('accepts only a server-confirmed same-origin browser identity', () => {
