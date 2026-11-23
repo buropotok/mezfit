@@ -178,16 +178,21 @@ def gateway_spec_changed(api, gateway, wanted):
     return spec_diff_paths(expected, actual)
 
 
-def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
-            secret_version, api, update_api, sleep=time.sleep):
+def require_confirmation(mode, action, confirmation):
+    """Validate the action BEFORE bootstrap can create any Yandex resources."""
     if mode not in ("preview", "apply") or action not in ("prepare", "activate"):
         raise WebHostingError("Unknown browser auth operation.")
+    if mode == "apply" and confirmation != (PREPARE if action == "prepare" else ACTIVATE):
+        raise WebHostingError("Wrong explicit confirmation.")
+
+
+def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
+            secret_version, api, update_api, sleep=time.sleep):
+    require_confirmation(mode, action, confirm)
     if not resource_id(folder) or not resource_id(deploy_sa):
         raise WebHostingError("Missing YC_FOLDER_ID or YC_DEPLOY_SA_ID.")
     if mode == "apply" and not resource_id(runtime_sa):
-        raise WebHostingError("Missing dedicated YC_LOGIN_RUNTIME_SA_ID.")
-    if mode == "apply" and confirm != (PREPARE if action == "prepare" else ACTIVATE):
-        raise WebHostingError("Wrong explicit confirmation.")
+        raise WebHostingError("Missing dedicated runtime service account.")
 
     gateway = choose(paged_list(api, GATEWAYS, folder, "apiGateways", "List web gateways"),
                      NAME_GATEWAY, folder, "Existing SPA gateway")
@@ -321,9 +326,11 @@ def main():
     from browser_auth_bootstrap import bootstrap
     mode = os.environ.get("MODE", "")
     action = os.environ.get("ACTION", "")
+    confirm = os.environ.get("CONFIRM", "")
+    require_confirmation(mode, action, confirm)
     folder = os.environ.get("YC_FOLDER_ID", "")
     runtime_sa, secret_id, version_id = bootstrap(mode, action, folder, api)
-    execute(mode, action, os.environ.get("CONFIRM", ""), folder,
+    execute(mode, action, confirm, folder,
             os.environ.get("YC_DEPLOY_SA_ID", ""),
             runtime_sa, secret_id, version_id, api, update_api)
 
