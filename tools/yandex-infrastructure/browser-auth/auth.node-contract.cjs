@@ -236,6 +236,14 @@ test('OIDC diagnostics distinguish token network failures and upstream rejection
     const body = JSON.parse(response.body);
     assert.equal(body.error, 'TELEGRAM_LOGIN_VERIFICATION_FAILED');
     assert.match(body.incidentId, /^[a-zA-Z0-9_-]{16}$/);
+    assert.deepEqual(body, {
+      error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED',
+      incidentId: body.incidentId,
+      stage: 'token',
+      code: scenario.code,
+      ...(scenario.httpStatus ? { httpStatus: scenario.httpStatus } : {}),
+    });
+    assert.ok(!/PRIVATE_|auth-code-123456|test-client-secret|client_id|Cookie|Authorization/.test(response.body));
     assert.equal(warnings.length, 1, scenario.name);
     const logged = JSON.parse(warnings[0]);
     assert.deepEqual(logged, {
@@ -299,7 +307,13 @@ test('OIDC diagnostics separate JWKS reachability from signature and claims chec
     assert.equal(log.incidentId, body.incidentId);
     assert.equal(log.stage, scenario.stage);
     assert.equal(log.code, scenario.code);
+    assert.deepEqual(body, {
+      error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED',
+      incidentId: log.incidentId,
+      stage: scenario.stage,
+      code: scenario.code,
+    });
     assert.ok(!/PRIVATE_|opaque-telegram-oidc-subject|Example User|auth-code-123456/.test(warnings[0]));
-    assert.deepEqual(Object.keys(body).sort(), ['error', 'incidentId']);
+    assert.ok(!/PRIVATE_|opaque-telegram-oidc-subject|Example User|auth-code-123456/.test(response.body));
   }
 });
