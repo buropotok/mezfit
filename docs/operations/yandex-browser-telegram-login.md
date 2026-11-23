@@ -87,16 +87,21 @@ business data is created by this PR.
    `client_secret` or the session HMAC key. Pin the **exact Lockbox
    version ID**, not a moving `latest`.
 
-3. Grant the existing Yandex deployment service account
-   (`mezfit-github-deploy`, id `ajeijn4c6747d0l7dmel`)
-   permission to create function versions and add the function's narrow
-   `functions.functionInvoker` binding (appropriate scoped Cloud
-   Functions IAM administrator rights). Grant **`lockbox.payloadViewer` on
-   the single new Lockbox secret only**, since that same account is used
-   as the runtime service account for the private function. Do not grant
-   public function invocation.
+3. Create a **separate least-privilege runtime service account** in the
+   same Yandex folder (for example `mezfit-browser-auth-runtime`). Grant
+   this account **`lockbox.payloadViewer` on the single new Lockbox secret
+   only**. It needs no DNS, Gateway, GitHub, D1 or Dexie roles.
 
-4. Create two **non-secret GitHub Actions repository variables**:
+   The existing deployment service account (`mezfit-github-deploy`,
+   id `ajeijn4c6747d0l7dmel`) should have the scoped permission to
+   create function versions and add the function's narrow
+   `functions.functionInvoker` binding (appropriate Cloud Functions
+   administration rights). **Do not grant this deployment account
+   Lockbox payload access.** The deployment workflow passes only secret
+   metadata, never the contents. Do not grant public function invocation.
+
+4. Create three **non-secret GitHub Actions repository variables**:
+   - `YC_LOGIN_RUNTIME_SA_ID`: the ID of the dedicated runtime service account.
    - `YC_LOGIN_LOCKBOX_ID`: the Lockbox secret ID (not any payload value).
    - `YC_LOGIN_LOCKBOX_VERSION_ID`: the pinned Lockbox secret version ID.
 
@@ -119,7 +124,7 @@ used to acquire a short-lived IAM token. No static Yandex API key is stored.
 
 All write phases are separately and explicitly confirmed. Readback checks
 require exact source SHA-256, function runtime, entrypoint, service account,
-pinned secret IDs/key mappings, and gateway integration. A missing IAM role
+pinned secret IDs/key mappings, separate runtime service account, and gateway integration. A missing IAM role
 fails without relaxing policy. A pre-existing gateway modification blocks
 activation rather than overwriting it. Function configuration drift blocks
 automatic upgrade until explicitly reviewed.
