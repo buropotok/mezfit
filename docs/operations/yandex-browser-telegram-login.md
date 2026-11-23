@@ -21,6 +21,9 @@ to Coach/Client data.**
 - [Yandex Cloud Functions Node.js 22](https://yandex.cloud/en/docs/functions/lang/nodejs/)
 - [Yandex Function CreateVersion + pinned Lockbox secrets](https://yandex.cloud/en/docs/functions/functions/api-ref/Function/createVersion)
 - [Yandex Function access bindings](https://yandex.cloud/en/docs/functions/functions/api-ref/Function/updateAccessBindings)
+- [Yandex IAM service-account creation](https://yandex.cloud/en/docs/iam/api-ref/ServiceAccount/create)
+- [Yandex Lockbox secret creation](https://yandex.cloud/en/docs/lockbox/api-ref/Secret/create)
+- [Yandex Lockbox access bindings](https://yandex.cloud/en/docs/lockbox/api-ref/Secret/updateAccessBindings)
 
 ## Architecture
 
@@ -73,39 +76,65 @@ business data is created by this PR.
    Client Secret is **not** the existing Telegram Bot API token. Configure
    BotFather to issue **RS256**-signed ID tokens (the default).
 
-2. In **Yandex Lockbox**, create one secret (e.g.
-   `mezfit-browser-telegram-oidc`) in folder
-   `b1g774t6sgop4rakjob7` with three payload keys:
-   - `client_id`: decimal Telegram OIDC Client ID;
-   - `client_secret`: BotFather OIDC Client Secret;
-   - `session_secret`: an independent cryptographically random 32-byte
-     base64url string (for example generate locally via
-     `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`).
+2. In GitHub [repository Actions Variables](https://github.com/buropotok/mezfit/settings/variables/actions),
+   create **one non-secret variable**:
+   - `TELEGRAM_LOGIN_CLIENT_ID` = `8635045061` (decimal ID from BotFather).
 
-   Do not place these values in GitHub files, workflow inputs, repository
-   secrets/variables, public pages, or chats. Never reuse the bot token as
-   `client_secret` or the session HMAC key. Pin the **exact Lockbox
-   version ID**, not a moving `latest`.
+   Under [Actions Secrets](https://github.com/buropotok/mezfit/settings/secrets/actions),
+   create **one repository secret**:
+   - `TELEGRAM_LOGIN_CLIENT_SECRET` = Client Secret from BotFather.
 
-3. Create a **separate least-privilege runtime service account** in the
-   same Yandex folder (for example `mezfit-browser-auth-runtime`). Grant
-   this account **`lockbox.payloadViewer` on the single new Lockbox secret
-   only**. It needs no DNS, Gateway, GitHub, D1 or Dexie roles.
+   Never paste the secret into repository files, workflow inputs, Actions
+   Variables, an issue, pull request or chat. GitHub only provides this value
+   to the owner-only `prepare` / `apply` job; the script transmits it
+   directly over HTTPS to Yandex Lockbox, without logging it. The source
+   service account receives a short-lived Yandex IAM token from GitHub OIDC.
 
-   The existing deployment service account (`mezfit-github-deploy`,
-   id `ajeijn4c6747d0l7dmel`) should have the scoped permission to
-   create function versions and add the function's narrow
-   `functions.functionInvoker` binding (appropriate Cloud Functions
-   administration rights). **Do not grant this deployment account
-   Lockbox payload access.** The deployment workflow passes only secret
-   metadata, never the contents. Do not grant public function invocation.
+3. **No manual Cloud Functions, Lockbox, or service-account creation.**
+   Owner-confirmed `prepare` / `apply` performs these steps itself:
 
-4. Create three **non-secret GitHub Actions repository variables**:
-   - `YC_LOGIN_RUNTIME_SA_ID`: the ID of the dedicated runtime service account.
-   - `YC_LOGIN_LOCKBOX_ID`: the Lockbox secret ID (not any payload value).
-   - `YC_LOGIN_LOCKBOX_VERSION_ID`: the pinned Lockbox secret version ID.
+   - Creates/reuses a dedicated `mezfit-browser-auth-runtime` service
+     account in the existing folder `b1g774t6sgop4rakjob7`;
+   - Creates/reuses the deletion-protected `mezfit-browser-telegram-oidc`
+     Lockbox secret, initially containing `client_id`, `client_secret`,
+     and a **separately generated random `session_secret`**;
+   - Retrieves the **current version ID from Lockbox metadata** (never a
+     moving `latest`), without fetching secret payload;
+   - Grants only `lockbox.payloadViewer` on that one secret to the
+     dedicated runtime account;
+   - Creates/reuses the private login function and assigns
+     `functions.functionInvoker` only to the original
+     `mezfit-github-deploy` account that API Gateway uses.
 
-   Existing `YC_FOLDER_ID` and `YC_DEPLOY_SA_ID` stay unchanged.
+   Rerunning Apply is idempotent: it neither replaces an existing secret
+   nor rotates a session key. To rotate Telegram credentials later, use a
+   separately reviewed, explicit rotation procedure.
+
+4. **The only possible Yandex-side prerequisite is the IAM bootstrap.**
+   The existing `mezfit-github-deploy` service account must already have
+   sufficient permissions to create the runtime account, protect the
+   secret, and install the function-specific bindings:
+
+   - `iam.serviceAccounts.admin` scoped to the target folder;
+   - `lockbox.admin` scoped to the target folder for initial secret
+     creation **and permission assignment**;
+   - `functions.admin` scoped to the target folder for Cloud Functions
+     and their IAM bindings;
+   - Existing `api-gateway.editor` remains necessary for route activation.
+
+   **This is an IAM bootstrap, not manual secret entry.** GitHub Actions
+   cannot grant itself missing permissions: if the deployment SA does not
+   have the roles, the action fails with HTTP 403 and the folder owner
+   must grant them once. The `lockbox.admin` role itself can read secret
+   payloads, so it should be **removed from the deployment SA after
+   successful initial provisioning** if subsequent first-time setup is not
+   needed. The script deliberately never fetches the payload.
+
+   No `YC_LOGIN_RUNTIME_SA_ID`, `YC_LOGIN_LOCKBOX_ID` or
+   `YC_LOGIN_LOCKBOX_VERSION_ID` repository variables are required.
+   All three identifiers are resolved from Yandex Cloud's metadata on each
+   invocation. Existing `YC_FOLDER_ID` and `YC_DEPLOY_SA_ID` remain
+   unchanged.
 
 ## Safe rollout: Preview / Apply
 
@@ -117,15 +146,15 @@ used to acquire a short-lived IAM token. No static Yandex API key is stored.
 
 | Action | Mode | Exact Apply confirmation | Effect |
 | --- | --- | --- | --- |
-| `prepare` | `preview` | none | Read existing gateway/function/secret version metadata, plan the change |
-| `prepare` | `apply` | `PREPARE_MEZFIT_BROWSER_LOGIN` | Create/reuse private function; exact gateway SA invoker binding; pinned Lockbox Node 22 version with tag `browser-login`; **no Gateway update** |
+| `prepare` | `preview` | none | Read existing gateway, runtime account, Lockbox and function metadata; plan without secrets or writes |
+| `prepare` | `apply` | `PREPARE_MEZFIT_BROWSER_LOGIN` | Bootstrap private runtime account + protected Lockbox from GitHub Secret, scope Lockbox access, create/reuse private function and pinned Node 22 version; **no Gateway update** |
 | `activate` | `preview` | none | Check ACTIVE exact function, secrets, original gateway spec, and four routes |
 | `activate` | `apply` | `ACTIVATE_MEZFIT_BROWSER_LOGIN` | PATCH the **existing** gateway `openapiSpec`, add only four `/auth/*` routes, preserve `/api/*` dummy 503, static SPA and attached domains |
 
 All write phases are separately and explicitly confirmed. Readback checks
 require exact source SHA-256, function runtime, entrypoint, service account,
 pinned secret IDs/key mappings, separate runtime service account, and gateway integration. A missing IAM role
-fails without relaxing policy. A pre-existing gateway modification blocks
+fails without relaxing policy and requires the owner to grant the minimum bootstrap permissions. A pre-existing gateway modification blocks
 activation rather than overwriting it. Function configuration drift blocks
 automatic upgrade until explicitly reviewed.
 
@@ -162,7 +191,7 @@ can run all Coach/Client screens. This PR intentionally contains no temporary
 Cloudflare Worker proxy, no cross-origin cookies, no fake initData, no
 client-side trust escalation, and no new authoritative database.
 
-Tests: Python stdlib operator tests are discovered by existing CI; the
+Tests: Python stdlib operator tests (including IAM/Lockbox bootstrap) are discovered by existing CI; the
 additional `node --test` contract is executed in GitHub PR CI using Node 22;
 frontend session parsing has a Vitest contract. AGENTS.md prohibits local
 npm/typecheck/test/build and those were not run before PR.
