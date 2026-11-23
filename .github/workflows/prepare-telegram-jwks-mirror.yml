@@ -82,11 +82,6 @@ jobs:
         with:
           yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
 
-      - name: Preview or apply JWKS infrastructure
-        env:
-          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
-        run: python3 tools/yandex-infrastructure/jwks_mirror.py
-
       - uses: actions/setup-node@v4
         if: inputs.action == 'activate' && inputs.mode == 'apply'
         with:
@@ -97,6 +92,11 @@ jobs:
       - name: Install pinned Wrangler
         if: inputs.action == 'activate' && inputs.mode == 'apply'
         run: npm ci
+
+      - name: Preview or apply JWKS infrastructure
+        env:
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+        run: python3 tools/yandex-infrastructure/jwks_mirror.py
 
       - name: Deploy separate Cloudflare JWKS Worker with one-time credentials
         if: inputs.action == 'activate' && inputs.mode == 'apply'
