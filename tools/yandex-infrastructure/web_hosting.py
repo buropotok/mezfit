@@ -143,18 +143,21 @@ def gateway_spec(bucket):
     }
 
 
-def browser_auth_gateway_spec(bucket, function_id, service_account_id):
-    """Exactly four same-origin auth endpoints, without altering other API routes."""
+def browser_auth_gateway_spec(bucket, function_id, service_account_id, *, popup=False):
+    """The existing auth routes and, optionally, two popup POST methods."""
     if not resource_id(function_id) or not resource_id(service_account_id):
         raise WebHostingError("Missing approved browser-auth function or gateway service account.")
     result = gateway_spec(bucket)
-    for path, method in (("/auth/start", "get"), ("/auth/callback", "get"),
-                         ("/auth/session", "get"), ("/auth/logout", "post")):
-        result["paths"][path] = {method: {"x-yc-apigateway-integration": {
+    routes = [("/auth/start", "get"), ("/auth/callback", "get"),
+              ("/auth/session", "get"), ("/auth/logout", "post")]
+    if popup:
+        routes.extend([("/auth/start", "post"), ("/auth/callback", "post")])
+    for path, method in routes:
+        result["paths"].setdefault(path, {})[method] = {"x-yc-apigateway-integration": {
             "type": "cloud_functions", "function_id": function_id,
             "service_account_id": service_account_id,
             "tag": "browser-login", "payload_format_version": "1.0",
-        }}}
+        }}
     return result
 
 
@@ -318,7 +321,9 @@ def verify_gateway(gateway, folder_id, bucket, api):
                        NAME_BROWSER_AUTH_FUNCTION, folder_id, "Browser auth function")
         if not known or not resource_id(known.get("id")) or not resource_id(approved_sa):
             raise WebHostingError("Browser auth routes require the approved function and deployment service account.")
-        expected_spec = browser_auth_gateway_spec(bucket, known["id"], approved_sa)
+        start_path = paths.get("/auth/start")
+        popup = isinstance(start_path, dict) and "post" in start_path
+        expected_spec = browser_auth_gateway_spec(bucket, known["id"], approved_sa, popup=popup)
     else:
         expected_spec = gateway_spec(bucket)
     expected = normalize_gateway_readback(expected_spec, gateway.get("domain"))

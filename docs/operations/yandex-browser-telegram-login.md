@@ -1,5 +1,21 @@
 # Browser Telegram Login on the existing MezFit Yandex gateway
 
+## Browser popup rollout
+
+The [official Telegram Login JS library](https://core.telegram.org/bots/telegram-login#using-the-telegram-login-library) returns an ID token to the browser. The SPA sends it via same-origin `POST /auth/callback`. The private function verifies `RS256`, issuer, audience, expiry, issue time, numeric Telegram identity and the nonce from `POST /auth/start`. It then issues the existing host-bound `__Host-mz_browser_session` cookie. The popup flow has no server-side `/token` request. The legacy GET methods support rollback and the previous SPA build.
+
+The function uses only the official Telegram HTTPS JWKS. A warm instance keeps keys for at most five minutes and refreshes for an unknown signing key after a short minimum interval. An expired cache is never used when fetching keys fails. After validating a five-minute challenge and its token, the function atomically creates an empty marker containing only a SHA-256 digest in its key, using `If-None-Match: *`. A duplicate marker or failed write denies the login across function instances. The private nonce bucket expires markers through a one-day lifecycle rule. Browser retries request a fresh challenge.
+
+### Release and rollback
+
+1. In [Prepare MezFit Browser Telegram Login](https://github.com/buropotok/mezfit/actions/workflows/prepare-mezfit-browser-login.yml) on `main`, run `action=popup`, `mode=preview`, with an empty `confirm`. The operator checks the active diagnostics version and gateway contract. If a nonce bucket already exists, it checks ownership, private access, the expiration rule and the policy. Preview makes no writes.
+2. Run `action=popup`, `mode=apply`, `confirm=ENABLE_MEZFIT_BROWSER_LOGIN_POPUP`. The existing deploy service account needs permission to create the dedicated bucket, set its lifecycle and policy, and read these settings. The operator creates the separate private bucket and grants conditional `PutObject` under `used/` to the existing runtime service account through the bucket policy. The function uses a short-lived IAM token from its invocation context. Lockbox and folder-wide grants are left alone. The operator preserves the diagnostics version under `browser-login-pre-popup`, activates the reviewed version, and adds two POST methods to the current Gateway.
+3. After successful backend readback, run [Publish MezFit SPA to Yandex](https://github.com/buropotok/mezfit/actions/workflows/publish-yandex-spa.yml) with `PUBLISH_MEZFIT_WEB`. Use a normal browser on a BotFather-approved origin. Check Android Chrome, iOS Safari and desktop, including blocked or closed popups, retry, success, reload, logout and Mini App login. If a script policy is configured, allow the Telegram SDK from `https://oauth.telegram.org`. An opener that sets COOP needs `same-origin-allow-popups` for this login page.
+4. A failed sign-in displays sanitized `stage`, `code`, an optional `httpStatus` and `incidentId`. `jwks: timeout` means Yandex did not receive the keys in time. `jwt` means verification rejected the token. `challenge` identifies the one-time attempt or storage validation. The first real sign-in after publishing checks live reachability from the function. The diagnostics contain no JWT, authentication code, cookie, credentials or user data.
+5. To roll back, run `action=popup-rollback`, `mode=preview`, then `mode=apply`, `confirm=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP`. This removes the two POST methods and restores the verified diagnostics version. An already-published SPA uses the original flow when the popup endpoint responds with HTTP 404/405. The private bucket remains in place and its lifecycle rule expires markers. Browser identity still gives no access to `/api/*` or Dexie Cloud.
+
+## Original redirect flow
+
 **Scope:** a real Telegram OpenID Connect (OIDC) browser login flow on
 `https://mezfit.online`, `https://mezfit.ru`, and the existing technical
 `*.apigw.yandexcloud.net` hostname, using a private Yandex Cloud Function.

@@ -13,10 +13,15 @@ const {
 
 const ISSUER = 'https://oauth.telegram.org';
 const COOKIE_FLOW = '__Host-mz_oidc_flow';
+const COOKIE_POPUP = '__Host-mz_oidc_popup';
 const COOKIE_SESSION = '__Host-mz_browser_session';
 const FLOW_TTL = 600;
 const SESSION_TTL = 12 * 60 * 60;
 const MAX_JWT_LENGTH = 12000;
+const POPUP_TTL = 300;
+const JWKS_TTL = 300_000;
+let popupKeys;
+let popupKeysRequest;
 const NO_CACHE = {
   'Cache-Control': 'no-store',
   'Referrer-Policy': 'no-referrer',
@@ -97,14 +102,17 @@ function navigate(url, cookies = []) {
 }
 
 function getHost(event, config) {
-  const host = Object.entries(event.headers || {}).find(([key]) => key.toLowerCase() === 'host')?.[1];
+  const host = requestHeader(event, 'host');
   if (typeof host !== 'string' || !config.hosts.includes(host)) return null;
   return host;
 }
 
 function checkOrigin(event, host) {
-  const origin = Object.entries(event.headers || {}).find(([key]) => key.toLowerCase() === 'origin')?.[1];
-  return origin === 'https://' + host;
+  return requestHeader(event, 'origin') === 'https://' + host;
+}
+
+function requestHeader(event, name) {
+  return Object.entries(event.headers || {}).find(([key]) => key.toLowerCase() === name)?.[1];
 }
 
 function parameters(event) {
@@ -184,7 +192,26 @@ function validClaims(claims, config, nonce, now = epoch()) {
   };
 }
 
-async function authenticateIdToken(idToken, config, nonce) {
+function getKeys() {
+  return fetchJson(ISSUER + '/.well-known/jwks.json', {}, 'jwks').then(keys => {
+    if (!keys || !Array.isArray(keys.keys)) throw new OidcCheckError('jwks', 'invalid_keys');
+    return keys;
+  });
+}
+
+async function getPopupKeys(kid) {
+  const age = popupKeys ? Date.now() - popupKeys.fetchedAt : Infinity;
+  if (age < JWKS_TTL && (age < 30_000 || popupKeys.value.keys.some(key => key?.kid === kid))) {
+    return popupKeys.value;
+  }
+  popupKeysRequest ??= getKeys().then(value => {
+    popupKeys = { value, fetchedAt: Date.now() };
+    return value;
+  }).finally(() => { popupKeysRequest = undefined; });
+  return popupKeysRequest;
+}
+
+async function authenticateIdToken(idToken, config, nonce, loadKeys = getKeys) {
   if (typeof idToken !== 'string' || idToken.length > MAX_JWT_LENGTH) {
     throw new OidcCheckError('jwt', 'invalid_token');
   }
@@ -199,13 +226,12 @@ async function authenticateIdToken(idToken, config, nonce) {
   } catch {
     throw new OidcCheckError('jwt', 'invalid_token');
   }
-  if (header.alg !== 'RS256' || typeof header.kid !== 'string' || !header.kid
+  if (!header || header.alg !== 'RS256' || typeof header.kid !== 'string' || !header.kid
       || (header.typ !== undefined && header.typ !== 'JWT')) {
     throw new OidcCheckError('jwt', 'unsupported_algorithm');
   }
-  const keys = await fetchJson(ISSUER + '/.well-known/jwks.json', {}, 'jwks');
-  if (!keys || !Array.isArray(keys.keys)) throw new OidcCheckError('jwks', 'invalid_keys');
-  const match = keys.keys.filter(k => k.kid === header.kid && k.kty === 'RSA'
+  const keys = await loadKeys(header.kid);
+  const match = keys.keys.filter(k => k?.kid === header.kid && k.kty === 'RSA'
     && (k.alg === undefined || k.alg === 'RS256')
     && (k.use === undefined || k.use === 'sig') && typeof k.n === 'string'
     && typeof k.e === 'string');
@@ -225,7 +251,9 @@ async function authenticateIdToken(idToken, config, nonce) {
   }
   if (!validSignature) throw new OidcCheckError('jwt', 'invalid_signature');
   const profile = validClaims(claims, config, nonce);
-  if (!profile) throw new OidcCheckError('jwt', 'invalid_claims');
+  if (!profile || (loadKeys === getPopupKeys && (claims.exp <= claims.iat || claims.exp - claims.iat > 86400))) {
+    throw new OidcCheckError('jwt', 'invalid_claims');
+  }
   return profile;
 }
 
@@ -287,17 +315,80 @@ async function callback(event, config, host) {
       cookie(COOKIE_SESSION, session, SESSION_TTL),
     ]);
   } catch (error) {
-    const incidentId = base64url(randomBytes(12));
-    const diagnostic = error instanceof OidcCheckError
-      ? { stage: error.stage, code: error.code, ...(error.httpStatus === null
-        ? {} : { httpStatus: error.httpStatus }) }
-      : { stage: 'internal', code: 'unclassified' };
-    console.warn(JSON.stringify({ event: 'mezfit.browser_oidc.failure', incidentId, ...diagnostic }));
-    // The operator may not have Yandex Function log access. Return only the
-    // same fixed, non-sensitive stage/code/status used by the safe log. Never
-    // return upstream bodies, exception messages, tokens or credentials.
-    return json(401, { error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED',
-      incidentId, ...diagnostic }, [clearFlow]);
+    return verificationFailure(error, clearFlow);
+  }
+}
+
+function verificationFailure(error, clearFlow) {
+  const incidentId = base64url(randomBytes(12));
+  const diagnostic = error instanceof OidcCheckError
+    ? { stage: error.stage, code: error.code, ...(error.httpStatus === null
+      ? {} : { httpStatus: error.httpStatus }) }
+    : { stage: 'internal', code: 'unclassified' };
+  console.warn(JSON.stringify({ event: 'mezfit.browser_oidc.failure', incidentId, ...diagnostic }));
+  return json(401, { error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED',
+    incidentId, ...diagnostic }, [clearFlow]);
+}
+
+function popupPayload(event) {
+  if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(requestHeader(event, 'content-type') || '')
+      || typeof event.body !== 'string' || event.body.length > (MAX_JWT_LENGTH + 128) * 2) return null;
+  const body = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
+  if (Buffer.byteLength(body) > MAX_JWT_LENGTH + 128) return null;
+  try {
+    const value = JSON.parse(body);
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+async function consumePopupNonce(bucket, nonce, token) {
+  if (!token) throw new OidcCheckError('challenge', 'storage_credentials_missing');
+  const marker = createHash('sha256').update(nonce).digest('hex');
+  let response;
+  try {
+    response = await fetch(`https://storage.yandexcloud.net/${bucket}/used/${marker}`, {
+      method: 'PUT', body: '', redirect: 'error', signal: AbortSignal.timeout(5000),
+      headers: { Authorization: `Bearer ${token}`, 'If-None-Match': '*' },
+    });
+  } catch (error) {
+    throw new OidcCheckError('challenge', networkFailureCode(error));
+  }
+  if (response.status === 412 || response.status === 409) {
+    throw new OidcCheckError('challenge', 'already_used');
+  }
+  if (!response.ok) throw new OidcCheckError('challenge', 'storage_http_error', response.status);
+}
+
+async function popup(event, context, config, host) {
+  if (!checkOrigin(event, host)) return json(403, { error: 'ORIGIN_MISMATCH' });
+  const bucket = process.env.MEZFIT_BROWSER_CHALLENGE_BUCKET || '';
+  const clientId = Number(config.clientId);
+  if (!/^mezfit-browser-nonce-[a-z0-9]{8,32}$/.test(bucket) || !Number.isSafeInteger(clientId)) {
+    return json(503, { error: 'TELEGRAM_LOGIN_POPUP_NOT_CONFIGURED' });
+  }
+  const payload = popupPayload(event);
+  if (!payload) return json(400, { error: 'TELEGRAM_LOGIN_INVALID_REQUEST' });
+  if (event.path === '/auth/start') {
+    const nonce = base64url(randomBytes(32));
+    const challenge = signed({ nonce, host, iat: epoch() }, config.key);
+    return json(200, { nonce, clientId, expiresIn: POPUP_TTL }, [cookie(COOKIE_POPUP, challenge, POPUP_TTL)]);
+  }
+  const clear = cookie(COOKIE_POPUP, '', 0);
+  try {
+    const flow = verified(readCookies(event)[COOKIE_POPUP], config.key);
+    if (!flow || flow.host !== host || typeof flow.nonce !== 'string'
+        || !Number.isInteger(flow.iat) || flow.iat > epoch() || flow.iat + POPUP_TTL <= epoch()) {
+      throw new OidcCheckError('challenge', 'invalid_or_expired');
+    }
+    const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, getPopupKeys);
+    if (flow.iat + POPUP_TTL <= epoch()) throw new OidcCheckError('challenge', 'invalid_or_expired');
+    await consumePopupNonce(bucket, flow.nonce, context?.token?.access_token);
+    const session = signed({ version: 1, host, ...profile, iat: epoch(), exp: epoch() + SESSION_TTL }, config.key);
+    return json(200, { authenticated: true }, [clear, cookie(COOKIE_SESSION, session, SESSION_TTL)]);
+  } catch (error) {
+    return verificationFailure(error, clear);
   }
 }
 
@@ -319,7 +410,7 @@ function session(event, config, host) {
   });
 }
 
-async function handler(event) {
+async function handler(event, context) {
   let config;
   try {
     config = configuration();
@@ -331,8 +422,10 @@ async function handler(event) {
   const method = event.httpMethod;
   switch (event.path) {
     case '/auth/start':
+      if (method === 'POST') return popup(event, context, config, host);
       return method === 'GET' ? start(config, host) : json(405, { error: 'METHOD_NOT_ALLOWED' });
     case '/auth/callback':
+      if (method === 'POST') return popup(event, context, config, host);
       return method === 'GET'
         ? callback(event, config, host) : json(405, { error: 'METHOD_NOT_ALLOWED' });
     case '/auth/session':
@@ -342,7 +435,8 @@ async function handler(event) {
       if (method !== 'POST') return json(405, { error: 'METHOD_NOT_ALLOWED' });
       if (!checkOrigin(event, host)) return json(403, { error: 'ORIGIN_MISMATCH' });
       return json(200, { authenticated: false },
-        [cookie(COOKIE_SESSION, '', 0), cookie(COOKIE_FLOW, '', 0)]);
+        [cookie(COOKIE_SESSION, '', 0), cookie(COOKIE_FLOW, '', 0),
+          ...(process.env.MEZFIT_BROWSER_CHALLENGE_BUCKET ? [cookie(COOKIE_POPUP, '', 0)] : [])]);
     default:
       return json(404, { error: 'NOT_FOUND' });
   }

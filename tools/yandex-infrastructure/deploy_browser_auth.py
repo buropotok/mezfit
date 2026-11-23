@@ -20,7 +20,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from web_hosting import (
     FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
-    OPERATIONS, WebHostingError, await_operation, browser_auth_gateway_spec,
+    OPERATIONS, STORAGE, WebHostingError, await_operation, browser_auth_gateway_spec,
     bucket_name, choose, normalize_gateway_readback, paged_list, resource_id,
     spec_diff_paths, verify_gateway,
 )
@@ -29,8 +29,13 @@ VERSIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/versi
 PREPARE = "PREPARE_MEZFIT_BROWSER_LOGIN"
 ACTIVATE = "ACTIVATE_MEZFIT_BROWSER_LOGIN"
 UPGRADE = "UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS"
+POPUP = "ENABLE_MEZFIT_BROWSER_LOGIN_POPUP"
+POPUP_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP"
 TAG = "browser-login"
 PREVIOUS_TAG = "browser-login-pre-diagnostics"
+PRE_POPUP_TAG = "browser-login-pre-popup"
+DIAGNOSTICS_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
+                           "a597bd9d1a9f9235f95cf0dd8fa0115bcc9b9ec7f0f06f3aa0148eb70080c95a")
 # Verified against the first successful production Prepare Apply GitHub Actions
 # run 45107553050. Reject changes from any other serving baseline.
 BASELINE_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
@@ -41,11 +46,13 @@ SOURCE = Path(__file__).parent / "browser-auth" / "index.js"
 def request_api(opener, token, url, label, payload=None, method=None):
     verb = method or ("POST" if payload is not None else "GET")
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8") if payload is not None else None
-    req = Request(url, data=body, method=verb,
-                  headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    if verb == "PUT" and body is not None:
+        headers["Content-MD5"] = base64.b64encode(hashlib.md5(body, usedforsecurity=False).digest()).decode("ascii")
+    req = Request(url, data=body, method=verb, headers=headers)
     try:
         with opener.open(req, timeout=30) as response:
-            result = json.load(response)
+            result = {} if verb == "PUT" else json.load(response)
     except HTTPError as error:
         raise WebHostingError(f"{label}: HTTP {error.code}; inspect scoped Yandex IAM and resource state.") from None
     except (URLError, OSError, ValueError):
@@ -144,7 +151,11 @@ def version_secrets(secret_id, secret_version):
     ]
 
 
-def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts, *, tagged=True):
+def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts, *, tagged=True,
+                    nonce_bucket=None):
+    environment = {"MEZFIT_AUTH_HOSTS": allowed_hosts}
+    if nonce_bucket:
+        environment["MEZFIT_BROWSER_CHALLENGE_BUCKET"] = nonce_bucket
     return (
         resource_id(version.get("id"))
         and version.get("description") == fingerprint
@@ -152,7 +163,7 @@ def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed
         and version.get("runtime") == "nodejs22"
         and version.get("entrypoint") == "index.handler"
         and version.get("serviceAccountId") == sa
-        and version.get("environment") == {"MEZFIT_AUTH_HOSTS": allowed_hosts}
+        and version.get("environment") == environment
         and version.get("secrets") == version_secrets(secret_id, secret_version)
         and (TAG in version.get("tags", []) if tagged else TAG not in version.get("tags", []))
     )
@@ -187,11 +198,176 @@ def gateway_spec_changed(api, gateway, wanted):
 
 def require_confirmation(mode, action, confirmation):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
-    expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE}
+    expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE,
+                "popup": POPUP, "popup-rollback": POPUP_ROLLBACK}
     if mode not in ("preview", "apply") or action not in expected:
         raise WebHostingError("Unknown browser auth operation.")
     if mode == "apply" and confirmation != expected[action]:
         raise WebHostingError("Wrong explicit confirmation.")
+
+
+def nonce_bucket_name(folder):
+    return "mezfit-browser-nonce-" + hashlib.sha256(folder.encode()).hexdigest()[:16]
+
+
+def nonce_bucket_contract(folder, runtime_sa):
+    bucket = nonce_bucket_name(folder)
+    flags = {"read": False, "list": False, "configRead": False}
+    lifecycle = [{"id": "expire-used-nonces", "enabled": True,
+                  "filter": {"prefix": "used/"}, "expiration": {"days": "1"}}]
+    settings = {"name": bucket, "folderId": folder, "defaultStorageClass": "STANDARD",
+                "anonymousAccessFlags": flags, "versioning": "VERSIONING_DISABLED",
+                "tags": [{"key": "mezfit-purpose", "value": "browser-login-nonce"}],
+                "lifecycleRules": lifecycle}
+    policy = {"Version": "2012-10-17", "Statement": [{
+        "Effect": "Allow", "Principal": {"CanonicalUser": [runtime_sa]},
+        "Action": ["s3:PutObject"], "Resource": [f"arn:aws:s3:::{bucket}/used/*"],
+        "Condition": {"Null": {"s3:if-none-match": "false"},
+                      "Bool": {"aws:SecureTransport": "true"}},
+    }]}
+    return settings, policy
+
+
+def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep):
+    settings, policy = nonce_bucket_contract(folder, runtime_sa)
+    bucket = settings["name"]
+
+    def read():
+        current = api(f"{STORAGE}/{bucket}?view=VIEW_FULL", "Read private nonce bucket")
+        flags = current.get("anonymousAccessFlags", {})
+        stable_fields = ("name", "folderId", "versioning", "tags", "lifecycleRules")
+        if (any(current.get(key) != settings[key] for key in stable_fields)
+                or any(flags.get(key, False) is not False for key in settings["anonymousAccessFlags"])
+                or current.get("websiteSettings") or current.get("cors")
+                or current.get("policy") not in ({}, None, policy)):
+            raise WebHostingError("Nonce bucket differs from the approved private contract.")
+        direct = api(f"{STORAGE}/{bucket}:listAccessBindings", "Read nonce bucket IAM bindings")
+        if direct.get("accessBindings") or direct.get("nextPageToken"):
+            raise WebHostingError("Unexpected nonce bucket IAM bindings.")
+        grants = current.get("acl", {}).get("grants", [])
+        if any(grant.get("grantType") != "GRANT_TYPE_ACCOUNT"
+               or grant.get("granteeId") != deploy_sa for grant in grants):
+            raise WebHostingError("Unexpected nonce bucket ACL.")
+        return current
+
+    existing = choose(paged_list(api, STORAGE, folder, "buckets", "List nonce buckets"),
+                      bucket, folder, "Private nonce bucket")
+    current = read() if existing else {}
+    print(f"Nonce bucket: {'reuse' if existing else 'create'}; one-day expiry for empty markers.")
+    if mode == "preview":
+        return bucket
+    if not existing:
+        await_operation(api, api(STORAGE, "Create private nonce bucket", settings),
+                        "Create private nonce bucket", sleep)
+        current = read()
+    if current.get("policy") != policy:
+        if read().get("policy") not in ({}, None):
+            raise WebHostingError("Nonce bucket policy changed concurrently; run Preview again.")
+        update_api(f"https://storage.yandexcloud.net/{bucket}?policy", "Install exact nonce bucket policy",
+                   policy, method="PUT")
+        if read().get("policy") != policy:
+            raise WebHostingError("Nonce bucket policy failed readback.")
+    return bucket
+
+
+def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
+                 secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep):
+    function_id = function["id"]
+    legacy_spec = browser_auth_gateway_spec(bucket_name(folder), function_id, deploy_sa)
+    popup_spec = browser_auth_gateway_spec(bucket_name(folder), function_id, deploy_sa, popup=True)
+
+    def current_gateway_spec():
+        if not gateway_spec_changed(api, gateway, legacy_spec):
+            return "legacy"
+        if not gateway_spec_changed(api, gateway, popup_spec):
+            return "popup"
+        raise WebHostingError("Browser login gateway drift; refusing to overwrite routes.")
+
+    versions = function_version_list(api, function_id)
+    serving = select_tagged_version(versions)
+    bucket = nonce_bucket_name(folder)
+    version_args = (runtime_sa, secret_id, secret_version, hosts)
+
+    def is_diagnostics(version):
+        return any(version_matches(version, digest, *version_args, tagged=TAG in version.get("tags", []))
+                   for digest in (DIAGNOSTICS_FINGERPRINT, fingerprint))
+
+    def is_popup(version):
+        return version_matches(version, fingerprint, *version_args,
+                               tagged=TAG in version.get("tags", []), nonce_bucket=bucket)
+
+    preserved = [version for version in versions if PRE_POPUP_TAG in version.get("tags", [])]
+    if len(preserved) > 1 or (preserved and not is_diagnostics(preserved[0])):
+        raise WebHostingError("Unexpected popup rollback version.")
+    if not serving or not (is_diagnostics(serving) or (is_popup(serving) and preserved)):
+        raise WebHostingError("Active version differs from approved diagnostics/popup code.")
+    current_spec = current_gateway_spec()
+    baseline = preserved[0] if preserved else serving
+    if is_diagnostics(serving) and serving["id"] != baseline["id"]:
+        raise WebHostingError("Serving diagnostics version differs from the rollback baseline.")
+
+    def set_tag(version, tag):
+        await_operation(api, api(f"{VERSIONS}/{version['id']}:setTag", "Set reviewed browser login tag",
+                                 {"tag": tag}), "Set reviewed browser login tag", sleep)
+        tagged = [v for v in function_version_list(api, function_id) if tag in v.get("tags", [])]
+        if len(tagged) != 1 or tagged[0].get("id") != version["id"]:
+            raise WebHostingError("Browser login tag failed readback.")
+
+    def update_routes(spec):
+        await_operation(api, update_api(f"{GATEWAYS}/{gateway['id']}", "Update popup methods only", {
+            "updateMask": "openapiSpec", "openapiSpec": json.dumps(spec, separators=(",", ":")),
+        }, method="PATCH"), "Update popup methods only", sleep)
+
+    def ensure_serving(expected):
+        active = select_tagged_version(function_version_list(api, function_id))
+        if not active or active.get("id") != expected["id"]:
+            raise WebHostingError("Serving function changed concurrently; rerun Preview.")
+
+    if action == "popup-rollback":
+        print("Restore the verified diagnostics version and remove the two popup POST methods.")
+        if mode == "preview":
+            return
+        ensure_serving(serving)
+        if current_gateway_spec() == "popup":
+            update_routes(legacy_spec)
+        if current_gateway_spec() != "legacy":
+            raise WebHostingError("Legacy gateway routes failed readback.")
+        ensure_serving(serving)
+        if serving["id"] != baseline["id"]:
+            set_tag(baseline, TAG)
+        return
+
+    candidates = [v for v in versions if v.get("description") == fingerprint and not is_diagnostics(v)]
+    if len(candidates) > 1 or (candidates and not is_popup(candidates[0])):
+        raise WebHostingError("Popup function candidate differs from the approved configuration.")
+    print("Keep the verified diagnostics version and add only two popup POST methods.")
+    ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep)
+    if mode == "preview":
+        return
+    ensure_serving(serving)
+    current_gateway_spec()
+    if not preserved:
+        set_tag(baseline, PRE_POPUP_TAG)
+    if not candidates:
+        payload = {"functionId": function_id, "runtime": "nodejs22", "entrypoint": "index.handler",
+                   "resources": {"memory": "268435456"}, "executionTimeout": "20s",
+                   "serviceAccountId": runtime_sa, "content": base64.b64encode(content).decode("ascii"),
+                   "environment": {"MEZFIT_AUTH_HOSTS": hosts, "MEZFIT_BROWSER_CHALLENGE_BUCKET": bucket},
+                   "tag": [], "description": fingerprint, "secrets": version_secrets(secret_id, secret_version)}
+        result = await_operation(api, api(VERSIONS, "Publish private popup version", payload),
+                                 "Publish private popup version", sleep)
+        candidates = [v for v in function_version_list(api, function_id) if v.get("id") == result.get("id")]
+        if len(candidates) != 1 or not is_popup(candidates[0]) or TAG in candidates[0].get("tags", []):
+            raise WebHostingError("Popup version failed readback.")
+    candidate = candidates[0]
+    ensure_serving(serving)
+    if serving["id"] != candidate["id"]:
+        set_tag(candidate, TAG)
+    if current_gateway_spec() == "legacy":
+        update_routes(popup_spec)
+    if current_gateway_spec() != "popup":
+        raise WebHostingError("Popup gateway routes failed readback.")
+    ensure_serving(candidate)
 
 
 def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
@@ -285,11 +461,17 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
     if not resource_id(secret_id) or not resource_id(secret_version) or not tagged:
         raise WebHostingError("Expected pinned browser auth version is absent.")
 
+    if action in {"popup", "popup-rollback"}:
+        deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
+                     secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep)
+        return
+
     wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
     if action == "upgrade":
         if gateway_spec_changed(api, gateway, wanted):
             raise WebHostingError("Exact active auth gateway routes required before diagnostics upgrade.")
-        if version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts):
+        if any(version_matches(tagged, digest, runtime_sa, secret_id, secret_version, hosts)
+               for digest in (fingerprint, DIAGNOSTICS_FINGERPRINT)):
             old = [v for v in function_version_list(api, function["id"])
                    if PREVIOUS_TAG in v.get("tags", [])]
             if len(old) != 1 or not version_matches(
@@ -372,7 +554,8 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
         print("Safe OIDC diagnostics active; previous function code retained under rollback tag.")
         return
 
-    if not version_matches(tagged, fingerprint, runtime_sa, secret_id, secret_version, hosts):
+    if not any(version_matches(tagged, digest, runtime_sa, secret_id, secret_version, hosts)
+               for digest in (fingerprint, DIAGNOSTICS_FINGERPRINT)):
         raise WebHostingError("Expected ACTIVE tagged browser auth version with pinned Lockbox secrets is absent.")
 
     wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
@@ -435,7 +618,8 @@ def main():
             paged_list(api, GATEWAYS, folder, "apiGateways", "Preflight browser auth Gateway"),
             NAME_GATEWAY, folder, "Existing SPA gateway")
         check_gateway(current_gateway, api, folder)
-    runtime_sa, secret_id, version_id = bootstrap(mode, action, folder, api)
+    bootstrap_action = "upgrade" if action in {"popup", "popup-rollback"} else action
+    runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
     execute(mode, action, confirm, folder,
             os.environ.get("YC_DEPLOY_SA_ID", ""),
             runtime_sa, secret_id, version_id, api, update_api)
