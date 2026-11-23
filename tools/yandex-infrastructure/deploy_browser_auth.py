@@ -228,6 +228,42 @@ def nonce_bucket_contract(folder, runtime_sa):
     return settings, policy
 
 
+def nonce_lifecycle_readback(rules):
+    # The management API can return inactive protobuf fields on a rule.
+    # Only discard known defaults; additional active filters/rules are drift.
+    if not isinstance(rules, list) or len(rules) != 1 or not isinstance(rules[0], dict):
+        return rules
+    rule = rules[0].copy()
+    defaults = {
+        "transitions": ([], None),
+        "abortIncompleteMultipartUpload": ({}, None),
+        "noncurrentExpiration": ({}, None),
+        "noncurrentTransitions": ([], None),
+        "noncurrentDeleteMarkers": ({}, None),
+    }
+    for name, empty in defaults.items():
+        if rule.get(name) in empty:
+            rule.pop(name, None)
+    rule_filter = rule.get("filter")
+    if isinstance(rule_filter, dict):
+        rule_filter = rule_filter.copy()
+        for name in ("tag", "andOperator"):
+            if rule_filter.get(name) in ({}, None):
+                rule_filter.pop(name, None)
+        rule["filter"] = rule_filter
+    expiration = rule.get("expiration")
+    if isinstance(expiration, dict):
+        expiration = expiration.copy()
+        if expiration.get("expiredObjectDeleteMarker") is False:
+            expiration.pop("expiredObjectDeleteMarker")
+        if expiration.get("date") == "":
+            expiration.pop("date")
+        if type(expiration.get("days")) is int:
+            expiration["days"] = str(expiration["days"])
+        rule["expiration"] = expiration
+    return [rule]
+
+
 def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep):
     settings, policy = nonce_bucket_contract(folder, runtime_sa)
     bucket = settings["name"]
@@ -235,12 +271,28 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
     def read():
         current = api(f"{STORAGE}/{bucket}?view=VIEW_FULL", "Read private nonce bucket")
         flags = current.get("anonymousAccessFlags", {})
-        stable_fields = ("name", "folderId", "versioning", "tags", "lifecycleRules")
-        if (any(current.get(key) != settings[key] for key in stable_fields)
-                or any(flags.get(key, False) is not False for key in settings["anonymousAccessFlags"])
-                or current.get("websiteSettings") or current.get("cors")
-                or current.get("policy") not in ({}, None, policy)):
-            raise WebHostingError("Nonce bucket differs from the approved private contract.")
+        website = current.get("websiteSettings")
+        fields = [key for key in ("name", "folderId", "tags") if current.get(key) != settings[key]]
+        if current.get("versioning", "VERSIONING_DISABLED") != "VERSIONING_DISABLED":
+            fields.append("versioning")
+        if not isinstance(flags, dict) or any(flags.get(key, False) is not False
+                                             for key in settings["anonymousAccessFlags"]):
+            fields.append("anonymousAccessFlags")
+        empty_website = {"index": "", "error": "", "routingRules": [], "redirectAllRequests": {}}
+        if website not in ({}, None) and (not isinstance(website, dict)
+                or any(key not in empty_website or value != empty_website[key] for key, value in website.items())):
+            fields.append("websiteSettings")
+        if current.get("cors") not in ([], None):
+            fields.append("cors")
+        if current.get("policy") not in ({}, None, policy):
+            fields.append("policy")
+        lifecycle = current.get("lifecycleRules")
+        lifecycle_missing = lifecycle in ([], None) and current.get("policy") in ({}, None)
+        if not lifecycle_missing and nonce_lifecycle_readback(lifecycle) != settings["lifecycleRules"]:
+            fields.append("lifecycleRules")
+        if fields:
+            raise WebHostingError("Nonce bucket differs from the approved private contract in: "
+                                  + ", ".join(fields) + ".")
         direct = api(f"{STORAGE}/{bucket}:listAccessBindings", "Read nonce bucket IAM bindings")
         if direct.get("accessBindings") or direct.get("nextPageToken"):
             raise WebHostingError("Unexpected nonce bucket IAM bindings.")
@@ -260,6 +312,15 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
         await_operation(api, api(STORAGE, "Create private nonce bucket", settings),
                         "Create private nonce bucket", sleep)
         current = read()
+    if current.get("lifecycleRules") in ([], None):
+        current = read()
+        if current.get("lifecycleRules") in ([], None):
+            await_operation(api, update_api(f"{STORAGE}/{bucket}", "Install missing nonce lifecycle", {
+                "updateMask": "lifecycleRules", "lifecycleRules": settings["lifecycleRules"],
+            }, method="PATCH"), "Install missing nonce lifecycle", sleep)
+            current = read()
+            if nonce_lifecycle_readback(current.get("lifecycleRules")) != settings["lifecycleRules"]:
+                raise WebHostingError("Nonce bucket lifecycleRules failed readback.")
     if current.get("policy") != policy:
         if read().get("policy") not in ({}, None):
             raise WebHostingError("Nonce bucket policy changed concurrently; run Preview again.")
