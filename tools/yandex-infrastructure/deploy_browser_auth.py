@@ -16,6 +16,7 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, build_opener
+from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from web_hosting import (
@@ -43,6 +44,38 @@ BASELINE_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
 SOURCE = Path(__file__).parent / "browser-auth" / "index.js"
 
 
+def approved_nonce_lifecycle_xml(body):
+    # S3 returns the effective rule, including all filters and actions.
+    # Compare the exact tree, ignoring only element order and the S3 namespace.
+    text = body.decode("utf-8")
+    if "<!DOCTYPE" in text or "<!ENTITY" in text:
+        return False
+    namespace = "{http://s3.amazonaws.com/doc/2006-03-01/}"
+
+    def tree(element):
+        if element.attrib or (element.tail or "").strip():
+            raise ValueError("unexpected lifecycle XML markup")
+        return (
+            element.tag.removeprefix(namespace),
+            (element.text or "").strip() if len(element) else (element.text or ""),
+            sorted(tree(child) for child in element),
+        )
+
+    try:
+        actual = tree(ElementTree.fromstring(text))
+    except (ElementTree.ParseError, ValueError):
+        return False
+    for prefix in ("<Filter><Prefix>used/</Prefix></Filter>", "<Prefix>used/</Prefix>"):
+        expected = ElementTree.fromstring(
+            "<LifecycleConfiguration><Rule><ID>expire-used-nonces</ID>"
+            "<Status>Enabled</Status>" + prefix + "<Expiration><Days>1</Days></Expiration>"
+            "</Rule></LifecycleConfiguration>"
+        )
+        if actual == tree(expected):
+            return True
+    return False
+
+
 def request_api(opener, token, url, label, payload=None, method=None):
     verb = method or ("POST" if payload is not None else "GET")
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8") if payload is not None else None
@@ -52,7 +85,11 @@ def request_api(opener, token, url, label, payload=None, method=None):
     req = Request(url, data=body, method=verb, headers=headers)
     try:
         with opener.open(req, timeout=30) as response:
-            result = {} if verb == "PUT" else json.load(response)
+            if verb == "GET" and url.startswith("https://storage.yandexcloud.net/mezfit-browser-nonce-") and url.endswith("?lifecycle"):
+                body = response.read(32_769)
+                result = {"approved": len(body) <= 32_768 and approved_nonce_lifecycle_xml(body)}
+            else:
+                result = {} if verb == "PUT" else json.load(response)
     except HTTPError as error:
         raise WebHostingError(f"{label}: HTTP {error.code}; inspect scoped Yandex IAM and resource state.") from None
     except (URLError, OSError, ValueError):
@@ -293,7 +330,16 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
         lifecycle = current.get("lifecycleRules")
         lifecycle_missing = lifecycle in ([], None) and current.get("policy") in ({}, None)
         if not lifecycle_missing and nonce_lifecycle_readback(lifecycle) != settings["lifecycleRules"]:
-            fields.append("lifecycleRules")
+            expected = settings["lifecycleRules"][0]
+            same_rule = (isinstance(lifecycle, list) and len(lifecycle) == 1
+                         and isinstance(lifecycle[0], dict) and lifecycle[0].get("id") == expected["id"]
+                         and lifecycle[0].get("enabled") is True)
+            if not fields and same_rule and api(
+                    f"https://storage.yandexcloud.net/{bucket}?lifecycle",
+                    "Verify effective nonce lifecycle through Object Storage S3 API").get("approved") is True:
+                current = {**current, "lifecycleRules": settings["lifecycleRules"]}
+            else:
+                fields.append("lifecycleRules")
         if fields:
             raise WebHostingError("Nonce bucket differs from the approved private contract in: "
                                   + ", ".join(fields) + ".")
