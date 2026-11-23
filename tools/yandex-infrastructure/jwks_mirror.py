@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -41,7 +42,7 @@ def validate_inputs(mode, action, confirm, folder, deploy_sa):
         raise WebHostingError("Explicit owner approval missing for selected JWKS action.")
 
 
-def check_bucket(bucket, folder):
+def check_bucket(bucket, folder, deploy_sa):
     if bucket.get("name") != bucket_name(folder) or bucket.get("folderId") != folder:
         raise WebHostingError("JWKS bucket name/ownership drift.")
     if bucket.get("anonymousAccessFlags") != PRIVATE:
@@ -50,7 +51,7 @@ def check_bucket(bucket, folder):
         raise WebHostingError("Static S3 authentication disabled for JWKS bucket.")
     grants = bucket.get("acl", {}).get("grants", [])
     if not isinstance(grants, list) or any(
-        g.get("grantType") != "GRANT_TYPE_ACCOUNT" for g in grants
+        g.get("grantType") != "GRANT_TYPE_ACCOUNT" or g.get("granteeId") != deploy_sa for g in grants
     ):
         raise WebHostingError("Unexpected JWKS bucket ACL; manual review.")
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", bucket.get("resourceId", "")):
@@ -79,7 +80,7 @@ def list_keys(api, sa_id):
     return keys
 
 
-def inspect(api, folder):
+def inspect(api, folder, deploy_sa):
     sa = choose(paged_list(api, IAM_SA, folder, "serviceAccounts",
                            "List Yandex service accounts"),
                 NAME_SA, folder, "JWKS publisher")
@@ -91,7 +92,7 @@ def inspect(api, folder):
         # Bucket.List may omit resourceId and ACL. Resolve authoritative metadata.
         bucket = api(f"{STORAGE}/{bucket_name(folder)}?view=VIEW_BASIC",
                      "Read exact JWKS bucket settings")
-    bindings = read_bindings(api, check_bucket(bucket, folder)) if bucket else []
+    bindings = read_bindings(api, check_bucket(bucket, folder, deploy_sa)) if bucket else []
     if bindings and (not sa or bindings != [expected_binding(sa["id"])]):
         raise WebHostingError("JWKS bucket IAM drift; not overwriting existing grants.")
     keys = list_keys(api, sa["id"]) if sa else []
@@ -100,7 +101,7 @@ def inspect(api, folder):
 
 def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sleep=None):
     validate_inputs(mode, action, confirm, folder, deploy_sa)
-    sa, bucket, bindings, keys = inspect(api, folder)
+    sa, bucket, bindings, keys = inspect(api, folder, deploy_sa)
     if action == "prepare":
         if keys:
             raise WebHostingError("Existing JWKS publisher access key requires separate rotation procedure.")
@@ -113,13 +114,13 @@ def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sle
             await_operation(api, api(IAM_SA, "Create dedicated JWKS publisher", {
                 "folderId": folder, "name": NAME_SA,
                 "description": "MezFit Telegram public JWKS mirror; dedicated bucket only",
-            }), "Create JWKS publisher", sleep or __import__("time").sleep)
+            }), "Create JWKS publisher", sleep or time.sleep)
         if not bucket:
             await_operation(api, api(STORAGE, "Create private JWKS bucket", {
                 "folderId": folder, "name": bucket_name(folder),
                 "anonymousAccessFlags": PRIVATE, "maxSize": "10485760",
-            }), "Create JWKS bucket", sleep or __import__("time").sleep)
-        sa, bucket, bindings, keys = inspect(api, folder)
+            }), "Create JWKS bucket", sleep or time.sleep)
+        sa, bucket, bindings, keys = inspect(api, folder, deploy_sa)
         if not sa or not bucket or keys:
             raise WebHostingError("JWKS resources absent or changed after creation.")
         if not bindings:
@@ -132,8 +133,8 @@ def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sle
                     "accessBindingDeltas": [
                         {"action": "ADD", "accessBinding": expected_binding(sa["id"])}
                     ]
-                }, method="PATCH"), "Grant JWKS writer", sleep or __import__("time").sleep)
-        sa, bucket, bindings, keys = inspect(api, folder)
+                }, method="PATCH"), "Grant JWKS writer", sleep or time.sleep)
+        sa, bucket, bindings, keys = inspect(api, folder, deploy_sa)
         if not sa or not bucket or bindings != [expected_binding(sa["id"])] or keys:
             raise WebHostingError("JWKS provisioning readback failed.")
         print("JWKS infrastructure prepared; no access key has been created.")
