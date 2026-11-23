@@ -1,34 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Button, Surface, Text } from '../ui';
-
-interface BrowserIdentity {
-  telegramUserId: string;
-  name: string;
-  username: string;
-}
+import { parseBrowserSession, type BrowserIdentity } from './browserSession';
 
 type BrowserAuthState =
   | { status: 'loading' }
   | { status: 'signed-out' }
   | { status: 'unavailable' }
   | { status: 'signed-in'; identity: BrowserIdentity };
-
-function parseBrowserSession(value: unknown): BrowserIdentity | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  if (record.authenticated !== true
-      || typeof record.telegramUserId !== 'string'
-      || !/^[1-9]\d{0,15}$/.test(record.telegramUserId)
-      || typeof record.name !== 'string'
-      || record.name.length > 120
-      || typeof record.username !== 'string'
-      || record.username.length > 64) return null;
-  return {
-    telegramUserId: record.telegramUserId,
-    name: record.name,
-    username: record.username,
-  };
-}
 
 /**
  * Browser OIDC identity does not grant Mini App initData. The verified browser
@@ -127,4 +105,3 @@ export function BrowserTelegramLogin() {
   );
 }
 
-export { parseBrowserSession };
