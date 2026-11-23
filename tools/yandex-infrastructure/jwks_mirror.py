@@ -49,6 +49,10 @@ def check_bucket(bucket, folder, deploy_sa):
         raise WebHostingError("JWKS bucket must remain private.")
     if bucket.get("disabledStatickeyAuth") is True:
         raise WebHostingError("Static S3 authentication disabled for JWKS bucket.")
+    if bucket.get("policy") not in ({}, None) or bucket.get("cors") not in ([], None):
+        raise WebHostingError("Unexpected JWKS bucket policy or CORS settings.")
+    if bucket.get("websiteSettings") not in ({}, None):
+        raise WebHostingError("JWKS bucket may not serve a static website.")
     grants = bucket.get("acl", {}).get("grants", [])
     if not isinstance(grants, list) or any(
         g.get("grantType") != "GRANT_TYPE_ACCOUNT" or g.get("granteeId") != deploy_sa for g in grants
@@ -90,7 +94,7 @@ def inspect(api, folder, deploy_sa):
         raise WebHostingError("JWKS publisher ID invalid.")
     if bucket:
         # Bucket.List may omit resourceId and ACL. Resolve authoritative metadata.
-        bucket = api(f"{STORAGE}/{bucket_name(folder)}?view=VIEW_BASIC",
+        bucket = api(f"{STORAGE}/{bucket_name(folder)}?view=VIEW_FULL",
                      "Read exact JWKS bucket settings")
     bindings = read_bindings(api, check_bucket(bucket, folder, deploy_sa)) if bucket else []
     if bindings and (not sa or bindings != [expected_binding(sa["id"])]):
