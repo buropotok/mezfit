@@ -96,7 +96,18 @@ def nonce_bucket_iam_resource_id(metadata, bucket):
     return identity
 
 
-def request_api(opener, token, url, label, payload=None, method=None, *, status_only=False):
+def nonce_s3_xml(stream):
+    body = stream.read(32_769).decode("utf-8")
+    if len(body.encode("utf-8")) > 32_768 or "<!DOCTYPE" in body or "<!ENTITY" in body:
+        raise ValueError("Unapproved XML response.")
+    root = ElementTree.fromstring(body)
+    for element in root.iter():
+        element.tag = element.tag.removeprefix("{http://s3.amazonaws.com/doc/2006-03-01/}")
+    return root
+
+
+def request_api(opener, token, url, label, payload=None, method=None, *, status_only=False,
+                xml=False, absent_code=None):
     verb = method or ("POST" if payload is not None else "GET")
     if status_only and verb != "GET":
         raise ValueError("Status probes must use GET.")
@@ -120,12 +131,21 @@ def request_api(opener, token, url, label, payload=None, method=None, *, status_
         with opener.open(req, timeout=30) as response:
             if status_only:
                 return response.status
+            if xml:
+                return nonce_s3_xml(response)
             if verb == "GET" and url.startswith("https://storage.yandexcloud.net/mezfit-browser-nonce-") and url.endswith("?lifecycle"):
                 body = response.read(32_769)
                 result = {"approved": len(body) <= 32_768 and approved_nonce_lifecycle_xml(body)}
             else:
                 result = {} if verb == "PUT" else json.load(response)
     except HTTPError as error:
+        if absent_code and error.code == 404:
+            try:
+                response = nonce_s3_xml(error)
+                if response.tag == "Error" and response.findtext("Code") == absent_code:
+                    return None
+            except (OSError, ValueError, ElementTree.ParseError):
+                pass
         nonce_policy_readback = None
         nonce_full_view = re.fullmatch(
             re.escape(STORAGE) + r"/(mezfit-browser-nonce-[0-9a-f]{16})\?view=VIEW_FULL", url,
@@ -141,7 +161,7 @@ def request_api(opener, token, url, label, payload=None, method=None, *, status_
             except WebHostingError:
                 nonce_policy_readback = "response unavailable or invalid"
         raise YandexHttpError(label, error.code, nonce_policy_readback=nonce_policy_readback) from None
-    except (URLError, OSError, ValueError):
+    except (URLError, OSError, ValueError, ElementTree.ParseError):
         raise WebHostingError(f"{label}: Yandex API response unavailable or invalid.") from None
     if not isinstance(result, dict):
         raise WebHostingError(f"{label}: expected JSON object.")
@@ -327,6 +347,82 @@ def deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa):
         "Condition": {"Bool": {"aws:SecureTransport": "true"}},
     }
     return {**legacy, "Statement": [*legacy["Statement"], readback]}
+
+
+def canonical_nonce_policy(actual, expected):
+    """Accept the provider's scalar/list forms without changing policy semantics."""
+    if not isinstance(actual, dict) or not isinstance(actual.get("Statement"), list):
+        return actual
+
+    def normalized(policy):
+        rules = []
+        for rule in policy["Statement"]:
+            if not isinstance(rule, dict):
+                return policy
+            entry = rule.copy()
+            for key in ("Action", "Resource"):
+                value = entry.get(key)
+                if isinstance(value, str):
+                    entry[key] = [value]
+                elif isinstance(value, list) and all(isinstance(item, str) for item in value):
+                    entry[key] = sorted(value)
+            principal = entry.get("Principal")
+            if isinstance(principal, dict) and isinstance(principal.get("CanonicalUser"), str):
+                entry["Principal"] = {**principal, "CanonicalUser": [principal["CanonicalUser"]]}
+            rules.append(entry)
+        return {**policy, "Statement": sorted(rules, key=lambda rule: json.dumps(rule, sort_keys=True))}
+
+    return expected if normalized(actual) == normalized(expected) else actual
+
+
+def nonce_s3_bucket_snapshot(request, folder, deploy_sa, runtime_sa, policy, observed_policy):
+    """Reconstruct only the verified bucket fields when VIEW_FULL is denied."""
+    settings, _ = nonce_bucket_contract(folder, runtime_sa)
+    bucket = settings["name"]
+    s3 = f"https://storage.yandexcloud.net/{bucket}"
+    if canonical_nonce_policy(observed_policy, policy) != policy:
+        raise WebHostingError("S3 nonce bucket policy does not match the approved policy.")
+    metadata = choose(paged_list(request, STORAGE, folder, "buckets", "List nonce buckets for readback"),
+                      bucket, folder, "Private nonce bucket")
+    if metadata is None:
+        raise WebHostingError("Nonce bucket absent from its expected folder.")
+    nonce_bucket_iam_resource_id(metadata, bucket)
+
+    tags = request(s3 + "?tagging", "Read nonce bucket tags through S3", xml=True)
+    expected_tags = settings["tags"]
+    tag_set = tags.find("TagSet")
+    if tags.tag != "Tagging" or len(tags) != 1 or tag_set is None or len(tag_set) != len(expected_tags):
+        raise WebHostingError("Unexpected nonce bucket tags.")
+    for tag, expected in zip(tag_set, expected_tags):
+        if (tag.tag != "Tag" or sorted(child.tag for child in tag) != ["Key", "Value"]
+                or tag.findtext("Key") != expected["key"] or tag.findtext("Value") != expected["value"]):
+            raise WebHostingError("Unexpected nonce bucket tags.")
+
+    acl = request(s3 + "?acl", "Read nonce bucket ACL through S3", xml=True)
+    grants = acl.find("AccessControlList")
+    if (acl.tag != "AccessControlPolicy" or sorted(child.tag for child in acl) != ["AccessControlList", "Owner"]
+            or len(acl.findall("Owner/ID")) != 1 or acl.findtext("Owner/ID") != folder or grants is None):
+        raise WebHostingError("Unexpected nonce bucket ACL owner or structure.")
+    for grant in grants:
+        grantee = grant.find("Grantee")
+        grantee_id = grant.findtext("Grantee/ID")
+        permission = grant.findtext("Permission")
+        if (grant.tag != "Grant" or sorted(child.tag for child in grant) != ["Grantee", "Permission"]
+                or grantee is None or grantee.get("{http://www.w3.org/2001/XMLSchema-instance}type") != "CanonicalUser"
+                or any(child.tag not in {"ID", "DisplayName"} for child in grantee)
+                or len(grantee.findall("ID")) != 1
+                or not ((grantee_id == folder and permission == "FULL_CONTROL")
+                        or (grantee_id == deploy_sa and permission in {"READ", "WRITE", "FULL_CONTROL"}))):
+            raise WebHostingError("Unexpected nonce bucket ACL grant.")
+
+    for query, absent_code in (("cors", "NoSuchCORSConfiguration"), ("website", "NoSuchWebsiteConfiguration")):
+        if request(f"{s3}?{query}", f"Verify no nonce bucket S3 {query} configuration",
+                   xml=True, absent_code=absent_code) is not None:
+            raise WebHostingError(f"Unexpected nonce bucket {query} configuration.")
+    if request(s3 + "?lifecycle", "Verify effective nonce lifecycle through Object Storage S3 API").get("approved") is not True:
+        raise WebHostingError("Nonce bucket lifecycleRules differ in S3 readback.")
+    return {**metadata, "tags": expected_tags, "acl": {"grants": []}, "cors": [],
+            "websiteSettings": {}, "lifecycleRules": settings["lifecycleRules"], "policy": policy}
 
 
 def nonce_policy_readback_diff(actual, expected):
@@ -573,7 +669,8 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
         if fields:
             raise WebHostingError("Nonce bucket differs from the approved private contract in: "
                                   + ", ".join(fields) + ".")
-        direct = api(f"{STORAGE}/{bucket}:listAccessBindings", "Read nonce bucket IAM bindings")
+        identity = nonce_bucket_iam_resource_id(current, bucket) if current.get("resourceId") else bucket
+        direct = api(f"{STORAGE}/{identity}:listAccessBindings", "Read nonce bucket IAM bindings")
         if direct.get("accessBindings") or direct.get("nextPageToken"):
             raise WebHostingError("Unexpected nonce bucket IAM bindings.")
         grants = current.get("acl", {}).get("grants", [])
@@ -947,8 +1044,30 @@ def main():
     if not token:
         raise WebHostingError("Missing short-lived Yandex IAM token.")
     opener = build_opener(NoRedirect())
+    nonce_policy = None
+
+    def request(url, label, payload=None, **options):
+        return request_api(opener, token, url, label, payload, **options)
+
     def api(url, label, payload=None):
-        return request_api(opener, token, url, label, payload)
+        if nonce_policy is None or payload is not None or url != f"{STORAGE}/{nonce_bucket_name(folder)}?view=VIEW_FULL":
+            return request(url, label, payload)
+        try:
+            current = request(url, label)
+        except YandexHttpError as error:
+            if error.status != 403 or not isinstance(error.nonce_policy_readback, dict):
+                raise
+            try:
+                current = nonce_s3_bucket_snapshot(
+                    request, folder, deploy_sa, runtime_sa, nonce_policy, error.nonce_policy_readback,
+                )
+            except WebHostingError as readback_error:
+                raise WebHostingError(f"{label}: VIEW_FULL HTTP 403. {readback_error}") from None
+            print("Nonce bucket settings read through the storage list and S3 API.", flush=True)
+        if "policy" in current:
+            current["policy"] = canonical_nonce_policy(current["policy"], nonce_policy)
+        return current
+
     def update_api(url, label, payload, method):
         return request_api(opener, token, url, label, payload, method)
     # Resolve and, only in owner-confirmed Prepare Apply, create the
