@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "mezfit-telegram-jwks-mirror",
+  "main": "./worker.mjs",
+  "compatibility_date": "2026-11-23",
+  "triggers": { "crons": ["* * * * *"] },
+  "workers_dev": false,
+  "vars": {
+    "YC_JWKS_BUCKET": "mezfit-telegram-jwks-b1g774t6sgop4rakjob7"
+  }
+}
