@@ -293,9 +293,11 @@ async function callback(event, config, host) {
         ? {} : { httpStatus: error.httpStatus }) }
       : { stage: 'internal', code: 'unclassified' };
     console.warn(JSON.stringify({ event: 'mezfit.browser_oidc.failure', incidentId, ...diagnostic }));
-    // The browser receives only a random incident ID; cause details stay in
-    // server logs and never reveal credentials or Telegram token contents.
-    return json(401, { error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED', incidentId }, [clearFlow]);
+    // The operator may not have Yandex Function log access. Return only the
+    // same fixed, non-sensitive stage/code/status used by the safe log. Never
+    // return upstream bodies, exception messages, tokens or credentials.
+    return json(401, { error: 'TELEGRAM_LOGIN_VERIFICATION_FAILED',
+      incidentId, ...diagnostic }, [clearFlow]);
   }
 }
 
