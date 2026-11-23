@@ -76,3 +76,27 @@ test('invalid Telegram JWKS never publishes objects', async () => {
     globalThis.fetch = savedFetch;
   }
 });
+
+test('failed JWKS write does not advertise a successful heartbeat', async () => {
+  const savedFetch = globalThis.fetch;
+  let statusWritten = false;
+  const env = {
+    YC_JWKS_BUCKET: 'mezfit-telegram-jwks-b1g774t6sgop4rakjob7',
+    YC_JWKS_ACCESS_KEY_ID: 'YCAJE12345678',
+    YC_JWKS_SECRET_ACCESS_KEY: 'example-local-fixture-only-s3-signing-secret',
+  };
+  globalThis.fetch = async (url, options = {}) => {
+    if (url.toString().startsWith('https://oauth.telegram.org/')) {
+      return new Response(JSON.stringify({ keys: [rsa('fresh')] }), { status: 200 });
+    }
+    if (options.method === 'GET') return new Response('', { status: 404 });
+    if (url.toString().endsWith('/status.json')) statusWritten = true;
+    return new Response('denied', { status: 403 });
+  };
+  try {
+    await assert.rejects(refresh(env), /JWKS_WRITE_HTTP_403/);
+    assert.equal(statusWritten, false);
+  } finally {
+    globalThis.fetch = savedFetch;
+  }
+});
