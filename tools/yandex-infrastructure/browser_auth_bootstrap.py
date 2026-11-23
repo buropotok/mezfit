@@ -126,7 +126,7 @@ def bootstrap(mode, action, folder, api, sleep=time.sleep,
     Preview is read-only. Prepare Apply is the only phase allowed to write.
     An existing Lockbox secret is reused without reading its payload.
     """
-    if mode not in {"preview", "apply"} or action not in {"prepare", "activate"}:
+    if mode not in {"preview", "apply"} or action not in {"prepare", "activate", "upgrade"}:
         raise WebHostingError("Invalid browser login bootstrap mode/action.")
     if not resource_id(folder):
         raise WebHostingError("Missing approved YC_FOLDER_ID.")
@@ -135,15 +135,15 @@ def bootstrap(mode, action, folder, api, sleep=time.sleep,
     print(f"Browser runtime SA: {'reuse' if runtime else 'create'}; "
           f"Lockbox secret: {'reuse' if lockbox else 'create'}.")
 
-    # Preview and Activate are metadata-only and cannot initialize a
+    # Preview, Activate and Upgrade are metadata-only and cannot initialize a
     # privileged account or materialize a GitHub secret in Yandex Cloud.
-    if mode == "preview" or action == "activate":
+    if mode == "preview" or action in {"activate", "upgrade"}:
         if lockbox and runtime:
             grants = access_bindings(api, lockbox["id"])
             enabled = validate_access(grants, runtime["id"])
-            if not enabled and action == "activate":
+            if not enabled and action in {"activate", "upgrade"}:
                 raise WebHostingError("Browser runtime account lacks scoped Lockbox access.")
-        elif action == "activate":
+        elif action in {"activate", "upgrade"}:
             raise WebHostingError("Browser login runtime SA/Lockbox absent; run Prepare first.")
         return (
             runtime["id"] if runtime else "",
