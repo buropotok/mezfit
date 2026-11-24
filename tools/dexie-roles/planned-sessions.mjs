@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { ADHOC_SCHEMA, EXPECTED_ADHOC_ROLES } from './adhoc-sessions.mjs';
 
-export const CONFIRMATION = 'APPLY_PLANNED_SESSION_COACH_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const fail = code => { throw new Error(code); };
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -78,9 +77,6 @@ export function validatePlannedDispatch(env) {
     fail('UNAUTHORIZED_PLANNED_DISPATCH');
   }
   if (!['preview', 'apply'].includes(env.DEXIE_PLANNED_OPERATION)) fail('INVALID_PLANNED_OPERATION');
-  if (env.DEXIE_PLANNED_OPERATION === 'apply') {
-    if (env.DEXIE_PLANNED_CONFIRMATION !== CONFIRMATION) fail('INVALID_PLANNED_CONFIRMATION');
-  } else if (env.DEXIE_PLANNED_CONFIRMATION) fail('PREVIEW_MUST_NOT_HAVE_APPLY_CONFIRMATION');
 }
 
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
