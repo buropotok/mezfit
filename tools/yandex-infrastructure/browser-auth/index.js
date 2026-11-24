@@ -4,7 +4,7 @@
  * Browser-only Telegram OIDC bridge for Yandex Cloud Functions (Node.js 22).
  *
  * This is NOT a substitute for Telegram Mini App initData. A browser cookie
- * authorizes only the /auth/session endpoint, never legacy /api/ or Dexie ACL.
+ * can verify browser identity for the session and Dexie token endpoints.
  * No bot token, OIDC secret or signing key is bundled with the source code.
  */
 const {
@@ -15,6 +15,8 @@ const ISSUER = 'https://oauth.telegram.org';
 const COOKIE_FLOW = '__Host-mz_oidc_flow';
 const COOKIE_POPUP = '__Host-mz_oidc_popup';
 const COOKIE_SESSION = '__Host-mz_browser_session';
+const DEXIE_TOKEN_PATH = '/api/dexie-cloud/tokens';
+const MAX_DEVICE_KEY_LENGTH = 8192;
 const FLOW_TTL = 600;
 const LEGACY_SESSION_TTL = 12 * 60 * 60;
 const SESSION_RENEW_INTERVAL = 24 * 60 * 60;
@@ -36,18 +38,24 @@ const NO_CACHE = {
 const base64url = (buffer) => Buffer.from(buffer).toString('base64url');
 const epoch = () => Math.floor(Date.now() / 1000);
 
-function configuration() {
-  const clientId = process.env.TG_OIDC_CLIENT_ID || '';
-  const clientSecret = process.env.TG_OIDC_CLIENT_SECRET || '';
+function sessionConfiguration() {
   const sessionSecret = process.env.MEZFIT_BROWSER_SESSION_SECRET || '';
   const hosts = (process.env.MEZFIT_AUTH_HOSTS || '').split(',').map(x => x.trim());
-  if (!/^[1-9][0-9]{3,19}$/.test(clientId) || !clientSecret
-      || !/^[A-Za-z0-9_-]{43,}$/.test(sessionSecret)
+  if (!/^[A-Za-z0-9_-]{43,}$/.test(sessionSecret)
       || Buffer.from(sessionSecret, 'base64url').length < 32
       || hosts.length === 0 || hosts.some(host => !/^[a-z0-9][a-z0-9.-]+$/.test(host))) {
     throw new Error('OIDC_CONFIGURATION_MISSING');
   }
-  return { clientId, clientSecret, key: Buffer.from(sessionSecret, 'base64url'), hosts };
+  return { key: Buffer.from(sessionSecret, 'base64url'), hosts };
+}
+
+function configuration() {
+  const clientId = process.env.TG_OIDC_CLIENT_ID || '';
+  const clientSecret = process.env.TG_OIDC_CLIENT_SECRET || '';
+  if (!/^[1-9][0-9]{3,19}$/.test(clientId) || !clientSecret) {
+    throw new Error('OIDC_CONFIGURATION_MISSING');
+  }
+  return { clientId, clientSecret, ...sessionConfiguration() };
 }
 
 function signed(value, key) {
@@ -507,17 +515,23 @@ async function popup(event, context, config, host) {
   }
 }
 
-function session(event, config, host) {
+function verifiedSession(event, config, host, now) {
   const data = verified(readCookies(event)[COOKIE_SESSION], config.key);
-  const now = epoch();
   if (!data || (data.version !== 1 && data.version !== 2) || data.host !== host
       || !Number.isSafeInteger(data.telegramUserId) || data.telegramUserId <= 0
       || typeof data.sub !== 'string' || !data.sub
       || !Number.isInteger(data.iat) || data.iat > now + 60
       || !Number.isInteger(data.exp) || data.exp <= now
       || data.exp > data.iat + (data.version === 1 ? LEGACY_SESSION_TTL : SESSION_TTL)) {
-    return json(401, { authenticated: false });
+    return null;
   }
+  return data;
+}
+
+function session(event, config, host) {
+  const now = epoch();
+  const data = verifiedSession(event, config, host, now);
+  if (!data) return json(401, { authenticated: false });
   const cookies = data.version === 1 || now - data.iat >= SESSION_RENEW_INTERVAL
     ? [browserSessionCookie(host, data, config.key, now)] : [];
   return json(200, {
@@ -528,17 +542,103 @@ function session(event, config, host) {
   }, cookies);
 }
 
+function tokenError(status, code, message) {
+  return json(status, { error: { code, message } });
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function tokenExchangeFailure(stage, status = null) {
+  console.error('DEXIE_CLOUD_TOKEN_EXCHANGE_FAILED', { stage, upstreamStatus: status });
+  const code = stage === 'contract' || stage === 'json' ? 'INVALID_CLOUD_RESPONSE' : 'DEXIE_CLOUD_UNAVAILABLE';
+  return tokenError(502, code, 'Cloud authentication failed');
+}
+
+async function dexieTokens(event, config, host) {
+  if (!checkOrigin(event, host)) return tokenError(403, 'ORIGIN_MISMATCH', 'Forbidden origin');
+  const identity = verifiedSession(event, config, host, epoch());
+  if (!identity) return tokenError(401, 'UNAUTHORIZED', 'Browser authentication required');
+
+  let body;
+  try {
+    if (typeof event.body !== 'string') return tokenError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+    const raw = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
+    body = JSON.parse(raw);
+  } catch {
+    return tokenError(400, 'INVALID_JSON', 'Request body must be valid JSON');
+  }
+  if (!isRecord(body) || typeof body.public_key !== 'string'
+      || body.public_key.length < 1 || body.public_key.length > MAX_DEVICE_KEY_LENGTH) {
+    return tokenError(400, 'INVALID_PUBLIC_KEY', 'Cloud device public key is required');
+  }
+
+  const { DEXIE_CLOUD_CLIENT_ID: clientId, DEXIE_CLOUD_CLIENT_SECRET: clientSecret,
+    DEXIE_CLOUD_DB_URL: dbUrl } = process.env;
+  if (!clientId || !clientSecret || !/^https:\/\/[a-z0-9-]+\.dexie\.cloud$/.test(dbUrl)) {
+    return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication is not configured');
+  }
+
+  const subject = 'tg:' + identity.telegramUserId;
+  let upstream;
+  try {
+    upstream = await fetch(dbUrl + '/token', {
+      method: 'POST',
+      redirect: 'error',
+      signal: AbortSignal.timeout(10000),
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'client_credentials',
+        scopes: ['ACCESS_DB'],
+        public_key: body.public_key,
+        client_id: clientId,
+        client_secret: clientSecret,
+        claims: { sub: subject, name: typeof identity.name === 'string' ? identity.name : '' },
+      }),
+    });
+  } catch {
+    return tokenExchangeFailure('fetch');
+  }
+  if (!upstream.ok) return tokenExchangeFailure('http', upstream.status);
+
+  let token;
+  try {
+    token = await upstream.json();
+  } catch {
+    return tokenExchangeFailure('json', upstream.status);
+  }
+  if (!isRecord(token) || token.type !== 'tokens'
+      || typeof token.accessToken !== 'string' || token.accessToken.length === 0
+      || !Number.isFinite(token.accessTokenExpiration)
+      || !isRecord(token.claims) || token.claims.sub !== subject
+      || !['demo', 'eval', 'prod', 'client'].includes(token.userType)) {
+    return tokenExchangeFailure('contract', upstream.status);
+  }
+  return json(200, token);
+}
+
 async function handler(event, context) {
+  const isTokenRoute = event.path === DEXIE_TOKEN_PATH;
+  const method = event.httpMethod;
+  if (isTokenRoute && method !== 'POST') {
+    return tokenError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
+  }
   let config;
   try {
-    config = configuration();
+    config = isTokenRoute ? sessionConfiguration() : configuration();
   } catch {
+    if (isTokenRoute) return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication is not configured');
     return json(503, { error: 'TELEGRAM_LOGIN_NOT_CONFIGURED' });
   }
   const host = getHost(event, config);
-  if (!host) return json(403, { error: 'UNAPPROVED_AUTH_HOST' });
-  const method = event.httpMethod;
+  if (!host) {
+    if (isTokenRoute) return tokenError(403, 'UNAPPROVED_AUTH_HOST', 'Forbidden host');
+    return json(403, { error: 'UNAPPROVED_AUTH_HOST' });
+  }
   switch (event.path) {
+    case DEXIE_TOKEN_PATH:
+      return dexieTokens(event, config, host);
     case '/auth/start':
       if (method === 'POST') return popup(event, context, config, host);
       return method === 'GET' ? start(config, host) : json(405, { error: 'METHOD_NOT_ALLOWED' });
