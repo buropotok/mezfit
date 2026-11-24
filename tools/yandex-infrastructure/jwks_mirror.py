@@ -74,13 +74,13 @@ def check_bucket(bucket, folder, deploy_sa):
     return bucket["resourceId"]
 
 
-def read_bindings(api, resource_id_value):
+def read_bindings(api, resource_id_value, label="JWKS bucket"):
     result = api(f"{STORAGE}/{resource_id_value}:listAccessBindings",
-                 "Read JWKS bucket IAM")
+                 f"Read {label} IAM")
     bindings = result.get("accessBindings", [])
     if (not isinstance(bindings, list) or
             any(not isinstance(row, dict) for row in bindings) or result.get("nextPageToken")):
-        raise WebHostingError("Unexpected/paginated JWKS IAM grants; manual review.")
+        raise WebHostingError(f"Unexpected/paginated {label} IAM grants; manual review.")
     return bindings
 
 
