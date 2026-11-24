@@ -57,8 +57,7 @@ revokes all URLs. No catalogue or portrait network request blocks calendar work.
 
 The existing cloud roles intentionally prohibited ordinary occurrence writes;
 that was incompatible with the required local-first Save path. After merge run
-`.github/workflows/dexie-local-calendar-acl.yml` on main: preview, then apply with
-confirmation `APPLY_LOCAL_CALENDAR_COACH_CLIENT_ACL`. The existing protected
+`.github/workflows/dexie-local-calendar-acl.yml` on main: preview, then apply. The existing protected
 publisher is used. The operator accepts only the exact previous role baseline or
 already-installed target; rechecks before import and verifies every role plus
 unchanged schema after the attempt. It cannot change membership, data, source PLAN,
