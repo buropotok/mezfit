@@ -125,3 +125,74 @@ class DexieTokenOperatorContracts(unittest.TestCase):
         cloud.update = update
         cloud.execute("apply", "dexie-tokens", DEXIE_TOKENS)
         self.assertEqual([url for url, _ in cloud.writes], [VERSIONS, GATEWAYS + "/gateway1"])
+
+
+class FreshDexieLockboxCloud(DexieTokenCloud):
+    def __init__(self):
+        super().__init__()
+        self.secret_template = self.dexie_secret
+        self.dexie_secret = None
+        self.lockbox_bindings = []
+        self.fail_grant = False
+
+    def __call__(self, url, label, payload=None):
+        if url == LOCKBOX and payload is not None:
+            assert self.dexie_secret is None
+            self.writes.append((url, payload))
+            self.dexie_secret = deepcopy(self.secret_template)
+            return self.operation({"id": self.dexie_secret["id"]})
+        if url == LOCKBOX + "/dexiesecret:updateAccessBindings":
+            if self.fail_grant:
+                raise WebHostingError("Simulated grant interruption")
+            self.writes.append((url, payload))
+            self.lockbox_bindings.extend(item["accessBinding"] for item in payload["accessBindingDeltas"])
+            return self.operation({})
+        return super().__call__(url, label, payload)
+
+
+class DexieLockboxBootstrapContracts(unittest.TestCase):
+    def test_preview_and_first_apply_with_existing_github_secrets(self):
+        from unittest.mock import patch
+
+        cloud = FreshDexieLockboxCloud()
+        cloud.execute("preview", "dexie-tokens", "")
+        self.assertEqual(cloud.writes, [])
+        with patch.dict("os.environ", {
+            "DEXIE_CLOUD_CLIENT_ID": "test-id", "DEXIE_CLOUD_CLIENT_SECRET": "test-secret",
+        }):
+            cloud.execute("apply", "dexie-tokens", DEXIE_TOKENS)
+            cloud.execute("apply", "dexie-tokens", DEXIE_TOKENS)
+        self.assertEqual([url for url, _ in cloud.writes], [
+            LOCKBOX, LOCKBOX + "/dexiesecret:updateAccessBindings", VERSIONS, GATEWAYS + "/gateway1",
+        ])
+        self.assertEqual(cloud.writes[0][1], {
+            "folderId": FOLDER, "name": DEXIE_SECRET_NAME,
+            "deletionProtection": True, "createVersion": True,
+            "versionPayloadEntries": [
+                {"key": "client_id", "textValue": "test-id"},
+                {"key": "client_secret", "textValue": "test-secret"},
+            ],
+        })
+        self.assertEqual(cloud.lockbox_bindings, [{
+            "roleId": "lockbox.payloadViewer",
+            "subject": {"type": "serviceAccount", "id": RUNTIME_SA},
+        }])
+        self.assertIn(DEXIE_TOKEN_PATH, cloud.spec["paths"])
+
+    def test_interrupted_binding_resumes_without_secret_rotation(self):
+        from unittest.mock import patch
+
+        cloud = FreshDexieLockboxCloud()
+        cloud.fail_grant = True
+        with patch.dict("os.environ", {
+            "DEXIE_CLOUD_CLIENT_ID": "test-id", "DEXIE_CLOUD_CLIENT_SECRET": "test-secret",
+        }):
+            with self.assertRaisesRegex(WebHostingError, "grant interruption"):
+                cloud.execute("apply", "dexie-tokens", DEXIE_TOKENS)
+            self.assertEqual([url for url, _ in cloud.writes], [LOCKBOX])
+            cloud.fail_grant = False
+            cloud.execute("preview", "dexie-tokens", "")
+            self.assertEqual([url for url, _ in cloud.writes], [LOCKBOX])
+            cloud.execute("apply", "dexie-tokens", DEXIE_TOKENS)
+        self.assertEqual(sum(url == LOCKBOX for url, _ in cloud.writes), 1)
+        self.assertIn(DEXIE_TOKEN_PATH, cloud.spec["paths"])

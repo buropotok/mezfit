@@ -1062,21 +1062,24 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     ensure_serving(candidate)
 
 
-def dexie_token_configuration(api, folder, runtime_sa):
-    from browser_auth_bootstrap import LOCKBOX, access_bindings, validate_access
-
-    secret = choose(paged_list(api, LOCKBOX, folder, "secrets", "List Dexie token Lockbox metadata"),
-                    DEXIE_SECRET_NAME, folder, "Dexie token Lockbox secret")
-    version = secret.get("currentVersion") if secret else None
-    if (not secret or not resource_id(secret.get("id")) or secret.get("status") != "ACTIVE"
+def dexie_secret_version(secret):
+    version = secret.get("currentVersion")
+    if (not resource_id(secret.get("id")) or secret.get("status") != "ACTIVE"
             or secret.get("deletionProtection") is not True or not isinstance(version, dict)
             or not resource_id(version.get("id")) or version.get("secretId") != secret["id"]
             or version.get("status") != "ACTIVE"
             or version.get("payloadEntryKeys") not in (
                 ["client_id", "client_secret"], ["client_secret", "client_id"])):
         raise WebHostingError("Expected protected Dexie token Lockbox secret with an active two-key version.")
-    if not validate_access(access_bindings(api, secret["id"]), runtime_sa):
-        raise WebHostingError("Browser runtime lacks scoped payload access on the Dexie token secret.")
+    return version["id"]
+
+
+def dexie_token_configuration(api, folder, runtime_sa, *, mode=None, sleep=time.sleep):
+    from browser_auth_bootstrap import LOCKBOX, RUNTIME_PAYLOAD_ROLE, access_bindings, validate_access
+
+    def find_secret():
+        return choose(paged_list(api, LOCKBOX, folder, "secrets", "List Dexie token Lockbox metadata"),
+                      DEXIE_SECRET_NAME, folder, "Dexie token Lockbox secret")
 
     try:
         db_url = json.loads(DEXIE_DB_CONFIG.read_text(encoding="utf-8"))["dbUrl"]
@@ -1084,8 +1087,52 @@ def dexie_token_configuration(api, folder, runtime_sa):
         raise WebHostingError("Unable to read the canonical Dexie database URL.") from None
     if not isinstance(db_url, str) or not re.fullmatch(r"https://[a-z0-9-]+\.dexie\.cloud", db_url):
         raise WebHostingError("Unexpected canonical Dexie database URL.")
+
+    secret = find_secret()
+    version_id = dexie_secret_version(secret) if secret else None
+    binding = bool(secret and validate_access(access_bindings(api, secret["id"]), runtime_sa))
+    if not binding:
+        if mode == "preview":
+            print(f"Dexie Lockbox: {'reuse existing secret' if secret else 'create protected secret'} "
+                  "and grant the browser runtime payload access on that secret.")
+            return db_url, None
+        if mode != "apply":
+            raise WebHostingError("Dexie token Lockbox secret or scoped runtime access is missing.")
+
+        client_id = os.environ.get("DEXIE_CLOUD_CLIENT_ID", "")
+        client_secret = os.environ.get("DEXIE_CLOUD_CLIENT_SECRET", "")
+        if not client_id.strip() or not client_secret.strip():
+            raise WebHostingError("Dexie Lockbox bootstrap requires both existing Dexie GitHub Secrets.")
+        if not secret:
+            if find_secret():
+                raise WebHostingError("Dexie Lockbox secret appeared concurrently; rerun Preview.")
+            label = "Create protected Dexie token Lockbox secret"
+            result = await_operation(api, api(LOCKBOX, label, {
+                "folderId": folder, "name": DEXIE_SECRET_NAME,
+                "deletionProtection": True, "createVersion": True,
+                "versionPayloadEntries": [
+                    {"key": "client_id", "textValue": client_id},
+                    {"key": "client_secret", "textValue": client_secret},
+                ],
+            }), label, sleep)
+            secret = find_secret()
+            if not secret or secret.get("id") != result.get("id"):
+                raise WebHostingError("New Dexie Lockbox secret failed metadata readback.")
+            version_id = dexie_secret_version(secret)
+
+        if not validate_access(access_bindings(api, secret["id"]), runtime_sa):
+            label = "Grant browser runtime access on the exact Dexie Lockbox secret"
+            await_operation(api, api(f"{LOCKBOX}/{secret['id']}:updateAccessBindings", label, {
+                "accessBindingDeltas": [{"action": "ADD", "accessBinding": {
+                    "roleId": RUNTIME_PAYLOAD_ROLE,
+                    "subject": {"type": "serviceAccount", "id": runtime_sa},
+                }}],
+            }), label, sleep)
+        if not validate_access(access_bindings(api, secret["id"]), runtime_sa):
+            raise WebHostingError("Dexie Lockbox runtime grant failed readback.")
+
     secrets = [
-        {"id": secret["id"], "versionId": version["id"], "key": key, "environmentVariable": env}
+        {"id": secret["id"], "versionId": version_id, "key": key, "environmentVariable": env}
         for key, env in (("client_id", "DEXIE_CLOUD_CLIENT_ID"),
                          ("client_secret", "DEXIE_CLOUD_CLIENT_SECRET"))
     ]
@@ -1137,7 +1184,16 @@ def deploy_dexie_tokens(mode, action, folder, gateway, function_id, deploy_sa, r
             raise WebHostingError("Gateway route verification failed; run Preview before retrying.")
 
     if activate:
-        db_url, dexie_secrets = dexie_token_configuration(api, folder, runtime_sa)
+        versions = current_versions()
+        db_url, dexie_secrets = dexie_token_configuration(api, folder, runtime_sa, mode="preview")
+        if dexie_secrets is None:
+            if active or select_tagged_version(versions, DEXIE_TOKEN_TAG):
+                raise WebHostingError("Existing Dexie token deployment has missing Lockbox access; inspect drift.")
+            if mode == "preview":
+                print("Dexie tokens: publish private version and add exact gateway POST after Lockbox bootstrap.")
+                return
+            require_routes(baseline)
+            db_url, dexie_secrets = dexie_token_configuration(api, folder, runtime_sa, mode="apply", sleep=sleep)
         environment = {"MEZFIT_AUTH_HOSTS": hosts, "DEXIE_CLOUD_DB_URL": db_url}
         signing_key = version_secrets(secret_id, secret_version)[2]
         secrets = [signing_key, *dexie_secrets]
