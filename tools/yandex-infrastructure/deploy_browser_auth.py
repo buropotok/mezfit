@@ -1,8 +1,8 @@
 """Owner-gated Yandex Cloud Function + API Gateway Telegram OIDC deployment.
 
 Preview is read-only. Apply creates/reuses one private function, publishes
-pinned-secret Node 22 code, then (in an independently confirmed phase) adds
-only the four /auth/* routes to the existing gateway. No /api/* changes.
+pinned-secret Node 22 code and activates browser auth on the existing gateway.
+Separate actions add or remove the exact browser Dexie token POST route.
 """
 
 import base64
@@ -24,7 +24,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import jwks_mirror
 from web_hosting import (
-    FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
+    DEXIE_TOKEN_TAG, FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
     OPERATIONS, STORAGE, WebHostingError, await_operation, browser_auth_gateway_spec,
     bucket_name, choose, normalize_gateway_readback, paged_list, resource_id,
     spec_diff_paths, verified_gateway_domains, verify_gateway,
@@ -38,6 +38,10 @@ UPGRADE = "UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS"
 POPUP = "ENABLE_MEZFIT_BROWSER_LOGIN_POPUP"
 POPUP_MIRROR = "ENABLE_MEZFIT_BROWSER_JWKS_MIRROR"
 POPUP_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP"
+DEXIE_TOKENS = "ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS"
+DEXIE_TOKENS_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_DEXIE_TOKENS"
+DEXIE_SECRET_NAME = "mezfit-browser-dexie-tokens"
+DEXIE_DB_CONFIG = Path(__file__).resolve().parents[2] / "dexie-cloud.json"
 TAG = "browser-login"
 PREVIOUS_TAG = "browser-login-pre-diagnostics"
 PRE_POPUP_TAG = "browser-login-pre-popup"
@@ -57,6 +61,10 @@ TELEGRAM_ID_DIAGNOSTICS_MIRROR_FINGERPRINT = (
 # Browser handler package introduced in PR #908.
 NUMERIC_TELEGRAM_ID_MIRROR_FINGERPRINT = (
     "MezFit browser OIDC code SHA256:5ea9d62646ca435c15a658a6c25f749f22d637a2aa11d3b5b3261da0c3d1de0d"
+)
+# Serving package before the separately tagged Dexie route.
+LONG_SESSION_MIRROR_FINGERPRINT = (
+    "MezFit browser OIDC code SHA256:418a0255050e917a49f3b8b45524b8df63b56d49fa286da6cfe6789591c7a31e"
 )
 MIRROR_OBJECT_URL = re.compile(
     r"https://storage\.yandexcloud\.net/mezfit-telegram-jwks-[a-z0-9]+/(status|jwks)\.json"
@@ -307,10 +315,10 @@ def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed
     )
 
 
-def select_tagged_version(versions):
-    matches = [v for v in versions if TAG in v.get("tags", [])]
+def select_tagged_version(versions, tag=TAG):
+    matches = [v for v in versions if tag in v.get("tags", [])]
     if len(matches) > 1:
-        raise WebHostingError("Multiple browser-login tagged versions; manual review.")
+        raise WebHostingError("Multiple versions with the requested serving tag; manual review.")
     return matches[0] if matches else None
 
 
@@ -338,7 +346,8 @@ def gateway_spec_changed(api, gateway, wanted):
 def require_confirmation(mode, action, confirmation):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
     expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE,
-                "popup": POPUP, "popup-mirror": POPUP_MIRROR, "popup-rollback": POPUP_ROLLBACK}
+                "popup": POPUP, "popup-mirror": POPUP_MIRROR, "popup-rollback": POPUP_ROLLBACK,
+                "dexie-tokens": DEXIE_TOKENS, "dexie-tokens-rollback": DEXIE_TOKENS_ROLLBACK}
     if mode not in ("preview", "apply") or action not in expected:
         raise WebHostingError("Unknown browser auth operation.")
     if mode == "apply" and confirmation != expected[action]:
@@ -930,12 +939,12 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
 
     def is_diagnostics(version):
         return any(version_matches(version, digest, *version_args, tagged=TAG in version.get("tags", []))
-                   for digest in (DIAGNOSTICS_FINGERPRINT, fingerprint))
+                   for digest in (DIAGNOSTICS_FINGERPRINT, LONG_SESSION_MIRROR_FINGERPRINT, fingerprint))
 
     def is_direct_popup(version):
         return any(version_matches(version, digest, *version_args,
                                    tagged=TAG in version.get("tags", []), nonce_bucket=bucket)
-                   for digest in (DIRECT_POPUP_FINGERPRINT, fingerprint))
+                   for digest in (DIRECT_POPUP_FINGERPRINT, LONG_SESSION_MIRROR_FINGERPRINT, fingerprint))
 
     def is_mirror_popup(version, digest=fingerprint):
         return version_matches(version, digest, *version_args,
@@ -952,6 +961,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
         for digest in (
             fingerprint, PREVIOUS_MIRROR_FINGERPRINT, CLAIM_DIAGNOSTICS_MIRROR_FINGERPRINT,
             TELEGRAM_ID_DIAGNOSTICS_MIRROR_FINGERPRINT, NUMERIC_TELEGRAM_ID_MIRROR_FINGERPRINT,
+            LONG_SESSION_MIRROR_FINGERPRINT,
         )
     )
     if not serving or not (is_diagnostics(serving) or (preserved and
@@ -999,6 +1009,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
 
     candidates = [
         v for v in versions if v.get("description") == fingerprint and not is_diagnostics(v)
+        and DEXIE_TOKEN_TAG not in v.get("tags", [])
         and not (is_direct_popup(v) if mirrored else is_mirror_popup(v))
     ]
     if len(candidates) > 1 or (candidates and not is_candidate(candidates[0])):
@@ -1049,6 +1060,145 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     if current_gateway_spec() != "popup":
         raise WebHostingError("Popup gateway routes failed readback.")
     ensure_serving(candidate)
+
+
+def dexie_token_configuration(api, folder, runtime_sa):
+    from browser_auth_bootstrap import LOCKBOX, access_bindings, validate_access
+
+    secret = choose(paged_list(api, LOCKBOX, folder, "secrets", "List Dexie token Lockbox metadata"),
+                    DEXIE_SECRET_NAME, folder, "Dexie token Lockbox secret")
+    version = secret.get("currentVersion") if secret else None
+    if (not secret or not resource_id(secret.get("id")) or secret.get("status") != "ACTIVE"
+            or secret.get("deletionProtection") is not True or not isinstance(version, dict)
+            or not resource_id(version.get("id")) or version.get("secretId") != secret["id"]
+            or version.get("status") != "ACTIVE"
+            or version.get("payloadEntryKeys") not in (
+                ["client_id", "client_secret"], ["client_secret", "client_id"])):
+        raise WebHostingError("Expected protected Dexie token Lockbox secret with an active two-key version.")
+    if not validate_access(access_bindings(api, secret["id"]), runtime_sa):
+        raise WebHostingError("Browser runtime lacks scoped payload access on the Dexie token secret.")
+
+    try:
+        db_url = json.loads(DEXIE_DB_CONFIG.read_text(encoding="utf-8"))["dbUrl"]
+    except (OSError, ValueError, TypeError, KeyError):
+        raise WebHostingError("Unable to read the canonical Dexie database URL.") from None
+    if not isinstance(db_url, str) or not re.fullmatch(r"https://[a-z0-9-]+\.dexie\.cloud", db_url):
+        raise WebHostingError("Unexpected canonical Dexie database URL.")
+    secrets = [
+        {"id": secret["id"], "versionId": version["id"], "key": key, "environmentVariable": env}
+        for key, env in (("client_id", "DEXIE_CLOUD_CLIENT_ID"),
+                         ("client_secret", "DEXIE_CLOUD_CLIENT_SECRET"))
+    ]
+    return db_url, secrets
+
+
+def deploy_dexie_tokens(mode, action, folder, gateway, function_id, deploy_sa, runtime_sa,
+                        secret_id, secret_version, hosts, tagged, content, fingerprint, api, update_api, sleep):
+    spec_args = (bucket_name(folder), function_id, deploy_sa)
+    nonce = nonce_bucket_name(folder)
+    jwks = jwks_mirror.bucket_name(folder)
+    version_args = (runtime_sa, secret_id, secret_version, hosts)
+    auth_baselines = (
+        (False, None, None, (
+            BASELINE_FINGERPRINT, DIAGNOSTICS_FINGERPRINT, LONG_SESSION_MIRROR_FINGERPRINT, fingerprint,
+        )),
+        (True, nonce, None, (DIRECT_POPUP_FINGERPRINT, LONG_SESSION_MIRROR_FINGERPRINT, fingerprint)),
+        (True, nonce, jwks, (
+            PREVIOUS_MIRROR_FINGERPRINT, CLAIM_DIAGNOSTICS_MIRROR_FINGERPRINT,
+            TELEGRAM_ID_DIAGNOSTICS_MIRROR_FINGERPRINT, NUMERIC_TELEGRAM_ID_MIRROR_FINGERPRINT,
+            LONG_SESSION_MIRROR_FINGERPRINT, fingerprint,
+        )),
+    )
+    approved = [popup for popup, nonce_bucket, jwks_bucket, digests in auth_baselines
+                if any(version_matches(tagged, digest, *version_args,
+                                       nonce_bucket=nonce_bucket, jwks_bucket=jwks_bucket)
+                       for digest in digests)]
+    if len(approved) != 1:
+        raise WebHostingError("Serving browser auth version differs from an approved pinned baseline.")
+    baseline = browser_auth_gateway_spec(*spec_args, popup=approved[0])
+    enabled = browser_auth_gateway_spec(*spec_args, popup=approved[0], dexie_tokens=True)
+    active = not gateway_spec_changed(api, gateway, enabled)
+    if not active and gateway_spec_changed(api, gateway, baseline):
+        raise WebHostingError("Gateway differs from the approved browser auth and Dexie route contracts.")
+    activate = action == "dexie-tokens"
+
+    def current_versions():
+        versions = function_version_list(api, function_id)
+        serving = select_tagged_version(versions)
+        # Publishing a new version can move $latest. The existing auth tag
+        # must still resolve to the exact immutable version seen in preflight.
+        if (not serving or serving.get("id") != tagged["id"]
+                or not has_gateway_invoker(function_bindings(api, function_id), deploy_sa)):
+            raise WebHostingError("Serving auth version or private invocation changed; rerun Preview.")
+        return versions
+
+    def require_routes(spec):
+        if gateway_spec_changed(api, gateway, spec):
+            raise WebHostingError("Gateway route verification failed; run Preview before retrying.")
+
+    if activate:
+        db_url, dexie_secrets = dexie_token_configuration(api, folder, runtime_sa)
+        environment = {"MEZFIT_AUTH_HOSTS": hosts, "DEXIE_CLOUD_DB_URL": db_url}
+        signing_key = version_secrets(secret_id, secret_version)[2]
+        secrets = [signing_key, *dexie_secrets]
+
+        def token_version(versions):
+            candidate = select_tagged_version(versions, DEXIE_TOKEN_TAG)
+            if candidate and not (
+                resource_id(candidate.get("id")) and candidate.get("description") == fingerprint
+                and candidate.get("status") == "ACTIVE" and candidate.get("runtime") == "nodejs22"
+                and candidate.get("entrypoint") == "index.handler"
+                and candidate.get("serviceAccountId") == runtime_sa
+                and candidate.get("environment") == environment and candidate.get("secrets") == secrets
+                and TAG not in candidate.get("tags", [])
+            ):
+                raise WebHostingError("Dexie token function version differs from the approved package/configuration.")
+            return candidate
+
+        candidate = token_version(current_versions())
+        if active and not candidate:
+            raise WebHostingError("Dexie token route is configured without its verified private version.")
+        print(f"Dexie tokens: {'reuse' if candidate else 'publish'} private version; "
+              f"{'keep' if active else 'add'} exact gateway POST.")
+        if mode == "preview" or active:
+            return
+        require_routes(baseline)
+        if not candidate:
+            if (dexie_token_configuration(api, folder, runtime_sa) != (db_url, dexie_secrets)
+                    or token_version(current_versions()) is not None):
+                raise WebHostingError("Dexie token version or Lockbox changed; rerun Preview.")
+            payload = {
+                "functionId": function_id, "runtime": "nodejs22", "entrypoint": "index.handler",
+                "resources": {"memory": "268435456"}, "executionTimeout": "20s",
+                "serviceAccountId": runtime_sa, "content": base64.b64encode(content).decode("ascii"),
+                "environment": environment, "tag": [DEXIE_TOKEN_TAG],
+                "description": fingerprint, "secrets": secrets,
+            }
+            result = await_operation(api, api(VERSIONS, "Publish private Dexie token version", payload),
+                                     "Publish private Dexie token version", sleep)
+            candidate = token_version(current_versions())
+            if not candidate or candidate["id"] != result.get("id"):
+                raise WebHostingError("Dexie token version failed strict readback.")
+        if (dexie_token_configuration(api, folder, runtime_sa) != (db_url, dexie_secrets)
+                or token_version(current_versions()) != candidate):
+            raise WebHostingError("Dexie token version or Lockbox changed; rerun Preview.")
+    else:
+        print("Dexie token rollback: remove only the exact POST; retain the private version and existing auth.")
+        if mode == "preview" or not active:
+            return
+        current_versions()
+
+    require_routes(baseline if activate else enabled)
+    wanted = enabled if activate else baseline
+    label = "Update browser Dexie token gateway POST"
+    operation = update_api(f"{GATEWAYS}/{gateway['id']}", label, {
+        "updateMask": "openapiSpec", "openapiSpec": json.dumps(wanted, separators=(",", ":")),
+    }, method="PATCH")
+    await_operation(api, operation, label, sleep)
+    require_routes(wanted)
+    versions = current_versions()
+    if activate and token_version(versions) != candidate:
+        raise WebHostingError("Active Dexie token version failed readback.")
 
 
 def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
@@ -1142,6 +1292,11 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
     if not resource_id(secret_id) or not resource_id(secret_version) or not tagged:
         raise WebHostingError("Expected pinned browser auth version is absent.")
 
+    if action in {"dexie-tokens", "dexie-tokens-rollback"}:
+        deploy_dexie_tokens(mode, action, folder, gateway, function["id"], deploy_sa, runtime_sa,
+                            secret_id, secret_version, hosts, tagged, content, fingerprint, api, update_api, sleep)
+        return
+
     if action in {"popup", "popup-mirror", "popup-rollback"}:
         deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
                      secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep,
@@ -1170,7 +1325,7 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
         if len(tagged_previous) > 1 or (tagged_previous and tagged_previous[0].get("id") != tagged.get("id")):
             raise WebHostingError("Existing preserved baseline tag points elsewhere; manual review required.")
         candidate = [v for v in versions if v.get("description") == fingerprint
-                     and TAG not in v.get("tags", [])]
+                     and TAG not in v.get("tags", []) and DEXIE_TOKEN_TAG not in v.get("tags", [])]
         if len(candidate) > 1 or (candidate and not version_matches(
                 candidate[0], fingerprint, runtime_sa, secret_id, secret_version, hosts,
                 tagged=False)):
@@ -1322,7 +1477,9 @@ def main():
             paged_list(api, GATEWAYS, folder, "apiGateways", "Preflight browser auth Gateway"),
             NAME_GATEWAY, folder, "Existing SPA gateway")
         check_gateway(current_gateway, api, folder)
-    bootstrap_action = "upgrade" if action in {"popup", "popup-mirror", "popup-rollback"} else action
+    bootstrap_action = "upgrade" if action in {
+        "popup", "popup-mirror", "popup-rollback", "dexie-tokens", "dexie-tokens-rollback",
+    } else action
     runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
     nonce_options = {}

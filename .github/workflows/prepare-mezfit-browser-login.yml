@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Prepare, activate, upgrade diagnostics, enable popup or JWKS mirror, or roll back popup
+        description: Manage browser login, JWKS mirror, or the browser Dexie token route
         type: choice
         required: true
         default: prepare
@@ -15,6 +15,8 @@ on:
           - popup
           - popup-mirror
           - popup-rollback
+          - dexie-tokens
+          - dexie-tokens-rollback
       mode:
         description: Preview is read-only; Apply requires exact confirmation
         type: choice
@@ -65,6 +67,8 @@ jobs:
             popup) expected=ENABLE_MEZFIT_BROWSER_LOGIN_POPUP ;;
             popup-mirror) expected=ENABLE_MEZFIT_BROWSER_JWKS_MIRROR ;;
             popup-rollback) expected=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP ;;
+            dexie-tokens) expected=ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS ;;
+            dexie-tokens-rollback) expected=ROLLBACK_MEZFIT_BROWSER_DEXIE_TOKENS ;;
             *) echo "Invalid action"; exit 1 ;;
           esac
           [[ "$MODE" == preview || "$MODE" == apply ]] || { echo "Invalid mode"; exit 1; }

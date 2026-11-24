@@ -12,7 +12,7 @@ The function uses only the official Telegram HTTPS JWKS. A warm instance keeps k
 2. Run `action=popup`, `mode=apply`, `confirm=ENABLE_MEZFIT_BROWSER_LOGIN_POPUP`. The existing deploy service account needs permission to create the dedicated bucket, set its lifecycle and policy, and read these settings. The operator creates the separate private bucket and grants conditional `PutObject` under `used/` to the existing runtime service account through the bucket policy. The function uses a short-lived IAM token from its invocation context. Lockbox and folder-wide grants are left alone. The operator preserves the diagnostics version under `browser-login-pre-popup`, activates the reviewed version, and adds two POST methods to the current Gateway.
 3. After successful backend readback, run [Publish MezFit SPA to Yandex](https://github.com/buropotok/mezfit/actions/workflows/publish-yandex-spa.yml) with `PUBLISH_MEZFIT_WEB`. Use a normal browser on a BotFather-approved origin. Check Android Chrome, iOS Safari and desktop, including blocked or closed popups, retry, success, reload, logout and Mini App login. If a script policy is configured, allow the Telegram SDK from `https://oauth.telegram.org`. An opener that sets COOP needs `same-origin-allow-popups` for this login page.
 4. A failed sign-in displays sanitized `stage`, `code`, an optional `httpStatus` and `incidentId`. `jwks: timeout` means Yandex did not receive the keys in time. `jwt` means verification rejected the token. `challenge` identifies the one-time attempt or storage validation. The first real sign-in after publishing checks live reachability from the function. The diagnostics contain no JWT, authentication code, cookie, credentials or user data.
-5. To roll back, run `action=popup-rollback`, `mode=preview`, then `mode=apply`, `confirm=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP`. This removes the two POST methods and restores the verified diagnostics version. An already-published SPA uses the original flow when the popup endpoint responds with HTTP 404/405. The private bucket remains in place and its lifecycle rule expires markers. Browser identity still gives no access to `/api/*` or Dexie Cloud.
+5. To roll back, run `action=popup-rollback`, `mode=preview`, then `mode=apply`, `confirm=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP`. This removes the two POST methods and restores the verified diagnostics version. An already-published SPA uses the original flow when the popup endpoint responds with HTTP 404/405. The private bucket remains in place and its lifecycle rule expires markers.
 
 ### Nonce bucket recovery after HTTP 403
 
@@ -61,21 +61,63 @@ passes. If the operator cannot inspect the policy, the policy differs from
 the expected runtime-only policy, or Preview still returns 403, inspect
 deployment IAM and bucket access before changing any settings.
 
+## Browser Dexie Cloud token exchange
+
+`POST /api/dexie-cloud/tokens` accepts a same-origin request with the existing
+browser session cookie and the Addon's `public_key`. The function checks the
+host, Origin and cookie before requesting `ACCESS_DB` from the database
+configured in `dexie-cloud.json`. Its subject is `tg:<telegramUserId>` from the
+signed session. The response is the validated Dexie token envelope, including
+any refresh fields, with `Cache-Control: no-store`. This exchange requires no
+Telegram calls. Session renewal continues through `GET /auth/session`.
+
+After merge, an owner provisions a deletion-protected Lockbox secret named
+`mezfit-browser-dexie-tokens` in the existing Yandex folder. Add `client_id`
+and `client_secret` from the existing server-side Dexie token exchange
+credentials. Grant `lockbox.payloadViewer` on this secret to
+`mezfit-browser-auth-runtime`. The operator reads metadata and bindings and
+pins the active version without fetching the payload. It also pins the current
+browser session signing key from the existing OIDC secret. Use the existing
+scoped deployment identity with metadata access to the new secret.
+
+In **Prepare MezFit Browser Telegram Login**, run `action=dexie-tokens` with
+`mode=preview`. Review the function and exact POST plan. Run `mode=apply` with
+`confirm=ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS` only after owner approval. Apply
+publishes or reuses the verified `browser-dexie-tokens` version of the same
+private function, then adds the exact POST to the existing Gateway and reads it
+back. The `browser-login` tag continues to serve the auth routes.
+
+For rollback, preview `action=dexie-tokens-rollback`, then apply with
+`confirm=ROLLBACK_MEZFIT_BROWSER_DEXIE_TOKENS`. The POST returns to the existing
+JSON 503 fallback. Rollback retains the private function version and both
+Lockbox secrets. Roll back this route before using an auth operator that changes
+the Gateway spec. The auth operators reject unexpected route sets.
+
+After activation, sign in through Telegram on the intended browser origin,
+disconnect VPN, and use an Addon-compatible test client on that origin to
+check the existing session and exchange its cookie for a token. Verify the
+returned subject, `Cache-Control: no-store`, rejection without a cookie, and
+JSON 503 on another unported API route. Record only statuses and subject
+match. Keep credentials and token bodies out of logs and make no business
+data writes during the smoke test. The browser still shows the login screen.
+Full browser access requires `/api/me`, roles, client bootstrap and the existing
+Addon integration in later work.
+
+Logout clears the browser cookie on that device. A copied valid stateless
+cookie can still be used until expiry or signing-key rotation. Rotation affects
+all browser sessions and does not automatically revoke Dexie tokens already
+issued. This rollout and its rollback perform no key rotation.
+
 ## Original redirect flow
 
 **Scope:** a real Telegram OpenID Connect (OIDC) browser login flow on
 `https://mezfit.online`, `https://mezfit.ru`, and the existing technical
 `*.apigw.yandexcloud.net` hostname, using a private Yandex Cloud Function.
 
-**Important functional limit:** The new server authenticates a **browser
-identity only**. It creates a secure browser session and validates
-`/auth/session`, but does **not** issue Telegram Mini App `initData`,
-Dexie Cloud tokens, roles, or permission to call any existing `/api/*` route.
-All existing Yandex `/api/*` requests still explicitly return 503 until the
-separate privileged backend migration. The browser screen therefore displays
-the confirmed identity plus a clear note that full product access remains
-inside Telegram Mini App. **Do not present this as completed browser access
-to Coach/Client data.**
+The redirect flow creates a secure browser session for `/auth/session`.
+The separately activated token route has the contract above. Other Yandex
+`/api/*` requests return JSON 503. The browser screen displays the confirmed
+identity, with full product access available inside Telegram Mini App.
 
 ## Official specifications
 
@@ -341,22 +383,16 @@ roll back or reapply a different source digest.
 4. Verify that an unauthorized Host, a forged state, a wrong OIDC signature,
    an expired token, and cross-origin logout all fail.
 5. Confirm that the existing Telegram Mini App continues to authenticate via
-   signed `initData` and no Yandex `/api/*` route was opened.
+   signed `initData` and the Yandex API routes match the selected rollout phase.
 6. Repeat against `mezfit.online` and optionally `mezfit.ru` only when
    their NS and issued TLS certificates are active.
 
 ## Compatibility and outstanding work
 
-This is the **identity foundation**, not an end-to-end product API migration.
-The next explicit backend slice must authorize browser-session credentials
-inside Yandex (and issue appropriately scoped Dexie Cloud tokens) independently
-of Telegram initData, preserving existing realm/role checks. It must also
-migrate the remaining protected endpoints and media flows before the browser
-can run all Coach/Client screens. This PR intentionally contains no temporary
-Cloudflare Worker proxy, no cross-origin cookies, no fake initData, no
-client-side trust escalation, and no new authoritative database.
+The Yandex backend provides browser identity and the separately activated
+Dexie token exchange. Running all Coach/Client screens in the browser requires
+the remaining protected endpoints, media flows and client integration.
 
-Tests: Python stdlib operator tests (including IAM/Lockbox bootstrap) are discovered by existing CI; the
-additional `node --test` contract is executed in GitHub PR CI using Node 22;
-frontend session parsing has a Vitest contract. AGENTS.md prohibits local
-npm/typecheck/test/build and those were not run before PR.
+GitHub PR CI discovers the Python operator tests and Node.js 22 function
+contract tests. Frontend session parsing is covered by the existing Vitest
+contract.

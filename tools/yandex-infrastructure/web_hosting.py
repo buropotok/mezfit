@@ -143,8 +143,12 @@ def gateway_spec(bucket):
     }
 
 
-def browser_auth_gateway_spec(bucket, function_id, service_account_id, *, popup=False):
-    """The existing auth routes and, optionally, two popup POST methods."""
+DEXIE_TOKEN_PATH = "/api/dexie-cloud/tokens"
+DEXIE_TOKEN_TAG = "browser-dexie-tokens"
+
+
+def browser_auth_gateway_spec(bucket, function_id, service_account_id, *, popup=False, dexie_tokens=False):
+    """The exact browser auth routes with optional popup and Dexie token POSTs."""
     if not resource_id(function_id) or not resource_id(service_account_id):
         raise WebHostingError("Missing approved browser-auth function or gateway service account.")
     result = gateway_spec(bucket)
@@ -158,6 +162,12 @@ def browser_auth_gateway_spec(bucket, function_id, service_account_id, *, popup=
             "service_account_id": service_account_id,
             "tag": "browser-login", "payload_format_version": "1.0",
         }}
+    if dexie_tokens:
+        result["paths"][DEXIE_TOKEN_PATH] = {"post": {"x-yc-apigateway-integration": {
+            "type": "cloud_functions", "function_id": function_id,
+            "service_account_id": service_account_id,
+            "tag": DEXIE_TOKEN_TAG, "payload_format_version": "1.0",
+        }}}
     return result
 
 
@@ -329,7 +339,8 @@ def verify_gateway(gateway, folder_id, bucket, api):
             raise WebHostingError("Browser auth routes require the approved function and deployment service account.")
         start_path = paths.get("/auth/start")
         popup = isinstance(start_path, dict) and "post" in start_path
-        expected_spec = browser_auth_gateway_spec(bucket, known["id"], approved_sa, popup=popup)
+        expected_spec = browser_auth_gateway_spec(
+            bucket, known["id"], approved_sa, popup=popup, dexie_tokens=DEXIE_TOKEN_PATH in paths)
     else:
         expected_spec = gateway_spec(bucket)
     expected = normalize_gateway_readback(expected_spec, gateway.get("domain"))
