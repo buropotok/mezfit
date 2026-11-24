@@ -44,13 +44,28 @@ test('signed popup tokens report the failing claim without revealing its value',
   const context = { token: { access_token: 'test-runtime-token' } };
   const now = Math.floor(Date.now() / 1000);
 
+  async function signIn(changes) {
+    const start = await handler(post('/auth/start', {}));
+    assert.equal(start.statusCode, 200);
+    const { nonce } = JSON.parse(start.body);
+    const cookie = start.multiValueHeaders['Set-Cookie'][0].split(';')[0];
+    const payload = { iss: issuer, aud: '123456789', sub: 'private-subject',
+      id: 123, iat: now, exp: now + 300, nonce, ...changes };
+    const input = [{ alg: 'RS256', kid }, payload]
+      .map(value => Buffer.from(JSON.stringify(value)).toString('base64url')).join('.');
+    const idToken = input + '.' + sign('RSA-SHA256', Buffer.from(input), pair.privateKey).toString('base64url');
+    return handler(post('/auth/callback', { idToken }, cookie), context);
+  }
+
   for (const [changes, code] of [
     [{ iss: 'private-issuer' }, 'claims_issuer_mismatch'],
     [{ aud: 'private-audience' }, 'claims_audience_mismatch'],
     [{ sub: '' }, 'claims_subject_invalid'],
     [{ id: undefined }, 'claims_telegram_id_missing'],
     [{ id: null }, 'claims_telegram_id_null'],
-    [{ id: '123456789' }, 'claims_telegram_id_numeric_string'],
+    [{ id: '9007199254740993' }, 'claims_telegram_id_number_invalid'],
+    [{ id: '0123' }, 'claims_telegram_id_invalid'],
+    [{ id: '1e3' }, 'claims_telegram_id_invalid'],
     [{ id: 'private-telegram-id' }, 'claims_telegram_id_invalid'],
     [{ id: true }, 'claims_telegram_id_wrong_type'],
     [{ id: 0 }, 'claims_telegram_id_number_invalid'],
@@ -64,16 +79,7 @@ test('signed popup tokens report the failing claim without revealing its value',
     [{ nonce: undefined }, 'claims_nonce_missing'],
     [{ nonce: 'private-unrelated-nonce' }, 'claims_nonce_mismatch'],
   ]) {
-    const start = await handler(post('/auth/start', {}));
-    assert.equal(start.statusCode, 200);
-    const { nonce } = JSON.parse(start.body);
-    const cookie = start.multiValueHeaders['Set-Cookie'][0].split(';')[0];
-    const payload = { iss: issuer, aud: '123456789', sub: 'private-subject',
-      id: 123, iat: now, exp: now + 300, nonce, ...changes };
-    const input = [{ alg: 'RS256', kid }, payload]
-      .map(value => Buffer.from(JSON.stringify(value)).toString('base64url')).join('.');
-    const idToken = input + '.' + sign('RSA-SHA256', Buffer.from(input), pair.privateKey).toString('base64url');
-    const response = await handler(post('/auth/callback', { idToken }, cookie), context);
+    const response = await signIn(changes);
     const body = JSON.parse(response.body);
     assert.equal(response.statusCode, 401);
     assert.equal(response.multiValueHeaders['Set-Cookie'].length, 1);
@@ -84,4 +90,17 @@ test('signed popup tokens report the failing claim without revealing its value',
       incidentId: body.incidentId, stage: 'jwt', code });
   }
   assert.equal(nonceWrites, 0);
+
+  const textId = '4294967296';
+  for (const id of [textId, Number(textId)]) {
+    const response = await signIn({ id });
+    assert.equal(response.statusCode, 200);
+    const cookie = response.multiValueHeaders['Set-Cookie'][1].split(';')[0];
+    const session = await handler({
+      path: '/auth/session', httpMethod: 'GET', headers: { host, cookie },
+    });
+    assert.equal(session.statusCode, 200);
+    assert.equal(JSON.parse(session.body).telegramUserId, textId);
+  }
+  assert.equal(nonceWrites, 2);
 });
