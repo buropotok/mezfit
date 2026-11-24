@@ -30,12 +30,6 @@ from web_hosting import (
 )
 
 VERSIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/versions"
-PREPARE = "PREPARE_MEZFIT_BROWSER_LOGIN"
-ACTIVATE = "ACTIVATE_MEZFIT_BROWSER_LOGIN"
-UPGRADE = "UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS"
-POPUP = "ENABLE_MEZFIT_BROWSER_LOGIN_POPUP"
-POPUP_MIRROR = "ENABLE_MEZFIT_BROWSER_JWKS_MIRROR"
-POPUP_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP"
 TAG = "browser-login"
 PREVIOUS_TAG = "browser-login-pre-diagnostics"
 PRE_POPUP_TAG = "browser-login-pre-popup"
@@ -329,14 +323,12 @@ def gateway_spec_changed(api, gateway, wanted):
     return spec_diff_paths(expected, actual)
 
 
-def require_confirmation(mode, action, confirmation):
+def validate_operation(mode, action):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
     expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE,
                 "popup": POPUP, "popup-mirror": POPUP_MIRROR, "popup-rollback": POPUP_ROLLBACK}
-    if mode not in ("preview", "apply") or action not in expected:
+    if mode not in ("preview", "apply") or action not in actions:
         raise WebHostingError("Unknown browser auth operation.")
-    if mode == "apply" and confirmation != expected[action]:
-        raise WebHostingError("Wrong explicit confirmation.")
 
 
 def nonce_bucket_name(folder):
@@ -959,9 +951,9 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     ensure_serving(candidate)
 
 
-def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
+def execute(mode, action, folder, deploy_sa, runtime_sa, secret_id,
             secret_version, api, update_api, sleep=time.sleep, *, nonce_policy=None):
-    require_confirmation(mode, action, confirm)
+    validate_operation(mode, action)
     if not resource_id(folder) or not resource_id(deploy_sa):
         raise WebHostingError("Missing YC_FOLDER_ID or YC_DEPLOY_SA_ID.")
     if mode == "apply" and not resource_id(runtime_sa):
@@ -1218,8 +1210,7 @@ def main():
     from browser_auth_bootstrap import bootstrap
     mode = os.environ.get("MODE", "")
     action = os.environ.get("ACTION", "")
-    confirm = os.environ.get("CONFIRM", "")
-    require_confirmation(mode, action, confirm)
+    validate_operation(mode, action)
     folder = os.environ.get("YC_FOLDER_ID", "")
     if not resource_id(folder):
         raise WebHostingError("Missing approved YC_FOLDER_ID.")
@@ -1235,7 +1226,7 @@ def main():
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
     nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa) if action == "popup" else None
     try:
-        execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id, version_id, api, update_api,
+        execute(mode, action, folder, deploy_sa, runtime_sa, secret_id, version_id, api, update_api,
                 nonce_policy=nonce_policy)
     except NonceBucketSetupError:
         report_nonce_bucket_diagnostics(opener, token, folder, deploy_sa, runtime_sa, nonce_policy)
