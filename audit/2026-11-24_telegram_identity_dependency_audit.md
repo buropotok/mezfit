@@ -1,0 +1,50 @@
+# Mezfit — аудит зависимости идентификаторов от Telegram
+
+**Дата:** 2026-11-24.  
+**Срез аудита:** main, commit [196a30054ea6b5ea6cfd9232169831d5bc0c21c5](https://github.com/buropotok/mezfit/commit/196a30054ea6b5ea6cfd9232169831d5bc0c21c5).  
+**Статус:** аудит сохранён; миграция идентификаторов и VK ID отложены решением владельца. Не является заданием на реализацию.  
+**Связанный контракт:** [решения по миграции в Yandex Cloud](../docs/architecture/yandex-cloud-migration-decisions.md), YC-11/YC-12; [local-first](../docs/architecture/local-first-storage-sync.md); [AGENTS.md](../AGENTS.md).
+
+## 1. Метод и ограничения
+
+Целевой статический аудит: поиск `tg:`, `slice(3)`, `validatedTelegramId`, `telegramUserId`, `cloudUserId`, `relationshipRealmId` и чтение найденных владельцев контрактов. Это не исчерпывающий анализ всех транзитивных вызовов или тестирование runtime. Никаких исправлений кода, облачных данных или ACL не выполнялось. При возобновлении миграции повторить поиск на актуальном main и проверить весь граф вызовов и тесты.
+
+## 2. Текущий контракт и решение
+
+`userId` в Dexie Cloud — строка `tg:<реальный Telegram ID>`. `telegramUserId` — внешний идентификатор без префикса. Dexie token `sub` равен `userId`; личный realm совпадает с ним. D1 `app_user.id` — отдельный числовой legacy ID, не заменяет cloud user ID. Пример схемы: [contactProfiles](../cloud/schema-contact-profiles.json) с индексами `id, realmId, userId`. Существующие идентификаторы, алгоритмы realm, membership, ownership, имена локальных баз и кешей остаются прежними.
+
+MVP не требует независимого от Telegram провайдера входа. Тренер обычно приглашает клиента через Telegram; наличие Telegram-аккаунта предполагается. Допустима необходимость VPN при первоначальном входе или повторной интерактивной авторизации. Приоритет — полноценная ежедневная работа web/Capacitor после входа без VPN и без обязательных запросов в Telegram, при подтверждённой доступности остальных сервисов. Сохранить Mini App. Отзыв/истечение сессии, смена устройства и очистка данных могут потребовать нового входа.
+
+## 3. Найденные зависимости и потенциальные последствия
+
+Риски ниже относятся к **гипотетической** смене семантики ID, а не к установленным текущим дефектам. Оценка качественная, не статистическая.
+
+| ID | Риск | Источник (путь и ориентир по строкам в срезе) | Зависимость / последствия при изменении |
+| --- | --- | --- | --- |
+| ID-01 | Высокий | [coach-telegram.ts](../worker/lib/coach-telegram.ts) L94–112 | `validatedTelegramId(recipientUserId)` становится Bot API chat_id; доставка и создание топиков ломаются или адресуются неверно. |
+| ID-02 | Высокий | [workout-reminders.ts](../worker/lib/workout-reminders.ts) L192–195, 245–258 | Числовой суффикс используется для поиска роли в D1 по telegram_user_id и отправки напоминаний. |
+| ID-03 | Критический | [approved-relationship.ts](../shared/approved-relationship.ts) L27–52; [relationship-id.ts](../shared/relationship-id.ts); [relationship-access.ts](../src/data/cloud/relationship-access.ts); [dexie-cloud-membership.ts](../worker/lib/dexie-cloud-membership.ts) L63–108 | Один helper извлекает и проверяет суффикс; realm hash и membership зависят от числовых строк участников. Неверный вход меняет realm или права. Алгоритм hash можно сохранить только при сохранении прежних входов для старых аккаунтов. |
+| ID-04 | Высокий | [CloudConnectionsProvider.tsx](../src/data/cloud/CloudConnectionsProvider.tsx) L70, 203, 224–230; [UserAvatarEditor.tsx](../src/profile/UserAvatarEditor.tsx) L17; [UserProfileForm.tsx](../src/profile/UserProfileForm.tsx) L148, 180; [PublishedUserProfile.tsx](../src/profile/PublishedUserProfile.tsx) | Контактам и собственному профилю присваивается Telegram ID из суффикса; UI может показать внутреннее число как Telegram ID. |
+| ID-05 | Высокий | [CoachShell.tsx](../src/coach/CoachShell.tsx) L196, 474; [assigned-programs.ts](../src/data/cloud/assigned-programs.ts) L18–20, 53–80; [AssignedProgramsProvider.tsx](../src/data/cloud/AssignedProgramsProvider.tsx); [program-management.ts](../src/data/cloud/program-management.ts) | Удаление тестовой связи и legacy назначение программы используют telegramUserId; бизнес-операции должны в будущем работать с внутренними ID. |
+| ID-06 | Критический | [dexie-cloud-tokens.ts](../worker/lib/dexie-cloud-tokens.ts) L14–18, 79–95; [cloud-scheduling-api.ts](../worker/lib/cloud-scheduling-api.ts); [worker/index.ts](../worker/index.ts) L594–611, 687 | Cloud subject и actor вычисляются из проверенного Telegram ID; приглашения и тестовый reset передают реальные Telegram ID. Несогласованное изменение ломает токены и разграничение доступа. |
+| ID-07 | Высокий | [cloud-contact-profiles.ts](../worker/lib/cloud-contact-profiles.ts) L44–45, 177, 220, 233, 355, 392 | Внутренний account вычисляется из Telegram identity; realm проверяется через числовые части. Запросы Telegram photo используют реальный проверенный identity.user.id — это корректная интеграционная граница. |
+| ID-08 | Критический | [discussion-media-r2.ts](../worker/lib/discussion-media-r2.ts) L162; [Yandex media signer](../infra/yandex-media-mvp/function/index.js) L148, 178 | Подписанты вычисляют actor/sender hash из Telegram ID. Несогласованное изменение нарушит проверку права на загрузку, соответствие ключей и резервных копий. |
+| ID-09 | Высокий | [App.tsx](../src/App.tsx); [NavigationShell.tsx](../src/NavigationShell.tsx); [UserProfileNavigationShell.tsx](../src/profile/UserProfileNavigationShell.tsx); [CloudSyncDiagnostic.tsx](../src/diagnostics/CloudSyncDiagnostic.tsx); [CloudAvatarDiagnostic.tsx](../src/diagnostics/CloudAvatarDiagnostic.tsx) | Frontend самостоятельно строит actor ID из Telegram identity; появление двух значений нарушит выбор профиля, навигацию, диагностику и синхронизацию. |
+| ID-10 | Высокий | [database.ts](../src/data/cloud/database.ts) L263–267, 307–308; [local database](../src/data/local/indexedDb/database.ts) L59–63; [resetLocalData.ts](../src/data/local/resetLocalData.ts); [resetLocalDataSizes.ts](../src/data/local/resetLocalDataSizes.ts); [SettingsPage.tsx](../src/settings/SettingsPage.tsx) L469–473; [appSessionCache.ts](../src/appSessionCache.ts); [ClientCoachContext.tsx](../src/client/ClientCoachContext.tsx) | Локальные базы, очистка, размер, кеш аккаунта и выбор тренера используют Telegram ID или его суффикс. Смена ключей рискует скрыть offline-данные или очистить не тот аккаунт. |
+| ID-11 | Высокий | [test-relationship-reset.ts](../worker/lib/test-relationship-reset.ts); [dexie-cloud-relationship.mjs](../tools/dexie-cloud-relationship.mjs); [discussion-notifications.ts](../worker/lib/discussion-notifications.ts) L126 | Административные операции и проверки автора сообщения опираются на текущий контракт. Необходимо сохранить строгие проверки полномочий; не ослаблять их ради совместимости. |
+
+## 4. Форматные проверки, которые не являются обращениями к Telegram
+
+Многие участки используют только регулярное выражение `^tg:[1-9]\\d*$`: flex-attributes, user-profile, discussions, discussion-views, discussion-read-state, discussion-attachment, workout-scheduling, workout-occurrence-plan/drafts, adhoc-workouts, program-management, coachExerciseCatalogue, персональные realm и media cache. Такие проверки сами по себе совместимы с более длинным положительным числовым суффиксом. Важно не путать их с получением внешнего Telegram ID. Некоторые helpers дополнительно требуют `Number.isSafeInteger`; ведущий ноль не совместим с найденными проверками.
+
+## 5. Отложенный вариант (не утверждён для реализации)
+
+Если независимая регистрация станет бизнес-необходимостью, предпочтительный кандидат для минимизации churn — сохранение имени `userId`, префикса `tg:` и всех прежних значений, серверная выдача новых числовых ID из непересекающегося диапазона безопасных целых (обсуждалось начало 5000000000000000). На момент будущего проектирования заново подтвердить ограничения Telegram, диапазоны всех потребителей, существующие данные, атомарность/уникальность распределения и отсутствие коллизий. Не считать диапазон зарезервированным сейчас. Не вводить `mz:`, UUID, ведущий ноль, генератор, новую identity DB, mapping или VK ID в рамках MVP. Не выделять синтетические tg ID.
+
+При отдельном одобрении будущей миграции разделить внутренний ID и подтверждённые внешние identities; не угадывать внешний ID из суффикса, не доверять входным ID клиента, не объединять аккаунты по имени/телефону. Адаптировать токены, ACL, realms, media, локальные данные и Bot API по изолированным контрактным срезам с обратной совместимостью. Проверить существующие аккаунты, идемпотентность, одновременный первый вход, отсутствие доступа к чужим realm, offline/online и регрессии на реальных устройствах; отдельный план rollback. Реализация только после нового решения владельца.
+
+## 6. Приоритет и условие пересмотра
+
+Польза мультипровайдерной миграции сейчас ограничивается альтернативным первоначальным входом (VK без VPN при доступности сервисов) и потенциальным охватом клиентов без Telegram. Риск затрагивает фундаментальные идентификаторы, security/ACL, синхронизацию и накопленные данные. Не расширять текущие PR миграции бэкенда до этой задачи. Вернуться при подтверждённой существенной проблеме регистрации/повторного входа или новом требовании бизнеса; решение владельца обязательно.
+
+Следующий этап: независимая серверная сессия Mezfit с прежним стабильным Telegram-based userId, защищённые API и Dexie token exchange/refresh на Yandex. Повседневная сессия должна восстанавливаться и продлеваться без обращения к Telegram, с ограниченным сроком действия, безопасной ротацией/отзывом по выбранному контракту, серверными ACL и изоляцией аккаунтов. Проверить доступность Dexie Cloud, медиа и остальных обязательных зависимостей без VPN отдельно; Telegram-уведомления и обновление Telegram-профилей могут оставаться интеграциями, но их недоступность не должна блокировать основной сценарий. Это цель реализации, не подтверждение уже работающего production backend.
