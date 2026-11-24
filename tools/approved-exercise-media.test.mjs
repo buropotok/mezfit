@@ -29,6 +29,6 @@ describe('approved GIF media release cannot silently drift', () => {
     expect(workflow).not.toMatch(/^\s+push:/m);
     expect(workflow).toContain("github.actor == github.repository_owner");
     expect(workflow).toContain("github.ref == 'refs/heads/main'");
-    expect(workflow).toContain("inputs.confirmation == 'IMPORT_PINNED_1324'");
+    expect(workflow).not.toMatch(/inputs\.confirmation|^\s+confirmation:/m);
   });
 });
