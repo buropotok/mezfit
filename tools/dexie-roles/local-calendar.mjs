@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
-const CONFIRMATION = 'APPLY_LOCAL_CALENDAR_COACH_CLIENT_ACL';
 const ROLES = ['coach', 'client'];
 const PLAN_TABLES = ['trainingPlans', 'programPhases', 'programDays', 'programExercises', 'programSets'];
 const FACT_FIELDS = [
@@ -354,11 +353,6 @@ export function validateAclDispatch(env) {
   }
   if (env.DEXIE_ACL_OPERATION !== 'preview' && env.DEXIE_ACL_OPERATION !== 'apply') {
     fail('INVALID_ACL_OPERATION');
-  }
-  if (env.DEXIE_ACL_OPERATION === 'apply') {
-    if (env.DEXIE_ACL_CONFIRMATION !== CONFIRMATION) fail('INVALID_ACL_CONFIRMATION');
-  } else if (env.DEXIE_ACL_CONFIRMATION) {
-    fail('PREVIEW_MUST_NOT_HAVE_APPLY_CONFIRMATION');
   }
 }
 
