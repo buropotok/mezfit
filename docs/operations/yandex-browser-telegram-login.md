@@ -8,11 +8,11 @@ The function uses only the official Telegram HTTPS JWKS. A warm instance keeps k
 
 ### Release and rollback
 
-1. In [Prepare MezFit Browser Telegram Login](https://github.com/buropotok/mezfit/actions/workflows/prepare-mezfit-browser-login.yml) on `main`, run `action=popup`, `mode=preview`, with an empty `confirm`. The operator checks the active diagnostics version and gateway contract. If a nonce bucket already exists, it checks ownership, private access, the expiration rule and the policy. Preview makes no writes.
-2. Run `action=popup`, `mode=apply`, `confirm=ENABLE_MEZFIT_BROWSER_LOGIN_POPUP`. The existing deploy service account needs permission to create the dedicated bucket, set its lifecycle and policy, and read these settings. The operator creates the separate private bucket and grants conditional `PutObject` under `used/` to the existing runtime service account through the bucket policy. The function uses a short-lived IAM token from its invocation context. Lockbox and folder-wide grants are left alone. The operator preserves the diagnostics version under `browser-login-pre-popup`, activates the reviewed version, and adds two POST methods to the current Gateway.
-3. After successful backend readback, run [Publish MezFit SPA to Yandex](https://github.com/buropotok/mezfit/actions/workflows/publish-yandex-spa.yml) with `PUBLISH_MEZFIT_WEB`. Use a normal browser on a BotFather-approved origin. Check Android Chrome, iOS Safari and desktop, including blocked or closed popups, retry, success, reload, logout and Mini App login. If a script policy is configured, allow the Telegram SDK from `https://oauth.telegram.org`. An opener that sets COOP needs `same-origin-allow-popups` for this login page.
+1. In [Prepare MezFit Browser Telegram Login](https://github.com/buropotok/mezfit/actions/workflows/prepare-mezfit-browser-login.yml) on `main`, run `action=popup`, `mode=preview`. The operator checks the active diagnostics version and gateway contract. If a nonce bucket already exists, it checks ownership, private access, the expiration rule and the policy. Preview makes no writes.
+2. Run `action=popup`, `mode=apply`. The existing deploy service account needs permission to create the dedicated bucket, set its lifecycle and policy, and read these settings. The operator creates the separate private bucket and grants conditional `PutObject` under `used/` to the existing runtime service account through the bucket policy. The function uses a short-lived IAM token from its invocation context. Lockbox and folder-wide grants are left alone. The operator preserves the diagnostics version under `browser-login-pre-popup`, activates the reviewed version, and adds two POST methods to the current Gateway.
+3. After successful backend readback, run [Publish MezFit SPA to Yandex](https://github.com/buropotok/mezfit/actions/workflows/publish-yandex-spa.yml). Use a normal browser on a BotFather-approved origin. Check Android Chrome, iOS Safari and desktop, including blocked or closed popups, retry, success, reload, logout and Mini App login. If a script policy is configured, allow the Telegram SDK from `https://oauth.telegram.org`. An opener that sets COOP needs `same-origin-allow-popups` for this login page.
 4. A failed sign-in displays sanitized `stage`, `code`, an optional `httpStatus` and `incidentId`. `jwks: timeout` means Yandex did not receive the keys in time. `jwt` means verification rejected the token. `challenge` identifies the one-time attempt or storage validation. The first real sign-in after publishing checks live reachability from the function. The diagnostics contain no JWT, authentication code, cookie, credentials or user data.
-5. To roll back, run `action=popup-rollback`, `mode=preview`, then `mode=apply`, `confirm=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP`. This removes the two POST methods and restores the verified diagnostics version. An already-published SPA uses the original flow when the popup endpoint responds with HTTP 404/405. The private bucket remains in place and its lifecycle rule expires markers. Browser identity still gives no access to `/api/*` or Dexie Cloud.
+5. To roll back, run `action=popup-rollback`, `mode=preview`, then `mode=apply`. This removes the two POST methods and restores the verified diagnostics version. An already-published SPA uses the original flow when the popup endpoint responds with HTTP 404/405. The private bucket remains in place and its lifecycle rule expires markers. Browser identity still gives no access to `/api/*` or Dexie Cloud.
 
 ### Nonce bucket recovery after HTTP 403
 
@@ -197,14 +197,14 @@ Workflow: `Prepare MezFit Browser Telegram Login`
 Only repository owner on `main` may dispatch. Existing GitHub OIDC is
 used to acquire a short-lived IAM token. No static Yandex API key is stored.
 
-| Action | Mode | Exact Apply confirmation | Effect |
-| --- | --- | --- | --- |
-| `prepare` | `preview` | none | Read existing gateway, runtime account, Lockbox and function metadata; plan without secrets or writes |
-| `prepare` | `apply` | `PREPARE_MEZFIT_BROWSER_LOGIN` | Bootstrap private runtime account + protected Lockbox from GitHub Secret, scope Lockbox access, create/reuse private function and pinned Node 22 version; **no Gateway update** |
-| `activate` | `preview` | none | Check ACTIVE exact function, secrets, original gateway spec, and four routes |
-| `activate` | `apply` | `ACTIVATE_MEZFIT_BROWSER_LOGIN` | PATCH the **existing** gateway `openapiSpec`, add only four `/auth/*` routes, preserve `/api/*` dummy 503, static SPA and attached domains |
-| `upgrade` | `preview` | none | Inspect only: verify exact deployed auth baseline, approved gateway and pinned Lockbox, and plan diagnostics version switch |
-| `upgrade` | `apply` | `UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS` | Retain baseline version under `browser-login-pre-diagnostics`, publish reviewed diagnostics version without serving tag, verify configuration, then move only `browser-login` tag; no Gateway, Secret or SPA changes |
+| Action | Mode | Effect |
+| --- | --- | --- |
+| `prepare` | `preview` | Read existing gateway, runtime account, Lockbox and function metadata; plan without secrets or writes |
+| `prepare` | `apply` | Bootstrap private runtime account + protected Lockbox from GitHub Secret, scope Lockbox access, create/reuse private function and pinned Node 22 version; **no Gateway update** |
+| `activate` | `preview` | Check ACTIVE exact function, secrets, original gateway spec, and four routes |
+| `activate` | `apply` | PATCH the **existing** gateway `openapiSpec`, add only four `/auth/*` routes, preserve `/api/*` dummy 503, static SPA and attached domains |
+| `upgrade` | `preview` | Inspect only: verify exact deployed auth baseline, approved gateway and pinned Lockbox, and plan diagnostics version switch |
+| `upgrade` | `apply` | Retain baseline version under `browser-login-pre-diagnostics`, publish reviewed diagnostics version without serving tag, verify configuration, then move only `browser-login` tag; no Gateway, Secret or SPA changes |
 
 All write phases are separately and explicitly confirmed. Readback checks
 require exact source SHA-256, function runtime, entrypoint, service account,
@@ -214,8 +214,7 @@ activation rather than overwriting it. Function configuration drift blocks
 automatic upgrade until explicitly reviewed.
 
 After merging the PR and activating the four routes, run the existing
-`Publish MezFit SPA to Yandex` workflow with
-`PUBLISH_MEZFIT_WEB` **again**, so the new browser-login React screen
+`Publish MezFit SPA to Yandex` workflow **again**, so the new browser-login React screen
 is actually served on Yandex. Cloudflare deploy continues separately.
 
 ## Diagnosing TELEGRAM_LOGIN_VERIFICATION_FAILED after callback
@@ -232,13 +231,12 @@ operator run:
 1. Merge the diagnostics PR after the required review and successful CI.
 2. Open the owner-only
    [Prepare MezFit Browser Telegram Login workflow](https://github.com/buropotok/mezfit/actions/workflows/prepare-mezfit-browser-login.yml)
-   on `main`. Select `action=upgrade`, `mode=preview`, empty confirmation.
+   on `main`. Select `action=upgrade`, `mode=preview`.
    Confirm that the currently served `browser-login` version matches the pinned
    baseline established by successful Prepare Apply run
    [45107553050](https://github.com/buropotok/mezfit/actions/runs/45107553050).
    An unexpected version or modified Gateway blocks the upgrade — never force.
-3. Repeat with `action=upgrade`, `mode=apply` and the exact confirmation
-   `UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS`.
+3. Repeat with `action=upgrade`, `mode=apply`.
 4. The operator first tags the original version
    `browser-login-pre-diagnostics` for safe rollback, publishes and strictly
    verifies a new unserved version with **the same runtime account, pinned

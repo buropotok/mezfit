@@ -45,7 +45,7 @@
 2. Завершить ревью спорных GIF и редакций. Отдельно утвердить все шесть записей
    предложения. Повторно выполнить `preview` и удостовериться, что
    `publishAllowed=true`.
-3. Выбрать `publish`, ввести `APPLY_REM_01_SIX_APPROVED`.
+3. Выбрать `publish`.
    Обязательны `dexie-production`, main-only environment, human reviewer и
    отдельное approval. Если защита окружения не настроена, запускать запрещено.
 4. Workflow повторяет read-only preflight, создаёт полный приватный экспорт публичных

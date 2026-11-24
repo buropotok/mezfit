@@ -17,7 +17,6 @@ DNS_API = "https://dns.api.cloud.yandex.net/dns/v1/zones"
 OPERATIONS_API = "https://operation.api.cloud.yandex.net/operations"
 ZONE_NAME = "mezfit-ru"
 ZONE_SUFFIX = "mezfit.ru."
-APPLY_CONFIRMATION = "CREATE_MEZFIT_RU_DNS"
 
 
 class DnsSetupError(Exception):
@@ -116,13 +115,11 @@ def wait_for_creation(operation, api, sleep):
     raise DnsSetupError("DNS creation is still pending. Inspect the operation before retrying.")
 
 
-def execute(mode, confirmation, folder_id, api, sleep=time.sleep):
+def execute(mode, folder_id, api, sleep=time.sleep):
     if mode not in {"preview", "apply"}:
         raise DnsSetupError("Mode must be preview or apply.")
     if not resource_id(folder_id):
         raise DnsSetupError("YC_FOLDER_ID is missing or malformed.")
-    if mode == "apply" and confirmation != APPLY_CONFIRMATION:
-        raise DnsSetupError("Apply requires the exact manual confirmation.")
 
     current = matching_zone(list_zones(folder_id, api), folder_id)
     if current:
@@ -173,7 +170,6 @@ def main():
 
     execute(
         os.environ.get("MODE", ""),
-        os.environ.get("CONFIRM", ""),
         os.environ.get("YC_FOLDER_ID", ""),
         api,
     )

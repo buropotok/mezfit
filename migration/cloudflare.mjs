@@ -851,8 +851,6 @@ async function main() {
       has_deploy_token: !!process.env.CLOUDFLARE_API_TOKEN, has_bootstrap_token: !!process.env.CLOUDFLARE_BOOTSTRAP_API_TOKEN,
     } });
     requireState(['preview', 'apply', 'deploy', 'diagnose', 'smoke', 'processor-smoke', 'nested-smoke', 'source-package-smoke'].includes(operation), 'MIGRATION_OPERATION_INVALID');
-    if (operation === 'apply') requireState(process.env.MIGRATION_CONFIRMATION === 'APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE',
-      'MIGRATION_APPLY_CONFIRMATION_REQUIRED');
     const account = (process.env.CLOUDFLARE_ACCOUNT_ID ?? '').toLowerCase();
     deploy = new CloudflareApi(account, process.env.CLOUDFLARE_API_TOKEN, 'CLOUDFLARE_API_TOKEN');
     if (operation === 'diagnose') {

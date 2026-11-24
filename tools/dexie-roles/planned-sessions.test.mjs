@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ADHOC_SCHEMA, EXPECTED_ADHOC_ROLES, EXPECTED_CALENDAR_ROLES } from './adhoc-sessions.mjs';
 import {
-  CONFIRMATION, EXPECTED_PLANNED_ROLES, PLANNED_ROLE_OVERLAY, assertApprovedManifest,
+  EXPECTED_PLANNED_ROLES, PLANNED_ROLE_OVERLAY, assertApprovedManifest,
   assertExactImportPayload, assertUnchangedBeforeApply, buildExpectedPlannedRoles,
   planPlannedSessions, validatePlannedDispatch, verifyPlannedSessions,
 } from './planned-sessions.mjs';
@@ -125,31 +125,25 @@ describe('approved protected planned session Coach ACL operator', () => {
     }
   });
 
-  it('requires protected manual dispatch, exact apply confirmation and blank preview confirmation', () => {
-    expect(CONFIRMATION).toBe('APPLY_PLANNED_SESSION_COACH_ACL');
+  it('requires protected manual dispatch, valid preview/apply selection', () => {
     expect(() => validatePlannedDispatch(trusted)).not.toThrow();
-    const apply = { ...trusted, DEXIE_PLANNED_OPERATION: 'apply', DEXIE_PLANNED_CONFIRMATION: CONFIRMATION };
+    const apply = { ...trusted, DEXIE_PLANNED_OPERATION: 'apply' };
     expect(() => validatePlannedDispatch(apply)).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'issues' },
       { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' },
-      { GITHUB_ACTOR: 'outsider' }, { GITHUB_ACTOR: '' }, { DEXIE_PLANNED_OPERATION: 'other' },
-      { DEXIE_PLANNED_CONFIRMATION: CONFIRMATION }]) {
+      { GITHUB_ACTOR: 'outsider' }, { GITHUB_ACTOR: '' }, { DEXIE_PLANNED_OPERATION: 'other' }]) {
       expect(() => validatePlannedDispatch({ ...trusted, ...change })).toThrow();
     }
     for (const change of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'issues' },
       { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'outsider' }]) {
       expect(() => validatePlannedDispatch({ ...apply, ...change })).toThrow('UNAUTHORIZED_PLANNED_DISPATCH');
     }
-    for (const confirmation of [undefined, '', ' ', CONFIRMATION + ' ', 'APPLY_ADHOC_SESSION_SCHEMA_AND_COACH_ACL']) {
-      expect(() => validatePlannedDispatch({ ...apply, DEXIE_PLANNED_CONFIRMATION: confirmation }))
-        .toThrow('INVALID_PLANNED_CONFIRMATION');
-    }
   });
 
   it('protects manual preview/apply, immediate recheck, failure and no-op readback with existing credentials', () => {
     const workflow = read('../../.github/workflows/dexie-planned-sessions.yml');
     expect(workflow).toContain('options: [preview, apply]');
-    expect(workflow).toContain('DEXIE_PLANNED_CONFIRMATION: ${{ inputs.confirmation }}');
+    expect(workflow).not.toMatch(/inputs\.confirmation|DEXIE_PLANNED_CONFIRMATION:/);
     expect(workflow).toContain('name: dexie-production');
     expect(workflow).toContain('secrets.DEXIE_CLOUD_WRITE_KEY');
     expect(workflow).toContain('node tools/dexie-schema/manage.mjs prepare');
@@ -184,7 +178,6 @@ describe('approved protected planned session Coach ACL operator', () => {
     mkdirSync(dir);
     const put = (name, value) => writeFileSync(join(dir, name), JSON.stringify(value));
     const env = { ...process.env, ...trusted, DEXIE_PLANNED_OPERATION: operation,
-      DEXIE_PLANNED_CONFIRMATION: operation === 'apply' ? CONFIRMATION : '',
       RUNNER_TEMP: temp, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1', GITHUB_OUTPUT: join(temp, 'output') };
     const run = (mode, change = {}) => spawnSync(process.execPath, ['tools/dexie-roles/planned-sessions.mjs', mode], {
       cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8', env: { ...env, ...change },

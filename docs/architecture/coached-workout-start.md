@@ -25,7 +25,7 @@ toast; the occurrence and execution graph are unchanged.
 
 After merge, the repository owner runs **Apply Dexie Coach workout format ACL**
 (`.github/workflows/dexie-coached-start.yml`) on main: preview, inspect the one
-Coach delta, then apply with `APPLY_COACHED_START_ACL`. Use the existing
+Coach delta, then apply. Use the existing
 `dexie-production` environment and environment secret, required reviewers and
 shared writer concurrency. The operator checks the exact old/new profiles,
 reexports full schema and roles immediately before import and verifies full

@@ -22,7 +22,7 @@
 | YC-05 | **`mezfit.online` — предпочтительный основной домен**, `mezfit.ru` сохраняется как дополнительный. | Отдельные DNS-зоны и сертификаты, но один Gateway, одна сборка и одна Dexie Cloud база. Не отключать `.ru` из-за проблемы идентификации домена на Госуслугах. |
 | YC-06 | Пока нет Yandex backend, маршруты `/api` и `/api/*` намеренно отвечают JSON `503`. | **Никакого скрытого проксирования в Cloudflare Worker** и никакого SPA fallback для `/api/*`. Статический сайт не считать полностью мигрированным продуктом. |
 | YC-07 | Существующий Telegram Mini App продолжает использовать подписанное `initData`. Для обычного браузера — **отдельная Telegram Login OIDC**-авторизация, проверяемая на сервере. | Нельзя конструировать фальшивое `initData` из браузерной cookie или выдавать Dexie Cloud роли по одному факту OIDC-входа. |
-| YC-08 | Все операции инфраструктуры — GitHub Actions с GitHub OIDC → короткоживущий Yandex IAM token, ручными `Preview` и `Apply` и точными ключами подтверждения. | Без статических Yandex ключей в репозитории, без автоматического неявного Apply, без молчаливого перезаписывания/drift repair чужих ресурсов. |
+| YC-08 | Все операции инфраструктуры — GitHub Actions с GitHub OIDC → короткоживущий Yandex IAM token, ручными `Preview` и `Apply`. | Без статических Yandex ключей в репозитории, без автоматического неявного Apply, без молчаливого перезаписывания/drift repair чужих ресурсов. |
 | YC-09 | Telegram OIDC Client Secret первоначально хранится в **GitHub Actions Secret**; workflow переносит его в **Yandex Lockbox** и создаёт отдельный runtime service account. | Вручную заполнять Lockbox не требуется. Секреты не попадают в исходники, PR, обычные Variables, логи или frontend. IAM-права для bootstrap не могут появиться у workflow сами собой. |
 | YC-10 | Работоспособность, авторизация, производительность и DNS подтверждаются отдельно. | Не путать «SPA открывается», «OIDC установил личность», «backend отвечает», «данные синхронизируются» и «можно переключать пользователей». |
 
@@ -149,20 +149,20 @@ PR: [#886 — Telegram browser OIDC with Yandex server-side verification](https:
 - readback-проверка ресурсов после мутаций; drift/конфликт → остановка и ручное разбирательство;
 - локальные `npm`/`typecheck`/`test`/`build` не запускать вместо CI; тесты и билд выполняет GitHub Actions по правилам `AGENTS.md`.
 
-| Workflow / файл | Action / фаза | Ключ `Apply` / подтверждение | Статус |
-| --- | --- | --- | --- |
-| [Prepare Yandex Cloud DNS](../../.github/workflows/setup-yandex-infrastructure.yml) | создание зоны `mezfit.ru` | `CREATE_MEZFIT_RU_DNS` | В `main`, зона создана. |
-| [Prepare Yandex Web Hosting](../../.github/workflows/prepare-yandex-web.yml) | `preview` / `apply` | `PREPARE_MEZFIT_WEB` | В `main`, инфраструктура создана. |
-| [Publish MezFit SPA to Yandex](../../.github/workflows/publish-yandex-spa.yml) | ручная публикация SPA | `PUBLISH_MEZFIT_WEB` | В `main`, успешная публикация подтверждена пользователем. |
-| [Prepare MezFit Dual Domains](../../.github/workflows/prepare-mezfit-dual-domains.yml) | `prepare_online` | `PREPARE_MEZFIT_ONLINE` | В `main`. |
-| То же | `validate_online` | `VALIDATE_MEZFIT_ONLINE` | В `main`, ранее применено для CNAME. |
-| То же | `activate_online` | `ACTIVATE_MEZFIT_ONLINE` | В `main`; выполнение блокируется, пока TLS не `ISSUED`. |
-| То же | `validate_ru` | `VALIDATE_MEZFIT_RU` | В `main`, ранее применено для CNAME. |
-| То же | `activate_ru` | `ACTIVATE_MEZFIT_RU` | В `main`; независимо от `.online`. |
-| `Prepare MezFit Browser Telegram Login` | `prepare` / `apply` | `PREPARE_MEZFIT_BROWSER_LOGIN` | **Только PR #886**, не `main` до merge. |
-| То же | `activate` / `apply` | `ACTIVATE_MEZFIT_BROWSER_LOGIN` | **Только PR #886**, требует отдельно подготовленную функцию. |
+| Workflow / файл | Action / фаза | Статус |
+| --- | --- | --- |
+| [Prepare Yandex Cloud DNS](../../.github/workflows/setup-yandex-infrastructure.yml) | создание зоны `mezfit.ru` | В `main`, зона создана. |
+| [Prepare Yandex Web Hosting](../../.github/workflows/prepare-yandex-web.yml) | `preview` / `apply` | В `main`, инфраструктура создана. |
+| [Publish MezFit SPA to Yandex](../../.github/workflows/publish-yandex-spa.yml) | ручная публикация SPA | В `main`, успешная публикация подтверждена пользователем. |
+| [Prepare MezFit Dual Domains](../../.github/workflows/prepare-mezfit-dual-domains.yml) | `prepare_online` | В `main`. |
+| То же | `validate_online` | В `main`, ранее применено для CNAME. |
+| То же | `activate_online` | В `main`; выполнение блокируется, пока TLS не `ISSUED`. |
+| То же | `validate_ru` | В `main`, ранее применено для CNAME. |
+| То же | `activate_ru` | В `main`; независимо от `.online`. |
+| `Prepare MezFit Browser Telegram Login` | `prepare` / `apply` | **Только PR #886**, не `main` до merge. |
+| То же | `activate` / `apply` | **Только PR #886**, требует отдельно подготовленную функцию. |
 
-**Операции не используют один общий ключ.** В каждом workflow есть поле `confirm`, но значение зависит от выбранного действия.
+**Операции запускаются вручную без статического текстового кода.** Выбирается конкретная операция или режим Apply; остальные ограничения сохраняются.
 
 В Yandex-развёртывании не трогать существующие Cloudflare deployment workflows и Dexie Cloud privileged Actions. Не переиспользовать `DEXIE_CLOUD_WRITE_KEY` для веб-хостинга/логина: его использование отдельно ограничено `AGENTS.md`.
 

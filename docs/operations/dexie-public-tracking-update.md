@@ -58,7 +58,7 @@ New clients validate all 1,324 tracking types once the marker is present.
    conflicting `tracking_type` or noncanonical manifest is a **hard stop**.
    No automatic deletion, private-row modification or generic overwrite is
    permitted. Reconcile the conflicting state in a separate reviewed change.
-4. Select `tracking-publish`, enter exactly `UPDATE_TRACKING_1324_V21`,
+4. Select `tracking-publish`,
    start it from `main` as the repository owner and approve the
    `dexie-production` environment deployment.
 5. The workflow fetches the pinned original, derives the v2.1 source,

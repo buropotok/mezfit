@@ -4,15 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Read-only preview or explicitly confirmed infrastructure apply
+        description: Read-only preview or infrastructure apply
         type: choice
         options: [preview, apply]
         default: preview
         required: true
-      confirmation:
-        description: For apply enter BOOTSTRAP_CLOUDFLARE_INFRASTRUCTURE
-        type: string
-        required: false
       replace_existing_cors:
         description: Explicitly allow replacing a different existing discussion-bucket CORS policy
         type: boolean
@@ -52,14 +48,9 @@ jobs:
       - name: Verify deliberate owner-only apply
         shell: bash
         env:
-          CONFIRMATION: ${{ inputs.confirmation }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          if [[ "$BOOTSTRAP_MODE" == "apply" && "$CONFIRMATION" != "BOOTSTRAP_CLOUDFLARE_INFRASTRUCTURE" ]]; then
-            echo 'Explicit apply confirmation is required.' >&2
-            exit 1
-          fi
           if [[ -z "$CLOUDFLARE_ACCOUNT_ID" || -z "$MEZFIT_APP_ORIGIN" ]]; then
             echo 'Repository variables CLOUDFLARE_ACCOUNT_ID and MEZFIT_APP_ORIGIN are required.' >&2
             exit 1

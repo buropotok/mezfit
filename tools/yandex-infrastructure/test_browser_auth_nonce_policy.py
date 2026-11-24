@@ -17,7 +17,7 @@ class NonceBucketPolicy(unittest.TestCase):
                                    self.cloud.update, lambda _: None, nonce_policy=self.policy)
 
     def test_workflow_passes_deploy_policy_to_popup_operator(self):
-        env = {"MODE": "preview", "ACTION": "popup", "CONFIRM": "", "YC_DEPLOY_SA_ID": SA,
+        env = {"MODE": "preview", "ACTION": "popup", "YC_DEPLOY_SA_ID": SA,
                "YC_FOLDER_ID": FOLDER, "YC_IAM_TOKEN": "test-token"}
         with patch.dict("os.environ", env, clear=True), \
                 patch("browser_auth_bootstrap.bootstrap", return_value=(RUNTIME_SA, SECRET, SECRET_VERSION)), \

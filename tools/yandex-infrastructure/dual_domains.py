@@ -21,13 +21,6 @@ DOMAINS = {
     "mezfit.ru": {"zone_name": "mezfit-ru", "cert_name": "mezfit-ru-web"},
 }
 ACTIONS = ("prepare_online", "validate_online", "validate_ru", "activate_online", "activate_ru")
-CONFIRMATIONS = {
-    "prepare_online": "PREPARE_MEZFIT_ONLINE",
-    "validate_online": "VALIDATE_MEZFIT_ONLINE",
-    "validate_ru": "VALIDATE_MEZFIT_RU",
-    "activate_online": "ACTIVATE_MEZFIT_ONLINE",
-    "activate_ru": "ACTIVATE_MEZFIT_RU",
-}
 
 
 def target(action):
@@ -181,13 +174,11 @@ def apply_record(api, zone, record, label, sleep):
         raise WebHostingError(f"{label} was not confirmed by DNS readback.")
 
 
-def execute(mode, action, confirmation, folder, api, sleep=None):
+def execute(mode, action, folder, api, sleep=None):
     if mode not in {"preview", "apply"} or action not in ACTIONS:
         raise WebHostingError("Choose known action and preview/apply mode.")
     if not resource_id(folder):
         raise WebHostingError("Invalid YC_FOLDER_ID.")
-    if mode == "apply" and confirmation != CONFIRMATIONS[action]:
-        raise WebHostingError(f"Apply requires exact confirmation for {action}.")
     if sleep is None:
         import time
         sleep = time.sleep
@@ -293,7 +284,7 @@ def main():
     def api(url, label, payload=None):
         return request_json(opener, token, url, label, payload)
     execute(os.environ.get("MODE", ""), os.environ.get("ACTION", ""),
-            os.environ.get("CONFIRM", ""), os.environ.get("YC_FOLDER_ID", ""),
+            os.environ.get("YC_FOLDER_ID", ""),
             api)
 
 

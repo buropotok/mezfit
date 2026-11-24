@@ -10,7 +10,7 @@ import json
 import unittest
 
 from web_hosting import (
-    CERTIFICATES, GATEWAYS, STORAGE, CONFIRMATION, NAME_CERTIFICATE,
+    CERTIFICATES, GATEWAYS, STORAGE, NAME_CERTIFICATE,
     NAME_GATEWAY, SAFE_FLAGS, WebHostingError, bucket_name, execute,
     gateway_spec, normalize_gateway_readback, verify_gateway,
 )
@@ -96,14 +96,14 @@ class GatewayReadbackContracts(unittest.TestCase):
 
     def test_apply_reuses_existing_resources_and_requests_only_missing_tls(self):
         api = FakeRecoveryApi(returned_spec())
-        execute("apply", CONFIRMATION, FOLDER, api, sleep=lambda _: None)
+        execute("apply", FOLDER, api, sleep=lambda _: None)
         self.assertEqual([url for url, _ in api.calls],
                          [CERTIFICATES + "/requestNew"])
         self.assertEqual(api.calls[0][1]["domains"], ["mezfit.ru"])
 
     def test_preview_remains_read_only_with_existing_gateway(self):
         api = FakeRecoveryApi(returned_spec())
-        execute("preview", "", FOLDER, api)
+        execute("preview", FOLDER, api)
         self.assertEqual(api.calls, [])
 
     def test_drift_in_api_dummy_response_is_blocked_and_reported(self):
@@ -111,7 +111,7 @@ class GatewayReadbackContracts(unittest.TestCase):
         actual["paths"]["/api"]["get"]["x-yc-apigateway-integration"]["http_code"] = 200
         api = FakeRecoveryApi(actual)
         with self.assertRaisesRegex(WebHostingError, "http_code"):
-            execute("apply", CONFIRMATION, FOLDER, api, sleep=lambda _: None)
+            execute("apply", FOLDER, api, sleep=lambda _: None)
         self.assertEqual(api.calls, [])
 
     def test_drift_in_static_bucket_is_blocked(self):

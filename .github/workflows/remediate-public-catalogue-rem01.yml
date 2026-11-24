@@ -12,10 +12,6 @@ on:
         options:
           - preview
           - publish
-      confirmation:
-        description: 'Required only for publish: APPLY_REM_01_SIX_APPROVED'
-        type: string
-        required: false
 
 permissions:
   contents: read
@@ -58,8 +54,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.actor == github.repository_owner &&
-      inputs.operation == 'publish' &&
-      inputs.confirmation == 'APPLY_REM_01_SIX_APPROVED'
+      inputs.operation == 'publish'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     # REQUIRED existing environment: main-only and mandatory human reviewer.

@@ -10,15 +10,11 @@ on:
         options: [prepare, activate, upgrade]
         default: prepare
       mode:
-        description: Preview is read-only; Apply requires explicit confirmation
+        description: Preview is read-only; Apply performs the selected operation
         required: true
         type: choice
         options: [preview, apply]
         default: preview
-      confirm:
-        description: Apply requires confirmation matching action (PREPARE/ACTIVATE/UPGRADE)
-        type: string
-        required: false
 
 permissions:
   contents: read
@@ -44,13 +40,12 @@ jobs:
       YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
       JWKS_ACTION: ${{ inputs.action }}
       JWKS_MODE: ${{ inputs.mode }}
-      JWKS_CONFIRM: ${{ inputs.confirm }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Confirm explicit operation and preflight Cloudflare credentials
+      - name: Validate operation and preflight Cloudflare credentials
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -59,14 +54,11 @@ jobs:
           set -euo pipefail
           [[ "$JWKS_MODE" == preview || "$JWKS_MODE" == apply ]] || exit 1
           case "$JWKS_ACTION" in
-            prepare) expected=PREPARE_MEZFIT_JWKS_MIRROR ;;
-            activate) expected=ACTIVATE_MEZFIT_JWKS_MIRROR ;;
-            upgrade) expected=UPGRADE_MEZFIT_JWKS_MIRROR ;;
+            prepare) : ;;
+            activate) : ;;
+            upgrade) : ;;
             *) exit 1 ;;
           esac
-          if [[ "$JWKS_MODE" == apply ]]; then
-            [[ "$JWKS_CONFIRM" == "$expected" ]] || { echo 'Wrong Apply confirmation' >&2; exit 1; }
-          fi
           if [[ ( "$JWKS_ACTION" == activate || "$JWKS_ACTION" == upgrade ) && "$JWKS_MODE" == apply ]]; then
             [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]] || exit 1
             [[ -n "$CLOUDFLARE_API_TOKEN" ]] || { echo 'Missing Cloudflare deploy token' >&2; exit 1; }

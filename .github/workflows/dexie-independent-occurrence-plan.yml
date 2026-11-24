@@ -11,10 +11,6 @@ on:
         required: true
         default: preview
         options: [preview, apply]
-      confirmation:
-        type: string
-        description: 'For apply enter APPLY_INDEPENDENT_OCCURRENCE_PLAN_ACL; leave blank for preview'
-        required: false
 
 permissions:
   contents: read
@@ -35,7 +31,6 @@ jobs:
       name: dexie-production
     env:
       INDEPENDENT_PLAN_OPERATION: ${{ inputs.operation }}
-      INDEPENDENT_PLAN_CONFIRMATION: ${{ inputs.confirmation }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,7 +38,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate protected dispatch and explicit confirmation
+      - name: Validate protected dispatch
         run: node tools/dexie-roles/independent-occurrence-plan.mjs preflight
       - name: Prepare existing protected Dexie CLI credentials
         env:

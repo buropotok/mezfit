@@ -90,8 +90,7 @@ on **main**, by the repository owner.
 
 1. `operation=preview` (default): read-only. It reports which D1, R2, CORS
    and scoped token resources exist and which actions would occur.
-2. `operation=apply`: enter exactly
-   `BOOTSTRAP_CLOUDFLARE_INFRASTRUCTURE`. It creates missing resources,
+2. `operation=apply`: creates missing resources,
    reconciles missing discussion CORS, optionally generates a new limited R2
    token, verifies resource readback, builds the app, applies existing D1
    migrations and deploys Worker with nonempty repository secrets.

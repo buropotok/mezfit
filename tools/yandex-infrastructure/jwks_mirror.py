@@ -20,9 +20,7 @@ from web_hosting import (NoRedirect, STORAGE, WebHostingError, await_operation,
 IAM_SA = "https://iam.api.cloud.yandex.net/iam/v1/serviceAccounts"
 IAM_KEYS = "https://iam.api.cloud.yandex.net/iam/aws-compatibility/v1/accessKeys"
 NAME_SA = "mezfit-jwks-publisher"
-APPROVALS = {"prepare": "PREPARE_MEZFIT_JWKS_MIRROR",
-             "activate": "ACTIVATE_MEZFIT_JWKS_MIRROR",
-             "upgrade": "UPGRADE_MEZFIT_JWKS_MIRROR"}
+ACTIONS = ("prepare", "activate", "upgrade")
 PRIVATE = {"read": False, "list": False, "configRead": False}
 
 
@@ -40,13 +38,11 @@ def reader_binding(account_id):
             "subject": {"type": "serviceAccount", "id": account_id}}
 
 
-def validate_inputs(mode, action, confirm, folder, deploy_sa):
-    if mode not in ("preview", "apply") or action not in APPROVALS:
+def validate_inputs(mode, action, folder, deploy_sa):
+    if mode not in ("preview", "apply") or action not in ACTIONS:
         raise WebHostingError("Unknown operator mode or action.")
     if not resource_id(folder) or not resource_id(deploy_sa):
         raise WebHostingError("YC_FOLDER_ID and YC_DEPLOY_SA_ID must be valid.")
-    if mode == "apply" and confirm != APPROVALS[action]:
-        raise WebHostingError("Explicit owner approval missing for selected JWKS action.")
 
 
 def check_bucket(bucket, folder, deploy_sa):
@@ -122,8 +118,8 @@ def inspect(api, folder, deploy_sa):
     return sa, bucket, bindings, keys
 
 
-def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sleep=None):
-    validate_inputs(mode, action, confirm, folder, deploy_sa)
+def execute(mode, action, folder, deploy_sa, api, output_file=None, sleep=None):
+    validate_inputs(mode, action, folder, deploy_sa)
     sa, bucket, bindings, keys = inspect(api, folder, deploy_sa)
     if action == "prepare":
         if keys:
@@ -202,7 +198,6 @@ def main():
     token = os.environ.get("YC_IAM_TOKEN", "")
     mode = os.environ.get("JWKS_MODE", "preview")
     action = os.environ.get("JWKS_ACTION", "prepare")
-    confirm = os.environ.get("JWKS_CONFIRM", "")
     folder = os.environ.get("YC_FOLDER_ID", "")
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
     try:
@@ -227,7 +222,7 @@ def main():
                 raise WebHostingError(f"{label}: expected JSON object.")
             return result
 
-        execute(mode, action, confirm, folder, deploy_sa, api,
+        execute(mode, action, folder, deploy_sa, api,
                 os.environ.get("JWKS_CREDENTIALS_FILE"))
     except WebHostingError as error:
         print(f"JWKS operator: {error}", file=sys.stderr)

@@ -5,7 +5,7 @@ from copy import deepcopy
 import unittest
 
 from dual_domains import (
-    ACTIONS, CONFIRMATIONS, DNS, check_record, execute, get_gateway,
+    ACTIONS, DNS, check_record, execute, get_gateway,
     select_certificate, select_zone,
 )
 from web_hosting import (
@@ -94,7 +94,7 @@ class FakeCloud:
         return {"id": "op123", "done": True, "response": response}
 
     def prepare_online(self):
-        execute("apply", "prepare_online", CONFIRMATIONS["prepare_online"],
+        execute("apply", "prepare_online",
                 FOLDER, self, sleep=lambda _: None)
 
     def issue(self, domain):
@@ -105,15 +105,15 @@ class FakeCloud:
 class DomainContracts(unittest.TestCase):
     def test_preview_of_foundation_does_not_create_resources(self):
         api = FakeCloud()
-        execute("preview", "prepare_online", "", FOLDER, api)
+        execute("preview", "prepare_online", FOLDER, api)
         self.assertEqual(api.writes, [])
 
-    def test_each_action_has_its_own_exact_confirmation(self):
+    def test_each_action_rejects_invalid_mode(self):
         api = FakeCloud()
         for action in ACTIONS:
             with self.subTest(action=action):
-                with self.assertRaisesRegex(WebHostingError, "confirmation"):
-                    execute("apply", action, "INCORRECT", FOLDER, api)
+                with self.assertRaisesRegex(WebHostingError, "Choose known action and preview/apply mode"):
+                    execute("invalid", action, FOLDER, api)
         self.assertEqual(api.writes, [])
 
     def test_prepare_online_creates_only_missing_online_resources(self):
@@ -133,11 +133,11 @@ class DomainContracts(unittest.TestCase):
     def test_validation_creates_only_expected_cname_and_reuses(self):
         api = FakeCloud()
         api.prepare_online()
-        execute("preview", "validate_online", "", FOLDER, api)
+        execute("preview", "validate_online", FOLDER, api)
         self.assertEqual(len(api.writes), 2)
-        execute("apply", "validate_online", CONFIRMATIONS["validate_online"],
+        execute("apply", "validate_online",
                 FOLDER, api, sleep=lambda _: None)
-        execute("apply", "validate_online", CONFIRMATIONS["validate_online"],
+        execute("apply", "validate_online",
                 FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 3)
         record = api.records["zon"][0]
@@ -147,7 +147,7 @@ class DomainContracts(unittest.TestCase):
 
     def test_ru_validation_is_independent_of_online(self):
         api = FakeCloud()
-        execute("apply", "validate_ru", CONFIRMATIONS["validate_ru"],
+        execute("apply", "validate_ru",
                 FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 1)
         self.assertEqual(api.records["zru"][0]["name"], "_acme-challenge.mezfit.ru.")
@@ -157,11 +157,11 @@ class DomainContracts(unittest.TestCase):
         api = FakeCloud()
         api.prepare_online()
         api.issue("mezfit.online")
-        execute("preview", "activate_online", "", FOLDER, api)
+        execute("preview", "activate_online", FOLDER, api)
         self.assertEqual(len(api.writes), 2)
-        execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+        execute("apply", "activate_online",
                 FOLDER, api, sleep=lambda _: None)
-        execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+        execute("apply", "activate_online",
                 FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 4)
         self.assertEqual([x["domain"] for x in api.gateway["attachedDomains"]],
@@ -194,10 +194,10 @@ class DomainContracts(unittest.TestCase):
         api.gateway["attachedDomains"] = [{
             "domain": "mezfit.online", "certificateId": "con", "enabled": True,
         }]
-        execute("preview", "activate_online", "", FOLDER, api)
+        execute("preview", "activate_online", FOLDER, api)
         self.assertEqual(len(api.writes), 2)
 
-        execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+        execute("apply", "activate_online",
                 FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 3)
         self.assertEqual(api.writes[-1][0], DNS + "/zon:updateRecordSets")
@@ -208,7 +208,7 @@ class DomainContracts(unittest.TestCase):
         fresh = LiveServerReadback()
         fresh.prepare_online()
         fresh.issue("mezfit.online")
-        execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+        execute("apply", "activate_online",
                 FOLDER, fresh, sleep=lambda _: None)
         self.assertEqual(fresh.records["zon"][0]["type"], "ANAME")
         self.assertEqual(len(fresh.writes), 4)
@@ -220,7 +220,7 @@ class DomainContracts(unittest.TestCase):
         api.issue("mezfit.ru")
         for domain in ("online", "ru"):
             action = "activate_" + domain
-            execute("apply", action, CONFIRMATIONS[action],
+            execute("apply", action,
                     FOLDER, api, sleep=lambda _: None)
         self.assertEqual({x["domain"] for x in api.gateway["attachedDomains"]},
                          {"mezfit.online", "mezfit.ru"})
@@ -234,7 +234,7 @@ class DomainContracts(unittest.TestCase):
         online = next(c for c in api.certificates if c["domains"] == ["mezfit.online"])
         online["status"] = "INVALID"
         with self.assertRaisesRegex(WebHostingError, "not awaiting validation"):
-            execute("apply", "validate_online", CONFIRMATIONS["validate_online"],
+            execute("apply", "validate_online",
                     FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 2)
 
@@ -244,7 +244,7 @@ class DomainContracts(unittest.TestCase):
         api.issue("mezfit.online")
         api.gateway["status"] = "UPDATING"
         with self.assertRaisesRegex(WebHostingError, "must be ACTIVE"):
-            execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+            execute("apply", "activate_online",
                     FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 2)
 
@@ -252,7 +252,7 @@ class DomainContracts(unittest.TestCase):
         api = FakeCloud()
         api.prepare_online()
         with self.assertRaisesRegex(WebHostingError, "require ISSUED"):
-            execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+            execute("apply", "activate_online",
                     FOLDER, api, sleep=lambda _: None)
         self.assertEqual(len(api.writes), 2)
 
@@ -281,7 +281,7 @@ class DomainContracts(unittest.TestCase):
             "domain": "unknown.example", "certificateId": "con", "enabled": True,
         }]
         with self.assertRaisesRegex(WebHostingError, "Unexpected gateway domain"):
-            execute("preview", "activate_online", "", FOLDER, api)
+            execute("preview", "activate_online", FOLDER, api)
 
     def test_unapproved_certificate_binding_is_blocked(self):
         api = FakeCloud()
@@ -291,19 +291,19 @@ class DomainContracts(unittest.TestCase):
             "domain": "mezfit.online", "certificateId": "cru", "enabled": True,
         }]
         with self.assertRaisesRegex(WebHostingError, "Unexpected gateway domain"):
-            execute("preview", "activate_online", "", FOLDER, api)
+            execute("preview", "activate_online", FOLDER, api)
 
     def test_existing_ru_zone_is_never_replaced(self):
         api = FakeCloud()
         api.zones[0]["publicVisibility"] = None
         with self.assertRaises(WebHostingError):
-            execute("preview", "validate_ru", "", FOLDER, api)
+            execute("preview", "validate_ru", FOLDER, api)
         self.assertEqual(api.writes, [])
 
     def test_missing_online_domain_requires_prepare(self):
         api = FakeCloud()
         with self.assertRaisesRegex(WebHostingError, "Missing mezfit.online"):
-            execute("preview", "validate_online", "", FOLDER, api)
+            execute("preview", "validate_online", FOLDER, api)
 
 
 if __name__ == "__main__":

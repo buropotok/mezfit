@@ -17,7 +17,6 @@ from urllib.request import Request, urlopen, build_opener
 from web_hosting import NoRedirect, WebHostingError, bucket_name, inspect, request_json
 
 STORAGE_OBJECTS = "https://storage.yandexcloud.net"
-CONFIRM = "PUBLISH_MEZFIT_WEB"
 
 
 def files_to_publish(directory):
@@ -85,8 +84,6 @@ def main():
     token = os.environ.get("YC_IAM_TOKEN", "")
     if not re.fullmatch(r"[a-z0-9]+", folder) or not token:
         raise WebHostingError("Missing Yandex folder ID or short-lived IAM token.")
-    if os.environ.get("CONFIRM") != CONFIRM:
-        raise WebHostingError("Explicit publication confirmation missing.")
 
     opener = build_opener(NoRedirect())
     def api(url, label, payload=None):

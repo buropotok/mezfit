@@ -16,10 +16,6 @@ on:
         required: true
         default: workout_v4
         options: [workout_v4]
-      confirmation:
-        type: string
-        description: 'For apply enter APPLY_WORKOUT_V4_SCHEMA'
-        required: false
 
 permissions:
   contents: read
@@ -38,7 +34,7 @@ jobs:
       github.actor == github.repository_owner &&
       (inputs.operation == 'preview' ||
        (inputs.operation == 'apply' &&
-        inputs.schema_target == 'workout_v4' && inputs.confirmation == 'APPLY_WORKOUT_V4_SCHEMA'))
+        inputs.schema_target == 'workout_v4'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:

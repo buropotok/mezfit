@@ -41,8 +41,7 @@ different SHA.
 
 `.github/workflows/import-exercise-media.yml` no longer runs on
 `Deploy Mezfit` completion. An import requires manual `workflow_dispatch`
-by the repository owner on `main`, with confirmation
-`IMPORT_PINNED_1324`. A later dataset version needs a separate reviewed
+by the repository owner on `main`. A later dataset version needs a separate reviewed
 PR updating the approved commit, source mapping, rights and corresponding
 Dexie catalogue. The frontend will not silently switch if the D1 media
 index somehow activates a different revision; the Worker responds 404

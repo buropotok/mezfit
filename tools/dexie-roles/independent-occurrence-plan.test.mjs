@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { EXPECTED_DISCUSSION_ROLES } from './discussions.mjs';
 import { addRepeatPermission } from './calendar-repeat.mjs';
-import { CONFIRMATION, OVERLAY, extendIndependentPlanAccess,
+import { OVERLAY, extendIndependentPlanAccess,
   planIndependentOccurrencePlan, verifyIndependentOccurrencePlan, validateDispatch } from './independent-occurrence-plan.mjs';
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
@@ -66,16 +66,14 @@ describe('independent occurrence PLAN protected ACL', () => {
       .toThrow('UNEXPECTED_INDEPENDENT_PLAN_ROLE_CHANGE');
   });
 
-  it('requires owner, main, manual dispatch and literal apply confirmation', () => {
+  it('requires owner, main, manual dispatch and valid preview/apply selection', () => {
     const allowed = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
       GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
-      INDEPENDENT_PLAN_OPERATION: 'apply', INDEPENDENT_PLAN_CONFIRMATION: CONFIRMATION };
+      INDEPENDENT_PLAN_OPERATION: 'apply' };
     expect(() => validateDispatch(allowed)).not.toThrow();
-    expect(() => validateDispatch({ ...allowed, INDEPENDENT_PLAN_OPERATION: 'preview',
-      INDEPENDENT_PLAN_CONFIRMATION: '' })).not.toThrow();
+    expect(() => validateDispatch({ ...allowed, INDEPENDENT_PLAN_OPERATION: 'preview' })).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_REF: 'refs/heads/feature' },
-      { GITHUB_ACTOR: 'other' }, { INDEPENDENT_PLAN_CONFIRMATION: '' },
-      { INDEPENDENT_PLAN_OPERATION: 'preview' }])
+      { GITHUB_ACTOR: 'other' }, { INDEPENDENT_PLAN_OPERATION: 'invalid' }])
       expect(() => validateDispatch({ ...allowed, ...change })).toThrow();
   });
 

@@ -24,7 +24,6 @@ NAME_BROWSER_AUTH_FUNCTION = "mezfit-browser-login"
 FUNCTIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/functions"
 NAME_CERTIFICATE = "mezfit-ru-web"
 DOMAIN = "mezfit.ru"
-CONFIRMATION = "PREPARE_MEZFIT_WEB"
 SAFE_FLAGS = {"read": True, "list": False, "configRead": False}
 
 
@@ -392,13 +391,11 @@ def certificate_challenge(api, cert_id):
               "(REG.RU while NS is not delegated). This workflow does not update DNS.")
 
 
-def execute(mode, confirmation, folder_id, api, sleep=time.sleep):
+def execute(mode, folder_id, api, sleep=time.sleep):
     if mode not in ("preview", "apply"):
         raise WebHostingError("Only preview and apply are supported.")
     if not resource_id(folder_id):
         raise WebHostingError("Missing/invalid YC_FOLDER_ID.")
-    if mode == "apply" and confirmation != CONFIRMATION:
-        raise WebHostingError("Apply requires the exact manual confirmation.")
 
     bucket, gateway, certificate = inspect(api, folder_id)
     print(f"Target folder: {folder_id}; bucket: {bucket_name(folder_id)}; "
@@ -472,7 +469,7 @@ def main():
     def api(url, label, payload=None):
         return request_json(opener, token, url, label, payload)
 
-    execute(os.environ.get("MODE", ""), os.environ.get("CONFIRM", ""),
+    execute(os.environ.get("MODE", ""),
             os.environ.get("YC_FOLDER_ID", ""), api)
 
 

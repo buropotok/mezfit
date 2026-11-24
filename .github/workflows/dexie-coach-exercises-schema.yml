@@ -10,10 +10,6 @@ on:
         required: true
         default: preview
         options: [preview, apply]
-      confirmation:
-        type: string
-        description: 'For apply enter APPLY_COACH_EXERCISES_V5_SCHEMA'
-        required: false
 
 permissions:
   contents: read
@@ -29,7 +25,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor == github.repository_owner &&
       (inputs.operation == 'preview' ||
-       (inputs.operation == 'apply' && inputs.confirmation == 'APPLY_COACH_EXERCISES_V5_SCHEMA'))
+       (inputs.operation == 'apply'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:

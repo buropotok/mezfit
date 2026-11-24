@@ -94,8 +94,7 @@ first; no implicit role migration or permission widening is permitted.
 3. Manually dispatch `Apply Dexie Cloud Flex Attributes schema and ACL`
    with `operation=preview`. Inspect full schema/roles compatibility and
    exact added tables/roles.
-4. Manually dispatch `operation=apply` with literal confirmation
-   `APPLY_FLEX_ATTRIBUTES_SCHEMA_AND_ACL` and approve the environment gate.
+4. Manually dispatch `operation=apply` and approve the environment gate.
 5. The operator re-exports both full configuration envelopes immediately
    before import, refuses drift or payload changes, imports only missing
    reviewed schema/role deltas, then verifies the complete before/after

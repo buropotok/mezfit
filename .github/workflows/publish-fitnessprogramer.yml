@@ -10,10 +10,6 @@ on:
         required: true
         default: preview
         options: [preview, apply]
-      confirmation:
-        type: string
-        description: 'For apply enter PUBLISH_FITNESSPROGRAMER_BASE_2_V1'
-        required: false
 
 permissions:
   contents: read
@@ -34,7 +30,6 @@ jobs:
       name: dexie-production
     env:
       BASE_2_OPERATION: ${{ inputs.operation }}
-      BASE_2_CONFIRMATION: ${{ inputs.confirmation }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Require owner/main/manual dispatch and exact apply confirmation
+      - name: Require owner/main/manual dispatch
         run: node tools/exercises/fitnessprogramer-operator.mjs preflight
       - name: Validate all pinned cards and GIFs without remote writes
         run: node tools/exercises/fitnessprogramer-operator.mjs validate-source

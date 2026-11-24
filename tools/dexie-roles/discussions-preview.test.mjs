@@ -120,7 +120,7 @@ describe('Discussions Preview on the confirmed Flex + repetition policy', () => 
       const options = {
         cwd: root, encoding: 'utf8', env: { ...process.env,
           GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main', GITHUB_ACTOR: 'owner', GITHUB_REPOSITORY_OWNER: 'owner',
-          DEXIE_DISCUSSION_OPERATION: 'preview', DEXIE_DISCUSSION_CONFIRMATION: '', DEXIE_CLOUD_WRITE_KEY: 'SECRET_CREDENTIAL',
+          DEXIE_DISCUSSION_OPERATION: 'preview', DEXIE_CLOUD_WRITE_KEY: 'SECRET_CREDENTIAL',
           RUNNER_TEMP: runner, GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1', GITHUB_OUTPUT: join(root, 'output') },
       };
       const run = () => spawnSync(process.execPath, [fileURLToPath(new URL('./discussions.mjs', import.meta.url)), 'plan'], options);

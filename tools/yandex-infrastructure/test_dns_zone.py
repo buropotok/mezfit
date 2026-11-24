@@ -4,7 +4,7 @@ import unittest
 from urllib.parse import parse_qs, urlparse
 
 from dns_zone import (
-    APPLY_CONFIRMATION, DNS_API, OPERATIONS_API, DnsSetupError,
+    DNS_API, OPERATIONS_API, DnsSetupError,
     execute, list_zones, matching_zone,
 )
 
@@ -47,29 +47,29 @@ class FakeYandexDns:
 class DnsFoundationTests(unittest.TestCase):
     def test_preview_never_writes(self):
         api = FakeYandexDns()
-        execute("preview", "", FOLDER, api)
+        execute("preview", FOLDER, api)
         self.assertEqual(api.writes, [])
 
     def test_apply_creates_protected_public_zone_once_and_reuses_it(self):
         api = FakeYandexDns()
-        execute("apply", APPLY_CONFIRMATION, FOLDER, api)
-        execute("apply", APPLY_CONFIRMATION, FOLDER, api)
+        execute("apply", FOLDER, api)
+        execute("apply", FOLDER, api)
         self.assertEqual(len(api.writes), 1)
         self.assertEqual(api.writes[0]["publicVisibility"], {})
         self.assertTrue(api.writes[0]["deletionProtection"])
         self.assertEqual(api.writes[0]["zone"], "mezfit.ru.")
         self.assertEqual(api.writes[0]["folderId"], FOLDER)
 
-    def test_apply_without_confirmation_is_denied_without_api_calls(self):
+    def test_invalid_mode_is_denied_without_api_calls(self):
         class NoApi:
             def __call__(self, *args, **kwargs):
                 raise AssertionError("No API call expected")
         with self.assertRaises(DnsSetupError):
-            execute("apply", "", FOLDER, NoApi())
+            execute("invalid", FOLDER, NoApi())
 
     def test_existing_public_zone_is_accepted_without_mutation(self):
         api = FakeYandexDns([PUBLIC_ZONE])
-        execute("apply", APPLY_CONFIRMATION, FOLDER, api)
+        execute("apply", FOLDER, api)
         self.assertEqual(api.writes, [])
 
     def test_private_zone_or_wrong_name_is_rejected(self):
@@ -81,7 +81,7 @@ class DnsFoundationTests(unittest.TestCase):
             with self.subTest(zone=zone):
                 api = FakeYandexDns([zone])
                 with self.assertRaises(DnsSetupError):
-                    execute("apply", APPLY_CONFIRMATION, FOLDER, api)
+                    execute("apply", FOLDER, api)
                 self.assertEqual(api.writes, [])
 
     def test_multiple_matching_zones_are_rejected(self):
@@ -92,7 +92,7 @@ class DnsFoundationTests(unittest.TestCase):
     def test_failed_operation_never_reports_success(self):
         api = FakeYandexDns(operation_ok=False)
         with self.assertRaises(DnsSetupError):
-            execute("apply", APPLY_CONFIRMATION, FOLDER, api)
+            execute("apply", FOLDER, api)
         self.assertEqual(len(api.writes), 1)
 
     def test_list_reads_subsequent_pages(self):

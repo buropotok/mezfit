@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  ADHOC_ROLE_OVERLAY, ADHOC_SCHEMA, CONFIRMATION, EXPECTED_CALENDAR_ROLES,
+  ADHOC_ROLE_OVERLAY, ADHOC_SCHEMA, EXPECTED_CALENDAR_ROLES,
   EXPECTED_ADHOC_ROLES, assertApprovedManifests, assertExactImportPayload,
   assertUnchangedBeforeApply, buildExpectedAdHocRoles, planAdHocSessions,
   validateAdHocDispatch, verifyAdHocSessions,
@@ -21,7 +21,7 @@ const afterRoles = () => ({ ...structuredClone(roles), roles: { ...structuredClo
 const plan = (s = schema, r = roles) => planAdHocSessions(overlay, schemaManifest, s, r);
 const trusted = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
-  DEXIE_ADHOC_OPERATION: 'apply', DEXIE_ADHOC_CONFIRMATION: CONFIRMATION };
+  DEXIE_ADHOC_OPERATION: 'apply' };
 
 describe('protected ad-hoc session schema and ACL exception', () => {
   it('pins both manifests and the existing calendar baseline independently', () => {
@@ -123,11 +123,10 @@ describe('protected ad-hoc session schema and ACL exception', () => {
 
   it('requires owner/main manual dispatch with preview and apply kept distinct', () => {
     expect(() => validateAdHocDispatch(trusted)).not.toThrow();
-    expect(() => validateAdHocDispatch({ ...trusted, DEXIE_ADHOC_OPERATION: 'preview', DEXIE_ADHOC_CONFIRMATION: '' })).not.toThrow();
+    expect(() => validateAdHocDispatch({ ...trusted, DEXIE_ADHOC_OPERATION: 'preview' })).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'pull_request' },
       { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'outsider' }, { GITHUB_ACTOR: '' },
-      { DEXIE_ADHOC_OPERATION: 'other' }, { DEXIE_ADHOC_CONFIRMATION: '' },
-      { DEXIE_ADHOC_OPERATION: 'preview' }]) {
+      { DEXIE_ADHOC_OPERATION: 'other' }]) {
       expect(() => validateAdHocDispatch({ ...trusted, ...change })).toThrow();
     }
   });
@@ -159,7 +158,7 @@ describe('protected ad-hoc session schema and ACL exception', () => {
     try {
       const result = spawnSync(process.execPath, ['tools/dexie-roles/adhoc-sessions.mjs', 'plan'], {
         cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8',
-        env: { ...process.env, ...trusted, DEXIE_ADHOC_OPERATION: 'preview', DEXIE_ADHOC_CONFIRMATION: '',
+        env: { ...process.env, ...trusted, DEXIE_ADHOC_OPERATION: 'preview',
           GITHUB_ACTOR: scenario === 'unauthorized' ? 'outsider' : trusted.GITHUB_ACTOR,
           RUNNER_TEMP: temp, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1',
           GITHUB_OUTPUT: join(temp, 'output') },

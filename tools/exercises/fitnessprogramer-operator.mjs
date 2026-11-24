@@ -17,7 +17,6 @@ const SOURCE_TREES = Object.freeze({
   'assets/work': '1216807c9f9b0fe2cce95e6a88dcd77e9bc74244',
   'assets/media': '078fb340e103355aee8ff5596608e63a017e762b',
 });
-const CONFIRMATION = 'PUBLISH_FITNESSPROGRAMER_BASE_2_V1';
 const METRICS = new Set(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight']);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -30,9 +29,8 @@ export function authorize(env) {
     || env.GITHUB_EVENT_NAME !== 'workflow_dispatch' || env.GITHUB_REF !== 'refs/heads/main'
     || !env.GITHUB_ACTOR || env.GITHUB_ACTOR !== env.GITHUB_REPOSITORY_OWNER)
     fail('UNAUTHORIZED_FITNESSPROGRAMER_DISPATCH');
-  if (env.BASE_2_OPERATION === 'apply' && env.BASE_2_CONFIRMATION === CONFIRMATION) return;
-  if (env.BASE_2_OPERATION === 'preview' && !env.BASE_2_CONFIRMATION) return;
-  fail('INVALID_FITNESSPROGRAMER_CONFIRMATION');
+  if (['preview', 'apply'].includes(env.BASE_2_OPERATION)) return;
+  fail('INVALID_FITNESSPROGRAMER_OPERATION');
 }
 
 export function schemaPlan(manifest, beforeSchema, beforeRoles) {

@@ -8,8 +8,8 @@ from zipfile import ZipFile
 from io import BytesIO
 
 from deploy_browser_auth import (
-    ACTIVATE, PREPARE, FUNCTIONS, TAG, VERSIONS, execute, source_package,
-    version_secrets, require_confirmation,
+    FUNCTIONS, TAG, VERSIONS, execute, source_package,
+    version_secrets, validate_operation,
 )
 from web_hosting import GATEWAYS, WebHostingError, bucket_name, gateway_spec
 
@@ -83,21 +83,20 @@ class FakeCloud:
     def operation(response):
         return {"id": "operation1", "done": True, "response": response}
 
-    def execute(self, mode, action, confirm, secret=SECRET, version=SECRET_VERSION):
+    def execute(self, mode, action, secret=SECRET, version=SECRET_VERSION):
         with patch.dict("os.environ", {"YC_DEPLOY_SA_ID": SA}):
-            execute(mode, action, confirm, FOLDER, SA, RUNTIME_SA, secret, version,
+            execute(mode, action, FOLDER, SA, RUNTIME_SA, secret, version,
                     self, self.update, sleep=lambda _: None)
 
 
 class BrowserOperatorContracts(TestCase):
-    def test_invalid_confirmation_blocks_bootstrap_preflight(self):
-        with self.assertRaisesRegex(WebHostingError, "confirmation"):
-            require_confirmation("apply", "prepare", "WRONG")
-        with self.assertRaisesRegex(WebHostingError, "confirmation"):
-            require_confirmation("apply", "activate", PREPARE)
+    def test_invalid_operation_blocks_bootstrap_preflight(self):
         with self.assertRaisesRegex(WebHostingError, "Unknown browser auth operation"):
-            require_confirmation("invalid", "prepare", "")
-        require_confirmation("preview", "prepare", "")
+            validate_operation("apply", "unknown")
+        with self.assertRaisesRegex(WebHostingError, "Unknown browser auth operation"):
+            validate_operation("invalid", "prepare")
+        validate_operation("preview", "prepare")
+        validate_operation("apply", "activate")
 
     def test_function_archive_is_reproducible_and_contains_only_runtime_files(self):
         archive, description = source_package()
@@ -110,27 +109,27 @@ class BrowserOperatorContracts(TestCase):
 
     def test_preview_is_read_only_without_lockbox_secrets(self):
         cloud = FakeCloud()
-        cloud.execute("preview", "prepare", "", secret="", version="")
+        cloud.execute("preview", "prepare", secret="", version="")
         self.assertEqual(cloud.writes, [])
 
-    def test_each_apply_requires_its_exact_confirmation(self):
+    def test_each_action_rejects_invalid_mode_before_write(self):
         cloud = FakeCloud()
         for action in ("prepare", "activate"):
             with self.subTest(action=action):
-                with self.assertRaisesRegex(WebHostingError, "confirmation"):
-                    cloud.execute("apply", action, "wrong")
+                with self.assertRaisesRegex(WebHostingError, "Unknown browser auth operation"):
+                    cloud.execute("invalid", action)
         self.assertEqual(cloud.writes, [])
 
     def test_apply_requires_pinned_lockbox_secret_and_version(self):
         cloud = FakeCloud()
         with self.assertRaisesRegex(WebHostingError, "Lockbox"):
-            cloud.execute("apply", "prepare", PREPARE, secret="", version="")
+            cloud.execute("apply", "prepare", secret="", version="")
         self.assertEqual(cloud.writes, [])
 
     def test_prepare_creates_only_private_function_invoker_and_pinned_version(self):
         cloud = FakeCloud()
-        cloud.execute("apply", "prepare", PREPARE)
-        cloud.execute("apply", "prepare", PREPARE)
+        cloud.execute("apply", "prepare")
+        cloud.execute("apply", "prepare")
         self.assertEqual(len(cloud.writes), 3)
         self.assertEqual(cloud.writes[0][0], FUNCTIONS)
         self.assertTrue(cloud.writes[1][0].endswith(":updateAccessBindings"))
@@ -149,11 +148,11 @@ class BrowserOperatorContracts(TestCase):
 
     def test_activation_adds_only_exact_four_auth_routes_and_reuses(self):
         cloud = FakeCloud()
-        cloud.execute("apply", "prepare", PREPARE)
-        cloud.execute("preview", "activate", "")
+        cloud.execute("apply", "prepare")
+        cloud.execute("preview", "activate")
         self.assertEqual(len(cloud.writes), 3)
-        cloud.execute("apply", "activate", ACTIVATE)
-        cloud.execute("apply", "activate", ACTIVATE)
+        cloud.execute("apply", "activate")
+        cloud.execute("apply", "activate")
         self.assertEqual(len(cloud.writes), 4)
         self.assertEqual(set(cloud.spec["paths"]) -
                          set(gateway_spec(bucket_name(FOLDER))["paths"]),
@@ -164,10 +163,10 @@ class BrowserOperatorContracts(TestCase):
 
     def test_gateway_drift_or_public_invocation_fails_before_writes(self):
         cloud = FakeCloud()
-        cloud.execute("apply", "prepare", PREPARE)
+        cloud.execute("apply", "prepare")
         cloud.spec["paths"]["/api"]["get"]["x-yc-apigateway-integration"]["http_code"] = 200
         with self.assertRaises(WebHostingError):
-            cloud.execute("apply", "activate", ACTIVATE)
+            cloud.execute("apply", "activate")
         self.assertEqual(len(cloud.writes), 3)
 
         blocked = FakeCloud()
@@ -176,12 +175,12 @@ class BrowserOperatorContracts(TestCase):
         blocked.bindings = [{"roleId": "functions.functionInvoker",
                              "subject": {"type": "system", "id": "allUsers"}}]
         with self.assertRaisesRegex(WebHostingError, "Public access"):
-            blocked.execute("apply", "prepare", PREPARE)
+            blocked.execute("apply", "prepare")
         self.assertEqual(blocked.writes, [])
 
     def test_missing_version_or_other_secret_version_blocks_activation(self):
         cloud = FakeCloud()
-        cloud.execute("apply", "prepare", PREPARE)
+        cloud.execute("apply", "prepare")
         with self.assertRaisesRegex(WebHostingError, "expected ACTIVE|Expected ACTIVE"):
-            cloud.execute("apply", "activate", ACTIVATE, version="other")
+            cloud.execute("apply", "activate", version="other")
         self.assertEqual(len(cloud.writes), 3)

@@ -7,7 +7,6 @@ import { isDeepStrictEqual } from 'node:util';
 import { EXPECTED_DISCUSSION_ROLES } from './discussions.mjs';
 import { addRepeatPermission } from './calendar-repeat.mjs';
 
-export const CONFIRMATION = 'APPLY_INDEPENDENT_OCCURRENCE_PLAN_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const FIELDS = ['plan', 'publishedPlan'];
 const fail = reason => { throw Error(reason); };
@@ -91,9 +90,6 @@ export function validateDispatch(env) {
     fail('UNAUTHORIZED_INDEPENDENT_PLAN_DISPATCH');
   if (!['preview', 'apply'].includes(env.INDEPENDENT_PLAN_OPERATION))
     fail('INVALID_INDEPENDENT_PLAN_OPERATION');
-  if (env.INDEPENDENT_PLAN_OPERATION === 'apply') {
-    if (env.INDEPENDENT_PLAN_CONFIRMATION !== CONFIRMATION) fail('INVALID_INDEPENDENT_PLAN_CONFIRMATION');
-  } else if (env.INDEPENDENT_PLAN_CONFIRMATION) fail('PREVIEW_CANNOT_CONFIRM_APPLY');
 }
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
 async function main() {

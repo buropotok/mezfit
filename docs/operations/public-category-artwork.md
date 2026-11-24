@@ -22,8 +22,7 @@ The existing `DEXIE_CLOUD_WRITE_KEY` environment secret is sufficient to request
 into the Mini App, copied to a PR job or exposed in logs. There is **no new key**.
 The new manual-only `.github/workflows/publish-category-artwork.yml` runs only
 for the repository owner on `main`, behind required `dexie-production`
-environment approval. Preview does not mutate. Apply requires the literal
-confirmation `PUBLISH_PUBLIC_CATEGORY_ARTWORK_V1` and uses the same
+environment approval. Preview does not mutate. Apply uses the same
 protected-writer concurrency lock as the catalogue publisher.
 
 The workflow first adds only the missing cloud table, verifies the complete
@@ -38,8 +37,7 @@ silently overwritten. No schema or media publication happens on PR or push.
 
 1. Merge the implementation after PR review and CI.
 2. From `main`, manually run the protected workflow with `preview`.
-3. With required environment approval, select `apply` and enter the exact
-   confirmation. Inspect the reported verification of all eight files.
+3. With required environment approval, select `apply`. Inspect the reported verification of all eight files.
 4. Verify on an authenticated Telegram Mini App device that all eight
    public BlobRefs resolve to local Blobs, including after a restart/offline.
 

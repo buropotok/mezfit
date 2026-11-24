@@ -15,10 +15,6 @@ on:
         description: 'Owner confirms the required COMM-02 device/network checks before Apply'
         default: false
         required: true
-      confirmation:
-        type: string
-        description: 'For apply enter APPLY_DISCUSSIONS_SCHEMA_AND_ACL'
-        required: false
 
 permissions:
   contents: read
@@ -41,7 +37,6 @@ jobs:
     env:
       DEXIE_DISCUSSION_COMM02_VALIDATED: ${{ inputs.comm02_validated }}
       DEXIE_DISCUSSION_OPERATION: ${{ inputs.operation }}
-      DEXIE_DISCUSSION_CONFIRMATION: ${{ inputs.confirmation }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,7 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate manual dispatch and explicit confirmation
+      - name: Validate manual dispatch
         run: node tools/dexie-roles/discussions.mjs preflight
       - name: Prepare protected Dexie CLI credentials
         env:

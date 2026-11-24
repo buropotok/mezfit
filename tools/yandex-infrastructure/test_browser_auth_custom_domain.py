@@ -2,7 +2,6 @@
 from unittest import TestCase
 
 import test_browser_auth_jwks_bucket
-from deploy_browser_auth import POPUP_MIRROR
 from test_deploy_browser_auth import DOMAIN, FOLDER
 from web_hosting import CERTIFICATES, WebHostingError
 
@@ -31,9 +30,9 @@ class CustomDomainMirrorCloud(test_browser_auth_jwks_bucket.MirrorCloud):
 class BrowserAuthCustomDomainTests(TestCase):
     def test_mirror_can_be_enabled_with_the_verified_custom_server(self):
         cloud = CustomDomainMirrorCloud()
-        cloud.execute("preview", "popup-mirror", "")
+        cloud.execute("preview", "popup-mirror")
         self.assertEqual(cloud.writes, [])
-        cloud.execute("apply", "popup-mirror", POPUP_MIRROR)
+        cloud.execute("apply", "popup-mirror")
         self.assertEqual(cloud.spec["servers"][1], {"url": "https://mezfit.online"})
         self.assertFalse(any("/apigateways/" in url for url, _ in cloud.writes))
 
@@ -41,5 +40,5 @@ class BrowserAuthCustomDomainTests(TestCase):
         cloud = CustomDomainMirrorCloud()
         cloud.spec["servers"].append({"url": "https://mezfit.ru"})
         with self.assertRaisesRegex(WebHostingError, "unexpected server URL"):
-            cloud.execute("apply", "popup-mirror", POPUP_MIRROR)
+            cloud.execute("apply", "popup-mirror")
         self.assertEqual(cloud.writes, [])

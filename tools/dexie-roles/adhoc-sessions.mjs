@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 
-export const CONFIRMATION = 'APPLY_ADHOC_SESSION_SCHEMA_AND_COACH_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 function deepFreeze(value) {
   for (const child of Object.values(value)) if (child && typeof child === 'object') deepFreeze(child);
@@ -208,9 +207,6 @@ export function validateAdHocDispatch(env) {
     fail('UNAUTHORIZED_ADHOC_DISPATCH');
   }
   if (!['preview', 'apply'].includes(env.DEXIE_ADHOC_OPERATION)) fail('INVALID_ADHOC_OPERATION');
-  if (env.DEXIE_ADHOC_OPERATION === 'apply') {
-    if (env.DEXIE_ADHOC_CONFIRMATION !== CONFIRMATION) fail('INVALID_ADHOC_CONFIRMATION');
-  } else if (env.DEXIE_ADHOC_CONFIRMATION) fail('PREVIEW_MUST_NOT_HAVE_APPLY_CONFIRMATION');
 }
 const load = async file => JSON.parse(await readFile(file, 'utf8'));
 async function main() {

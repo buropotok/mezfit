@@ -25,7 +25,7 @@ for (const [name, role] of Object.entries(schedulingRequests.roles)) {
 const schema = { sealed: true, schema: { workoutOccurrences: '@id' } };
 const trusted = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
-  DEXIE_ACL_OPERATION: 'apply', DEXIE_ACL_CONFIRMATION: 'APPLY_LOCAL_CALENDAR_COACH_CLIENT_ACL' };
+  DEXIE_ACL_OPERATION: 'apply' };
 describe('protected local calendar ACL', () => {
   it('replaces the exact installed request policy and preserves PLAN, FACT and other roles', () => {
     const before = structuredClone(schedulingRequests);
@@ -78,7 +78,7 @@ describe('protected local calendar ACL', () => {
     try {
       const result = spawnSync(process.execPath, ['tools/dexie-roles/local-calendar.mjs', 'plan'], {
         cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8',
-        env: { ...process.env, ...trusted, DEXIE_ACL_OPERATION: 'preview', DEXIE_ACL_CONFIRMATION: '',
+        env: { ...process.env, ...trusted, DEXIE_ACL_OPERATION: 'preview',
           RUNNER_TEMP: temp, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1',
           GITHUB_OUTPUT: join(temp, 'output') },
       });
@@ -144,7 +144,6 @@ describe('protected local calendar ACL', () => {
       const result = spawnSync(process.execPath, ['tools/dexie-roles/local-calendar.mjs', 'plan'], {
         cwd: fileURLToPath(new URL('../../', import.meta.url)), encoding: 'utf8',
         env: { ...process.env, ...trusted, DEXIE_ACL_OPERATION: operation,
-          DEXIE_ACL_CONFIRMATION: operation === 'apply' ? trusted.DEXIE_ACL_CONFIRMATION : '',
           RUNNER_TEMP: temp, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1',
           GITHUB_OUTPUT: join(temp, 'output') },
       });
@@ -188,10 +187,11 @@ describe('protected local calendar ACL', () => {
     expect(() => verifySchedulingAcl(manifest, schema, before, { schema: {} }, after)).toThrow();
     expect(() => assertUnchangedBeforeApply(schema, before, schema, after)).toThrow();
   });
-  it('requires protected main/owner manual dispatch and explicit confirmation', () => {
+  it('requires protected main/owner manual dispatch and valid preview/apply selection', () => {
     expect(() => validateAclDispatch(trusted)).not.toThrow();
+    expect(() => validateAclDispatch({ ...trusted, DEXIE_ACL_OPERATION: 'preview' })).not.toThrow();
     for (const invalid of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_REF: 'refs/heads/feature' },
-      { GITHUB_ACTOR: 'outsider' }, { DEXIE_ACL_CONFIRMATION: '' }])
+      { GITHUB_ACTOR: 'outsider' }, { DEXIE_ACL_OPERATION: 'invalid' }])
       expect(() => validateAclDispatch({ ...trusted, ...invalid })).toThrow();
     const workflow = readFileSync(new URL('../../.github/workflows/dexie-local-calendar-acl.yml', import.meta.url), 'utf8');
     expect(workflow).toContain('name: dexie-production');

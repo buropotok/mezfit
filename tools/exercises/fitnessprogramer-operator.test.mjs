@@ -12,11 +12,10 @@ const manifest = { schema: SCHEMA };
 const roles = { roles: {} };
 
 describe('FitnessProgramer protected publication', () => {
-  it('accepts a manual owner preview and requires exact confirmation to apply', () => {
+  it('accepts a manual owner preview and accepts explicit Apply selection without a code', () => {
     expect(() => authorize({ ...ownerRun, BASE_2_OPERATION: 'preview' })).not.toThrow();
-    expect(() => authorize({ ...ownerRun, BASE_2_OPERATION: 'apply' })).toThrow('INVALID_FITNESSPROGRAMER_CONFIRMATION');
-    expect(() => authorize({ ...ownerRun, BASE_2_OPERATION: 'apply',
-      BASE_2_CONFIRMATION: 'PUBLISH_FITNESSPROGRAMER_BASE_2_V1' })).not.toThrow();
+    expect(() => authorize({ ...ownerRun, BASE_2_OPERATION: 'apply' })).not.toThrow();
+    expect(() => authorize({ ...ownerRun, BASE_2_OPERATION: 'invalid' })).toThrow('INVALID_FITNESSPROGRAMER_OPERATION');
   });
 
   it('rejects PRs, other repositories, and dispatches from non-owners', () => {

@@ -14,8 +14,8 @@ The exact allowlisted schema manifest is **cloud/schema-coach-exercises.json**.
 
 After merging the reviewed workflow into `main`, open **Actions → Apply Dexie Cloud coach exercise schema** (`.github/workflows/dexie-coach-exercises-schema.yml`).
 
-1. Select branch **main**, operation **preview**, leave confirmation blank. Run the workflow, approve the protected `dexie-production` environment, and review the log's list of missing tables. No cloud changes occur in preview.
-2. When the missing-table plan is correct, start a new run on **main** with operation **apply** and confirmation **APPLY_COACH_EXERCISES_V5_SCHEMA**. Approve the protected environment.
+1. Select branch **main**, operation **preview**. Run the workflow, approve the protected `dexie-production` environment, and review the log's list of missing tables. No cloud changes occur in preview.
+2. When the missing-table plan is correct, start a new run on **main** with operation **apply**. Approve the protected environment.
 3. The workflow exports schema/roles before import, imports **only missing allowlisted tables**, then re-exports schema/roles and fails unless the three `id`-keyed tables are present, every earlier table/key remains unchanged, roles remain identical and `sealed` has not changed.
 4. Repeat operation **preview** and expect `Missing tables (0)`. The apply operation is safe to repeat: no already-installed table is re-keyed or re-imported.
 
