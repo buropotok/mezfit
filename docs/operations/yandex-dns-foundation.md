@@ -45,8 +45,7 @@ be the repository owner. No PR, push, scheduled, or automated Apply is allowed.
    and reports either the existing exact public zone or a proposed create.
    Preview never sends a create/update/delete request.
 3. Inspect the result, folder ID and deployment IAM permissions.
-4. To create the zone, run `mode=apply` and supply exact confirmation
-   `CREATE_MEZFIT_RU_DNS`. The operator re-reads the DNS list immediately
+4. To create the zone, run `mode=apply`. The operator re-reads the DNS list immediately
    before creating anything, waits for the Yandex operation, then re-reads
    the created resource and the list.
 5. Run Preview again to verify the zone is present. Keep REG.RU NS unchanged
