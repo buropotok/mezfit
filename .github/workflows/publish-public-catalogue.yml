@@ -14,10 +14,6 @@ on:
           - publish
           - tracking-preview
           - tracking-publish
-      confirmation:
-        description: 'publish: PUBLISH_1324_69_V2; tracking-publish: UPDATE_TRACKING_1324_V21'
-        type: string
-        required: false
 
 permissions:
   contents: read
@@ -66,8 +62,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.actor == github.repository_owner &&
-      inputs.operation == 'publish' &&
-      inputs.confirmation == 'PUBLISH_1324_69_V2'
+      inputs.operation == 'publish'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     # REQUIRED: create this environment in GitHub Settings first, restrict to
@@ -160,8 +155,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       github.actor == github.repository_owner &&
-      inputs.operation == 'tracking-publish' &&
-      inputs.confirmation == 'UPDATE_TRACKING_1324_V21'
+      inputs.operation == 'tracking-publish'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # Reuse existing publication service credentials and owner-approved environment.
