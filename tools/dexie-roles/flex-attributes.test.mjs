@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { EXPECTED_COACHED_START_ROLES } from './coached-start.mjs';
 import {
-  FLEX_ROLE_OVERLAY, FLEX_SCHEMA, EXPECTED_FLEX_ROLES, CONFIRMATION,
+  FLEX_ROLE_OVERLAY, FLEX_SCHEMA, EXPECTED_FLEX_ROLES,
   assertFlexManifests, assertFlexUnchanged, buildExpectedFlexRoles,
   planFlexAttributes, validateFlexDispatch, verifyFlexAttributes,
 } from './flex-attributes.mjs';
@@ -18,7 +18,7 @@ const afterRoles = () => ({ ...structuredClone(roles), roles: { ...structuredClo
 const plan = (s = schema, r = roles) => planFlexAttributes(overlay, manifest, s, r);
 const trusted = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
-  DEXIE_FLEX_OPERATION: 'apply', DEXIE_FLEX_CONFIRMATION: CONFIRMATION };
+  DEXIE_FLEX_OPERATION: 'apply' };
 
 describe('protected Flex Attributes schema and ACL', () => {
   it('pins both manifests and the entire previous Coach coached-start ACL baseline', () => {
@@ -89,13 +89,12 @@ describe('protected Flex Attributes schema and ACL', () => {
       .toThrow('FLEX_CLOUD_CONFIGURATION_CHANGED');
   });
 
-  it('allows only manual owner/main dispatch and explicit apply confirmation', () => {
+  it('allows only manual owner/main dispatch and valid preview/apply selection', () => {
     expect(() => validateFlexDispatch(trusted)).not.toThrow();
-    expect(() => validateFlexDispatch({ ...trusted, DEXIE_FLEX_OPERATION: 'preview', DEXIE_FLEX_CONFIRMATION: '' }))
+    expect(() => validateFlexDispatch({ ...trusted, DEXIE_FLEX_OPERATION: 'preview' }))
       .not.toThrow();
     for (const delta of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_REF: 'refs/heads/feature' },
-      { GITHUB_ACTOR: 'other' }, { DEXIE_FLEX_OPERATION: 'bad' }, { DEXIE_FLEX_CONFIRMATION: '' },
-      { DEXIE_FLEX_OPERATION: 'preview' }]) {
+      { GITHUB_ACTOR: 'other' }, { DEXIE_FLEX_OPERATION: 'bad' }]) {
       expect(() => validateFlexDispatch({ ...trusted, ...delta })).toThrow();
     }
   });
