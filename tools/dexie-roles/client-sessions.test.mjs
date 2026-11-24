@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ADHOC_SCHEMA } from './adhoc-sessions.mjs';
 import { EXPECTED_CANCELLATION_ROLES } from './calendar-cancellation.mjs';
-import { CONFIRMATION, EXPECTED_CLIENT_SESSION_ROLES, CLIENT_SESSION_ROLE_OVERLAY,
+import { EXPECTED_CLIENT_SESSION_ROLES, CLIENT_SESSION_ROLE_OVERLAY,
   planClientSessions, verifyClientSessions, validateClientSessionDispatch,
   assertUnchangedBeforeApply, assertExactImportPayload } from './client-sessions.mjs';
 
@@ -56,14 +56,13 @@ describe('protected Client execution ACL', () => {
     expect(() => assertUnchangedBeforeApply(schema, roles, schema, target())).toThrow();
     expect(() => assertExactImportPayload({}, { data: {} })).toThrow();
   });
-  it('requires owner/main manual dispatch and explicit apply confirmation', () => {
+  it('requires owner/main manual dispatch and valid preview/apply selection', () => {
     expect(() => validateClientSessionDispatch(trusted)).not.toThrow();
-    const apply = { ...trusted, DEXIE_CLIENT_SESSION_OPERATION: 'apply', DEXIE_CLIENT_SESSION_CONFIRMATION: CONFIRMATION };
+    const apply = { ...trusted, DEXIE_CLIENT_SESSION_OPERATION: 'apply' };
     expect(() => validateClientSessionDispatch(apply)).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'other' }])
       expect(() => validateClientSessionDispatch({ ...apply, ...change })).toThrow();
-    expect(() => validateClientSessionDispatch({ ...apply, DEXIE_CLIENT_SESSION_CONFIRMATION: '' })).toThrow();
-    expect(() => validateClientSessionDispatch({ ...trusted, DEXIE_CLIENT_SESSION_CONFIRMATION: CONFIRMATION })).toThrow();
+    expect(() => validateClientSessionDispatch({ ...apply, DEXIE_CLIENT_SESSION_OPERATION: 'invalid' })).toThrow();
   });
   it('keeps writes protected and verifies full readback after failed imports and no-op apply', () => {
     const workflow = readFileSync(new URL('../../.github/workflows/dexie-client-sessions.yml', import.meta.url), 'utf8');
