@@ -110,8 +110,7 @@ Older operators remain frozen and are not used to roll back the new profile.
 
 `.github/workflows/dexie-client-sessions.yml` reuses the existing protected
 `dexie-production` environment secret and writer concurrency. It is owner/main
-manual dispatch only. Preview is read-only; apply requires the literal
-`APPLY_CLIENT_SESSION_ACL`, a fresh full schema/roles recheck, exact payload
+manual dispatch only. Preview is read-only; apply requires a fresh full schema/roles recheck, exact payload
 validation and full readback, including failed import or no-op apply. Temporary
 credentials and exports remain private and are cleaned. No PR/push trigger runs
 this operation. As with prior operators, export/recheck/import is not a remote
