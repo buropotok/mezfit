@@ -138,6 +138,41 @@ class GatewayReadbackContracts(unittest.TestCase):
         with self.assertRaisesRegex(WebHostingError, "unexpected server URL"):
             verify_gateway(GATEWAY, FOLDER, bucket_name(FOLDER), FakeRecoveryApi(actual))
 
+    def test_verified_attached_domain_is_allowed_as_provider_server(self):
+        gateway = deepcopy(GATEWAY)
+        gateway["attachedDomains"] = [{
+            "domain": "mezfit.online", "certificateId": "cert-online", "enabled": True,
+        }]
+        actual = returned_spec()
+        actual["servers"].append({"url": "https://mezfit.online"})
+        api = FakeRecoveryApi(actual)
+        api.certificates = [{
+            "id": "cert-online", "name": "mezfit-online-web", "folderId": FOLDER,
+            "domains": ["mezfit.online"], "type": "MANAGED",
+            "deletionProtection": True, "status": "ISSUED",
+        }]
+        self.assertEqual(
+            verify_gateway(gateway, FOLDER, bucket_name(FOLDER), api), gateway,
+        )
+
+        # An approved attachment must not authorize unrelated servers.
+        actual["servers"].append({"url": "https://unexpected.example"})
+        with self.assertRaisesRegex(WebHostingError, "unexpected server URL"):
+            verify_gateway(gateway, FOLDER, bucket_name(FOLDER), api)
+
+    def test_custom_server_requires_a_validated_gateway_attachment(self):
+        actual = returned_spec()
+        actual["servers"].append({"url": "https://mezfit.online"})
+        with self.assertRaisesRegex(WebHostingError, "unexpected server URL"):
+            verify_gateway(GATEWAY, FOLDER, bucket_name(FOLDER), FakeRecoveryApi(actual))
+
+        gateway = deepcopy(GATEWAY)
+        gateway["attachedDomains"] = [{
+            "domain": "mezfit.online", "certificateId": "unapproved", "enabled": True,
+        }]
+        with self.assertRaisesRegex(WebHostingError, "Unexpected gateway domain"):
+            verify_gateway(gateway, FOLDER, bucket_name(FOLDER), FakeRecoveryApi(actual))
+
     def test_malformed_server_url_is_a_controlled_failure(self):
         actual = returned_spec()
         actual["servers"] = [{"url": 123}]

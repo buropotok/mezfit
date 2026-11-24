@@ -191,12 +191,13 @@ def verify_certificate(cert, folder_id):
     return cert
 
 
-def normalize_gateway_readback(spec, domain):
+def normalize_gateway_readback(spec, domain, attached_domains=()):
     """Discard only known OpenAPI display/default fields; preserve executable policy.
 
-    Yandex may enrich the stored spec with its default public server, operation
-    descriptions/responses, and standard path-parameter defaults. In contrast,
-    the integration, path/method set, auth, bucket and fallback must match.
+    Yandex may enrich the stored spec with its default public server and the
+    gateway's already verified custom domains, operation descriptions/responses,
+    and standard path-parameter defaults. In contrast, the integration,
+    path/method set, auth, bucket and fallback must match.
     """
     if not isinstance(spec, dict):
         raise WebHostingError("Gateway specification must be an OpenAPI object.")
@@ -205,11 +206,13 @@ def normalize_gateway_readback(spec, domain):
     if servers is not None:
         # Never treat an arbitrary host as benign normalization.
         expected_url = f"https://{domain}" if isinstance(domain, str) and domain else ""
+        allowed_urls = {expected_url}
+        allowed_urls.update(f"https://{name}" for name in attached_domains)
         if (not expected_url or not isinstance(servers, list) or not servers
                 or any(not isinstance(server, dict)
                        or set(server) - {"url", "description"}
                        or not isinstance(server.get("url"), str)
-                       or server["url"].rstrip("/") != expected_url
+                       or server["url"].rstrip("/") not in allowed_urls
                        for server in servers)):
             raise WebHostingError("Gateway specification has an unexpected server URL.")
 
@@ -285,18 +288,18 @@ def verify_gateway(gateway, folder_id, bucket, api):
         attached = []
     if not isinstance(attached, list) or len(attached) > 2:
         raise WebHostingError("Unexpected gateway custom-domain attachments.")
+    approved_domains = set()
     if attached:
         approved_names = {"mezfit.ru": NAME_CERTIFICATE,
                           "mezfit.online": "mezfit-online-web"}
         known = paged_list(api, CERTIFICATES, folder_id, "certificates", "List approved domain certificates")
-        used = set()
         for item in attached:
             if not isinstance(item, dict) or not isinstance(item.get("domain"), str):
                 raise WebHostingError("Malformed attached domain.")
             name = item["domain"].rstrip(".")
             expected_name = approved_names.get(name)
             matches = [c for c in known if c.get("name") == expected_name] if expected_name else []
-            if (name in used or len(matches) != 1 or item.get("certificateId") != matches[0].get("id")
+            if (name in approved_domains or len(matches) != 1 or item.get("certificateId") != matches[0].get("id")
                     or item.get("enabled") is not True
                     or matches[0].get("status") not in {"ISSUED", "RENEWING"}
                     or matches[0].get("folderId") != folder_id
@@ -304,7 +307,7 @@ def verify_gateway(gateway, folder_id, bucket, api):
                     or matches[0].get("type") != "MANAGED"
                     or matches[0].get("deletionProtection") is not True):
                 raise WebHostingError("Unexpected gateway domain or certificate binding.")
-            used.add(name)
+            approved_domains.add(name)
     result = api(f"{GATEWAYS}/{gateway['id']}:spec", "Read gateway OpenAPI contract")
     try:
         actual = json.loads(result["openapiSpec"])
@@ -327,7 +330,7 @@ def verify_gateway(gateway, folder_id, bucket, api):
     else:
         expected_spec = gateway_spec(bucket)
     expected = normalize_gateway_readback(expected_spec, gateway.get("domain"))
-    actual = normalize_gateway_readback(actual, gateway.get("domain"))
+    actual = normalize_gateway_readback(actual, gateway.get("domain"), approved_domains)
     differences = spec_diff_paths(expected, actual)
     if differences:
         raise WebHostingError(

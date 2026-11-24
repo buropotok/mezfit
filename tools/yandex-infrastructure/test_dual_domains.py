@@ -173,6 +173,46 @@ class DomainContracts(unittest.TestCase):
                          api.gateway)
         self.assertEqual(len(api.records["zru"]), 0)
 
+    def test_activation_recovers_after_yandex_adds_custom_server(self):
+        class LiveServerReadback(FakeCloud):
+            def __call__(self, url, label, payload=None):
+                if payload is None and url == GATEWAYS + "/gateway1:spec":
+                    spec = gateway_spec(bucket_name(FOLDER))
+                    spec["servers"] = [{"url": f"https://{self.gateway['domain']}"}]
+                    spec["servers"].extend(
+                        {"url": f"https://{item['domain']}"}
+                        for item in self.gateway["attachedDomains"]
+                    )
+                    return {"openapiSpec": json.dumps(spec)}
+                return super().__call__(url, label, payload)
+
+        api = LiveServerReadback()
+        api.prepare_online()
+        api.issue("mezfit.online")
+
+        # The prior Apply attached the domain but failed before writing ANAME.
+        api.gateway["attachedDomains"] = [{
+            "domain": "mezfit.online", "certificateId": "con", "enabled": True,
+        }]
+        execute("preview", "activate_online", "", FOLDER, api)
+        self.assertEqual(len(api.writes), 2)
+
+        execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+                FOLDER, api, sleep=lambda _: None)
+        self.assertEqual(len(api.writes), 3)
+        self.assertEqual(api.writes[-1][0], DNS + "/zon:updateRecordSets")
+        self.assertEqual(api.records["zon"][0]["type"], "ANAME")
+        self.assertEqual(api.records["zon"][0]["data"], [GATEWAY_DOMAIN + "."])
+
+        # A fresh gateway attach also passes the provider's updated readback.
+        fresh = LiveServerReadback()
+        fresh.prepare_online()
+        fresh.issue("mezfit.online")
+        execute("apply", "activate_online", CONFIRMATIONS["activate_online"],
+                FOLDER, fresh, sleep=lambda _: None)
+        self.assertEqual(fresh.records["zon"][0]["type"], "ANAME")
+        self.assertEqual(len(fresh.writes), 4)
+
     def test_both_domains_attach_to_same_gateway(self):
         api = FakeCloud()
         api.prepare_online()
