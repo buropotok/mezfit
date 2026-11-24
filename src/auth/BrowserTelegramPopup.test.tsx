@@ -79,3 +79,24 @@ it('allows a retry when the popup is blocked or never calls back', async () => {
   act(() => callback?.({ id_token: 'late' }));
   expect(completeBrowserLogin).not.toHaveBeenCalled();
 });
+
+it.each([false, true])('only shows the entire rejected token in explicit diagnostic mode (%s)', async debug => {
+  const originalUrl = window.location.href;
+  if (debug) window.history.replaceState(null, '', '?debugTelegramToken=1');
+  try {
+    const token = 'example.header.signature';
+    vi.mocked(completeBrowserLogin).mockRejectedValueOnce(new ApiError(401, 'Не удалось подтвердить вход'));
+    render(<BrowserTelegramLogin />);
+    await openLogin();
+    await act(async () => callback?.({ id_token: token }));
+    expect(await screen.findByText('Не удалось подтвердить вход')).toBeTruthy();
+    expect(completeBrowserLogin).toHaveBeenCalledWith(token, expect.any(AbortSignal));
+    if (debug) {
+      expect(screen.getByDisplayValue(token)).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Скрыть токен' }));
+    }
+    expect(screen.queryByDisplayValue(token)).toBeNull();
+  } finally {
+    window.history.replaceState(null, '', originalUrl);
+  }
+});

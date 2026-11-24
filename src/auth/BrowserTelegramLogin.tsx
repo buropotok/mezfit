@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, completeBrowserLogin, getBrowserSession, logoutBrowserSession, prepareBrowserLogin } from '../api';
-import { Button, Surface, Text } from '../ui';
+import { Button, Surface, Text, TextArea } from '../ui';
 import type { BrowserIdentity } from './browserSession';
 import { loadTelegramLoginSdk } from './telegramLoginSdk';
 
@@ -25,7 +25,9 @@ export function BrowserTelegramLogin() {
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState<LoginAttempt>({ status: 'preparing' });
   const [retry, setRetry] = useState(0);
+  const [debugToken, setDebugToken] = useState<string | null>(null);
   const opening = useRef(false);
+  const debugTokenEnabled = new URLSearchParams(window.location.search).get('debugTelegramToken') === '1';
 
   useEffect(() => {
     let active = true;
@@ -52,6 +54,7 @@ export function BrowserTelegramLogin() {
     const startedAt = Date.now();
     let timer = window.setTimeout(() => controller.abort(), 8500);
     opening.current = false;
+    setDebugToken(null);
     setAttempt({ status: 'preparing' });
 
     function fail(message: string) {
@@ -87,6 +90,7 @@ export function BrowserTelegramLogin() {
               fail('Telegram не завершил вход. Можно попробовать ещё раз.');
               return;
             }
+            if (debugTokenEnabled) setDebugToken(token);
             timer = window.setTimeout(() => controller.abort(), 15_000);
             void completeBrowserLogin(token, controller.signal).then(identity => {
               if (active) setState({ status: 'signed-in', identity });
@@ -110,9 +114,10 @@ export function BrowserTelegramLogin() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [state.status, retry]);
+  }, [state.status, retry, debugTokenEnabled]);
 
   async function signOut() {
+    setDebugToken(null);
     setBusy(true);
     try {
       await logoutBrowserSession();
@@ -168,6 +173,15 @@ export function BrowserTelegramLogin() {
               <Text variant="footnote" tone="muted">
                 Для полной работы приложения пока откройте @mezfit_bot в Telegram.
               </Text>
+            </>
+          )}
+          {debugTokenEnabled && debugToken !== null && (
+            <>
+              <TextArea label="Полный токен Telegram" value={debugToken} readOnly rows={5} />
+              <Text variant="footnote" tone="muted">
+                Токен содержит данные аккаунта. Просматривайте его на своём устройстве.
+              </Text>
+              <Button variant="secondary" onClick={() => setDebugToken(null)}>Скрыть токен</Button>
             </>
           )}
         </div>
