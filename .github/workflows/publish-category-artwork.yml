@@ -10,10 +10,6 @@ on:
         required: true
         default: preview
         options: [preview, apply]
-      confirmation:
-        type: string
-        description: 'For apply enter PUBLISH_PUBLIC_CATEGORY_ARTWORK_V1'
-        required: false
 
 permissions:
   contents: read
@@ -34,7 +30,6 @@ jobs:
       name: dexie-production
     env:
       CATEGORY_ARTWORK_OPERATION: ${{ inputs.operation }}
-      CATEGORY_ARTWORK_CONFIRMATION: ${{ inputs.confirmation }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Require owner/main/manual dispatch and exact apply confirmation
+      - name: Require owner/main/manual dispatch
         run: node tools/exercises/category-artwork-operator.mjs preflight
       - name: Validate the eight immutable input images without any remote write
         run: node tools/exercises/publish-category-artwork.mjs validate
