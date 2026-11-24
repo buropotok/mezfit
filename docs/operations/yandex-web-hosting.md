@@ -38,13 +38,12 @@ attach `mezfit.ru` to the gateway and configure its Cloud DNS ANAME target.
    need not be delegated yet.
 2. **Prepare Yandex Web Hosting** — `.github/workflows/prepare-yandex-web.yml`.
    Owner/main/manual only. `preview` calls read-only Yandex Cloud APIs and
-   prints an exact plan. `apply` requires literal
-   `PREPARE_MEZFIT_WEB`; the operator rechecks resources, creates missing
+   prints an exact plan. In `apply`, the operator rechecks resources, creates missing
    resources only, checks each operation, and reads them back. Existing
    resources with conflicting name, public access, certificate domain or
    gateway specification are never silently rewritten.
 3. **Publish MezFit SPA to Yandex** — `.github/workflows/publish-yandex-spa.yml`.
-   Manual owner/main only, literal `PUBLISH_MEZFIT_WEB`. Uses `npm ci` and
+   Manual owner/main only. Uses `npm ci` and
    `npm run build` **inside GitHub Actions**, then obtains a short-lived
    IAM token through existing GitHub OIDC and uploads `dist/`. It never
    deletes bucket objects; uploads `index.html` last and sets conservative
@@ -74,14 +73,13 @@ imply that the website is live.
    `mezfit-github-deploy` service account.
 3. Run **Prepare Yandex Web Hosting** with `mode=preview`.
 4. Inspect the target folder, three resource plans and permissions.
-5. Run `mode=apply`, `confirm=PREPARE_MEZFIT_WEB`. On a partial failure,
+5. Run `mode=apply`. On a partial failure,
    inspect existing resources and re-run Preview, never blindly force updates.
 6. In Certificate Manager, inspect the managed `mezfit-ru-web` request and
    its `DNS_CNAME` validation challenge. If DNS is still at REG.RU, add the
    reported CNAME in REG.RU (the only current authoritative source) without
    changing NS. The certificate can be issued before changing NS.
-7. Optionally run **Publish MezFit SPA to Yandex** with its own manual
-   confirmation and inspect the gateway's **default** `*.apigw.yandexcloud.net`
+7. Optionally run **Publish MezFit SPA to Yandex** as a separate manual run and inspect the gateway's **default** `*.apigw.yandexcloud.net`
    URL. This uploads static files, **not** a working independent backend.
 8. Only in later PRs: migrate identity/session/Worker APIs to Yandex, wire
    API Gateway to the Yandex backend, attach the issued certificate and
@@ -102,7 +100,7 @@ imply that the website is live.
 
 ## Verification and limits
 
-PR CI runs the new stdlib Python tests for Preview, owner confirmation,
+PR CI runs the new stdlib Python tests for Preview, operation validation,
 idempotent create/reuse, resource conflicts, missing API backend response,
 asset cache/MIME settings and HTML-last upload. Existing application tests are
 not modified. Local npm/build/test/typecheck are not run before the PR, in
