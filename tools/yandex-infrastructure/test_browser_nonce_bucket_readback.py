@@ -3,7 +3,6 @@
 from copy import deepcopy
 import unittest
 
-from deploy_browser_auth import POPUP
 from test_browser_auth_popup import PopupCloud
 from web_hosting import STORAGE, WebHostingError
 
@@ -31,16 +30,16 @@ class BrowserNonceBucketReadbackContract(unittest.TestCase):
         rule["transitions"] = []
         rule["filter"]["tag"] = {}
         rule["expiration"].update({"days": 1, "expiredObjectDeleteMarker": False})
-        cloud.execute("preview", "popup", "")
+        cloud.execute("preview", "popup")
         self.assertEqual(cloud.writes, [])
 
     def test_resumes_partially_created_owned_bucket_before_granting_write_access(self):
         cloud = LifecycleReadbackCloud()
         cloud.nonce_bucket = deepcopy(cloud.settings)
         cloud.nonce_bucket.pop("lifecycleRules")
-        cloud.execute("preview", "popup", "")
+        cloud.execute("preview", "popup")
         self.assertEqual(cloud.writes, [])
-        cloud.execute("apply", "popup", POPUP)
+        cloud.execute("apply", "popup")
         self.assertEqual(cloud.writes[0][1]["updateMask"], "lifecycleRules")
         self.assertEqual(cloud.nonce_bucket["lifecycleRules"], cloud.settings["lifecycleRules"])
         self.assertEqual(cloud.nonce_bucket["policy"], cloud.policy)
@@ -57,7 +56,7 @@ class BrowserNonceBucketReadbackContract(unittest.TestCase):
                 cloud = PopupCloud()
                 cloud.nonce_bucket = {**deepcopy(cloud.settings), field: value}
                 with self.assertRaisesRegex(WebHostingError, field):
-                    cloud.execute("apply", "popup", POPUP)
+                    cloud.execute("apply", "popup")
                 self.assertEqual(cloud.writes, [])
 
     def test_missing_retention_with_active_policy_is_not_automatically_repaired(self):
@@ -65,5 +64,5 @@ class BrowserNonceBucketReadbackContract(unittest.TestCase):
         cloud.nonce_bucket = {**deepcopy(cloud.settings), "policy": cloud.policy}
         cloud.nonce_bucket.pop("lifecycleRules")
         with self.assertRaisesRegex(WebHostingError, "lifecycleRules"):
-            cloud.execute("apply", "popup", POPUP)
+            cloud.execute("apply", "popup")
         self.assertEqual(cloud.writes, [])
