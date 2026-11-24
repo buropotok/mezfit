@@ -20,8 +20,12 @@ const SESSION_TTL = 12 * 60 * 60;
 const MAX_JWT_LENGTH = 12000;
 const POPUP_TTL = 300;
 const JWKS_TTL = 300_000;
+const MIRROR_REFRESH = 60_000;
+const JWKS_SOURCE = ISSUER + '/.well-known/jwks.json';
 let popupKeys;
 let popupKeysRequest;
+let mirrorKeys;
+let mirrorKeysRequest;
 const NO_CACHE = {
   'Cache-Control': 'no-store',
   'Referrer-Policy': 'no-referrer',
@@ -193,10 +197,98 @@ function validClaims(claims, config, nonce, now = epoch()) {
 }
 
 function getKeys() {
-  return fetchJson(ISSUER + '/.well-known/jwks.json', {}, 'jwks').then(keys => {
+  return fetchJson(JWKS_SOURCE, {}, 'jwks').then(keys => {
     if (!keys || !Array.isArray(keys.keys)) throw new OidcCheckError('jwks', 'invalid_keys');
     return keys;
   });
+}
+
+async function readMirrorObject(bucket, name, token) {
+  let response;
+  try {
+    response = await fetch(`https://storage.yandexcloud.net/${bucket}/${name}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      redirect: 'error', signal: AbortSignal.timeout(3000),
+    });
+  } catch (error) {
+    throw new OidcCheckError('jwks', networkFailureCode(error));
+  }
+  if (!response.ok) throw new OidcCheckError('jwks', 'mirror_http_error', response.status);
+  if (!response.body) throw new OidcCheckError('jwks', 'mirror_invalid');
+  const chunks = [];
+  let size = 0;
+  try {
+    for await (const chunk of response.body) {
+      size += chunk.length;
+      if (size > 65536) throw new OidcCheckError('jwks', 'response_too_large');
+      chunks.push(chunk);
+    }
+  } catch (error) {
+    if (error instanceof OidcCheckError) throw error;
+    throw new OidcCheckError('jwks', 'body_read_failure');
+  }
+  return Buffer.concat(chunks, size);
+}
+
+function parseMirrorJson(bytes) {
+  try {
+    return JSON.parse(bytes.toString('utf8'));
+  } catch {
+    throw new OidcCheckError('jwks', 'mirror_invalid');
+  }
+}
+
+async function loadMirrorKeys(bucket, token, retry = true) {
+  const [statusBytes, keysBytes] = await Promise.all([
+    readMirrorObject(bucket, 'status.json', token),
+    readMirrorObject(bucket, 'jwks.json', token),
+  ]);
+  const status = parseMirrorJson(statusBytes);
+  if (status?.source !== JWKS_SOURCE || typeof status.checkedAt !== 'string'
+      || typeof status.jwksSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(status.jwksSha256)) {
+    throw new OidcCheckError('jwks', 'mirror_invalid');
+  }
+  const checkedAt = Date.parse(status.checkedAt);
+  const fetchedAt = Date.now();
+  if (!Number.isFinite(checkedAt) || checkedAt > fetchedAt + 30_000 || fetchedAt - checkedAt >= JWKS_TTL) {
+    throw new OidcCheckError('jwks', 'mirror_stale');
+  }
+  if (createHash('sha256').update(keysBytes).digest('hex') !== status.jwksSha256) {
+    // The publisher writes keys before the heartbeat. Re-read a pair caught during rotation.
+    if (retry) return loadMirrorKeys(bucket, token, false);
+    throw new OidcCheckError('jwks', 'mirror_digest_mismatch');
+  }
+  const value = parseMirrorJson(keysBytes);
+  if (!Array.isArray(value?.keys) || !value.keys.length) {
+    throw new OidcCheckError('jwks', 'invalid_keys');
+  }
+  return { value, fetchedAt, expiresAt: checkedAt + JWKS_TTL };
+}
+
+async function getMirrorKeys(bucket, token, kid) {
+  if (!/^mezfit-telegram-jwks-[a-z0-9]{1,43}$/.test(bucket) || typeof token !== 'string' || !token) {
+    throw new OidcCheckError('jwks', 'mirror_not_configured');
+  }
+  const now = Date.now();
+  const age = mirrorKeys ? now - mirrorKeys.fetchedAt : Infinity;
+  if (mirrorKeys?.bucket === bucket && now < mirrorKeys.expiresAt && age < MIRROR_REFRESH
+      && (age < 5_000 || mirrorKeys.value.keys.some(key => key?.kid === kid))) {
+    return mirrorKeys.value;
+  }
+  if (mirrorKeysRequest?.bucket !== bucket) {
+    const request = loadMirrorKeys(bucket, token).then(result => {
+      mirrorKeys = { ...result, bucket };
+      return result.value;
+    });
+    const pending = { bucket, request };
+    mirrorKeysRequest = pending;
+    try {
+      return await request;
+    } finally {
+      if (mirrorKeysRequest === pending) mirrorKeysRequest = undefined;
+    }
+  }
+  return mirrorKeysRequest.request;
 }
 
 async function getPopupKeys(kid) {
@@ -382,9 +474,12 @@ async function popup(event, context, config, host) {
         || !Number.isInteger(flow.iat) || flow.iat > epoch() || flow.iat + POPUP_TTL <= epoch()) {
       throw new OidcCheckError('challenge', 'invalid_or_expired');
     }
-    const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, getPopupKeys);
+    const token = context?.token?.access_token;
+    const mirrorBucket = process.env.MEZFIT_BROWSER_JWKS_BUCKET;
+    const loadKeys = mirrorBucket === undefined ? getPopupKeys : kid => getMirrorKeys(mirrorBucket, token, kid);
+    const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, loadKeys);
     if (flow.iat + POPUP_TTL <= epoch()) throw new OidcCheckError('challenge', 'invalid_or_expired');
-    await consumePopupNonce(bucket, flow.nonce, context?.token?.access_token);
+    await consumePopupNonce(bucket, flow.nonce, token);
     const session = signed({ version: 1, host, ...profile, iat: epoch(), exp: epoch() + SESSION_TTL }, config.key);
     return json(200, { authenticated: true }, [clear, cookie(COOKIE_SESSION, session, SESSION_TTL)]);
   } catch (error) {
