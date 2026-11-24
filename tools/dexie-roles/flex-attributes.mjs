@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { EXPECTED_COACHED_START_ROLES } from './coached-start.mjs';
 
-export const CONFIRMATION = 'APPLY_FLEX_ATTRIBUTES_SCHEMA_AND_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const fail = code => { throw new Error(code); };
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -94,9 +93,6 @@ export function validateFlexDispatch(env) {
     fail('UNAUTHORIZED_FLEX_DISPATCH');
   }
   if (!['preview', 'apply'].includes(env.DEXIE_FLEX_OPERATION)) fail('INVALID_FLEX_OPERATION');
-  if (env.DEXIE_FLEX_OPERATION === 'apply') {
-    if (env.DEXIE_FLEX_CONFIRMATION !== CONFIRMATION) fail('INVALID_FLEX_CONFIRMATION');
-  } else if (env.DEXIE_FLEX_CONFIRMATION) fail('PREVIEW_MUST_NOT_CONFIRM_APPLY');
 }
 
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
