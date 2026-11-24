@@ -7,7 +7,7 @@ import unittest
 
 from browser_auth_bootstrap import bootstrap
 from deploy_browser_auth import (
-    BASELINE_FINGERPRINT, PREVIOUS_TAG, TAG, UPGRADE, VERSIONS,
+    BASELINE_FINGERPRINT, PREVIOUS_TAG, TAG, VERSIONS,
     version_secrets, source_package,
 )
 from test_browser_auth_bootstrap import FakeBootstrapCloud, FOLDER as BOOTSTRAP_FOLDER
@@ -71,12 +71,12 @@ class UpgradeCloud(FakeCloud):
 
 
 class OidcDiagnosticsUpgradeContracts(unittest.TestCase):
-    def test_confirmation_preview_and_metadata_only_bootstrap(self):
+    def test_preview_and_metadata_only_bootstrap(self):
         cloud = UpgradeCloud()
-        cloud.execute("preview", "upgrade", "")
+        cloud.execute("preview", "upgrade")
         self.assertEqual(cloud.writes, [])
-        with self.assertRaisesRegex(WebHostingError, "confirmation"):
-            cloud.execute("apply", "upgrade", "WRONG")
+        with self.assertRaisesRegex(WebHostingError, "Unknown browser auth operation"):
+            cloud.execute("invalid", "upgrade")
         self.assertEqual(cloud.writes, [])
         self.assertEqual(cloud.versions[0]["tags"], [TAG])
 
@@ -93,7 +93,7 @@ class OidcDiagnosticsUpgradeContracts(unittest.TestCase):
     def test_exact_version_upgrade_keeps_rollback_and_never_touches_gateway(self):
         cloud = UpgradeCloud()
         old_gateway = cloud.spec.copy()
-        cloud.execute("apply", "upgrade", UPGRADE)
+        cloud.execute("apply", "upgrade")
         self.assertEqual([url for url, _ in cloud.writes], [
             VERSIONS + "/version1:setTag", VERSIONS, VERSIONS + "/version2:setTag",
         ])
@@ -104,40 +104,40 @@ class OidcDiagnosticsUpgradeContracts(unittest.TestCase):
         self.assertEqual(cloud.versions[1]["tags"], [TAG])
         self.assertEqual(cloud.versions[1]["description"], source_package()[1])
         self.assertEqual(cloud.spec, old_gateway)
-        cloud.execute("apply", "upgrade", UPGRADE)
+        cloud.execute("apply", "upgrade")
         self.assertEqual(len(cloud.writes), 3)
 
     def test_gateway_or_serving_version_drift_never_overwritten(self):
         stale = UpgradeCloud()
         stale.versions[0]["description"] = "Unknown version, not approved"
         with self.assertRaisesRegex(WebHostingError, "approved baseline"):
-            stale.execute("apply", "upgrade", UPGRADE)
+            stale.execute("apply", "upgrade")
         self.assertEqual(stale.writes, [])
 
         changed_routes = UpgradeCloud()
         changed_routes.spec["paths"]["/api"]["get"]["x-yc-apigateway-integration"]["http_code"] = 200
         with self.assertRaises(WebHostingError):
-            changed_routes.execute("apply", "upgrade", UPGRADE)
+            changed_routes.execute("apply", "upgrade")
         self.assertEqual(changed_routes.writes, [])
 
     def test_upgraded_version_without_retained_baseline_is_rejected(self):
         cloud = UpgradeCloud()
-        cloud.execute("apply", "upgrade", UPGRADE)
+        cloud.execute("apply", "upgrade")
         cloud.versions[0]["tags"].remove(PREVIOUS_TAG)
         before = len(cloud.writes)
         with self.assertRaisesRegex(WebHostingError, "rollback baseline"):
-            cloud.execute("apply", "upgrade", UPGRADE)
+            cloud.execute("apply", "upgrade")
         self.assertEqual(len(cloud.writes), before)
 
     def test_interrupted_upgrade_reuses_verified_candidate_without_redeploying(self):
         cloud = UpgradeCloud()
         cloud.fail_tag_once = True
         with self.assertRaisesRegex(WebHostingError, "Simulated infrastructure interruption"):
-            cloud.execute("apply", "upgrade", UPGRADE)
+            cloud.execute("apply", "upgrade")
         self.assertEqual([url for url, _ in cloud.writes], [
             VERSIONS + "/version1:setTag", VERSIONS, VERSIONS + "/version2:setTag",
         ])
-        cloud.execute("apply", "upgrade", UPGRADE)
+        cloud.execute("apply", "upgrade")
         self.assertEqual([url for url, _ in cloud.writes][-1],
                          VERSIONS + "/version2:setTag")
         self.assertEqual(len([url for url, _ in cloud.writes if url == VERSIONS]), 1)
