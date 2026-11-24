@@ -186,7 +186,14 @@ function invalidClaimCode(claims, config, nonce, now = epoch()) {
   if (typeof claims.sub !== 'string' || claims.sub.length < 1 || claims.sub.length > 100) {
     return 'claims_subject_invalid';
   }
-  if (!Number.isSafeInteger(claims.id) || claims.id <= 0) return 'claims_telegram_id_invalid';
+  const id = claims.id;
+  if (id === undefined) return 'claims_telegram_id_missing';
+  if (id === null) return 'claims_telegram_id_null';
+  if (typeof id === 'string') {
+    return /^[0-9]+$/.test(id) ? 'claims_telegram_id_numeric_string' : 'claims_telegram_id_invalid';
+  }
+  if (typeof id !== 'number') return 'claims_telegram_id_wrong_type';
+  if (!Number.isSafeInteger(id) || id <= 0) return 'claims_telegram_id_number_invalid';
   if (!Number.isInteger(claims.exp)) return 'claims_exp_invalid';
   if (claims.exp <= now) return 'claims_token_expired';
   if (!Number.isInteger(claims.iat)) return 'claims_iat_invalid';
