@@ -105,8 +105,7 @@ local-calendar operator. No existing operator is widened.
 
 Preview exports only schema and roles, validates both manifests and installed
 Coach/Client profiles, and reports fixed approved table/role names. It writes no
-remote configuration or business data. Apply additionally requires the literal
-`APPLY_ADHOC_SESSION_SCHEMA_AND_COACH_ACL`. Immediately before import it re-exports
+remote configuration or business data. Immediately before import, Apply re-exports
 both complete configuration envelopes and compares them exactly with the run's
 initial exports, then verifies the generated payload exactly. A fresh apply run
 creates its own preview; it does not consume a prior run's payload.
@@ -144,8 +143,7 @@ without using the publisher credential for product mutations:
 2. Verify required environment reviewers, main-only protection, owner-only manual
    dispatch, existing environment-secret placement and shared writer concurrency.
    Run preview on reviewed main. Confirm no unexpected installed policy/schema
-   and an independently reviewed exact delta. Dispatch apply with the literal
-   confirmation and retain its successful full configuration readback evidence.
+   and an independently reviewed exact delta. Dispatch apply and retain its successful full configuration readback evidence.
 3. With a real Coach in relationship A, add a complete graph using the sentinel
    owner on **every** row; edit each allowed field and verify remote readback.
    Confirm Start and completion offline commit atomically, remain editable on
