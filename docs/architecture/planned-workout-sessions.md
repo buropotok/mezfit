@@ -77,8 +77,7 @@ writer concurrency group `dexie-public-catalogue-publishing`. No new credential,
 account, environment or PR/push/issue trigger is introduced. Keep required
 reviewers and main-only environment protection configured.
 
-Apply requires literal `APPLY_PLANNED_SESSION_COACH_ACL`; preview requires blank
-confirmation. There is no approval environment variable requirement. Each run
+There is no approval environment variable requirement. Each run
 exports its own full initial schema/roles, validates the exact manifest/baseline,
 and writes the private `planned-proposal.json` plus `change_count` to
 `GITHUB_OUTPUT`. A prior run's payload cannot be reused.
@@ -126,7 +125,7 @@ permission checks were executed in this operator update; PR CI owns code checks.
 
 ## Exports for integration review
 
-`CONFIRMATION`, `PLANNED_ROLE_OVERLAY`, `EXPECTED_PLANNED_ROLES`,
+`PLANNED_ROLE_OVERLAY`, `EXPECTED_PLANNED_ROLES`,
 `buildExpectedPlannedRoles`, `assertApprovedManifest`, `planPlannedSessions`,
 `assertExactImportPayload`, `assertUnchangedBeforeApply`, `verifyPlannedSessions`,
 `validatePlannedDispatch`. Importing the module performs no work or network calls.
