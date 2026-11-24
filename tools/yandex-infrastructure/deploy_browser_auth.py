@@ -18,6 +18,7 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, build_opener
+from uuid import uuid4
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
@@ -30,6 +31,7 @@ from web_hosting import (
 )
 
 VERSIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/versions"
+RUNTIME_IAM_TOKEN_URL = "https://iam.api.cloud.yandex.net/iam/v1/tokens:createForServiceAccount"
 PREPARE = "PREPARE_MEZFIT_BROWSER_LOGIN"
 ACTIVATE = "ACTIVATE_MEZFIT_BROWSER_LOGIN"
 UPGRADE = "UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS"
@@ -341,6 +343,10 @@ def require_confirmation(mode, action, confirmation):
 
 def nonce_bucket_name(folder):
     return "mezfit-browser-nonce-" + hashlib.sha256(folder.encode()).hexdigest()[:16]
+
+
+def nonce_runtime_binding(runtime_sa):
+    return {"roleId": "storage.uploader", "subject": {"type": "serviceAccount", "id": runtime_sa}}
 
 
 def nonce_bucket_contract(folder, runtime_sa):
@@ -729,7 +735,7 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
                                   + ", ".join(fields) + ".")
         identity = nonce_bucket_iam_resource_id(current, bucket) if current.get("resourceId") else bucket
         direct = api(f"{STORAGE}/{identity}:listAccessBindings", "Read nonce bucket IAM bindings")
-        if direct.get("accessBindings") or direct.get("nextPageToken"):
+        if direct.get("accessBindings", []) not in ([], [nonce_runtime_binding(runtime_sa)]) or direct.get("nextPageToken"):
             raise WebHostingError("Unexpected nonce bucket IAM bindings.")
         grants = current.get("acl", {}).get("grants", [])
         if any(grant.get("grantType") != "GRANT_TYPE_ACCOUNT"
@@ -770,6 +776,70 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
         if read("after policy update").get("policy") != policy:
             raise WebHostingError("Nonce bucket policy failed readback.")
     return bucket
+
+
+def ensure_mirror_nonce_access(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep,
+                               nonce_policy, verify_write):
+    bucket = ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep,
+                                 nonce_policy=nonce_policy)
+    metadata = api(f"{STORAGE}/{bucket}?view=VIEW_BASIC", "Resolve nonce bucket for runtime grant")
+    if metadata.get("folderId") != folder:
+        raise WebHostingError("Nonce bucket is outside the approved folder.")
+    bucket_id = nonce_bucket_iam_resource_id(metadata, bucket)
+    expected = nonce_runtime_binding(runtime_sa)
+    bindings = jwks_mirror.read_bindings(api, bucket_id, "nonce bucket")
+    if bindings not in ([], [expected]):
+        raise WebHostingError("Unexpected nonce bucket IAM bindings.")
+    print(f"Nonce bucket runtime write grant: {'verified' if bindings else 'install'}.", flush=True)
+    if mode == "preview":
+        return
+    if not bindings:
+        await_operation(api, update_api(
+            f"{STORAGE}/{bucket_id}:updateAccessBindings", "Grant runtime write on nonce bucket",
+            {"accessBindingDeltas": [{"action": "ADD", "accessBinding": expected}]}, method="PATCH",
+        ), "Grant runtime write on nonce bucket", sleep)
+    if jwks_mirror.read_bindings(api, bucket_id, "nonce bucket") != [expected]:
+        raise WebHostingError("Nonce bucket runtime grant failed IAM readback.")
+    verify_write(bucket)
+
+
+def verify_nonce_runtime_write(opener, deploy_token, runtime_sa, bucket, sleep=time.sleep):
+    response = request_api(opener, deploy_token, RUNTIME_IAM_TOKEN_URL,
+                           "Request nonce probe IAM token for browser runtime",
+                           {"serviceAccountId": runtime_sa})
+    runtime_token = response.get("iamToken")
+    if not isinstance(runtime_token, str) or not runtime_token:
+        raise WebHostingError("Browser runtime IAM token missing from nonce probe response.")
+    marker = hashlib.sha256(uuid4().bytes).hexdigest()
+    url = f"https://storage.yandexcloud.net/{bucket}/used/{marker}"
+
+    def put(conditional):
+        headers = {"Authorization": f"Bearer {runtime_token}"}
+        if conditional:
+            headers["If-None-Match"] = "*"
+        req = Request(url, data=b"", headers=headers, method="PUT")
+        try:
+            with opener.open(req, timeout=8) as result:
+                return result.status
+        except HTTPError as error:
+            with error:
+                return error.code
+        except (URLError, OSError, ValueError):
+            raise WebHostingError("Nonce runtime probe could not reach Yandex Object Storage.") from None
+
+    for attempt in range(6):
+        first = put(True)
+        if first != 403 or attempt == 5:
+            break
+        sleep(5)
+    print(f"Nonce runtime probe, first conditional PUT: HTTP {first}.", flush=True)
+    if first != 200:
+        raise WebHostingError("Browser runtime could not create a nonce marker.")
+    replay, unconditional = put(True), put(False)
+    print(f"Nonce runtime probe, repeat PUT: HTTP {replay}; unconditional PUT: HTTP {unconditional}.",
+          flush=True)
+    if replay not in (409, 412) or unconditional != 403:
+        raise WebHostingError("Nonce runtime storage did not enforce write-once conditions.")
 
 
 def ensure_jwks_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep):
@@ -823,7 +893,8 @@ def ensure_jwks_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sle
 
 
 def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
-                 secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep, *, nonce_policy):
+                 secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep, *,
+                 nonce_policy, verify_nonce_write=None):
     function_id = function["id"]
     legacy_spec = browser_auth_gateway_spec(bucket_name(folder), function_id, deploy_sa)
     popup_spec = browser_auth_gateway_spec(bucket_name(folder), function_id, deploy_sa, popup=True)
@@ -920,6 +991,12 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     if mirrored:
         print("Switch popup JWKS reads to the private mirror; verify existing gateway routes.")
         ensure_jwks_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep)
+        if verify_nonce_write is not None:
+            try:
+                ensure_mirror_nonce_access(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep,
+                                           nonce_policy, verify_nonce_write)
+            except WebHostingError as error:
+                raise NonceBucketSetupError(str(error)) from None
     else:
         print("Keep the verified diagnostics version and add only two popup POST methods.")
         try:
@@ -960,7 +1037,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
 
 
 def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
-            secret_version, api, update_api, sleep=time.sleep, *, nonce_policy=None):
+            secret_version, api, update_api, sleep=time.sleep, *, nonce_policy=None, verify_nonce_write=None):
     require_confirmation(mode, action, confirm)
     if not resource_id(folder) or not resource_id(deploy_sa):
         raise WebHostingError("Missing YC_FOLDER_ID or YC_DEPLOY_SA_ID.")
@@ -1053,7 +1130,7 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
     if action in {"popup", "popup-mirror", "popup-rollback"}:
         deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
                      secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep,
-                     nonce_policy=nonce_policy)
+                     nonce_policy=nonce_policy, verify_nonce_write=verify_nonce_write)
         return
 
     wanted = browser_auth_gateway_spec(bucket_name(folder), function["id"], deploy_sa)
@@ -1233,10 +1310,16 @@ def main():
     bootstrap_action = "upgrade" if action in {"popup", "popup-mirror", "popup-rollback"} else action
     runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
-    nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa) if action == "popup" else None
+    nonce_options = {}
+    if action in {"popup", "popup-mirror"}:
+        nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa)
+    if action == "popup-mirror":
+        nonce_options["verify_nonce_write"] = lambda bucket: verify_nonce_runtime_write(
+            opener, token, runtime_sa, bucket,
+        )
     try:
         execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id, version_id, api, update_api,
-                nonce_policy=nonce_policy)
+                nonce_policy=nonce_policy, **nonce_options)
     except NonceBucketSetupError:
         report_nonce_bucket_diagnostics(opener, token, folder, deploy_sa, runtime_sa, nonce_policy)
         raise

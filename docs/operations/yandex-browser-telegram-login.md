@@ -16,6 +16,16 @@ The function uses only the official Telegram HTTPS JWKS. A warm instance keeps k
 
 ### Nonce bucket recovery after HTTP 403
 
+If browser login reports `challenge: storage_http_error, HTTP 403` while using
+the JWKS mirror, use the existing `popup-mirror` action. Apply verifies the
+nonce bucket policy and grants the browser runtime `storage.uploader` on that
+bucket only. It uses the deployment account's existing
+`iam.serviceAccounts.admin` permission to obtain a runtime IAM token and
+asserts that a conditional write succeeds, a replay conflicts, and a write
+without the condition is forbidden. The smoke-test marker expires under the
+same one-day lifecycle rule. IAM tokens stay in the deployment process.
+
+
 When the management API denies `VIEW_FULL`, the operator can verify an existing
 bucket through the folder listing, the S3 API and direct IAM readback. It
 requires the approved policy, exact purpose tag and lifecycle, a private bucket
