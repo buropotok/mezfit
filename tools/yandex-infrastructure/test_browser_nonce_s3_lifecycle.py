@@ -3,7 +3,7 @@
 from copy import deepcopy
 import unittest
 
-from deploy_browser_auth import POPUP, approved_nonce_lifecycle_xml
+from deploy_browser_auth import approved_nonce_lifecycle_xml
 from test_browser_auth_popup import PopupCloud
 from web_hosting import WebHostingError
 
@@ -37,17 +37,17 @@ class S3LifecycleCloud(PopupCloud):
 class BrowserNonceS3LifecycleContract(unittest.TestCase):
     def test_format_difference_requires_exact_s3_validation_before_write(self):
         cloud = S3LifecycleCloud(XML)
-        cloud.execute("preview", "popup", "")
+        cloud.execute("preview", "popup")
         self.assertEqual(cloud.s3_reads, 1)
         self.assertEqual(cloud.writes, [])
-        cloud.execute("apply", "popup", POPUP)
+        cloud.execute("apply", "popup")
         self.assertEqual(cloud.nonce_bucket["policy"], cloud.policy)
         self.assertGreater(cloud.s3_reads, 1)
 
     def test_real_retention_drift_is_rejected_without_mutation(self):
         cloud = S3LifecycleCloud(XML.replace(b"<Days>1</Days>", b"<Days>2</Days>"))
         with self.assertRaisesRegex(WebHostingError, "lifecycleRules"):
-            cloud.execute("apply", "popup", POPUP)
+            cloud.execute("apply", "popup")
         self.assertEqual(cloud.s3_reads, 1)
         self.assertEqual(cloud.writes, [])
 
