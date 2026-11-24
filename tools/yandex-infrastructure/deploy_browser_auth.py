@@ -44,6 +44,10 @@ DIRECT_POPUP_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
 # Browser handler package introduced in PR #903.
 PREVIOUS_MIRROR_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
                                "e95c5b4032b326d3caa399fee6d91303367ed9f977fcc818508096a475fd3b86")
+# Browser handler package introduced in PR #906.
+CLAIM_DIAGNOSTICS_MIRROR_FINGERPRINT = (
+    "MezFit browser OIDC code SHA256:8eb832dfd3e07613416d203261d130bb5ad82d133a278993f388ce2271703ac5"
+)
 MIRROR_OBJECT_URL = re.compile(
     r"https://storage\.yandexcloud\.net/mezfit-telegram-jwks-[a-z0-9]+/(status|jwks)\.json"
 )
@@ -853,8 +857,9 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     preserved = [version for version in versions if PRE_POPUP_TAG in version.get("tags", [])]
     if len(preserved) > 1 or (preserved and not is_diagnostics(preserved[0])):
         raise WebHostingError("Unexpected popup rollback version.")
-    serving_mirror = serving and (
-        is_mirror_popup(serving) or is_mirror_popup(serving, PREVIOUS_MIRROR_FINGERPRINT)
+    serving_mirror = serving and any(
+        is_mirror_popup(serving, digest)
+        for digest in (fingerprint, PREVIOUS_MIRROR_FINGERPRINT, CLAIM_DIAGNOSTICS_MIRROR_FINGERPRINT)
     )
     if not serving or not (is_diagnostics(serving) or (preserved and
             (is_direct_popup(serving) or serving_mirror))):
