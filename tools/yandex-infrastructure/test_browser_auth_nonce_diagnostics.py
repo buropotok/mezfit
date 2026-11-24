@@ -67,7 +67,7 @@ class NonceBucketDiagnostics(unittest.TestCase):
             self.assertNotIn(private_value, report)
 
     def test_workflow_reports_diagnostics_and_still_fails_the_original_check(self):
-        env = {"MODE": "preview", "ACTION": "popup", "CONFIRM": "", "YC_DEPLOY_SA_ID": SA,
+        env = {"MODE": "preview", "ACTION": "popup", "YC_DEPLOY_SA_ID": SA,
                "YC_FOLDER_ID": FOLDER, "YC_IAM_TOKEN": "sample-token"}
         failure = NonceBucketSetupError("original verification error")
         with (
