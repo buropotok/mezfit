@@ -50,7 +50,6 @@ describe('GlassSurface', () => {
     expect(surface.classList.contains('ui-glass-surface')).toBe(true);
     expect(surface.classList.contains('ui-glass-surface--default-radius')).toBe(true);
     expect(surface.style.getPropertyValue('--ui-glass-surface-default-radius')).toBe('32px');
-    expect(surface.style.getPropertyValue('--ui-glass-surface-radius')).toBe('32px');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-r')).toBe('24');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-g')).toBe('24');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('26');
@@ -66,6 +65,18 @@ describe('GlassSurface', () => {
     expect(surface.querySelector('feImage')).toBeNull();
     expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
+  });
+
+  it('uses the computed CSS radius for ModalTuned geometry when no shape is passed', () => {
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      borderTopLeftRadius: '24px',
+    } as CSSStyleDeclaration);
+
+    const view = render(<GlassSurface className="custom-radius">Glass</GlassSurface>);
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.style.borderRadius).toBe('');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-radius')).toBe('24px');
   });
 
   it.each([
