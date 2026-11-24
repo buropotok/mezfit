@@ -105,10 +105,12 @@ The function implements:
   exchanges a one-time code **server-side** with BotFather's OIDC Client
   Secret, validates Telegram's **RS256** JWT using its JWKS keys plus issuer,
   audience, nonce, issued/expiry times and numeric Telegram user ID.
-  Issues a 12-hour host-bound, HMAC-SHA256-signed browser-session cookie;
-  the raw Telegram ID token and access token are not retained.
+  Issues a host-bound, HMAC-SHA256-signed browser-session cookie valid for 400 days.
+  The raw Telegram ID token and access token are not retained.
 - `GET /auth/session`: validates the signed HttpOnly Secure SameSite=Lax
   cookie and returns only identity fields (not tokens or backend permissions).
+  A valid session renews after at least one day. A still-valid 12-hour cookie
+  renews on its first use after deployment.
 - `POST /auth/logout`: rejects cross-origin POST and expires both cookies.
 
 Security: explicitly allowlisted Hosts; no cross-origin API/CORS; no

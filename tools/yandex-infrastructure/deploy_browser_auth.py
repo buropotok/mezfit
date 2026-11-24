@@ -54,6 +54,10 @@ CLAIM_DIAGNOSTICS_MIRROR_FINGERPRINT = (
 TELEGRAM_ID_DIAGNOSTICS_MIRROR_FINGERPRINT = (
     "MezFit browser OIDC code SHA256:ee2d1dee40166c06c5d06a0cf9716fd58bc7179a8bd602b178293a61af386c0a"
 )
+# Browser handler package introduced in PR #908.
+NUMERIC_TELEGRAM_ID_MIRROR_FINGERPRINT = (
+    "MezFit browser OIDC code SHA256:5ea9d62646ca435c15a658a6c25f749f22d637a2aa11d3b5b3261da0c3d1de0d"
+)
 MIRROR_OBJECT_URL = re.compile(
     r"https://storage\.yandexcloud\.net/mezfit-telegram-jwks-[a-z0-9]+/(status|jwks)\.json"
 )
@@ -947,7 +951,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
         is_mirror_popup(serving, digest)
         for digest in (
             fingerprint, PREVIOUS_MIRROR_FINGERPRINT, CLAIM_DIAGNOSTICS_MIRROR_FINGERPRINT,
-            TELEGRAM_ID_DIAGNOSTICS_MIRROR_FINGERPRINT,
+            TELEGRAM_ID_DIAGNOSTICS_MIRROR_FINGERPRINT, NUMERIC_TELEGRAM_ID_MIRROR_FINGERPRINT,
         )
     )
     if not serving or not (is_diagnostics(serving) or (preserved and
