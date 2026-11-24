@@ -26,8 +26,8 @@ No indexed key/table changes are needed for the optional boolean field. This is 
 
 After merge, dispatch **Apply Dexie calendar logical-deletion ACL** on `main`:
 
-1. Run `preview`, leaving confirmation empty; inspect the exact two-role delta from the complete installed planned-session baseline.
-2. Run `apply` with `APPLY_CALENDAR_CANCELLATION_ACL`, using the existing protected `dexie-production` approval. The operator immediately rechecks full schema/roles, imports only reviewed roles and verifies complete final readback, including import failures and no-op apply.
+1. Run `preview`; inspect the exact two-role delta from the complete installed planned-session baseline.
+2. Run `apply`, using the existing protected `dexie-production` approval. The operator immediately rechecks full schema/roles, imports only reviewed roles and verifies complete final readback, including import failures and no-op apply.
 3. Use ordinary Coach/Client accounts to verify actual field authorization. Configuration readback alone does not prove it: Coach deactivation, permitted independent Client deactivation, forbidden foreign realm/identity/assigned PLAN writes and physical DELETE must be checked. No live writes or activation tests are claimed by this PR.
 4. On two devices, check offline cancellation/deactivation, retained raw data, disappearance from the other device after Addon sync, inability to Start/deactivate a linked execution, and unchanged source programs. Test the animation on iOS WKWebView and Android WebView, including interrupted close, navigation away and reduced motion.
 
