@@ -17,6 +17,7 @@ interface BootRuntime {
   mark(stage: string, details?: BootDetails): void;
   finish(): void;
   getLaunchStartParam?(): string | null;
+  telegramSdkReady?: Promise<void>;
 }
 
 function getBootRuntime(): BootRuntime | undefined {
@@ -26,6 +27,11 @@ function getBootRuntime(): BootRuntime | undefined {
 
 export function getCapturedTelegramLaunchStartParam(): string | null {
   return getBootRuntime()?.getLaunchStartParam?.() ?? null;
+}
+
+/** Wait only when the HTML entry detected a real Telegram Mini App launch. */
+export function waitForTelegramSdk(): Promise<void> {
+  return getBootRuntime()?.telegramSdkReady ?? Promise.resolve();
 }
 
 export function errorName(error: unknown): string {
