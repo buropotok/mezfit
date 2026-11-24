@@ -61,23 +61,28 @@ async function s3Request(env, method, name, payload) {
   });
 }
 
-function normalizeJwks(value) {
+function normalizeJwks(value, { allowOtherAlgorithms = false } = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value) ||
       !Array.isArray(value.keys) || value.keys.length < 1 || value.keys.length > 16) {
     throw new Error('JWKS_INVALID');
   }
   const seen = new Set();
-  const keys = value.keys.map(key => {
-    if (!key || typeof key !== 'object' || Array.isArray(key) ||
-        key.kty !== 'RSA' || (key.alg !== undefined && key.alg !== 'RS256') ||
+  const keys = [];
+  for (const key of value.keys) {
+    if (!key || typeof key !== 'object' || Array.isArray(key)) throw new Error('JWKS_INVALID');
+    // Telegram advertises several key types. The mirror serves RS256 verifiers.
+    if (allowOtherAlgorithms && typeof key.kty === 'string' && key.kty && key.kty !== 'RSA' &&
+        typeof key.alg === 'string' && key.alg && key.alg !== 'RS256') continue;
+    if (key.kty !== 'RSA' || (key.alg !== undefined && key.alg !== 'RS256') ||
         (key.use !== undefined && key.use !== 'sig') ||
         typeof key.kid !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(key.kid) ||
         typeof key.n !== 'string' || !/^[A-Za-z0-9_-]{250,1400}$/.test(key.n) ||
         typeof key.e !== 'string' || !/^[A-Za-z0-9_-]{2,12}$/.test(key.e) ||
         seen.has(key.kid)) throw new Error('JWKS_INVALID');
     seen.add(key.kid);
-    return { kty: 'RSA', kid: key.kid, alg: 'RS256', use: 'sig', n: key.n, e: key.e };
-  });
+    keys.push({ kty: 'RSA', kid: key.kid, alg: 'RS256', use: 'sig', n: key.n, e: key.e });
+  }
+  if (keys.length === 0) throw new Error('JWKS_INVALID');
   keys.sort((a, b) => a.kid.localeCompare(b.kid));
   return { keys };
 }
@@ -118,7 +123,7 @@ async function refresh(env) {
   } catch {
     throw new Error('TELEGRAM_FETCH_FAILED');
   }
-  const next = normalizeJwks(await smallJson(source));
+  const next = normalizeJwks(await smallJson(source), { allowOtherAlgorithms: true });
   const currentRaw = await smallJson(await s3Request(env, 'GET', 'jwks.json'), true);
   // Malformed existing data must not be silently accepted as a valid baseline.
   const current = currentRaw === null ? null : normalizeJwks(currentRaw);
