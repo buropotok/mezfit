@@ -20,7 +20,7 @@ In GitHub Actions, open **Publish Dexie public exercise catalogue** (default bra
 
 First choose `preview`. It loads the immutable source from private R2, checks SHA-256, authenticates with read-only scopes, and reports counts plus missing records without writing.
 
-For publication, select `publish`, enter `PUBLISH_1324_69_V2`, and approve the protected environment deployment. The workflow will:
+For publication, select `publish` and approve the protected environment deployment. The workflow will:
 
 1. Retrieve the source JSON at `exercise-catalogue/source/2.0.0/sha256-5ce3e6b15117e115a1e10ac31573eb85eea6bf284a72971e5ca1ee02572aa40c.json` and validate its SHA-256.
 2. Read only the three public catalogue tables; reject conflicting existing data, unknown IDs, unexpected manifests or invalid realms.
@@ -35,6 +35,6 @@ After publication rerun read-only diagnostics via the normal issue command `/dex
 
 ## Boundaries
 
-The publication key is database-wide; GitHub Environment approval, manual confirmation and reviewed restricted code are essential safeguards. Do not add this key to the app, Worker, ordinary repository secrets, or automatic push workflows. No GIF/R2 media routing is implemented by this workflow. Server schema and access rules must be checked independently by the manager.
+The publication key is database-wide; GitHub Environment approval, manual dispatch and reviewed restricted code are essential safeguards. Do not add this key to the app, Worker, ordinary repository secrets, or automatic push workflows. No GIF/R2 media routing is implemented by this workflow. Server schema and access rules must be checked independently by the manager.
 
 See `docs/architecture/public-exercise-catalogue-pr1.md` and `docs/operations/dexie-public-catalogue-diagnostics.md`.
