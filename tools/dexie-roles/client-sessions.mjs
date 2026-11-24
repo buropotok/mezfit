@@ -7,7 +7,6 @@ import { isDeepStrictEqual } from 'node:util';
 import { ADHOC_SCHEMA } from './adhoc-sessions.mjs';
 import { EXPECTED_CANCELLATION_ROLES } from './calendar-cancellation.mjs';
 
-export const CONFIRMATION = 'APPLY_CLIENT_SESSION_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const fail = code => { throw new Error(code); };
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -126,9 +125,6 @@ export function validateClientSessionDispatch(env) {
     fail('UNAUTHORIZED_CLIENT_SESSION_DISPATCH');
   }
   if (!['preview', 'apply'].includes(env.DEXIE_CLIENT_SESSION_OPERATION)) fail('INVALID_CLIENT_SESSION_OPERATION');
-  if (env.DEXIE_CLIENT_SESSION_OPERATION === 'apply') {
-    if (env.DEXIE_CLIENT_SESSION_CONFIRMATION !== CONFIRMATION) fail('INVALID_CLIENT_SESSION_CONFIRMATION');
-  } else if (env.DEXIE_CLIENT_SESSION_CONFIRMATION) fail('PREVIEW_MUST_NOT_HAVE_APPLY_CONFIRMATION');
 }
 
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
