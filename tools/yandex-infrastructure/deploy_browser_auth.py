@@ -41,6 +41,9 @@ PREVIOUS_TAG = "browser-login-pre-diagnostics"
 PRE_POPUP_TAG = "browser-login-pre-popup"
 DIRECT_POPUP_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
                             "3b4ffc610ac5d7bf85172aa80537d58501b1ab7eed498dbc71983892db129f99")
+# Browser handler package introduced in PR #903.
+PREVIOUS_MIRROR_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
+                               "e95c5b4032b326d3caa399fee6d91303367ed9f977fcc818508096a475fd3b86")
 MIRROR_OBJECT_URL = re.compile(
     r"https://storage\.yandexcloud\.net/mezfit-telegram-jwks-[a-z0-9]+/(status|jwks)\.json"
 )
@@ -840,8 +843,8 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
                                    tagged=TAG in version.get("tags", []), nonce_bucket=bucket)
                    for digest in (DIRECT_POPUP_FINGERPRINT, fingerprint))
 
-    def is_mirror_popup(version):
-        return version_matches(version, fingerprint, *version_args,
+    def is_mirror_popup(version, digest=fingerprint):
+        return version_matches(version, digest, *version_args,
                                tagged=TAG in version.get("tags", []), nonce_bucket=bucket,
                                jwks_bucket=jwks_bucket)
 
@@ -850,8 +853,11 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     preserved = [version for version in versions if PRE_POPUP_TAG in version.get("tags", [])]
     if len(preserved) > 1 or (preserved and not is_diagnostics(preserved[0])):
         raise WebHostingError("Unexpected popup rollback version.")
+    serving_mirror = serving and (
+        is_mirror_popup(serving) or is_mirror_popup(serving, PREVIOUS_MIRROR_FINGERPRINT)
+    )
     if not serving or not (is_diagnostics(serving) or (preserved and
-            (is_direct_popup(serving) or is_mirror_popup(serving)))):
+            (is_direct_popup(serving) or serving_mirror))):
         raise WebHostingError("Active version differs from approved diagnostics/popup code.")
     current_spec = current_gateway_spec()
     baseline = preserved[0] if preserved else serving
@@ -859,7 +865,7 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
         raise WebHostingError("Serving diagnostics version differs from the rollback baseline.")
     if mirrored and (current_spec != "popup" or is_diagnostics(serving)):
         raise WebHostingError("Enable popup routes and verify the serving popup version first.")
-    if action == "popup" and is_mirror_popup(serving):
+    if action == "popup" and serving_mirror:
         raise WebHostingError("Use popup-mirror to manage the active JWKS mirror version.")
 
     def set_tag(version, tag):

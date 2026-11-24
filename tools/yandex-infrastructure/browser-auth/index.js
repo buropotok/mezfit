@@ -179,21 +179,23 @@ async function fetchJson(url, options, stage) {
   }
 }
 
-function validClaims(claims, config, nonce, now = epoch()) {
-  if (!claims || typeof claims !== 'object' || claims.iss !== ISSUER
-      || claims.aud !== config.clientId
-      || typeof claims.sub !== 'string' || claims.sub.length < 1 || claims.sub.length > 100
-      || !Number.isSafeInteger(claims.id) || claims.id <= 0
-      || !Number.isInteger(claims.exp) || claims.exp <= now
-      || !Number.isInteger(claims.iat) || claims.iat > now + 60 || claims.iat < now - 600
-      || claims.nonce !== nonce) return null;
-  return {
-    sub: claims.sub,
-    telegramUserId: claims.id,
-    name: typeof claims.name === 'string' ? claims.name.slice(0, 120) : '',
-    username: typeof claims.preferred_username === 'string'
-      ? claims.preferred_username.slice(0, 64) : '',
-  };
+function invalidClaimCode(claims, config, nonce, now = epoch()) {
+  if (!claims || typeof claims !== 'object') return 'claims_payload_invalid';
+  if (claims.iss !== ISSUER) return 'claims_issuer_mismatch';
+  if (claims.aud !== config.clientId) return 'claims_audience_mismatch';
+  if (typeof claims.sub !== 'string' || claims.sub.length < 1 || claims.sub.length > 100) {
+    return 'claims_subject_invalid';
+  }
+  if (!Number.isSafeInteger(claims.id) || claims.id <= 0) return 'claims_telegram_id_invalid';
+  if (!Number.isInteger(claims.exp)) return 'claims_exp_invalid';
+  if (claims.exp <= now) return 'claims_token_expired';
+  if (!Number.isInteger(claims.iat)) return 'claims_iat_invalid';
+  if (claims.iat > now + 60) return 'claims_iat_in_future';
+  if (claims.iat < now - 600) return 'claims_iat_too_old';
+  if (claims.nonce !== nonce) {
+    return claims.nonce === undefined ? 'claims_nonce_missing' : 'claims_nonce_mismatch';
+  }
+  return null;
 }
 
 function getKeys() {
@@ -303,7 +305,7 @@ async function getPopupKeys(kid) {
   return popupKeysRequest;
 }
 
-async function authenticateIdToken(idToken, config, nonce, loadKeys = getKeys) {
+async function authenticateIdToken(idToken, config, nonce, loadKeys = getKeys, detailedClaims = false) {
   if (typeof idToken !== 'string' || idToken.length > MAX_JWT_LENGTH) {
     throw new OidcCheckError('jwt', 'invalid_token');
   }
@@ -342,11 +344,20 @@ async function authenticateIdToken(idToken, config, nonce, loadKeys = getKeys) {
     throw new OidcCheckError('jwt', 'signature_check_failure');
   }
   if (!validSignature) throw new OidcCheckError('jwt', 'invalid_signature');
-  const profile = validClaims(claims, config, nonce);
-  if (!profile || (loadKeys === getPopupKeys && (claims.exp <= claims.iat || claims.exp - claims.iat > 86400))) {
-    throw new OidcCheckError('jwt', 'invalid_claims');
+  const claimCode = invalidClaimCode(claims, config, nonce);
+  if (claimCode) {
+    throw new OidcCheckError('jwt', detailedClaims ? claimCode : 'invalid_claims');
   }
-  return profile;
+  if (loadKeys === getPopupKeys && (claims.exp <= claims.iat || claims.exp - claims.iat > 86400)) {
+    throw new OidcCheckError('jwt', 'claims_token_lifetime_invalid');
+  }
+  return {
+    sub: claims.sub,
+    telegramUserId: claims.id,
+    name: typeof claims.name === 'string' ? claims.name.slice(0, 120) : '',
+    username: typeof claims.preferred_username === 'string'
+      ? claims.preferred_username.slice(0, 64) : '',
+  };
 }
 
 async function start(config, host) {
@@ -477,7 +488,7 @@ async function popup(event, context, config, host) {
     const token = context?.token?.access_token;
     const mirrorBucket = process.env.MEZFIT_BROWSER_JWKS_BUCKET;
     const loadKeys = mirrorBucket === undefined ? getPopupKeys : kid => getMirrorKeys(mirrorBucket, token, kid);
-    const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, loadKeys);
+    const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, loadKeys, true);
     if (flow.iat + POPUP_TTL <= epoch()) throw new OidcCheckError('challenge', 'invalid_or_expired');
     await consumePopupNonce(bucket, flow.nonce, token);
     const session = signed({ version: 1, host, ...profile, iat: epoch(), exp: epoch() + SESSION_TTL }, config.key);
@@ -538,5 +549,5 @@ async function handler(event, context) {
 }
 
 exports.handler = handler;
-exports._test = { signed, verified, validClaims, checkOrigin, readCookies,
+exports._test = { signed, verified, checkOrigin, readCookies,
   configuration, authenticateIdToken, session, start, callback, parameters };
