@@ -50,6 +50,7 @@ type GlassCssProperties = CSSProperties & {
   '--ui-glass-surface-shadow': string;
   '--ui-glass-surface-filter': string;
   '--ui-glass-surface-radius': string;
+  '--ui-glass-surface-default-radius'?: string;
   '--ui-glass-surface-edge-outset': string;
   '--ui-glass-surface-edge-light-blur': string;
   '--ui-glass-surface-edge-dark-blur': string;
@@ -221,6 +222,7 @@ export type GlassSurfaceProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & 
   /** Public backdrop blur override in CSS pixels. Legacy glass.blur remains supported and takes precedence. */
   blur?: number;
   glass?: GlassMaterialOverrides;
+  /** ModalTuned uses 32 CSS px when no shape or CSS radius is supplied. */
   shape?: GlassShape;
   contentClassName?: string;
   /** Implicit CSS-pixel silhouette; material, shadow and bezel follow this path. */
@@ -246,7 +248,7 @@ export function GlassSurface({
   preset = 'modalTuned',
   blur,
   glass,
-  shape = 'auto',
+  shape,
   className = '',
   contentClassName = '',
   contour,
@@ -285,7 +287,9 @@ export function GlassSurface({
     Math.min(1, bezelHighlights?.opposite ?? bezelHighlights?.bottomRight ?? 1),
   );
   const hostMode = !wrapContent;
-  const shapeRadius = typeof shape === 'object' ? shape.radius : shape;
+  const defaultRadius = preset === 'modalTuned' && shape === undefined ? 32 : undefined;
+  const shapeRadius = typeof shape === 'object' ? shape.radius : shape ?? defaultRadius ?? 'auto';
+  const usesCssRadius = defaultRadius !== undefined || (hostMode && shapeRadius === 'auto');
   const [geometry, setGeometry] = useState<GlassGeometry | null>(null);
   const [vectorMapHref, setVectorMapHref] = useState<string | null>(null);
 
@@ -299,13 +303,16 @@ export function GlassSurface({
       const rect = element.getBoundingClientRect();
       const width = Math.max(1, element.offsetWidth || rect.width);
       const height = Math.max(1, element.offsetHeight || rect.height);
-      const preserveHostRadius = hostMode && shape === 'auto';
-      const computedRadius = preserveHostRadius
+      const computedRadius = usesCssRadius
         ? Number.parseFloat(element.ownerDocument.defaultView?.getComputedStyle(element).borderTopLeftRadius ?? '')
         : Number.NaN;
       const radius = Number.isFinite(computedRadius)
         ? Math.min(computedRadius, Math.min(width, height) / 2)
-        : resolveGlassRadius(width, height, shape);
+        : resolveGlassRadius(
+          width,
+          height,
+          typeof shapeRadius === 'number' ? { radius: shapeRadius } : shapeRadius,
+        );
 
       setGeometry(current => {
         if (
@@ -325,7 +332,7 @@ export function GlassSurface({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [active, hostMode, shapeRadius]);
+  }, [active, shapeRadius, usesCssRadius]);
 
   useEffect(() => {
     if (!resolvedOptics) {
@@ -484,7 +491,8 @@ export function GlassSurface({
     : null;
   const glassStyle: GlassCssProperties = {
     ...style,
-    ...(hostMode && shape === 'auto' ? {} : { borderRadius: radius || undefined }),
+    ...(usesCssRadius ? {} : { borderRadius: geometry?.radius }),
+    '--ui-glass-surface-default-radius': defaultRadius === undefined ? undefined : `${defaultRadius}px`,
     '--ui-glass-surface-tint-r': String(material.tintR),
     '--ui-glass-surface-tint-g': String(material.tintG),
     '--ui-glass-surface-tint-b': String(material.tintB),
@@ -523,7 +531,7 @@ export function GlassSurface({
     <Component
       {...props}
       ref={setRootRef}
-      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${contour ? ' ui-glass-surface--contour' : ''}${directionalLighting ? ' ui-glass-surface--directional' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''}${isBezelOnly ? ' ui-glass-surface--bezel-only' : ''}${halo !== 'none' ? ` ui-glass-surface--halo-${halo}` : ''} ${className}`.trim()}
+      className={`ui-glass-surface ui-glass-surface--${wrapContent ? 'standalone' : 'host'}${defaultRadius === undefined ? '' : ' ui-glass-surface--default-radius'}${contour ? ' ui-glass-surface--contour' : ''}${directionalLighting ? ' ui-glass-surface--directional' : ''}${isLiquidConvex ? ' ui-glass-surface--liquid-convex' : ''}${isBezelOnly ? ' ui-glass-surface--bezel-only' : ''}${halo !== 'none' ? ` ui-glass-surface--halo-${halo}` : ''} ${className}`.trim()}
       data-ui-glass-map-ready={activeVectorMapHref ? 'true' : 'false'}
       style={glassStyle}
     >

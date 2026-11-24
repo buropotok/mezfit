@@ -48,7 +48,8 @@ describe('GlassSurface', () => {
     const surface = view.container.firstElementChild as HTMLElement;
 
     expect(surface.classList.contains('ui-glass-surface')).toBe(true);
-    expect(Number.parseFloat(surface.style.borderRadius)).toBeCloseTo(34.7, 1);
+    expect(surface.classList.contains('ui-glass-surface--default-radius')).toBe(true);
+    expect(surface.style.getPropertyValue('--ui-glass-surface-default-radius')).toBe('32px');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-r')).toBe('24');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-g')).toBe('24');
     expect(surface.style.getPropertyValue('--ui-glass-surface-tint-b')).toBe('26');
@@ -64,6 +65,31 @@ describe('GlassSurface', () => {
     expect(surface.querySelector('feImage')).toBeNull();
     expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled();
     expect(surface.querySelector('.test-content')?.textContent).toBe('Glass');
+  });
+
+  it('uses the computed CSS radius for ModalTuned geometry when no shape is passed', () => {
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      borderTopLeftRadius: '24px',
+    } as CSSStyleDeclaration);
+
+    const view = render(<GlassSurface className="custom-radius">Glass</GlassSurface>);
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.style.borderRadius).toBe('');
+    expect(surface.style.getPropertyValue('--ui-glass-surface-radius')).toBe('24px');
+  });
+
+  it.each([
+    { preset: 'modalTuned', shape: 'auto', radius: 34.7 },
+    { preset: 'modalTuned', shape: 'capsule', radius: 92 },
+    { preset: 'modalTuned', shape: { radius: 16 }, radius: 16 },
+    { preset: 'clear', shape: undefined, radius: 34.7 },
+  ] as const)('keeps the shape override or preset geometry for $preset ($shape)', ({ preset, shape, radius }) => {
+    const view = render(<GlassSurface preset={preset} shape={shape}>Glass</GlassSurface>);
+    const surface = view.container.firstElementChild as HTMLElement;
+
+    expect(surface.classList.contains('ui-glass-surface--default-radius')).toBe(false);
+    expect(Number.parseFloat(surface.style.borderRadius)).toBeCloseTo(radius, 1);
   });
 
   it('controls built-in bezel highlights independently while bezelOpacity remains the master multiplier', () => {
