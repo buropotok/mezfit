@@ -56,7 +56,7 @@ async function s3Request(env, method, name, payload) {
       ', SignedHeaders=' + signedNames.join(';') + ', Signature=' + signature,
   };
   return fetch(url, {
-    method, headers: requestHeaders, body, redirect: 'error',
+    method, headers: requestHeaders, body, redirect: 'manual',
     signal: AbortSignal.timeout(8000), cache: 'no-store',
   });
 }
@@ -114,7 +114,7 @@ async function smallJson(response, missingAllowed = false) {
 async function refresh(env) {
   let source;
   try {
-    source = await fetch(SOURCE, { redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(8000) });
+    source = await fetch(SOURCE, { redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(8000) });
   } catch {
     throw new Error('TELEGRAM_FETCH_FAILED');
   }
