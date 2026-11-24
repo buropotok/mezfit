@@ -187,6 +187,45 @@ test('logout is POST-only and requires exact same origin', async () => {
   assert.ok(result.multiValueHeaders['Set-Cookie'].every(c => c.includes('Max-Age=0')));
 });
 
+test('browser sessions migrate from twelve hours and renew while in use', async () => {
+  const { key } = _test.configuration();
+  const day = 86400;
+  const ttl = 400 * day;
+  const profile = { host: HOST, sub: 'opaque', telegramUserId: 123, name: 'Example', username: 'example' };
+  const requestSession = value => handler(events('/auth/session', 'GET', {
+    Cookie: '__Host-mz_browser_session=' + _test.signed({ ...profile, ...value }, key),
+  }));
+  const current = now();
+  for (const previous of [
+    { version: 1, iat: current - 60, exp: current + 7200 },
+    { version: 2, iat: current - day - 60, exp: current - day - 60 + ttl },
+  ]) {
+    const response = await requestSession(previous);
+    assert.equal(response.statusCode, 200);
+    assert.equal(JSON.parse(response.body).telegramUserId, '123');
+    const [renewed] = response.multiValueHeaders['Set-Cookie'];
+    assert.match(renewed, /Secure; HttpOnly; SameSite=Lax; Max-Age=34560000$/);
+    const refreshed = _test.verified(cookiePair(renewed).split('=')[1], key);
+    assert.equal(refreshed.version, 2);
+    assert.equal(refreshed.exp - refreshed.iat, ttl);
+    assert.equal(refreshed.telegramUserId, profile.telegramUserId);
+    assert.equal(refreshed.host, HOST);
+
+    const next = await handler(events('/auth/session', 'GET', { Cookie: cookiePair(renewed) }));
+    assert.equal(next.statusCode, 200);
+    assert.equal(next.multiValueHeaders, undefined);
+  }
+  for (const previous of [
+    { version: 1, iat: current - day, exp: current - 1 },
+    { version: 2, iat: current - ttl - 1, exp: current - 1 },
+    { version: 2, iat: current, exp: current + ttl + 1 },
+  ]) {
+    const response = await requestSession(previous);
+    assert.equal(response.statusCode, 401);
+    assert.equal(response.multiValueHeaders, undefined);
+  }
+});
+
 test('unauthorized host, missing config and protected /api paths fail closed', async () => {
   assert.equal((await handler(events('/auth/start', 'GET', { Host: 'evil.example' }))).statusCode, 403);
   assert.equal((await handler(events('/api/me'))).statusCode, 404);

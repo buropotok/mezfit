@@ -16,7 +16,9 @@ const COOKIE_FLOW = '__Host-mz_oidc_flow';
 const COOKIE_POPUP = '__Host-mz_oidc_popup';
 const COOKIE_SESSION = '__Host-mz_browser_session';
 const FLOW_TTL = 600;
-const SESSION_TTL = 12 * 60 * 60;
+const LEGACY_SESSION_TTL = 12 * 60 * 60;
+const SESSION_RENEW_INTERVAL = 24 * 60 * 60;
+const SESSION_TTL = 400 * SESSION_RENEW_INTERVAL;
 const MAX_JWT_LENGTH = 12000;
 const POPUP_TTL = 300;
 const JWKS_TTL = 300_000;
@@ -86,6 +88,13 @@ function readCookies(event) {
 
 function cookie(name, value, maxAge) {
   return name + '=' + value + '; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=' + maxAge;
+}
+
+function browserSessionCookie(host, profile, key, now = epoch()) {
+  const { sub, telegramUserId, name, username } = profile;
+  const value = signed({ version: 2, host, sub, telegramUserId, name, username,
+    iat: now, exp: now + SESSION_TTL }, key);
+  return cookie(COOKIE_SESSION, value, SESSION_TTL);
 }
 
 function respond(status, body = '', headers = {}, cookies = []) {
@@ -417,12 +426,7 @@ async function callback(event, config, host) {
       throw new OidcCheckError('token', 'missing_id_token');
     }
     const profile = await authenticateIdToken(result.id_token, config, flow.nonce);
-    const session = signed({ version: 1, host, ...profile,
-      iat: epoch(), exp: epoch() + SESSION_TTL }, config.key);
-    return navigate('/', [
-      clearFlow,
-      cookie(COOKIE_SESSION, session, SESSION_TTL),
-    ]);
+    return navigate('/', [clearFlow, browserSessionCookie(host, profile, config.key)]);
   } catch (error) {
     return verificationFailure(error, clearFlow);
   }
@@ -497,8 +501,7 @@ async function popup(event, context, config, host) {
     const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, loadKeys, true);
     if (flow.iat + POPUP_TTL <= epoch()) throw new OidcCheckError('challenge', 'invalid_or_expired');
     await consumePopupNonce(bucket, flow.nonce, token);
-    const session = signed({ version: 1, host, ...profile, iat: epoch(), exp: epoch() + SESSION_TTL }, config.key);
-    return json(200, { authenticated: true }, [clear, cookie(COOKIE_SESSION, session, SESSION_TTL)]);
+    return json(200, { authenticated: true }, [clear, browserSessionCookie(host, profile, config.key)]);
   } catch (error) {
     return verificationFailure(error, clear);
   }
@@ -506,20 +509,23 @@ async function popup(event, context, config, host) {
 
 function session(event, config, host) {
   const data = verified(readCookies(event)[COOKIE_SESSION], config.key);
-  if (!data || data.version !== 1 || data.host !== host
+  const now = epoch();
+  if (!data || (data.version !== 1 && data.version !== 2) || data.host !== host
       || !Number.isSafeInteger(data.telegramUserId) || data.telegramUserId <= 0
       || typeof data.sub !== 'string' || !data.sub
-      || !Number.isInteger(data.iat) || data.iat > epoch() + 60
-      || !Number.isInteger(data.exp) || data.exp <= epoch()
-      || data.exp > data.iat + SESSION_TTL) {
+      || !Number.isInteger(data.iat) || data.iat > now + 60
+      || !Number.isInteger(data.exp) || data.exp <= now
+      || data.exp > data.iat + (data.version === 1 ? LEGACY_SESSION_TTL : SESSION_TTL)) {
     return json(401, { authenticated: false });
   }
+  const cookies = data.version === 1 || now - data.iat >= SESSION_RENEW_INTERVAL
+    ? [browserSessionCookie(host, data, config.key, now)] : [];
   return json(200, {
     authenticated: true,
     telegramUserId: String(data.telegramUserId),
     name: typeof data.name === 'string' ? data.name : '',
     username: typeof data.username === 'string' ? data.username : '',
-  });
+  }, cookies);
 }
 
 async function handler(event, context) {
