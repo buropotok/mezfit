@@ -80,7 +80,7 @@ class NonceBucketS3Readback(unittest.TestCase):
                 class Opener:
                     open = staticmethod(open_request)
 
-                def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret, version, api, update_api,
+                def execute(mode, action, folder, deploy_sa, runtime_sa, secret, version, api, update_api,
                             *, nonce_policy):
                     try:
                         ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api,
@@ -88,7 +88,7 @@ class NonceBucketS3Readback(unittest.TestCase):
                     except WebHostingError as failure:
                         raise NonceBucketSetupError(str(failure)) from None
 
-                env = {"MODE": "preview", "ACTION": "popup", "CONFIRM": "", "YC_DEPLOY_SA_ID": SA,
+                env = {"MODE": "preview", "ACTION": "popup", "YC_DEPLOY_SA_ID": SA,
                        "YC_FOLDER_ID": FOLDER, "YC_IAM_TOKEN": "sample-token"}
                 with (
                     patch.dict("os.environ", env, clear=True),
