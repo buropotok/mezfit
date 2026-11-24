@@ -639,6 +639,29 @@ function isCloudTokenResponse(value: unknown): value is CloudTokenResponse {
     && ['demo', 'eval', 'prod', 'client'].includes(String(value.userType));
 }
 
+export async function checkBrowserDexieCloudToken(
+  publicKey: string,
+  telegramUserId: string,
+  signal: AbortSignal,
+): Promise<{ status: number; subjectMatches: boolean | null }> {
+  const response = await fetch('/api/dexie-cloud/tokens', {
+    method: 'POST',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    redirect: 'error',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ public_key: publicKey }),
+    signal,
+  });
+  if (response.status !== 200) return { status: response.status, subjectMatches: null };
+
+  const value: unknown = await response.json().catch(() => null);
+  return {
+    status: response.status,
+    subjectMatches: isCloudTokenResponse(value) ? value.claims.sub === `tg:${telegramUserId}` : null,
+  };
+}
+
 /** Privileged Telegram-authenticated token exchange; ordinary reads/writes use local Dexie. */
 export async function getDexieCloudTokens(
   initData: string,

@@ -1,4 +1,4 @@
-import { getDexieCloudTokens } from '../api';
+import { checkBrowserDexieCloudToken, getDexieCloudTokens } from '../api';
 
 /**
  * One-shot production auth probe. Unlike the Dexie Cloud Addon, it does not
@@ -6,6 +6,16 @@ import { getDexieCloudTokens } from '../api';
  */
 export async function runCloudAuthProbe(initData: string): Promise<void> {
   if (!initData) throw new Error('TELEGRAM_AUTH_REQUIRED');
+  // The Worker verifies the Telegram signature and cloud claims.sub.
+  await getDexieCloudTokens(initData, { public_key: await createPublicKey() });
+}
+
+export async function runBrowserCloudAuthProbe(telegramUserId: string, signal: AbortSignal) {
+  const publicKey = await createPublicKey();
+  return checkBrowserDexieCloudToken(publicKey, telegramUserId, signal);
+}
+
+async function createPublicKey(): Promise<string> {
   if (!globalThis.crypto?.subtle) throw new Error('CRYPTO_UNAVAILABLE');
 
   // Match the Dexie Cloud Addon's RSA public_key (PEM/SPKI) protocol.
@@ -24,9 +34,5 @@ export async function runCloudAuthProbe(initData: string): Promise<void> {
   let binary = '';
   for (const byte of spki) binary += String.fromCharCode(byte);
   const lines = btoa(binary).match(/.{1,64}/g) ?? [];
-  const publicKeyPem = ['-----BEGIN PUBLIC KEY-----', ...lines, '-----END PUBLIC KEY-----'].join('\n');
-
-  // The Worker verifies the Telegram signature and cloud claims.sub.
-  // Intentionally discard the full access/refresh token response.
-  await getDexieCloudTokens(initData, { public_key: publicKeyPem });
+  return ['-----BEGIN PUBLIC KEY-----', ...lines, '-----END PUBLIC KEY-----'].join('\n');
 }

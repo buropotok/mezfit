@@ -1,8 +1,43 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getBrowserSession, logoutBrowserSession } from './api';
+import { checkBrowserDexieCloudToken, getBrowserSession, logoutBrowserSession } from './api';
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe('browser Dexie token diagnostic', () => {
+  it('uses the same-origin session and returns only the status and identity match', async () => {
+    const token = {
+      type: 'tokens', userType: 'prod', claims: { sub: 'tg:123' },
+      accessToken: 'must-not-return', refreshToken: 'must-not-return', accessTokenExpiration: 123456,
+    };
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json(token))
+      .mockResolvedValueOnce(Response.json({ ...token, claims: { sub: 'tg:456' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { signal } = new AbortController();
+
+    await expect(checkBrowserDexieCloudToken('public-key', '123', signal))
+      .resolves.toEqual({ status: 200, subjectMatches: true });
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/api/dexie-cloud/tokens', {
+      method: 'POST', credentials: 'same-origin', cache: 'no-store', redirect: 'error',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ public_key: 'public-key' }), signal,
+    });
+    await expect(checkBrowserDexieCloudToken('public-key', '123', signal))
+      .resolves.toEqual({ status: 200, subjectMatches: false });
+  });
+
+  it('retains the HTTP status for rejected or invalid responses', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(Response.json({ claims: { sub: 'tg:123' } })));
+    const { signal } = new AbortController();
+
+    await expect(checkBrowserDexieCloudToken('public-key', '123', signal))
+      .resolves.toEqual({ status: 401, subjectMatches: null });
+    await expect(checkBrowserDexieCloudToken('public-key', '123', signal))
+      .resolves.toEqual({ status: 200, subjectMatches: null });
+  });
 });
 
 describe('browser authentication API', () => {

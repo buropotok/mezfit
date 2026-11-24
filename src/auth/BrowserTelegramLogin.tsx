@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, completeBrowserLogin, getBrowserSession, logoutBrowserSession, prepareBrowserLogin } from '../api';
+import { BrowserDexieDiagnostic } from '../diagnostics/BrowserDexieDiagnostic';
 import { Button, Surface, Text, TextArea } from '../ui';
 import type { BrowserIdentity } from './browserSession';
 import { loadTelegramLoginSdk } from './telegramLoginSdk';
@@ -17,8 +18,7 @@ type LoginAttempt =
 
 /**
  * Browser OIDC identity does not grant Mini App initData. The verified browser
- * identity stays at this explicitly limited boundary until protected API
- * endpoints and Dexie token exchange support that credential type server-side.
+ * identity stays on this screen until the browser app bootstrap is wired up.
  */
 export function BrowserTelegramLogin() {
   const [state, setState] = useState<BrowserAuthState>({ status: 'loading' });
@@ -27,7 +27,9 @@ export function BrowserTelegramLogin() {
   const [retry, setRetry] = useState(0);
   const [debugToken, setDebugToken] = useState<string | null>(null);
   const opening = useRef(false);
-  const debugTokenEnabled = new URLSearchParams(window.location.search).get('debugTelegramToken') === '1';
+  const query = new URLSearchParams(window.location.search);
+  const debugTokenEnabled = query.get('debugTelegramToken') === '1';
+  const debugDexieEnabled = query.get('debugDexie') === '1';
 
   useEffect(() => {
     let active = true;
@@ -141,10 +143,13 @@ export function BrowserTelegramLogin() {
             <>
               <Text>Telegram подтвердил вашу личность: {state.identity.name || state.identity.username || state.identity.telegramUserId}.</Text>
               <Text variant="footnote" tone="muted">
-                Браузерный вход подтверждён. Доступ к тренировкам, программам и Dexie Cloud
-                через этот вид сессии появится после переноса защищённого API на Яндекс.
+                Браузерный вход подтверждён. Доступ к тренировкам и программам в браузере
+                появится после подключения защищённых API.
                 Пока используйте полную версию через @mezfit_bot.
               </Text>
+              {debugDexieEnabled && (
+                <BrowserDexieDiagnostic telegramUserId={state.identity.telegramUserId} disabled={busy} />
+              )}
               <Button variant="secondary" onClick={() => void signOut()} disabled={busy}>
                 Выйти
               </Button>
