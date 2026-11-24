@@ -139,7 +139,7 @@ Flex baseline, полный текстовый профиль PR #653 и пол�
 - Owner/main/manual workflow_dispatch, environment dexie-production с reviewers,
   существующий DEXIE_CLOUD_WRITE_KEY и общий privileged writer concurrency.
 - Preview не импортирует. Apply требует отдельного решения владельца, отметки
-  `comm02_validated=true` и literal `APPLY_DISCUSSIONS_SCHEMA_AND_ACL`.
+  `comm02_validated=true`.
   Эта отметка — свидетельство владельца, не автоматическая проверка телефонов.
 - Полный schema/roles export до операции, точный recheck непосредственно перед импортом,
   readback после попытки импорта (в том числе CLI error) и при no-op; cleanup в always.
