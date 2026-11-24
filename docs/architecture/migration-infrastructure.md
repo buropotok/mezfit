@@ -38,7 +38,7 @@ Worker starts with Queue and Workflow entrypoints only.
 
 1. Run **Bootstrap migration infrastructure** in `preview` mode to read the
    resource state and planned changes.
-2. Run it in `apply` mode with `APPLY_MEZFIT_MIGRATION_INFRASTRUCTURE`. It creates
+2. Run it in `apply` mode. It creates
    any missing resources and publishes the uploader credentials directly as
    Worker Secrets via an initial private deployment. The initial deployment has
    no Queue consumer until the D1 schema has been installed.
