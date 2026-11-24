@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 
 from deploy_browser_auth import (
-    RUNTIME_IAM_TOKEN_URL, ensure_mirror_nonce_access, nonce_bucket_name,
+    RUNTIME_IAM_TOKEN_URL, YandexHttpError, ensure_mirror_nonce_access, nonce_bucket_name,
     nonce_runtime_binding, verify_nonce_runtime_write,
 )
 from test_deploy_browser_auth import FOLDER, RUNTIME_SA, SA
@@ -11,6 +11,34 @@ from web_hosting import STORAGE, WebHostingError
 
 
 class NonceRuntimeContracts(TestCase):
+    def test_apply_uses_verified_folder_list_when_bucket_get_is_forbidden(self):
+        bucket = nonce_bucket_name(FOLDER)
+        bucket_id = "nonceresource1"
+        binding = nonce_runtime_binding(RUNTIME_SA)
+        bindings = []
+
+        def api(url, label):
+            if url == f"{STORAGE}/{bucket}?view=VIEW_BASIC":
+                raise YandexHttpError(label, 403)
+            if url.startswith(f"{STORAGE}?folderId={FOLDER}&"):
+                return {"buckets": [{"name": bucket, "resourceId": bucket_id, "folderId": FOLDER}]}
+            if url == f"{STORAGE}/{bucket_id}:listAccessBindings":
+                return {"accessBindings": bindings.copy()}
+            self.fail(f"Unexpected API request: {url}")
+
+        def grant(url, label, payload, method):
+            self.assertEqual(url, f"{STORAGE}/{bucket_id}:updateAccessBindings")
+            self.assertEqual(method, "PATCH")
+            self.assertEqual(payload, {"accessBindingDeltas": [{"action": "ADD", "accessBinding": binding}]})
+            bindings.append(binding)
+            return {"id": "operation1", "done": True, "response": {}}
+
+        probe = Mock()
+        with patch("deploy_browser_auth.ensure_nonce_bucket", return_value=bucket):
+            ensure_mirror_nonce_access("apply", FOLDER, SA, RUNTIME_SA, api, grant, Mock(), {}, probe)
+        self.assertEqual(bindings, [binding])
+        probe.assert_called_once_with(bucket)
+
     def test_apply_grants_only_the_runtime_write_role_at_bucket_scope(self):
         bucket = nonce_bucket_name(FOLDER)
         bucket_id = "nonceresource1"
