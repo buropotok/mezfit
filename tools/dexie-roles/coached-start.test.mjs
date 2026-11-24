@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ADHOC_SCHEMA } from './adhoc-sessions.mjs';
 import { EXPECTED_CLIENT_SESSION_ROLES } from './client-sessions.mjs';
-import { CONFIRMATION, EXPECTED_COACHED_START_ROLES, planCoachedStart, verifyCoachedStart,
+import { EXPECTED_COACHED_START_ROLES, planCoachedStart, verifyCoachedStart,
   validateCoachedStartDispatch, assertUnchangedBeforeApply, assertExactImportPayload } from './coached-start.mjs';
 
 const overlay = JSON.parse(readFileSync(new URL('../../cloud/coached-start-roles.json', import.meta.url), 'utf8'));
@@ -44,10 +44,10 @@ describe('protected Coach format ACL', () => {
   });
   it('requires manual main owner dispatch, explicit apply and protected full readback', () => {
     expect(() => validateCoachedStartDispatch(trusted)).not.toThrow();
-    const apply = { ...trusted, DEXIE_COACHED_START_OPERATION: 'apply', DEXIE_COACHED_START_CONFIRMATION: CONFIRMATION };
+    const apply = { ...trusted, DEXIE_COACHED_START_OPERATION: 'apply' };
     expect(() => validateCoachedStartDispatch(apply)).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' },
-      { GITHUB_ACTOR: 'other' }, { DEXIE_COACHED_START_CONFIRMATION: '' }])
+      { GITHUB_ACTOR: 'other' }, { DEXIE_COACHED_START_OPERATION: 'invalid' }])
       expect(() => validateCoachedStartDispatch({ ...apply, ...change })).toThrow();
     const workflow = readFileSync(new URL('../../.github/workflows/dexie-coached-start.yml', import.meta.url), 'utf8');
     expect(workflow).not.toMatch(/^\s+(push|pull_request|issues|schedule):/m);
