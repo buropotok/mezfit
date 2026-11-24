@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { EXPECTED_FLEX_ROLES } from './flex-attributes.mjs';
-import { DISCUSSION_SCHEMA, DISCUSSION_ROLE_OVERLAY, EXPECTED_DISCUSSION_ROLES, LEGACY_DISCUSSION_ROLES, CONFIRMATION,
+import { DISCUSSION_SCHEMA, DISCUSSION_ROLE_OVERLAY, EXPECTED_DISCUSSION_ROLES, LEGACY_DISCUSSION_ROLES,
   planDiscussions, verifyDiscussions, assertDiscussionUnchanged, validateDiscussionDispatch } from './discussions.mjs';
 const schema = { schema: { existing: 'id' }, sealed: true };
 const roles = { roles: { ...structuredClone(EXPECTED_FLEX_ROLES), unrelated: { permissions: {} } } };
@@ -61,15 +61,15 @@ describe('exact protected discussion schema/ACL operator', () => {
     const wrong = structuredClone(targetRoles); wrong.roles.unrelated.permissions.manage = '*';
     expect(() => verifyDiscussions(DISCUSSION_ROLE_OVERLAY, DISCUSSION_SCHEMA, schema, roles, targetSchema, wrong)).toThrow();
   });
-  it('allows preview without mutation, requires owner/main/manual + COMM-02 attestation + literal Apply', () => {
+  it('allows preview without mutation, requires owner/main/manual + COMM-02 attestation + Apply selection', () => {
     const env = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main', GITHUB_ACTOR: 'owner', GITHUB_REPOSITORY_OWNER: 'owner', DEXIE_DISCUSSION_OPERATION: 'preview' };
     expect(() => validateDiscussionDispatch(env)).not.toThrow();
     for (const patch of [{ GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'other' }])
       expect(() => validateDiscussionDispatch({ ...env, ...patch })).toThrow();
-    const apply = { ...env, DEXIE_DISCUSSION_OPERATION: 'apply', DEXIE_DISCUSSION_CONFIRMATION: CONFIRMATION };
+    const apply = { ...env, DEXIE_DISCUSSION_OPERATION: 'apply' };
     expect(() => validateDiscussionDispatch(apply)).toThrow('COMM02_VALIDATION_REQUIRED');
     expect(() => validateDiscussionDispatch({ ...apply, DEXIE_DISCUSSION_COMM02_VALIDATED: 'true' })).not.toThrow();
-    expect(() => validateDiscussionDispatch({ ...apply, DEXIE_DISCUSSION_COMM02_VALIDATED: 'true', DEXIE_DISCUSSION_CONFIRMATION: 'yes' })).toThrow();
+    expect(() => validateDiscussionDispatch({ ...apply, DEXIE_DISCUSSION_COMM02_VALIDATED: 'false' })).toThrow('COMM02_VALIDATION_REQUIRED');
     const workflow = readFileSync(new URL('../../.github/workflows/dexie-discussions.yml', import.meta.url), 'utf8');
     expect(workflow).toContain("if: ${{ !cancelled() && inputs.operation == 'apply'");
     expect(workflow).toContain('environment:\n      name: dexie-production');
