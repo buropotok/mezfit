@@ -179,21 +179,18 @@ async function fetchJson(url, options, stage) {
   }
 }
 
-function invalidClaimCode(claims, config, nonce, now = epoch()) {
+function invalidClaimCode(claims, config, nonce, telegramUserId, now = epoch()) {
   if (!claims || typeof claims !== 'object') return 'claims_payload_invalid';
   if (claims.iss !== ISSUER) return 'claims_issuer_mismatch';
   if (claims.aud !== config.clientId) return 'claims_audience_mismatch';
   if (typeof claims.sub !== 'string' || claims.sub.length < 1 || claims.sub.length > 100) {
     return 'claims_subject_invalid';
   }
-  const id = claims.id;
-  if (id === undefined) return 'claims_telegram_id_missing';
-  if (id === null) return 'claims_telegram_id_null';
-  if (typeof id === 'string') {
-    return /^[0-9]+$/.test(id) ? 'claims_telegram_id_numeric_string' : 'claims_telegram_id_invalid';
-  }
-  if (typeof id !== 'number') return 'claims_telegram_id_wrong_type';
-  if (!Number.isSafeInteger(id) || id <= 0) return 'claims_telegram_id_number_invalid';
+  if (telegramUserId === undefined) return 'claims_telegram_id_missing';
+  if (telegramUserId === null) return 'claims_telegram_id_null';
+  if (typeof telegramUserId === 'string') return 'claims_telegram_id_invalid';
+  if (typeof telegramUserId !== 'number') return 'claims_telegram_id_wrong_type';
+  if (!Number.isSafeInteger(telegramUserId) || telegramUserId <= 0) return 'claims_telegram_id_number_invalid';
   if (!Number.isInteger(claims.exp)) return 'claims_exp_invalid';
   if (claims.exp <= now) return 'claims_token_expired';
   if (!Number.isInteger(claims.iat)) return 'claims_iat_invalid';
@@ -351,7 +348,9 @@ async function authenticateIdToken(idToken, config, nonce, loadKeys = getKeys, d
     throw new OidcCheckError('jwt', 'signature_check_failure');
   }
   if (!validSignature) throw new OidcCheckError('jwt', 'invalid_signature');
-  const claimCode = invalidClaimCode(claims, config, nonce);
+  const id = claims?.id;
+  const telegramUserId = typeof id === 'string' && /^[1-9][0-9]*$/.test(id) ? Number(id) : id;
+  const claimCode = invalidClaimCode(claims, config, nonce, telegramUserId);
   if (claimCode) {
     throw new OidcCheckError('jwt', detailedClaims ? claimCode : 'invalid_claims');
   }
@@ -360,7 +359,7 @@ async function authenticateIdToken(idToken, config, nonce, loadKeys = getKeys, d
   }
   return {
     sub: claims.sub,
-    telegramUserId: claims.id,
+    telegramUserId,
     name: typeof claims.name === 'string' ? claims.name.slice(0, 120) : '',
     username: typeof claims.preferred_username === 'string'
       ? claims.preferred_username.slice(0, 64) : '',
