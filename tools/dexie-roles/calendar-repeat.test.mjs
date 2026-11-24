@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { EXPECTED_FLEX_ROLES } from './flex-attributes.mjs';
 import {
-  CONFIRMATION, OVERLAY, addRepeatPermission, planRepeatAcl,
+  OVERLAY, addRepeatPermission, planRepeatAcl,
   verifyRepeatAcl, validateDispatch,
 } from './calendar-repeat.mjs';
 
@@ -19,7 +19,7 @@ const target = () => {
 };
 const allowed = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main',
   GITHUB_ACTOR: 'buropotok', GITHUB_REPOSITORY_OWNER: 'buropotok',
-  REPEAT_OPERATION: 'apply', REPEAT_CONFIRMATION: CONFIRMATION };
+  REPEAT_OPERATION: 'apply' };
 
 describe('protected calendar repetition ACL operator', () => {
   it('pins the exact per-field overlay and preserves every existing grant', () => {
@@ -76,13 +76,12 @@ describe('protected calendar repetition ACL operator', () => {
       .toThrow('UNEXPECTED_REPEAT_ROLES_CHANGE');
   });
 
-  it('allows only manual owner/main and explicit apply confirmation', () => {
+  it('allows only manual owner/main and valid preview/apply selection', () => {
     expect(() => validateDispatch(allowed)).not.toThrow();
     expect(() => validateDispatch({ ...allowed,
-      REPEAT_OPERATION: 'preview', REPEAT_CONFIRMATION: '' })).not.toThrow();
+      REPEAT_OPERATION: 'preview' })).not.toThrow();
     for (const wrong of [{ GITHUB_EVENT_NAME: 'push' },
       { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'other' },
-      { REPEAT_CONFIRMATION: '' }, { REPEAT_OPERATION: 'preview' },
       { REPEAT_OPERATION: 'unknown' }]) {
       expect(() => validateDispatch({ ...allowed, ...wrong })).toThrow();
     }
