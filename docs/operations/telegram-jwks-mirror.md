@@ -1,6 +1,7 @@
 # Telegram JWKS mirror: isolated Cloudflare Cron -> Yandex Object Storage
 
-**Scope:** infrastructure only. This does **not** change any Telegram browser-login / Mini App verification, Yandex Cloud Function, API Gateway, existing Cloudflare `mezfit` Worker, Dexie Cloud, or frontend.
+The dedicated Cloudflare Worker publishes Telegram JWKS to a private Yandex bucket.
+The Yandex browser-login function can use that mirror for its popup callback.
 
 ## Purpose and trust boundary
 
@@ -14,12 +15,11 @@ The Worker uses its **own S3 identity**, authorized only on one new private Yand
 - `status.json`: updated following each successful Telegram fetch and storage reconciliation;
   contains `checkedAt`, `changedAt`, `kids`, and a digest of the published keyset
 
-Both objects are **private**, never browser-readable. A later, independent authorization PR
-may grant the Yandex browser-login runtime SA **read-only** permission on this bucket and switch
-JWKS discovery to its existing server-side JWT verifier. That PR must retain RS256, `kid`,
-issuer, audience, nonce, temporal validations, and the existing popup replay protection.
-It must validate freshness using the separate heartbeat. No JWT or user data is transmitted
-to this Worker. The separate Telegram Mini App `initData` authentication is unchanged.
+Both objects are **private**. The browser-login runtime can read the bucket using a
+short-lived Yandex IAM token and a bucket-scoped `storage.viewer` grant.
+Popup verification uses the existing server-side checks for RS256, `kid`, issuer,
+audience, nonce, token lifetime, and replay protection after validating the mirror
+heartbeat and digest. No JWT or user data is transmitted to the mirror Worker.
 
 The Worker rejects ordinary HTTP requests (404). Only the Cron invokes the refresh.
 Invalid, unavailable, or oversized Telegram responses never replace last-known-good keys;
@@ -105,6 +105,22 @@ For the initial bootstrap, the Worker previously rejected Yandex static S3
 key IDs containing `-`, even though those are valid characters. This was
 fixed independently of the key and bucket; existing credentials should be reused.
 
+### Switch browser popup verification to the mirror
+
+Use **Prepare MezFit Browser Telegram Login**
+(`.github/workflows/prepare-mezfit-browser-login.yml`) after the mirror is publishing and
+the popup routes are active. Run `popup-mirror` in `preview` first, then in `apply`
+with `ENABLE_MEZFIT_BROWSER_JWKS_MIRROR`. Both modes check the bucket settings, direct
+IAM bindings, and the current heartbeat and key set. Apply installs the read grant,
+publishes the function version, and moves the existing `browser-login` tag.
+
+Test a new browser sign-in after Apply to exercise the function's runtime identity.
+The popup refreshes its in-memory key set at least once per minute while serving
+login requests, sooner for an unfamiliar key ID, and expires it when the
+last successful publisher check reaches five minutes. The previous authorization
+code route retains its Telegram endpoints. For rollout failure, the existing
+`popup-rollback` action restores the diagnostics version and removes the popup POST routes.
+
 ### Empty bucket troubleshooting
 
 A green GitHub Actions run proves the requested *operator action* finished,
@@ -141,8 +157,7 @@ operator procedure; this bootstrap workflow is intentionally not a rotation API.
 - `.github/workflows/ci.yml`: invokes the new Node contract alongside the existing
   Yandex Python operator suite; other CI checks continue unchanged
 
-This infrastructure intentionally does not use Github commits or `repository_dispatch`
-to move keys. Yandex Object Storage is the source for future local server-side verification.
+Key refreshes are published directly to Yandex Object Storage by the Cron Worker.
 
 External references:
 

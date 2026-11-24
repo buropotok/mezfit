@@ -13,6 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, build_opener
 
+from browser_auth_bootstrap import RUNTIME_ACCOUNT_NAME
 from web_hosting import (NoRedirect, STORAGE, WebHostingError, await_operation,
                          choose, paged_list, resource_id)
 
@@ -31,6 +32,11 @@ def bucket_name(folder):
 
 def expected_binding(account_id):
     return {"roleId": "storage.uploader",
+            "subject": {"type": "serviceAccount", "id": account_id}}
+
+
+def reader_binding(account_id):
+    return {"roleId": "storage.viewer",
             "subject": {"type": "serviceAccount", "id": account_id}}
 
 
@@ -102,8 +108,16 @@ def inspect(api, folder, deploy_sa):
         bucket = api(f"{STORAGE}/{bucket_name(folder)}?view=VIEW_FULL",
                      "Read exact JWKS bucket settings")
     bindings = read_bindings(api, check_bucket(bucket, folder, deploy_sa)) if bucket else []
-    if bindings and (not sa or bindings != [expected_binding(sa["id"])]):
-        raise WebHostingError("JWKS bucket IAM drift; not overwriting existing grants.")
+    if bindings:
+        writer = expected_binding(sa["id"]) if sa else None
+        if bindings != [writer]:
+            runtime = choose(paged_list(api, IAM_SA, folder, "serviceAccounts",
+                                        "List Yandex service accounts"),
+                             RUNTIME_ACCOUNT_NAME, folder, "Browser login runtime")
+            if (not writer or not runtime or not resource_id(runtime.get("id"))
+                    or runtime["id"] == sa["id"] or len(bindings) != 2
+                    or writer not in bindings or reader_binding(runtime["id"]) not in bindings):
+                raise WebHostingError("JWKS bucket IAM drift; not overwriting existing grants.")
     keys = list_keys(api, sa["id"]) if sa else []
     return sa, bucket, bindings, keys
 
@@ -144,12 +158,12 @@ def execute(mode, action, confirm, folder, deploy_sa, api, output_file=None, sle
                     ]
                 }, method="PATCH"), "Grant JWKS writer", sleep or time.sleep)
         sa, bucket, bindings, keys = inspect(api, folder, deploy_sa)
-        if not sa or not bucket or bindings != [expected_binding(sa["id"])] or keys:
+        if not sa or not bucket or expected_binding(sa["id"]) not in bindings or keys:
             raise WebHostingError("JWKS provisioning readback failed.")
         print("JWKS infrastructure prepared; no access key has been created.")
         return
 
-    if not sa or not bucket or bindings != [expected_binding(sa["id"])]:
+    if not sa or not bucket or expected_binding(sa["id"]) not in bindings:
         raise WebHostingError("Prepare JWKS private bucket and scoped publisher first.")
     if action == "upgrade":
         if len(keys) != 1:

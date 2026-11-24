@@ -6,6 +6,7 @@ only the four /auth/* routes to the existing gateway. No /api/* changes.
 """
 
 import base64
+from datetime import datetime, timezone
 import hashlib
 import io
 import json
@@ -20,6 +21,7 @@ from urllib.request import Request, build_opener
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+import jwks_mirror
 from web_hosting import (
     FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
     OPERATIONS, STORAGE, WebHostingError, await_operation, browser_auth_gateway_spec,
@@ -32,10 +34,16 @@ PREPARE = "PREPARE_MEZFIT_BROWSER_LOGIN"
 ACTIVATE = "ACTIVATE_MEZFIT_BROWSER_LOGIN"
 UPGRADE = "UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS"
 POPUP = "ENABLE_MEZFIT_BROWSER_LOGIN_POPUP"
+POPUP_MIRROR = "ENABLE_MEZFIT_BROWSER_JWKS_MIRROR"
 POPUP_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP"
 TAG = "browser-login"
 PREVIOUS_TAG = "browser-login-pre-diagnostics"
 PRE_POPUP_TAG = "browser-login-pre-popup"
+DIRECT_POPUP_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
+                            "3b4ffc610ac5d7bf85172aa80537d58501b1ab7eed498dbc71983892db129f99")
+MIRROR_OBJECT_URL = re.compile(
+    r"https://storage\.yandexcloud\.net/mezfit-telegram-jwks-[a-z0-9]+/(status|jwks)\.json"
+)
 DIAGNOSTICS_FINGERPRINT = ("MezFit browser OIDC code SHA256:"
                            "a597bd9d1a9f9235f95cf0dd8fa0115bcc9b9ec7f0f06f3aa0148eb70080c95a")
 # Verified against the first successful production Prepare Apply GitHub Actions
@@ -133,6 +141,11 @@ def request_api(opener, token, url, label, payload=None, method=None, *, status_
                 return response.status
             if xml:
                 return nonce_s3_xml(response)
+            if verb == "GET" and MIRROR_OBJECT_URL.fullmatch(url):
+                data = response.read(65_537)
+                if len(data) > 65_536:
+                    raise WebHostingError(f"{label}: response too large.")
+                return data
             if verb == "GET" and url.startswith("https://storage.yandexcloud.net/mezfit-browser-nonce-") and url.endswith("?lifecycle"):
                 body = response.read(32_769)
                 result = {"approved": len(body) <= 32_768 and approved_nonce_lifecycle_xml(body)}
@@ -258,10 +271,12 @@ def version_secrets(secret_id, secret_version):
 
 
 def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts, *, tagged=True,
-                    nonce_bucket=None):
+                    nonce_bucket=None, jwks_bucket=None):
     environment = {"MEZFIT_AUTH_HOSTS": allowed_hosts}
     if nonce_bucket:
         environment["MEZFIT_BROWSER_CHALLENGE_BUCKET"] = nonce_bucket
+    if jwks_bucket:
+        environment["MEZFIT_BROWSER_JWKS_BUCKET"] = jwks_bucket
     return (
         resource_id(version.get("id"))
         and version.get("description") == fingerprint
@@ -305,7 +320,7 @@ def gateway_spec_changed(api, gateway, wanted):
 def require_confirmation(mode, action, confirmation):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
     expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE,
-                "popup": POPUP, "popup-rollback": POPUP_ROLLBACK}
+                "popup": POPUP, "popup-mirror": POPUP_MIRROR, "popup-rollback": POPUP_ROLLBACK}
     if mode not in ("preview", "apply") or action not in expected:
         raise WebHostingError("Unknown browser auth operation.")
     if mode == "apply" and confirmation != expected[action]:
@@ -745,6 +760,56 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
     return bucket
 
 
+def ensure_jwks_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep):
+    bucket = jwks_mirror.bucket_name(folder)
+    metadata = api(f"{STORAGE}/{bucket}?view=VIEW_FULL", "Read private JWKS bucket settings")
+    bucket_id = jwks_mirror.check_bucket(metadata, folder, deploy_sa)
+    publisher = choose(paged_list(api, jwks_mirror.IAM_SA, folder, "serviceAccounts",
+                                  "List Yandex service accounts"),
+                       jwks_mirror.NAME_SA, folder, "JWKS publisher")
+    if not publisher or not resource_id(publisher.get("id")) or publisher["id"] == runtime_sa:
+        raise WebHostingError("Expected a dedicated JWKS publisher distinct from browser runtime.")
+    writer = jwks_mirror.expected_binding(publisher["id"])
+    reader = jwks_mirror.reader_binding(runtime_sa)
+    bindings = jwks_mirror.read_bindings(api, bucket_id)
+    if bindings != [writer] and (len(bindings) != 2 or writer not in bindings or reader not in bindings):
+        raise WebHostingError("Unexpected direct IAM grants on the private JWKS bucket.")
+
+    base = f"https://storage.yandexcloud.net/{bucket}"
+    for attempt in range(2):
+        status = api(f"{base}/status.json", "Read JWKS mirror heartbeat")
+        keys = api(f"{base}/jwks.json", "Read mirrored Telegram JWKS")
+        try:
+            status = json.loads(status)
+            jwks = json.loads(keys)
+            checked_at = datetime.fromisoformat(status["checkedAt"])
+            age = (datetime.now(timezone.utc) - checked_at).total_seconds()
+            if status["source"] != "https://oauth.telegram.org/.well-known/jwks.json":
+                raise ValueError()
+            if not isinstance(jwks["keys"], list) or not jwks["keys"]:
+                raise ValueError()
+            digest_matches = hashlib.sha256(keys).hexdigest() == status["jwksSha256"]
+        except (KeyError, ValueError, TypeError):
+            raise WebHostingError("JWKS mirror returned invalid metadata or keys.") from None
+        if not -30 <= age < 300:
+            raise WebHostingError("JWKS mirror heartbeat is outside the allowed freshness window.")
+        if digest_matches:
+            break
+        if attempt == 1:
+            raise WebHostingError("JWKS mirror heartbeat digest does not match its key set.")
+
+    print(f"Private JWKS mirror objects verified; browser runtime read grant: "
+          f"{'verified' if reader in bindings else 'install'}.")
+    if mode == "apply" and reader not in bindings:
+        await_operation(api, update_api(
+            f"{STORAGE}/{bucket_id}:updateAccessBindings", "Grant browser runtime read on JWKS bucket",
+            {"accessBindingDeltas": [{"action": "ADD", "accessBinding": reader}]}, method="PATCH",
+        ), "Grant browser runtime read on JWKS bucket", sleep)
+        bindings = jwks_mirror.read_bindings(api, bucket_id)
+        if len(bindings) != 2 or writer not in bindings or reader not in bindings:
+            raise WebHostingError("Unexpected JWKS bucket IAM readback after granting browser runtime read.")
+
+
 def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
                  secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep, *, nonce_policy):
     function_id = function["id"]
@@ -761,25 +826,40 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
     versions = function_version_list(api, function_id)
     serving = select_tagged_version(versions)
     bucket = nonce_bucket_name(folder)
+    mirrored = action == "popup-mirror"
+    jwks_bucket = jwks_mirror.bucket_name(folder)
     version_args = (runtime_sa, secret_id, secret_version, hosts)
 
     def is_diagnostics(version):
         return any(version_matches(version, digest, *version_args, tagged=TAG in version.get("tags", []))
                    for digest in (DIAGNOSTICS_FINGERPRINT, fingerprint))
 
-    def is_popup(version):
+    def is_direct_popup(version):
+        return any(version_matches(version, digest, *version_args,
+                                   tagged=TAG in version.get("tags", []), nonce_bucket=bucket)
+                   for digest in (DIRECT_POPUP_FINGERPRINT, fingerprint))
+
+    def is_mirror_popup(version):
         return version_matches(version, fingerprint, *version_args,
-                               tagged=TAG in version.get("tags", []), nonce_bucket=bucket)
+                               tagged=TAG in version.get("tags", []), nonce_bucket=bucket,
+                               jwks_bucket=jwks_bucket)
+
+    is_candidate = is_mirror_popup if mirrored else is_direct_popup
 
     preserved = [version for version in versions if PRE_POPUP_TAG in version.get("tags", [])]
     if len(preserved) > 1 or (preserved and not is_diagnostics(preserved[0])):
         raise WebHostingError("Unexpected popup rollback version.")
-    if not serving or not (is_diagnostics(serving) or (is_popup(serving) and preserved)):
+    if not serving or not (is_diagnostics(serving) or (preserved and
+            (is_direct_popup(serving) or is_mirror_popup(serving)))):
         raise WebHostingError("Active version differs from approved diagnostics/popup code.")
     current_spec = current_gateway_spec()
     baseline = preserved[0] if preserved else serving
     if is_diagnostics(serving) and serving["id"] != baseline["id"]:
         raise WebHostingError("Serving diagnostics version differs from the rollback baseline.")
+    if mirrored and (current_spec != "popup" or is_diagnostics(serving)):
+        raise WebHostingError("Enable popup routes and verify the serving popup version first.")
+    if action == "popup" and is_mirror_popup(serving):
+        raise WebHostingError("Use popup-mirror to manage the active JWKS mirror version.")
 
     def set_tag(version, tag):
         await_operation(api, api(f"{VERSIONS}/{version['id']}:setTag", "Set reviewed browser login tag",
@@ -812,18 +892,26 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
             set_tag(baseline, TAG)
         return
 
-    candidates = [v for v in versions if v.get("description") == fingerprint and not is_diagnostics(v)]
-    if len(candidates) > 1 or (candidates and not is_popup(candidates[0])):
+    candidates = [
+        v for v in versions if v.get("description") == fingerprint and not is_diagnostics(v)
+        and not (is_direct_popup(v) if mirrored else is_mirror_popup(v))
+    ]
+    if len(candidates) > 1 or (candidates and not is_candidate(candidates[0])):
         raise WebHostingError("Popup function candidate differs from the approved configuration.")
-    print("Keep the verified diagnostics version and add only two popup POST methods.")
-    try:
-        ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, nonce_policy=nonce_policy)
-    except WebHostingError as error:
-        raise NonceBucketSetupError(str(error)) from None
+    if mirrored:
+        print("Switch popup JWKS reads to the private mirror; verify existing gateway routes.")
+        ensure_jwks_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep)
+    else:
+        print("Keep the verified diagnostics version and add only two popup POST methods.")
+        try:
+            ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, nonce_policy=nonce_policy)
+        except WebHostingError as error:
+            raise NonceBucketSetupError(str(error)) from None
     if mode == "preview":
         return
     ensure_serving(serving)
-    current_gateway_spec()
+    if current_gateway_spec() != current_spec:
+        raise WebHostingError("Gateway routes changed concurrently; rerun Preview.")
     if not preserved:
         set_tag(baseline, PRE_POPUP_TAG)
     if not candidates:
@@ -832,16 +920,20 @@ def deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
                    "serviceAccountId": runtime_sa, "content": base64.b64encode(content).decode("ascii"),
                    "environment": {"MEZFIT_AUTH_HOSTS": hosts, "MEZFIT_BROWSER_CHALLENGE_BUCKET": bucket},
                    "tag": [], "description": fingerprint, "secrets": version_secrets(secret_id, secret_version)}
+        if mirrored:
+            payload["environment"]["MEZFIT_BROWSER_JWKS_BUCKET"] = jwks_bucket
         result = await_operation(api, api(VERSIONS, "Publish private popup version", payload),
                                  "Publish private popup version", sleep)
         candidates = [v for v in function_version_list(api, function_id) if v.get("id") == result.get("id")]
-        if len(candidates) != 1 or not is_popup(candidates[0]) or TAG in candidates[0].get("tags", []):
+        if len(candidates) != 1 or not is_candidate(candidates[0]) or TAG in candidates[0].get("tags", []):
             raise WebHostingError("Popup version failed readback.")
     candidate = candidates[0]
     ensure_serving(serving)
+    if mirrored and current_gateway_spec() != "popup":
+        raise WebHostingError("Popup gateway routes changed concurrently; rerun Preview.")
     if serving["id"] != candidate["id"]:
         set_tag(candidate, TAG)
-    if current_gateway_spec() == "legacy":
+    if not mirrored and current_gateway_spec() == "legacy":
         update_routes(popup_spec)
     if current_gateway_spec() != "popup":
         raise WebHostingError("Popup gateway routes failed readback.")
@@ -939,7 +1031,7 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
     if not resource_id(secret_id) or not resource_id(secret_version) or not tagged:
         raise WebHostingError("Expected pinned browser auth version is absent.")
 
-    if action in {"popup", "popup-rollback"}:
+    if action in {"popup", "popup-mirror", "popup-rollback"}:
         deploy_popup(mode, action, folder, gateway, function, deploy_sa, runtime_sa,
                      secret_id, secret_version, hosts, content, fingerprint, api, update_api, sleep,
                      nonce_policy=nonce_policy)
@@ -1119,7 +1211,7 @@ def main():
             paged_list(api, GATEWAYS, folder, "apiGateways", "Preflight browser auth Gateway"),
             NAME_GATEWAY, folder, "Existing SPA gateway")
         check_gateway(current_gateway, api, folder)
-    bootstrap_action = "upgrade" if action in {"popup", "popup-rollback"} else action
+    bootstrap_action = "upgrade" if action in {"popup", "popup-mirror", "popup-rollback"} else action
     runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
     nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa) if action == "popup" else None

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Prepare, activate, upgrade diagnostics, enable popup, or roll back popup
+        description: Prepare, activate, upgrade diagnostics, enable popup or JWKS mirror, or roll back popup
         type: choice
         required: true
         default: prepare
@@ -13,6 +13,7 @@ on:
           - activate
           - upgrade
           - popup
+          - popup-mirror
           - popup-rollback
       mode:
         description: Preview is read-only; Apply requires exact confirmation
@@ -62,6 +63,7 @@ jobs:
             activate) expected=ACTIVATE_MEZFIT_BROWSER_LOGIN ;;
             upgrade) expected=UPGRADE_MEZFIT_BROWSER_LOGIN_DIAGNOSTICS ;;
             popup) expected=ENABLE_MEZFIT_BROWSER_LOGIN_POPUP ;;
+            popup-mirror) expected=ENABLE_MEZFIT_BROWSER_JWKS_MIRROR ;;
             popup-rollback) expected=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP ;;
             *) echo "Invalid action"; exit 1 ;;
           esac
