@@ -45,7 +45,7 @@ function PlanRow({ row, showPlannedStatus, actor, onOpen }: {
   const creator = useWorkoutPerson(creatorId ?? workout.coachUserId ?? workout.athleteUserId, workout.realmId, actor);
   const end = new Date(Date.parse(workout.startsAtUtc) + workout.durationMinutes * 60_000);
   const label = kind === 'draft' ? 'Черновик тренировки' : kind === 'missed' ? 'Пропущенная тренировка' : 'Запланированная тренировка';
-  return <GlassSurface component="button" wrapContent={false} shape="capsule" optics={false}
+  return <GlassSurface component="button" wrapContent={false} optics={false}
     className="profile-workout-card" onClick={onOpen} aria-label={`${label}: ${workout.plan.name}`}>
     <WorkoutPlanCardHeader name={workout.plan.name}
       programName={workout.trainingPlanId ? 'Программа тренировок' : 'Без программы'}
@@ -65,7 +65,7 @@ function SessionRow({ session, programName, actor, onOpen }: {
 }) {
   const athlete = useWorkoutPerson(session.athleteUserId, session.realmId, actor);
   const completed = session.status === 'completed';
-  return <GlassSurface component="button" wrapContent={false} shape="capsule" optics={false}
+  return <GlassSurface component="button" wrapContent={false} optics={false}
     className="profile-workout-card" onClick={onOpen} aria-label={`${completed ? 'Завершённая тренировка' : 'Тренировка в процессе'}: ${session.name}`}>
     <div className="workout-session-card__header workout-session-card__header--scheduled">
       <span className="workout-session-card__icon">
