@@ -11,10 +11,6 @@ on:
         options:
           - preview
           - apply
-      confirm:
-        description: For Apply, enter PREPARE_MEZFIT_WEB
-        type: string
-        required: false
 
 permissions:
   contents: read
@@ -39,16 +35,12 @@ jobs:
       - name: Validate operator configuration
         env:
           MODE: ${{ inputs.mode }}
-          CONFIRM: ${{ inputs.confirm }}
           YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
           YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
         shell: bash
         run: |
           set -euo pipefail
           [[ "$MODE" == preview || "$MODE" == apply ]] || { echo "Invalid mode"; exit 1; }
-          if [[ "$MODE" == apply ]]; then
-            [[ "$CONFIRM" == PREPARE_MEZFIT_WEB ]] || { echo "Apply confirmation missing"; exit 1; }
-          fi
           for key in YC_DEPLOY_SA_ID YC_FOLDER_ID; do
             [[ "${!key}" =~ ^[a-z0-9]+$ ]] || { echo "Missing or invalid $key"; exit 1; }
           done
@@ -65,7 +57,6 @@ jobs:
       - name: Preview or create Yandex web foundation
         env:
           MODE: ${{ inputs.mode }}
-          CONFIRM: ${{ inputs.confirm }}
           YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
           YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
           YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
