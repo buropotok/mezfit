@@ -292,11 +292,13 @@ Avoid mutable `window.*` state and global registries. If a platform-level global
 
 ## 21. Security and secrets
 
-Never put bot tokens, API keys, Cloudflare credentials, signing secrets, or privileged credentials in browser code or committed source. Secrets belong in protected server configuration, including Cloudflare secret storage and Yandex Lockbox for the media signer. The sole approved GitHub Actions credential for privileged Dexie Cloud writes is the existing `DEXIE_CLOUD_WRITE_KEY` **environment secret** in `dexie-production`, configured with required reviewers and restricted to `main`. It may be consumed only by explicitly dispatched, owner-restricted, reviewer-approved jobs for (1) initial public catalogue publication and narrowly scoped versioned updates of existing public exercise definitions plus their publication manifest (with exact ID allowlist, approved-field diff, private backup, full readback verification and stable realm/owner/provenance), (2) additive-only workout schema imports using an exact reviewed table allowlist, (3) additive-only coach exercise personal-catalogue schema imports limited to `coachExerciseOverrides`, `coachExerciseDefinitions`, and `coachExerciseFavourites` with primary key `id`, and (4) the **scoped local calendar ACL installation** in `.github/workflows/dexie-local-calendar-acl.yml`, limited to the exact Coach/Client `workoutOccurrences` grants specified below. It must provide read-only preview, explicit apply confirmation, a protected manual main/repository-owner run, a pre-import configuration recheck, and full readback verification. Other roles, their permissions, all existing Coach PLAN / Client FACT grants, schema, realm membership and business data must remain unchanged. Schema imports must validate the exact reviewed allowlist and verify before/after schema and roles; no other table changes are authorized. All catalogue and schema workflows are **forbidden** to mutate cloud roles; the dedicated ACL workflow is forbidden to mutate cloud schema or business data. None of these workflows may run on PR/push. The key must never be a repository-level secret, appear in PR/push jobs, or share credentials with browser/Worker token exchange. This exception reuses the existing publisher; it does not authorize new keys or roles. Read-only diagnostics continue to use their separate least-privilege account.
+Manual workflow dispatch and selection of the intended operation or Apply mode require no additional static text confirmation code. Preserve existing authorization, branch and event restrictions, protected environments and required reviewers, concurrency, operation validation, and independent attestations of prerequisite checks. This rule does not authorize live execution of privileged operations or waive any separate owner approval requirements.
 
-**Approved public category artwork exception (2026-11-01):** The repository owner authorized one additional use of the existing protected `DEXIE_CLOUD_WRITE_KEY` for publication of exactly eight immutable category illustration Blobs into the public Dexie Cloud table `publicExerciseCategoryArtworks` (primary key `id`). `.github/workflows/publish-category-artwork.yml` may add only that schema table and may publish only the pinned files/IDs declared in `cloud/category-artwork.json` to `rlm-public` with `owner: null`. It must be owner-only, main-only, manual dispatch, protected by required `dexie-production` reviewers, an exact apply confirmation, the shared privileged writer lock, schema/roles before-and-after readback, and SHA-256 readback of every uploaded Blob. Do not delete or overwrite conflicting rows, alter roles/permissions, touch other schema or business tables, run it on PR/push, introduce new secrets, or place publisher credentials in client/Worker code. Preview must be read-only. Clients read only locally synced authorized Blob data, never Cloudflare media endpoints for category art. This is an explicit narrow extension of the allowed publisher operations above; it does not authorize general public catalogue writes or broader rights for ordinary users.
+Never put bot tokens, API keys, Cloudflare credentials, signing secrets, or privileged credentials in browser code or committed source. Secrets belong in protected server configuration, including Cloudflare secret storage and Yandex Lockbox for the media signer. The sole approved GitHub Actions credential for privileged Dexie Cloud writes is the existing `DEXIE_CLOUD_WRITE_KEY` **environment secret** in `dexie-production`, configured with required reviewers and restricted to `main`. It may be consumed only by explicitly dispatched, owner-restricted, reviewer-approved jobs for (1) initial public catalogue publication and narrowly scoped versioned updates of existing public exercise definitions plus their publication manifest (with exact ID allowlist, approved-field diff, private backup, full readback verification and stable realm/owner/provenance), (2) additive-only workout schema imports using an exact reviewed table allowlist, (3) additive-only coach exercise personal-catalogue schema imports limited to `coachExerciseOverrides`, `coachExerciseDefinitions`, and `coachExerciseFavourites` with primary key `id`, and (4) the **scoped local calendar ACL installation** in `.github/workflows/dexie-local-calendar-acl.yml`, limited to the exact Coach/Client `workoutOccurrences` grants specified below. It must provide read-only preview, explicit selection of Apply, a protected manual main/repository-owner run, a pre-import configuration recheck, and full readback verification. Other roles, their permissions, all existing Coach PLAN / Client FACT grants, schema, realm membership and business data must remain unchanged. Schema imports must validate the exact reviewed allowlist and verify before/after schema and roles; no other table changes are authorized. All catalogue and schema workflows are **forbidden** to mutate cloud roles; the dedicated ACL workflow is forbidden to mutate cloud schema or business data. None of these workflows may run on PR/push. The key must never be a repository-level secret, appear in PR/push jobs, or share credentials with browser/Worker token exchange. This exception reuses the existing publisher; it does not authorize new keys or roles. Read-only diagnostics continue to use their separate least-privilege account.
 
-**Approved FitnessProgramer Base 2 publication (2026-11-18):** The owner authorized the protected `DEXIE_CLOUD_WRITE_KEY` to publish the pinned 1,173 FitnessProgramer cards and 1,168 GIF source files (1,167 distinct byte digests) into the public realm with `owner: null`. The manual `publish-fitnessprogramer.yml` operator may add only the three `id` tables in `cloud/schema-fitnessprogramer.json`. It uses the same publisher environment and shared writer lock, owner/main restrictions, explicit apply confirmation, read-only preview, schema/role readback, source tree checks and full GIF byte readback. Existing roles, permissions, public Base 1 records, and other schema remain untouched. Never allow ordinary users to write these records. Publish the release manifest only after complete verification.
+**Approved public category artwork exception (2026-11-01):** The repository owner authorized one additional use of the existing protected `DEXIE_CLOUD_WRITE_KEY` for publication of exactly eight immutable category illustration Blobs into the public Dexie Cloud table `publicExerciseCategoryArtworks` (primary key `id`). `.github/workflows/publish-category-artwork.yml` may add only that schema table and may publish only the pinned files/IDs declared in `cloud/category-artwork.json` to `rlm-public` with `owner: null`. It must be owner-only, main-only, manual dispatch, protected by required `dexie-production` reviewers, explicit selection of Apply, the shared privileged writer lock, schema/roles before-and-after readback, and SHA-256 readback of every uploaded Blob. Do not delete or overwrite conflicting rows, alter roles/permissions, touch other schema or business tables, run it on PR/push, introduce new secrets, or place publisher credentials in client/Worker code. Preview must be read-only. Clients read only locally synced authorized Blob data, never Cloudflare media endpoints for category art. This is an explicit narrow extension of the allowed publisher operations above; it does not authorize general public catalogue writes or broader rights for ordinary users.
+
+**Approved FitnessProgramer Base 2 publication (2026-11-18):** The owner authorized the protected `DEXIE_CLOUD_WRITE_KEY` to publish the pinned 1,173 FitnessProgramer cards and 1,168 GIF source files (1,167 distinct byte digests) into the public realm with `owner: null`. The manual `publish-fitnessprogramer.yml` operator may add only the three `id` tables in `cloud/schema-fitnessprogramer.json`. It uses the same publisher environment and shared writer lock, owner/main restrictions, explicit selection of Apply, read-only preview, schema/role readback, source tree checks and full GIF byte readback. Existing roles, permissions, public Base 1 records, and other schema remain untouched. Never allow ordinary users to write these records. Publish the release manifest only after complete verification.
 
 Public exercise definitions remain read-only to all ordinary Coach/Client accounts. This user-facing immutability does not prohibit operator-approved corrections to the central catalogue. Such corrections must use the existing protected Dexie Cloud publication service account, must not modify private realms or server roles, and must retain compatibility with clients already synchronized to the public realm.
 
@@ -312,8 +314,8 @@ previous role baseline embedded in the operator. Both roles may add calendar
 occurrences; timing/cancelledAt updates are allowed, while execution status is not; only Coach may update assigned
 occurrence PLAN. Realm/participant identity fields, source PLAN grants, session
 lifecycle, FACT grants, schema and other roles must remain unchanged. Use the
-existing protected publisher only, owner/main manual dispatch, explicit apply
-confirmation, immediate configuration recheck and full readback. Never execute
+existing protected publisher only, owner/main manual dispatch, explicit selection of Apply,
+immediate configuration recheck and full readback. Never execute
 ACL writes on PR/push. The prior retirement operator is replaced by this workflow.
 
 The same protected operation may also accept the exact frozen scheduling-request
@@ -342,7 +344,7 @@ in `cloud/schema-adhoc-sessions.json` with the exact Coach add/field-update
 overlay in `cloud/adhoc-session-roles.json`. Preserve every existing role grant
 and unrelated configuration byte-semantically; do not change `cloud/roles.json`.
 Use only the existing protected publisher environment secret, owner/main manual
-preview/apply with explicit confirmation, shared writer concurrency, immediate
+preview/apply, shared writer concurrency, immediate
 full schema/roles recheck and exact full readback even after an import error.
 No business writes, new keys or PR/push execution are authorized. This exception
 does not widen any existing operator. See
@@ -369,7 +371,7 @@ Other legacy scheduled lifecycle paths remain unchanged.
 `workoutSessionId` to occurrence field updates on the complete reviewed ad-hoc
 baseline. No schema, source PLAN, Client, FACT, membership or business data writes.
 Reuse the existing protected environment secret, main/owner manual preview/apply,
-literal apply confirmation, shared writer concurrency, immediate full schema/roles
+shared writer concurrency, immediate full schema/roles
 recheck and exact complete readback after any attempted import, including errors
 and no-op applies. No new credentials or PR/push/issue trigger is authorized.
 Membership preflight may accept the complete old or new reviewed profiles, never
@@ -395,7 +397,7 @@ complete planned-session baseline, using `cloud/calendar-cancellation-roles.json
 No DELETE/manage grants, schema changes, identity updates, PLAN/FACT grant changes,
 membership changes or business-data writes are authorized. Preserve unrelated
 configuration, use the existing protected environment secret, owner/main manual
-preview/apply, literal confirmation, shared writer concurrency, immediate full
+preview/apply, shared writer concurrency, immediate full
 configuration recheck and exact complete readback after failed/no-op imports.
 Membership preflight accepts only complete old or complete new reviewed profiles.
 The workflow is prepared in this PR, not automatically executed on PR/push.
@@ -418,7 +420,7 @@ baseline. No schema, Coach, old scheduled FACT, source PLAN, membership or
 business-data writes are authorized. This supersedes Client read-only execution
 only for the explicitly adopted new Client context after activation. Preserve
 owner sentinels and immutable identity/provenance. Reuse the existing protected
-environment secret, owner/main manual preview/apply, literal apply confirmation,
+environment secret, owner/main manual preview/apply,
 shared writer concurrency, immediate full configuration recheck and exact full
 readback after failed/no-op imports. No PR/push execution or new credentials.
 Live ACL installation is a separate authorized operation; this implementation
@@ -438,7 +440,7 @@ owner, source PLAN and timing. Independent athlete Start remains available.
 Coach `workoutOccurrences.format` update in `cloud/coached-start-roles.json` on
 the complete Client execution baseline. Client, source PLAN, FACT, schema,
 membership and business data are unchanged. Reuse the protected environment
-secret, main/owner manual preview/apply, literal confirmation, shared writer
+secret, main/owner manual preview/apply, shared writer
 concurrency, immediate full recheck and exact full readback after attempted
 imports (including failure) and no-op applies. No PR/push activation or new
 credentials. See `docs/architecture/coached-workout-start.md`.
@@ -467,8 +469,7 @@ data are authorized. Attribute definitions are add-only; updates can change
 only values, with null representing a cleared value.
 
 Reuse the current protected `DEXIE_CLOUD_WRITE_KEY` environment secret,
-repository-owner/main manual Preview/Apply, explicit literal apply
-confirmation, shared protected-writer concurrency, immediate complete
+repository-owner/main manual Preview/Apply, shared protected-writer concurrency, immediate complete
 configuration recheck, and full readback even following a failed/no-op
 import. Never run this privilege operation on PR/push; do not widen existing
 operators or add secrets. Live ordinary-account ACL checks are required
@@ -497,8 +498,8 @@ remove it, or replace validated live roles with older snapshots. Permission-set
 array order is immaterial; duplicates, mixed, partial or otherwise altered role
 profiles must be rejected. Unknown differences require safe permission-only
 diagnostics, never raw role metadata, credentials or membership exports. Reuse the existing
-protected environment secret, owner/main manual Preview/Apply, literal
-`APPLY_DISCUSSIONS_SCHEMA_AND_ACL`, required environment reviewers, the shared
+protected environment secret, owner/main manual Preview/Apply,
+required environment reviewers, the shared
 privileged writer lock, immediate full recheck and exact full readback even
 following failed/no-op imports. Apply requires owner attestation of COMM-02
 validation and a separate explicit live-operation approval. Preparation/PR
@@ -537,7 +538,7 @@ realm/owner/identity, other roles, membership or schema. Server ACL is
 field-scoped; dynamic `independent`/`coached` eligibility is checked by the
 local typed repository, not by comparing cloud templates or by a new Worker.
 Reuse the existing protected `DEXIE_CLOUD_WRITE_KEY`, main/owner manual
-Preview/Apply, literal `APPLY_INDEPENDENT_OCCURRENCE_PLAN_ACL`, shared writer
+Preview/Apply, shared writer
 concurrency, complete pre-import recheck and complete schema/roles readback
 even following failed/no-op import. Never install on PR/push. An explicit owner
 activation and real authenticated Client/Coach permission checks are required
