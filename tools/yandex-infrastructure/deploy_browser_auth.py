@@ -26,7 +26,7 @@ from web_hosting import (
     FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
     OPERATIONS, STORAGE, WebHostingError, await_operation, browser_auth_gateway_spec,
     bucket_name, choose, normalize_gateway_readback, paged_list, resource_id,
-    spec_diff_paths, verify_gateway,
+    spec_diff_paths, verified_gateway_domains, verify_gateway,
 )
 
 VERSIONS = "https://serverless-functions.api.cloud.yandex.net/functions/v1/versions"
@@ -313,7 +313,8 @@ def gateway_spec_changed(api, gateway, wanted):
     except (KeyError, TypeError, ValueError):
         raise WebHostingError("Cannot read existing gateway specification.") from None
     expected = normalize_gateway_readback(wanted, gateway.get("domain"))
-    actual = normalize_gateway_readback(actual, gateway.get("domain"))
+    attached_domains = verified_gateway_domains(gateway, gateway["folderId"], api)
+    actual = normalize_gateway_readback(actual, gateway.get("domain"), attached_domains)
     return spec_diff_paths(expected, actual)
 
 
