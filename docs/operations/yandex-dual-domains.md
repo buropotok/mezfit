@@ -44,16 +44,15 @@ Workflow: `.github/workflows/prepare-mezfit-dual-domains.yml`,
 `YC_DEPLOY_SA_ID`, `YC_FOLDER_ID`, GitHub OIDC and existing folder-scoped
 `dns.editor`, `api-gateway.editor`, `certificate-manager.editor` grants.
 
-Two inputs: `action` and `mode` (default `preview`). `apply` requires
-exact action-specific confirmation:
+Two inputs: `action` and `mode` (default `preview`). Select the intended action and mode:
 
-| Action | Exact Apply confirmation | Result |
-| --- | --- | --- |
-| `prepare_online` | `PREPARE_MEZFIT_ONLINE` | Create/reuse protected public online DNS zone and its separately managed certificate request |
-| `validate_online` | `VALIDATE_MEZFIT_ONLINE` | Add only the exact managed certificate validation CNAME to online DNS zone |
-| `validate_ru` | `VALIDATE_MEZFIT_RU` | Add only the exact managed certificate validation CNAME to existing ru DNS zone |
-| `activate_online` | `ACTIVATE_MEZFIT_ONLINE` | Attach an **ISSUED** online certificate to the existing gateway, then add apex ANAME in online zone |
-| `activate_ru` | `ACTIVATE_MEZFIT_RU` | Attach an **ISSUED** ru certificate to the existing gateway, then add apex ANAME in ru zone |
+| Action | Result |
+| --- | --- |
+| `prepare_online` | Create/reuse protected public online DNS zone and its separately managed certificate request |
+| `validate_online` | Add only the exact managed certificate validation CNAME to online DNS zone |
+| `validate_ru` | Add only the exact managed certificate validation CNAME to existing ru DNS zone |
+| `activate_online` | Attach an **ISSUED** online certificate to the existing gateway, then add apex ANAME in online zone |
+| `activate_ru` | Attach an **ISSUED** ru certificate to the existing gateway, then add apex ANAME in ru zone |
 
 Each phase is independent. **Preview makes no modifications**, and Apply
 re-reads relevant resources before writing. CNAME/ANAME additions refuse
@@ -71,8 +70,7 @@ the intended domain owner and migration window.
 1. **Check that you own and control `mezfit.online`** at a registrar. The
    workflow cannot purchase or verify registration on your behalf.
 2. Merge this PR only after review and successful CI.
-3. Run `prepare_online` in Preview, then Apply using
-   `PREPARE_MEZFIT_ONLINE`. This stages Yandex DNS and a certificate request.
+3. Run `prepare_online` in Preview, then Apply. This stages Yandex DNS and a certificate request.
 4. At the `mezfit.online` registrar, delegate NS to
    `ns1.yandexcloud.net` and `ns2.yandexcloud.net`. Do **not** change the
    existing `mezfit.ru` delegation; it was changed previously by the owner.
