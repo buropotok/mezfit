@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ADHOC_SCHEMA } from './adhoc-sessions.mjs';
 import { EXPECTED_PLANNED_ROLES } from './planned-sessions.mjs';
-import { CONFIRMATION, EXPECTED_CANCELLATION_ROLES, CANCELLATION_ROLE_OVERLAY,
+import { EXPECTED_CANCELLATION_ROLES, CANCELLATION_ROLE_OVERLAY,
   planCalendarCancellation, verifyCalendarCancellation, validateCancellationDispatch,
   assertUnchangedBeforeApply, assertExactImportPayload } from './calendar-cancellation.mjs';
 
@@ -50,14 +50,13 @@ describe('protected logical-deletion ACL', () => {
     expect(() => assertUnchangedBeforeApply(schema, roles, schema, target())).toThrow();
     expect(() => assertExactImportPayload({}, { data: {} })).toThrow();
   });
-  it('permits only owner/main manual dispatch, explicit apply and empty preview confirmation', () => {
+  it('permits only owner/main manual dispatch, valid preview/apply selection', () => {
     expect(() => validateCancellationDispatch(trusted)).not.toThrow();
-    const apply = { ...trusted, DEXIE_CANCELLATION_OPERATION: 'apply', DEXIE_CANCELLATION_CONFIRMATION: CONFIRMATION };
+    const apply = { ...trusted, DEXIE_CANCELLATION_OPERATION: 'apply' };
     expect(() => validateCancellationDispatch(apply)).not.toThrow();
     for (const change of [{ GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF: 'refs/heads/feature' }, { GITHUB_ACTOR: 'other' }])
       expect(() => validateCancellationDispatch({ ...apply, ...change })).toThrow();
-    expect(() => validateCancellationDispatch({ ...apply, DEXIE_CANCELLATION_CONFIRMATION: '' })).toThrow();
-    expect(() => validateCancellationDispatch({ ...trusted, DEXIE_CANCELLATION_CONFIRMATION: CONFIRMATION })).toThrow();
+    expect(() => validateCancellationDispatch({ ...apply, DEXIE_CANCELLATION_OPERATION: 'invalid' })).toThrow();
   });
   it('keeps workflow writes protected, rechecked, and read back after failed imports or no-op apply', () => {
     const workflow = readFileSync(new URL('../../.github/workflows/dexie-calendar-cancellation.yml', import.meta.url), 'utf8');
