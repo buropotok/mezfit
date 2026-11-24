@@ -53,9 +53,12 @@ class NonceRuntimeContracts(TestCase):
                 ok = Mock()
                 ok.__enter__ = Mock(return_value=Mock(status=200))
                 ok.__exit__ = Mock(return_value=False)
-                forbidden = HTTPError("", 403, "", None, None)
-                replay = HTTPError("", 412, "", None, None)
-                opener.open.side_effect = [forbidden, ok, replay, forbidden if succeeds else ok]
+                opener.open.side_effect = [
+                    HTTPError("", 403, "", None, None),
+                    ok,
+                    HTTPError("", 412, "", None, None),
+                    HTTPError("", 403, "", None, None) if succeeds else ok,
+                ]
                 with patch("deploy_browser_auth.request_api", return_value={"iamToken": "runtime-token"}) as mint:
                     if succeeds:
                         verify_nonce_runtime_write(opener, "deployment-token", RUNTIME_SA, bucket, sleep)
