@@ -58,48 +58,48 @@ class FakeCloud:
 
 
 class JwksMirrorTests(unittest.TestCase):
-    def call(self, fake, mode="preview", action="prepare", confirm="", output=None):
-        mirror.execute(mode, action, confirm, FOLDER, DEPLOY, fake, output, sleep=lambda _: None)
+    def call(self, fake, mode="preview", action="prepare", output=None):
+        mirror.execute(mode, action, FOLDER, DEPLOY, fake, output, sleep=lambda _: None)
 
     def test_preview_is_strictly_read_only(self):
         fake = FakeCloud()
         self.call(fake)
         self.assertEqual(fake.writes, [])
 
-    def test_requires_owner_approval(self):
+    def test_rejects_invalid_operation(self):
         fake = FakeCloud()
         with self.assertRaises(WebHostingError):
-            self.call(fake, "apply", confirm="wrong")
+            self.call(fake, "apply", action="unknown")
         self.assertEqual(fake.writes, [])
 
     def test_create_scoped_resources_and_reuse_without_new_key(self):
         fake = FakeCloud()
-        self.call(fake, "apply", "prepare", mirror.APPROVALS["prepare"])
+        self.call(fake, "apply", "prepare")
         self.assertEqual(fake.binding, [mirror.expected_binding(SA_ID)])
         self.assertEqual(fake.keys, [])
         count = len(fake.writes)
-        self.call(fake, "apply", "prepare", mirror.APPROVALS["prepare"])
+        self.call(fake, "apply", "prepare")
         self.assertEqual(count, len(fake.writes))
 
     def test_activation_creates_one_key_and_prevents_silent_rotation(self):
         fake = FakeCloud()
-        self.call(fake, "apply", "prepare", mirror.APPROVALS["prepare"])
+        self.call(fake, "apply", "prepare")
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "credentials.json"
             self.call(fake, "preview", "activate")
             self.assertFalse(path.exists())
-            self.call(fake, "apply", "activate", mirror.APPROVALS["activate"], str(path))
+            self.call(fake, "apply", "activate", str(path))
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
             secret = json.loads(path.read_text())
             self.assertEqual(secret["YC_JWKS_ACCESS_KEY_ID"], fake.keys[0]["keyId"])
             self.assertEqual(secret["YC_JWKS_SECRET_ACCESS_KEY"], "secret-is-staged-only-in-temporary-path")
             with self.assertRaises(WebHostingError):
-                self.call(fake, "apply", "activate", mirror.APPROVALS["activate"], str(path))
+                self.call(fake, "apply", "activate", str(path))
             self.assertEqual(len(fake.keys), 1)
 
     def test_public_or_unexpected_iam_bucket_is_rejected(self):
         fake = FakeCloud()
-        self.call(fake, "apply", "prepare", mirror.APPROVALS["prepare"])
+        self.call(fake, "apply", "prepare")
         fake.bucket["anonymousAccessFlags"] = {"read": True, "list": False, "configRead": False}
         with self.assertRaises(WebHostingError):
             self.call(fake)
@@ -113,13 +113,13 @@ class JwksMirrorTests(unittest.TestCase):
 
     def test_upgrade_reuses_one_existing_key_without_yandex_writes(self):
         fake = FakeCloud()
-        self.call(fake, "apply", "prepare", mirror.APPROVALS["prepare"])
+        self.call(fake, "apply", "prepare")
         with self.assertRaises(WebHostingError):
             self.call(fake, "preview", "upgrade")
         fake.keys.append({"serviceAccountId": SA_ID, "keyId": "YCAJEK0Iv6xqy-pEQcueLTAdg"})
         count = len(fake.writes)
         self.call(fake, "preview", "upgrade")
-        self.call(fake, "apply", "upgrade", mirror.APPROVALS["upgrade"])
+        self.call(fake, "apply", "upgrade")
         self.assertEqual(count, len(fake.writes))
         self.assertEqual(len(fake.keys), 1)
         fake.keys.append({"serviceAccountId": SA_ID, "keyId": "YCAJEanother"})
