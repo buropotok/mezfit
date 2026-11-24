@@ -275,14 +275,7 @@ def spec_diff_paths(expected, actual, path="$", limit=8):
     return [] if expected == actual else [path]
 
 
-def verify_gateway(gateway, folder_id, bucket, api):
-    if (gateway.get("folderId") != folder_id or gateway.get("name") != NAME_GATEWAY
-            or not resource_id(gateway.get("id"))
-            or gateway.get("status") not in {"ACTIVE", "CREATING", "UPDATING"}):
-        raise WebHostingError("Existing gateway has unexpected owner, name or status.")
-
-    # Domains may now be attached independently; publishing must still verify
-    # that no other domain/certificate or gateway integration was introduced.
+def verified_gateway_domains(gateway, folder_id, api):
     attached = gateway.get("attachedDomains")
     if attached is None:
         attached = []
@@ -308,6 +301,16 @@ def verify_gateway(gateway, folder_id, bucket, api):
                     or matches[0].get("deletionProtection") is not True):
                 raise WebHostingError("Unexpected gateway domain or certificate binding.")
             approved_domains.add(name)
+    return approved_domains
+
+
+def verify_gateway(gateway, folder_id, bucket, api):
+    if (gateway.get("folderId") != folder_id or gateway.get("name") != NAME_GATEWAY
+            or not resource_id(gateway.get("id"))
+            or gateway.get("status") not in {"ACTIVE", "CREATING", "UPDATING"}):
+        raise WebHostingError("Existing gateway has unexpected owner, name or status.")
+
+    approved_domains = verified_gateway_domains(gateway, folder_id, api)
     result = api(f"{GATEWAYS}/{gateway['id']}:spec", "Read gateway OpenAPI contract")
     try:
         actual = json.loads(result["openapiSpec"])
