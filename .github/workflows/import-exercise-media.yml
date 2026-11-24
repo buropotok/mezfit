@@ -4,11 +4,6 @@ name: Import Full Exercise Dataset
 # It can change the active media version referenced by immutable Dexie rows.
 on:
   workflow_dispatch:
-    inputs:
-      confirmation:
-        description: 'Type IMPORT_PINNED_1324 to reimport the reviewed immutable GIF dataset'
-        type: string
-        required: true
 
 concurrency:
   group: mezfit-full-exercise-dataset-import
@@ -19,8 +14,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/main' &&
-      github.actor == github.repository_owner &&
-      inputs.confirmation == 'IMPORT_PINNED_1324'
+      github.actor == github.repository_owner
     runs-on: ubuntu-latest
     permissions:
       contents: read
