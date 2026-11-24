@@ -1,6 +1,6 @@
 import unittest
 
-from deploy_browser_auth import DIAGNOSTICS_FINGERPRINT, POPUP, POPUP_ROLLBACK, PRE_POPUP_TAG, TAG
+from deploy_browser_auth import DIAGNOSTICS_FINGERPRINT, PRE_POPUP_TAG, TAG
 from deploy_browser_auth import nonce_bucket_contract
 from test_browser_auth_diagnostics_upgrade import UpgradeCloud
 from test_deploy_browser_auth import FOLDER, RUNTIME_SA
@@ -41,9 +41,9 @@ class PopupDeploymentContract(unittest.TestCase):
     def test_preview_apply_idempotence_and_rollback(self):
         cloud = PopupCloud()
         original = cloud.spec
-        cloud.execute('preview', 'popup', '')
+        cloud.execute('preview', 'popup')
         self.assertEqual(cloud.writes, [])
-        cloud.execute('apply', 'popup', POPUP)
+        cloud.execute('apply', 'popup')
         self.assertEqual(cloud.nonce_bucket['policy'], cloud.policy)
         self.assertEqual(set(cloud.spec['paths']['/auth/start']), {'get', 'post'})
         self.assertEqual(set(cloud.spec['paths']['/auth/callback']), {'get', 'post'})
@@ -51,20 +51,20 @@ class PopupDeploymentContract(unittest.TestCase):
         self.assertIn(PRE_POPUP_TAG, cloud.versions[0]['tags'])
         self.assertIn(TAG, cloud.versions[1]['tags'])
         before = len(cloud.writes)
-        cloud.execute('apply', 'popup', POPUP)
+        cloud.execute('apply', 'popup')
         self.assertEqual(len(cloud.writes), before)
-        cloud.execute('preview', 'popup-rollback', '')
+        cloud.execute('preview', 'popup-rollback')
         self.assertEqual(len(cloud.writes), before)
-        cloud.execute('apply', 'popup-rollback', POPUP_ROLLBACK)
+        cloud.execute('apply', 'popup-rollback')
         self.assertEqual(cloud.spec, original)
         self.assertIn(TAG, cloud.versions[0]['tags'])
         self.assertNotIn(TAG, cloud.versions[1]['tags'])
 
-    def test_public_bucket_drift_and_wrong_confirmation_reject_before_write(self):
+    def test_public_bucket_drift_and_invalid_operation_reject_before_write(self):
         cloud = PopupCloud()
-        with self.assertRaisesRegex(WebHostingError, 'confirmation'):
-            cloud.execute('apply', 'popup', 'wrong')
+        with self.assertRaisesRegex(WebHostingError, 'Unknown browser auth operation'):
+            cloud.execute('invalid', 'popup')
         cloud.nonce_bucket = {**cloud.settings, 'anonymousAccessFlags': {'read': True}}
         with self.assertRaisesRegex(WebHostingError, 'private contract'):
-            cloud.execute('apply', 'popup', POPUP)
+            cloud.execute('apply', 'popup')
         self.assertEqual(cloud.writes, [])
