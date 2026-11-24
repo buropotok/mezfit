@@ -7,7 +7,6 @@ import { isDeepStrictEqual } from 'node:util';
 import { EXPECTED_FLEX_ROLES as PREVIOUS_DISCUSSION_ROLES } from './flex-attributes.mjs';
 import { addRepeatPermission } from './calendar-repeat.mjs';
 
-export const CONFIRMATION = 'APPLY_DISCUSSIONS_SCHEMA_AND_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const fail = code => { throw new Error(code); };
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -218,8 +217,7 @@ export function validateDiscussionDispatch(env) {
   if (!['preview', 'apply'].includes(env.DEXIE_DISCUSSION_OPERATION)) fail('INVALID_DISCUSSION_OPERATION');
   if (env.DEXIE_DISCUSSION_OPERATION === 'apply') {
     if (env.DEXIE_DISCUSSION_COMM02_VALIDATED !== 'true') fail('COMM02_VALIDATION_REQUIRED');
-    if (env.DEXIE_DISCUSSION_CONFIRMATION !== CONFIRMATION) fail('INVALID_DISCUSSION_CONFIRMATION');
-  } else if (env.DEXIE_DISCUSSION_CONFIRMATION) fail('PREVIEW_MUST_NOT_CONFIRM_APPLY');
+  }
 }
 
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
