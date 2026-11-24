@@ -782,7 +782,18 @@ def ensure_mirror_nonce_access(mode, folder, deploy_sa, runtime_sa, api, update_
                                nonce_policy, verify_write):
     bucket = ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep,
                                  nonce_policy=nonce_policy)
-    metadata = api(f"{STORAGE}/{bucket}?view=VIEW_BASIC", "Resolve nonce bucket for runtime grant")
+    try:
+        metadata = api(f"{STORAGE}/{bucket}?view=VIEW_BASIC", "Resolve nonce bucket for runtime grant")
+    except YandexHttpError as error:
+        if error.status != 403:
+            raise
+        metadata = choose(
+            paged_list(api, STORAGE, folder, "buckets", "Resolve nonce bucket through storage list"),
+            bucket, folder, "Private nonce bucket",
+        )
+        if metadata is None:
+            raise WebHostingError("Nonce bucket missing from the approved folder listing.") from None
+        print("Nonce bucket IAM resource resolved through storage list.", flush=True)
     if metadata.get("folderId") != folder:
         raise WebHostingError("Nonce bucket is outside the approved folder.")
     bucket_id = nonce_bucket_iam_resource_id(metadata, bucket)
