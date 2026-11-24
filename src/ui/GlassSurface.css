@@ -6,7 +6,8 @@
 }
 
 @layer base {
-  :where(.ui-glass-surface--default-radius) {
+  /* Outrank Preflight's button reset while allowing utility classes to override. */
+  .ui-glass-surface--default-radius {
     border-radius: var(--ui-glass-surface-default-radius);
   }
 }

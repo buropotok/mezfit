@@ -3,6 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(new URL('./GlassSurface.css', import.meta.url), 'utf8');
 
+describe('GlassSurface default radius', () => {
+  it('uses a class selector in the base layer to beat the button reset while allowing utilities to override', () => {
+    const baseLayer = css.match(/@layer base \{([\s\S]*?)\n\}/)?.[1];
+
+    expect(baseLayer).toMatch(/\n\s*\.ui-glass-surface--default-radius\s*\{\s*border-radius:\s*var\(--ui-glass-surface-default-radius\);/);
+  });
+});
+
 describe('GlassSurface bezel layers', () => {
   it('keeps top-left and bottom-right highlights on independently controlled layers', () => {
     const bezelRules = [...css.matchAll(/\.ui-glass-surface::(?:before|after) \{[\s\S]*?\n\}/g)]
