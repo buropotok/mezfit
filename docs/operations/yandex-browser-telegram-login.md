@@ -71,21 +71,22 @@ signed session. The response is the validated Dexie token envelope, including
 any refresh fields, with `Cache-Control: no-store`. This exchange requires no
 Telegram calls. Session renewal continues through `GET /auth/session`.
 
-After merge, an owner provisions a deletion-protected Lockbox secret named
-`mezfit-browser-dexie-tokens` in the existing Yandex folder. Add `client_id`
-and `client_secret` from the existing server-side Dexie token exchange
-credentials. Grant `lockbox.payloadViewer` on this secret to
-`mezfit-browser-auth-runtime`. The operator reads metadata and bindings and
-pins the active version without fetching the payload. It also pins the current
-browser session signing key from the existing OIDC secret. Use the existing
-scoped deployment identity with metadata access to the new secret.
-
 In **Prepare MezFit Browser Telegram Login**, run `action=dexie-tokens` with
-`mode=preview`. Review the function and exact POST plan. Run `mode=apply` with
-`confirm=ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS` only after owner approval. Apply
-publishes or reuses the verified `browser-dexie-tokens` version of the same
-private function, then adds the exact POST to the existing Gateway and reads it
-back. The `browser-login` tag continues to serve the auth routes.
+`mode=preview`. Review the Lockbox, function and exact POST plan. Run
+`mode=apply` with `confirm=ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS` only after
+owner approval. The first Apply uses the existing GitHub Secrets
+`DEXIE_CLOUD_CLIENT_ID` and `DEXIE_CLOUD_CLIENT_SECRET` to create the
+deletion-protected `mezfit-browser-dexie-tokens` secret. It grants
+`lockbox.payloadViewer` on that secret to `mezfit-browser-auth-runtime`.
+An existing secret is reused without fetching or rotating its payload.
+Preview receives no Dexie credentials and makes no writes. If the existing
+deploy identity lacks Lockbox creation or binding permissions, Apply stops
+at the failed operation.
+
+Apply pins the active Lockbox version and the existing browser session
+signing key, publishes or reuses the private `browser-dexie-tokens` version
+and adds the exact Gateway POST. The `browser-login` tag continues to serve
+the auth routes.
 
 For rollback, preview `action=dexie-tokens-rollback`, then apply with
 `confirm=ROLLBACK_MEZFIT_BROWSER_DEXIE_TOKENS`. The POST returns to the existing

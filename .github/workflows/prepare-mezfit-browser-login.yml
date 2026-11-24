@@ -101,4 +101,6 @@ jobs:
           # Never echo it, write to GITHUB_OUTPUT, or pass it as a CLI arg.
           TELEGRAM_LOGIN_CLIENT_ID: ${{ vars.TELEGRAM_LOGIN_CLIENT_ID }}
           TELEGRAM_LOGIN_CLIENT_SECRET: ${{ inputs.action == 'prepare' && inputs.mode == 'apply' && secrets.TELEGRAM_LOGIN_CLIENT_SECRET || '' }}
+          DEXIE_CLOUD_CLIENT_ID: ${{ inputs.action == 'dexie-tokens' && inputs.mode == 'apply' && secrets.DEXIE_CLOUD_CLIENT_ID || '' }}
+          DEXIE_CLOUD_CLIENT_SECRET: ${{ inputs.action == 'dexie-tokens' && inputs.mode == 'apply' && secrets.DEXIE_CLOUD_CLIENT_SECRET || '' }}
         run: python3 tools/yandex-infrastructure/deploy_browser_auth.py
