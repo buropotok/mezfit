@@ -57,18 +57,15 @@ credential; unlike the GitHub -> Yandex deployment token, it does not auto-expir
 
 Workflow: **Prepare Telegram JWKS Mirror**
 (`.github/workflows/prepare-telegram-jwks-mirror.yml`). Only the repository owner
-on `main` can dispatch it. All writes are manual and require action-specific
-literal confirmation. The PR itself does not perform live infrastructure changes.
+on `main` can dispatch it. All writes require manual selection of the action and Apply mode. The PR itself does not perform live infrastructure changes.
 
-1. Run `action=prepare`, `mode=preview`, blank confirmation. It inspects only Yandex
+1. Run `action=prepare`, `mode=preview`. It inspects only Yandex
    resources and permissions. Stop on unexpected existing bucket, ACL or IAM drift.
-2. Run `action=prepare`, `mode=apply`,
-   `confirm=PREPARE_MEZFIT_JWKS_MIRROR`. It creates/reuses the private bucket and
+2. Run `action=prepare`, `mode=apply`. It creates/reuses the private bucket and
    publisher, adds only the expected bucket IAM grant, and validates the readback.
    This phase creates **no S3 access key** and deploys no Cloudflare code.
 3. Run `action=activate`, `mode=preview` and inspect the one-time key/deployment plan.
-4. Run `action=activate`, `mode=apply`,
-   `confirm=ACTIVATE_MEZFIT_JWKS_MIRROR`. The workflow preflights Cloudflare API
+4. Run `action=activate`, `mode=apply`. The workflow preflights Cloudflare API
    access, mints one S3 key, and deploys **only** the separate Worker using its
    own Wrangler config. The existing `mezfit` Worker, its Cron, D1, R2 and assets
    are unchanged.
@@ -88,11 +85,10 @@ A deployed Worker must never be upgraded by repeating `activate/apply`: its Yand
 static S3 credential is a one-time secret and cannot be read back from Yandex.
 Use **the same owner-only** `Prepare Telegram JWKS Mirror` workflow on `main`:
 
-1. `action=upgrade`, `mode=preview` (blank confirmation): read-only check
+1. `action=upgrade`, `mode=preview`: read-only check
    that the private bucket has the approved IAM contract and that exactly
    **one** publisher S3 key exists.
-2. `action=upgrade`, `mode=apply`,
-   `confirm=UPGRADE_MEZFIT_JWKS_MIRROR`: preflight that the independent
+2. `action=upgrade`, `mode=apply`: preflight that the independent
    Cloudflare Worker **already exists**, then redeploy its code with Wrangler
    and **without** `--secrets-file` or any Yandex key creation.
 3. Wrangler verifies both required Cloudflare secret bindings are present;
@@ -109,8 +105,7 @@ fixed independently of the key and bucket; existing credentials should be reused
 
 Use **Prepare MezFit Browser Telegram Login**
 (`.github/workflows/prepare-mezfit-browser-login.yml`) after the mirror is publishing and
-the popup routes are active. Run `popup-mirror` in `preview` first, then in `apply`
-with `ENABLE_MEZFIT_BROWSER_JWKS_MIRROR`. Both modes check the bucket settings, direct
+the popup routes are active. Run `popup-mirror` in `preview` first, then in `apply`. Both modes check the bucket settings, direct
 IAM bindings, and the current heartbeat and key set. Apply installs the read grant,
 publishes the function version, and moves the existing `browser-login` tag.
 
