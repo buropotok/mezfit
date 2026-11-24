@@ -5,8 +5,10 @@
   initial-value: 1;
 }
 
-:where(.ui-glass-surface--default-radius) {
-  border-radius: var(--ui-glass-surface-default-radius);
+@layer base {
+  :where(.ui-glass-surface--default-radius) {
+    border-radius: var(--ui-glass-surface-default-radius);
+  }
 }
 
 .ui-glass-surface--standalone {
