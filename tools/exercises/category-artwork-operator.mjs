@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 
 const DATABASE_URL = 'https://zjv60oxag.dexie.cloud';
-export const CONFIRMATION = 'PUBLISH_PUBLIC_CATEGORY_ARTWORK_V1';
 const TABLE = 'publicExerciseCategoryArtworks';
 const PRIMARY_KEY = 'id';
 const fail = code => { throw new Error(code); };
@@ -19,9 +18,6 @@ export function authorizeCategoryArtworkOperation(env) {
     fail('UNAUTHORIZED_CATEGORY_ARTWORK_DISPATCH');
   if (!['preview', 'apply'].includes(env.CATEGORY_ARTWORK_OPERATION))
     fail('INVALID_CATEGORY_ARTWORK_OPERATION');
-  if (env.CATEGORY_ARTWORK_OPERATION === 'apply') {
-    if (env.CATEGORY_ARTWORK_CONFIRMATION !== CONFIRMATION) fail('INVALID_CATEGORY_ARTWORK_CONFIRMATION');
-  } else if (env.CATEGORY_ARTWORK_CONFIRMATION) fail('PREVIEW_CANNOT_APPLY');
 }
 
 export function planCategoryArtworkSchema(manifest, beforeSchema, beforeRoles) {
