@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from web_hosting import (
-    CERTIFICATES, GATEWAYS, STORAGE, CONFIRMATION, DOMAIN,
+    CERTIFICATES, GATEWAYS, STORAGE, DOMAIN,
     NAME_CERTIFICATE, NAME_GATEWAY, SAFE_FLAGS, WebHostingError,
     bucket_name, execute, gateway_spec, paged_list, verify_bucket,
 )
@@ -68,17 +68,17 @@ class FakeYandex:
 class WebHostingContracts(unittest.TestCase):
     def test_preview_is_read_only(self):
         api = FakeYandex()
-        execute("preview", "", FOLDER, api)
+        execute("preview", FOLDER, api)
         self.assertEqual(api.writes, [])
 
-    def test_apply_requires_exact_confirmation_without_api_calls(self):
+    def test_invalid_mode_rejected_without_api_calls(self):
         with self.assertRaises(WebHostingError):
-            execute("apply", "wrong", FOLDER, lambda *args: self.fail("must not call API"))
+            execute("invalid", FOLDER, lambda *args: self.fail("must not call API"))
 
     def test_create_then_reuse_all_three_resources(self):
         api = FakeYandex()
-        execute("apply", CONFIRMATION, FOLDER, api, sleep=lambda _: None)
-        execute("apply", CONFIRMATION, FOLDER, api, sleep=lambda _: None)
+        execute("apply", FOLDER, api, sleep=lambda _: None)
+        execute("apply", FOLDER, api, sleep=lambda _: None)
         self.assertEqual([kind for kind, _ in api.writes],
                          ["bucket", "gateway", "certificate"])
         self.assertEqual(api.writes[0][1]["anonymousAccessFlags"], SAFE_FLAGS)
@@ -95,7 +95,7 @@ class WebHostingContracts(unittest.TestCase):
                     "anonymousAccessFlags": flags,
                 }]
                 with self.assertRaises(WebHostingError):
-                    execute("apply", CONFIRMATION, FOLDER, api)
+                    execute("apply", FOLDER, api)
                 self.assertEqual(api.writes, [])
 
     def test_existing_gateway_spec_drift_fails_before_writes(self):
@@ -106,7 +106,7 @@ class WebHostingContracts(unittest.TestCase):
             "spec": json.dumps({"openapi": "3.0.0", "paths": {}}),
         }]
         with self.assertRaises(WebHostingError):
-            execute("apply", CONFIRMATION, FOLDER, api)
+            execute("apply", FOLDER, api)
         self.assertEqual(api.writes, [])
 
     def test_invalid_existing_certificate_fails_before_writes(self):
@@ -116,7 +116,7 @@ class WebHostingContracts(unittest.TestCase):
             "domains": ["other.ru"], "type": "MANAGED", "deletionProtection": True,
         }]
         with self.assertRaises(WebHostingError):
-            execute("apply", CONFIRMATION, FOLDER, api)
+            execute("apply", FOLDER, api)
         self.assertEqual(api.writes, [])
 
     def test_gateway_never_masks_unmigrated_api(self):
