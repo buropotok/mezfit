@@ -6,7 +6,7 @@ import unittest
 
 import jwks_mirror
 from deploy_browser_auth import (
-    DIAGNOSTICS_FINGERPRINT, DIRECT_POPUP_FINGERPRINT, POPUP_MIRROR, POPUP_ROLLBACK,
+    DIAGNOSTICS_FINGERPRINT, DIRECT_POPUP_FINGERPRINT,
     PRE_POPUP_TAG, TAG, VERSIONS, nonce_bucket_name,
 )
 from test_browser_auth_diagnostics_upgrade import UpgradeCloud
@@ -73,18 +73,18 @@ class BrowserJwksMirrorTests(unittest.TestCase):
     def test_preview_and_apply_from_existing_popup_then_rollback(self):
         cloud = MirrorCloud()
         original_spec = cloud.spec
-        cloud.execute("preview", "popup-mirror", "")
+        cloud.execute("preview", "popup-mirror")
         self.assertEqual(cloud.writes, [])
-        cloud.execute("apply", "popup-mirror", POPUP_MIRROR)
+        cloud.execute("apply", "popup-mirror")
         self.assertEqual([url for url, _ in cloud.writes], [
             cloud.bindings_path + ":updateAccessBindings", VERSIONS, VERSIONS + "/version2:setTag",
         ])
         self.assertEqual(cloud.versions[-1]["environment"]["MEZFIT_BROWSER_JWKS_BUCKET"], cloud.mirror_name)
         self.assertIn(TAG, cloud.versions[-1]["tags"])
         self.assertEqual(cloud.spec, original_spec)
-        cloud.execute("apply", "popup-mirror", POPUP_MIRROR)
+        cloud.execute("apply", "popup-mirror")
         self.assertEqual(len(cloud.writes), 3)
-        cloud.execute("apply", "popup-rollback", POPUP_ROLLBACK)
+        cloud.execute("apply", "popup-rollback")
         self.assertIn(TAG, cloud.versions[0]["tags"])
         self.assertEqual(set(cloud.spec["paths"]["/auth/callback"]), {"get"})
 
@@ -92,5 +92,5 @@ class BrowserJwksMirrorTests(unittest.TestCase):
         cloud = MirrorCloud()
         cloud.checked_at -= timedelta(minutes=6)
         with self.assertRaisesRegex(WebHostingError, "freshness"):
-            cloud.execute("apply", "popup-mirror", POPUP_MIRROR)
+            cloud.execute("apply", "popup-mirror")
         self.assertEqual(cloud.writes, [])
