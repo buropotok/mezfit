@@ -325,8 +325,7 @@ def gateway_spec_changed(api, gateway, wanted):
 
 def validate_operation(mode, action):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
-    expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE,
-                "popup": POPUP, "popup-mirror": POPUP_MIRROR, "popup-rollback": POPUP_ROLLBACK}
+    actions = ("prepare", "activate", "upgrade", "popup", "popup-mirror", "popup-rollback")
     if mode not in ("preview", "apply") or action not in actions:
         raise WebHostingError("Unknown browser auth operation.")
 
