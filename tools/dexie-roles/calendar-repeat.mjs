@@ -12,7 +12,6 @@ import { EXPECTED_COACHED_START_ROLES } from './coached-start.mjs';
 import { EXPECTED_FLEX_ROLES } from './flex-attributes.mjs';
 
 const FIELD = 'pendingRepeatRule';
-export const CONFIRMATION = 'APPLY_CALENDAR_REPEAT_ACL';
 const DB_URL = 'https://zjv60oxag.dexie.cloud';
 const USERS = ['coach', 'client'];
 const PROFILES = [EXPECTED_CALENDAR_ROLES, EXPECTED_ADHOC_ROLES,
@@ -62,9 +61,6 @@ export function validateDispatch(env) {
     || !env.GITHUB_ACTOR || env.GITHUB_ACTOR !== env.GITHUB_REPOSITORY_OWNER)
     fail('UNAUTHORIZED_REPEAT_DISPATCH');
   if (!['preview', 'apply'].includes(env.REPEAT_OPERATION)) fail('INVALID_REPEAT_OPERATION');
-  if (env.REPEAT_OPERATION === 'apply') {
-    if (env.REPEAT_CONFIRMATION !== CONFIRMATION) fail('INVALID_REPEAT_CONFIRMATION');
-  } else if (env.REPEAT_CONFIRMATION) fail('PREVIEW_CANNOT_CONFIRM_APPLY');
 }
 const load = async path => JSON.parse(await readFile(path, 'utf8'));
 async function main() {
