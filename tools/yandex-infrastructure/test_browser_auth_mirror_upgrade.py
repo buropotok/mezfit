@@ -2,7 +2,7 @@
 from unittest import TestCase
 
 import test_browser_auth_jwks_bucket
-from deploy_browser_auth import POPUP_MIRROR, PREVIOUS_MIRROR_FINGERPRINT, TAG, VERSIONS
+from deploy_browser_auth import PREVIOUS_MIRROR_FINGERPRINT, TAG, VERSIONS
 from jwks_mirror import reader_binding
 from test_deploy_browser_auth import RUNTIME_SA
 
@@ -14,9 +14,9 @@ class BrowserAuthMirrorUpgradeTests(TestCase):
         old["description"] = PREVIOUS_MIRROR_FINGERPRINT
         old["environment"]["MEZFIT_BROWSER_JWKS_BUCKET"] = cloud.mirror_name
         cloud.mirror_bindings.append(reader_binding(RUNTIME_SA))
-        cloud.execute("preview", "popup-mirror", "")
+        cloud.execute("preview", "popup-mirror")
         self.assertEqual(cloud.writes, [])
-        cloud.execute("apply", "popup-mirror", POPUP_MIRROR)
+        cloud.execute("apply", "popup-mirror")
         self.assertEqual([url for url, _ in cloud.writes], [
             VERSIONS, VERSIONS + "/version2:setTag",
         ])
