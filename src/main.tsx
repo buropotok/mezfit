@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { startAppBootstrap } from './appBootstrap';
 import { completePendingLocalDataReset } from './data/local/resetLocalData';
-import { finishBoot } from './bootDiagnostics';
+import { finishBoot, waitForTelegramSdk } from './bootDiagnostics';
 import { getTelegramLaunchStartParam, getTelegramWebApp } from './telegram';
 import './ui/konsta.css';
 import './style.css';
@@ -71,4 +71,7 @@ async function bootstrap(): Promise<void> {
   );
 }
 
-void startAppBootstrap(bootstrap);
+void startAppBootstrap(async () => {
+  await waitForTelegramSdk();
+  await bootstrap();
+});

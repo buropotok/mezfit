@@ -4,6 +4,7 @@ import html from '../index.html?raw';
 
 interface TestBootRuntime {
   getLaunchStartParam?(): string | null;
+  telegramSdkReady?: Promise<void>;
   mark(stage: string): void;
   finish(): void;
 }
@@ -17,17 +18,15 @@ function runBootstrapBeforeTelegramSdk(path: string): TestBootRuntime | undefine
   delete window.Telegram;
 
   const parsed = new DOMParser().parseFromString(html, 'text/html');
-  const scripts = Array.from(parsed.scripts);
-  const telegramSdkIndex = scripts.findIndex(
-    (script) => script.getAttribute('src') === 'https://telegram.org/js/telegram-web-app.js',
-  );
-
-  expect(telegramSdkIndex).toBeGreaterThan(0);
+  const scripts = Array.from(parsed.head.querySelectorAll('script'));
+  expect(scripts.some(script => script.getAttribute('src') === 'https://telegram.org/js/telegram-web-app.js'))
+    .toBe(false);
 
   const testWindow = window as TestWindow;
   delete testWindow.__MEZFIT_BOOT__;
 
-  for (const script of scripts.slice(0, telegramSdkIndex)) {
+  for (const script of scripts) {
+    if (script.hasAttribute('src')) continue;
     const source = script.textContent?.trim();
     if (source) testWindow.eval(source);
   }
@@ -46,6 +45,8 @@ afterEach(() => {
   delete (window as TestWindow).__MEZFIT_BOOT__;
   delete window.Telegram;
   document.getElementById('mezfit-boot-diagnostics')?.remove();
+  document.querySelectorAll('script[src="https://telegram.org/js/telegram-web-app.js"]')
+    .forEach(script => script.remove());
 });
 
 describe('Telegram launch bootstrap', () => {
@@ -56,6 +57,56 @@ describe('Telegram launch bootstrap', () => {
 
     expect(window.Telegram).toBeUndefined();
     expect(runtime?.getLaunchStartParam?.()).toBe(startParam);
+    expect(runtime?.telegramSdkReady).toBeUndefined();
+    expect(document.querySelector('script[src="https://telegram.org/js/telegram-web-app.js"]')).toBeNull();
+  });
+
+  it('skips the WebApp SDK on a normal browser entry', () => {
+    const runtime = runBootstrapBeforeTelegramSdk('/');
+    expect(runtime?.telegramSdkReady).toBeUndefined();
+    expect(document.querySelector('script[src="https://telegram.org/js/telegram-web-app.js"]')).toBeNull();
+  });
+
+  it('loads the SDK for Telegram launch parameters in the URL fragment and gates startup', async () => {
+    const runtime = runBootstrapBeforeTelegramSdk(
+      '/#tgWebAppPlatform=android&tgWebAppVersion=8.0&tgWebAppData=user%3D1',
+    );
+    const script = document.querySelector<HTMLScriptElement>(
+      'script[src="https://telegram.org/js/telegram-web-app.js"]',
+    );
+    expect(script).not.toBeNull();
+    expect(runtime?.telegramSdkReady).toBeDefined();
+
+    let settled = false;
+    void runtime?.telegramSdkReady?.then(() => { settled = true; });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    script?.dispatchEvent(new Event('load'));
+    await runtime?.telegramSdkReady;
+    expect(settled).toBe(true);
+  });
+
+  it('loads the SDK for Telegram launch parameters in the query string', async () => {
+    const runtime = runBootstrapBeforeTelegramSdk('/?tgWebAppPlatform=ios&tgWebAppVersion=8.0');
+    const script = document.querySelector<HTMLScriptElement>(
+      'script[src="https://telegram.org/js/telegram-web-app.js"]',
+    );
+    expect(script).not.toBeNull();
+    script?.dispatchEvent(new Event('load'));
+    await runtime?.telegramSdkReady;
+  });
+
+  it('releases the startup gate if Telegram SDK loading fails', async () => {
+    const runtime = runBootstrapBeforeTelegramSdk('/#tgWebAppData=auth_date%3D1');
+    const script = document.querySelector<HTMLScriptElement>(
+      'script[src="https://telegram.org/js/telegram-web-app.js"]',
+    );
+    expect(script).not.toBeNull();
+    script?.dispatchEvent(new Event('error'));
+    await runtime?.telegramSdkReady;
+    expect(document.getElementById('mezfit-boot-diagnostics')?.textContent)
+      .toContain('Последний этап: telegram-sdk-error');
   });
 
   it('keeps diagnostics visible until React confirms its first mount', () => {

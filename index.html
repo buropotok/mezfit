@@ -231,12 +231,52 @@
         }, 8000);
       }());
     </script>
-    <script>window.__MEZFIT_BOOT__.mark('telegram-sdk-start');</script>
-    <script
-      src="https://telegram.org/js/telegram-web-app.js"
-      onload="window.__MEZFIT_BOOT__.mark('telegram-sdk-loaded')"
-      onerror="window.__MEZFIT_BOOT__.fail('telegram-sdk-error', { reason: 'load-error' })"
-    ></script>
+    <script>
+      (function () {
+        // Telegram supplies launch parameters before its SDK is loaded.
+        function isTelegramMiniAppLaunch(source) {
+          try {
+            var params = new URLSearchParams(source.charAt(0) === '#' ? source.slice(1) : source);
+            return Boolean(params.get('tgWebAppData')) ||
+              (Boolean(params.get('tgWebAppPlatform')) && Boolean(params.get('tgWebAppVersion')));
+          } catch (_) {
+            return false;
+          }
+        }
+
+        var boot = window.__MEZFIT_BOOT__;
+        if (!isTelegramMiniAppLaunch(window.location.search) &&
+            !isTelegramMiniAppLaunch(window.location.hash)) {
+          boot.mark('telegram-sdk-skipped');
+          return;
+        }
+        if (window.Telegram && window.Telegram.WebApp) {
+          boot.mark('telegram-sdk-loaded');
+          return;
+        }
+
+        boot.mark('telegram-sdk-start');
+        boot.telegramSdkReady = new Promise(function (resolve) {
+          var script = document.createElement('script');
+          script.src = 'https://telegram.org/js/telegram-web-app.js';
+          script.async = false;
+          script.onload = function () {
+            boot.mark('telegram-sdk-loaded');
+            resolve();
+          };
+          script.onerror = function () {
+            boot.fail('telegram-sdk-error', { reason: 'load-error' });
+            resolve();
+          };
+          try {
+            document.head.appendChild(script);
+          } catch (_) {
+            boot.fail('telegram-sdk-error', { reason: 'load-error' });
+            resolve();
+          }
+        });
+      }());
+    </script>
   </head>
   <body>
     <div id="root"></div>
