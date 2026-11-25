@@ -1,0 +1,74 @@
+name: Backfill Mezfit account replica
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_user_id:
+        description: D1 user ID of the pilot account, or first D1 ID of a batch.
+        type: string
+        required: true
+      to_user_id:
+        description: Last D1 ID of a batch (inclusive, at most 100 IDs). Leave empty for the pilot.
+        type: string
+
+concurrency:
+  group: mezfit-account-replica-backfill
+  cancel-in-progress: false
+
+jobs:
+  enqueue:
+    if: github.repository == 'buropotok/mezfit' && github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Resolve D1 database id
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        shell: bash
+        run: |
+          DB_ID=$(npx wrangler d1 list --json | jq -er 'first(.[] | select(.name == "mezfit") | .uuid | strings)')
+          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
+      - name: Enqueue existing accounts
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          FROM_USER_ID: ${{ inputs.from_user_id }}
+          TO_USER_ID: ${{ inputs.to_user_id }}
+        shell: bash
+        run: |
+          filter=$(node --input-type=module <<'JS'
+          const { FROM_USER_ID: from, TO_USER_ID: last } = process.env;
+          const to = last || from;
+          const validId = (id) => /^[1-9][0-9]{0,15}$/.test(id || '') && Number.isSafeInteger(Number(id));
+
+          if (!validId(from) || !validId(to) || Number(to) < Number(from) || Number(to) - Number(from) >= 100) {
+            console.error('Enter a D1 ID or a range of at most 100 D1 IDs.');
+            process.exitCode = 1;
+          } else {
+            console.log(`id BETWEEN ${from} AND ${to}`);
+          }
+          JS
+          )
+          result=$(npx wrangler d1 execute DB_BINDING --remote --yes --json --command "
+            INSERT INTO account_replication_outbox (telegram_user_id, revision, next_attempt_at)
+            SELECT telegram_user_id, 1, CAST(strftime('%s', 'now') AS INTEGER) * 1000
+            FROM app_user WHERE $filter
+            ON CONFLICT (telegram_user_id) DO NOTHING;
+            SELECT COUNT(*) AS matching_accounts FROM app_user WHERE $filter;
+          ")
+          queued=$(jq -er '.[0].meta.changes | numbers' <<< "$result")
+          matched=$(jq -er '.[1].results[0].matching_accounts | numbers' <<< "$result")
+          {
+            echo "Matching accounts: $matched"
+            echo "New entries in the delivery queue: $queued"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ -z "$TO_USER_ID" && "$matched" -ne 1 ]]; then
+            echo "::error::Pilot account was not found in D1"
+            exit 1
+          fi

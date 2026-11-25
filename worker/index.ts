@@ -37,29 +37,8 @@ import { receiveDiscussionNotifications, sendDiscussionNotifications } from './l
 import { resetTestCloudRelationship } from './lib/test-relationship-reset';
 import { resetLegacyTestRelationship } from './lib/test-legacy-relationship-reset';
 
-type Role = 'coach' | 'client';
-
-interface UserRow {
-  id: number;
-  telegram_user_id: string;
-  username: string | null;
-  first_name: string;
-  last_name: string | null;
-  language_code: string | null;
-  photo_url: string | null;
-  is_premium: number;
-}
-
-interface UserView {
-  id: number;
-  telegramUserId: string;
-  username: string | null;
-  firstName: string;
-  lastName: string | null;
-  languageCode: string | null;
-  photoUrl: string | null;
-  isPremium: boolean;
-}
+import { userView, type Role, type UserRow } from './lib/account-profile';
+import { deliverAccountReplicas, queueImmediateAccountDelivery } from './lib/account-replication';
 
 interface AuthContext {
   row: UserRow;
@@ -96,20 +75,7 @@ function json(data: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data), { ...init, headers });
 }
 
-function userView(row: UserRow): UserView {
-  return {
-    id: row.id,
-    telegramUserId: row.telegram_user_id,
-    username: row.username,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    languageCode: row.language_code,
-    photoUrl: row.photo_url,
-    isPremium: row.is_premium === 1,
-  };
-}
-
-async function resolveUser(db: D1Database, telegramUser: TelegramInitUser): Promise<UserRow> {
+async function resolveUser(db: D1Database, telegramUser: TelegramInitUser): Promise<UserRow & { wasCreated?: boolean }> {
   const telegramUserId = String(telegramUser.id);
   const existing = await db
     .prepare(`
@@ -122,7 +88,7 @@ async function resolveUser(db: D1Database, telegramUser: TelegramInitUser): Prom
 
   if (existing) return existing;
 
-  await db
+  const insert = await db
     .prepare(`
       INSERT INTO app_user (
         telegram_user_id, username, first_name, last_name, language_code, photo_url, is_premium
@@ -150,7 +116,7 @@ async function resolveUser(db: D1Database, telegramUser: TelegramInitUser): Prom
     .first<UserRow>();
 
   if (!row) throw new Error('Failed to resolve persisted user');
-  return row;
+  return { ...row, wasCreated: insert.meta.changes > 0 };
 }
 
 async function getRoles(db: D1Database, userId: number): Promise<Role[]> {
@@ -161,10 +127,11 @@ async function getRoles(db: D1Database, userId: number): Promise<Role[]> {
   return result.results.map(({ role }) => role);
 }
 
-async function requireUser(request: Request, env: Env): Promise<AuthContext> {
+async function requireUser(request: Request, env: Env, ctx?: ExecutionContext): Promise<AuthContext> {
   const initData = request.headers.get('x-telegram-init-data') ?? '';
   const validated = await validateTelegramInitData(initData, env.TELEGRAM_BOT_TOKEN);
   const row = await resolveUser(env.DB_BINDING, validated.user);
+  if (row.wasCreated) queueImmediateAccountDelivery(env, ctx, row.telegram_user_id);
   return {
     row,
     roles: await getRoles(env.DB_BINDING, row.id),
@@ -242,8 +209,8 @@ function isExerciseEquipmentCode(value: unknown): value is ExerciseEquipmentCode
   return typeof value === 'string' && exerciseEquipmentCodes.has(value as ExerciseEquipmentCode);
 }
 
-async function handleExerciseRoute(request: Request, env: Env, clientUserId: number): Promise<Response> {
-  const auth = await requireUser(request, env);
+async function handleExerciseRoute(request: Request, env: Env, clientUserId: number, ctx?: ExecutionContext): Promise<Response> {
+  const auth = await requireUser(request, env, ctx);
   requireRole(auth, 'coach');
   await requireCoachClient(env.DB_BINDING, auth.row.id, clientUserId);
 
@@ -332,12 +299,12 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname.startsWith('/api/workout-sessions')) {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     return handleWorkoutSessionRoute(request, env.DB_BINDING, auth.row.id);
   }
 
   if (url.pathname.startsWith('/api/schedule')) {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     return handleScheduleRoute(request, env.DB_BINDING, auth.row.id, auth.roles);
   }
 
@@ -364,23 +331,23 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/coach/exercises' || /^\/api\/coach\/exercises\/\d+(?:\/favourite)?$/.test(url.pathname)) {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     return handleCoachExerciseCatalogueRoute(request, env.DB_BINDING, auth.row.id);
   }
 
   const exerciseMatch = url.pathname.match(/^\/api\/coach\/clients\/(\d+)\/exercises$/);
-  if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]));
+  if (exerciseMatch) return handleExerciseRoute(request, env, Number(exerciseMatch[1]), ctx);
 
   const programSetMatch = url.pathname.match(/^\/api\/coach\/program-exercises\/(\d+)\/sets$/);
   if (programSetMatch) {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     return handleCoachProgramSetRoute(request, env.DB_BINDING, auth.row.id, Number(programSetMatch[1]));
   }
 
   if (url.pathname === '/api/coach/programs' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     const [programs, clients] = await Promise.all([
       listProgramsForUserByCoach(env.DB_BINDING, auth.row.id, auth.row.id),
@@ -390,7 +357,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/coach/programs' && request.method === 'POST') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     let parsedBody: unknown;
     try {
@@ -432,7 +399,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
 
   const programDetailsMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)$/);
   if (programDetailsMatch && request.method === 'GET') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     const programId = Number(programDetailsMatch[1]);
     await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
@@ -443,7 +410,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
 
   const programPhaseCreateMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/phases$/);
   if (programPhaseCreateMatch && request.method === 'POST') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     const programId = Number(programPhaseCreateMatch[1]);
     await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
@@ -468,7 +435,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
 
   const programPhaseDeleteMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/phases\/(\d+)$/);
   if (programPhaseDeleteMatch && request.method === 'DELETE') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     const programId = Number(programPhaseDeleteMatch[1]);
     const phaseId = Number(programPhaseDeleteMatch[2]);
@@ -488,7 +455,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
 
   const duplicateProgramMatch = url.pathname.match(/^\/api\/coach\/programs\/(\d+)\/duplicate$/);
   if (duplicateProgramMatch && request.method === 'POST') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     const programId = Number(duplicateProgramMatch[1]);
     await requireProgramOwner(env.DB_BINDING, auth.row.id, programId);
@@ -497,7 +464,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/coach/programs/reorder' && request.method === 'PUT') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     let parsedBody: unknown;
     try {
@@ -549,12 +516,12 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/me' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     return json({ user: userView(auth.row), roles: auth.roles });
   }
 
   if (url.pathname === '/api/telegram/chat-activation' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     try {
       const activated = await telegramChatIsActivated(auth.row.telegram_user_id, env.TELEGRAM_BOT_TOKEN);
       return json({ activated });
@@ -564,7 +531,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/me/roles' && request.method === 'POST') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     let body: { role?: string } = {};
     try {
       body = (await request.json()) as { role?: string };
@@ -576,17 +543,18 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
       throw new HttpError(400, 'INVALID_ROLE', 'Role must be coach or client');
     }
 
-    await env.DB_BINDING
+    const insert = await env.DB_BINDING
       .prepare('INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, ?)')
       .bind(auth.row.id, body.role)
       .run();
+    if (insert.meta.changes > 0) queueImmediateAccountDelivery(env, ctx, auth.row.telegram_user_id);
 
     return json({ user: userView(auth.row), roles: await getRoles(env.DB_BINDING, auth.row.id) });
   }
 
   const testResetMatch = url.pathname.match(/^\/api\/coach\/clients\/([1-9]\d*)\/test-relationship$/);
   if (testResetMatch && request.method === 'DELETE') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
     const clientTelegramId = testResetMatch[1];
     if (!Number.isSafeInteger(Number(clientTelegramId))
@@ -617,7 +585,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/coach/client-invites' && request.method === 'POST') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
 
     let body: { label?: string } = {};
@@ -647,7 +615,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/invite/current' && request.method === 'GET') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) return json({ invite: null });
 
@@ -670,7 +638,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   }
 
   if (url.pathname === '/api/invite/current/accept' && request.method === 'POST') {
-    const auth = await requireUser(request, env);
+    const auth = await requireUser(request, env, ctx);
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
@@ -692,7 +660,7 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
     // Temporary legacy read-model: existing D1-backed coach/client screens
     // consume these IDs until their repositories migrate to Dexie Cloud.
     // The active link is not written unless the cloud membership is verified.
-    await env.DB_BINDING.batch([
+    const [, roleInsert] = await env.DB_BINDING.batch([
       env.DB_BINDING
         .prepare(`
           INSERT INTO coach_client (coach_user_id, client_user_id, invite_id)
@@ -706,6 +674,8 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
         .prepare("INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, 'client')")
         .bind(auth.row.id),
     ]);
+
+    if ((roleInsert?.meta.changes ?? 0) > 0) queueImmediateAccountDelivery(env, ctx, auth.row.telegram_user_id);
 
     return json({ ok: true, roles: await getRoles(env.DB_BINDING, auth.row.id) });
   }
@@ -739,20 +709,20 @@ export default {
     }
   },
   async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
-    try {
+    const [replication, ...notifications] = await Promise.allSettled([
+      deliverAccountReplicas(env),
       // Real delivery time, not the nominal Cron timestamp, prevents stale reminders after delays.
-      const results = await Promise.allSettled([
-        sendWorkoutReminders(env, Date.now()),
-        sendDiscussionNotifications(env),
-        Promise.resolve().then(() => env.DB_BINDING.prepare(
-          'DELETE FROM telegram_notification_receipts WHERE expires_at <= ?',
-        ).bind(Date.now()).run()),
-      ]);
-      if (results.some(result => result.status === 'rejected')) throw new Error('NOTIFICATIONS_TICK_FAILED');
-    } catch {
-      // No tokens, personal data, cloud payloads or raw upstream errors in cron logs.
+      sendWorkoutReminders(env, Date.now()),
+      sendDiscussionNotifications(env),
+      Promise.resolve().then(() => env.DB_BINDING.prepare(
+        'DELETE FROM telegram_notification_receipts WHERE expires_at <= ?',
+      ).bind(Date.now()).run()),
+    ]);
+    if (replication.status === 'rejected') console.error('ACCOUNT_REPLICATION_TICK_FAILED');
+    if (notifications.some(result => result.status === 'rejected')) {
       console.error('NOTIFICATIONS_TICK_FAILED');
       throw new Error('NOTIFICATIONS_TICK_FAILED');
     }
+    if (replication.status === 'rejected') throw new Error('ACCOUNT_REPLICATION_TICK_FAILED');
   },
 } satisfies ExportedHandler<Env>;
