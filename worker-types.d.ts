@@ -1,6 +1,7 @@
 interface Env {
   ASSETS: Fetcher;
   DB_BINDING: D1Database;
+  MEZFIT_ACCOUNT_REPLICATION_SECRET?: string;
   R2_BINDING_MEZFIT: R2Bucket;
   R2_BINDING_DISCUSSION_MEDIA: R2Bucket;
   R2_ACCOUNT_ID?: string;
