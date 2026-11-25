@@ -1,0 +1,22 @@
+name: Verify Mezfit account replica
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.repository == 'buropotok/mezfit' && github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify writes on the deployed Yandex route
+        env:
+          MEZFIT_ACCOUNT_REPLICATION_SECRET: ${{ secrets.MEZFIT_ACCOUNT_REPLICATION_SECRET }}
+        shell: bash
+        run: python3 -u tools/yandex-infrastructure/verify_account_replica.py | tee -a "$GITHUB_STEP_SUMMARY"
