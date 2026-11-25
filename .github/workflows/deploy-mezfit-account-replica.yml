@@ -1,0 +1,51 @@
+name: Deploy Mezfit account replica
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-mezfit-account-replica.yml'
+      - 'tools/yandex-infrastructure/deploy_account_replica.py'
+      - 'tools/yandex-infrastructure/requirements-account-replica-deploy.txt'
+      - 'tools/yandex-infrastructure/account-replica/**'
+      - 'tools/yandex-infrastructure/web_hosting.py'
+      - 'tools/yandex-infrastructure/deploy_browser_auth.py'
+      - 'tools/yandex-infrastructure/browser_auth_bootstrap.py'
+      - 'tools/yandex-infrastructure/jwks_mirror.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mezfit-yandex-web-gateway
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.repository == 'buropotok/mezfit' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deployment dependencies
+        run: python3 -m pip install -r tools/yandex-infrastructure/requirements-account-replica-deploy.txt
+      - name: Acquire short-lived Yandex IAM token
+        id: yc_iam
+        uses: docker://ghcr.io/yc-actions/yc-iam-token-fed:1.0.0
+        with:
+          yc-sa-id: ${{ vars.YC_DEPLOY_SA_ID }}
+      - name: Apply the replica and verify its route
+        env:
+          YC_DEPLOY_SA_ID: ${{ vars.YC_DEPLOY_SA_ID }}
+          YC_FOLDER_ID: ${{ vars.YC_FOLDER_ID }}
+          YC_IAM_TOKEN: ${{ steps.yc_iam.outputs.token }}
+          MEZFIT_ACCOUNT_REPLICATION_SECRET: ${{ secrets.MEZFIT_ACCOUNT_REPLICATION_SECRET }}
+        run: python3 tools/yandex-infrastructure/deploy_account_replica.py

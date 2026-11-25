@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mezfit-yandex-web-foundation
+  group: mezfit-yandex-web-gateway
   cancel-in-progress: false
 
 jobs:

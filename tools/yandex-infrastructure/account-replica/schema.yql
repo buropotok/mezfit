@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS account_replica (
+    telegram_id Utf8,
+    revision Uint64,
+    snapshot Utf8,
+    PRIMARY KEY (telegram_id)
+);
