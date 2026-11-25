@@ -20,6 +20,8 @@ import { handleCoachProgramSetRoute } from './lib/program-set-api';
 import { listClientProgramsForCoach, listProgramsForUserByCoach } from './lib/programs';
 import { createOpaqueToken, sha256Hex } from './lib/tokens';
 import { TelegramAuthError, validateTelegramInitData, type TelegramInitUser } from './lib/telegram';
+import { BOT_WEBHOOK_PATH, botInviteLinksEnabled, handleTelegramBotWebhook, InviteAcceptanceError } from './lib/telegram-bot-webhook';
+import { completeInviteConsent } from './lib/telegram-invite-consent';
 import { telegramChatIsActivated } from './lib/telegram-chat-activation';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
@@ -167,7 +169,10 @@ function inviteTokenFromStartParam(startParam?: string): string | null {
 }
 
 async function findInvite(db: D1Database, token: string): Promise<InviteRow | null> {
-  const tokenHash = await sha256Hex(token);
+  return findInviteByHash(db, await sha256Hex(token));
+}
+
+async function findInviteByHash(db: D1Database, tokenHash: string): Promise<InviteRow | null> {
   return db
     .prepare(`
       SELECT
@@ -187,6 +192,75 @@ async function findInvite(db: D1Database, token: string): Promise<InviteRow | nu
     `)
     .bind(tokenHash)
     .first<InviteRow>();
+}
+
+function inviteCoachName(invite: InviteRow): string {
+  return [invite.coach_first_name, invite.coach_last_name].filter(Boolean).join(' ');
+}
+
+async function previewBotInvite(env: Env, parameter: string, actor: string) {
+  const token = inviteTokenFromStartParam(parameter);
+  const invite = token && await findInvite(env.DB_BINDING, token);
+  if (!invite) throw new InviteAcceptanceError('INVITE_UNAVAILABLE');
+  if (invite.coach_telegram_user_id === actor) throw new InviteAcceptanceError('SELF_LINK');
+  return { id: invite.id, coachName: inviteCoachName(invite) };
+}
+
+async function acceptClientInvite(
+  env: Env, ctx: ExecutionContext | undefined, tokenHash: string,
+  actor: { row: UserRow } | { telegramUser: TelegramInitUser; consentId: string },
+): Promise<void> {
+  const db = env.DB_BINDING;
+  const invite = await findInviteByHash(db, tokenHash);
+  if (!invite) throw new InviteAcceptanceError('INVITE_UNAVAILABLE');
+  const telegramId = 'row' in actor ? actor.row.telegram_user_id : String(actor.telegramUser.id);
+  if (invite.coach_telegram_user_id === telegramId || ('row' in actor && invite.coach_user_id === actor.row.id)) {
+    throw new InviteAcceptanceError('SELF_LINK');
+  }
+
+  requireCloudMembershipConfiguration(env);
+  const client = 'row' in actor ? actor.row : await resolveUser(db, actor.telegramUser);
+  if (invite.coach_user_id === client.id) throw new InviteAcceptanceError('SELF_LINK');
+
+  // Bound the bot provisioning request so a failed attempt can release the consent for retry.
+  const signal = 'consentId' in actor ? AbortSignal.timeout(25_000) : undefined;
+  const cloudFetch: typeof fetch = signal ? (input, init) => fetch(input, { ...init, signal }) : fetch;
+  await provisionInviteMembership(env, invite.coach_telegram_user_id, client.telegram_user_id, cloudFetch, {
+    coach: inviteCoachName(invite),
+    client: [client.first_name, client.last_name].filter(Boolean).join(' '),
+  });
+
+  // Dexie readback precedes the legacy projection. The bot receipt, role, link
+  // and outbox (including missing rows for legacy clients) commit together.
+  const statements = [
+    db.prepare(`
+      INSERT INTO coach_client (coach_user_id, client_user_id, invite_id)
+      VALUES (?, ?, ?)
+      ON CONFLICT(coach_user_id, client_user_id) DO UPDATE SET
+        status = 'active',
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(invite.coach_user_id, client.id, invite.id),
+    db.prepare("INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, 'client')").bind(client.id),
+  ];
+  if ('consentId' in actor) {
+    statements.push(
+      db.prepare(`
+        INSERT INTO account_replication_outbox (telegram_user_id, revision, next_attempt_at)
+        VALUES (?, 1, ?) ON CONFLICT (telegram_user_id) DO NOTHING
+      `).bind(client.telegram_user_id, Date.now()),
+      completeInviteConsent(db, actor.consentId, client.telegram_user_id),
+    );
+  }
+  const [, roleInsert] = await db.batch(statements);
+  if ('consentId' in actor) {
+    // The required mutations are already durable. The existing cron recovers
+    // delivery if this Worker ends before immediate delivery finishes.
+    await deliverAccountReplicas(env, client.telegram_user_id).catch(() => {
+      console.warn('TELEGRAM_INVITE_REPLICATION_ATTEMPT_FAILED');
+    });
+  } else if ((roleInsert?.meta.changes ?? 0) > 0) {
+    queueImmediateAccountDelivery(env, ctx, client.telegram_user_id);
+  }
 }
 
 const trackingTypes = new Set<TrackingType>(['weight_reps', 'time', 'time_distance', 'time_reps', 'time_weight']);
@@ -607,9 +681,10 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
       .run();
 
     const startParam = `invite_${token}`;
+    const launch = botInviteLinksEnabled(env) ? 'start' : 'startapp';
     return json({
       startParam,
-      telegramUrl: `https://t.me/${env.TELEGRAM_BOT_USERNAME}?startapp=${startParam}`,
+      telegramUrl: `https://t.me/${env.TELEGRAM_BOT_USERNAME}?${launch}=${startParam}`,
       expiresInDays: 30,
     }, { status: 201 });
   }
@@ -642,40 +717,17 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
     const token = inviteTokenFromStartParam(resolveInviteStartParam(request, auth.startParam));
     if (!token) throw new HttpError(400, 'INVITE_MISSING', 'No invite is attached to this Mini App launch');
 
-    const invite = await findInvite(env.DB_BINDING, token);
-    if (!invite) throw new HttpError(410, 'INVITE_UNAVAILABLE', 'Invite is invalid, revoked, or expired');
-    if (invite.coach_user_id === auth.row.id) throw new HttpError(400, 'SELF_LINK', 'Coach cannot accept their own invite');
-
-    requireCloudMembershipConfiguration(env);
-
-    // A link remains reusable for other clients until expiration or revocation.
-    // Dexie Cloud is authoritative for each verified coach-client pair.
-    // Repeated acceptance by the same client is idempotent, even after a lost
-    // HTTP success response; the D1 projection is written only after cloud success.
-    await provisionInviteMembership(env, invite.coach_telegram_user_id, auth.row.telegram_user_id, fetch, {
-      coach: [invite.coach_first_name, invite.coach_last_name].filter(Boolean).join(' '),
-      client: [auth.row.first_name, auth.row.last_name].filter(Boolean).join(' '),
-    });
-
-    // Temporary legacy read-model: existing D1-backed coach/client screens
-    // consume these IDs until their repositories migrate to Dexie Cloud.
-    // The active link is not written unless the cloud membership is verified.
-    const [, roleInsert] = await env.DB_BINDING.batch([
-      env.DB_BINDING
-        .prepare(`
-          INSERT INTO coach_client (coach_user_id, client_user_id, invite_id)
-          VALUES (?, ?, ?)
-          ON CONFLICT(coach_user_id, client_user_id) DO UPDATE SET
-            status = 'active',
-            updated_at = CURRENT_TIMESTAMP
-        `)
-        .bind(invite.coach_user_id, auth.row.id, invite.id),
-      env.DB_BINDING
-        .prepare("INSERT OR IGNORE INTO user_role (user_id, role) VALUES (?, 'client')")
-        .bind(auth.row.id),
-    ]);
-
-    if ((roleInsert?.meta.changes ?? 0) > 0) queueImmediateAccountDelivery(env, ctx, auth.row.telegram_user_id);
+    try {
+      await acceptClientInvite(env, ctx, await sha256Hex(token), auth);
+    } catch (error) {
+      if (error instanceof InviteAcceptanceError) {
+        if (error.code === 'INVITE_UNAVAILABLE') {
+          throw new HttpError(410, error.code, 'Invite is invalid, revoked, or expired');
+        }
+        throw new HttpError(400, error.code, 'Coach cannot accept their own invite');
+      }
+      throw error;
+    }
 
     return json({ ok: true, roles: await getRoles(env.DB_BINDING, auth.row.id) });
   }
@@ -687,6 +739,13 @@ export default {
   async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (url.pathname === BOT_WEBHOOK_PATH) {
+      return handleTelegramBotWebhook(request, env, {
+        preview: (parameter, actor) => previewBotInvite(env, parameter, actor),
+        accept: (tokenHash, telegramUser, consentId) =>
+          acceptClientInvite(env, ctx, tokenHash, { telegramUser, consentId }),
+      });
+    }
 
     try {
       return (await receiveDiscussionNotifications(request, env, ctx)) ?? await handleApi(request, env, ctx);

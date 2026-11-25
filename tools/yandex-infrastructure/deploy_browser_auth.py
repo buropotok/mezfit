@@ -24,9 +24,9 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import jwks_mirror
 from web_hosting import (
-    DEXIE_TOKEN_TAG, FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
+    DEXIE_TOKEN_PATH, DEXIE_TOKEN_TAG, LOGIN_URL_PATH, LOGIN_URL_TAG, FUNCTIONS, GATEWAYS, NAME_BROWSER_AUTH_FUNCTION, NAME_GATEWAY, NoRedirect,
     OPERATIONS, STORAGE, WebHostingError, await_operation, browser_auth_gateway_spec,
-    bucket_name, choose, normalize_gateway_readback, paged_list, resource_id,
+    browser_login_url_route, browser_login_url_fallback, checked_gateway_spec, bucket_name, choose, normalize_gateway_readback, paged_list, resource_id,
     spec_diff_paths, verified_gateway_domains, verify_gateway,
 )
 
@@ -40,6 +40,9 @@ POPUP_MIRROR = "ENABLE_MEZFIT_BROWSER_JWKS_MIRROR"
 POPUP_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP"
 DEXIE_TOKENS = "ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS"
 DEXIE_TOKENS_ROLLBACK = "ROLLBACK_MEZFIT_BROWSER_DEXIE_TOKENS"
+LOGIN_URL = "ENABLE_MEZFIT_TELEGRAM_LOGIN_URL"
+LOGIN_URL_ROLLBACK = "ROLLBACK_MEZFIT_TELEGRAM_LOGIN_URL"
+LOGIN_URL_SECRET_NAME = "mezfit-browser-login-url"
 DEXIE_SECRET_NAME = "mezfit-browser-dexie-tokens"
 DEXIE_DB_CONFIG = Path(__file__).resolve().parents[2] / "dexie-cloud.json"
 TAG = "browser-login"
@@ -328,7 +331,7 @@ def check_gateway(gateway, api, folder):
             or not isinstance(gateway.get("domain"), str)
             or not gateway["domain"].endswith(".apigw.yandexcloud.net")):
         raise WebHostingError("Approved SPA API Gateway must exist and be ACTIVE.")
-    verify_gateway(gateway, folder, bucket_name(folder), api, reject_account_replica=True)
+    verify_gateway(gateway, folder, bucket_name(folder), api, reject_account_replica=True, reject_login_url=True)
 
 
 def gateway_spec_changed(api, gateway, wanted):
@@ -347,7 +350,8 @@ def require_confirmation(mode, action, confirmation):
     """Validate the action BEFORE bootstrap can create any Yandex resources."""
     expected = {"prepare": PREPARE, "activate": ACTIVATE, "upgrade": UPGRADE,
                 "popup": POPUP, "popup-mirror": POPUP_MIRROR, "popup-rollback": POPUP_ROLLBACK,
-                "dexie-tokens": DEXIE_TOKENS, "dexie-tokens-rollback": DEXIE_TOKENS_ROLLBACK}
+                "dexie-tokens": DEXIE_TOKENS, "dexie-tokens-rollback": DEXIE_TOKENS_ROLLBACK,
+                "login-url": LOGIN_URL, "login-url-rollback": LOGIN_URL_ROLLBACK}
     if mode not in ("preview", "apply") or action not in expected:
         raise WebHostingError("Unknown browser auth operation.")
     if mode == "apply" and confirmation != expected[action]:
@@ -686,7 +690,7 @@ def nonce_lifecycle_readback(rules):
     return [rule]
 
 
-def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, *, nonce_policy=None):
+def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sleep, *, nonce_policy=None, require_existing=False):
     settings, legacy_policy = nonce_bucket_contract(folder, runtime_sa)
     policy = legacy_policy if nonce_policy is None else nonce_policy
     bucket = settings["name"]
@@ -759,6 +763,8 @@ def ensure_nonce_bucket(mode, folder, deploy_sa, runtime_sa, api, update_api, sl
     existing = choose(paged_list(api, STORAGE, folder, "buckets", "List nonce buckets"),
                       bucket, folder, "Private nonce bucket")
     current = read("preflight") if existing else {}
+    if require_existing and (not existing or current.get("policy") != policy):
+        raise WebHostingError("LoginUrl requires the approved existing nonce bucket and policy.")
     policy_action = "reuse" if current.get("policy") == policy else "install"
     print(f"Nonce bucket: {'reuse' if existing else 'create'}; one-day expiry for empty markers; "
           f"policy: {policy_action}.", flush=True)
@@ -1257,6 +1263,161 @@ def deploy_dexie_tokens(mode, action, folder, gateway, function_id, deploy_sa, r
         raise WebHostingError("Active Dexie token version failed readback.")
 
 
+def login_url_secret(mode, folder, runtime_sa, api, sleep):
+    from browser_auth_bootstrap import LOCKBOX, RUNTIME_PAYLOAD_ROLE, access_bindings, validate_access
+
+    def find_secret():
+        return choose(paged_list(api, LOCKBOX, folder, "secrets", "Read LoginUrl Lockbox metadata"),
+                      LOGIN_URL_SECRET_NAME, folder, "LoginUrl Lockbox secret")
+
+    secret = find_secret()
+    if not secret and mode == "apply":
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        if not re.fullmatch(r"[0-9]+:[A-Za-z0-9_-]+", token):
+            raise WebHostingError("LoginUrl bootstrap requires the existing TELEGRAM_BOT_TOKEN GitHub Secret.")
+        label = "Create protected LoginUrl Lockbox secret"
+        result = await_operation(api, api(LOCKBOX, label, {
+            "folderId": folder, "name": LOGIN_URL_SECRET_NAME,
+            "deletionProtection": True, "createVersion": True,
+            "versionPayloadEntries": [{
+                "key": "login_url_key", "textValue": hashlib.sha256(token.encode()).hexdigest(),
+            }],
+        }), label, sleep)
+        secret = find_secret()
+        if not secret or secret.get("id") != result.get("id"):
+            raise WebHostingError("LoginUrl Lockbox secret failed creation readback.")
+    if not secret:
+        return None
+    version = secret.get("currentVersion")
+    if (not resource_id(secret.get("id")) or secret.get("status") != "ACTIVE"
+            or secret.get("deletionProtection") is not True or not isinstance(version, dict)
+            or version.get("secretId") != secret["id"] or not resource_id(version.get("id"))
+            or version.get("status") != "ACTIVE" or version.get("payloadEntryKeys") != ["login_url_key"]):
+        raise WebHostingError("Unexpected LoginUrl Lockbox metadata.")
+    if not validate_access(access_bindings(api, secret["id"]), runtime_sa):
+        if mode == "preview":
+            return None
+        label = "Grant scoped LoginUrl Lockbox payload access"
+        await_operation(api, api(f"{LOCKBOX}/{secret['id']}:updateAccessBindings", label, {
+            "accessBindingDeltas": [{"action": "ADD", "accessBinding": {
+                "roleId": RUNTIME_PAYLOAD_ROLE, "subject": {"type": "serviceAccount", "id": runtime_sa},
+            }}],
+        }), label, sleep)
+        if not validate_access(access_bindings(api, secret["id"]), runtime_sa):
+            raise WebHostingError("LoginUrl Lockbox access failed readback.")
+    return {"id": secret["id"], "versionId": version["id"], "key": "login_url_key",
+            "environmentVariable": "MEZFIT_TELEGRAM_LOGIN_URL_KEY"}
+
+
+def deploy_login_url(mode, action, folder, gateway, function_id, deploy_sa, runtime_sa,
+                     secret_id, secret_version, tagged, content, fingerprint, api, update_api, sleep):
+    activate = action == "login-url"
+    url = f"{GATEWAYS}/{gateway['id']}"
+    route = browser_login_url_route(function_id, deploy_sa)
+    fallback = browser_login_url_fallback()
+    bucket = nonce_bucket_name(folder)
+    signing_key = version_secrets(secret_id, secret_version)[2]
+
+    def state():
+        live = api(url, "Read existing Gateway and access logging configuration")
+        if live.get("id") != gateway["id"] or live.get("domain") != gateway["domain"] or live.get("status") != "ACTIVE":
+            raise WebHostingError("Gateway identity or status changed.")
+        spec = checked_gateway_spec(live, folder, bucket_name(folder), api)
+        domains = verified_gateway_domains(live, folder, api)
+        if "mezfit.online" not in domains or DEXIE_TOKEN_PATH not in spec["paths"]:
+            raise WebHostingError("LoginUrl requires verified mezfit.online and the existing Dexie token route.")
+        if activate and live.get("logOptions", {}).get("disabled") is not True:
+            raise WebHostingError("Cannot enable LoginUrl while Gateway URL logging is enabled or unverified.")
+        return normalize_gateway_readback(spec, live["domain"], domains), domains
+
+    initial_versions = function_version_list(api, function_id)
+    existing_dexie = select_tagged_version(initial_versions, DEXIE_TOKEN_TAG)
+
+    def versions():
+        values = function_version_list(api, function_id)
+        if (select_tagged_version(values) != tagged
+                or select_tagged_version(values, DEXIE_TOKEN_TAG) != existing_dexie
+                or not has_gateway_invoker(function_bindings(api, function_id), deploy_sa)):
+            raise WebHostingError("Serving browser auth or Dexie token version or private invocation changed.")
+        return values
+
+    original, domains = state()
+    previous = original["paths"].get(LOGIN_URL_PATH)
+    target = route if activate else fallback
+    versions()
+    if activate:
+        if ("post" not in original["paths"].get("/auth/start", {})
+                or tagged.get("status") != "ACTIVE" or tagged.get("serviceAccountId") != runtime_sa
+                or tagged.get("environment", {}).get("MEZFIT_BROWSER_CHALLENGE_BUCKET") != bucket
+                or signing_key not in tagged.get("secrets", [])
+                or not existing_dexie or existing_dexie.get("status") != "ACTIVE"
+                or signing_key not in existing_dexie.get("secrets", [])):
+            raise WebHostingError("LoginUrl requires existing popup logout cleanup, nonce storage and shared signing key.")
+        ensure_nonce_bucket("preview", folder, deploy_sa, runtime_sa, api, update_api, sleep,
+                            nonce_policy=deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa),
+                            require_existing=True)
+        binding = login_url_secret("preview", folder, runtime_sa, api, sleep)
+        print("LoginUrl: verify exact Gateway route; publish a private tagged version if needed.")
+        if mode == "apply":
+            if state() != (original, domains):
+                raise WebHostingError("Gateway changed before LoginUrl bootstrap.")
+            if binding is None:
+                binding = login_url_secret("apply", folder, runtime_sa, api, sleep)
+        if binding is None and (previous == route or select_tagged_version(versions(), LOGIN_URL_TAG)):
+            raise WebHostingError("Existing LoginUrl deployment lacks its verified Lockbox binding.")
+        environment = {"MEZFIT_AUTH_HOSTS": "mezfit.online", "MEZFIT_BROWSER_CHALLENGE_BUCKET": bucket}
+        secrets = [signing_key, binding]
+
+        def verify_version():
+            candidate = select_tagged_version(versions(), LOGIN_URL_TAG)
+            if candidate and (not binding or not resource_id(candidate.get("id"))
+                    or candidate.get("description") != fingerprint
+                    or candidate.get("status") != "ACTIVE" or candidate.get("runtime") != "nodejs22"
+                    or candidate.get("entrypoint") != "index.handler"
+                    or candidate.get("serviceAccountId") != runtime_sa
+                    or candidate.get("environment") != environment or candidate.get("secrets") != secrets
+                    or candidate.get("logOptions", {}).get("disabled") is not True
+                    or TAG in candidate.get("tags", []) or DEXIE_TOKEN_TAG in candidate.get("tags", [])):
+                raise WebHostingError("LoginUrl version differs from the pinned private package or configuration.")
+            return candidate
+
+        candidate = verify_version()
+        if previous == route and not candidate:
+            raise WebHostingError("Active LoginUrl route has no verified private version.")
+        if mode == "apply" and not candidate:
+            label = "Publish private LoginUrl function version"
+            result = await_operation(api, api(VERSIONS, label, {
+                "functionId": function_id, "runtime": "nodejs22", "entrypoint": "index.handler",
+                "resources": {"memory": "268435456"}, "executionTimeout": "20s",
+                "serviceAccountId": runtime_sa, "content": base64.b64encode(content).decode("ascii"),
+                "environment": environment, "tag": [LOGIN_URL_TAG], "description": fingerprint,
+                "secrets": secrets, "logOptions": {"disabled": True},
+            }), label, sleep)
+            candidate = verify_version()
+            if not candidate or candidate["id"] != result.get("id"):
+                raise WebHostingError("LoginUrl version failed readback.")
+        if mode == "apply" and (login_url_secret("preview", folder, runtime_sa, api, sleep) != binding
+                                or verify_version() != candidate):
+            raise WebHostingError("LoginUrl version or Lockbox changed during Apply.")
+    else:
+        print("LoginUrl rollback: replace the exact route with a redirect to the existing website.")
+    if mode == "preview" or previous == target or (not activate and previous is None):
+        return
+    if state() != (original, domains):
+        raise WebHostingError("Gateway changed since LoginUrl preflight.")
+    versions()
+    wanted = {**original, "paths": {**original["paths"], LOGIN_URL_PATH: target}}
+    label = "Patch only the LoginUrl Gateway path"
+    await_operation(api, update_api(url, label, {
+        "updateMask": "openapiSpec", "openapiSpec": json.dumps(wanted, separators=(",", ":")),
+    }, method="PATCH"), label, sleep)
+    if state() != (wanted, domains):
+        raise WebHostingError("LoginUrl Gateway route failed strict readback.")
+    if activate and verify_version() != candidate:
+        raise WebHostingError("Serving LoginUrl version failed final readback.")
+    versions()
+
+
 def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
             secret_version, api, update_api, sleep=time.sleep, *, nonce_policy=None, verify_nonce_write=None):
     require_confirmation(mode, action, confirm)
@@ -1269,7 +1430,8 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
                      NAME_GATEWAY, folder, "Existing SPA gateway")
     if not gateway:
         raise WebHostingError("SPA Gateway absent; browser login must reuse existing web infrastructure.")
-    check_gateway(gateway, api, folder)
+    if action not in {"login-url", "login-url-rollback"}:
+        check_gateway(gateway, api, folder)
     function = choose(paged_list(api, FUNCTIONS, folder, "functions", "List Cloud Functions"),
                       NAME_BROWSER_AUTH_FUNCTION, folder, "Browser-login function")
     content, fingerprint = source_package()
@@ -1347,6 +1509,11 @@ def execute(mode, action, confirm, folder, deploy_sa, runtime_sa, secret_id,
     tagged = select_tagged_version(function_version_list(api, function["id"]))
     if not resource_id(secret_id) or not resource_id(secret_version) or not tagged:
         raise WebHostingError("Expected pinned browser auth version is absent.")
+
+    if action in {"login-url", "login-url-rollback"}:
+        deploy_login_url(mode, action, folder, gateway, function["id"], deploy_sa, runtime_sa,
+                         secret_id, secret_version, tagged, content, fingerprint, api, update_api, sleep)
+        return
 
     if action in {"dexie-tokens", "dexie-tokens-rollback"}:
         deploy_dexie_tokens(mode, action, folder, gateway, function["id"], deploy_sa, runtime_sa,
@@ -1535,11 +1702,12 @@ def main():
         check_gateway(current_gateway, api, folder)
     bootstrap_action = "upgrade" if action in {
         "popup", "popup-mirror", "popup-rollback", "dexie-tokens", "dexie-tokens-rollback",
+        "login-url", "login-url-rollback",
     } else action
     runtime_sa, secret_id, version_id = bootstrap(mode, bootstrap_action, folder, api)
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
     nonce_options = {}
-    if action in {"popup", "popup-mirror"}:
+    if action in {"popup", "popup-mirror", "login-url"}:
         nonce_policy = deploy_nonce_bucket_policy(folder, deploy_sa, runtime_sa)
     if action == "popup-mirror":
         nonce_options["verify_nonce_write"] = lambda bucket: verify_nonce_runtime_write(
