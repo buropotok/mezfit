@@ -30,7 +30,7 @@ async function postSnapshot(secret: string, row: PendingAccount): Promise<string
   try {
     response = await fetch(REPLICA_URL, {
       method: 'POST',
-      redirect: 'error',
+      redirect: 'manual',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       headers: {
         authorization: `Bearer ${secret}`,
@@ -44,6 +44,7 @@ async function postSnapshot(secret: string, row: PendingAccount): Promise<string
 
   if (response.status !== 200) {
     await response.body?.cancel().catch(() => {});
+    if (response.status >= 300 && response.status < 400) return 'REDIRECT_REFUSED';
     switch (response.status) {
       case 400: return 'INVALID_SNAPSHOT';
       case 401: return 'UNAUTHORIZED';
