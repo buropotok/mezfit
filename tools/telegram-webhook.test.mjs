@@ -70,6 +70,40 @@ describe('Telegram webhook deployment', () => {
     expect(targets(request)).toEqual(['getMe', 'getWebhookInfo', 'Worker', 'setWebhook']);
   });
 
+  it('separates an unreachable Telegram API from a non-JSON gateway response', async () => {
+    const dnsFailure = new TypeError('request with ' + env.TELEGRAM_BOT_TOKEN, {
+      cause: { code: 'ENOTFOUND' },
+    });
+    await expect(configureTelegramWebhook('preflight', env, async () => { throw dnsFailure; }))
+      .rejects.toThrow('getMe: transport error (DNS_FAILURE)');
+    await expect(configureTelegramWebhook('preflight', env, async () => new Response('<html>', { status: 502 })))
+      .rejects.toThrow('getMe: could not read response (HTTP 502, INVALID_JSON)');
+  });
+
+  it('reports Telegram subscription checks and delivery status separately', async () => {
+    const response = fixture();
+    let reads = 0;
+    const request = async (url, init) => {
+      if (url.endsWith('/getWebhookInfo') && ++reads === 2) {
+        return Response.json({ ok: true, result: {
+          url: endpoint,
+          has_custom_certificate: false,
+          pending_update_count: 3,
+          allowed_updates: ['message', 'callback_query'],
+          last_error_date: 1,
+          last_error_message: 'Wrong response from the webhook: 401 ' + env.TELEGRAM_BOT_WEBHOOK_SECRET,
+        } });
+      }
+      return response(url, init);
+    };
+    await expect(configureTelegramWebhook('register', env, request)).resolves.toEqual({
+      pendingUpdates: 3, deliveryErrorAt: 1, deliveryErrorIsRecent: false,
+      deliveryError: 'Wrong response from the webhook: 401 [redacted]',
+    });
+    await expect(configureTelegramWebhook('register', env, fixture({ actualUpdates: ['message'] })))
+      .rejects.toThrow('getWebhookInfo after registration: allowed_updates does not match');
+  });
+
   it.each([
     [{ username: 'other_bot' }, /does not belong/, ['getMe']],
     [{ current: 'https://other.example/webhook' }, /different webhook/, ['getMe', 'getWebhookInfo']],
