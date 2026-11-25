@@ -34,6 +34,36 @@ async function openLogin() {
   fireEvent.click(button);
 }
 
+it('waits for a slow session check past the previous five-second cutoff', async () => {
+  vi.useFakeTimers();
+  vi.mocked(getBrowserSession).mockImplementationOnce(signal => new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => resolve(identity), 6_500);
+    signal?.addEventListener('abort', () => {
+      window.clearTimeout(timer);
+      reject(new Error('session request aborted'));
+    }, { once: true });
+  }));
+
+  render(<BrowserTelegramLogin />);
+  await act(async () => { await vi.advanceTimersByTimeAsync(5_500); });
+  expect(screen.getByText('Проверяем браузерную сессию…')).toBeTruthy();
+  await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+  expect(screen.getByText(/Подтверждённый пользователь/)).toBeTruthy();
+});
+
+it('allows retrying the session check after a transient server error', async () => {
+  vi.mocked(getBrowserSession)
+    .mockRejectedValueOnce(new ApiError(503, 'Запрос браузерной авторизации не выполнен'))
+    .mockResolvedValueOnce(identity);
+
+  render(<BrowserTelegramLogin />);
+  expect(await screen.findByText(/HTTP 503/)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Повторить проверку' }));
+  expect(await screen.findByText(/Подтверждённый пользователь/)).toBeTruthy();
+  expect(getBrowserSession).toHaveBeenCalledTimes(2);
+  expect(prepareBrowserLogin).not.toHaveBeenCalled();
+});
+
 it('uses a popup but only displays the identity read from the server session', async () => {
   vi.mocked(completeBrowserLogin).mockResolvedValue(identity);
   render(<BrowserTelegramLogin />);
