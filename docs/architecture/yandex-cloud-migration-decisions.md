@@ -7,6 +7,7 @@
 
 > **Это архитектурный документ, а не отчёт об успешном production cutover.**
 > Статусы конкретных ресурсов/сертификатов/CI могут измениться после указанной даты.
+> Разделы 2–6 сохраняют исторический контекст первоначального развёртывания; актуальные решения и порядок работ — §1.3 и §8.
 > Перед действиями проверять фактический `main`, статус PR, GitHub Actions и Yandex Cloud.
 > Обязательны корневой [AGENTS.md](../../AGENTS.md) и
 > [архитектура локального хранения](local-first-storage-sync.md).
@@ -27,7 +28,6 @@
 | YC-10 | Работоспособность, авторизация, производительность и DNS подтверждаются отдельно. | Не путать «SPA открывается», «OIDC установил личность», «backend отвечает», «данные синхронизируются» и «можно переключать пользователей». |
 | YC-11 | **Решение владельца 2026-11-24:** сохранить действующую идентификацию `userId = tg:<telegramUserId>` для всех пользователей MVP. Провайдер-независимую идентификацию и VK ID отложить. | Не менять префикс, ID, realm hash, membership, ownership, схему бизнес-данных и ключи локальных данных ради альтернативного входа; не создавать identity registry или синтетические ID. [Аудит зависимостей](../../audit/2026-11-24_telegram_identity_dependency_audit.md). |
 | YC-12 | Независимость от Telegram как среды исполнения, а не как провайдера идентификации: после первичного входа полноценная повседневная работа web/Capacitor без VPN и обязательных обращений к Telegram. | Серверная сессия Mezfit, восстановление и продление сессии, выдача/обновление Dexie токенов и защищённые API без повторного обращения к Telegram при действующей сессии. Сохранить проверку ролей/realms, безопасный отзыв, сроки действия и изоляцию аккаунтов. |
-
 | YC-13 | **Cloudflare D1 — единственный источник учётных записей и глобальных ролей; Yandex YDB — односторонняя реплика.** | Сохранить `app_user`, `user_role`, их ID и CF-потребителей. YDB хранит только проекцию существующего `MeResponse` с метаданными доставки. Не создавать независимую запись ролей в YDB, не переносить туда бизнес-профили, программы, тренировки, связи и ACL. |
 | YC-14 | **Надёжная доставка CF → Yandex через Transactional Outbox в D1.** | Изменение учётных данных и постановка задания атомарны; доставка с повторными попытками, устойчивой версией данных и идемпотентным приёмом. Переиспользовать существующий CF Cron (5 минут); отдельный брокер сообщений на первом этапе не нужен. |
 | YC-15 | **Целевой сценарий клиента — регистрация и явное принятие приглашения в Telegram-боте на CF.** | Новая ссылка ведёт в чат бота через `?start=invite_<token>`, а не `startapp`. Бот показывает имя тренера и кнопки «Принять» / «Отмена». Переиспользовать существующие правила приглашений, Dexie membership и legacy-проекцию; не удалять Mini App до проверки замены. |
@@ -293,7 +293,7 @@ PR: [#886 — Telegram browser OIDC with Yandex server-side verification](https:
 - [Yandex DNS foundation](../operations/yandex-dns-foundation.md)
 - [Yandex SPA hosting and security](../operations/yandex-web-hosting.md)
 - [Yandex dual domains](../operations/yandex-dual-domains.md)
-- [Browser Telegram OIDC (PR #886; отсутствует в main до merge)](https://github.com/buropotok/mezfit/blob/feat/yandex-telegram-browser-oidc/docs/operations/yandex-browser-telegram-login.md)
+- [Browser Telegram OIDC и Dexie Token API](../operations/yandex-browser-telegram-login.md)
 - [`web_hosting.py` — Gateway contract](../../tools/yandex-infrastructure/web_hosting.py)
 - [`publish_spa.py` — static deploy contract](../../tools/yandex-infrastructure/publish_spa.py)
 - [`dual_domains.py` — DNS/managed TLS/domain operator](../../tools/yandex-infrastructure/dual_domains.py)
