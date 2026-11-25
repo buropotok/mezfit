@@ -65,7 +65,7 @@ describe('account replication', () => {
       .mockImplementationOnce(async (url, request) => {
         expect(url).toBe('https://mezfit.online/api/internal/account-replication');
         expect(request.method).toBe('POST');
-        expect(request.redirect).toBe('error');
+        expect(request.redirect).toBe('manual');
         expect(request.headers.authorization).toBe('Bearer test-secret');
         expect(JSON.parse(request.body)).toEqual({
           user: {
@@ -91,6 +91,23 @@ describe('account replication', () => {
 
     db.exec("UPDATE app_user SET first_name = 'Updated' WHERE id = 1");
     expect(outbox()).toMatchObject({ revision: 4, attempts: 0, next_attempt_at: expect.any(Number) });
+  });
+
+  it('keeps the snapshot pending when the receiver redirects', async () => {
+    insertAccount();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const send = vi.fn().mockResolvedValue(Response.redirect('https://redirect.example/', 302));
+    vi.stubGlobal('fetch', send);
+
+    await deliverAccountReplicas(env);
+
+    expect(send).toHaveBeenCalledExactlyOnceWith(
+      'https://mezfit.online/api/internal/account-replication',
+      expect.objectContaining({ method: 'POST', redirect: 'manual' }),
+    );
+    expect(outbox()).toMatchObject({
+      revision: 1, attempts: 1, next_attempt_at: expect.any(Number), last_error: 'REDIRECT_REFUSED',
+    });
   });
 
   it('retries an invalid acknowledgement without advancing the revision', async () => {
