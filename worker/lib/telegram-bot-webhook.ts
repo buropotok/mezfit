@@ -7,6 +7,7 @@ import {
 
 export const BOT_WEBHOOK_PATH = '/api/telegram/bot-webhook';
 const WEB_URL = 'https://mezfit.online/';
+const WEB_LOGIN_URL = WEB_URL + 'auth/telegram-login';
 const MAX_BODY_BYTES = 32 * 1024;
 const SECRET_FORMAT = /^[A-Za-z0-9_-]{1,256}$/;
 const CALLBACK_DATA = /^([acs])\.([a-f0-9]{32})\.([a-f0-9]{24})$/;
@@ -14,7 +15,9 @@ const UNAVAILABLE = 'Приглашение недействительно ил�
 const SELF_LINK = 'Вы не можете принять собственное приглашение.';
 
 type Action = 'a' | 'c' | 's';
-type Button = { text: string } & ({ callback_data: string } | { url: string });
+type Button = { text: string } & (
+  { callback_data: string } | { url: string } | { login_url: { url: string } }
+);
 type Message = { chat_id: number; text: string; reply_markup: { inline_keyboard: Button[][] } };
 type TelegramCall =
   | { method: 'sendMessage'; payload: Message }
@@ -263,8 +266,10 @@ async function handleUpdate(update: Update, env: Env, secret: string, invitation
       await button('Проверить готовность', 's', consentId),
     ]]);
   }
+  const readyButton: Button = env.TELEGRAM_BOT_LOGIN_URL_ENABLED === 'true'
+    ? { text: appButton.text, login_url: { url: WEB_LOGIN_URL } } : appButton;
   return send(`Приглашение принято! Ваш тренер — ${status.coachName}. Веб-интерфейс будет подключён отдельно.`, [
-    [appButton],
+    [readyButton],
     [{ text: 'Открыть Mini App', url: `https://t.me/${env.TELEGRAM_BOT_USERNAME}?startapp` }],
   ]);
 }

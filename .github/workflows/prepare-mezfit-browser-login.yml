@@ -17,6 +17,8 @@ on:
           - popup-rollback
           - dexie-tokens
           - dexie-tokens-rollback
+          - login-url
+          - login-url-rollback
       mode:
         description: Preview is read-only; Apply requires exact confirmation
         type: choice
@@ -69,6 +71,8 @@ jobs:
             popup-rollback) expected=ROLLBACK_MEZFIT_BROWSER_LOGIN_POPUP ;;
             dexie-tokens) expected=ENABLE_MEZFIT_BROWSER_DEXIE_TOKENS ;;
             dexie-tokens-rollback) expected=ROLLBACK_MEZFIT_BROWSER_DEXIE_TOKENS ;;
+            login-url) expected=ENABLE_MEZFIT_TELEGRAM_LOGIN_URL ;;
+            login-url-rollback) expected=ROLLBACK_MEZFIT_TELEGRAM_LOGIN_URL ;;
             *) echo "Invalid action"; exit 1 ;;
           esac
           [[ "$MODE" == preview || "$MODE" == apply ]] || { echo "Invalid mode"; exit 1; }
@@ -103,4 +107,5 @@ jobs:
           TELEGRAM_LOGIN_CLIENT_SECRET: ${{ inputs.action == 'prepare' && inputs.mode == 'apply' && secrets.TELEGRAM_LOGIN_CLIENT_SECRET || '' }}
           DEXIE_CLOUD_CLIENT_ID: ${{ inputs.action == 'dexie-tokens' && inputs.mode == 'apply' && secrets.DEXIE_CLOUD_CLIENT_ID || '' }}
           DEXIE_CLOUD_CLIENT_SECRET: ${{ inputs.action == 'dexie-tokens' && inputs.mode == 'apply' && secrets.DEXIE_CLOUD_CLIENT_SECRET || '' }}
+          TELEGRAM_BOT_TOKEN: ${{ inputs.action == 'login-url' && inputs.mode == 'apply' && secrets.TELEGRAM_BOT_TOKEN || '' }}
         run: python3 tools/yandex-infrastructure/deploy_browser_auth.py

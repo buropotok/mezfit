@@ -143,6 +143,8 @@ def gateway_spec(bucket):
     }
 
 
+LOGIN_URL_PATH = "/auth/telegram-login"
+LOGIN_URL_TAG = "browser-login-url"
 DEXIE_TOKEN_PATH = "/api/dexie-cloud/tokens"
 DEXIE_TOKEN_TAG = "browser-dexie-tokens"
 ACCOUNT_REPLICA_PATH = "/api/internal/account-replication"
@@ -158,6 +160,24 @@ def account_replica_route(function_id, service_account_id):
         "service_account_id": service_account_id, "tag": ACCOUNT_REPLICA_TAG,
         "payload_format_version": "1.0",
     }}}
+
+
+def browser_login_url_route(function_id, service_account_id):
+    if not resource_id(function_id) or not resource_id(service_account_id):
+        raise WebHostingError("Missing approved LoginUrl function or service account.")
+    return {method: {"x-yc-apigateway-integration": {
+        "type": "cloud_functions", "function_id": function_id,
+        "service_account_id": service_account_id, "tag": LOGIN_URL_TAG,
+        "payload_format_version": "1.0",
+    }} for method in ("get", "post")}
+
+
+def browser_login_url_fallback():
+    return {method: {"x-yc-apigateway-integration": {
+        "type": "dummy", "http_code": 303,
+        "http_headers": {"location": "/", "cache-control": "no-store", "referrer-policy": "no-referrer"},
+        "content": {"*": "{}"},
+    }} for method in ("get", "post")}
 
 
 def browser_auth_gateway_spec(bucket, function_id, service_account_id, *, popup=False, dexie_tokens=False):
@@ -327,7 +347,7 @@ def verified_gateway_domains(gateway, folder_id, api):
     return approved_domains
 
 
-def checked_gateway_spec(gateway, folder_id, bucket, api, *, reject_account_replica=False):
+def checked_gateway_spec(gateway, folder_id, bucket, api, *, reject_account_replica=False, reject_login_url=False):
     if (gateway.get("folderId") != folder_id or gateway.get("name") != NAME_GATEWAY
             or not resource_id(gateway.get("id"))
             or gateway.get("status") not in {"ACTIVE", "CREATING", "UPDATING"}):
@@ -354,6 +374,15 @@ def checked_gateway_spec(gateway, folder_id, bucket, api, *, reject_account_repl
         popup = isinstance(start_path, dict) and "post" in start_path
         expected_spec = browser_auth_gateway_spec(
             bucket, known["id"], approved_sa, popup=popup, dexie_tokens=DEXIE_TOKEN_PATH in paths)
+        if LOGIN_URL_PATH in paths:
+            if reject_login_url:
+                raise WebHostingError("LoginUrl route is managed separately; refusing to replace the Gateway spec.")
+            route = browser_login_url_route(known["id"], approved_sa)
+            fallback = browser_login_url_fallback()
+            normalized = normalize_gateway_readback({"paths": {LOGIN_URL_PATH: paths[LOGIN_URL_PATH]}},
+                                                     gateway.get("domain"))
+            expected_spec["paths"][LOGIN_URL_PATH] = (
+                fallback if normalized["paths"][LOGIN_URL_PATH] == fallback else route)
     else:
         expected_spec = gateway_spec(bucket)
     if isinstance(paths, dict) and ACCOUNT_REPLICA_PATH in paths:
@@ -378,8 +407,9 @@ def checked_gateway_spec(gateway, folder_id, bucket, api, *, reject_account_repl
     return actual
 
 
-def verify_gateway(gateway, folder_id, bucket, api, *, reject_account_replica=False):
-    checked_gateway_spec(gateway, folder_id, bucket, api, reject_account_replica=reject_account_replica)
+def verify_gateway(gateway, folder_id, bucket, api, *, reject_account_replica=False, reject_login_url=False):
+    checked_gateway_spec(gateway, folder_id, bucket, api,
+                         reject_account_replica=reject_account_replica, reject_login_url=reject_login_url)
     return gateway
 
 

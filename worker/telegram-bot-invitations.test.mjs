@@ -419,6 +419,21 @@ describe('Telegram bot invitations', () => {
     expect(outbox()).toBeUndefined();
   });
 
+  it('uses login_url only for a ready registration after activation', async () => {
+    env.TELEGRAM_BOT_LOGIN_URL_ENABLED = 'true';
+    replicate.mockResolvedValueOnce(Response.json({ status: 'applied', revision: 999 }));
+    await send(callback((await show()).accept));
+    const [[check]] = latestMessage().reply_markup.inline_keyboard;
+    expect(check).toEqual({ text: 'Проверить готовность', callback_data: expect.any(String) });
+    const { deliverAccountReplicas } = await import('./lib/account-replication');
+    now = outbox().next_attempt_at;
+    await deliverAccountReplicas(env, '202');
+    await send(callback(check.callback_data));
+    expect(latestMessage().reply_markup.inline_keyboard[0][0]).toEqual({
+      text: 'Открыть Mezfit', login_url: { url: 'https://mezfit.online/auth/telegram-login' },
+    });
+  });
+
   it('keeps a newer revision pending when a concurrent change outpaces immediate delivery', async () => {
     const { accept } = await show();
     replicate.mockImplementationOnce(async (snapshot) => {

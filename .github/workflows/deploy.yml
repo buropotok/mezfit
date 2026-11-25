@@ -65,6 +65,7 @@ jobs:
           MEZFIT_ACCOUNT_REPLICATION_SECRET: ${{ secrets.MEZFIT_ACCOUNT_REPLICATION_SECRET }}
           TELEGRAM_BOT_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_BOT_WEBHOOK_SECRET }}
           TELEGRAM_BOT_INVITES_ENABLED: ${{ vars.TELEGRAM_BOT_INVITES_ENABLED }}
+          TELEGRAM_BOT_LOGIN_URL_ENABLED: ${{ vars.TELEGRAM_BOT_LOGIN_URL_ENABLED }}
         shell: bash
         run: |
           if [[ -n "$MEZFIT_ACCOUNT_REPLICATION_SECRET" && ! "$MEZFIT_ACCOUNT_REPLICATION_SECRET" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
@@ -79,7 +80,10 @@ jobs:
             echo "::error::TELEGRAM_BOT_INVITES_ENABLED requires TELEGRAM_BOT_WEBHOOK_SECRET"
             exit 1
           fi
-          deploy_args=(--var "TELEGRAM_BOT_INVITES_ENABLED:${TELEGRAM_BOT_INVITES_ENABLED:-false}")
+          deploy_args=(
+            --var "TELEGRAM_BOT_INVITES_ENABLED:${TELEGRAM_BOT_INVITES_ENABLED:-false}"
+            --var "TELEGRAM_BOT_LOGIN_URL_ENABLED:${TELEGRAM_BOT_LOGIN_URL_ENABLED:-false}"
+          )
           if [[ -n "$MEZFIT_ACCOUNT_REPLICATION_SECRET" || -n "$TELEGRAM_BOT_WEBHOOK_SECRET" ]]; then
             secret_file=$(mktemp)
             trap 'rm -f "$secret_file"' EXIT

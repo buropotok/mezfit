@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Browser-only Telegram OIDC bridge for Yandex Cloud Functions (Node.js 22).
+ * Browser-only Telegram sign-in bridge for Yandex Cloud Functions (Node.js 22).
  *
  * This is NOT a substitute for Telegram Mini App initData. A browser cookie
  * can verify browser identity for the session and Dexie token endpoints.
@@ -15,6 +15,10 @@ const ISSUER = 'https://oauth.telegram.org';
 const COOKIE_FLOW = '__Host-mz_oidc_flow';
 const COOKIE_POPUP = '__Host-mz_oidc_popup';
 const COOKIE_SESSION = '__Host-mz_browser_session';
+const LOGIN_URL_PATH = '/auth/telegram-login';
+const LOGIN_URL_HOST = 'mezfit.online';
+const LOGIN_URL_TTL = 120;
+const LOGIN_URL_PURPOSE = 'telegram-login-url';
 const DEXIE_TOKEN_PATH = '/api/dexie-cloud/tokens';
 const MAX_DEVICE_KEY_LENGTH = 8192;
 const FLOW_TTL = 600;
@@ -618,15 +622,162 @@ async function dexieTokens(event, config, host) {
   return json(200, token);
 }
 
+function loginUrlParameters(event) {
+  const single = event.queryStringParameters ?? {};
+  const multi = event.multiValueQueryStringParameters;
+  if (!isRecord(single) || (multi != null && !isRecord(multi))) return null;
+  const keys = Object.keys(single);
+  if (keys.length === 0 && (!multi || Object.keys(multi).length === 0)) return single;
+  // This route requires the v1 Gateway event's complete multivalue map.
+  if (!multi || Object.keys(multi).length !== keys.length) return null;
+  let size = 0;
+  for (const key of keys) {
+    const value = single[key];
+    const values = multi[key];
+    if (!['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'].includes(key)
+        || typeof value !== 'string' || !Array.isArray(values) || values.length !== 1 || values[0] !== value
+        || /[\u0000-\u001f\u007f\uFFFD]/u.test(value)) return null;
+    size += Buffer.byteLength(key) + Buffer.byteLength(value);
+  }
+  return size <= 4096 ? single : null;
+}
+
+function freshLoginUrl(authDate, now = epoch()) {
+  return Number.isSafeInteger(authDate) && authDate > 0 && authDate <= now + 30
+    && authDate + LOGIN_URL_TTL > now;
+}
+
+function loginUrlIdentity(values, key) {
+  const { id, first_name: firstName, last_name: lastName = '', username = '',
+    photo_url: photo = '', auth_date: date, hash } = values;
+  if (!/^[1-9][0-9]{0,15}$/.test(id ?? '') || !Number.isSafeInteger(Number(id))
+      || !/^[1-9][0-9]{0,15}$/.test(date ?? '') || !freshLoginUrl(Number(date))
+      || !firstName?.trim() || firstName.length > 128 || lastName.length > 128
+      || !/^[A-Za-z0-9_]{0,64}$/.test(username) || photo.length > 2048
+      || (photo && !URL.canParse(photo)) || !/^[a-fA-F0-9]{64}$/.test(hash ?? '')) return null;
+  const received = Buffer.from(hash, 'hex');
+  const check = Object.keys(values).filter(name => name !== 'hash').sort()
+    .map(name => name + '=' + values[name]).join('\n');
+  const expected = createHmac('sha256', key).update(check).digest();
+  if (received.length !== expected.length || !timingSafeEqual(received, expected)) return null;
+  return {
+    telegramUserId: Number(id), name: [firstName, lastName].filter(Boolean).join(' '),
+    username, authDate: Number(date),
+    marker: createHash('sha256').update(LOGIN_URL_PURPOSE + ':').update(received).digest('hex'),
+  };
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, character =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+}
+
+function loginUrlPage(status, content, cookies = [], code) {
+  return respond(status, '<!doctype html><html lang="ru"><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1"><title>Вход в Mezfit</title>'
+    + '<main><h1>Вход в Mezfit</h1>' + content + '</main></html>', {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Security-Policy': "default-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+    'X-Frame-Options': 'DENY',
+    ...(code ? { 'X-Mezfit-Login-Code': code } : {}),
+  }, cookies);
+}
+
+async function telegramLoginUrl(event, context, config, host) {
+  const method = event.httpMethod;
+  if (method !== 'GET' && method !== 'POST') return respond(405, '', { Allow: 'GET, POST' });
+  const values = loginUrlParameters(event);
+  const hex = process.env.MEZFIT_TELEGRAM_LOGIN_URL_KEY || '';
+  const configured = /^[0-9a-f]{64}$/.test(hex);
+  const active = verifiedSession(event, config, host, epoch());
+
+  // Share the existing short-lived challenge slot. Domain-separated signing
+  // prevents confusion with OIDC popup challenges, and existing logout clears it.
+  const pendingKey = createHmac('sha256', config.key).update(LOGIN_URL_PURPOSE).digest();
+  const candidate = verified(readCookies(event)[COOKIE_POPUP], pendingKey);
+  const pending = candidate?.host === host && candidate.purpose === LOGIN_URL_PURPOSE
+    && Number.isSafeInteger(candidate.exp) && candidate.exp > epoch() ? candidate : null;
+  const clear = cookie(COOKIE_POPUP, '', 0);
+  const fallback = '<p><a href="/">Перейти на сайт и войти через Telegram</a></p>';
+  const conflict = 'В этом браузере открыт другой аккаунт. Выйдите из него и снова откройте кнопку в боте.';
+  const retry = 'Не удалось подтвердить вход. Откройте кнопку в боте снова или войдите с сайта.';
+  const errorPage = (status, code, clearPending = true) => loginUrlPage(status,
+    '<p>' + (code === 'ACCOUNT_CONFLICT' ? conflict : retry) + '</p>' + fallback, clearPending ? [clear] : [], code);
+  const makePending = (fields, age) => cookie(COOKIE_POPUP, signed({
+    ...fields, host, purpose: LOGIN_URL_PURPOSE, exp: epoch() + age,
+  }, pendingKey), age);
+  if (method === 'GET') {
+    if (values && Object.keys(values).length === 0) {
+      if (!pending) return navigate('/');
+      if (pending.error) {
+        const status = { NOT_CONFIGURED: 503, ACCOUNT_CONFLICT: 409 }[pending.error] ?? 400;
+        return errorPage(status, pending.error);
+      }
+      if (active) return active.telegramUserId === pending.telegramUserId ? navigate('/', [clear])
+        : errorPage(409, 'ACCOUNT_CONFLICT');
+      return loginUrlPage(200, '<form method="post" action="' + LOGIN_URL_PATH + '">'
+        + '<input type="hidden" name="nonce" value="' + pending.nonce + '">'
+        + '<button name="action" value="confirm">Войти как ' + escapeHtml(pending.name) + '</button> '
+        + '<button name="action" value="cancel">Отмена</button></form>');
+    }
+    const identity = values && configured && loginUrlIdentity(values, Buffer.from(hex, 'hex'));
+    if (!identity || active && active.telegramUserId !== identity.telegramUserId) {
+      const error = !configured ? 'NOT_CONFIGURED' : identity ? 'ACCOUNT_CONFLICT' : 'INVALID_OR_EXPIRED';
+      return navigate(LOGIN_URL_PATH, [makePending({ error }, 30)]);
+    }
+    if (active) return navigate('/', pending ? [clear] : []);
+    const age = Math.min(LOGIN_URL_TTL, identity.authDate + LOGIN_URL_TTL - epoch());
+    if (age <= 0) return navigate(LOGIN_URL_PATH, [makePending({ error: 'INVALID_OR_EXPIRED' }, 30)]);
+    return navigate(LOGIN_URL_PATH, [makePending({ ...identity, nonce: base64url(randomBytes(32)) }, age)]);
+  }
+
+  if (!checkOrigin(event, host)) return json(403, { error: 'ORIGIN_MISMATCH' });
+  if (!values || Object.keys(values).length !== 0 || typeof event.body !== 'string' || event.body.length > 256
+      || !/^application\/x-www-form-urlencoded(?:;\s*charset=utf-8)?$/i.test(requestHeader(event, 'content-type') || '')) {
+    return json(400, { error: 'TELEGRAM_LOGIN_URL_INVALID_REQUEST' });
+  }
+  const body = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
+  const form = new URLSearchParams(body);
+  const action = form.get('action');
+  if (!pending || pending.error || [...form].length !== 2 || form.get('nonce') !== pending.nonce
+      || !['confirm', 'cancel'].includes(action)) {
+    return errorPage(400, 'INVALID_CONFIRMATION', false);
+  }
+  const redirect = cookies => respond(303, '', { Location: '/' }, cookies);
+  if (action === 'cancel') return redirect([clear]);
+  if (active) return active.telegramUserId === pending.telegramUserId ? redirect([clear])
+    : errorPage(409, 'ACCOUNT_CONFLICT');
+
+  const bucket = process.env.MEZFIT_BROWSER_CHALLENGE_BUCKET || '';
+  if (!configured || !/^mezfit-browser-nonce-[a-z0-9]{8,32}$/.test(bucket)) {
+    return errorPage(503, 'NOT_CONFIGURED');
+  }
+  if (!freshLoginUrl(pending.authDate)) return errorPage(400, 'INVALID_OR_EXPIRED');
+  try {
+    await consumePopupNonce(bucket, LOGIN_URL_PURPOSE + ':' + pending.marker, context?.token?.access_token);
+  } catch (error) {
+    const used = error instanceof OidcCheckError && error.code === 'already_used';
+    return used ? errorPage(409, 'ALREADY_USED') : errorPage(503, 'REPLAY_STORAGE_UNAVAILABLE');
+  }
+  const now = epoch();
+  if (pending.exp <= now || !freshLoginUrl(pending.authDate, now)) {
+    return errorPage(400, 'INVALID_OR_EXPIRED');
+  }
+  return redirect([clear, browserSessionCookie(host, {
+    ...pending, sub: LOGIN_URL_PURPOSE + ':' + pending.telegramUserId,
+  }, config.key, now)]);
+}
+
 async function handler(event, context) {
   const isTokenRoute = event.path === DEXIE_TOKEN_PATH;
+  const isLoginUrl = event.path === LOGIN_URL_PATH;
   const method = event.httpMethod;
   if (isTokenRoute && method !== 'POST') {
     return tokenError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
   }
   let config;
   try {
-    config = isTokenRoute ? sessionConfiguration() : configuration();
+    config = isTokenRoute || isLoginUrl ? sessionConfiguration() : configuration();
   } catch {
     if (isTokenRoute) return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication is not configured');
     return json(503, { error: 'TELEGRAM_LOGIN_NOT_CONFIGURED' });
@@ -635,6 +786,10 @@ async function handler(event, context) {
   if (!host) {
     if (isTokenRoute) return tokenError(403, 'UNAPPROVED_AUTH_HOST', 'Forbidden host');
     return json(403, { error: 'UNAPPROVED_AUTH_HOST' });
+  }
+  if (isLoginUrl) {
+    if (host !== LOGIN_URL_HOST) return json(403, { error: 'UNAPPROVED_AUTH_HOST' });
+    return telegramLoginUrl(event, context, config, host);
   }
   switch (event.path) {
     case DEXIE_TOKEN_PATH:
