@@ -8,7 +8,7 @@ import { loadTelegramLoginSdk } from './telegramLoginSdk';
 type BrowserAuthState =
   | { status: 'loading' }
   | { status: 'signed-out' }
-  | { status: 'unavailable' }
+  | { status: 'unavailable'; message: string }
   | { status: 'signed-in'; identity: BrowserIdentity };
 
 type LoginAttempt =
@@ -16,12 +16,15 @@ type LoginAttempt =
   | { status: 'ready'; expiresAt: number; open: () => void }
   | { status: 'error'; message: string };
 
+const SESSION_CHECK_TIMEOUT_MS = 15_000;
+
 /**
  * Browser OIDC identity does not grant Mini App initData. The verified browser
  * identity stays on this screen until the browser app bootstrap is wired up.
  */
 export function BrowserTelegramLogin() {
   const [state, setState] = useState<BrowserAuthState>({ status: 'loading' });
+  const [sessionCheck, setSessionCheck] = useState(0);
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState<LoginAttempt>({ status: 'preparing' });
   const [retry, setRetry] = useState(0);
@@ -34,20 +37,24 @@ export function BrowserTelegramLogin() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 5000);
+    const timeout = window.setTimeout(() => controller.abort(), SESSION_CHECK_TIMEOUT_MS);
     void getBrowserSession(controller.signal).then(identity => {
       if (active) {
         setState(identity ? { status: 'signed-in', identity } : { status: 'signed-out' });
       }
-    }).catch(() => {
-      if (active) setState({ status: 'unavailable' });
+    }).catch((error: unknown) => {
+      if (!active) return;
+      const message = controller.signal.aborted ? 'Сервер не успел ответить.'
+        : error instanceof ApiError ? 'Ошибка сервера (HTTP ' + error.status + ').'
+        : 'Не удалось связаться с сервером.';
+      setState({ status: 'unavailable', message });
     }).finally(() => window.clearTimeout(timeout));
     return () => {
       active = false;
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, []);
+  }, [sessionCheck]);
 
   useEffect(() => {
     if (state.status !== 'signed-out') return;
@@ -156,11 +163,13 @@ export function BrowserTelegramLogin() {
             </>
           ) : state.status === 'unavailable' ? (
             <>
-              <Text>Откройте приложение в Telegram.</Text>
-              <Text variant="footnote" tone="muted">
-                Браузерная авторизация на этом адресе пока не подключена.
-                Для работы Mini App откройте @mezfit_bot в Telegram.
-              </Text>
+              <Text>Не удалось проверить браузерную сессию. {state.message}</Text>
+              <Button onClick={() => {
+                setState({ status: 'loading' });
+                setSessionCheck(value => value + 1);
+              }}>
+                Повторить проверку
+              </Button>
             </>
           ) : (
             <>
