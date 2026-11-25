@@ -63,17 +63,30 @@ jobs:
       - name: Deploy Worker
         env:
           MEZFIT_ACCOUNT_REPLICATION_SECRET: ${{ secrets.MEZFIT_ACCOUNT_REPLICATION_SECRET }}
+          TELEGRAM_BOT_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_BOT_WEBHOOK_SECRET }}
+          TELEGRAM_BOT_INVITES_ENABLED: ${{ vars.TELEGRAM_BOT_INVITES_ENABLED }}
         shell: bash
         run: |
-          if [[ -z "$MEZFIT_ACCOUNT_REPLICATION_SECRET" ]]; then
-            npx wrangler deploy
-            exit
-          fi
-          if [[ ! "$MEZFIT_ACCOUNT_REPLICATION_SECRET" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
+          if [[ -n "$MEZFIT_ACCOUNT_REPLICATION_SECRET" && ! "$MEZFIT_ACCOUNT_REPLICATION_SECRET" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
             echo "::error::Invalid MEZFIT_ACCOUNT_REPLICATION_SECRET format"
             exit 1
           fi
-          secret_file=$(mktemp)
-          trap 'rm -f "$secret_file"' EXIT
-          jq -n '{MEZFIT_ACCOUNT_REPLICATION_SECRET: env.MEZFIT_ACCOUNT_REPLICATION_SECRET}' > "$secret_file"
-          npx wrangler deploy --secrets-file "$secret_file"
+          if [[ -n "$TELEGRAM_BOT_WEBHOOK_SECRET" && ! "$TELEGRAM_BOT_WEBHOOK_SECRET" =~ ^[A-Za-z0-9_-]{1,256}$ ]]; then
+            echo "::error::Invalid TELEGRAM_BOT_WEBHOOK_SECRET format"
+            exit 1
+          fi
+          if [[ "$TELEGRAM_BOT_INVITES_ENABLED" == "true" && -z "$TELEGRAM_BOT_WEBHOOK_SECRET" ]]; then
+            echo "::error::TELEGRAM_BOT_INVITES_ENABLED requires TELEGRAM_BOT_WEBHOOK_SECRET"
+            exit 1
+          fi
+          deploy_args=(--var "TELEGRAM_BOT_INVITES_ENABLED:${TELEGRAM_BOT_INVITES_ENABLED:-false}")
+          if [[ -n "$MEZFIT_ACCOUNT_REPLICATION_SECRET" || -n "$TELEGRAM_BOT_WEBHOOK_SECRET" ]]; then
+            secret_file=$(mktemp)
+            trap 'rm -f "$secret_file"' EXIT
+            jq -n '{
+              MEZFIT_ACCOUNT_REPLICATION_SECRET: env.MEZFIT_ACCOUNT_REPLICATION_SECRET,
+              TELEGRAM_BOT_WEBHOOK_SECRET: env.TELEGRAM_BOT_WEBHOOK_SECRET
+            } | with_entries(select(.value != ""))' > "$secret_file"
+            deploy_args+=(--secrets-file "$secret_file")
+          fi
+          npx wrangler deploy "${deploy_args[@]}"
