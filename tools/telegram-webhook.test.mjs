@@ -53,6 +53,23 @@ describe('Telegram webhook deployment', () => {
     expect(targets(request)).toEqual(['getMe', 'getWebhookInfo']);
   });
 
+  it('reports why Telegram rejected registration without leaking credentials or injecting log lines', async () => {
+    const successfulResponse = fixture();
+    const request = vi.fn(async (url, init) => {
+      if (!url.endsWith('/setWebhook')) return successfulResponse(url, init);
+      return Response.json({
+        ok: false,
+        error_code: 400,
+        description: 'Bad Request: bad webhook: Failed to resolve host\n::warning:: '
+          + env.TELEGRAM_BOT_TOKEN + ' ' + env.TELEGRAM_BOT_WEBHOOK_SECRET,
+      }, { status: 400 });
+    });
+    await expect(configureTelegramWebhook('register', env, request)).rejects.toThrow(
+      'setWebhook: rejected or invalid response (HTTP 400): Bad Request: bad webhook: Failed to resolve host warning [redacted] [redacted]',
+    );
+    expect(targets(request)).toEqual(['getMe', 'getWebhookInfo', 'Worker', 'setWebhook']);
+  });
+
   it.each([
     [{ username: 'other_bot' }, /does not belong/, ['getMe']],
     [{ current: 'https://other.example/webhook' }, /different webhook/, ['getMe', 'getWebhookInfo']],

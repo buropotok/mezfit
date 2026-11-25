@@ -3,6 +3,20 @@ import { pathToFileURL } from 'node:url';
 const endpoint = 'https://mezfit.buropotok.workers.dev/api/telegram/bot-webhook';
 const requiredUpdates = ['message', 'callback_query'];
 
+function registrationError(body, token, webhookSecret) {
+  if (body?.ok !== false || typeof body.description !== 'string') return '';
+  return body.description
+    .replace(/https?:\/\/\S+/gi, '[url]')
+    .replaceAll(token, '[redacted]')
+    .replaceAll(encodeURIComponent(token), '[redacted]')
+    .replaceAll(webhookSecret, '[redacted]')
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
+    .replace(/::|##\[/g, ' ')
+    .replace(/ +/g, ' ')
+    .trim()
+    .slice(0, 500);
+}
+
 async function apiRequest(fetchImpl, token, method, payload) {
   let response;
   try {
@@ -18,7 +32,9 @@ async function apiRequest(fetchImpl, token, method, payload) {
   }
   const body = await response.json().catch(() => null);
   if (!response.ok || body?.ok !== true) {
-    throw new Error(method + ': rejected or invalid response (HTTP ' + response.status + ')');
+    const detail = method === 'setWebhook' ? registrationError(body, token, payload.secret_token) : '';
+    throw new Error(method + ': rejected or invalid response (HTTP ' + response.status + ')'
+      + (detail ? ': ' + detail : ''));
   }
   return body.result;
 }
