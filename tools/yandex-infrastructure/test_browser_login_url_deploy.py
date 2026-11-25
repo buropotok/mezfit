@@ -13,7 +13,7 @@ from test_deploy_browser_auth import FOLDER, RUNTIME_SA, SA, SECRET, SECRET_VERS
 from web_hosting import (
     ACCOUNT_REPLICA_PATH, GATEWAYS, LOGIN_URL_PATH, LOGIN_URL_TAG, WebHostingError,
     account_replica_route, browser_auth_gateway_spec, browser_login_url_fallback,
-    browser_login_url_route, bucket_name, verify_gateway,
+    browser_login_url_route, bucket_name, normalize_gateway_readback, verify_gateway,
 )
 
 
@@ -63,7 +63,7 @@ class LoginUrlDeployment(unittest.TestCase):
 
     def test_preview_apply_repeat_and_rollback_leave_replica_and_serving_oidc_intact(self):
         cloud = self.cloud
-        original = deepcopy(cloud.spec)
+        original = normalize_gateway_readback(cloud.spec, cloud.gateway["domain"])
         serving = deepcopy(cloud.versions)
         cloud.execute("preview", "login-url", "")
         self.assertEqual(cloud.writes, [])
@@ -73,12 +73,14 @@ class LoginUrlDeployment(unittest.TestCase):
         self.assertEqual(cloud.versions[:2], serving)
         self.assertEqual(cloud.versions[2]["tags"], [LOGIN_URL_TAG])
         self.assertEqual(cloud.versions[2]["logOptions"], {"disabled": True})
-        self.assertEqual(cloud.spec["paths"][LOGIN_URL_PATH], browser_login_url_route("function1", SA))
+        active = normalize_gateway_readback(cloud.spec, cloud.gateway["domain"])
+        self.assertEqual(active["paths"].pop(LOGIN_URL_PATH), browser_login_url_route("function1", SA))
+        self.assertEqual(active, original)
         cloud.execute("apply", "login-url", LOGIN_URL)
         self.assertEqual(len(cloud.writes), 2)
         cloud.execute("apply", "login-url-rollback", LOGIN_URL_ROLLBACK)
         self.assertEqual(cloud.spec["paths"].pop(LOGIN_URL_PATH), browser_login_url_fallback())
-        self.assertEqual(cloud.spec, original)
+        self.assertEqual(normalize_gateway_readback(cloud.spec, cloud.gateway["domain"]), original)
 
     def test_logging_or_gateway_drift_stops_before_mutations(self):
         cloud = self.cloud
