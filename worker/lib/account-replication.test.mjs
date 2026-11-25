@@ -20,6 +20,7 @@ beforeEach(() => {
   db = new DatabaseSync(':memory:');
   db.exec(loadMigration('0001_users_and_roles.sql'));
   db.exec(loadMigration('0033_account_replication_outbox.sql'));
+  db.exec(loadMigration('0034_account_replication_diagnostics.sql'));
   const prepare = (sql) => {
     const statement = db.prepare(sql);
     return {
@@ -108,6 +109,28 @@ describe('account replication', () => {
     expect(outbox()).toMatchObject({
       revision: 1, attempts: 1, next_attempt_at: expect.any(Number), last_error: 'REDIRECT_REFUSED',
     });
+  });
+
+  it.each([
+    ['REPLICATION_NOT_CONFIGURED', null, 'REPLICATION_NOT_CONFIGURED'],
+    ['REPLICA_UNAVAILABLE', 'WRITE_COMMIT:TIMEOUT', 'REPLICA_UNAVAILABLE:WRITE_COMMIT:TIMEOUT'],
+    ['REPLICA_UNAVAILABLE', 'private text', 'REPLICA_UNAVAILABLE'],
+  ])('stores the diagnostic for %s with detail %s', async (code, detail, expected) => {
+    insertAccount();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const send = vi.fn(async (_url, request) => {
+      const headers = { 'x-mezfit-replica-request-id': request.headers['x-mezfit-replica-request-id'] };
+      if (detail !== null) headers['x-mezfit-replica-error-detail'] = detail;
+      return Response.json({ error: { code } }, { status: 503, headers });
+    });
+    vi.stubGlobal('fetch', send);
+
+    await deliverAccountReplicas(env);
+
+    const requestId = send.mock.calls[0][1].headers['x-mezfit-replica-request-id'];
+    expect(outbox()).toMatchObject({ last_error: expected, last_http_status: 503, last_request_id: requestId });
+    db.exec("UPDATE app_user SET first_name = 'Updated' WHERE id = 1");
+    expect(outbox()).toMatchObject({ last_error: null, last_http_status: null, last_request_id: null });
   });
 
   it('retries an invalid acknowledgement without advancing the revision', async () => {

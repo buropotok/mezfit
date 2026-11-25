@@ -74,3 +74,30 @@ class ReceiverContracts(unittest.TestCase):
             response = receiver.handler(request(), None)
             self.assertEqual(response["statusCode"], 503)
             self.assertEqual(json.loads(response["body"]), {"error": {"code": "REPLICA_UNAVAILABLE"}})
+
+    def test_reports_validation_field_with_the_same_request_id(self):
+        event = request(snapshot={"revision": 1, "user": USER | {"firstName": None}, "roles": []})
+        correlation_id = "b27d0232-6afd-4952-baf2-962bb2d1e079"
+        event["headers"][receiver.REQUEST_ID_HEADER] = correlation_id
+        with patch.dict(os.environ, {receiver.SECRET_ENV: SECRET}), patch("builtins.print") as log:
+            response = receiver.handler(event, None)
+        self.assertEqual(response["statusCode"], 400)
+        self.assertEqual(response["headers"][receiver.DETAIL_HEADER], "firstName")
+        self.assertEqual(response["headers"][receiver.REQUEST_ID_HEADER], correlation_id)
+        self.assertEqual(json.loads(log.call_args.args[0]), {
+            "event": "ACCOUNT_REPLICA_FAILURE", "request_id": correlation_id,
+            "http_status": 400, "code": "INVALID_SNAPSHOT", "detail": "firstName",
+        })
+
+    def test_reports_database_stage_without_exception_text(self):
+        failure = receiver.ReplicaWriteError("WRITE_COMMIT")
+        failure.__cause__ = TimeoutError("private details")
+        with patch.dict(os.environ, {receiver.SECRET_ENV: SECRET}), patch.object(receiver, "runtime_store"), \
+                patch.object(receiver, "save", side_effect=failure), patch("builtins.print") as log:
+            response = receiver.handler(request(), None)
+        self.assertEqual(response["statusCode"], 503)
+        self.assertEqual(response["headers"][receiver.DETAIL_HEADER], "WRITE_COMMIT:TIMEOUT")
+        sanitized = json.loads(log.call_args.args[0])
+        self.assertEqual(sanitized["request_id"], response["headers"][receiver.REQUEST_ID_HEADER])
+        self.assertEqual(sanitized["detail"], "WRITE_COMMIT:TIMEOUT")
+        self.assertNotIn("private details", log.call_args.args[0])

@@ -7,8 +7,9 @@ import hmac
 import json
 import os
 import re
+from uuid import uuid4
 
-from replica_store import connect, save, verify_schema
+from replica_store import ReplicaWriteError, connect, save, verify_schema
 
 SECRET_ENV = "MEZFIT_ACCOUNT_REPLICATION_SECRET"
 SECRET_PATTERN = re.compile(r"[A-Za-z0-9_-]{43}")
@@ -20,6 +21,49 @@ STRING_LIMITS = {
     "languageCode": 64, "photoUrl": 4096,
 }
 USER_FIELDS = {*STRING_LIMITS, "id", "telegramUserId", "isPremium"}
+REQUEST_ID_HEADER = "x-mezfit-replica-request-id"
+DETAIL_HEADER = "x-mezfit-replica-error-detail"
+REQUEST_ID = re.compile(r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}")
+YDB_ERROR_KINDS = {
+    "Unauthenticated": "AUTHENTICATION", "Unauthorized": "PERMISSION",
+    "ConnectionFailure": "CONNECTION", "ConnectionLost": "CONNECTION", "ConnectionError": "CONNECTION",
+    "DeadlineExceed": "TIMEOUT", "Timeout": "TIMEOUT",
+    "Unavailable": "UNAVAILABLE", "Overloaded": "OVERLOADED", "SchemeError": "SCHEMA",
+    "BadRequest": "BAD_QUERY", "PreconditionFailed": "PRECONDITION", "Aborted": "ABORTED",
+    "SessionPoolEmpty": "SESSION_POOL_EMPTY", "BadSession": "BAD_SESSION",
+    "Undetermined": "COMMIT_UNKNOWN", "InternalError": "INTERNAL",
+}
+
+
+class SnapshotError(ValueError):
+    pass
+
+
+def request_id(event):
+    headers = event.get("headers")
+    if isinstance(headers, dict):
+        values = [value for name, value in headers.items() if name.lower() == REQUEST_ID_HEADER]
+        if len(values) == 1 and isinstance(values[0], str) and REQUEST_ID.fullmatch(values[0]):
+            return values[0]
+    return str(uuid4())
+
+
+def failure(status, body, correlation_id, detail=None):
+    response = reply(status, body)
+    response["headers"][REQUEST_ID_HEADER] = correlation_id
+    if detail:
+        response["headers"][DETAIL_HEADER] = detail
+    print(json.dumps({
+        "event": "ACCOUNT_REPLICA_FAILURE", "request_id": correlation_id,
+        "http_status": status, "code": body["error"]["code"], "detail": detail,
+    }))
+    return response
+
+
+def ydb_error_kind(exc):
+    if isinstance(exc, TimeoutError):
+        return "TIMEOUT"
+    return YDB_ERROR_KINDS.get(type(exc).__name__, "UNCLASSIFIED")
 
 
 def reply(status, body):
@@ -55,7 +99,7 @@ def unique_fields(items):
     value = {}
     for name, field in items:
         if name in value:
-            raise ValueError("Repeated field")
+            raise SnapshotError("DUPLICATE_FIELD")
         value[name] = field
     return value
 
@@ -63,31 +107,39 @@ def unique_fields(items):
 def read_snapshot(event):
     body = event.get("body")
     if not isinstance(body, str) or len(body) > 4 * ((MAX_BODY_BYTES + 2) // 3):
-        raise ValueError("Body size or type")
+        raise SnapshotError("BODY_TYPE_OR_SIZE")
     raw = base64.b64decode(body, validate=True) if event.get("isBase64Encoded") is True else body.encode("utf-8")
     if len(raw) > MAX_BODY_BYTES:
-        raise ValueError("Body size")
+        raise SnapshotError("BODY_TOO_LARGE")
     value = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_fields)
     if not isinstance(value, dict) or value.keys() != {"revision", "user", "roles"}:
-        raise ValueError("Snapshot shape")
+        raise SnapshotError("SNAPSHOT_SHAPE")
 
     user, roles, revision = value["user"], value["roles"], value["revision"]
-    if not isinstance(user, dict) or user.keys() != USER_FIELDS or not positive_safe_integer(revision):
-        raise ValueError("User shape or revision")
+    if not positive_safe_integer(revision):
+        raise SnapshotError("REVISION")
+    if not isinstance(user, dict) or user.keys() != USER_FIELDS:
+        raise SnapshotError("USER_SHAPE")
     telegram_id = user["telegramUserId"]
     if (not isinstance(telegram_id, str) or not re.fullmatch(r"[1-9][0-9]{0,15}", telegram_id)
-            or int(telegram_id) > MAX_SAFE_INTEGER or not positive_safe_integer(user["id"])
-            or type(user["isPremium"]) is not bool):
-        raise ValueError("User identity or premium flag")
+            or int(telegram_id) > MAX_SAFE_INTEGER):
+        raise SnapshotError("TELEGRAM_ID")
+    if not positive_safe_integer(user["id"]):
+        raise SnapshotError("D1_ID")
+    if type(user["isPremium"]) is not bool:
+        raise SnapshotError("IS_PREMIUM")
     for key, limit in STRING_LIMITS.items():
         field = user[key]
         if field is None and key != "firstName":
             continue
         if not isinstance(field, str) or len(field) > limit:
-            raise ValueError("Invalid text field")
-        field.encode("utf-8")  # Reject escaped lone surrogates.
+            raise SnapshotError(key)
+        try:
+            field.encode("utf-8")  # Reject escaped lone surrogates.
+        except UnicodeError:
+            raise SnapshotError(key) from None
     if not isinstance(roles, list) or len(roles) > 2 or any(role not in ROLE_NAMES for role in roles):
-        raise ValueError("Invalid roles")
+        raise SnapshotError("ROLES")
     snapshot = {"user": user, "roles": [role for role in ROLE_NAMES if role in roles]}
     return telegram_id, revision, json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
 
@@ -101,9 +153,10 @@ def runtime_store():
 
 
 def handler(event, context):
+    correlation_id = request_id(event)
     secret = os.environ.get(SECRET_ENV, "")
     if not SECRET_PATTERN.fullmatch(secret):
-        return error(503, "REPLICATION_NOT_CONFIGURED")
+        return failure(503, {"error": {"code": "REPLICATION_NOT_CONFIGURED"}}, correlation_id)
     # A direct IAM-authorized Cloud Functions invocation checks only schema.
     # The public gateway has no GET integration for this function.
     query = event.get("queryStringParameters")
@@ -116,15 +169,35 @@ def handler(event, context):
     if event.get("httpMethod") != "POST":
         return error(405, "METHOD_NOT_ALLOWED")
     if not authorization(event, secret):
-        return error(401, "UNAUTHORIZED")
+        response = error(401, "UNAUTHORIZED")
+        response["headers"][REQUEST_ID_HEADER] = correlation_id
+        return response
     try:
         telegram_id, revision, snapshot = read_snapshot(event)
-    except (ValueError, UnicodeError, binascii.Error, RecursionError):
-        return error(400, "INVALID_SNAPSHOT")
+    except (ValueError, RecursionError) as exc:
+        if isinstance(exc, SnapshotError):
+            detail = str(exc)
+        elif isinstance(exc, binascii.Error):
+            detail = "BODY_BASE64"
+        elif isinstance(exc, UnicodeError):
+            detail = "BODY_ENCODING"
+        else:
+            detail = "BODY_JSON"
+        return failure(400, {"error": {"code": "INVALID_SNAPSHOT"}}, correlation_id, detail)
+
+    unavailable = {"error": {"code": "REPLICA_UNAVAILABLE"}}
     try:
-        outcome, stored_revision = save(runtime_store(), telegram_id, revision, snapshot)
-    except Exception:
-        return error(503, "REPLICA_UNAVAILABLE")
+        store = runtime_store()
+    except KeyError:
+        return failure(503, unavailable, correlation_id, "CONNECT:CONFIG_MISSING")
+    except Exception as exc:
+        return failure(503, unavailable, correlation_id, f"CONNECT:{ydb_error_kind(exc)}")
+    try:
+        outcome, stored_revision = save(store, telegram_id, revision, snapshot)
+    except ReplicaWriteError as exc:
+        return failure(503, unavailable, correlation_id, f"{exc.stage}:{ydb_error_kind(exc.__cause__)}")
+    except Exception as exc:
+        return failure(503, unavailable, correlation_id, f"WRITE:{ydb_error_kind(exc)}")
     if outcome == "conflict":
-        return reply(409, {"error": {"code": "REVISION_CONFLICT"}, "revision": stored_revision})
+        return failure(409, {"error": {"code": "REVISION_CONFLICT"}, "revision": stored_revision}, correlation_id)
     return reply(200, {"status": outcome, "revision": stored_revision})

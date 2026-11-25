@@ -91,6 +91,34 @@ Bearer хранится на сервере и используется толь
 версии функции и только потом возобнови доставку. Оператор текущего этапа
 останавливается при расхождении pinned версии и не ротирует секрет.
 
+## Как выяснить причину сбоя доставки
+
+В SQL-консоли D1 выполни запрос с D1 ID аккаунта:
+
+```sql
+SELECT o.attempts, o.last_http_status, o.last_error, o.last_request_id,
+       datetime(o.next_attempt_at / 1000, 'unixepoch') AS next_attempt_utc
+FROM app_user AS u
+JOIN account_replication_outbox AS o ON o.telegram_user_id = u.telegram_user_id
+WHERE u.id = 9;
+```
+
+- `REQUEST_TIMEOUT` означает таймаут до получения HTTP-ответа. При
+  `REQUEST_FAILED` Cloudflare вернул ошибку без HTTP-ответа.
+- `REPLICATION_NOT_CONFIGURED` означает отсутствие корректной конфигурации
+  секрета в приёмнике. `UNAUTHORIZED` означает отказ в аутентификации.
+- `INVALID_SNAPSHOT:firstName` и аналогичные коды показывают поле или этап проверки.
+- `REPLICA_UNAVAILABLE:WRITE_COMMIT:TIMEOUT` показывает этап операции YDB и тип
+  сбоя. Таймаут подтверждения допускает уже сохранённую версию, поэтому Worker
+  безопасно повторит тот же запрос. Для ошибок без распознанного кода YDB тип
+  указывается как `UNCLASSIFIED`.
+- `HTTP_503_UNRECOGNIZED_RESPONSE` означает, что по ответу нельзя подтвердить
+  известную ошибку функции. Проверь логи Gateway и Cloud Functions.
+
+По `last_request_id` ищи событие `ACCOUNT_REPLICA_FAILURE` в логах функции
+`mezfit-account-replica`. Оно включает этап и код, а данные аккаунта и секрет
+в логи не записываются. При подтверждении доставки поля ошибки очищаются.
+
 ## Проверка и отключение
 
 Признак готовности Apply — сообщение

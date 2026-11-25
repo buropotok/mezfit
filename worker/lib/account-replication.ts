@@ -3,6 +3,17 @@ import { userView, type Role, type UserRow } from './account-profile';
 const REPLICA_URL = 'https://mezfit.online/api/internal/account-replication';
 const REQUEST_TIMEOUT_MS = 5_000;
 const TICK_LIMIT = 20;
+const REQUEST_ID_HEADER = 'x-mezfit-replica-request-id';
+const ERROR_DETAIL_HEADER = 'x-mezfit-replica-error-detail';
+const RECEIVER_ERRORS: Readonly<Record<number, readonly string[]>> = {
+  400: ['INVALID_SNAPSHOT'],
+  401: ['UNAUTHORIZED'],
+  405: ['METHOD_NOT_ALLOWED'],
+  409: ['REVISION_CONFLICT'],
+  503: ['REPLICA_UNAVAILABLE', 'REPLICATION_NOT_CONFIGURED'],
+};
+const SNAPSHOT_DETAIL = /^(?:DUPLICATE_FIELD|BODY_TYPE_OR_SIZE|BODY_TOO_LARGE|BODY_BASE64|BODY_ENCODING|BODY_JSON|SNAPSHOT_SHAPE|USER_SHAPE|REVISION|TELEGRAM_ID|D1_ID|IS_PREMIUM|ROLES|username|firstName|lastName|languageCode|photoUrl)$/;
+const DATABASE_DETAIL = /^(?:CONNECT|SESSION|PREPARE_READ|PREPARE_WRITE|READ|COMMIT_READ|WRITE_COMMIT|WRITE):(?:CONFIG_MISSING|AUTHENTICATION|PERMISSION|CONNECTION|TIMEOUT|UNAVAILABLE|OVERLOADED|SCHEMA|BAD_QUERY|PRECONDITION|ABORTED|SESSION_POOL_EMPTY|BAD_SESSION|COMMIT_UNKNOWN|INTERNAL|UNCLASSIFIED)$/;
 const RETRY_MINUTES = [5, 10, 20, 40, 60] as const;
 
 interface PendingAccount extends UserRow {
@@ -21,41 +32,70 @@ function confirmedRevision(body: unknown, sent: number): boolean {
   return (status === 'applied' || status === 'duplicate') && revision === sent;
 }
 
-async function postSnapshot(secret: string, row: PendingAccount): Promise<string | null> {
+interface DeliveryFailure {
+  code: string;
+  httpStatus: number | null;
+}
+
+async function receiverFailure(response: Response, requestId: string): Promise<DeliveryFailure> {
+  const httpStatus = response.status;
+  if (httpStatus >= 300 && httpStatus < 400) {
+    await response.body?.cancel().catch(() => {});
+    return { code: 'REDIRECT_REFUSED', httpStatus };
+  }
+
+  const known = RECEIVER_ERRORS[httpStatus];
+  if (!known) {
+    await response.body?.cancel().catch(() => {});
+    return { code: `HTTP_${httpStatus}`, httpStatus };
+  }
+  const body: unknown = await response.json().catch(() => null);
+  const error = body && typeof body === 'object' && 'error' in body ? body.error : null;
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : null;
+  if (typeof code !== 'string' || !known.includes(code)) {
+    return { code: `HTTP_${httpStatus}_UNRECOGNIZED_RESPONSE`, httpStatus };
+  }
+  const detail = response.headers.get(ERROR_DETAIL_HEADER);
+  if (detail && response.headers.get(REQUEST_ID_HEADER) === requestId
+      && ((code === 'INVALID_SNAPSHOT' && SNAPSHOT_DETAIL.test(detail))
+        || (code === 'REPLICA_UNAVAILABLE' && DATABASE_DETAIL.test(detail)))) {
+    return { code: `${code}:${detail}`, httpStatus };
+  }
+  return { code, httpStatus };
+}
+
+async function postSnapshot(secret: string, row: PendingAccount, requestId: string): Promise<DeliveryFailure | null> {
   const roles: Role[] = [];
   if (row.has_client === 1) roles.push('client');
   if (row.has_coach === 1) roles.push('coach');
 
+  const signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(REPLICA_URL, {
       method: 'POST',
       redirect: 'manual',
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal,
       headers: {
         authorization: `Bearer ${secret}`,
         'content-type': 'application/json',
+        [REQUEST_ID_HEADER]: requestId,
       },
       body: JSON.stringify({ revision: row.revision, user: userView(row), roles }),
     });
   } catch {
-    return 'REQUEST_FAILED';
+    return { code: signal.aborted ? 'REQUEST_TIMEOUT' : 'REQUEST_FAILED', httpStatus: null };
   }
 
-  if (response.status !== 200) {
-    await response.body?.cancel().catch(() => {});
-    if (response.status >= 300 && response.status < 400) return 'REDIRECT_REFUSED';
-    switch (response.status) {
-      case 400: return 'INVALID_SNAPSHOT';
-      case 401: return 'UNAUTHORIZED';
-      case 409: return 'REVISION_CONFLICT';
-      case 503: return 'REPLICA_UNAVAILABLE';
-      default: return 'UNEXPECTED_HTTP_STATUS';
-    }
-  }
+  if (response.status !== 200) return receiverFailure(response, requestId);
 
-  const body: unknown = await response.json().catch(() => null);
-  return confirmedRevision(body, row.revision) ? null : 'INVALID_ACKNOWLEDGEMENT';
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    return { code: signal.aborted ? 'RESPONSE_TIMEOUT' : 'INVALID_RESPONSE_JSON', httpStatus: 200 };
+  }
+  return confirmedRevision(body, row.revision) ? null : { code: 'INVALID_ACKNOWLEDGEMENT', httpStatus: 200 };
 }
 
 export async function deliverAccountReplicas(env: Env, telegramUserId?: string): Promise<void> {
@@ -78,11 +118,12 @@ export async function deliverAccountReplicas(env: Env, telegramUserId?: string):
   `).bind(...(byAccount ? [Date.now(), telegramUserId, 1] : [Date.now(), TICK_LIMIT])).all<PendingAccount>();
 
   for (const row of result.results) {
-    const failure = await postSnapshot(secret, row);
+    const requestId = crypto.randomUUID();
+    const failure = await postSnapshot(secret, row, requestId);
     if (failure === null) {
       await db.prepare(`
         UPDATE account_replication_outbox
-        SET next_attempt_at = NULL, last_error = NULL
+        SET next_attempt_at = NULL, last_error = NULL, last_request_id = NULL, last_http_status = NULL
         WHERE telegram_user_id = ? AND revision = ?
       `).bind(row.telegram_user_id, row.revision).run();
       continue;
@@ -92,10 +133,13 @@ export async function deliverAccountReplicas(env: Env, telegramUserId?: string):
     const nextAttempt = Date.now() + delay * 60_000;
     const retry = await db.prepare(`
       UPDATE account_replication_outbox
-      SET attempts = attempts + 1, next_attempt_at = ?, last_error = ?
+      SET attempts = attempts + 1, next_attempt_at = ?, last_error = ?, last_request_id = ?, last_http_status = ?
       WHERE telegram_user_id = ? AND revision = ? AND attempts = ? AND next_attempt_at = ?
-    `).bind(nextAttempt, failure, row.telegram_user_id, row.revision, row.attempts, row.next_attempt_at).run();
-    if (retry.meta.changes > 0) console.warn('ACCOUNT_REPLICATION_RETRY', failure);
+    `).bind(nextAttempt, failure.code, requestId, failure.httpStatus,
+      row.telegram_user_id, row.revision, row.attempts, row.next_attempt_at).run();
+    if (retry.meta.changes > 0) console.warn('ACCOUNT_REPLICATION_RETRY', {
+      code: failure.code, request_id: requestId, http_status: failure.httpStatus,
+    });
   }
 }
 
