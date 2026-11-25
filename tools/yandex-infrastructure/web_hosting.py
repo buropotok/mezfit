@@ -145,6 +145,19 @@ def gateway_spec(bucket):
 
 DEXIE_TOKEN_PATH = "/api/dexie-cloud/tokens"
 DEXIE_TOKEN_TAG = "browser-dexie-tokens"
+ACCOUNT_REPLICA_PATH = "/api/internal/account-replication"
+ACCOUNT_REPLICA_TAG = "account-replica"
+NAME_ACCOUNT_REPLICA_FUNCTION = "mezfit-account-replica"
+
+
+def account_replica_route(function_id, service_account_id):
+    if not resource_id(function_id) or not resource_id(service_account_id):
+        raise WebHostingError("Missing approved account replica function or gateway service account.")
+    return {"post": {"x-yc-apigateway-integration": {
+        "type": "cloud_functions", "function_id": function_id,
+        "service_account_id": service_account_id, "tag": ACCOUNT_REPLICA_TAG,
+        "payload_format_version": "1.0",
+    }}}
 
 
 def browser_auth_gateway_spec(bucket, function_id, service_account_id, *, popup=False, dexie_tokens=False):
@@ -314,7 +327,7 @@ def verified_gateway_domains(gateway, folder_id, api):
     return approved_domains
 
 
-def verify_gateway(gateway, folder_id, bucket, api):
+def checked_gateway_spec(gateway, folder_id, bucket, api, *, reject_account_replica=False):
     if (gateway.get("folderId") != folder_id or gateway.get("name") != NAME_GATEWAY
             or not resource_id(gateway.get("id"))
             or gateway.get("status") not in {"ACTIVE", "CREATING", "UPDATING"}):
@@ -343,15 +356,30 @@ def verify_gateway(gateway, folder_id, bucket, api):
             bucket, known["id"], approved_sa, popup=popup, dexie_tokens=DEXIE_TOKEN_PATH in paths)
     else:
         expected_spec = gateway_spec(bucket)
+    if isinstance(paths, dict) and ACCOUNT_REPLICA_PATH in paths:
+        if reject_account_replica:
+            raise WebHostingError("Account replica route is active; disable it before changing browser-auth routes.")
+        receiver = choose(paged_list(api, FUNCTIONS, folder_id, "functions",
+                                    "List approved account replica function"),
+                          NAME_ACCOUNT_REPLICA_FUNCTION, folder_id, "Account replica function")
+        if not receiver or receiver.get("status") != "ACTIVE":
+            raise WebHostingError("Account replica route requires the active managed function.")
+        expected_spec["paths"][ACCOUNT_REPLICA_PATH] = account_replica_route(
+            receiver.get("id"), os.environ.get("YC_DEPLOY_SA_ID", ""))
     expected = normalize_gateway_readback(expected_spec, gateway.get("domain"))
-    actual = normalize_gateway_readback(actual, gateway.get("domain"), approved_domains)
-    differences = spec_diff_paths(expected, actual)
+    normalized = normalize_gateway_readback(actual, gateway.get("domain"), approved_domains)
+    differences = spec_diff_paths(expected, normalized)
     if differences:
         raise WebHostingError(
             "Existing gateway specification differs at "
             + ", ".join(differences)
             + "; refusing to overwrite or reuse modified routes."
         )
+    return actual
+
+
+def verify_gateway(gateway, folder_id, bucket, api, *, reject_account_replica=False):
+    checked_gateway_spec(gateway, folder_id, bucket, api, reject_account_replica=reject_account_replica)
     return gateway
 
 

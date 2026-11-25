@@ -28,3 +28,25 @@ jobs:
       - run: npm test -- --maxWorkers=4
       - run: npm run typecheck
       - run: npm run build
+
+  account-replica-ydb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the replica SDK
+        run: python3 -m pip install -r tools/yandex-infrastructure/requirements-account-replica-deploy.txt
+      - name: Start disposable YDB
+        run: |
+          docker run --detach --name replica-ydb --hostname localhost \
+            --publish 127.0.0.1:2136:2136 \
+            --env GRPC_PORT=2136 ydbplatform/local-ydb:26.3.1.28@sha256:780be13e9f1f075f1726e12307ca1a847ac86219a9a22d945ce3e13f1a4b0007
+      - name: Verify replica schema and concurrent transactions against YDB
+        run: python3 tools/yandex-infrastructure/integration_account_replica.py

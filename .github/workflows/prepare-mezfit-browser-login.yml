@@ -34,7 +34,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mezfit-yandex-web-auth
+  group: mezfit-yandex-web-gateway
   cancel-in-progress: false
 
 jobs:

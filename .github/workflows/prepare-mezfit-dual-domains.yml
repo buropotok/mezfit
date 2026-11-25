@@ -31,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mezfit-yandex-dual-domains
+  group: mezfit-yandex-web-gateway
   cancel-in-progress: false
 
 jobs:

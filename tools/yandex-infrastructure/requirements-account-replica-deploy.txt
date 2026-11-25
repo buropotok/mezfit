@@ -1,0 +1,2 @@
+-r account-replica/requirements.txt
+yandexcloud==0.417.0

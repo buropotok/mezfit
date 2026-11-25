@@ -328,7 +328,7 @@ def check_gateway(gateway, api, folder):
             or not isinstance(gateway.get("domain"), str)
             or not gateway["domain"].endswith(".apigw.yandexcloud.net")):
         raise WebHostingError("Approved SPA API Gateway must exist and be ACTIVE.")
-    verify_gateway(gateway, folder, bucket_name(folder), api)
+    verify_gateway(gateway, folder, bucket_name(folder), api, reject_account_replica=True)
 
 
 def gateway_spec_changed(api, gateway, wanted):
