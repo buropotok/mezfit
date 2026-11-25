@@ -251,6 +251,18 @@ describe('Telegram bot invitations', () => {
     assertNoRegistration();
   });
 
+  it('logs the Telegram method and rejection codes when the bot cannot answer /start', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    notification.mockResolvedValueOnce(Response.json({
+      ok: false, error_code: 403, description: 'private upstream detail',
+    }, { status: 403 }));
+
+    expect((await send(start(202, '/start'))).status).toBe(200);
+    expect(warn.mock.calls).toEqual([['BOT_API_REJECTED', {
+      method: 'sendMessage', reason: 'TELEGRAM_REJECTED', http_status: 403, telegram_code: 403,
+    }]]);
+  });
+
   it('provisions verified identities before committing role, pair and outbox and confirms snapshot', async () => {
     const { accept, cancel } = await show();
     assertNoRegistration();

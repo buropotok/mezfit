@@ -86,6 +86,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          phase="Validate deployment credentials"
+          trap 'status=$?; printf "::error title=%s::Command failed (exit %s). See this stage in the Deploy Worker log.\n" "$phase" "$status" >&2' ERR
+          stage() {
+            phase=$1
+            printf '\n== %s ==\n' "$phase"
+          }
           bot_token=$TELEGRAM_SETUP_BOT_TOKEN
           unset TELEGRAM_SETUP_BOT_TOKEN
           if [[ -n "$MEZFIT_ACCOUNT_REPLICATION_SECRET" && ! "$MEZFIT_ACCOUNT_REPLICATION_SECRET" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
@@ -98,6 +104,7 @@ jobs:
           fi
           # Once set by this workflow, D1 is the source for future deployments.
           # Fall back to the previous repository variable for existing installations.
+          stage "Read invitation setting from D1"
           saved=$(npx wrangler d1 execute DB_BINDING --remote --json \
             --command "SELECT value FROM app_setting WHERE key = 'telegram_invites_enabled'" |
             jq -er 'select(length == 1 and .[0].success == true) | .[0].results |
@@ -106,6 +113,7 @@ jobs:
           case "$TELEGRAM_INVITES_ACTION" in
             unchanged) ;;
             enable)
+              stage "Check Telegram bot and current webhook"
               TELEGRAM_BOT_TOKEN="$bot_token" node tools/telegram-webhook.mjs preflight
               ;;
             disable) links_enabled=false ;;
@@ -119,6 +127,7 @@ jobs:
             echo "::error::TELEGRAM_BOT_INVITES_ENABLED requires TELEGRAM_BOT_WEBHOOK_SECRET"
             exit 1
           fi
+          stage "Prepare Worker deployment configuration"
           deploy_args=(
             --var "TELEGRAM_BOT_LOGIN_URL_ENABLED:${TELEGRAM_BOT_LOGIN_URL_ENABLED:-false}"
           )
@@ -134,20 +143,29 @@ jobs:
           deploy_worker() {
             npx wrangler deploy "${deploy_args[@]}" --var "TELEGRAM_BOT_INVITES_ENABLED:$1"
           }
+          stage "Deploy Cloudflare Worker (invitation links enabled: $links_enabled)"
           deploy_worker "$links_enabled"
 
           if [[ "$TELEGRAM_INVITES_ACTION" == "enable" ]]; then
+            stage "Check Worker endpoint and register webhook with Telegram"
             TELEGRAM_BOT_TOKEN="$bot_token" node tools/telegram-webhook.mjs register
             if [[ "$links_enabled" != "true" ]]; then
+              stage "Deploy Worker with chat invitation links enabled"
               deploy_worker true
             fi
             links_enabled=true
           fi
 
           if [[ "$TELEGRAM_INVITES_ACTION" != "unchanged" ]]; then
+            stage "Save invitation setting in D1"
             npx wrangler d1 execute DB_BINDING --remote --json \
               --command "INSERT INTO app_setting (key, value) VALUES ('telegram_invites_enabled', '$links_enabled')
                 ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP" |
               jq -e 'length == 1 and .[0].success == true' >/dev/null
+            stage "Verify saved invitation setting in D1"
+            npx wrangler d1 execute DB_BINDING --remote --json \
+              --command "SELECT value FROM app_setting WHERE key = 'telegram_invites_enabled'" |
+              jq -e --arg expected "$links_enabled" \
+                'length == 1 and .[0].success == true and .[0].results == [{value: $expected}]' >/dev/null
             echo "Invitation links enabled: $links_enabled"
           fi

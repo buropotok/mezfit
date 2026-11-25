@@ -143,8 +143,19 @@ async function callbackData(secret: string, action: Action, consentId: string, a
 }
 
 class TelegramDeliveryError extends Error {
-  constructor(readonly code: 'BOT_API_UNAVAILABLE' | 'BOT_API_REJECTED') {
+  constructor(
+    readonly code: 'BOT_API_UNAVAILABLE' | 'BOT_API_REJECTED',
+    readonly method: TelegramCall['method'],
+    readonly reason: string,
+    readonly httpStatus?: number,
+    readonly telegramCode?: number,
+  ) {
     super(code);
+  }
+
+  log(): void {
+    console.warn(this.code, { method: this.method, reason: this.reason,
+      http_status: this.httpStatus, telegram_code: this.telegramCode });
   }
 }
 
@@ -158,7 +169,12 @@ async function telegram(token: string, { method, payload }: TelegramCall): Promi
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const result: unknown = await response.json().catch(() => null);
+    let readFailure: string | undefined;
+    const result: unknown = await response.json().catch((error: unknown) => {
+      readFailure = signal.aborted ? 'BODY_TIMEOUT'
+        : error instanceof SyntaxError ? 'INVALID_JSON' : 'BODY_READ_FAILED';
+      return null;
+    });
     if (response.ok && object(result) && result.ok === true) {
       const success = method === 'answerCallbackQuery' ? result.result === true
         : object(result.result) && id(result.result.message_id);
@@ -168,13 +184,15 @@ async function telegram(token: string, { method, payload }: TelegramCall): Promi
     if (method === 'editMessageText' && response.status === 400 && object(result)
       && result.ok === false && result.error_code === 400 && typeof result.description === 'string'
       && result.description.startsWith('Bad Request: message is not modified')) return;
-    if (response.status === 429 || response.status >= 500 || response.ok) {
-      throw new TelegramDeliveryError('BOT_API_UNAVAILABLE');
-    }
-    throw new TelegramDeliveryError('BOT_API_REJECTED');
+    const telegramCode = object(result) && result.ok === false && typeof result.error_code === 'number'
+      && Number.isSafeInteger(result.error_code) ? result.error_code : undefined;
+    const retryable = response.status === 429 || response.status >= 500 || response.ok;
+    const reason = readFailure ?? (telegramCode !== undefined ? 'TELEGRAM_REJECTED' : 'UNEXPECTED_RESPONSE');
+    throw new TelegramDeliveryError(retryable ? 'BOT_API_UNAVAILABLE' : 'BOT_API_REJECTED',
+      method, reason, response.status, telegramCode);
   } catch (error) {
     if (error instanceof TelegramDeliveryError) throw error;
-    throw new TelegramDeliveryError('BOT_API_UNAVAILABLE');
+    throw new TelegramDeliveryError('BOT_API_UNAVAILABLE', method, signal.aborted ? 'REQUEST_TIMEOUT' : 'REQUEST_FAILED');
   }
 }
 
@@ -225,8 +243,9 @@ async function handleUpdate(update: Update, env: Env, secret: string, invitation
 
   await telegram(env.TELEGRAM_BOT_TOKEN, {
     method: 'answerCallbackQuery', payload: { callback_query_id: update.callbackId },
-  }).catch(() => {
+  }).catch((error: unknown) => {
     // Callback acknowledgements expire and may have already succeeded on delivery retry.
+    if (error instanceof TelegramDeliveryError) error.log();
   });
 
   if (action === 'c') await cancelInviteConsent(db, consentId, actor);
@@ -293,7 +312,8 @@ export async function handleTelegramBotWebhook(request: Request, env: Env, invit
     return new Response(null, { status: 200 });
   } catch (error) {
     const code = error instanceof TelegramDeliveryError ? error.code : 'BOT_INVITE_HANDLER_FAILED';
-    console.warn(code);
+    if (error instanceof TelegramDeliveryError) error.log();
+    else console.warn(code, { update_type: update.kind });
     return new Response(null, { status: code === 'BOT_API_REJECTED' ? 200 : 503 });
   }
 }
