@@ -17,6 +17,12 @@ VALUES ($telegram_id, $revision, $snapshot);
 """
 
 
+class ReplicaWriteError(Exception):
+    def __init__(self, stage):
+        super().__init__(stage)
+        self.stage = stage
+
+
 def connect(endpoint, database, credentials, *, timeout=5):
     import ydb
 
@@ -54,23 +60,36 @@ def save(store, telegram_id, revision, snapshot):
     pool, _, _ = store
     settings = ydb.BaseRequestSettings().with_timeout(3).with_operation_timeout(2)
 
+    stage = "SESSION"
+
     def transaction(session):
+        nonlocal stage
+        stage = "PREPARE_READ"
         select = session.prepare(SELECT, settings=settings)
+        stage = "PREPARE_WRITE"
         upsert = session.prepare(UPSERT, settings=settings)
+        stage = "READ"
         with session.transaction(ydb.SerializableReadWrite()) as tx:
             rows = tx.execute(select, {"$telegram_id": telegram_id}, settings=settings)[0].rows
             if rows:
                 row = rows[0]
                 if row.revision > revision:
+                    stage = "COMMIT_READ"
                     tx.commit(settings=settings)
                     return "stale", row.revision
                 if row.revision == revision:
+                    stage = "COMMIT_READ"
                     tx.commit(settings=settings)
                     return ("duplicate" if row.snapshot == snapshot else "conflict"), row.revision
+            stage = "WRITE_COMMIT"
             tx.execute(upsert, {"$telegram_id": telegram_id, "$revision": revision, "$snapshot": snapshot},
                        commit_tx=True, settings=settings)
             return "applied", revision
 
-    return pool.retry_operation_sync(transaction,
-                                     retry_settings=ydb.RetrySettings(
-                                         max_retries=2, idempotent=True, max_session_acquire_timeout=2))
+    try:
+        return pool.retry_operation_sync(
+            transaction,
+            retry_settings=ydb.RetrySettings(max_retries=2, idempotent=True, max_session_acquire_timeout=2),
+        )
+    except Exception as exc:
+        raise ReplicaWriteError(stage) from exc
