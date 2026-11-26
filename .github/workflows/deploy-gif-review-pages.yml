@@ -13,6 +13,7 @@ on:
     paths:
       - ".github/workflows/deploy-gif-review-pages.yml"
       - "tools/gif-review-pages/**"
+      - "tools/mezfit-access-page/**"
 
 permissions:
   contents: read
@@ -53,6 +54,16 @@ jobs:
           test -s gif-review-site/index.html
           test -s gif-review-site/candidates.json
           test -s gif-review-site/evidence.csv
+      - name: Include independent Mezfit access diagnostics
+        shell: bash
+        run: |
+          mkdir -p gif-review-site/access-test
+          cp tools/mezfit-access-page/index.html gif-review-site/access-test/
+          cp tools/mezfit-access-page/styles.css gif-review-site/access-test/
+          cp tools/mezfit-access-page/access.js gif-review-site/access-test/
+          test -s gif-review-site/access-test/index.html
+          test -s gif-review-site/access-test/styles.css
+          test -s gif-review-site/access-test/access.js
       - name: Save reproducible candidate report
         uses: actions/upload-artifact@v4
         with:
