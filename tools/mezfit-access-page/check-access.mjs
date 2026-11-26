@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { connectionAdvice, probeNetwork, MEZFIT_URL, TELEGRAM_SDK_URL } from './access.js';
+import { connectionAdvice, initializeAccessPage, probeNetwork, MEZFIT_URL, TELEGRAM_SDK_URL } from './access.js';
 
 test('only approved HTTPS endpoints are checked', () => {
   assert.equal(MEZFIT_URL, 'https://mezfit.online/');
@@ -59,6 +59,60 @@ test('hung network request is aborted at the timeout', async () => {
   });
   assert.equal(await probeNetwork(MEZFIT_URL, fetchImpl, 10), false);
   assert.equal(aborted, true);
+});
+
+test('browser UI shows Telegram option only when both paths are reachable', async () => {
+  const elements = new Map();
+  function element(id) {
+    if (!elements.has(id)) {
+      elements.set(id, {
+        hidden: false,
+        textContent: '',
+        disabled: false,
+        dataset: {},
+        listeners: {},
+        classList: { toggle() {} },
+        addEventListener(name, callback) { this.listeners[name] = callback; },
+      });
+    }
+    return elements.get(id);
+  }
+  const doc = {
+    visibilityState: 'visible',
+    getElementById: element,
+    addEventListener() {},
+  };
+  let siteWorks = true;
+  let telegramWorks = true;
+  const fakeFetch = async url => {
+    if (url === MEZFIT_URL && !siteWorks) throw new Error('blocked site');
+    if (url === TELEGRAM_SDK_URL && !telegramWorks) throw new Error('blocked sdk');
+    return { type: 'opaque' };
+  };
+  const tick = () => new Promise(resolve => setImmediate(resolve));
+  initializeAccessPage(doc, fakeFetch);
+  await tick();
+  assert.equal(element('site-item').dataset.state, 'up');
+  assert.equal(element('telegram-item').dataset.state, 'up');
+  assert.equal(element('telegram-login').hidden, false);
+  assert.equal(element('notice').hidden, true);
+
+  telegramWorks = false;
+  element('retry').listeners.click();
+  await tick();
+  assert.equal(element('site-item').dataset.state, 'up');
+  assert.equal(element('telegram-item').dataset.state, 'down');
+  assert.equal(element('telegram-login').hidden, true);
+  assert.match(element('notice-title').textContent, /Telegram/);
+
+  siteWorks = false;
+  telegramWorks = true;
+  element('retry').listeners.click();
+  await tick();
+  assert.equal(element('site-item').dataset.state, 'down');
+  assert.equal(element('telegram-login').hidden, true);
+  assert.match(element('notice-description').textContent, /VPN/);
+  assert.match(element('open-mezfit').textContent, /Попробовать открыть Mezfit/);
 });
 
 test('page links only to the intended app and does not collect passwords', async () => {
