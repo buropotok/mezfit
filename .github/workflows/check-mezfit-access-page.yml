@@ -1,0 +1,19 @@
+name: Check Mezfit access page
+
+on:
+  pull_request:
+    paths:
+      - "tools/mezfit-access-page/**"
+      - ".github/workflows/check-mezfit-access-page.yml"
+      - ".github/workflows/deploy-gif-review-pages.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  access-page:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Review standalone access page contracts
+        run: node --test tools/mezfit-access-page/check-access.mjs
