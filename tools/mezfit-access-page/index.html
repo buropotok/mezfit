@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#f6f8fc">
+    <meta name="description" content="Проверка доступности Mezfit и входа через Telegram.">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>Mezfit — вход в приложение</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./access.js"></script>
+  </head>
+  <body>
+    <div class="layout">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Mezfit — главная">
+          <span class="brand-symbol" aria-hidden="true">M</span>
+          <span class="brand-name">mezfit<span class="brand-dot">.</span></span>
+        </a>
+        <span class="topbar-label">Доступ к приложению</span>
+      </header>
+
+      <main class="main">
+        <section class="entry-card" aria-labelledby="page-title">
+          <div class="introduction">
+            <div class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Доступ без лишних шагов</div>
+            <h1 id="page-title">Добро пожаловать<br>в Mezfit</h1>
+            <p class="lead">Проверим подключение к приложению и Telegram, чтобы подсказать удобный способ входа.</p>
+            <div class="privacy-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+              Проверка выполняется в вашем браузере. Страница не запрашивает данные аккаунта и не хранит результаты.
+            </div>
+          </div>
+
+          <div class="check-panel" aria-label="Проверка доступности">
+            <div class="panel-heading">
+              <h2>Состояние подключения</h2>
+              <span class="panel-subtitle">Проверяем два сервиса</span>
+            </div>
+
+            <div class="checks" aria-live="polite" aria-atomic="false">
+              <div class="check-item" id="site-item" data-state="checking">
+                <span class="status-mark" aria-hidden="true"></span>
+                <div class="check-copy">
+                  <strong>Приложение Mezfit</strong>
+                  <span id="site-status">Проверяем соединение…</span>
+                </div>
+              </div>
+              <div class="check-item" id="telegram-item" data-state="checking">
+                <span class="status-mark" aria-hidden="true"></span>
+                <div class="check-copy">
+                  <strong>Вход через Telegram</strong>
+                  <span id="telegram-status">Проверяем соединение…</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="notice" id="notice" role="status" hidden>
+              <span class="notice-icon" aria-hidden="true">!</span>
+              <div>
+                <strong id="notice-title"></strong>
+                <p id="notice-description"></p>
+              </div>
+            </div>
+
+            <div class="actions">
+              <a id="open-mezfit" class="action action-primary" href="https://mezfit.online/" rel="noreferrer">
+                Открыть Mezfit <span aria-hidden="true">↗</span>
+              </a>
+              <a id="telegram-login" class="action action-secondary" href="https://mezfit.online/" rel="noreferrer" hidden>
+                Продолжить через Telegram
+              </a>
+              <button id="retry" class="retry" type="button" disabled>
+                <span class="retry-icon" aria-hidden="true">↻</span> Проверить ещё раз
+              </button>
+            </div>
+
+            <p class="disclaimer">Проверка показывает доступность соединения, но не гарантирует успешную авторизацию. При необходимости можно открыть сайт напрямую.</p>
+          </div>
+        </section>
+        <p class="footnote">Нет необходимости отключать VPN, если всё работает.</p>
+      </main>
+
+      <footer class="footer">
+        <span>© Mezfit</span>
+        <span>Простая страница проверки соединения</span>
+      </footer>
+    </div>
+  </body>
+</html>
