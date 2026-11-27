@@ -274,7 +274,11 @@ def configure_route(api, patch, folder, gateway, original, route):
         raise WebHostingError("An existing Gateway route changed during Apply.")
 
 
-def verify_unsigned_post(opener, domain):
+def verify_unsigned_post(opener, gateway, folder, api):
+    # Check the same host that receives replication traffic. Bootstrap may run
+    # before the custom domain is attached to the gateway.
+    domains = verified_gateway_domains(gateway, folder, api)
+    domain = "mezfit.online" if "mezfit.online" in domains else gateway["domain"]
     req = Request(f"https://{domain}{ACCOUNT_REPLICA_PATH}", data=b"{}",
                   headers={"Content-Type": "application/json"}, method="POST")
     try:
@@ -287,8 +291,9 @@ def verify_unsigned_post(opener, domain):
         except (OSError, ValueError):
             pass
         raise WebHostingError(f"Unexpected receiver response for unsigned POST: HTTP {exc.code}.") from None
-    except URLError:
-        raise WebHostingError("Gateway receiver could not be reached for the unsigned POST.") from None
+    except (URLError, OSError) as exc:
+        cause = exc.reason if isinstance(exc, URLError) else exc
+        raise WebHostingError(f"Unsigned replica POST to {domain} failed: {type(cause).__name__}.") from None
     raise WebHostingError("Account replica Gateway did not reject the unsigned POST.")
 
 
@@ -361,7 +366,8 @@ def main():
     if not current_secret or pinned_secret(current_secret) != secrets:
         raise WebHostingError("Pinned Lockbox version changed before Gateway activation.")
     configure_route(api, patch, folder, gateway, baseline, account_replica_route(function_id, deploy_sa))
-    verify_unsigned_post(opener, gateway["domain"])
+    gateway, _ = gateway_state(api, folder)
+    verify_unsigned_post(opener, gateway, folder, api)
     print("Account replica: schema and private runtime ready; exact Gateway POST verified (401 without caller secret).")
 
 
