@@ -1,21 +1,46 @@
 import cloudConfig from '../../dexie-cloud.json';
+import { PASSWORD_USER_ID_MIN, passwordCredentials } from './password-credentials';
 import { TelegramAuthError, validateTelegramInitData } from './telegram';
 
 export interface DexieCloudTokenEnv {
   TELEGRAM_BOT_TOKEN: string;
+  DB_BINDING?: D1Database;
+  MEZFIT_DEXIE_D1_MAPPING_ENABLED?: string;
   DEXIE_CLOUD_CLIENT_ID?: string;
   DEXIE_CLOUD_CLIENT_SECRET?: string;
 }
 
 /**
- * The subject must be stable on every device and must only come from verified Telegram initData.
- * The older D1 app_user numeric ID is intentionally not reused.
+ * Format the server-resolved identity. The older D1 app_user primary key is not a subject.
  */
 export function cloudUserId(telegramUserId: number): string {
   if (!Number.isSafeInteger(telegramUserId) || telegramUserId <= 0) {
     throw new Error('INVALID_TELEGRAM_USER_ID');
   }
   return `tg:${telegramUserId}`;
+}
+
+async function resolveLegacySubject(db: D1Database, telegramId: number): Promise<string | null> {
+  const credentials = passwordCredentials(db);
+  let identity = await credentials.resolveByVerifiedTelegramId(telegramId);
+  if (!identity) {
+    // First registration belongs to the existing account bootstrap, not this endpoint.
+    const account = await db.prepare('SELECT id FROM app_user WHERE telegram_user_id = ?')
+      .bind(String(telegramId)).first<{ id: number }>();
+    if (!account) return null;
+    identity = await credentials.createIdentityForExistingTelegramAccount(
+      account, telegramId, { onlyIfNeverReplicated: true },
+    );
+  }
+
+  // Accounts that first registered with a password cannot enter through this path
+  // until the Telegram-specific consumers are ready, even with a verified link.
+  if (identity.userId >= PASSWORD_USER_ID_MIN || identity.userId !== telegramId
+      || identity.telegramId !== telegramId
+      || identity.appUserId === null || !Number.isSafeInteger(identity.appUserId) || identity.appUserId <= 0) {
+    return null;
+  }
+  return cloudUserId(identity.userId);
 }
 
 function error(status: number, code: string, message: string): Response {
@@ -76,7 +101,20 @@ export async function handleDexieCloudTokenRoute(
     return error(400, 'INVALID_PUBLIC_KEY', 'Cloud device public key is required');
   }
 
-  const subject = cloudUserId(identity.user.id);
+  let subject: string | null;
+  if (env.MEZFIT_DEXIE_D1_MAPPING_ENABLED === 'true') {
+    try {
+      subject = env.DB_BINDING ? await resolveLegacySubject(env.DB_BINDING, identity.user.id) : null;
+    } catch {
+      subject = null;
+    }
+    if (subject === null) {
+      console.warn('DEXIE_CLOUD_ACCOUNT_MAPPING_UNAVAILABLE');
+      return error(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication failed');
+    }
+  } else {
+    subject = cloudUserId(identity.user.id);
+  }
   let upstream: Response;
   try {
     upstream = await fetchUpstream(`${cloudConfig.dbUrl}/token`, {
