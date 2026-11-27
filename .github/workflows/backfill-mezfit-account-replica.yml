@@ -3,10 +3,17 @@ name: Backfill Mezfit account replica
 on:
   workflow_dispatch:
     inputs:
-      from_user_id:
-        description: D1 user ID of the pilot account, or first D1 ID of a batch.
-        type: string
+      mode:
+        description: Count matching accounts or enqueue their current snapshots.
         required: true
+        type: choice
+        default: preview
+        options:
+          - preview
+          - apply
+      from_user_id:
+        description: First app_user ID. Leave both IDs empty to include every account.
+        type: string
       to_user_id:
         description: Last D1 ID of a batch (inclusive, at most 100 IDs). Leave empty for the pilot.
         type: string
@@ -35,19 +42,23 @@ jobs:
         run: |
           DB_ID=$(npx wrangler d1 list --json | jq -er 'first(.[] | select(.name == "mezfit") | .uuid | strings)')
           sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$DB_ID/" wrangler.jsonc
-      - name: Enqueue existing accounts
+      - name: Preview or enqueue existing accounts
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          MODE: ${{ inputs.mode }}
           FROM_USER_ID: ${{ inputs.from_user_id }}
           TO_USER_ID: ${{ inputs.to_user_id }}
         shell: bash
         run: |
+          set -euo pipefail
           filter=$(node --input-type=module <<'JS'
           const { FROM_USER_ID: from, TO_USER_ID: last } = process.env;
           const to = last || from;
           const validId = (id) => /^[1-9][0-9]{0,15}$/.test(id || '') && Number.isSafeInteger(Number(id));
 
-          if (!validId(from) || !validId(to) || Number(to) < Number(from) || Number(to) - Number(from) >= 100) {
+          if (!from && !last) {
+            console.log('1 = 1');
+          } else if (!validId(from) || !validId(to) || Number(to) < Number(from) || Number(to) - Number(from) >= 100) {
             console.error('Enter a D1 ID or a range of at most 100 D1 IDs.');
             process.exitCode = 1;
           } else {
@@ -55,20 +66,34 @@ jobs:
           }
           JS
           )
-          result=$(npx wrangler d1 execute DB_BINDING --remote --yes --json --command "
-            INSERT INTO account_replication_outbox (telegram_user_id, revision, next_attempt_at)
-            SELECT telegram_user_id, 1, CAST(strftime('%s', 'now') AS INTEGER) * 1000
-            FROM app_user WHERE $filter
-            ON CONFLICT (telegram_user_id) DO NOTHING;
-            SELECT COUNT(*) AS matching_accounts FROM app_user WHERE $filter;
-          ")
-          queued=$(jq -er '.[0].meta.changes | numbers' <<< "$result")
-          matched=$(jq -er '.[1].results[0].matching_accounts | numbers' <<< "$result")
-          {
-            echo "Matching accounts: $matched"
-            echo "New entries in the delivery queue: $queued"
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [[ -z "$TO_USER_ID" && "$matched" -ne 1 ]]; then
+          preview="
+            SELECT COUNT(*) AS matching_accounts,
+              COALESCE(SUM(o.telegram_user_id IS NULL OR (s.credential_exists = 1 AND o.full_snapshot = 0)), 0) AS to_queue
+            FROM account_replication_source AS s
+            LEFT JOIN account_replication_outbox AS o ON o.telegram_user_id = s.replication_key
+            WHERE $filter;
+          "
+          result=$(npx wrangler d1 execute DB_BINDING --remote --yes --json --command "$preview")
+          matched=$(jq -er '.[0].results[0].matching_accounts | numbers' <<< "$result")
+          to_queue=$(jq -er '.[0].results[0].to_queue | numbers' <<< "$result")
+          if [[ -n "$FROM_USER_ID" && -z "$TO_USER_ID" && "$matched" -ne 1 ]]; then
             echo "::error::Pilot account was not found in D1"
             exit 1
+          fi
+          {
+            echo "Matching accounts: $matched"
+            echo "Snapshots to enqueue: $to_queue"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$MODE" == apply ]]; then
+            result=$(npx wrangler d1 execute DB_BINDING --remote --yes --json --command "
+              INSERT INTO account_replication_outbox (telegram_user_id, revision, next_attempt_at, full_snapshot)
+              SELECT replication_key, 1, CAST(strftime('%s', 'now') AS INTEGER) * 1000, credential_exists
+              FROM account_replication_source WHERE $filter
+              ON CONFLICT (telegram_user_id) DO UPDATE SET
+                revision = revision + 1, attempts = 0, next_attempt_at = excluded.next_attempt_at,
+                last_error = NULL, full_snapshot = 1
+              WHERE excluded.full_snapshot = 1 AND full_snapshot = 0;
+            ")
+            queued=$(jq -er '.[0].meta.changes | numbers' <<< "$result")
+            echo "Snapshots queued: $queued" >> "$GITHUB_STEP_SUMMARY"
           fi
