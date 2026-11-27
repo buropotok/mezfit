@@ -15,6 +15,12 @@ SECRET_ENV = "MEZFIT_ACCOUNT_REPLICATION_SECRET"
 SECRET_PATTERN = re.compile(r"[A-Za-z0-9_-]{43}")
 MAX_SAFE_INTEGER = 2**53 - 1
 MAX_BODY_BYTES = 32768
+PASSWORD_ID_MIN = 2**52
+LOGIN_PATTERN = re.compile(r"[a-z0-9_]{1,32}")
+VERIFIER_PATTERN = re.compile(
+    r"\$argon2id\$v=19\$m=[1-9][0-9]{0,8},t=[1-9][0-9]{0,8},p=[1-9][0-9]{0,8}"
+    r"\$[A-Za-z0-9+/]{11,128}\$[A-Za-z0-9+/]{22,256}"
+)
 ROLE_NAMES = ("client", "coach")
 STRING_LIMITS = {
     "username": 256, "firstName": 256, "lastName": 256,
@@ -112,12 +118,52 @@ def read_snapshot(event):
     if len(raw) > MAX_BODY_BYTES:
         raise SnapshotError("BODY_TOO_LARGE")
     value = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_fields)
-    if not isinstance(value, dict) or value.keys() != {"revision", "user", "roles"}:
+    base = {"revision", "user", "roles"}
+    if not isinstance(value, dict) or value.keys() not in (base, base | {"identity"}):
         raise SnapshotError("SNAPSHOT_SHAPE")
 
     user, roles, revision = value["user"], value["roles"], value["revision"]
+    modern = "identity" in value
     if not positive_safe_integer(revision):
         raise SnapshotError("REVISION")
+    if not isinstance(roles, list) or len(roles) > 2 or any(role not in ROLE_NAMES for role in roles):
+        raise SnapshotError("ROLES")
+    if user is not None or not modern:
+        validate_user(user)
+    snapshot = json.dumps({"user": user, "roles": [role for role in ROLE_NAMES if role in roles]},
+                          sort_keys=True, separators=(",", ":"))
+    if not modern:
+        return user["telegramUserId"], revision, snapshot
+
+    ident = value["identity"]
+    if not isinstance(ident, dict) or ident.keys() != {"userId", "telegramId", "login", "passHash", "state"}:
+        raise SnapshotError("IDENTITY_SHAPE")
+    key, external, login, verifier, state = (ident[name] for name in
+                                             ("userId", "telegramId", "login", "passHash", "state"))
+    if (not canonical_id(key, MAX_SAFE_INTEGER)
+            or (external is not None and not canonical_id(external, PASSWORD_ID_MIN - 1))
+            or state not in ("active", "deleted")
+            or (login is not None and (not isinstance(login, str) or not LOGIN_PATTERN.fullmatch(login)))
+            or (verifier is not None and (login is None or not isinstance(verifier, str)
+                                          or not VERIFIER_PATTERN.fullmatch(verifier)))):
+        raise SnapshotError("IDENTITY_SHAPE")
+    if state == "deleted":
+        if any(field is not None for field in (user, external, login, verifier)) or roles:
+            raise SnapshotError("IDENTITY_SHAPE")
+    elif ((user is None) != (external is None)
+          or (user is None and roles)
+          or (user is not None and user["telegramUserId"] != external)
+          or (int(key) < PASSWORD_ID_MIN and key != external)
+          or (user is None and (login is None or verifier is None))):
+        raise SnapshotError("IDENTITY_SHAPE")
+    return key, revision, snapshot, (external, login, verifier, state)
+
+
+def canonical_id(value, limit):
+    return isinstance(value, str) and re.fullmatch(r"[1-9][0-9]{0,15}", value) and int(value) <= limit
+
+
+def validate_user(user):
     if not isinstance(user, dict) or user.keys() != USER_FIELDS:
         raise SnapshotError("USER_SHAPE")
     telegram_id = user["telegramUserId"]
@@ -138,10 +184,6 @@ def read_snapshot(event):
             field.encode("utf-8")  # Reject escaped lone surrogates.
         except UnicodeError:
             raise SnapshotError(key) from None
-    if not isinstance(roles, list) or len(roles) > 2 or any(role not in ROLE_NAMES for role in roles):
-        raise SnapshotError("ROLES")
-    snapshot = {"user": user, "roles": [role for role in ROLE_NAMES if role in roles]}
-    return telegram_id, revision, json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
 
 
 @lru_cache(maxsize=1)
@@ -173,7 +215,7 @@ def handler(event, context):
         response["headers"][REQUEST_ID_HEADER] = correlation_id
         return response
     try:
-        telegram_id, revision, snapshot = read_snapshot(event)
+        snapshot = read_snapshot(event)
     except (ValueError, RecursionError) as exc:
         if isinstance(exc, SnapshotError):
             detail = str(exc)
@@ -193,11 +235,13 @@ def handler(event, context):
     except Exception as exc:
         return failure(503, unavailable, correlation_id, f"CONNECT:{ydb_error_kind(exc)}")
     try:
-        outcome, stored_revision = save(store, telegram_id, revision, snapshot)
+        outcome, stored_revision = save(store, *snapshot)
     except ReplicaWriteError as exc:
         return failure(503, unavailable, correlation_id, f"{exc.stage}:{ydb_error_kind(exc.__cause__)}")
     except Exception as exc:
         return failure(503, unavailable, correlation_id, f"WRITE:{ydb_error_kind(exc)}")
+    if outcome == "identity_conflict":
+        return failure(409, {"error": {"code": "IDENTITY_CONFLICT"}}, correlation_id)
     if outcome == "conflict":
         return failure(409, {"error": {"code": "REVISION_CONFLICT"}, "revision": stored_revision}, correlation_id)
     return reply(200, {"status": outcome, "revision": stored_revision})
