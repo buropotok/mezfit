@@ -1,7 +1,7 @@
 import { discussionAnchorKey, discussionId, discussionRecord as record, isDiscussionAnchor, isPersonalDiscussionId,
   matchesDiscussionThreadAnchor } from '../../shared/discussion-anchor';
 import { discussionCursorKey, discussionInstant, discussionReadCursor, discussionReadStateId } from '../../shared/discussion-read-state';
-import { validatedTelegramId } from '../../shared/approved-relationship';
+import { internalUserIdFromCloudId } from '../../shared/approved-relationship';
 import { sendTopicTelegram } from './coach-telegram';
 import { cloudList, cloudRead, cloudToken, enabledByPreference, readNotificationClientName, readNotificationRelationship, type WorkoutReminderEnv } from './workout-reminders';
 
@@ -123,7 +123,7 @@ async function deliver(env: DiscussionNotificationEnv, event: PendingDiscussion,
   if (message === null) throw new Error('DISCUSSION_MESSAGE_PENDING');
   if (!record(message) || message.id !== event.message_id || message.realmId !== event.realm_id
     || message.draftForRealmId || message.deletedAt || !discussionId(message.threadId)
-    || typeof message.authorUserId !== 'string' || !validatedTelegramId(message.authorUserId)
+    || typeof message.authorUserId !== 'string' || !internalUserIdFromCloudId(message.authorUserId)
     || message.owner !== message.authorUserId || typeof message.text !== 'string') return null;
   const members = await cloudList('/all/members?realmId=' + encodeURIComponent(event.realm_id), token, fetchImpl);
   const pair = notificationParticipants(members);

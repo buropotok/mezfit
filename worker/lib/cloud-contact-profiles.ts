@@ -1,3 +1,4 @@
+import { cloudIdForVerifiedTelegram } from './password-credentials';
 import { validateTelegramInitData, type TelegramInitUser } from './telegram';
 import { optimizeContactAvatar, type ContactAvatarVariant } from './contact-avatar-transform';
 import { isBoundedJpeg } from './bounded-avatar-jpeg';
@@ -12,6 +13,7 @@ import {
 } from './dexie-cloud-membership';
 
 export interface ContactProfileEnv extends CloudMembershipEnv {
+  DB_BINDING: D1Database;
   TELEGRAM_BOT_TOKEN: string;
   IMAGES: ImagesBinding;
 }
@@ -217,6 +219,8 @@ export async function currentTelegramAvatarSource(
   const identity = await validateTelegramInitData(
     request.headers.get('x-telegram-init-data') ?? '', env.TELEGRAM_BOT_TOKEN,
   );
+  const account = await cloudIdForVerifiedTelegram(env.DB_BINDING, identity.user.id).catch(() => null);
+  if (!account) return error(503, 'ACCOUNT_IDENTITY_UNAVAILABLE');
   const photo = await currentTelegramPhoto(fetchImpl, env.TELEGRAM_BOT_TOKEN, identity.user.id);
   // Diagnostic is an explicit read-only inspection of what the Bot API returns
   // *now*, not the cached 204 comparison used by routine profile refresh.
@@ -230,7 +234,6 @@ export async function currentTelegramAvatarSource(
   // An untrusted browser hint is never enough to skip a photo refresh: read
   // every currently authorized relationship from the authoritative cloud.
   // Missing/incomplete realm variants must still trigger the client encoder.
-  const account = 'tg:' + identity.user.id;
   const bearer = await cloudMembershipAdminToken(env, fetchImpl);
   const own = await cloudMembershipAdminRead(
     fetchImpl, bearer, '/all/members?userId=' + encodeURIComponent(account),
@@ -352,7 +355,8 @@ export async function syncOwnContactProfile(
   } catch {
     return error(400, 'INVALID_CLIENT_AVATAR');
   }
-  const account = 'tg:' + identity.user.id;
+  const account = await cloudIdForVerifiedTelegram(env.DB_BINDING, identity.user.id).catch(() => null);
+  if (!account) return error(503, 'ACCOUNT_IDENTITY_UNAVAILABLE');
   const sourceAuthAt = identity.authDate.getTime();
   if (!Number.isSafeInteger(sourceAuthAt) || sourceAuthAt <= 0) {
     return error(401, 'INVALID_PROFILE_SOURCE');

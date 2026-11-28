@@ -1,4 +1,5 @@
 import { DISCUSSION_MEDIA_KEY_PATTERN, discussionMediaSenderPrefix, discussionMediaObjectSizeLimit } from '../../shared/discussion-media-limits';
+import { cloudIdForVerifiedTelegram } from './password-credentials';
 import { TelegramAuthError, validateTelegramInitData } from './telegram';
 import { authorizeDiscussionR2Read, validDiscussionR2ReadIdentity, type DiscussionMediaReadEnv } from './discussion-media-read-auth';
 
@@ -8,6 +9,7 @@ const EXPIRES_SECONDS = 600;
 const encoder = new TextEncoder();
 
 export interface DiscussionR2MediaEnv extends DiscussionMediaReadEnv {
+  DB_BINDING: D1Database;
   TELEGRAM_BOT_TOKEN: string;
   R2_BINDING_DISCUSSION_MEDIA: R2Bucket;
   R2_ACCOUNT_ID?: string;
@@ -157,13 +159,16 @@ export async function handleDiscussionR2MediaRoute(request: Request, env: Discus
   if (!input || (path.endsWith('/read') && !validDiscussionR2ReadIdentity(raw))) {
     return jsonError(400, 'INVALID_MEDIA_REQUEST');
   }
-  let actorId: string;
+  let telegramId: number;
   try {
-    actorId = 'tg:' + (await validateTelegramInitData(input.initData, env.TELEGRAM_BOT_TOKEN)).user.id;
+    telegramId = (await validateTelegramInitData(input.initData, env.TELEGRAM_BOT_TOKEN)).user.id;
   } catch (error) {
     if (error instanceof TelegramAuthError) return jsonError(401, 'UNAUTHORIZED');
     throw error;
   }
+
+  const actorId = await cloudIdForVerifiedTelegram(env.DB_BINDING, telegramId).catch(() => null);
+  if (!actorId) return jsonError(503, 'MEDIA_AUTHORIZATION_UNAVAILABLE');
 
   if (path.endsWith('/read')) {
     if (!validDiscussionR2ReadIdentity(raw)) return jsonError(400, 'INVALID_MEDIA_REQUEST');

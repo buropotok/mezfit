@@ -17,11 +17,11 @@ import { createCloudDatabase, type MezfitCloudDatabase } from './database';
 import { syncCloudContactProfile } from '../../api';
 import { loadContactAvatar } from './contact-avatar-cache';
 
-/** Telegram's verified identity, not the former D1 integer, is the contact ID. */
+/** Contact identity and access come from the authorized Dexie relationship. */
 export interface CloudContact {
   relationshipId: string;
   userId: string;
-  telegramUserId: string;
+  telegramUserId?: string;
   displayName: string;
   avatarVersion?: string | null;
   avatarMode?: string;
@@ -67,7 +67,6 @@ function contact(realmId: string, member: { userId?: string; name?: string; avat
   return {
     relationshipId: realmId,
     userId,
-    telegramUserId: userId.slice(3),
     displayName: member.name?.trim() || fallback,
     avatarMode: member.avatarMode,
     avatarVersion: typeof member.avatarVersion === 'string' && /^[a-f0-9]{64}$/.test(member.avatarVersion)
@@ -200,7 +199,7 @@ async function readContactSnapshot(db: MezfitCloudDatabase, actorUserId: string)
         for (const realmId of new Set([actorUserId, ...contacts.clients.map(item => item.relationshipId), ...contacts.coaches.map(item => item.relationshipId)])) {
           const existing = selfAvatars.find(item => item.relationshipId === realmId);
           if (existing) existing.userAvatar = true;
-          else selfAvatars.push({ relationshipId: realmId, userId: actorUserId, telegramUserId: actorUserId.slice(3), displayName: 'Вы', userAvatar: true });
+          else selfAvatars.push({ relationshipId: realmId, userId: actorUserId, displayName: 'Вы', userAvatar: true });
         }
       }
     } catch { /* Avatar failure must not disable contacts or cloud transport. */ }

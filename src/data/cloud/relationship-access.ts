@@ -1,7 +1,5 @@
 import Dexie from 'dexie';
-import { checkApprovedAssignedPair, validatedTelegramId, type AssignedPairCheck } from '../../../shared/approved-relationship';
-
-export const telegramId = validatedTelegramId;
+import { checkApprovedAssignedPair, internalUserIdFromCloudId, type AssignedPairCheck } from '../../../shared/approved-relationship';
 
 /** Local Dexie transactions require a keepalive while verifying relationship hashes. */
 export function isApprovedAssignedPair(
@@ -10,7 +8,7 @@ export function isApprovedAssignedPair(
   coachUserId: string,
   clientUserId: string,
 ): Promise<boolean> {
-  const coach = telegramId(coachUserId), client = telegramId(clientUserId);
+  const coach = internalUserIdFromCloudId(coachUserId), client = internalUserIdFromCloudId(clientUserId);
   if (!coach || !client || coach === client || !realm) return Dexie.Promise.resolve(false);
   return Dexie.waitFor(checkApprovedAssignedPair({ realm, members, coachUserId, clientUserId }));
 }

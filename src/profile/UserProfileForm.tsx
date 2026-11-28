@@ -31,7 +31,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
   onCancel?: () => void;
   defaults: UserProfileDefaults;
   initialProfile: UserProfile | null;
-  telegramUserId: string;
+  telegramUserId?: string | null;
   telegramUsername: string | null;
   onSave: (draft: UserProfileDraft, changedFields?: readonly UserProfileField[]) => Promise<void>;
 }) {
@@ -145,7 +145,7 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
       <div className="user-profile__details">
         <div className="user-profile__field">
           <Text variant="caption">Telegram ID</Text>
-          <Text variant="headline">{telegramUserId}</Text>
+          <Text variant="headline">{telegramUserId ?? 'Telegram не привязан'}</Text>
         </div>
         <div className="user-profile__field">
           <Text variant="caption">Telegram</Text>
@@ -176,8 +176,6 @@ export function UserProfileForm({ defaults, initialProfile, telegramUserId, tele
         {weightInput}
       </div>
     </GlassSurface> : <>
-      <Text variant="caption">Telegram ID</Text>
-      <Text variant="headline">{telegramUserId}</Text>
       <div className="user-profile__date">
         <Text variant="caption">Дата рождения</Text>
         <Button variant="secondary" disabled={saving} onClick={() => setPickerOpen(true)}>

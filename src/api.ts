@@ -917,14 +917,14 @@ export function reorderCoachPrograms(initData: string, programIds: number[]): Pr
 }
 
 /** Privileged, irreversible test reset; only an allowlisted signed Coach may call it. */
-export async function resetTestClientRelationship(initData: string, clientTelegramId: string): Promise<void> {
-  if (!/^[1-9]\d*$/.test(clientTelegramId)
-    || !Number.isSafeInteger(Number(clientTelegramId))
-    || String(Number(clientTelegramId)) !== clientTelegramId) {
+export async function resetTestClientRelationship(initData: string, clientInternalId: string): Promise<void> {
+  if (!/^[1-9]\d*$/.test(clientInternalId)
+    || !Number.isSafeInteger(Number(clientInternalId))
+    || String(Number(clientInternalId)) !== clientInternalId) {
     throw new ApiError(400, 'Некорректный клиент', 'INVALID_CLIENT');
   }
   const result = await apiRequest<unknown>(
-    initData, `/api/coach/clients/${clientTelegramId}/test-relationship`, { method: 'DELETE' },
+    initData, `/api/coach/clients/${clientInternalId}/test-relationship`, { method: 'DELETE' },
   );
   if (!isRecord(result) || result.ok !== true) {
     throw new ApiError(502, 'Не удалось подтвердить удаление связи', 'INVALID_API_RESPONSE');

@@ -1,6 +1,7 @@
 import { liveQuery } from 'dexie';
 import { relationshipRealmId } from '../../../shared/relationship-id';
-import { isApprovedAssignedPair, telegramId } from './relationship-access';
+import { internalUserIdFromCloudId } from '../../../shared/approved-relationship';
+import { isApprovedAssignedPair } from './relationship-access';
 export { isApprovedAssignedPair } from './relationship-access';
 import { createCloudDatabase, type CloudTrainingPlanRow, type MezfitCloudDatabase } from './database';
 
@@ -49,12 +50,12 @@ export class AssignedProgramsRepository {
 
   /** The Worker-provisioned canonical realm and exactly two accepted members
    * are required; user IDs supplied by UI remain selectors, not proof. */
-  private async relationshipRealm(clientTelegramId: string): Promise<string> {
-    const clientUserId = `tg:${clientTelegramId}`;
-    if (!telegramId(clientUserId)) throw new Error('Некорректный клиент');
+  private async relationshipRealm(clientInternalId: string): Promise<string> {
+    const clientUserId = `tg:${clientInternalId}`;
+    if (!internalUserIdFromCloudId(clientUserId)) throw new Error('Некорректный клиент');
     if (clientUserId === this.actorUserId) throw new Error('Нельзя назначить программу самому себе');
 
-    const realmId = await relationshipRealmId(this.actorUserId.slice(3), clientTelegramId);
+    const realmId = await relationshipRealmId(this.actorUserId.slice(3), clientInternalId);
     const [realm, members] = await Promise.all([
       this.db.realms.get(realmId),
       this.db.members.where('realmId').equals(realmId).toArray(),
@@ -63,10 +64,10 @@ export class AssignedProgramsRepository {
     throw new Error('Связь с клиентом ещё не синхронизирована. Подключитесь к сети и повторите.');
   }
 
-  async createAssigned(clientTelegramId: string, rawName: string): Promise<string> {
+  async createAssigned(clientInternalId: string, rawName: string): Promise<string> {
     const name = rawName.trim();
     if (!name || name.length > 120) throw new Error('Название программы должно содержать от 1 до 120 символов');
-    const realmId = await this.relationshipRealm(clientTelegramId);
+    const realmId = await this.relationshipRealm(clientInternalId);
     const now = new Date().toISOString();
     const position = await this.db.trainingPlans.where('realmId').equals(realmId).count();
     // Maintain the ownerless input contract of this pilot adapter. The
@@ -76,7 +77,7 @@ export class AssignedProgramsRepository {
       realmId,
       owner: null,
       coachUserId: this.actorUserId,
-      clientUserId: `tg:${clientTelegramId}`,
+      clientUserId: `tg:${clientInternalId}`,
       athleteUserId: `tg:${clientTelegramId}`,
       name,
       position,

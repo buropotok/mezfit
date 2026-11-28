@@ -60,7 +60,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function telegramId(value: string): string {
+function internalId(value: string): string {
   if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value))
     || String(Number(value)) !== value) failConflict();
   return value;
@@ -77,12 +77,12 @@ function memberName(value: string): string | undefined {
 }
 
 export async function relationshipMembership(
-  coachTelegramId: string,
-  clientTelegramId: string,
+  coachInternalId: string,
+  clientInternalId: string,
   names?: RelationshipNames,
 ): Promise<{ realm: CloudRealm; members: [CloudMember, CloudMember] }> {
-  const coach = telegramId(coachTelegramId);
-  const client = telegramId(clientTelegramId);
+  const coach = internalId(coachInternalId);
+  const client = internalId(clientInternalId);
   if (coach === client) failConflict();
   const coachName = names ? memberName(names.coach) : undefined;
   const clientName = names ? memberName(names.client) : undefined;
@@ -416,15 +416,15 @@ export function requireCloudMembershipConfiguration(env: CloudMembershipEnv): as
  */
 export async function provisionInviteMembership(
   env: CloudMembershipEnv,
-  coachTelegramId: string,
-  clientTelegramId: string,
+  coachInternalId: string,
+  clientInternalId: string,
   fetchImpl: typeof fetch = fetch,
   names?: RelationshipNames,
 ): Promise<{ realmId: string }> {
   // Reject missing secrets before any remote or legacy database mutation.
   requireCloudMembershipConfiguration(env);
 
-  const { realm, members } = await relationshipMembership(coachTelegramId, clientTelegramId, names);
+  const { realm, members } = await relationshipMembership(coachInternalId, clientInternalId, names);
   const admin = await cloudMembershipAdminToken(env, fetchImpl);
 
   // User impersonation belongs only to the narrow auth service account; never

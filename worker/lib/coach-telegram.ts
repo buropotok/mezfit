@@ -1,4 +1,4 @@
-import { validatedTelegramId } from '../../shared/approved-relationship';
+import { linkedTelegramAccount } from './password-credentials';
 import { discussionRecord as record } from '../../shared/discussion-anchor';
 import { notificationStartParam, type TelegramNotificationTarget } from '../../shared/telegram-notification-link';
 
@@ -91,8 +91,15 @@ async function resolveTopic(env: CoachTelegramEnv, chatId: string, key: string, 
 export async function sendTopicTelegram(
   env: CoachTelegramEnv, notification: TelegramNotification, fetchImpl: typeof fetch = fetch,
 ): Promise<TelegramDelivery> {
-  const chatId = validatedTelegramId(notification.recipientUserId);
-  if (!chatId || !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(env.TELEGRAM_BOT_USERNAME)) return blocked;
+  if (!/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(env.TELEGRAM_BOT_USERNAME)) return blocked;
+  let account: Awaited<ReturnType<typeof linkedTelegramAccount>>;
+  try {
+    account = await linkedTelegramAccount(env.DB_BINDING, notification.recipientUserId);
+  } catch {
+    return retry();
+  }
+  if (!account) return blocked;
+  const chatId = account.telegramId;
   const key = notification.peer?.userId ?? 'general';
   const name = Array.from(notification.peer ? notification.peer.name.trim() : 'Общее').slice(0, 128).join('');
   const receipt = crypto.randomUUID().replaceAll('-', '');

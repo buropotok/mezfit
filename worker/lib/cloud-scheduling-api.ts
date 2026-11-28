@@ -1,3 +1,4 @@
+import { cloudIdForVerifiedTelegram } from './password-credentials';
 import { validateTelegramInitData } from './telegram';
 
 function failure(status: number, code: string): Response {
@@ -6,7 +7,7 @@ function failure(status: number, code: string): Response {
   });
 }
 
-/** Do not use legacy D1 identity for Dexie scheduling. */
+/** Resolve the verified Telegram caller to the internal Dexie actor. */
 export async function handleCloudSchedulingConfirm(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return failure(405, 'METHOD_NOT_ALLOWED');
   const identity = await validateTelegramInitData(
@@ -19,11 +20,18 @@ export async function handleCloudSchedulingConfirm(request: Request, env: Env): 
   let command: unknown;
   try { command = JSON.parse(source); }
   catch { return failure(400, 'INVALID_JSON'); }
+  let actor: string | null;
+  try {
+    actor = await cloudIdForVerifiedTelegram(env.DB_BINDING, identity.user.id);
+  } catch {
+    return failure(503, 'ACCOUNT_IDENTITY_UNAVAILABLE');
+  }
+  if (!actor) return failure(503, 'ACCOUNT_IDENTITY_UNAVAILABLE');
   const id = env.SCHEDULE_RESERVATIONS.idFromName('all-workout-bookings-v1');
   const stub = env.SCHEDULE_RESERVATIONS.get(id);
   return stub.fetch('https://schedule.internal/confirm', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ actor: 'tg:' + identity.user.id, input: command }),
+    body: JSON.stringify({ actor, input: command }),
   });
 }

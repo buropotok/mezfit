@@ -70,11 +70,11 @@ async function realmRows(fetchImpl: typeof fetch, bearer: string, table: string,
  * the same authorized actor can retry an interrupted cleanup.
  */
 export async function resetTestCloudRelationship(
-  env: CloudMembershipEnv, coachTelegramId: string, clientTelegramId: string,
+  env: CloudMembershipEnv, coachInternalId: string, clientInternalId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ realmId: string }> {
   requireCloudMembershipConfiguration(env);
-  const { realm, members } = await relationshipMembership(coachTelegramId, clientTelegramId);
+  const { realm, members } = await relationshipMembership(coachInternalId, clientInternalId);
   const bearer = await cloudMembershipAdminToken(env, fetchImpl);
   const existing = await cloudRequest(fetchImpl, bearer,
     '/all/realms/' + encodeURIComponent(realm.realmId));

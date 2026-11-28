@@ -1,5 +1,6 @@
 import cloudConfig from '../../dexie-cloud.json';
-import { checkApprovedAssignedPair, validatedTelegramId, type RelationshipMemberView } from '../../shared/approved-relationship';
+import { linkedTelegramAccount } from './password-credentials';
+import { checkApprovedAssignedPair, internalUserIdFromCloudId, type RelationshipMemberView } from '../../shared/approved-relationship';
 import { flexAttributeId, flexValueId } from '../../shared/flex-identifiers';
 
 import { COACH_TELEGRAM_PREFERENCES } from '../../shared/telegram-notification-link';
@@ -52,9 +53,9 @@ function validOccurrence(value: unknown): value is Occurrence {
   return typeof value.id === 'string' && value.id.length > 0
     && typeof value.realmId === 'string' && value.realmId.length > 0
     && (value.owner === null || value.owner === value.realmId)
-    && typeof value.athleteUserId === 'string' && validatedTelegramId(value.athleteUserId) !== null
-    && (value.coachUserId === null || (typeof value.coachUserId === 'string' && validatedTelegramId(value.coachUserId) !== null))
-    && (value.clientUserId === null || (typeof value.clientUserId === 'string' && validatedTelegramId(value.clientUserId) !== null))
+    && typeof value.athleteUserId === 'string' && internalUserIdFromCloudId(value.athleteUserId) !== null
+    && (value.coachUserId === null || (typeof value.coachUserId === 'string' && internalUserIdFromCloudId(value.coachUserId) !== null))
+    && (value.clientUserId === null || (typeof value.clientUserId === 'string' && internalUserIdFromCloudId(value.clientUserId) !== null))
     && typeof value.startsAtUtc === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value.startsAtUtc)
     && Number.isFinite(Date.parse(value.startsAtUtc))
     && value.status === 'scheduled' && value.workoutSessionId === null
@@ -189,11 +190,11 @@ export async function readNotificationClientName(
 }
 
 async function personalRole(userId: string, db: D1Database): Promise<'coach' | 'client' | undefined> {
-  const user = validatedTelegramId(userId);
-  if (!user) return undefined;
+  const account = await linkedTelegramAccount(db, userId);
+  if (!account) return undefined;
   const roles = await db.prepare(
-    'SELECT role FROM user_role JOIN app_user ON app_user.id = user_role.user_id WHERE app_user.telegram_user_id = ?',
-  ).bind(user).all<{ role: string }>();
+    'SELECT role FROM user_role WHERE user_id = ?',
+  ).bind(account.appUserId).all<{ role: string }>();
   if (roles.results.length !== 1) return undefined; // Dual-role users are out of MVP scope.
   return roles.results[0].role === 'coach' || roles.results[0].role === 'client'
     ? roles.results[0].role : undefined;
@@ -242,10 +243,16 @@ async function claimDelivery(
 async function sendTelegram(
   env: WorkoutReminderEnv, recipient: Recipient, fetchImpl: typeof fetch,
 ): Promise<{ status: 'sent' | 'blocked' | 'retry'; messageId: number | null; waitSeconds: number }> {
-  const telegramUserId = validatedTelegramId(recipient.userId);
-  if (!telegramUserId || !/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(env.TELEGRAM_BOT_USERNAME)) {
+  if (!/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(env.TELEGRAM_BOT_USERNAME)) {
     return { status: 'blocked', messageId: null, waitSeconds: 0 };
   }
+  let account: Awaited<ReturnType<typeof linkedTelegramAccount>>;
+  try {
+    account = await linkedTelegramAccount(env.DB_BINDING, recipient.userId);
+  } catch {
+    return { status: 'retry', messageId: null, waitSeconds: 300 };
+  }
+  if (!account) return { status: 'blocked', messageId: null, waitSeconds: 0 };
   const text = recipient.preference === 'coached'
     ? '🏋️ Через час совместная тренировка с клиентом. Откройте Mezfit, чтобы подготовиться.'
     : '🏋️ Через час ваша тренировка. Откройте Mezfit, чтобы посмотреть план.';
@@ -255,7 +262,7 @@ async function sendTelegram(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: telegramUserId,
+        chat_id: account.telegramId,
         text,
         reply_markup: { inline_keyboard: [[{
           text: 'Открыть Mezfit',

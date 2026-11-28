@@ -14,7 +14,7 @@ export function UserAvatarEditor({ contact, editable = true, fallbackSrc }: { co
     ? new UserAvatarRepository(cloud.db, cloud.actorUserId) : null, [cloud?.db, cloud?.actorUserId]);
   const own = cloud?.selfAvatars?.find(item => item.userId === cloud.actorUserId);
   const subject = contact ?? own ?? (cloud ? { userId: cloud.actorUserId, relationshipId: cloud.actorUserId,
-    telegramUserId: cloud.actorUserId.slice(3), displayName: 'Мой аватар' } : null);
+    displayName: 'Мой аватар' } : null);
   const src = useCloudContactAvatarUrl(subject, 'large');
   const key = contact ? contact.userId + ':' + contact.relationshipId : cloud?.actorUserId;
   const [snapshot, setSnapshot] = useState<{ repository: UserAvatarRepository; key: string | undefined; data: UserAvatarSnapshot } | null>(null);

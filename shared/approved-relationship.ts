@@ -24,7 +24,8 @@ export interface AssignedPairCheck {
   clientUserId: string;
 }
 
-export function validatedTelegramId(userId: string): string | null {
+/** Canonical numeric part of a Dexie Cloud user ID. It grants no Telegram identity. */
+export function internalUserIdFromCloudId(userId: string): string | null {
   if (!userId.startsWith('tg:')) return null;
   const id = userId.slice(3);
   return /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id))
@@ -46,8 +47,8 @@ function approvedMember(member: RelationshipMemberView, id: string, userId: stri
 
 /** Identical realm authorization for local UI projections and privileged reminder delivery. */
 export async function checkApprovedAssignedPair({ realm, members, coachUserId, clientUserId }: AssignedPairCheck): Promise<boolean> {
-  const coach = validatedTelegramId(coachUserId);
-  const client = validatedTelegramId(clientUserId);
+  const coach = internalUserIdFromCloudId(coachUserId);
+  const client = internalUserIdFromCloudId(clientUserId);
   if (!coach || !client || coach === client || !realm) return false;
   const expectedRealmId = await relationshipRealmId(coach, client);
   if (realm.realmId !== expectedRealmId || realm.owner !== null

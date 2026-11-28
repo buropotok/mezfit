@@ -1,3 +1,4 @@
+import { internalUserIdFromCloudId } from '../../shared/approved-relationship';
 import { DiscussionsPage } from '../discussions/DiscussionsPage';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -193,7 +194,9 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
     setResetBusy(true);
     setResetError('');
     try {
-      await resetTestClientRelationship(initData, target.telegramUserId);
+      const clientInternalId = internalUserIdFromCloudId(target.userId);
+      if (!clientInternalId) throw new Error('Некорректный клиент');
+      await resetTestClientRelationship(initData, clientInternalId);
       // The server has confirmed removal; never retry the destructive call
       // only because a subsequent local pull failed.
       setResetTarget(null);
@@ -470,10 +473,9 @@ export function CoachShell({ initData, actor, destination, requestedAvatarClient
             throw new Error('Назначение программ будет доступно после активации Dexie Cloud');
           }
           if (!cloudPrograms) throw new Error('Dexie Cloud недоступен');
-          await cloudPrograms.repository.createAssigned(
-            programDraft.owner.client.telegramUserId,
-            programDraft.name.trim(),
-          );
+          const clientInternalId = internalUserIdFromCloudId(programDraft.owner.client.userId);
+          if (!clientInternalId) throw new Error('Некорректный клиент');
+          await cloudPrograms.repository.createAssigned(clientInternalId, programDraft.name.trim());
         } else {
           await createCoachProgram(initData, programDraft.name.trim(), { type: 'self' });
         }

@@ -25,6 +25,8 @@ import { completeInviteConsent } from './lib/telegram-invite-consent';
 import { telegramChatIsActivated } from './lib/telegram-chat-activation';
 import { handleWorkoutSessionRoute } from './lib/workout-session-api';
 import { handleScheduleRoute } from './lib/schedule-api';
+import { internalUserIdFromCloudId } from '../shared/approved-relationship';
+import { cloudIdForVerifiedTelegram, passwordCredentials } from './lib/password-credentials';
 import { handleDexieCloudTokenRoute } from './lib/dexie-cloud-tokens';
 import { handleCloudSchedulingConfirm } from './lib/cloud-scheduling-api';
 export { ScheduleReservationCoordinator } from './lib/schedule-reservation-coordinator';
@@ -119,6 +121,14 @@ async function resolveUser(db: D1Database, telegramUser: TelegramInitUser): Prom
 
   if (!row) throw new Error('Failed to resolve persisted user');
   return { ...row, wasCreated: insert.meta.changes > 0 };
+}
+
+async function ensureTelegramAccountMapping(db: D1Database, row: UserRow): Promise<void> {
+  const telegramId = Number(row.telegram_user_id);
+  const credentials = passwordCredentials(db);
+  const mapping = await credentials.resolveByVerifiedTelegramId(telegramId)
+    ?? await credentials.createIdentityForExistingTelegramAccount(row, telegramId, { onlyIfNeverReplicated: true });
+  if (mapping.appUserId !== row.id) throw new Error('TELEGRAM_ACCOUNT_MAPPING_CONFLICT');
 }
 
 async function getRoles(db: D1Database, userId: number): Promise<Role[]> {
@@ -222,10 +232,19 @@ async function acceptClientInvite(
   const client = 'row' in actor ? actor.row : await resolveUser(db, actor.telegramUser);
   if (invite.coach_user_id === client.id) throw new InviteAcceptanceError('SELF_LINK');
 
+  const [coachCloudId, clientCloudId] = await Promise.all([
+    cloudIdForVerifiedTelegram(db, Number(invite.coach_telegram_user_id)),
+    ensureTelegramAccountMapping(db, client)
+      .then(() => cloudIdForVerifiedTelegram(db, Number(client.telegram_user_id))),
+  ]).catch(() => [null, null]);
+  const coachInternalId = coachCloudId && internalUserIdFromCloudId(coachCloudId);
+  const clientInternalId = clientCloudId && internalUserIdFromCloudId(clientCloudId);
+  if (!coachInternalId || !clientInternalId) throw new CloudMembershipError('CLOUD_MEMBERSHIP_UNAVAILABLE', 503);
+
   // Bound the bot provisioning request so a failed attempt can release the consent for retry.
   const signal = 'consentId' in actor ? AbortSignal.timeout(25_000) : undefined;
   const cloudFetch: typeof fetch = signal ? (input, init) => fetch(input, { ...init, signal }) : fetch;
-  await provisionInviteMembership(env, invite.coach_telegram_user_id, client.telegram_user_id, cloudFetch, {
+  await provisionInviteMembership(env, coachInternalId, clientInternalId, cloudFetch, {
     coach: inviteCoachName(invite),
     client: [client.first_name, client.last_name].filter(Boolean).join(' '),
   });
@@ -247,7 +266,7 @@ async function acceptClientInvite(
       db.prepare(`
         INSERT INTO account_replication_outbox (telegram_user_id, revision, next_attempt_at)
         VALUES (?, 1, ?) ON CONFLICT (telegram_user_id) DO NOTHING
-      `).bind(client.telegram_user_id, Date.now()),
+      `).bind(clientInternalId, Date.now()),
       completeInviteConsent(db, actor.consentId, client.telegram_user_id),
     );
   }
@@ -255,11 +274,11 @@ async function acceptClientInvite(
   if ('consentId' in actor) {
     // The required mutations are already durable. The existing cron recovers
     // delivery if this Worker ends before immediate delivery finishes.
-    await deliverAccountReplicas(env, client.telegram_user_id).catch(() => {
+    await deliverAccountReplicas(env, clientInternalId).catch(() => {
       console.warn('TELEGRAM_INVITE_REPLICATION_ATTEMPT_FAILED');
     });
   } else if ((roleInsert?.meta.changes ?? 0) > 0) {
-    queueImmediateAccountDelivery(env, ctx, client.telegram_user_id);
+    queueImmediateAccountDelivery(env, ctx, clientInternalId);
   }
 }
 
@@ -591,6 +610,13 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
 
   if (url.pathname === '/api/me' && request.method === 'GET') {
     const auth = await requireUser(request, env, ctx);
+    try {
+      await ensureTelegramAccountMapping(env.DB_BINDING, auth.row);
+    } catch {
+      // A temporary mapping failure must not prevent access to the legacy profile.
+      // Telegram-only operations will retry or fail closed until the link is ready.
+      console.warn('TELEGRAM_ACCOUNT_MAPPING_UNAVAILABLE');
+    }
     return json({ user: userView(auth.row), roles: auth.roles });
   }
 
@@ -630,12 +656,8 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
   if (testResetMatch && request.method === 'DELETE') {
     const auth = await requireUser(request, env, ctx);
     requireRole(auth, 'coach');
-    const clientTelegramId = testResetMatch[1];
-    if (!Number.isSafeInteger(Number(clientTelegramId))
-      || String(Number(clientTelegramId)) !== clientTelegramId
-      || clientTelegramId === auth.row.telegram_user_id) {
-      throw new HttpError(400, 'INVALID_CLIENT', 'Invalid client identity');
-    }
+    const clientInternalId = internalUserIdFromCloudId('tg:' + testResetMatch[1]);
+    if (!clientInternalId) throw new HttpError(400, 'INVALID_CLIENT', 'Invalid client identity');
     // Destructive test capability is disabled by default. Grant it only to
     // explicitly listed verified test coaches in Worker secret/vars.
     const resetConfig = env as Env & { TEST_CONNECTION_RESET_COACH_IDS?: string };
@@ -643,14 +665,20 @@ async function handleApi(request: Request, env: Env, ctx?: ExecutionContext): Pr
       .some(value => value.trim() === auth.row.telegram_user_id)) {
       throw new HttpError(403, 'TEST_RESET_FORBIDDEN', 'Test relationship reset is not enabled for this coach');
     }
+    const coachCloudId = await cloudIdForVerifiedTelegram(env.DB_BINDING, Number(auth.row.telegram_user_id))
+      .catch(() => null);
+    const coachInternalId = coachCloudId && internalUserIdFromCloudId(coachCloudId);
+    if (!coachInternalId) throw new HttpError(503, 'ACCOUNT_IDENTITY_UNAVAILABLE', 'Account identity unavailable');
+    if (clientInternalId === coachInternalId) throw new HttpError(400, 'INVALID_CLIENT', 'Invalid client identity');
+
     const pair = await env.DB_BINDING.prepare(`
-      SELECT client.id AS id FROM coach_client cc
-      JOIN app_user client ON client.id = cc.client_user_id
-      WHERE cc.coach_user_id = ? AND client.telegram_user_id = ? AND cc.status = 'active'
-    `).bind(auth.row.id, clientTelegramId).first<{ id: number }>();
+      SELECT cc.client_user_id AS id FROM coach_client cc
+      JOIN password_credentials AS identity ON identity.app_user_id = cc.client_user_id
+      WHERE cc.coach_user_id = ? AND identity.user_id = ? AND cc.status = 'active'
+    `).bind(auth.row.id, Number(clientInternalId)).first<{ id: number }>();
     if (!pair) throw new HttpError(404, 'CLIENT_NOT_FOUND', 'Client is not linked to this coach');
 
-    await resetTestCloudRelationship(env, auth.row.telegram_user_id, clientTelegramId, fetch);
+    await resetTestCloudRelationship(env, coachInternalId, clientInternalId, fetch);
     // D1 legacy history is deliberately test-only disposable. Delete only
     // this pair's old graph and deactivate the link atomically after Cloud
     // deletion; a D1 failure leaves the link active for an authorized retry.

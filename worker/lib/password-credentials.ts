@@ -1,3 +1,4 @@
+import { internalUserIdFromCloudId } from '../../shared/approved-relationship';
 import type { UserRow } from './account-profile';
 
 export const PASSWORD_USER_ID_MIN = 2 ** 52;
@@ -121,6 +122,41 @@ export function passwordCredentials(db: D1Database) {
   }
 
   return { getByUserId, getByAppUserId, resolveByVerifiedTelegramId, createIdentityForExistingTelegramAccount };
+}
+
+/** Use only after verification of the Telegram initData or bot identity. */
+export async function cloudIdForVerifiedTelegram(db: D1Database, telegramId: number): Promise<string | null> {
+  const account = await passwordCredentials(db).resolveByVerifiedTelegramId(telegramId);
+  if (!account) return null;
+  validateId(account.userId, 'INVALID_USER_ID');
+  if (account.appUserId === null) throw new Error('TELEGRAM_ACCOUNT_MAPPING_CONFLICT');
+  validateId(account.appUserId, 'INVALID_APP_USER_ID');
+  return `tg:${account.userId}`;
+}
+
+/** Resolve a Dexie subject to the linked D1 account without reading credentials. */
+export async function linkedTelegramAccount(db: D1Database, cloudId: string): Promise<{
+  appUserId: number;
+  telegramId: string;
+} | null> {
+  const internalId = internalUserIdFromCloudId(cloudId);
+  if (!internalId) return null;
+
+  const row = await db.prepare(`
+    SELECT account.id AS app_user_id, account.telegram_user_id
+    FROM password_credentials AS credentials
+    JOIN app_user AS account ON account.id = credentials.app_user_id
+    WHERE credentials.user_id = ?
+  `).bind(Number(internalId)).first<{ app_user_id: number; telegram_user_id: string }>();
+  if (!row) return null;
+
+  validateId(row.app_user_id, 'INVALID_APP_USER_ID');
+  const telegramId = Number(row.telegram_user_id);
+  if (verifiedTelegramKey(telegramId) !== row.telegram_user_id
+      || (Number(internalId) < PASSWORD_USER_ID_MIN && internalId !== row.telegram_user_id)) {
+    throw new Error('TELEGRAM_ACCOUNT_MAPPING_CONFLICT');
+  }
+  return { appUserId: row.app_user_id, telegramId: row.telegram_user_id };
 }
 
 /**

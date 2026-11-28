@@ -72,7 +72,7 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
     <UserAvatarEditor contact={contact} editable={data?.canEdit === true} />
     {notice ? <Text variant="footnote" role={notice.error ? 'alert' : 'status'}>{notice.text}</Text> : null}
     <UserProfileForm key={key} overridden={data?.overridden} onReset={reset} purpose="contact" initialProfile={profile ?? editor.profile}
-      defaults={{ firstName: '', lastName: '' }} telegramUserId={contact.telegramUserId} telegramUsername={null}
+      defaults={{ firstName: '', lastName: '' }} telegramUsername={null}
       onCancel={() => setEditor(null)}
       onSave={async (draft, changedFields) => {
         const owner = active.current;
@@ -89,7 +89,6 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
     ['Фамилия', profile.lastName || 'Не указана', 'lastName'],
     ['E-mail', profile.email || 'Не указан', 'email'],
     ['Телефон', profile.phone || 'Не указан', 'phone'],
-    ['Telegram ID', contact.telegramUserId],
     ['Дата рождения', profile.birthDate || 'Не указана', 'birthDate'],
     ['Пол', profile.sex === 'male' ? 'муж' : profile.sex === 'female' ? 'жен' : 'не указан', 'sex'],
     ['Вес, кг', profile.weightKg === null ? 'Не указан' : String(profile.weightKg), 'weightKg'],
@@ -107,7 +106,6 @@ export function PublishedUserProfile({ contact }: { contact: CloudContact }) {
         <Button variant="secondary" onClick={() => setRetry(value => value + 1)}>Повторить</Button></>
       : data?.incomplete ? <Text variant="body">Переопределения ещё загружаются. Повторите позже.</Text>
       : !profile ? <><Text variant="body">{contact.displayName}</Text>
-        <Text variant="caption">Telegram ID</Text><Text variant="headline">{contact.telegramUserId}</Text>
         <Text variant="body">Анкета клиента ещё не опубликована.</Text></>
       : <>{fields.map(([label, value]) => <div className="stack" key={label}>
         <Text variant="caption">{label}</Text><Text variant="headline">{value}</Text>
