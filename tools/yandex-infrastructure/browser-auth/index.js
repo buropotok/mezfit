@@ -21,6 +21,16 @@ const LOGIN_URL_TTL = 120;
 const LOGIN_URL_PURPOSE = 'telegram-login-url';
 const DEXIE_TOKEN_PATH = '/api/dexie-cloud/tokens';
 const MAX_DEVICE_KEY_LENGTH = 8192;
+const PASSWORD_USER_ID_MIN = 2 ** 52;
+const ACCOUNT_LOOKUP_TIMEOUT = 6000;
+const ACCOUNT_LOOKUP = `
+  DECLARE $telegram_id AS Utf8;
+  SELECT telegram_id AS user_id, external_telegram_id, identity_state, snapshot,
+    CAST(revision AS Utf8) AS revision
+  FROM account_replica VIEW account_external_telegram_idx
+  WHERE external_telegram_id = $telegram_id
+  LIMIT 2;
+`;
 const FLOW_TTL = 600;
 const LEGACY_SESSION_TTL = 12 * 60 * 60;
 const SESSION_RENEW_INTERVAL = 24 * 60 * 60;
@@ -104,8 +114,11 @@ function cookie(name, value, maxAge) {
 
 function browserSessionCookie(host, profile, key, now = epoch()) {
   const { sub, telegramUserId, name, username } = profile;
-  const value = signed({ version: 2, host, sub, telegramUserId, name, username,
-    iat: now, exp: now + SESSION_TTL }, key);
+  const value = signed({
+    version: profile.account ? 3 : 2, host, sub, telegramUserId, name, username,
+    ...(profile.account ? { account: profile.account } : {}),
+    iat: now, exp: now + SESSION_TTL,
+  }, key);
   return cookie(COOKIE_SESSION, value, SESSION_TTL);
 }
 
@@ -437,7 +450,10 @@ async function callback(event, config, host) {
     if (!result || typeof result !== 'object' || typeof result.id_token !== 'string') {
       throw new OidcCheckError('token', 'missing_id_token');
     }
-    const profile = await authenticateIdToken(result.id_token, config, flow.nonce);
+    const profile = await verifiedProfileForSession(
+      await authenticateIdToken(result.id_token, config, flow.nonce), config,
+    );
+    if (!profile) return json(503, { error: 'ACCOUNT_IDENTITY_UNAVAILABLE' }, [clearFlow]);
     return navigate('/', [clearFlow, browserSessionCookie(host, profile, config.key)]);
   } catch (error) {
     return verificationFailure(error, clearFlow);
@@ -510,7 +526,10 @@ async function popup(event, context, config, host) {
     const token = context?.token?.access_token;
     const mirrorBucket = process.env.MEZFIT_BROWSER_JWKS_BUCKET;
     const loadKeys = mirrorBucket === undefined ? getPopupKeys : kid => getMirrorKeys(mirrorBucket, token, kid);
-    const profile = await authenticateIdToken(payload.idToken, config, flow.nonce, loadKeys, true);
+    const profile = await verifiedProfileForSession(
+      await authenticateIdToken(payload.idToken, config, flow.nonce, loadKeys, true), config,
+    );
+    if (!profile) return json(503, { error: 'ACCOUNT_IDENTITY_UNAVAILABLE' });
     if (flow.iat + POPUP_TTL <= epoch()) throw new OidcCheckError('challenge', 'invalid_or_expired');
     await consumePopupNonce(bucket, flow.nonce, token);
     return json(200, { authenticated: true }, [clear, browserSessionCookie(host, profile, config.key)]);
@@ -519,11 +538,94 @@ async function popup(event, context, config, host) {
   }
 }
 
+function canonicalAccountId(value) {
+  return typeof value === 'string' && /^[1-9][0-9]{0,15}$/.test(value)
+    && Number.isSafeInteger(Number(value));
+}
+
+function accountMappingEnabled() {
+  return process.env.MEZFIT_BROWSER_YDB_IDENTITY_ENABLED === 'true';
+}
+
+async function readYdbAccount(telegramId, context) {
+  const database = process.env.MEZFIT_BROWSER_ACCOUNT_YDB_PATH;
+  const token = context?.token?.access_token;
+  if (typeof token !== 'string' || !token || !/^\/ru-central1\/[a-z0-9]+\/[a-z0-9]+$/.test(database || '')) {
+    throw new Error('ACCOUNT_REPLICA_NOT_CONFIGURED');
+  }
+
+  // The browser function uses its own IAM identity. The replica sender secret is not used.
+  const { AUTO_TX, Driver, ExecuteQuerySettings, OperationParams, TokenAuthService, TypedData, TypedValues } = require('ydb-sdk');
+  const driver = new Driver({
+    connectionString: 'grpcs://ydb.serverless.yandexcloud.net:2135' + database,
+    authService: new TokenAuthService(token),
+    poolSettings: { minLimit: 0, maxLimit: 1 },
+  });
+  let timer;
+  try {
+    const read = async () => {
+      if (!await driver.ready(2000)) throw new Error('ACCOUNT_REPLICA_UNAVAILABLE');
+      const result = await driver.tableClient.withSession(session => session.executeQuery(
+        ACCOUNT_LOOKUP, { $telegram_id: TypedValues.utf8(telegramId) }, AUTO_TX,
+        new ExecuteQuerySettings().withOperationParams(
+          new OperationParams().withOperationTimeoutSeconds(3),
+        ),
+      ), 2000);
+      if (result.resultSets.length !== 1 || result.resultSets[0].truncated) {
+        throw new Error('INVALID_ACCOUNT_REPLICA_RESULT');
+      }
+      return TypedData.createNativeObjects(result.resultSets[0]);
+    };
+    return await Promise.race([
+      read(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('ACCOUNT_REPLICA_TIMEOUT')), ACCOUNT_LOOKUP_TIMEOUT);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    void driver.destroy().catch(() => {});
+  }
+}
+
+async function resolveBrowserAccount(profile, config) {
+  const telegramId = String(profile.telegramUserId);
+  if (!canonicalAccountId(telegramId) || Number(telegramId) >= PASSWORD_USER_ID_MIN) return null;
+  try {
+    const rows = await config.readAccount(telegramId);
+    if (!Array.isArray(rows) || rows.length !== 1) return null;
+    const row = rows[0];
+    if (!isRecord(row) || row.identity_state !== 'active' || row.external_telegram_id !== telegramId
+        || !canonicalAccountId(row.user_id) || !canonicalAccountId(row.revision)
+        || typeof row.snapshot !== 'string') return null;
+    // Only the current Telegram-first identity class can receive a production subject.
+    if (row.user_id !== telegramId || Number(row.user_id) >= PASSWORD_USER_ID_MIN) return null;
+    const account = { userId: row.user_id, revision: Number(row.revision) };
+    if (profile.version === 3 && (profile.account.userId !== account.userId
+        || account.revision < profile.account.revision)) return null;
+    const snapshot = JSON.parse(row.snapshot);
+    if (!isRecord(snapshot?.user) || snapshot.user.telegramUserId !== telegramId
+        || !Number.isSafeInteger(snapshot.user.id) || snapshot.user.id <= 0) return null;
+    return account;
+  } catch {
+    return null;
+  }
+}
+
+async function verifiedProfileForSession(profile, config) {
+  if (!accountMappingEnabled()) return profile;
+  const account = await resolveBrowserAccount(profile, config);
+  return account ? { ...profile, account } : null;
+}
+
 function verifiedSession(event, config, host, now) {
   const data = verified(readCookies(event)[COOKIE_SESSION], config.key);
-  if (!data || (data.version !== 1 && data.version !== 2) || data.host !== host
+  if (!data || ![1, 2, 3].includes(data.version) || data.host !== host
       || !Number.isSafeInteger(data.telegramUserId) || data.telegramUserId <= 0
       || typeof data.sub !== 'string' || !data.sub
+      || (data.version === 3 && (!isRecord(data.account) || data.account.userId !== String(data.telegramUserId)
+        || data.telegramUserId >= PASSWORD_USER_ID_MIN
+        || !Number.isSafeInteger(data.account.revision) || data.account.revision <= 0))
       || !Number.isInteger(data.iat) || data.iat > now + 60
       || !Number.isInteger(data.exp) || data.exp <= now
       || data.exp > data.iat + (data.version === 1 ? LEGACY_SESSION_TTL : SESSION_TTL)) {
@@ -532,12 +634,15 @@ function verifiedSession(event, config, host, now) {
   return data;
 }
 
-function session(event, config, host) {
+async function session(event, config, host) {
   const now = epoch();
   const data = verifiedSession(event, config, host, now);
   if (!data) return json(401, { authenticated: false });
+  const profile = await verifiedProfileForSession(data, config);
+  if (!profile) return json(503, { error: 'ACCOUNT_IDENTITY_UNAVAILABLE' });
   const cookies = data.version === 1 || now - data.iat >= SESSION_RENEW_INTERVAL
-    ? [browserSessionCookie(host, data, config.key, now)] : [];
+    || (accountMappingEnabled() && profile.account.revision !== data.account?.revision)
+    ? [browserSessionCookie(host, profile, config.key, now)] : [];
   return json(200, {
     authenticated: true,
     telegramUserId: String(data.telegramUserId),
@@ -584,7 +689,9 @@ async function dexieTokens(event, config, host) {
     return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication is not configured');
   }
 
-  const subject = 'tg:' + identity.telegramUserId;
+  const profile = await verifiedProfileForSession(identity, config);
+  if (!profile) return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication failed');
+  const subject = 'tg:' + (accountMappingEnabled() ? profile.account.userId : identity.telegramUserId);
   let upstream;
   try {
     upstream = await fetch(dbUrl + '/token', {
@@ -753,6 +860,8 @@ async function telegramLoginUrl(event, context, config, host) {
     return errorPage(503, 'NOT_CONFIGURED');
   }
   if (!freshLoginUrl(pending.authDate)) return errorPage(400, 'INVALID_OR_EXPIRED');
+  const profile = await verifiedProfileForSession(pending, config);
+  if (!profile) return errorPage(503, 'ACCOUNT_IDENTITY_UNAVAILABLE', false);
   try {
     await consumePopupNonce(bucket, LOGIN_URL_PURPOSE + ':' + pending.marker, context?.token?.access_token);
   } catch (error) {
@@ -764,11 +873,11 @@ async function telegramLoginUrl(event, context, config, host) {
     return errorPage(400, 'INVALID_OR_EXPIRED');
   }
   return redirect([clear, browserSessionCookie(host, {
-    ...pending, sub: LOGIN_URL_PURPOSE + ':' + pending.telegramUserId,
+    ...profile, sub: LOGIN_URL_PURPOSE + ':' + pending.telegramUserId,
   }, config.key, now)]);
 }
 
-async function handler(event, context) {
+async function handleBrowserRequest(event, context, readAccount) {
   const isTokenRoute = event.path === DEXIE_TOKEN_PATH;
   const isLoginUrl = event.path === LOGIN_URL_PATH;
   const method = event.httpMethod;
@@ -782,6 +891,7 @@ async function handler(event, context) {
     if (isTokenRoute) return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication is not configured');
     return json(503, { error: 'TELEGRAM_LOGIN_NOT_CONFIGURED' });
   }
+  config.readAccount = telegramId => readAccount(telegramId, context);
   const host = getHost(event, config);
   if (!host) {
     if (isTokenRoute) return tokenError(403, 'UNAPPROVED_AUTH_HOST', 'Forbidden host');
@@ -815,6 +925,10 @@ async function handler(event, context) {
   }
 }
 
+async function handler(event, context) {
+  return handleBrowserRequest(event, context, readYdbAccount);
+}
+
 exports.handler = handler;
 exports._test = { signed, verified, checkOrigin, readCookies,
-  configuration, authenticateIdToken, session, start, callback, parameters };
+  configuration, authenticateIdToken, session, start, callback, parameters, handleBrowserRequest };
