@@ -14,12 +14,11 @@ const row = {
   snapshot: JSON.stringify({ user: { id: 42, telegramUserId: String(id) }, roles: ['client'] }),
 };
 
-function event(path, version, account) {
+function event(path, version) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     version, host, sub: 'telegram-oidc-sub', telegramUserId: id,
-    name: 'Test', username: 'example', iat: now - 10, exp: now + 1000,
-    ...(account ? { account } : {}),
+    name: 'Test', username: 'example', iat: now - (version === 1 ? 10 : 86401), exp: now + 1000,
   };
   return {
     path, httpMethod: path === tokenPath ? 'POST' : 'GET',
@@ -50,7 +49,7 @@ function enable(t, fetch) {
   });
 }
 
-test('upgrades signed v1 and v2 cookies from the YDB mapping without a Telegram request', async t => {
+test('renews signed v1 and v2 cookies after checking the YDB mapping without a Telegram request', async t => {
   enable(t, () => assert.fail('session renewal should not make an HTTP request'));
   for (const v of [1, 2]) {
     const response = await handleBrowserRequest(event('/auth/session', v), {}, async telegramId => {
@@ -60,8 +59,8 @@ test('upgrades signed v1 and v2 cookies from the YDB mapping without a Telegram 
     assert.equal(response.statusCode, 200);
     const cookie = response.multiValueHeaders['Set-Cookie'][0].split(';')[0];
     const payload = verified(cookie.slice(cookieName.length + 1), key);
-    assert.equal(payload.version, 3);
-    assert.deepEqual(payload.account, { userId: String(id), revision: 18 });
+    assert.equal(payload.version, 2);
+    assert.equal(payload.telegramUserId, id);
     assert.deepEqual(JSON.parse(response.body), {
       authenticated: true, telegramUserId: String(id), name: 'Test', username: 'example',
     });
@@ -90,7 +89,7 @@ test('issues the established subject from exactly one complete YDB identity', as
   assert.equal(calls, 1);
 });
 
-test('rejects unavailable, ambiguous, synthetic, inconsistent and older snapshots without resetting the session', async t => {
+test('rejects unavailable, ambiguous, synthetic and inconsistent snapshots without resetting the session', async t => {
   enable(t, () => assert.fail('Dexie must not be contacted'));
   for (const read of [
     async () => { throw new Error('fixture permission denied'); },
@@ -99,12 +98,11 @@ test('rejects unavailable, ambiguous, synthetic, inconsistent and older snapshot
     async () => [{ ...row, user_id: String(2 ** 52) }],
     async () => [{ ...row, identity_state: 'deleted' }],
     async () => [{ ...row, snapshot: '{"user":{"id":42,"telegramUserId":"1"}}' }],
-    async () => [{ ...row, revision: '17' }],
     async () => [{ ...row, revision: '018' }],
   ]) {
     for (const path of [tokenPath, '/auth/session']) {
       const response = await handleBrowserRequest(
-        event(path, 3, { userId: String(id), revision: 18 }), {}, read,
+        event(path, 2), {}, read,
       );
       assert.equal(response.statusCode, 503);
       assert.equal(response.multiValueHeaders, undefined);
