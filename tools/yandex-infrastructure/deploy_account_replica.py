@@ -15,14 +15,16 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
-from browser_auth_bootstrap import IAM_SERVICE_ACCOUNTS, LOCKBOX, access_bindings
+from browser_auth_bootstrap import IAM_SERVICE_ACCOUNTS, LOCKBOX, RUNTIME_ACCOUNT_NAME, access_bindings
 from deploy_browser_auth import (
-    VERSIONS, YandexHttpError, function_bindings, function_version_list, request_api, select_tagged_version,
+    RUNTIME_IAM_TOKEN_URL, TAG as BROWSER_AUTH_TAG, VERSIONS, YandexHttpError, function_bindings,
+    function_version_list, has_gateway_invoker, request_api, select_tagged_version, source_package,
 )
 from web_hosting import (
-    ACCOUNT_REPLICA_PATH, ACCOUNT_REPLICA_TAG, DEXIE_TOKEN_PATH, FUNCTIONS, GATEWAYS, NAME_ACCOUNT_REPLICA_FUNCTION,
+    ACCOUNT_REPLICA_PATH, ACCOUNT_REPLICA_TAG, DEXIE_TOKEN_PATH, DEXIE_TOKEN_TAG, FUNCTIONS, GATEWAYS,
+    LOGIN_URL_PATH, LOGIN_URL_TAG, NAME_ACCOUNT_REPLICA_FUNCTION, NAME_BROWSER_AUTH_FUNCTION,
     NAME_GATEWAY, OPERATIONS, WebHostingError, NoRedirect, account_replica_route, await_operation, bucket_name,
-    checked_gateway_spec, choose, normalize_gateway_readback, paged_list, resource_id, verified_gateway_domains,
+    browser_login_url_route, checked_gateway_spec, choose, normalize_gateway_readback, paged_list, resource_id, verified_gateway_domains,
 )
 
 SITE = "ACCOUNT_REPLICA"
@@ -119,7 +121,7 @@ def ensure_binding(api, endpoint, observe, wanted, label):
         raise WebHostingError(f"{label}: access bindings failed readback.")
 
 
-def ensure_ydb_binding(api, database_id, runtime_id, token):
+def ensure_ydb_binding(api, database_id, runtime_id, token, *, browser_runtime_id=None):
     # The YDB management API exposes access-binding methods over gRPC.
     import grpc
     from yandex.cloud.access.access_pb2 import ADD, ListAccessBindingsRequest, UpdateAccessBindingsRequest
@@ -138,17 +140,25 @@ def ensure_ydb_binding(api, database_id, runtime_id, token):
                     raise WebHostingError("Unexpected quantity of YDB access bindings.")
                 return [(item.role_id, item.subject.type, item.subject.id) for item in result.access_bindings]
 
-            expected = [("ydb.editor", "serviceAccount", runtime_id)]
+            expected = {("ydb.editor", "serviceAccount", runtime_id)}
+            if browser_runtime_id is not None:
+                if browser_runtime_id == runtime_id or not resource_id(browser_runtime_id):
+                    raise WebHostingError("Browser identity reader must use its own service account.")
+                expected.add(("ydb.viewer", "serviceAccount", browser_runtime_id))
             current = inspect()
-            if current == expected:
-                return
-            if current or inspect():
+            if not set(current) <= expected or len(current) != len(set(current)):
                 raise WebHostingError("YDB account replica has unexpected access bindings.")
+            missing = expected - set(current)
+            if not missing:
+                return
+            if set(inspect()) != set(current):
+                raise WebHostingError("YDB account replica access bindings changed before Apply.")
             request = UpdateAccessBindingsRequest(resource_id=database_id)
-            delta = request.access_binding_deltas.add(action=ADD)
-            delta.access_binding.role_id = "ydb.editor"
-            delta.access_binding.subject.type = "serviceAccount"
-            delta.access_binding.subject.id = runtime_id
+            for role, subject_type, subject_id in sorted(missing):
+                delta = request.access_binding_deltas.add(action=ADD)
+                delta.access_binding.role_id = role
+                delta.access_binding.subject.type = subject_type
+                delta.access_binding.subject.id = subject_id
             operation = client.UpdateAccessBindings(request, timeout=20)
             if operation.done:
                 if operation.HasField("error"):
@@ -159,7 +169,8 @@ def ensure_ydb_binding(api, database_id, runtime_id, token):
                 url = f"{OPERATIONS}/{operation.id}"
                 await_operation(api, api(url, "Read YDB access binding operation"),
                                 "Grant the runtime access to the replica YDB")
-            if inspect() != expected:
+            confirmed = inspect()
+            if set(confirmed) != expected or len(confirmed) != len(expected):
                 raise WebHostingError("YDB account replica access bindings failed readback.")
     except grpc.RpcError as exc:
         raise WebHostingError(f"YDB account replica access bindings: gRPC {exc.code().name}.") from None
@@ -297,6 +308,123 @@ def verify_unsigned_post(opener, gateway, folder, api):
     raise WebHostingError("Account replica Gateway did not reject the unsigned POST.")
 
 
+def activate_browser_identity(api, folder, gateway, spec, deploy_sa, browser_sa, endpoint, database_path):
+    browser = find(api, FUNCTIONS, folder, "functions", NAME_BROWSER_AUTH_FUNCTION)
+    if not browser or browser.get("status") != "ACTIVE" or not resource_id(browser.get("id")):
+        raise WebHostingError("Existing active browser auth function is required.")
+    function_id = browser["id"]
+    tags = [BROWSER_AUTH_TAG, DEXIE_TOKEN_TAG]
+    if spec["paths"].get(LOGIN_URL_PATH) == browser_login_url_route(function_id, deploy_sa):
+        tags.append(LOGIN_URL_TAG)
+
+    # Check data access with the browser account before publishing or moving any serving tag.
+    token = api(RUNTIME_IAM_TOKEN_URL, "Request browser runtime token for YDB readback",
+                {"serviceAccountId": browser_sa}).get("iamToken")
+    if not isinstance(token, str) or not token:
+        raise WebHostingError("Browser runtime IAM token missing from YDB probe response.")
+    import ydb
+    from replica_store import connect, verify_schema
+
+    try:
+        store = connect(endpoint, database_path, ydb.AccessTokenCredentials(token), timeout=10)
+        try:
+            verify_schema(store)
+            pool, _, _ = store
+            query = (
+                "SELECT COUNT(*) AS total, "
+                "COUNT_IF(COALESCE(identity_state = 'active' AND external_telegram_id = telegram_id, false)) AS ready "
+                "FROM account_replica WHERE CAST(telegram_id AS Uint64) < 4503599627370496 "
+                "AND (identity_state IS NULL OR identity_state != 'deleted');"
+            )
+            settings = ydb.BaseRequestSettings().with_timeout(5).with_operation_timeout(4)
+
+            def coverage(session):
+                with session.transaction(ydb.SerializableReadWrite()) as tx:
+                    row = tx.execute(query, settings=settings)[0].rows[0]
+                    tx.execute(
+                        "SELECT telegram_id FROM account_replica VIEW account_external_telegram_idx "
+                        "WHERE external_telegram_id = '' LIMIT 2;",
+                        commit_tx=True, settings=settings,
+                    )
+                    return row.total, row.ready
+
+            total, ready = pool.retry_operation_sync(
+                coverage, retry_settings=ydb.RetrySettings(max_retries=1, idempotent=True),
+            )
+            print(f"Browser identity readiness: {ready}/{total} Telegram-first replicas.", flush=True)
+            if ready != total:
+                raise WebHostingError("Incomplete account identities in YDB; finish existing account backfill.")
+        finally:
+            pool, driver, _ = store
+            pool.stop()
+            driver.stop()
+    except WebHostingError:
+        raise
+    except Exception:
+        raise WebHostingError("Browser runtime could not verify schema or read an account mapping in YDB.") from None
+
+    content, fingerprint = source_package()
+    initial = function_version_list(api, function_id)
+    if not has_gateway_invoker(function_bindings(api, function_id), deploy_sa):
+        raise WebHostingError("Browser auth function does not have the approved private invocation binding.")
+    serving = {tag: select_tagged_version(initial, tag) for tag in tags}
+    candidates = {}
+    for tag, current in serving.items():
+        if (not current or not resource_id(current.get("id")) or current.get("status") != "ACTIVE"
+                or current.get("runtime") != "nodejs22" or current.get("entrypoint") != "index.handler"
+                or current.get("functionId") != function_id or current.get("serviceAccountId") != browser_sa
+                or not isinstance(current.get("description"), str)
+                or not current["description"].startswith("MezFit browser OIDC code SHA256:")
+                or not isinstance(current.get("environment"), dict)
+                or not isinstance(current.get("resources"), dict) or not isinstance(current.get("secrets"), list)
+                or not isinstance(current.get("executionTimeout"), str)):
+            raise WebHostingError(f"Unexpected browser auth baseline for {tag}.")
+        environment = {**current["environment"], "MEZFIT_BROWSER_YDB_IDENTITY_ENABLED": "true",
+                       "MEZFIT_BROWSER_ACCOUNT_YDB_PATH": database_path}
+        if current.get("description") == fingerprint and current["environment"] == environment:
+            candidates[tag] = current
+            continue
+        fields = {key: current[key] for key in ("functionId", "runtime", "entrypoint", "resources",
+                                                "executionTimeout", "serviceAccountId", "secrets")}
+        # Preserve version-level settings that may differ between the serving tags.
+        fields.update({key: current[key] for key in ("connectivity", "logOptions", "concurrency",
+                                                     "metadataOptions", "storageMounts", "mounts") if current.get(key)})
+        fields.update(environment=environment, description=fingerprint)
+        version_config = json.dumps(fields, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        digest = hashlib.sha256(content + version_config).hexdigest()[:20]
+        candidate_tag = f"identity-{tags.index(tag)}-{digest}"
+        candidate = select_tagged_version(function_version_list(api, function_id), candidate_tag)
+        if not candidate:
+            label = f"Publish verified browser identity candidate for {tag}"
+            published = await_operation(api, api(VERSIONS, label, {
+                **fields, "content": base64.b64encode(content).decode("ascii"), "tag": [candidate_tag],
+            }), label)
+            candidate = select_tagged_version(function_version_list(api, function_id), candidate_tag)
+            if not candidate or candidate.get("id") != published.get("id"):
+                raise WebHostingError(f"Browser candidate failed readback for {tag}.")
+        if candidate.get("status") != "ACTIVE" or any(candidate.get(k) != v for k, v in fields.items()):
+            raise WebHostingError(f"Browser candidate differs from the requested version for {tag}.")
+        candidates[tag] = candidate
+
+    fresh_gateway, fresh_spec = gateway_state(api, folder)
+    versions = function_version_list(api, function_id)
+    if (fresh_gateway["id"] != gateway["id"] or fresh_spec != spec
+            or not has_gateway_invoker(function_bindings(api, function_id), deploy_sa)
+            or any((select_tagged_version(versions, tag) or {}).get("id") != current["id"]
+                   for tag, current in serving.items())):
+        raise WebHostingError("Serving browser version or Gateway changed during deployment.")
+    for tag, candidate in candidates.items():
+        if serving[tag]["id"] != candidate["id"]:
+            print(f"Browser identity previous version for {tag}: {serving[tag]['id']}", flush=True)
+            label = f"Activate browser account identity for {tag}"
+            await_operation(api, api(f"{VERSIONS}/{candidate['id']}:setTag", label, {"tag": tag}), label)
+    active = function_version_list(api, function_id)
+    if any((select_tagged_version(active, tag) or {}).get("id") != candidate["id"]
+           for tag, candidate in candidates.items()):
+        raise WebHostingError("Browser account identity serving tags failed readback.")
+    print("Browser account identity: read-only YDB lookup enabled on the serving versions.", flush=True)
+
+
 def main():
     folder = os.environ.get("YC_FOLDER_ID", "")
     deploy_sa = os.environ.get("YC_DEPLOY_SA_ID", "")
@@ -333,7 +461,13 @@ def main():
     runtime_id = runtime["id"]
     if runtime_id == deploy_sa:
         raise WebHostingError("Deployment and runtime identities must differ.")
-    ensure_ydb_binding(api, database["id"], runtime_id, token)
+    browser_runtime = find(api, IAM_SERVICE_ACCOUNTS, folder, "serviceAccounts", RUNTIME_ACCOUNT_NAME)
+    browser_runtime_id = browser_runtime.get("id") if browser_runtime else None
+    if browser_runtime and (not resource_id(browser_runtime_id) or browser_runtime_id == deploy_sa):
+        raise WebHostingError("Unexpected existing browser auth runtime identity.")
+    ensure_ydb_binding(api, database["id"], runtime_id, token, browser_runtime_id=browser_runtime_id)
+    if browser_runtime_id:
+        print("Account replica YDB: browser runtime read access verified.", flush=True)
     ensure_binding(api, f"{LOCKBOX}/{secret['id']}:updateAccessBindings",
                    lambda: access_bindings(api, secret["id"]),
                    binding("lockbox.payloadViewer", runtime_id), "Grant the runtime access to its Lockbox secret")
@@ -366,9 +500,11 @@ def main():
     if not current_secret or pinned_secret(current_secret) != secrets:
         raise WebHostingError("Pinned Lockbox version changed before Gateway activation.")
     configure_route(api, patch, folder, gateway, baseline, account_replica_route(function_id, deploy_sa))
-    gateway, _ = gateway_state(api, folder)
+    gateway, active_spec = gateway_state(api, folder)
     verify_unsigned_post(opener, gateway, folder, api)
     print("Account replica: schema and private runtime ready; exact Gateway POST verified (401 without caller secret).")
+    if browser_runtime_id:
+        activate_browser_identity(api, folder, gateway, active_spec, deploy_sa, browser_runtime_id, endpoint, database_path)
 
 
 if __name__ == "__main__":
