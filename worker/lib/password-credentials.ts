@@ -81,6 +81,7 @@ export function passwordCredentials(db: D1Database) {
   async function createIdentityForExistingTelegramAccount(
     appUser: Pick<UserRow, 'id'>,
     verifiedTelegramId: number,
+    { onlyIfNeverReplicated = false } = {},
   ): Promise<TelegramAccountIdentity> {
     validateId(appUser.id, 'INVALID_APP_USER_ID');
     const telegramKey = verifiedTelegramKey(verifiedTelegramId);
@@ -104,6 +105,12 @@ export function passwordCredentials(db: D1Database) {
         END
       FROM app_user AS account
       WHERE account.id = ? AND account.telegram_user_id = ?
+        ${onlyIfNeverReplicated ? `
+          AND NOT EXISTS (
+            SELECT 1 FROM account_replication_outbox
+            WHERE telegram_user_id = account.telegram_user_id AND full_snapshot = 1
+          )
+        ` : ''}
       ON CONFLICT (app_user_id) DO NOTHING
       ON CONFLICT (user_id) DO NOTHING
     `).bind(appUser.id, telegramKey).run();

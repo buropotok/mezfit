@@ -3,6 +3,7 @@
 from pathlib import Path
 
 TABLE = "account_replica"
+EXTERNAL_TELEGRAM_INDEX = "account_external_telegram_idx"
 SCHEMA = Path(__file__).with_name("schema.yql")
 UPSERT = """
 DECLARE $telegram_id AS Utf8;
@@ -88,15 +89,33 @@ def verify_schema(store, *, create=False):
             columns = {column.name: str(column.type) for column in table.columns}
             if (any(expected.get(name) != kind for name, kind in columns.items())
                     or not baseline.keys() <= columns.keys() or list(table.primary_key) != ["telegram_id"]
-                    or table.indexes or table.ttl_settings or (complete and columns != expected)):
+                    or table.ttl_settings or (complete and columns != expected)):
                 raise ValueError("Unexpected account replica table schema.")
             return columns
 
+        def check_index(table, *, complete):
+            indexes = table.indexes
+            if not indexes and not complete:
+                return
+            if (len(indexes) != 1 or indexes[0].name != EXTERNAL_TELEGRAM_INDEX
+                    or list(indexes[0].index_columns) != ["external_telegram_id"]
+                    or indexes[0].status != ydb.IndexStatus.READY):
+                raise ValueError("Unexpected account replica Telegram lookup index.")
+
         columns = check(table, complete=not create)
+        check_index(table, complete=not create)
         missing = [f"ADD COLUMN {name} {kind}" for name, kind in IDENTITY_COLUMNS.items() if name not in columns]
         if create and missing:
             session.execute_scheme(f"ALTER TABLE {TABLE} " + ", ".join(missing) + ";", settings=settings)
-            check(session.describe_table(table_path, settings=settings), complete=True)
+        if create and not table.indexes:
+            session.execute_scheme(
+                f"ALTER TABLE {TABLE} ADD INDEX {EXTERNAL_TELEGRAM_INDEX} GLOBAL SYNC ON (external_telegram_id);",
+                settings=ydb.BaseRequestSettings().with_timeout(90).with_operation_timeout(85),
+            )
+        if create:
+            current = session.describe_table(table_path, settings=settings)
+            check(current, complete=True)
+            check_index(current, complete=True)
 
     pool.retry_operation_sync(check, retry_settings=ydb.RetrySettings(max_retries=2, idempotent=True))
 

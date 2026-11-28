@@ -11,6 +11,8 @@ on:
       - 'tools/yandex-infrastructure/web_hosting.py'
       - 'tools/yandex-infrastructure/deploy_browser_auth.py'
       - 'tools/yandex-infrastructure/browser_auth_bootstrap.py'
+      - 'tools/yandex-infrastructure/browser-auth/index.js'
+      - 'tools/yandex-infrastructure/browser-auth/package.json'
       - 'tools/yandex-infrastructure/jwks_mirror.py'
 
 permissions:
