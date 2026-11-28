@@ -298,6 +298,18 @@ def version_secrets(secret_id, secret_version):
     ]
 
 
+def browser_environment_matches(actual, expected):
+    if actual == expected:
+        return True
+    if not isinstance(actual, dict):
+        return False
+    base = actual.copy()
+    enabled = base.pop("MEZFIT_BROWSER_YDB_IDENTITY_ENABLED", None)
+    database = base.pop("MEZFIT_BROWSER_ACCOUNT_YDB_PATH", None)
+    return (base == expected and enabled == "true" and isinstance(database, str)
+            and bool(re.fullmatch(r"/ru-central1/[a-z0-9]+/[a-z0-9]+", database)))
+
+
 def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed_hosts, *, tagged=True,
                     nonce_bucket=None, jwks_bucket=None):
     environment = {"MEZFIT_AUTH_HOSTS": allowed_hosts}
@@ -312,7 +324,7 @@ def version_matches(version, fingerprint, sa, secret_id, secret_version, allowed
         and version.get("runtime") == "nodejs22"
         and version.get("entrypoint") == "index.handler"
         and version.get("serviceAccountId") == sa
-        and version.get("environment") == environment
+        and browser_environment_matches(version.get("environment"), environment)
         and version.get("secrets") == version_secrets(secret_id, secret_version)
         and (TAG in version.get("tags", []) if tagged else TAG not in version.get("tags", []))
     )
@@ -1211,7 +1223,7 @@ def deploy_dexie_tokens(mode, action, folder, gateway, function_id, deploy_sa, r
                 and candidate.get("status") == "ACTIVE" and candidate.get("runtime") == "nodejs22"
                 and candidate.get("entrypoint") == "index.handler"
                 and candidate.get("serviceAccountId") == runtime_sa
-                and candidate.get("environment") == environment and candidate.get("secrets") == secrets
+                and browser_environment_matches(candidate.get("environment"), environment) and candidate.get("secrets") == secrets
                 and TAG not in candidate.get("tags", [])
             ):
                 raise WebHostingError("Dexie token function version differs from the approved package/configuration.")
@@ -1375,7 +1387,7 @@ def deploy_login_url(mode, action, folder, gateway, function_id, deploy_sa, runt
                     or candidate.get("status") != "ACTIVE" or candidate.get("runtime") != "nodejs22"
                     or candidate.get("entrypoint") != "index.handler"
                     or candidate.get("serviceAccountId") != runtime_sa
-                    or candidate.get("environment") != environment or candidate.get("secrets") != secrets
+                    or not browser_environment_matches(candidate.get("environment"), environment) or candidate.get("secrets") != secrets
                     or candidate.get("logOptions", {}).get("disabled") is not True
                     or TAG in candidate.get("tags", []) or DEXIE_TOKEN_TAG in candidate.get("tags", [])):
                 raise WebHostingError("LoginUrl version differs from the pinned private package or configuration.")
