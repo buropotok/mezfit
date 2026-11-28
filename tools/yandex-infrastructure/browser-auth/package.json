@@ -1,5 +1,8 @@
 {
   "name": "mezfit-yandex-browser-oidc",
   "private": true,
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "ydb-sdk": "5.11.1"
+  }
 }
