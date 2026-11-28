@@ -114,11 +114,8 @@ function cookie(name, value, maxAge) {
 
 function browserSessionCookie(host, profile, key, now = epoch()) {
   const { sub, telegramUserId, name, username } = profile;
-  const value = signed({
-    version: profile.account ? 3 : 2, host, sub, telegramUserId, name, username,
-    ...(profile.account ? { account: profile.account } : {}),
-    iat: now, exp: now + SESSION_TTL,
-  }, key);
+  const value = signed({ version: 2, host, sub, telegramUserId, name, username,
+    iat: now, exp: now + SESSION_TTL }, key);
   return cookie(COOKIE_SESSION, value, SESSION_TTL);
 }
 
@@ -600,13 +597,10 @@ async function resolveBrowserAccount(profile, config) {
         || typeof row.snapshot !== 'string') return null;
     // Only the current Telegram-first identity class can receive a production subject.
     if (row.user_id !== telegramId || Number(row.user_id) >= PASSWORD_USER_ID_MIN) return null;
-    const account = { userId: row.user_id, revision: Number(row.revision) };
-    if (profile.version === 3 && (profile.account.userId !== account.userId
-        || account.revision < profile.account.revision)) return null;
     const snapshot = JSON.parse(row.snapshot);
     if (!isRecord(snapshot?.user) || snapshot.user.telegramUserId !== telegramId
         || !Number.isSafeInteger(snapshot.user.id) || snapshot.user.id <= 0) return null;
-    return account;
+    return row.user_id;
   } catch {
     return null;
   }
@@ -614,18 +608,15 @@ async function resolveBrowserAccount(profile, config) {
 
 async function verifiedProfileForSession(profile, config) {
   if (!accountMappingEnabled()) return profile;
-  const account = await resolveBrowserAccount(profile, config);
-  return account ? { ...profile, account } : null;
+  const userId = await resolveBrowserAccount(profile, config);
+  return userId ? { ...profile, userId } : null;
 }
 
 function verifiedSession(event, config, host, now) {
   const data = verified(readCookies(event)[COOKIE_SESSION], config.key);
-  if (!data || ![1, 2, 3].includes(data.version) || data.host !== host
+  if (!data || (data.version !== 1 && data.version !== 2) || data.host !== host
       || !Number.isSafeInteger(data.telegramUserId) || data.telegramUserId <= 0
       || typeof data.sub !== 'string' || !data.sub
-      || (data.version === 3 && (!isRecord(data.account) || data.account.userId !== String(data.telegramUserId)
-        || data.telegramUserId >= PASSWORD_USER_ID_MIN
-        || !Number.isSafeInteger(data.account.revision) || data.account.revision <= 0))
       || !Number.isInteger(data.iat) || data.iat > now + 60
       || !Number.isInteger(data.exp) || data.exp <= now
       || data.exp > data.iat + (data.version === 1 ? LEGACY_SESSION_TTL : SESSION_TTL)) {
@@ -641,7 +632,6 @@ async function session(event, config, host) {
   const profile = await verifiedProfileForSession(data, config);
   if (!profile) return json(503, { error: 'ACCOUNT_IDENTITY_UNAVAILABLE' });
   const cookies = data.version === 1 || now - data.iat >= SESSION_RENEW_INTERVAL
-    || (accountMappingEnabled() && profile.account.revision !== data.account?.revision)
     ? [browserSessionCookie(host, profile, config.key, now)] : [];
   return json(200, {
     authenticated: true,
@@ -691,7 +681,7 @@ async function dexieTokens(event, config, host) {
 
   const profile = await verifiedProfileForSession(identity, config);
   if (!profile) return tokenError(503, 'DEXIE_CLOUD_UNAVAILABLE', 'Cloud authentication failed');
-  const subject = 'tg:' + (accountMappingEnabled() ? profile.account.userId : identity.telegramUserId);
+  const subject = 'tg:' + (accountMappingEnabled() ? profile.userId : identity.telegramUserId);
   let upstream;
   try {
     upstream = await fetch(dbUrl + '/token', {
